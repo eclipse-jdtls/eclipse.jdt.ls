@@ -1,0 +1,45 @@
+{
+	"name": "JavaLanguageClient",
+	"description": "VSCode part of the Java language server",
+	"author": "Red Hat Inc.",
+	"license": "MIT",
+	"version": "0.0.1",
+	"publisher": "redhat",
+	"engines": {
+		"vscode": "^0.10.10"
+	},
+	"categories": [ 
+		"Other"
+	],
+	"activationEvents": [
+		"onLanguage:java"
+	],
+	"main": "./out/src/extension",
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "Example configuration",
+			"properties": {
+				"numberOfProblems": {
+					"type": "number",
+					"default": 100,
+					"description": "Controls the maximum number of problems produced by the server."
+				}
+			}
+		}
+	},	
+	"scripts": {
+		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"build-server": "mvn -f ../server/pom.xml clean verify"
+
+	},
+	"devDependencies": {
+		"typescript": "^1.8.9",
+		"vscode": "^0.11.0"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^1.4.2"	
+	}
+}
