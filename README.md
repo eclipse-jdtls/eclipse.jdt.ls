@@ -17,13 +17,32 @@ Developing and Contributing
 
 *client* folder contains the VS Code extension. 
 
-This command will build the server and put a copy under client/ folder:
+This command will build the server and put a copy under `client/server` folder:
     
     $ cd server
     $ mvn clean verify 
 
+
 For building VS Code extension see the [guide](https://code.visualstudio.com/docs/extensions/overview).
 The above command copies a server under client/server folder.
+
+Setup Eclipse
+-----------
+
+Install Eclipse Neon Java EE from
+http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neonr
+that will have most needed already installed.
+
+You can also get the
+http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/neonr
+and just instal Eclipse PDE from marketplace.
+
+Once installed use `File > Open Projects from File System...` and
+point it `java-language-server` and Eclipse should automatically
+detect the projects and import it properly.
+
+If you after import sees an error on `pom.xml` about Tycho, you can use Quick Fix
+(Ctrl+1) to install the Tycho maven integration.
 
 Feedback
 ---------
