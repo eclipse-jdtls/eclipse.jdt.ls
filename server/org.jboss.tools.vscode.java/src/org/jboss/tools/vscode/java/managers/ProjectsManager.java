@@ -10,7 +10,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.jboss.tools.vscode.ipc.JsonRpcConnection;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 public class ProjectsManager {
 	
@@ -27,14 +27,12 @@ public class ProjectsManager {
 		List<IProject> projects;
 		try {
 			projects = importer.importToWorkspace();
-			JsonRpcConnection.log("Number of created projects " + projects.size());
+			JavaLanguageServerPlugin.logInfo("Number of created projects " + projects.size());
 			return projects;
 		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logInfo("Import cancelled");
 		}
 		return Collections.emptyList();
 	}
@@ -47,8 +45,7 @@ public class ProjectsManager {
 		try {
 			this.getCurrentProject().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
 	}
 

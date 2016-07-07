@@ -3,13 +3,11 @@ package org.jboss.tools.vscode.java;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.text.DocumentFilter;
-
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
-import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
@@ -25,21 +23,18 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
-
-	public static JavaLanguageServerPlugin instance;
+	
 	private static BundleContext context;
+
 	private ProjectsManager pm;
 	private DocumentsManager dm;
 	private JsonRpcConnection connection;
+	private LogHandler logHandler;
 
 	static BundleContext getContext() {
 		return context;
 	}
 
-	public JavaLanguageServerPlugin() {
-		instance = this;
-	}
-	
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
@@ -51,8 +46,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		dm = new DocumentsManager(connection,pm);
 		connection.addHandlers(handlers());
 		connection.connect();
+		
+		logHandler = new LogHandler();
+		logHandler.install(connection);
 	}
-
+	
 	/**
 	 * @return
 	 */
@@ -76,13 +74,31 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public void stop(BundleContext bundleContext) throws Exception {
 		JavaLanguageServerPlugin.context = null;
 		connection = null;	
+		
+		if (logHandler != null) {
+			logHandler.uninstall();
+			logHandler = null;
+		}
 	}
 	
-	public JsonRpcConnection getConnection(){
+	public JsonRpcConnection getConnection() {
 		return connection;
 	}
 	
-	public static void log(MessageType type, String msg) {
-		instance.connection.logMessage(type, msg);
+	public static void log(IStatus status) {
+		Platform.getLog(JavaLanguageServerPlugin.context.getBundle()).log(status);
 	}
+	
+	public static void logError(String message) {
+		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message));
+	}
+
+	public static void logInfo(String message) {
+		log(new Status(IStatus.INFO, context.getBundle().getSymbolicName(), message));
+	}
+
+	public static void logException(String message, Throwable ex) {
+		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
+	}
+	
 }

@@ -3,8 +3,8 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -34,7 +34,7 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		JsonRpcConnection.log("ExtensionLifeCycleHandler process: " + request.toJSONString());
+		JavaLanguageServerPlugin.logInfo("ExtensionLifeCycleHandler process: " + request.toJSONString());
 		if(REQ_INIT.equals(request.getMethod()))
 			return handleInit(request);
 		if(REQ_SHUTDOWN.equals(request.getMethod()))
@@ -72,7 +72,7 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	}
 	
 	private JSONRPC2Response handleShutdown(JSONRPC2Request request){
-		JsonRpcConnection.log("Exiting Java Language Server");
+		JavaLanguageServerPlugin.logInfo("Exiting Java Language Server");
 		System.exit(0);
 		return new JSONRPC2Response(request.getID());
 	}

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
@@ -33,6 +32,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.java.CompletionProposalRequestor;
 import org.jboss.tools.vscode.java.HoverInfoProvider;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.handlers.DiagnosticsHandler;
 import org.jboss.tools.vscode.java.handlers.JsonRpcHelpers;
 import org.jboss.tools.vscode.java.model.CodeCompletionItem;
@@ -59,7 +59,7 @@ public class DocumentsManager {
 	
 	
 	public ICompilationUnit openDocument(String uri){
-		JsonRpcConnection.log("Opening document : " + uri);
+		JavaLanguageServerPlugin.logInfo("Opening document : " + uri);
 		ICompilationUnit unit = openUnits.get(uri);
 		if (unit == null) {
 			File f = null;
@@ -89,7 +89,7 @@ public class DocumentsManager {
 
 					}
 					openUnits.put(uri, unit);
-					JsonRpcConnection.log("added unit " + uri);
+					JavaLanguageServerPlugin.logInfo("added unit " + uri);
 				}
 			}
 		}
@@ -97,8 +97,7 @@ public class DocumentsManager {
 			try {
 				unit.reconcile(ICompilationUnit.NO_AST, true, null, null);
 			} catch (JavaModelException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				JavaLanguageServerPlugin.logException("Probem with reconcile for" +  uri, e);
 			}
 		}
 		return unit;
@@ -106,28 +105,27 @@ public class DocumentsManager {
 	}
 	
 	public void closeDocument(String uri){
-		JsonRpcConnection.log("close document : " + uri);
+		JavaLanguageServerPlugin.logInfo("close document : " + uri);
 		openUnits.remove(uri);
 	}
 	
 	public void updateDocument(String uri, int line, int column, int length, String text){
-		JsonRpcConnection.log("Updating document: "+ uri+ " line: " + line + " col:" +column + " length:"+ length +" text:"+text );
+		JavaLanguageServerPlugin.logInfo("Updating document: "+ uri+ " line: " + line + " col:" +column + " length:"+ length +" text:"+text );
 		ICompilationUnit unit = openUnits.get(uri);
 		if(unit == null ) return ;
 		try {
 			IBuffer buffer = unit.getBuffer();
 			int offset = JsonRpcHelpers.toOffset(buffer,line,column);
 			buffer.replace(offset,length,text);
-			JsonRpcConnection.log("Changed buffer: "+buffer.getContents());
+			JavaLanguageServerPlugin.logInfo("Changed buffer: "+buffer.getContents());
 			
 			if (length > 0 || text.length() > 0) {
-				JsonRpcConnection.log(uri+ " updated reconciling");
+				JavaLanguageServerPlugin.logInfo(uri+ " updated reconciling");
 				unit.reconcile(ICompilationUnit.NO_AST, true, null, null);
 			}
 
 		} catch (JavaModelException e) {
-			JsonRpcConnection.log(e.toString());
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem updating document " +  uri, e);
 		}
 	}
 	
@@ -156,8 +154,7 @@ public class DocumentsManager {
 			
 			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector, new NullProgressMonitor());
 		} catch (JavaModelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem with codeComplete for" +  uri, e);
 		}
 		return proposals;
 
@@ -187,8 +184,7 @@ public class DocumentsManager {
 				return getLocation(unit, element);
 			}
 		} catch (JavaModelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  uri, e);
 		}
 		return null;
 	}
@@ -231,7 +227,7 @@ public class DocumentsManager {
 			collectChildren(unit, elements, symbols);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem getting outline for" +  uri, e);
 		}
 		return new SymbolInformation[0];
 	}

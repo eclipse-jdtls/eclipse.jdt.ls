@@ -20,3 +20,5 @@ Export-Package: com.thetransactioncompany.jsonrpc2,
  net.minidev.json.parser,
  net.minidev.json.reader,
  org.jboss.tools.vscode.ipc
+Bundle-Activator: org.jboss.tools.vscode.ipc.IPCPlugin
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0"

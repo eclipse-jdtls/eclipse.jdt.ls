@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 
@@ -26,20 +27,20 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	@Override
 	public void acceptProblem(IProblem problem) {
-		JsonRpcConnection.log("accept problem for "+ this.uri);
+		JavaLanguageServerPlugin.logInfo("accept problem for "+ this.uri);
 		problems.add(problem);
 	}
 
 	@Override
 	public void beginReporting() {
-		JsonRpcConnection.log("begin problem for "+ this.uri);
+		JavaLanguageServerPlugin.logInfo("begin problem for "+ this.uri);
 		problems.clear();
 
 	}
 
 	@Override
 	public void endReporting() {
-		JsonRpcConnection.log("end reporting for "+ this.uri);
+		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.uri);
 		JSONRPC2Notification notification = new JSONRPC2Notification("textDocument/publishDiagnostics");
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("uri",this.uri);

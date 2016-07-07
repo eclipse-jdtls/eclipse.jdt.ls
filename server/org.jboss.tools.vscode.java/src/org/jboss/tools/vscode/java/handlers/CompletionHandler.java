@@ -43,7 +43,7 @@ public class CompletionHandler implements RequestHandler {
 			result.add(completionItem);
 		}
 		response.setResult(result);
-		JavaLanguageServerPlugin.log(MessageType.Info, "Completion request completed");
+		JavaLanguageServerPlugin.logInfo("Completion request completed");
 		return response;
 	}
 	

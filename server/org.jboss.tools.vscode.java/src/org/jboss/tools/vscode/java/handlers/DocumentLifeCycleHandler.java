@@ -3,8 +3,8 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -38,7 +38,7 @@ public class DocumentLifeCycleHandler implements RequestHandler{
 
 	@Override
 	public void process(JSONRPC2Notification request) {
-		JsonRpcConnection.log("DocumentLifeCycleHandler.process");
+		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.process");
 		String uri = JsonRpcHelpers.readTextDocumentUri(request);
 		if(REQ_OPENED.equals(request.getMethod())){
 			dm.openDocument(uri);

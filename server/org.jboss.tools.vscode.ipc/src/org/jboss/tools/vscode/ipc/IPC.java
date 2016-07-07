@@ -1,16 +1,17 @@
 package org.jboss.tools.vscode.ipc;
 
 
-import static org.jboss.tools.vscode.ipc.JsonRpcConnection.plog;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,10 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Message;
  */
 final public class IPC implements Transport {
 
+	private static final boolean PROTOCOL_LOG = Boolean.valueOf(System.getProperty("log.protocol", "false")).booleanValue();
+	private static FileWriter protocolLog;
 
+	
 	private BufferedReader input;
 	private PrintStream output;
 	private List<DataListener> listeners = new ArrayList<DataListener>();
@@ -53,7 +57,7 @@ final public class IPC implements Transport {
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
 		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
 		
-		JsonRpcConnection.log("Installing IPC: out pipe: "+stdInName +" in pipe: " + stdOutName);	
+		IPCPlugin.logInfo("Installing IPC: out pipe: "+stdInName +" in pipe: " + stdOutName);	
 		
 			try {
 				final File inFile = new File(stdOutName);
@@ -77,10 +81,10 @@ final public class IPC implements Transport {
 							}
 							tmpStream.print("ready");
 							tmpStream.flush();
-							JsonRpcConnection.log("Connected input ");
+							IPCPlugin.logInfo("Connected input ");
 							startListening();
 						}catch (Exception e) {
-							JsonRpcConnection.log("failed to create IPC Input: " + e);
+							IPCPlugin.logException("failed to create IPC Input", e);
 							// TODO: handle exception
 						}
 					}
@@ -98,10 +102,7 @@ final public class IPC implements Transport {
 				output.println("ready");
 				output.flush();
 			} catch ( IOException e) {
-				// TODO Auto-generated catch block
-				ByteArrayOutputStream bo = new ByteArrayOutputStream();
-				e.printStackTrace(new PrintStream(bo));
-				JsonRpcConnection.log("failed to create IPC I/O : " + bo.toString());
+				IPCPlugin.logException("failed to create IPC I/O", e);
 			}
 	}
 
@@ -125,7 +126,7 @@ final public class IPC implements Transport {
 						if( l>0 ){
 							final char[] cbuf = new char[l];
 							int readChars = input.read(cbuf, 0, l);
-							JsonRpcConnection.log("Read " + readChars + " content-lenght was " + l);
+							IPCPlugin.logInfo("Read " + readChars + " content-lenght was " + l);
 							plog(cbuf);
 							notifyListeners(String.valueOf(cbuf));
 						}
@@ -135,10 +136,7 @@ final public class IPC implements Transport {
 					}
 				}
 			}catch (Exception e) {
-				headers = new StringBuilder();
-				ByteArrayOutputStream bo = new ByteArrayOutputStream();
-				e.printStackTrace(new PrintStream(bo));
-				JsonRpcConnection.log("exception on receive loop" + bo.toString());
+				IPCPlugin.logException("exception on receive loop", e);
 			}
 		}
 	}
@@ -155,7 +153,6 @@ final public class IPC implements Transport {
 	}
 	
 	private void notifyListeners(final String data){
-		JsonRpcConnection.log("Notifying listeners with data:" + data);
 		if(listeners.isEmpty())
 			return;
 		listeners.forEach((listener) -> listener.dataReceived(data));
@@ -177,5 +174,33 @@ final public class IPC implements Transport {
 	
 	private boolean isWindows() {
 	        return (OS.indexOf("win") >= 0);
+	}
+	
+	public static void plog (String buf){
+		if(PROTOCOL_LOG)
+			plog(buf.toCharArray());
+	}
+	
+	public static void plog (char buf){
+		if(PROTOCOL_LOG)
+			plog(new char[] {buf});
+	}
+	
+	public static void plog(char[] buf ){
+		if(!PROTOCOL_LOG) return;
+		try {
+			if (protocolLog == null) {
+				Path cwd = Paths. get(System.getProperty("user.home"));
+				Path logPath = cwd.toAbsolutePath().normalize().resolve("protocol.log");
+				protocolLog = new FileWriter(logPath.toFile());
+			}
+			protocolLog.write(buf);
+			protocolLog.flush();
+		}
+		catch (IOException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 	}	
+	
 }
