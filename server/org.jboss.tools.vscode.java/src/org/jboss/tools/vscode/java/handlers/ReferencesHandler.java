@@ -86,8 +86,10 @@ public class ReferencesHandler implements RequestHandler {
 	@SuppressWarnings("unchecked")
 	private ReferenceParams readParams(JSONRPC2Request request) {
 		ReferenceParams result = new ReferenceParams();
+		
 		Map<String, Object> params = request.getNamedParams();
-		result.uri = (String) params.get("uri");
+		Map<String, Object> textDocument= (Map<String, Object>) params.get("textDocument");
+		result.uri = (String) textDocument.get("uri");
 		result.languageId = (String) params.get("languageId");
 		result.context = readContext((Map<String, Object>) params.get("context"));
 		result.position = readPosition((Map<String, Object>) params.get("position"));
