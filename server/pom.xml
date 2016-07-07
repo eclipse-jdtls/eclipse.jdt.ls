@@ -71,6 +71,10 @@
 						</environment>
 					</environments>
 					<includePackedArtifacts>false</includePackedArtifacts>
+					<dependency-resolution>
+					  <optionalDependencies>ignore</optionalDependencies>
+					</dependency-resolution>
+					
 				</configuration>
 			</plugin>
 			<plugin>
