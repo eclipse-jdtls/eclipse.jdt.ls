@@ -57,6 +57,15 @@ detect the projects and import it properly.
 If you after import sees an error on `pom.xml` about Tycho, you can use Quick Fix
 (Ctrl+1) to install the Tycho maven integration.
 
+Generate simple java app for testing
+-------------------------------
+
+    mvn archetype:generate -DgroupId=com.mycompany.app
+    -DartifactId=my-app
+    -DarchetypeArtifactId=maven-archetype-quickstart
+    -DinteractiveMode=false
+
+
 Feedback
 ---------
 
