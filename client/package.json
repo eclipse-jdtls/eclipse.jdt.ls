@@ -40,6 +40,7 @@
 		"vscode": "^0.11.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "next"
+		"vscode-languageclient": "next",
+		"rimraf": "^2.5.3"
 	}
 }

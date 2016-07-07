@@ -4,7 +4,9 @@
 import * as path from 'path';
 import * as cp from 'child_process';
 import * as fs from 'fs';
+
 var electron = require('./electron_j');
+var rimraf = require('rimraf');
 
 import { workspace, Disposable, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions } from 'vscode-languageclient';
@@ -92,20 +94,8 @@ function cleanWorkspaces(){
 		if(err) return;
 		files.forEach(function(item,index, array){
 			if(item.startsWith('vscodesws_')){
-				rmdirRf(path.resolve(serverDir,item));
+				rimraf.sync(path.resolve(serverDir, item));
 			}
 		});
 	});
 }
-
-var rmdirRf = function(path) {
-    fs.readdirSync(path).forEach(function(file,index){
-      var curPath = path + "/" + file;
-      if(fs.lstatSync(curPath).isDirectory()) {
-        rmdirRf(curPath);
-      } else {
-        fs.unlinkSync(curPath);
-      }
-    });
-    fs.rmdirSync(path);
-};
