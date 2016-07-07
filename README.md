@@ -26,6 +26,19 @@ This command will build the server and put a copy under `client/server` folder:
 For building VS Code extension see the [guide](https://code.visualstudio.com/docs/extensions/overview).
 The above command copies a server under client/server folder.
 
+Setup vscode
+-----------
+
+Install latest Visual Code - Insider edition from
+https://code.visualstudio.com/insiders
+
+Install latest Node (v6.3+) https://nodejs.org/en/download/current/
+
+   cd client
+   npm install
+   vscode-insiders .
+ 
+ 
 Setup Eclipse
 -----------
 
