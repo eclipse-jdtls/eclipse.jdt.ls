@@ -15,6 +15,7 @@ import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
+import org.jboss.tools.vscode.java.handlers.FormatterHandler;
 import org.jboss.tools.vscode.java.handlers.HoverHandler;
 import org.jboss.tools.vscode.java.handlers.LogHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
@@ -53,6 +54,7 @@ public class JavaClientConnection {
 		handlers.add(new WorkspaceSymbolHandler());
 		handlers.add(new ReferencesHandler());
 		handlers.add(new DocumentHighlightHandler());
+		handlers.add(new FormatterHandler());
 		return handlers;
 	}	
 	/**

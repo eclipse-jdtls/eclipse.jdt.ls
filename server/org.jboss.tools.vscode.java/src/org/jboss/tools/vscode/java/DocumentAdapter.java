@@ -75,7 +75,11 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 		} catch (CoreException e) {
 		}
 	}
-	
+
+	public IDocument getDocument() {
+		return fDocument;
+	}
+
 	@Override
 	public void addBufferChangedListener(IBufferChangedListener listener) {
 		synchronized (lock) {			

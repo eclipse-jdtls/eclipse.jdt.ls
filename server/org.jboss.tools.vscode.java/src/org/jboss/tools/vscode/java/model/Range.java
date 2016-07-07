@@ -3,6 +3,9 @@ package org.jboss.tools.vscode.java.model;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * POJO for returning Range.
+ */
 public class Range {
 	public Position start;
 	public Position end;
