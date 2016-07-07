@@ -206,11 +206,11 @@ public class DocumentsManager {
 	 * @param $
 	 * @throws JavaModelException
 	 */
-	private Location getLocation(ICompilationUnit unit, IJavaElement element) throws JavaModelException {
+	public Location getLocation(ICompilationUnit unit, IJavaElement element) throws JavaModelException {
 		Location $ = new Location();
 		$.setUri("file://" + element.getResource().getLocationURI().getPath());
 		if (element instanceof ISourceReference) {
-			ISourceRange nameRange = ((ISourceReference) element).getSourceRange();
+			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
 			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset());
 			int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset() + nameRange.getLength());
 
@@ -269,7 +269,7 @@ public class DocumentsManager {
 		return openUnits.containsKey(uri);
 	}
 
-	public IJavaElement findElementAtSelection(String uri, long line, long column) {
+	public IJavaElement findElementAtSelection(String uri, int line, int column) throws JavaModelException {
 		ICompilationUnit unit = openUnits.get(uri);
 
 		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
