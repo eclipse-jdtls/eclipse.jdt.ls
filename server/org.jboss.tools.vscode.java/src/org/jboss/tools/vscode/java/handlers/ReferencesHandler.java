@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -16,6 +17,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
+import org.jboss.tools.vscode.java.model.Location;
 import org.jboss.tools.vscode.java.model.SymbolInformation;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -40,12 +42,12 @@ public class ReferencesHandler implements RequestHandler {
 		ReferenceParams params = readParams(request);
 		SearchEngine engine = new SearchEngine();
 
+		JSONRPC2Response response = new JSONRPC2Response(request.getID());
+		try { 
 		IJavaElement elementToSearch = dm.findElementAtSelection(params.uri, params.position.line,
 				params.position.character);
 
 		SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		try { 
 			final List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 					SearchEngine.createWorkspaceScope(), new SearchRequestor() {
@@ -55,17 +57,18 @@ public class ReferencesHandler implements RequestHandler {
 							Object o = match.getElement();
 							if (o instanceof IJavaElement) {
 								IJavaElement element = (IJavaElement) o;
-								Map<String, Object> outlineItem = new HashMap<String, Object>();
-								outlineItem.put("name", element.getElementName());
-								outlineItem.put("kind", SymbolInformation.mapKind(element));
-								if (element.getParent() != null) {
-									outlineItem.put("containerName", element.getParent().getElementName());
+								ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+								if(compilationUnit == null){
+									return;
 								}
-								Map<String, Object> l = new HashMap<String, Object>();
-								l.put("uri", match.getResource().getLocationURI().toString());
-								l.put("range", JsonRpcHelpers.convertRange(0, 0, 0, 0));
-								outlineItem.put("location", l);
-								result.add(outlineItem);
+								Location location = dm.getLocation(compilationUnit, element);
+								Map<String,Object> l = new HashMap<String,Object>();
+								l.put("uri",location.getUri());
+								l.put("range",JsonRpcHelpers.convertRange(location.getLine(),
+										location.getColumn(),
+										location.getEndLine(),
+										location.getEndColumn()));
+								result.add(l);
 
 							}
 
