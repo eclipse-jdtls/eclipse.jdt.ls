@@ -9,5 +9,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/junixsocket-native-common-2.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/log4j-1.2.17.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/native-lib-loader-2.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/gson-2.7.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

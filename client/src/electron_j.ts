@@ -65,7 +65,7 @@ function fork(modulePath, args, options, callback) {
         serversConnected ++;
         if (serversConnected == 2)
             resolve({reader, writer});
-    });
+    
     serverOut.listen(stdOutPipeName);
     var serverIn = net.createServer(function (stream) {
         writer = stream;
