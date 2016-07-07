@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jdt.core.CompletionProposal;
-import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.model.CodeCompletionItem;
 
@@ -42,15 +42,13 @@ public class CompletionHandler implements RequestHandler {
 			completionItem.put("insertText",p.getInsertText());
 			result.add(completionItem);
 		}
-		
 		response.setResult(result);
+		JavaLanguageServerPlugin.log(MessageType.Info, "Completion request completed");
 		return response;
 	}
-
-
+	
 	@Override
 	public void process(JSONRPC2Notification request) {
 		//not implemented
 	}
-
 }

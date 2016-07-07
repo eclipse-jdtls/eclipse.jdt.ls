@@ -9,6 +9,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
+import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
@@ -25,6 +26,7 @@ import org.osgi.framework.BundleContext;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
 
+	public static JavaLanguageServerPlugin instance;
 	private static BundleContext context;
 	private ProjectsManager pm;
 	private DocumentsManager dm;
@@ -34,6 +36,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return context;
 	}
 
+	public JavaLanguageServerPlugin() {
+		instance = this;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
@@ -74,5 +80,9 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	
 	public JsonRpcConnection getConnection(){
 		return connection;
+	}
+	
+	public static void log(MessageType type, String msg) {
+		instance.connection.logMessage(type, msg);
 	}
 }

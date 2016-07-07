@@ -1,11 +1,17 @@
 package org.jboss.tools.vscode.ipc;
 
+import java.io.BufferedOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.swing.JList;
 
 import org.jboss.tools.vscode.ipc.Transport.DataListener;
 
@@ -84,6 +90,19 @@ public class JsonRpcConnection implements DataListener{
 		log("No handlers for request: " + request);		
 	}
 
+	/**
+	 * Sends the logMessage message back to the client as a notification
+	 * @param msg The message to send back to the client
+	 */
+	public void logMessage(MessageType type, String msg) {
+		JSONRPC2Notification note = new JSONRPC2Notification("window/logMessage");
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("message", msg);
+		params.put("type", type.getType());
+		note.setNamedParams(params);
+		sendNotification(note);
+	}
+	
 	public static void log(String log) {
 		if(!DEBUG) return;
 		try {
@@ -96,7 +115,6 @@ public class JsonRpcConnection implements DataListener{
 			logWriter.flush();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
