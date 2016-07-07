@@ -21,6 +21,8 @@ function runJavaServer(){
 			let workspacePath = path.resolve( __dirname,"../../server/vscodesws_"+makeRandomHexString(5));
 			if(DEBUG){
 				params.push('-agentlib:jdwp=transport=dt_socket,server=y,address=1044');
+				// suspend=y is the default. Use this one if you need to debug the server startup code:
+				// params.push('-agentlib:jdwp=transport=dt_socket,server=y,address=1044');
 			}
 			params.push('-Declipse.application=org.jboss.tools.vscode.java.id1');
 			params.push('-Dosgi.bundles.defaultStartLevel=4');
