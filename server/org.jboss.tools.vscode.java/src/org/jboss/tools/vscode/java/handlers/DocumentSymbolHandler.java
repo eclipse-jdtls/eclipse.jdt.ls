@@ -29,7 +29,7 @@ public class DocumentSymbolHandler implements RequestHandler {
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		String uri = (String) request.getNamedParams().get("uri");
+		String uri = JsonRpcHelpers.readTextDocumentUri(request);
 		SymbolInformation[] elements  = dm.getOutline(uri);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();

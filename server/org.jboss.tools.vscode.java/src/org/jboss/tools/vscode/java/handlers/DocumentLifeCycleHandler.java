@@ -39,7 +39,7 @@ public class DocumentLifeCycleHandler implements RequestHandler{
 	@Override
 	public void process(JSONRPC2Notification request) {
 		JsonRpcConnection.log("DocumentLifeCycleHandler.process");
-		String uri = (String) request.getNamedParams().get("uri");
+		String uri = JsonRpcHelpers.readTextDocumentUri(request);
 		if(REQ_OPENED.equals(request.getMethod())){
 			dm.openDocument(uri);
 		}
@@ -55,7 +55,7 @@ public class DocumentLifeCycleHandler implements RequestHandler{
 	 * @param request
 	 */
 	private void handleChanged(JSONRPC2Notification request) {
-		String uri = (String) request.getNamedParams().get("uri");
+		String uri = JsonRpcHelpers.readTextDocumentUri(request);
 		List<Object> contentChanges = (List<Object>) request.getNamedParams().get("contentChanges");
 		for (Object object : contentChanges) {
 			Map<String, Object> change = (Map<String, Object>) object;

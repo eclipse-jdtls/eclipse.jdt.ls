@@ -30,8 +30,7 @@ public class CompletionHandler implements RequestHandler {
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		String uri = (String) request.getNamedParams().get("uri");
-		
+		String uri = JsonRpcHelpers.readTextDocumentUri(request);
 		int[] position = JsonRpcHelpers.readTextDocumentPosition(request);
 		List<CodeCompletionItem> proposals = this.dm.computeContentAssist(uri,position[0],position[1]);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
