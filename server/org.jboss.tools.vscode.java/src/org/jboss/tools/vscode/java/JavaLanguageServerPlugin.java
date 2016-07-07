@@ -17,6 +17,7 @@ import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.FindSymbolsHandler;
 import org.jboss.tools.vscode.java.handlers.HoverHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
+import org.jboss.tools.vscode.java.handlers.ReferencesHandler;
 import org.jboss.tools.vscode.java.handlers.WorkspaceEventsHandler;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
@@ -60,6 +61,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		handlers.add(new WorkspaceEventsHandler(pm,dm));
 		handlers.add(new DocumentSymbolHandler(dm));
 		handlers.add(new FindSymbolsHandler());
+		handlers.add(new ReferencesHandler(dm));
 		return handlers;
 	}
 
