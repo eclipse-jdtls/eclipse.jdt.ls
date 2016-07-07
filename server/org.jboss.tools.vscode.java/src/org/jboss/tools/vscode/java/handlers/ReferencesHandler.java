@@ -61,7 +61,7 @@ public class ReferencesHandler implements RequestHandler {
 								if(compilationUnit == null){
 									return;
 								}
-								Location location = dm.getLocation(compilationUnit, element);
+								Location location = dm.getLocation(compilationUnit, match.getOffset(), match.getLength());
 								Map<String,Object> l = new HashMap<String,Object>();
 								l.put("uri",location.getUri());
 								l.put("range",JsonRpcHelpers.convertRange(location.getLine(),
