@@ -27,8 +27,10 @@ function runJavaServer(){
 			params.push('-Declipse.application=org.jboss.tools.vscode.java.id1');
 			params.push('-Dosgi.bundles.defaultStartLevel=4');
 			params.push('-Declipse.product=org.jboss.tools.vscode.java.product');
-			if(DEBUG)
+			if(DEBUG) {
 				params.push('-Dlog.protocol=true');
+				params.push('-Dlog.level=ALL');
+			}
 		
 			params.push('-jar'); params.push(path.resolve( __dirname ,'../../server/plugins/org.eclipse.equinox.launcher_1.3.200.v20160318-1642.jar'));
 			//select configuration directory according to OS

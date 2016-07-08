@@ -15,6 +15,7 @@ import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.FindSymbolsHandler;
 import org.jboss.tools.vscode.java.handlers.HoverHandler;
+import org.jboss.tools.vscode.java.handlers.LogHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
 import org.jboss.tools.vscode.java.handlers.ReferencesHandler;
 import org.jboss.tools.vscode.java.handlers.WorkspaceEventsHandler;

@@ -1,4 +1,4 @@
-package org.jboss.tools.vscode.java;
+package org.jboss.tools.vscode.java.handlers;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
@@ -19,7 +18,7 @@ import org.jboss.tools.vscode.ipc.MessageType;
 /**
  * The LogHandler hooks in the Eclipse log and forwards all Eclipse log messages to
  * the the client. In VSCode you can see all the messages in the Output view, in the
- * 'Java' channel.
+ * 'Java Language Support' channel.
  */
 public class LogHandler {
 	
@@ -29,35 +28,67 @@ public class LogHandler {
 	private ILogListener logListener;
 	private FileWriter logWriter;
 	private DateFormat dateFormat;
+	private int logLevelMask;
+	private JsonRpcConnection connection;
+	private Calendar calendar;
 
-	public void install(JsonRpcConnection connection) {
-	    dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+	public void install(JsonRpcConnection rcpConnection) {
+	    this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+	    this.logLevelMask = getLogLevelMask(System.getProperty("log.level"));
+	    this.calendar = Calendar.getInstance();
+	    this.connection = rcpConnection;
 		
 		this.logListener = new ILogListener() {
-			@Override
 			public void logging(IStatus status, String bundleId) {
-				Date date = Calendar.getInstance().getTime();
-				String message = dateFormat.format(date) + ' ' + status.getMessage();
-				if (status.getException() != null) {
-					message = message + '\n' + status.getException().getMessage();
-					StringWriter sw = new StringWriter();
-					status.getException().printStackTrace(new PrintWriter(sw));
-					String exceptionAsString = sw.toString();
-					message = message + '\n' + exceptionAsString;
-				}
-
-				connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), message);
-				if (LOG_TO_FILE) {
-					logToFile("[" + getLabelFromSeverity(status.getSeverity()) + "] " + message);
-				}
-
+				processLogMessage(status);
 			}
 		};
 		Platform.addLogListener(this.logListener);
 	}
 
 	public void uninstall() {
-		Platform.removeLogListener(logListener);
+		Platform.removeLogListener(this.logListener);
+		if (this.logWriter != null) {
+			try {
+				this.logWriter.close();
+			} catch (IOException e) {
+				// ignore
+			}
+			this.logWriter = null;
+		}
+	}
+	
+	private int getLogLevelMask(String logLevel) {
+		switch (logLevel) {
+			case "ALL":
+				return -1;
+			case "ERROR":
+				return IStatus.ERROR;
+			case "WARNING":
+			default:
+				return IStatus.ERROR | IStatus.WARNING;
+
+		}
+	}
+	
+	private void processLogMessage(IStatus status) {
+		String dateString = this.dateFormat.format(this.calendar.getTime());
+		String message = status.getMessage();
+		if (status.getException() != null) {
+			message = message + '\n' + status.getException().getMessage();
+			StringWriter sw = new StringWriter();
+			status.getException().printStackTrace(new PrintWriter(sw));
+			String exceptionAsString = sw.toString();
+			message = message + '\n' + exceptionAsString;
+		}
+		
+		if (status.matches(this.logLevelMask)) {
+			connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' '+ message);
+		}
+		if (LOG_TO_FILE) {
+			// log all messages
+			logToFile("[" + getLabelFromSeverity(status.getSeverity()) + "] " + dateString + ' ' + message);
+		}		
 	}
 	
 	private MessageType getMessageTypeFromSeverity(int severity) {
@@ -90,13 +121,13 @@ public class LogHandler {
 
 	private void logToFile(String log) {
 		try {
-			if (logWriter == null) {
+			if (this.logWriter == null) {
 				Path cwd = Paths.get(System.getProperty("user.home"));
 				Path logPath = cwd.toAbsolutePath().normalize().resolve("langserver.log");
-				logWriter = new FileWriter(logPath.toFile());
+				this.logWriter = new FileWriter(logPath.toFile());
 			}
-			logWriter.write(log + "\n");
-			logWriter.flush();
+			this.logWriter.write(log + "\n");
+			this.logWriter.flush();
 
 		} catch (IOException e) {
 			e.printStackTrace();
