@@ -3,19 +3,18 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.jboss.tools.vscode.java.HoverInfoProvider;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class HoverHandler implements RequestHandler{
+public class HoverHandler extends AbstractRequestHandler {
 	
 	private static final String REQ_HOVER = "textDocument/hover";
-	private final DocumentsManager dm;
-	public HoverHandler(DocumentsManager manager) {
-		this.dm = manager;
+
+	public HoverHandler() {
 	}
 
 	@Override
@@ -25,10 +24,10 @@ public class HoverHandler implements RequestHandler{
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		String uri = JsonRpcHelpers.readTextDocumentUri(request);
-		
+		ICompilationUnit unit = resolveCompilationUnit(request);
 		int[] position = JsonRpcHelpers.readTextDocumentPosition(request);
-		String hover = dm.computeHover(uri,position[0],position[1]);
+		
+		String hover = computeHover(unit ,position[0],position[1]);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		Map<String,Object> result = new HashMap<String,Object>();
 //		Map<String,Object> markedString = new HashMap<String,Object>();
@@ -42,7 +41,11 @@ public class HoverHandler implements RequestHandler{
 	@Override
 	public void process(JSONRPC2Notification request) {
 		// not needed
-		
 	}
-
+	 
+	public String computeHover(ICompilationUnit unit, int line, int column) {
+		HoverInfoProvider provider = new HoverInfoProvider(unit);
+		return provider.computeHover(line,column);
+		
+	}	
 }

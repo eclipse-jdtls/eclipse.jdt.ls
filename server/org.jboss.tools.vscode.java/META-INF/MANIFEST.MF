@@ -14,3 +14,4 @@ Require-Bundle: org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
  org.eclipse.text;bundle-version="3.6.0",
  org.eclipse.m2e.core,
  com.ibm.icu;bundle-version="56.1.0"
+ org.eclipse.core.filebuffers;bundle-version="3.6.0"

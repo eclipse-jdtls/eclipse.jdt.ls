@@ -3,9 +3,7 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.resources.ProjectScope;
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.managers.ProjectsManager.CHANGE_TYPE;
 
@@ -13,17 +11,15 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class WorkspaceEventsHandler implements RequestHandler {
+public class WorkspaceEventsHandler extends AbstractRequestHandler {
 
 	private static final String REQ_FILE_CHANGE = "workspace/didChangeWatchedFiles";
 	private static final int CHANGE_TYPE_CREATED = 1;
 	private static final int CHANGE_TYPE_CHANGED = 2;
 	private static final int CHANGE_TYPE_DELETED = 3;
-	private final DocumentsManager dm ;
 	private final ProjectsManager pm ;
 	
-	public WorkspaceEventsHandler(ProjectsManager projects, DocumentsManager documents) {
-		this.dm = documents;
+	public WorkspaceEventsHandler(ProjectsManager projects) {
 		this.pm = projects;
 	}
 	
@@ -44,10 +40,11 @@ public class WorkspaceEventsHandler implements RequestHandler {
 		for (Map<String, Object> obj : changes) {
 			String uri = (String) obj.get("uri");
 			Number type = (Number) obj.get("type");
-			if(this.dm.isOpen(uri))//Open Java file
+			ICompilationUnit unit = resolveCompilationUnit(uri);
+			if (unit.isWorkingCopy()) {
 				continue;
-			pm.fileChanged(uri, toChangeType(type));
-			
+			}
+			pm.fileChanged(uri, toChangeType(type));			
 		}
 	}
 	
@@ -63,5 +60,4 @@ public class WorkspaceEventsHandler implements RequestHandler {
 			throw new UnsupportedOperationException();
 		}
 	}
-
 }

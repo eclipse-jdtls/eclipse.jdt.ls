@@ -29,7 +29,7 @@ public class HoverInfoProvider {
 		this.unit = aUnit;
 	}
 	
-	public String computeHover(int line, int column){
+	public String computeHover(int line, int column) {
 		try {
 			IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(),line,column),0);
 			if(elements == null || elements.length != 1)

@@ -3,21 +3,22 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.JavaModelException;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.model.Location;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class NavigateToDefinitionHandler implements RequestHandler{
+public class NavigateToDefinitionHandler extends AbstractRequestHandler {
 
 	private static final String REQ_DEFINITION = "textDocument/definition";
-	private final DocumentsManager dm;
 	
-	public NavigateToDefinitionHandler(DocumentsManager manager) {
-		this.dm = manager;
+	public NavigateToDefinitionHandler() {
 	}
 	
 	@Override
@@ -27,9 +28,10 @@ public class NavigateToDefinitionHandler implements RequestHandler{
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		String uri = JsonRpcHelpers.readTextDocumentUri(request);
+		ICompilationUnit unit = resolveCompilationUnit(request);
+		
 		int[] position = JsonRpcHelpers.readTextDocumentPosition(request);
-		Location l = dm.computeDefinitonNavigation(uri,position[0],position[1] );
+		Location l = computeDefinitonNavigation(unit, position[0], position[1]);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		Map<String,Object> result = new HashMap<String,Object>();
 		if(l != null){
@@ -44,6 +46,26 @@ public class NavigateToDefinitionHandler implements RequestHandler{
 	public void process(JSONRPC2Notification request) {
 		// not implemented
 		
+	}
+	
+	private Location computeDefinitonNavigation(ICompilationUnit unit, int line, int column) {
+		try {
+			IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
+
+			if (elements == null || elements.length != 1)
+				return null;
+			IJavaElement element = elements[0];
+			IResource resource = element.getResource();
+
+			// if the selected element corresponds to a resource in workspace,
+			// navigate to it
+			if (resource != null && resource.getProject() != null) {
+				return getLocation(unit, element);
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  unit.getElementName(), e);
+		}
+		return null;
 	}
 	
 	private Map<String, Object> convertRange(int startLine, int startCol, int endLine, int endCol) {
