@@ -60,8 +60,6 @@ final public class IPC implements Transport {
 		IPCPlugin.logInfo("Installing IPC: out pipe: "+stdInName +" in pipe: " + stdOutName);	
 		
 			try {
-				final File inFile = new File(stdOutName);
-				final File outFile = new File(stdInName);
 				
 				Thread t = new Thread(new Runnable() {
 					
@@ -69,18 +67,23 @@ final public class IPC implements Transport {
 					public void run() {
 						try{
 							PrintStream tmpStream = null;
-							if(isWindows()){
-								RandomAccessFile raf = new RandomAccessFile(outFile, "rwd");
-								tmpStream = new PrintStream(Channels.newOutputStream(raf.getChannel())); 
-								input = new BufferedReader(new InputStreamReader(Channels.newInputStream(raf.getChannel())));
-							}else{
-								AFUNIXSocket sock = AFUNIXSocket.newInstance();
-								sock.connect(new AFUNIXSocketAddress(outFile));
-								tmpStream = new PrintStream(sock.getOutputStream());
-								input = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+							if (stdInName == null) {
+								input = new BufferedReader(new InputStreamReader(System.in));
+							} else {
+								final File outFile = new File(stdInName);
+								if(isWindows()){
+									RandomAccessFile raf = new RandomAccessFile(outFile, "rwd");
+									tmpStream = new PrintStream(Channels.newOutputStream(raf.getChannel())); 
+									input = new BufferedReader(new InputStreamReader(Channels.newInputStream(raf.getChannel())));
+								}else{
+									AFUNIXSocket sock = AFUNIXSocket.newInstance();
+									sock.connect(new AFUNIXSocketAddress(outFile));
+									tmpStream = new PrintStream(sock.getOutputStream());
+									input = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+								}
+								tmpStream.print("ready");
+								tmpStream.flush();
 							}
-							tmpStream.print("ready");
-							tmpStream.flush();
 							IPCPlugin.logInfo("Connected input ");
 							startListening();
 						}catch (Exception e) {
@@ -91,16 +94,21 @@ final public class IPC implements Transport {
 				});
 				t.setName("IPC Listener Thread");
 				t.start();
-				if(isWindows()){
-					RandomAccessFile raf = new RandomAccessFile(inFile, "rwd");
-					output = new PrintStream(Channels.newOutputStream(raf.getChannel()));
-				}else{
-					AFUNIXSocket sock = AFUNIXSocket.newInstance();
-					sock.connect(new AFUNIXSocketAddress(inFile));
-					output = new PrintStream(sock.getOutputStream());
+				if (stdOutName == null) {
+					output = System.out;
+				} else {
+					final File inFile = new File(stdOutName);
+					if(isWindows()){
+						RandomAccessFile raf = new RandomAccessFile(inFile, "rwd");
+						output = new PrintStream(Channels.newOutputStream(raf.getChannel()));
+					}else{
+						AFUNIXSocket sock = AFUNIXSocket.newInstance();
+						sock.connect(new AFUNIXSocketAddress(inFile));
+						output = new PrintStream(sock.getOutputStream());
+					}
+					output.println("ready");
+					output.flush();
 				}
-				output.println("ready");
-				output.flush();
 			} catch ( IOException e) {
 				IPCPlugin.logException("failed to create IPC I/O", e);
 			}
