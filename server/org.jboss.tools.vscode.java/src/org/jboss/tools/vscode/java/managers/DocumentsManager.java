@@ -50,9 +50,9 @@ public class DocumentsManager {
 	private Map<String, ICompilationUnit> openUnits;
 	private ProjectsManager pm;
 	private JsonRpcConnection connection;
-	
-	public DocumentsManager(JsonRpcConnection conn, ProjectsManager pm  ) {
-		openUnits =  new HashMap<String,ICompilationUnit>();
+
+	public DocumentsManager(JsonRpcConnection conn, ProjectsManager pm) {
+		openUnits = new HashMap<String, ICompilationUnit>();
 		this.pm = pm;
 		this.connection = conn;
 	}
@@ -93,7 +93,7 @@ public class DocumentsManager {
 				}
 			}
 		}
-		if(unit != null){
+		if (unit != null) {
 			try {
 				unit.reconcile(ICompilationUnit.NO_AST, true, null, null);
 			} catch (JavaModelException e) {
@@ -101,7 +101,7 @@ public class DocumentsManager {
 			}
 		}
 		return unit;
-			
+
 	}
 	
 	public void closeDocument(String uri){
@@ -112,7 +112,8 @@ public class DocumentsManager {
 	public void updateDocument(String uri, int line, int column, int length, String text){
 		JavaLanguageServerPlugin.logInfo("Updating document: "+ uri+ " line: " + line + " col:" +column + " length:"+ length +" text:"+text );
 		ICompilationUnit unit = openUnits.get(uri);
-		if(unit == null ) return ;
+		if (unit == null)
+			return;
 		try {
 			IBuffer buffer = unit.getBuffer();
 			int offset = JsonRpcHelpers.toOffset(buffer,line,column);
@@ -128,10 +129,11 @@ public class DocumentsManager {
 			JavaLanguageServerPlugin.logException("Problem updating document " +  uri, e);
 		}
 	}
-	
-	public List<CodeCompletionItem> computeContentAssist(String uri, int line, int column){
+
+	public List<CodeCompletionItem> computeContentAssist(String uri, int line, int column) {
 		ICompilationUnit unit = openUnits.get(uri);
-		if(unit == null ) return Collections.emptyList();
+		if (unit == null)
+			return Collections.emptyList();
 		final List<CodeCompletionItem> proposals = new ArrayList<CodeCompletionItem>();
 		final CompletionContext[] completionContextParam = new CompletionContext[] { null };
 		try {
@@ -145,31 +147,35 @@ public class DocumentsManager {
 			collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_IMPORT, true);
 			collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.METHOD_IMPORT, true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+			collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF,
+					true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
+			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION,
+					CompletionProposal.TYPE_REF, true);
+			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION,
+					CompletionProposal.TYPE_REF, true);
 
 			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
-			
-			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector, new NullProgressMonitor());
+
+			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector,
+					new NullProgressMonitor());
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for" +  uri, e);
 		}
 		return proposals;
 
 	}
-	
-	public String computeHover(String uri, int line, int column){
+
+	public String computeHover(String uri, int line, int column) {
 		ICompilationUnit unit = openUnits.get(uri);
 		HoverInfoProvider provider = new HoverInfoProvider(unit);
-		return provider.computeHover(line,column);
-		
+		return provider.computeHover(line, column);
+
 	}
-	
+
 	public Location computeDefinitonNavigation(String uri, int line, int column) {
 		ICompilationUnit unit = openUnits.get(uri);
-		
+
 		try {
 			IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
 
@@ -189,7 +195,6 @@ public class DocumentsManager {
 		return null;
 	}
 
-
 	/**
 	 * @param unit
 	 * @param element
@@ -197,20 +202,19 @@ public class DocumentsManager {
 	 * @param $
 	 * @throws JavaModelException
 	 */
-	private Location getLocation(ICompilationUnit unit, IJavaElement element)
-			throws JavaModelException {
+	public Location getLocation(ICompilationUnit unit, IJavaElement element) throws JavaModelException {
 		Location $ = new Location();
-		$.setUri("file://"+ element.getResource().getLocationURI().getPath());
+		$.setUri("file://" + element.getResource().getLocationURI().getPath());
 		if (element instanceof ISourceReference) {
-			ISourceRange nameRange = ((ISourceReference) element).getSourceRange();
-			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(),nameRange.getOffset());
+			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
+			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset());
 			int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset() + nameRange.getLength());
-			
-			if(loc != null){
+
+			if (loc != null) {
 				$.setLine(loc[0]);
 				$.setColumn(loc[1]);
 			}
-			if(endLoc != null ){
+			if (endLoc != null) {
 				$.setEndLine(endLoc[0]);
 				$.setEndColumn(endLoc[1]);
 			}
@@ -218,8 +222,25 @@ public class DocumentsManager {
 		}
 		return null;
 	}
-	
-	public SymbolInformation[] getOutline(String uri){
+
+	public Location getLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
+		Location result = new Location();
+		result.setUri("file://" + unit.getResource().getLocationURI().getPath());
+		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
+		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
+
+		if (loc != null) {
+			result.setLine(loc[0]);
+			result.setColumn(loc[1]);
+		}
+		if (endLoc != null) {
+			result.setEndLine(endLoc[0]);
+			result.setEndColumn(endLoc[1]);
+		}
+		return result;
+	}
+
+	public SymbolInformation[] getOutline(String uri) {
 		ICompilationUnit unit = openUnits.get(uri);
 		try {
 			IJavaElement[] elements = unit.getChildren();
@@ -232,7 +253,6 @@ public class DocumentsManager {
 		return new SymbolInformation[0];
 	}
 
-
 	/**
 	 * @param unit
 	 * @param elements
@@ -241,27 +261,36 @@ public class DocumentsManager {
 	 */
 	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
-		for(IJavaElement element : elements ){
-			if(element.getElementType() == IJavaElement.TYPE){
-				collectChildren(unit, ((IType)element).getChildren(),symbols);
+		for (IJavaElement element : elements) {
+			if (element.getElementType() == IJavaElement.TYPE) {
+				collectChildren(unit, ((IType) element).getChildren(), symbols);
 			}
-			if(element.getElementType() != IJavaElement.FIELD &&
-					element.getElementType() != IJavaElement.METHOD
-					){
+			if (element.getElementType() != IJavaElement.FIELD && element.getElementType() != IJavaElement.METHOD) {
 				continue;
 			}
 			SymbolInformation si = new SymbolInformation();
 			si.setName(element.getElementName());
 			si.setKind(SymbolInformation.mapKind(element));
-			if(element.getParent() != null )
+			if (element.getParent() != null)
 				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(getLocation(unit,element));
+			si.setLocation(getLocation(unit, element));
 			symbols.add(si);
 		}
 	}
 
-	public boolean isOpen(String uri){
+	public boolean isOpen(String uri) {
 		return openUnits.containsKey(uri);
 	}
-	
+
+	public IJavaElement findElementAtSelection(String uri, int line, int column) throws JavaModelException {
+		ICompilationUnit unit = openUnits.get(uri);
+
+		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
+
+		if (elements == null || elements.length != 1)
+			return null;
+		return elements[0];
+
+	}
+
 }
