@@ -1,9 +1,17 @@
 package org.jboss.tools.vscode.java.handlers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 
@@ -22,9 +30,11 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	private static final String REQ_INIT = "initialize";
 	private static final String REQ_SHUTDOWN  = "shutdown";
 	private ProjectsManager projectsManager;
+	private JavaClientConnection connection;
 
-	public ExtensionLifeCycleHandler(ProjectsManager manager) {
+	public ExtensionLifeCycleHandler(ProjectsManager manager, JavaClientConnection connection) {
 		this.projectsManager = manager;
+		this.connection = connection;
 	}
 
 	@Override
@@ -43,11 +53,30 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 		return JsonRpcHelpers.methodNotFound(request);
 	}
 	
-	private JSONRPC2Response handleInit(JSONRPC2Request request){
-		JSONRPC2Response $ =  new JSONRPC2Response(request.getID());
-		final String root = (String) request.getNamedParams().get("rootPath");
-		projectsManager.createProject(root);
+	private void triggerInitialization(String root) {
+	  Job job = new Job("Initialize Workspace") {
+	     protected IStatus run(IProgressMonitor monitor) {
+			connection.sendStatus(MessageType.Info, "Initializing");
+			IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), monitor);
+			if (status.isOK()) {
+				connection.sendStatus(MessageType.Info, "Ready");
+			} else {
+				connection.sendStatus(MessageType.Error, "Initialization Failed");
+			}
+			return Status.OK_STATUS;
+	     }
+	  };
+	  job.setPriority(Job.BUILD);
+	  job.schedule(100); // small delay to not start sending status before initialize message has arrived
+	}
+	
+	
+	private JSONRPC2Response handleInit(JSONRPC2Request request) {
 		
+		String root = (String) request.getNamedParams().get("rootPath");
+		triggerInitialization(root);
+		
+		JSONRPC2Response $ =  new JSONRPC2Response(request.getID());
 		Map<String, Object> capabilities = new HashMap<String,Object>();
 		//textDocumentSync
 		capabilities.put("textDocumentSync",new Integer(2));//2=Incremental

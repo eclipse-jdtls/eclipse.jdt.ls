@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
+import org.jboss.tools.vscode.java.JavaClientConnection;
 
 /**
  * The LogHandler hooks in the Eclipse log and forwards all Eclipse log messages to
@@ -29,10 +30,10 @@ public class LogHandler {
 	private FileWriter logWriter;
 	private DateFormat dateFormat;
 	private int logLevelMask;
-	private JsonRpcConnection connection;
+	private JavaClientConnection connection;
 	private Calendar calendar;
 
-	public void install(JsonRpcConnection rcpConnection) {
+	public void install(JavaClientConnection rcpConnection) {
 	    this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 	    this.logLevelMask = getLogLevelMask(System.getProperty("log.level"));
 	    this.calendar = Calendar.getInstance();

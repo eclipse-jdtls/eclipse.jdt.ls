@@ -78,17 +78,4 @@ public class JsonRpcConnection implements DataListener{
 		IPCPlugin.logError("No handlers for request: " + request);		
 	}
 
-	/**
-	 * Sends the logMessage message back to the client as a notification
-	 * @param msg The message to send back to the client
-	 */
-	public void logMessage(MessageType type, String msg) {
-		JSONRPC2Notification note = new JSONRPC2Notification("window/logMessage");
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("message", msg);
-		params.put("type", type.getType());
-		note.setNamedParams(params);
-		sendNotification(note);
-	}
-
 }

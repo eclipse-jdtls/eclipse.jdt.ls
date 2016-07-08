@@ -9,7 +9,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 public class ProjectsManager {
@@ -22,19 +25,20 @@ public class ProjectsManager {
 		return getWorkspace().getRoot().getProject(TMP_PROJECT_NAME);
 	}
 
-	public List<IProject> createProject(final String projectName) {
+	public IStatus createProject(final String projectName, List<IProject> resultingProjects, IProgressMonitor monitor) {
 		MavenProjectImporter importer = new MavenProjectImporter(new File(projectName));
-		List<IProject> projects;
 		try {
-			projects = importer.importToWorkspace();
+			List<IProject> projects = importer.importToWorkspace(monitor);
 			JavaLanguageServerPlugin.logInfo("Number of created projects " + projects.size());
-			return projects;
+			resultingProjects.addAll(projects);
+			return Status.OK_STATUS;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
+			return new Status(IStatus.ERROR, "", "Import failed: " + e.getMessage());
 		} catch (InterruptedException e) {
 			JavaLanguageServerPlugin.logInfo("Import cancelled");
+			return Status.CANCEL_STATUS;
 		}
-		return Collections.emptyList();
 	}
 
 	private IWorkspace getWorkspace() {

@@ -31,7 +31,7 @@ public class MavenProjectImporter {
 	}
 
 	
-	public List<IProject> importToWorkspace()
+	public List<IProject> importToWorkspace(IProgressMonitor monitor)
 			throws CoreException, InterruptedException {
 		MavenPluginActivator mavenPlugin = MavenPluginActivator.getDefault();
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)mavenPlugin.getMavenConfiguration();
@@ -42,7 +42,7 @@ public class MavenProjectImporter {
 		Set<MavenProjectInfo> projectInfos = getMavenProjects(getProjectDirectory(), modelManager);
 		ProjectImportConfiguration projectImportConfiguration = new ProjectImportConfiguration();
 		List<IMavenProjectImportResult> importResults =
-				configurationManager.importProjects(projectInfos, projectImportConfiguration, new NullProgressMonitor());
+				configurationManager.importProjects(projectInfos, projectImportConfiguration, monitor);
 		
 		return toProjects(importResults);
 	}

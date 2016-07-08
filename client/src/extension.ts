@@ -9,10 +9,19 @@ var electron = require('./electron_j');
 var rimraf = require('rimraf');
 
 import { workspace, Disposable, ExtensionContext } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType} from 'vscode-languageclient';
 
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
+
+interface StatusReport {
+	message: string;
+	type: number;
+}
+
+namespace StatusNotification {
+	export const type: NotificationType<StatusReport> = { get method() { return 'language/status'; } };
+}
 
 function runJavaServer(){
 	return new Promise(function(resolve, reject){
@@ -74,7 +83,11 @@ export function activate(context: ExtensionContext) {
 	}
 	
 	// Create the language client and start the client.
-	let disposable = new LanguageClient('Java Language Support', serverOptions, clientOptions).start();
+	let languageClient = new LanguageClient('java', serverOptions, clientOptions);
+	languageClient.onNotification(StatusNotification.type, (report) => {
+		console.log(report.message);
+	});
+	let disposable = languageClient.start();
 	
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation

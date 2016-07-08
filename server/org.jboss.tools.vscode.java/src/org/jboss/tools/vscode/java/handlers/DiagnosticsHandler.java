@@ -9,6 +9,7 @@ import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
+import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -17,9 +18,9 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	
 	private final List<IProblem> problems;
 	private final String uri;
-	private final JsonRpcConnection connection;
+	private final JavaClientConnection connection;
 	
-	public DiagnosticsHandler(JsonRpcConnection conn, String uri) {
+	public DiagnosticsHandler(JavaClientConnection conn, String uri) {
 		problems = new ArrayList<IProblem>();
 		this.uri = uri;
 		this.connection = conn;

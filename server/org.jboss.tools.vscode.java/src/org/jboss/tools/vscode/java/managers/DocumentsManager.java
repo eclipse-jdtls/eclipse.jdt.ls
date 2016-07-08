@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.java.CompletionProposalRequestor;
 import org.jboss.tools.vscode.java.HoverInfoProvider;
+import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.handlers.DiagnosticsHandler;
 import org.jboss.tools.vscode.java.handlers.JsonRpcHelpers;
@@ -49,9 +50,9 @@ public class DocumentsManager {
 
 	private Map<String, ICompilationUnit> openUnits;
 	private ProjectsManager pm;
-	private JsonRpcConnection connection;
+	private JavaClientConnection connection;
 
-	public DocumentsManager(JsonRpcConnection conn, ProjectsManager pm) {
+	public DocumentsManager(JavaClientConnection conn, ProjectsManager pm) {
 		openUnits = new HashMap<String, ICompilationUnit>();
 		this.pm = pm;
 		this.connection = conn;
