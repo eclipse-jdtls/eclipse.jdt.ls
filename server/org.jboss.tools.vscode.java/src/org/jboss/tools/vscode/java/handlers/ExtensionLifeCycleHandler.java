@@ -93,6 +93,7 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 		//Open Type
 		capabilities.put("workspaceSymbolProvider", Boolean.TRUE);
 		capabilities.put("referencesProvider", Boolean.TRUE);
+		capabilities.put("documentHighlightProvider", Boolean.TRUE);
 		
 		
 		Map<String, Object> result = new HashMap<String, Object>();

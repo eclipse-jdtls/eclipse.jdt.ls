@@ -14,6 +14,7 @@ import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, N
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
 
+<<<<<<< HEAD
 interface StatusReport {
 	message: string;
 	type: number;
@@ -25,10 +26,14 @@ namespace StatusNotification {
 
 function runJavaServer(){
 	return new Promise(function(resolve, reject){
+=======
+function runJavaServer() {
+	return new Promise(function(resolve, reject) {
+>>>>>>> 5e9275663ad3b26698609cbd0b0edbb4e1288b42
 			let child = 'java';
 			let params = [];
 			let workspacePath = path.resolve( __dirname,"../../server/vscodesws_"+makeRandomHexString(5));
-			if(DEBUG){
+			if (DEBUG) {
 				params.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044');
 				// suspend=y is the default. Use this form if you need to debug the server startup code:
 				// params.push('-agentlib:jdwp=transport=dt_socket,server=y,address=1044');
@@ -36,7 +41,7 @@ function runJavaServer(){
 			params.push('-Declipse.application=org.jboss.tools.vscode.java.id1');
 			params.push('-Dosgi.bundles.defaultStartLevel=4');
 			params.push('-Declipse.product=org.jboss.tools.vscode.java.product');
-			if(DEBUG) {
+			if (DEBUG) {
 				params.push('-Dlog.protocol=true');
 				params.push('-Dlog.level=ALL');
 			}
@@ -44,15 +49,15 @@ function runJavaServer(){
 			params.push('-jar'); params.push(path.resolve( __dirname ,'../../server/plugins/org.eclipse.equinox.launcher_1.3.200.v20160318-1642.jar'));
 			//select configuration directory according to OS
 			let configDir = 'config_win';
-			if ( process.platform === 'darwin' ){
+			if (process.platform === 'darwin') {
 				configDir = 'config_mac';
-			}else if(process.platform === 'linux'){
+			} else if (process.platform === 'linux') {
 				configDir = 'config_linux';
 			}
-			params.push('-configuration');params.push(path.resolve( __dirname ,'../../server',configDir));
+			params.push('-configuration'); params.push(path.resolve( __dirname ,'../../server',configDir));
 			params.push('-data'); params.push(workspacePath);
 			
-			electron.fork(child,params,{}, function(err, result){
+			electron.fork(child, params, {}, function(err, result) {
 				if(err) reject(err);
 				if(result) resolve(result);
 			});
