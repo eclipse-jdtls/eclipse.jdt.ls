@@ -5,11 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
@@ -18,7 +24,6 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.model.Location;
-import org.jboss.tools.vscode.java.model.SymbolInformation;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
@@ -43,31 +48,31 @@ public class ReferencesHandler implements RequestHandler {
 		SearchEngine engine = new SearchEngine();
 
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		try { 
-		IJavaElement elementToSearch = dm.findElementAtSelection(params.uri, params.position.line,
-				params.position.character);
+		try {
+			IJavaElement elementToSearch = dm.findElementAtSelection(params.uri, params.position.line,
+					params.position.character);
 
-		SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
+			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
 			final List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
-					SearchEngine.createWorkspaceScope(), new SearchRequestor() {
+					createSearchScope(), new SearchRequestor() {
 
 						@Override
 						public void acceptSearchMatch(SearchMatch match) throws CoreException {
 							Object o = match.getElement();
 							if (o instanceof IJavaElement) {
 								IJavaElement element = (IJavaElement) o;
-								ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
-								if(compilationUnit == null){
+								ICompilationUnit compilationUnit = (ICompilationUnit) element
+										.getAncestor(IJavaElement.COMPILATION_UNIT);
+								if (compilationUnit == null) {
 									return;
 								}
-								Location location = dm.getLocation(compilationUnit, match.getOffset(), match.getLength());
-								Map<String,Object> l = new HashMap<String,Object>();
-								l.put("uri",location.getUri());
-								l.put("range",JsonRpcHelpers.convertRange(location.getLine(),
-										location.getColumn(),
-										location.getEndLine(),
-										location.getEndColumn()));
+								Location location = dm.getLocation(compilationUnit, match.getOffset(),
+										match.getLength());
+								Map<String, Object> l = new HashMap<String, Object>();
+								l.put("uri", location.getUri());
+								l.put("range", JsonRpcHelpers.convertRange(location.getLine(), location.getColumn(),
+										location.getEndLine(), location.getEndColumn()));
 								result.add(l);
 
 							}
@@ -86,9 +91,9 @@ public class ReferencesHandler implements RequestHandler {
 	@SuppressWarnings("unchecked")
 	private ReferenceParams readParams(JSONRPC2Request request) {
 		ReferenceParams result = new ReferenceParams();
-		
+
 		Map<String, Object> params = request.getNamedParams();
-		Map<String, Object> textDocument= (Map<String, Object>) params.get("textDocument");
+		Map<String, Object> textDocument = (Map<String, Object>) params.get("textDocument");
 		result.uri = (String) textDocument.get("uri");
 		result.languageId = (String) params.get("languageId");
 		result.context = readContext((Map<String, Object>) params.get("context"));
@@ -115,6 +120,21 @@ public class ReferencesHandler implements RequestHandler {
 		// not implemented
 	}
 
+	private IJavaSearchScope createSearchScope() throws JavaModelException {
+		List<IPackageFragmentRoot> sources = new ArrayList<>();
+
+		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
+		for (IJavaProject project : projects) {
+			IPackageFragmentRoot[] roots = project.getPackageFragmentRoots();
+			for (IPackageFragmentRoot pkgRoot : roots) {
+				if (pkgRoot.getKind() == IPackageFragmentRoot.K_SOURCE) {
+					sources.add(pkgRoot);
+				}
+			}
+		}
+
+		return SearchEngine.createJavaSearchScope(sources.toArray(new IPackageFragmentRoot[sources.size()]));
+	}
 }
 
 class TextDocumentIdentifier {
