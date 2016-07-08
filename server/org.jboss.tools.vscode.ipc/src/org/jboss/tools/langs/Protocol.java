@@ -92,6 +92,39 @@ public class Protocol {
     @SerializedName("cancelParams")
     @Expose
     private CancelParams cancelParams;
+    /**
+     * Defines the capabilities provided by the client.
+     * 
+     */
+    @SerializedName("clientCapabilities")
+    @Expose
+    private ClientCapabilities clientCapabilities;
+    @SerializedName("initializeParams")
+    @Expose
+    private InitializeParams initializeParams;
+    /**
+     * The error returned if the initilize request fails.
+     * 
+     */
+    @SerializedName("initializeError")
+    @Expose
+    private InitializeError initializeError;
+    /**
+     * Defines the capabilities provided by a language
+     * 
+     * server.
+     * 
+     */
+    @SerializedName("serverCapabilities")
+    @Expose
+    private ServerCapabilities serverCapabilities;
+    /**
+     * The result returned from an initilize request.
+     * 
+     */
+    @SerializedName("initializeResult")
+    @Expose
+    private InitializeResult initializeResult;
 
     /**
      * Position in a text document expressed as zero-based line and character offset.
@@ -331,6 +364,108 @@ public class Protocol {
      */
     public void setCancelParams(CancelParams cancelParams) {
         this.cancelParams = cancelParams;
+    }
+
+    /**
+     * Defines the capabilities provided by the client.
+     * 
+     * @return
+     *     The clientCapabilities
+     */
+    public ClientCapabilities getClientCapabilities() {
+        return clientCapabilities;
+    }
+
+    /**
+     * Defines the capabilities provided by the client.
+     * 
+     * @param clientCapabilities
+     *     The clientCapabilities
+     */
+    public void setClientCapabilities(ClientCapabilities clientCapabilities) {
+        this.clientCapabilities = clientCapabilities;
+    }
+
+    /**
+     * 
+     * @return
+     *     The initializeParams
+     */
+    public InitializeParams getInitializeParams() {
+        return initializeParams;
+    }
+
+    /**
+     * 
+     * @param initializeParams
+     *     The initializeParams
+     */
+    public void setInitializeParams(InitializeParams initializeParams) {
+        this.initializeParams = initializeParams;
+    }
+
+    /**
+     * The error returned if the initilize request fails.
+     * 
+     * @return
+     *     The initializeError
+     */
+    public InitializeError getInitializeError() {
+        return initializeError;
+    }
+
+    /**
+     * The error returned if the initilize request fails.
+     * 
+     * @param initializeError
+     *     The initializeError
+     */
+    public void setInitializeError(InitializeError initializeError) {
+        this.initializeError = initializeError;
+    }
+
+    /**
+     * Defines the capabilities provided by a language
+     * 
+     * server.
+     * 
+     * @return
+     *     The serverCapabilities
+     */
+    public ServerCapabilities getServerCapabilities() {
+        return serverCapabilities;
+    }
+
+    /**
+     * Defines the capabilities provided by a language
+     * 
+     * server.
+     * 
+     * @param serverCapabilities
+     *     The serverCapabilities
+     */
+    public void setServerCapabilities(ServerCapabilities serverCapabilities) {
+        this.serverCapabilities = serverCapabilities;
+    }
+
+    /**
+     * The result returned from an initilize request.
+     * 
+     * @return
+     *     The initializeResult
+     */
+    public InitializeResult getInitializeResult() {
+        return initializeResult;
+    }
+
+    /**
+     * The result returned from an initilize request.
+     * 
+     * @param initializeResult
+     *     The initializeResult
+     */
+    public void setInitializeResult(InitializeResult initializeResult) {
+        this.initializeResult = initializeResult;
     }
 
 }

@@ -3,14 +3,9 @@ package org.jboss.tools.vscode.java;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.text.DocumentFilter;
-
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.jboss.tools.langs.base.LSPClient;
 import org.jboss.tools.langs.base.LSPClient.MessageCallback;
 import org.jboss.tools.langs.base.Message;
-import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;

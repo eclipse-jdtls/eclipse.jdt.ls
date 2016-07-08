@@ -36,6 +36,10 @@ public class NamedPipeConnection extends AbstractConnection {
 				TransportMessage message;
 				try {
 					message = TransportMessage.fromStream(stream, DEFAULT_CHARSET);
+					if(message == null ){
+						//Stream disconnected exit reader thread
+						break;
+					}
 					inboundQueue.add(message);
 				} catch (IOException e) {
 					//continue

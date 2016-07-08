@@ -2,10 +2,10 @@
 package org.jboss.tools.langs.base;
 
 /**
- * A general interface for RPC message paramters
+ * A general interface for RPC message parameters
  * 
  */
-public class Params {
+public abstract class Params {
 
 
 }

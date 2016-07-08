@@ -9,7 +9,8 @@ import com.google.gson.annotations.SerializedName;
  * A general message as defined by JSON-RPC. The language server protocol always uses 2.0 as the jsonrpc version.
  * 
  */
-public abstract class Message {
+public abstract class Message
+ {
 
     @SerializedName("jsonrpc")
     @Expose
@@ -32,5 +33,5 @@ public abstract class Message {
     public void setJsonrpc(String jsonrpc) {
         this.jsonrpc = jsonrpc;
     }
-
+    
 }

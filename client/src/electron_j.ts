@@ -56,22 +56,20 @@ function fork(modulePath, args, options, callback) {
     var newEnv = generatePatchedEnv(options.env || process.env, stdInPipeName, stdOutPipeName);
     var childProcess;
     let serversConnected = 0;
-    let reader: any;
-    let writer: any;
-
+    let streamInfo = {writer : null,
+                      reader: null} ;
     // Begin listening to stdout pipe
     var serverOut = net.createServer(function (stream) {
-        reader = stream;
-        serversConnected ++;
-        if (serversConnected == 2)
-            resolve({reader, writer});
+            streamInfo.writer = stream;
+            if(streamInfo.reader != null)
+                resolve(streamInfo);
+    });
     
     serverOut.listen(stdOutPipeName);
     var serverIn = net.createServer(function (stream) {
-        writer = stream;
-        serversConnected ++;
-        if (serversConnected == 2)
-            resolve({reader, writer});
+            streamInfo.reader = stream;
+            if(streamInfo.writer != null )
+                resolve(streamInfo);
     });
     serverIn.listen(stdInPipeName);
 
