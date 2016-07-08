@@ -2,7 +2,6 @@ package org.jboss.tools.vscode.ipc;
 
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -81,8 +80,6 @@ final public class IPC implements Transport {
 									tmpStream = new PrintStream(sock.getOutputStream());
 									input = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 								}
-								tmpStream.print("ready");
-								tmpStream.flush();
 							}
 							IPCPlugin.logInfo("Connected input ");
 							startListening();
@@ -106,8 +103,6 @@ final public class IPC implements Transport {
 						sock.connect(new AFUNIXSocketAddress(inFile));
 						output = new PrintStream(sock.getOutputStream());
 					}
-					output.println("ready");
-					output.flush();
 				}
 			} catch ( IOException e) {
 				IPCPlugin.logException("failed to create IPC I/O", e);

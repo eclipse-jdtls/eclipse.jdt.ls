@@ -56,27 +56,22 @@ function fork(modulePath, args, options, callback) {
     var newEnv = generatePatchedEnv(options.env || process.env, stdInPipeName, stdOutPipeName);
     var childProcess;
     let serversConnected = 0;
+    let reader: any;
+    let writer: any;
+
     // Begin listening to stdout pipe
     var serverOut = net.createServer(function (stream) {
-        // The child process will write exactly one chunk with content `ready` when it has installed a listener to the stdin pipe
-        stream.once('data', function (chunk) {
-            // From now on the childProcess.stdout is available for reading
-            childProcess.stdout = stream;
-            serversConnected ++;
-            if(serversConnected == 2)
-                resolve(childProcess);
-        });
+        reader = stream;
+        serversConnected ++;
+        if (serversConnected == 2)
+            resolve({reader, writer});
     });
     serverOut.listen(stdOutPipeName);
     var serverIn = net.createServer(function (stream) {
-        // The child process will write exactly one chunk with content `ready` when it has installed a listener to the stdin pipe
-        stream.once('data', function (chunk) {
-            // From now on the childProcess.stdin is available for reading
-            childProcess.stdin = stream;
-            serversConnected ++;
-            if(serversConnected == 2)
-                resolve(childProcess);
-        });
+        writer = stream;
+        serversConnected ++;
+        if (serversConnected == 2)
+            resolve({reader, writer});
     });
     serverIn.listen(stdInPipeName);
 
