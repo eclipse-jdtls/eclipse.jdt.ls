@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.IBuffer;
@@ -29,6 +29,13 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
+import org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
+import org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.java.CompletionProposalRequestor;
 import org.jboss.tools.vscode.java.HoverInfoProvider;
@@ -36,7 +43,10 @@ import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.handlers.DiagnosticsHandler;
 import org.jboss.tools.vscode.java.handlers.JsonRpcHelpers;
 import org.jboss.tools.vscode.java.model.CodeCompletionItem;
+import org.jboss.tools.vscode.java.model.DocumentHighlight;
 import org.jboss.tools.vscode.java.model.Location;
+import org.jboss.tools.vscode.java.model.Position;
+import org.jboss.tools.vscode.java.model.Range;
 import org.jboss.tools.vscode.java.model.SymbolInformation;
 
 /**
@@ -56,9 +66,8 @@ public class DocumentsManager {
 		this.pm = pm;
 		this.connection = conn;
 	}
-	
-	
-	public ICompilationUnit openDocument(String uri){
+
+	public ICompilationUnit openDocument(String uri) {
 		JavaLanguageServerPlugin.logInfo("Opening document : " + uri);
 		ICompilationUnit unit = openUnits.get(uri);
 		if (unit == null) {
@@ -97,37 +106,85 @@ public class DocumentsManager {
 			try {
 				unit.reconcile(ICompilationUnit.NO_AST, true, null, null);
 			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException("Probem with reconcile for" +  uri, e);
+				JavaLanguageServerPlugin.logException("Probem with reconcile for" + uri, e);
 			}
 		}
 		return unit;
 
 	}
-	
-	public void closeDocument(String uri){
+
+	public void closeDocument(String uri) {
 		JavaLanguageServerPlugin.logInfo("close document : " + uri);
 		openUnits.remove(uri);
 	}
-	
-	public void updateDocument(String uri, int line, int column, int length, String text){
-		JavaLanguageServerPlugin.logInfo("Updating document: "+ uri+ " line: " + line + " col:" +column + " length:"+ length +" text:"+text );
+
+	public void updateDocument(String uri, int line, int column, int length, String text) {
+		JavaLanguageServerPlugin.logInfo("Updating document: " + uri + " line: " + line + " col:" + column + " length:"
+				+ length + " text:" + text);
 		ICompilationUnit unit = openUnits.get(uri);
 		if (unit == null)
 			return;
 		try {
 			IBuffer buffer = unit.getBuffer();
-			int offset = JsonRpcHelpers.toOffset(buffer,line,column);
-			buffer.replace(offset,length,text);
-			JavaLanguageServerPlugin.logInfo("Changed buffer: "+buffer.getContents());
-			
+			int offset = JsonRpcHelpers.toOffset(buffer, line, column);
+			buffer.replace(offset, length, text);
+			JavaLanguageServerPlugin.logInfo("Changed buffer: " + buffer.getContents());
+
 			if (length > 0 || text.length() > 0) {
-				JavaLanguageServerPlugin.logInfo(uri+ " updated reconciling");
+				JavaLanguageServerPlugin.logInfo(uri + " updated reconciling");
 				unit.reconcile(ICompilationUnit.NO_AST, true, null, null);
 			}
 
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem updating document " +  uri, e);
+			JavaLanguageServerPlugin.logException("Problem updating document " + uri, e);
 		}
+	}
+
+	public List<DocumentHighlight> computeOccurrences(String uri, int line, int column) {
+		ICompilationUnit unit = openUnits.get(uri);
+		if (unit != null) {
+			try {
+				int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+				OccurrencesFinder finder = new OccurrencesFinder();
+				ASTParser parser = ASTParser.newParser(AST.JLS8);
+				parser.setSource(unit);
+				parser.setResolveBindings(true);
+				ASTNode ast = parser.createAST(new NullProgressMonitor());
+				if (ast instanceof CompilationUnit) {
+					finder.initialize((CompilationUnit) ast, offset, 0);
+					List<DocumentHighlight> result = new ArrayList<>();
+					OccurrenceLocation[] occurrences = finder.getOccurrences();
+					if (occurrences != null) {
+						for (OccurrenceLocation loc : occurrences) {
+							result.add(convertToHighlight(unit, loc));
+						}
+					}
+					return result;
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Problem with compute occurrences for" + uri, e);
+			}
+		}
+		return Collections.emptyList();
+	}
+
+	private DocumentHighlight convertToHighlight(ICompilationUnit unit, OccurrenceLocation occurrence)
+			throws JavaModelException {
+		DocumentHighlight h = new DocumentHighlight();
+		// TODO Auto-generated method stub
+		if ((occurrence.getFlags() | IOccurrencesFinder.F_WRITE_OCCURRENCE) == IOccurrencesFinder.F_WRITE_OCCURRENCE) {
+			h.kind = 3;
+		} else if ((occurrence.getFlags()
+				| IOccurrencesFinder.F_READ_OCCURRENCE) == IOccurrencesFinder.F_READ_OCCURRENCE) {
+			h.kind = 2;
+		}
+		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset());
+		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset() + occurrence.getLength());
+
+		h.range = new Range();
+		h.range.start = new Position(loc[0], loc[1]);
+		h.range.end = new Position(endLoc[0], endLoc[1]);
+		return h;
 	}
 
 	public List<CodeCompletionItem> computeContentAssist(String uri, int line, int column) {
@@ -135,7 +192,6 @@ public class DocumentsManager {
 		if (unit == null)
 			return Collections.emptyList();
 		final List<CodeCompletionItem> proposals = new ArrayList<CodeCompletionItem>();
-		final CompletionContext[] completionContextParam = new CompletionContext[] { null };
 		try {
 			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals);
 			// Allow completions for unresolved types - since 3.3
@@ -160,7 +216,7 @@ public class DocumentsManager {
 			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector,
 					new NullProgressMonitor());
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem with codeComplete for" +  uri, e);
+			JavaLanguageServerPlugin.logException("Problem with codeComplete for" + uri, e);
 		}
 		return proposals;
 
@@ -190,7 +246,7 @@ public class DocumentsManager {
 				return getLocation(unit, element);
 			}
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  uri, e);
+			JavaLanguageServerPlugin.logException("Problem with codeSelect for" + uri, e);
 		}
 		return null;
 	}
@@ -248,7 +304,7 @@ public class DocumentsManager {
 			collectChildren(unit, elements, symbols);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem getting outline for" +  uri, e);
+			JavaLanguageServerPlugin.logException("Problem getting outline for" + uri, e);
 		}
 		return new SymbolInformation[0];
 	}

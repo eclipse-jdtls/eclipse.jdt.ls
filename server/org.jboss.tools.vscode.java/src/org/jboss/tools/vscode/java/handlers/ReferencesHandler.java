@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.model.Location;
+import org.jboss.tools.vscode.java.model.Position;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
@@ -166,13 +167,3 @@ class ReferenceContext {
 	boolean includeDeclaration;
 }
 
-class Position {
-	/**
-	 * Line position in a document (zero-based).
-	 */
-	int line;
-	/**
-	 * Character offset on a line in a document (zero-based).
-	 */
-	int character;
-}

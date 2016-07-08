@@ -10,6 +10,7 @@ import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
+import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
@@ -67,6 +68,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		handlers.add(new DocumentSymbolHandler(dm));
 		handlers.add(new FindSymbolsHandler());
 		handlers.add(new ReferencesHandler(dm));
+		handlers.add(new DocumentHighlightHandler(dm));
 		return handlers;
 	}
 
