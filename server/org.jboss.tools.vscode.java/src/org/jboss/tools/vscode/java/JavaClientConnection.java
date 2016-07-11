@@ -15,6 +15,7 @@ import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
@@ -77,11 +78,11 @@ public class JavaClientConnection {
 	 * Sends a status to the client to be presented to users
 	 * @param msg The status to send back to the client
 	 */
-	public void sendStatus(MessageType type, String status) {
+	public void sendStatus(ServiceStatus serverStatus, String status) {
 		JSONRPC2Notification note = new JSONRPC2Notification("language/status");
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("message", status);
-		params.put("type", type.name());
+		params.put("type", serverStatus.name());
 		note.setNamedParams(params);
 		rcpConnection.sendNotification(note);
 	}

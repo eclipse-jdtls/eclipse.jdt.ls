@@ -8,15 +8,15 @@ import * as fs from 'fs';
 var electron = require('./electron_j');
 var rimraf = require('rimraf');
 
-import { workspace, Disposable, ExtensionContext } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType} from 'vscode-languageclient';
+import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn} from 'vscode';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType } from 'vscode-languageclient';
 
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
 
 interface StatusReport {
 	message: string;
-	type: number;
+	type: string;
 }
 
 namespace StatusNotification {
@@ -82,17 +82,46 @@ export function activate(context: ExtensionContext) {
 		}
 	}
 	
+	let item = window.createStatusBarItem(StatusBarAlignment.Right, Number.MIN_VALUE);
+    
 	// Create the language client and start the client.
 	let languageClient = new LanguageClient('java', serverOptions, clientOptions);
 	languageClient.onNotification(StatusNotification.type, (report) => {
 		console.log(report.message);
+		if(window.activeTextEditor && window.activeTextEditor.document){
+			if(window.activeTextEditor.document.languageId === "java"){
+				if(report.type === "Started"){
+					item.text = "$(thumbsup)"
+				} else if(report.type === "Error"){
+					item.text = "$(thumbsdown)"
+				} 
+				else {
+					item.text = report.message;
+				}
+				
+				item.tooltip = report.message;
+				item.show();
+			} else {
+				item.hide();
+			}
+		}
 	});
+
+	window.onDidChangeActiveTextEditor((editor) =>{
+		if(editor && editor.document && editor.document.languageId === "java"){
+			item.show();
+		} else{
+			item.hide();
+		}
+	});
+
 	let disposable = languageClient.start();
 	
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
 }
+
 
 function makeRandomHexString(length) {
     var chars = ['0', '1', '2', '3', '4', '5', '6', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];

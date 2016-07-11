@@ -7,10 +7,12 @@ import java.util.Map;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
@@ -56,12 +58,12 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	private void triggerInitialization(String root) {
 	  Job job = new Job("Initialize Workspace") {
 	     protected IStatus run(IProgressMonitor monitor) {
-			connection.sendStatus(MessageType.Info, "Initializing");
-			IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), monitor);
+			connection.sendStatus(ServiceStatus.Starting, "Init...");
+			IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), new ServerStatusMonitor());
 			if (status.isOK()) {
-				connection.sendStatus(MessageType.Info, "Ready");
+				connection.sendStatus(ServiceStatus.Started, "Ready");
 			} else {
-				connection.sendStatus(MessageType.Error, "Initialization Failed");
+				connection.sendStatus(ServiceStatus.Error, "Initialization Failed");
 			}
 			return Status.OK_STATUS;
 	     }
@@ -112,4 +114,20 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	public void  process(JSONRPC2Notification request) {
 	}
 	
+	private class ServerStatusMonitor extends NullProgressMonitor{
+		private double totalWork;
+		private double progress;
+		@Override
+		public void beginTask(String arg0, int totalWork) {
+			this.totalWork = totalWork; 
+		}
+
+		@Override
+		public void worked(int work) {
+			progress += work;
+			
+			connection.sendStatus(ServiceStatus.Starting,  String.format( "%.0f%%", progress/totalWork * 100));
+		}
+		
+	}
 }
