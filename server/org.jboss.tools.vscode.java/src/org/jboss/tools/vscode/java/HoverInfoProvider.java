@@ -13,7 +13,6 @@ import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.util.Util;
-import org.eclipse.jdt.ui.JavadocContentAccess;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DefaultLineTracker;
 import org.eclipse.jface.text.Document;
@@ -21,6 +20,8 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ILineTracker;
 import org.eclipse.jface.text.IRegion;
 import org.jboss.tools.vscode.java.handlers.JsonRpcHelpers;
+
+import copied.org.eclipse.jdt.ui.JavadocContentAccess;
 
 public class HoverInfoProvider {
 	

@@ -13,9 +13,6 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
-import org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
-import org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.model.DocumentHighlight;
 import org.jboss.tools.vscode.java.model.Position;
@@ -24,6 +21,10 @@ import org.jboss.tools.vscode.java.model.Range;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
+
+import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
+import copied.org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
+import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
 
 public class DocumentHighlightHandler extends AbstractRequestHandler {
 	

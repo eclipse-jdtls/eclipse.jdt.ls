@@ -8,12 +8,12 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.internal.corext.javadoc;
-
-import org.eclipse.jface.internal.text.html.SingleCharReader;
+package copied.org.eclipse.jdt.internal.corext.javadoc;
 
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
+
+import copied.org.eclipse.jface.internal.text.html.SingleCharReader;
 
 
 /**
