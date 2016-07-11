@@ -126,6 +126,7 @@ final public class IPC implements Transport {
 					if (current == '\r') {
 						headers.append((char) input.read());// write the '\n'
 						int l = getContentLength(headers.toString());
+						headers = new StringBuilder();
 						if( l>0 ){
 							final char[] cbuf = new char[l];
 							int readChars = input.read(cbuf, 0, l);
@@ -133,7 +134,6 @@ final public class IPC implements Transport {
 							plog(cbuf);
 							notifyListeners(String.valueOf(cbuf));
 						}
-						headers = new StringBuilder();
 					} else {
 						headers.append(current);
 					}
