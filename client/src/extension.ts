@@ -14,7 +14,6 @@ import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, N
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
 
-<<<<<<< HEAD
 interface StatusReport {
 	message: string;
 	type: number;
@@ -26,10 +25,6 @@ namespace StatusNotification {
 
 function runJavaServer(){
 	return new Promise(function(resolve, reject){
-=======
-function runJavaServer() {
-	return new Promise(function(resolve, reject) {
->>>>>>> 5e9275663ad3b26698609cbd0b0edbb4e1288b42
 			let child = 'java';
 			let params = [];
 			let workspacePath = path.resolve( __dirname,"../../server/vscodesws_"+makeRandomHexString(5));
