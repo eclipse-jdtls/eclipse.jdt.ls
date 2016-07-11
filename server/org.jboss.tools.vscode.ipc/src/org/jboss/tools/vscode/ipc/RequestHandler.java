@@ -9,6 +9,4 @@ public interface RequestHandler {
 	public boolean canHandle(String request);
 	public JSONRPC2Response process(JSONRPC2Request request);
 	public void process(JSONRPC2Notification request);
-	
-
 }

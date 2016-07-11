@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jface.internal.text.html;
+package copied.org.eclipse.jface.internal.text.html;
 
 import java.io.IOException;
 import java.io.Reader;

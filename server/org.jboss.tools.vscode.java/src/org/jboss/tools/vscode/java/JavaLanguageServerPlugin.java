@@ -1,8 +1,13 @@
 package org.jboss.tools.vscode.java;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -24,8 +29,19 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.context = bundleContext;
 		connection = new JavaClientConnection();	
 		connection.connect();
+		
+		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
+			@Override
+			public IBuffer createBuffer(ICompilationUnit workingCopy) {
+				ICompilationUnit original= workingCopy.getPrimary();
+				IResource resource= original.getResource();
+				if (resource instanceof IFile)
+					return new DocumentAdapter(workingCopy, (IFile)resource);
+				return DocumentAdapter.Null;
+			}
+		});		
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
@@ -58,5 +74,4 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static void logException(String message, Throwable ex) {
 		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
 	}
-	
 }

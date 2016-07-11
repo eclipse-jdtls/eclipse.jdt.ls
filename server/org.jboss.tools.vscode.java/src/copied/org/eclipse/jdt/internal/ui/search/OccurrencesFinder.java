@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.internal.ui.search;
+package copied.org.eclipse.jdt.internal.ui.search;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,14 +37,16 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
+
+import copied.org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import copied.org.eclipse.jdt.internal.corext.dom.Bindings;
+
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.Bindings;
 
 
 public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder {
@@ -91,7 +93,9 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 		if (fResult == null) {
 			fResult= new ArrayList<>();
 			fWriteUsages= new HashSet<>();
-			fRoot.accept(this);
+			if (fRoot != null) {
+				fRoot.accept(this);
+			}
 		}
 	}
 

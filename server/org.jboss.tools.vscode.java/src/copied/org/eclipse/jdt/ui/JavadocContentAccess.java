@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ui;
+package copied.org.eclipse.jdt.ui;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -22,10 +22,10 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
-
-import org.eclipse.jdt.internal.corext.javadoc.JavaDocCommentReader;
-import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.jboss.tools.vscode.javadoc.JavaDoc2MarkdownTextReader;
+
+import copied.org.eclipse.jdt.internal.corext.javadoc.JavaDocCommentReader;
+import copied.org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 
 /**
  * Helper needed to get the content of a Javadoc comment.

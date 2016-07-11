@@ -16,7 +16,7 @@
  *     Stephan Herrmann - Configuration for
  *		 Bug 463360 - [override method][null] generating method override should not create redundant null annotations
  *******************************************************************************/
-package org.eclipse.jdt.internal.corext.dom;
+package copied.org.eclipse.jdt.internal.corext.dom;
 
 import javax.script.Bindings;
 

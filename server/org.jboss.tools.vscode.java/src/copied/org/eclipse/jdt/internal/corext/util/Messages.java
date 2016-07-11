@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.internal.corext.util;
+package copied.org.eclipse.jdt.internal.corext.util;
 
 import com.ibm.icu.text.MessageFormat;
 

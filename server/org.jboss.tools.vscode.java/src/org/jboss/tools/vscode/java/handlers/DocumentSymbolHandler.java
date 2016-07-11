@@ -5,21 +5,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.ISourceReference;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.model.Location;
 import org.jboss.tools.vscode.java.model.SymbolInformation;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class DocumentSymbolHandler implements RequestHandler {
+public class DocumentSymbolHandler extends AbstractRequestHandler {
 
 	private static final String  REQ_DOC_SYMBOL = "textDocument/documentSymbol";
-	private final DocumentsManager dm;
 	
-	public DocumentSymbolHandler(DocumentsManager manager) {
-		this.dm = manager;
+	public DocumentSymbolHandler() {
 	}
 
 	@Override
@@ -29,8 +33,10 @@ public class DocumentSymbolHandler implements RequestHandler {
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
+		ICompilationUnit unit = this.resolveCompilationUnit(request);
 		String uri = JsonRpcHelpers.readTextDocumentUri(request);
-		SymbolInformation[] elements  = dm.getOutline(uri);
+		
+		SymbolInformation[] elements  = this.getOutline(unit);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
 		for ( SymbolInformation element : elements ) {
@@ -41,24 +47,52 @@ public class DocumentSymbolHandler implements RequestHandler {
 				outlineItem.put("containerName", element.getContainerName());
 			}
 			Map<String,Object> l = new HashMap<String,Object>();
-			l.put("uri",uri);
+			l.put("uri", uri);
 			l.put("range",JsonRpcHelpers.convertRange(element.getLocation().getLine(),
 					element.getLocation().getColumn(),
 					element.getLocation().getEndLine(),
 					element.getLocation().getEndColumn()));
 			outlineItem.put("location",l);
-			result.add(outlineItem);
-			
+			result.add(outlineItem);			
 		}
 		response.setResult(result);
 		return response;
 	}
 
-
-
+	private SymbolInformation[] getOutline(ICompilationUnit unit) {
+		try {
+			IJavaElement[] elements = unit.getChildren();
+			ArrayList<SymbolInformation> symbols = new ArrayList<SymbolInformation>(elements.length);
+			collectChildren(unit, elements, symbols);
+			return symbols.toArray(new SymbolInformation[symbols.size()]);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Problem getting outline for" +  unit.getElementName(), e);
+		}
+		return new SymbolInformation[0];
+	}
+	
+	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
+			throws JavaModelException {
+		for(IJavaElement element : elements ){
+			if(element.getElementType() == IJavaElement.TYPE){
+				collectChildren(unit, ((IType)element).getChildren(),symbols);
+			}
+			if(element.getElementType() != IJavaElement.FIELD &&
+					element.getElementType() != IJavaElement.METHOD
+					){
+				continue;
+			}
+			SymbolInformation si = new SymbolInformation();
+			si.setName(element.getElementName());
+			si.setKind(SymbolInformation.mapKind(element));
+			if(element.getParent() != null )
+				si.setContainerName(element.getParent().getElementName());
+			si.setLocation(getLocation(unit, element));
+			symbols.add(si);
+		}
+	}
+	
 	@Override
 	public void process(JSONRPC2Notification request) {
-
 	}
-
 }

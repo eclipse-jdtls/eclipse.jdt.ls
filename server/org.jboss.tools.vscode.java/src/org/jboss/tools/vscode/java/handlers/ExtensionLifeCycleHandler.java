@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -69,7 +70,8 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	     }
 	  };
 	  job.setPriority(Job.BUILD);
-	  job.schedule(100); // small delay to not start sending status before initialize message has arrived
+	  job.setRule(ResourcesPlugin.getWorkspace().getRoot());
+	  job.schedule(); // small delay to not start sending status before initialize message has arrived
 	}
 	
 	
