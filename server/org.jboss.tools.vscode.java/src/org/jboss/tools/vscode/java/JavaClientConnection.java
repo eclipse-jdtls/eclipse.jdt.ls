@@ -10,6 +10,7 @@ import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
+import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
@@ -50,6 +51,7 @@ public class JavaClientConnection {
 		handlers.add(new DocumentSymbolHandler());
 		handlers.add(new FindSymbolsHandler());
 		handlers.add(new ReferencesHandler());
+		handlers.add(new DocumentHighlightHandler());
 		return handlers;
 	}	
 	/**
