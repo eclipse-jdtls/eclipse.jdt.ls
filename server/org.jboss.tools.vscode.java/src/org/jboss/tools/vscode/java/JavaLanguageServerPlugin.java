@@ -29,7 +29,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.context = bundleContext;
 		connection = new JavaClientConnection();	
 		connection.connect();
-
+		
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
 			@Override
 			public IBuffer createBuffer(ICompilationUnit workingCopy) {

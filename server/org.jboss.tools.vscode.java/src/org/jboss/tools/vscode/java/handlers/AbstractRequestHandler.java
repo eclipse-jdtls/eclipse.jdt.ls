@@ -64,5 +64,22 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 			return $;
 		}
 		return null;
+	}
+	
+	protected Location getLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
+		Location result = new Location();
+		result.setUri("file://" + unit.getResource().getLocationURI().getPath());
+		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
+		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
+
+		if (loc != null) {
+			result.setLine(loc[0]);
+			result.setColumn(loc[1]);
+		}
+		if (endLoc != null) {
+			result.setEndLine(endLoc[0]);
+			result.setEndColumn(endLoc[1]);
+		}
+		return result;
 	}	
 }

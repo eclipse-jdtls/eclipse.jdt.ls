@@ -8,13 +8,17 @@ import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -28,7 +32,10 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 	private static final String REQ_CHANGED = "textDocument/didChange";
 	
 	
-	public DocumentLifeCycleHandler() {
+	private JsonRpcConnection connection;
+	
+	public DocumentLifeCycleHandler(JsonRpcConnection connection) {
+		this.connection = connection;
 	}
 	
 	@Override
@@ -64,7 +71,8 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 		}
 		try {
 			// ToDo wire up cancelation.
-			unit.becomeWorkingCopy(null);			
+			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
+			unit.reconcile();
 		} catch (JavaModelException e) {
 		}
 	}
@@ -111,8 +119,10 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 				root.addChild(edit);
 			}
 		
-			root.apply(document);
-			unit.reconcile();	
+			if (root.hasChildren()) {
+				root.apply(document);
+				unit.reconcile();					
+			}
 		} catch (JavaModelException e) {			
 		} catch (org.eclipse.jface.text.BadLocationException e) {
 		}

@@ -21,8 +21,6 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.model.Location;
 import org.jboss.tools.vscode.java.model.Position;
 
@@ -30,12 +28,10 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class ReferencesHandler implements RequestHandler {
+public class ReferencesHandler extends AbstractRequestHandler {
 	public static final String REQ_REFERENCES = "textDocument/references";
-	private DocumentsManager dm;
 
-	public ReferencesHandler(DocumentsManager manager) {
-		this.dm = manager;
+	public ReferencesHandler() {
 	}
 
 	@Override
@@ -50,7 +46,7 @@ public class ReferencesHandler implements RequestHandler {
 
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		try {
-			IJavaElement elementToSearch = dm.findElementAtSelection(params.uri, params.position.line,
+			IJavaElement elementToSearch = findElementAtSelection(resolveCompilationUnit(request), params.position.line,
 					params.position.character);
 
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
@@ -68,7 +64,7 @@ public class ReferencesHandler implements RequestHandler {
 								if (compilationUnit == null) {
 									return;
 								}
-								Location location = dm.getLocation(compilationUnit, match.getOffset(),
+								Location location = getLocation(compilationUnit, match.getOffset(),
 										match.getLength());
 								Map<String, Object> l = new HashMap<String, Object>();
 								l.put("uri", location.getUri());
@@ -89,6 +85,15 @@ public class ReferencesHandler implements RequestHandler {
 		return response;
 	}
 
+	private IJavaElement findElementAtSelection(ICompilationUnit unit, int line, int column) throws JavaModelException {
+		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
+
+		if (elements == null || elements.length != 1)
+			return null;
+		return elements[0];
+
+	}	
+	
 	@SuppressWarnings("unchecked")
 	private ReferenceParams readParams(JSONRPC2Request request) {
 		ReferenceParams result = new ReferenceParams();

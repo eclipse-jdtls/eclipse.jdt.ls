@@ -40,24 +40,23 @@ public class JavaClientConnection {
 		this.rcpConnection = new JsonRpcConnection(new IPC());
 		
 		projectsManager = new ProjectsManager();
-		DocumentsManager dm = new DocumentsManager(this, projectsManager);
-		rcpConnection.addHandlers(handlers(projectsManager, dm));
+		rcpConnection.addHandlers(handlers(projectsManager));
 		
 		logHandler = new LogHandler();
 		logHandler.install(this);		
 	}
 	
-	private List<RequestHandler> handlers(ProjectsManager pm, DocumentsManager dm) {
+	private List<RequestHandler> handlers(ProjectsManager pm) {
 		List<RequestHandler> handlers = new ArrayList<RequestHandler>();
 		handlers.add(new ExtensionLifeCycleHandler(pm, this));
-		handlers.add(new DocumentLifeCycleHandler(dm));
-		handlers.add(new CompletionHandler(dm));
-		handlers.add(new HoverHandler(dm));
-		handlers.add(new NavigateToDefinitionHandler(dm));
-		handlers.add(new WorkspaceEventsHandler(pm,dm));
-		handlers.add(new DocumentSymbolHandler(dm));
+		handlers.add(new DocumentLifeCycleHandler(this));
+		handlers.add(new CompletionHandler());
+		handlers.add(new HoverHandler());
+		handlers.add(new NavigateToDefinitionHandler());
+		handlers.add(new WorkspaceEventsHandler(pm));
+		handlers.add(new DocumentSymbolHandler());
 		handlers.add(new FindSymbolsHandler());
-		handlers.add(new ReferencesHandler(dm));
+		handlers.add(new ReferencesHandler());
 		return handlers;
 	}	
 	/**
