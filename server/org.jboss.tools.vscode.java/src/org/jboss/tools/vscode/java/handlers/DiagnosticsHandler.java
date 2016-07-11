@@ -77,12 +77,15 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		Map<String, Object> start = new HashMap<String, Object>();
 		Map<String, Object> end = new HashMap<String, Object>();
 		start.put("line",problem.getSourceLineNumber()-1);// VSCode is 0-based
-		if(problem instanceof DefaultProblem){
-			start.put("character", ((DefaultProblem)problem).getSourceColumnNumber());
-		}
 		end.put("line",problem.getSourceLineNumber()-1);
 		if(problem instanceof DefaultProblem){
-			end.put("character", ((DefaultProblem)problem).getSourceColumnNumber());
+			DefaultProblem dProblem = (DefaultProblem)problem;
+			start.put("character", dProblem.getSourceColumnNumber() - 1);
+			int offset = 0;
+			if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {
+				offset = dProblem.getSourceEnd() - dProblem.getSourceStart() + 1;
+			}
+			end.put("character", dProblem.getSourceColumnNumber() - 1 + offset);
 		}
 		range.put("start",start);
 		range.put("end",end);
