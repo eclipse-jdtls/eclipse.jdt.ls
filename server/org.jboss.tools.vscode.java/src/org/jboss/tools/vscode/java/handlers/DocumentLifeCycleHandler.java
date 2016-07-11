@@ -8,17 +8,14 @@ import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.WorkingCopyOwner;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
-import org.jboss.tools.vscode.ipc.JsonRpcConnection;
+import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -32,9 +29,9 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 	private static final String REQ_CHANGED = "textDocument/didChange";
 	
 	
-	private JsonRpcConnection connection;
+	private JavaClientConnection connection;
 	
-	public DocumentLifeCycleHandler(JsonRpcConnection connection) {
+	public DocumentLifeCycleHandler(JavaClientConnection connection) {
 		this.connection = connection;
 	}
 	

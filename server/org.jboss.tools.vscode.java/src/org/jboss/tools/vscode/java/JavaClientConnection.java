@@ -4,13 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IStatus;
 import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
@@ -25,7 +19,6 @@ import org.jboss.tools.vscode.java.handlers.LogHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
 import org.jboss.tools.vscode.java.handlers.ReferencesHandler;
 import org.jboss.tools.vscode.java.handlers.WorkspaceEventsHandler;
-import org.jboss.tools.vscode.java.managers.DocumentsManager;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
