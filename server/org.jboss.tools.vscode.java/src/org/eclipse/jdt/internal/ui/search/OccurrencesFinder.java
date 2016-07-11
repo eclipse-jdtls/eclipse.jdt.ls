@@ -91,7 +91,9 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 		if (fResult == null) {
 			fResult= new ArrayList<>();
 			fWriteUsages= new HashSet<>();
-			fRoot.accept(this);
+			if (fRoot != null) {
+				fRoot.accept(this);
+			}
 		}
 	}
 
