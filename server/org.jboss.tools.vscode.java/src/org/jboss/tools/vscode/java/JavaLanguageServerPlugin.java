@@ -14,6 +14,7 @@ import org.osgi.framework.BundleContext;
 public class JavaLanguageServerPlugin implements BundleActivator {
 	
 	private static BundleContext context;
+	static LanguageServer languageServer;
 
 	private JavaClientConnection connection;
 
@@ -21,6 +22,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return context;
 	}
 
+	public static LanguageServer getLanguageServer() {
+		return languageServer;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
