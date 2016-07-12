@@ -85,7 +85,7 @@ export function activate(context: ExtensionContext) {
 	let item = window.createStatusBarItem(StatusBarAlignment.Right, Number.MIN_VALUE);
     
 	// Create the language client and start the client.
-	let languageClient = new LanguageClient('java', serverOptions, clientOptions);
+	let languageClient = new LanguageClient('java','Java Language Support', serverOptions, clientOptions);
 	languageClient.onNotification(StatusNotification.type, (report) => {
 		console.log(report.message);
 		if(window.activeTextEditor && window.activeTextEditor.document){
@@ -98,7 +98,7 @@ export function activate(context: ExtensionContext) {
 				else {
 					item.text = report.message;
 				}
-				
+				item.command = "java.open.output";
 				item.tooltip = report.message;
 				item.show();
 			} else {
@@ -106,7 +106,9 @@ export function activate(context: ExtensionContext) {
 			}
 		}
 	});
-
+	commands.registerCommand("java.open.output", ()=>{
+		languageClient.outputChannel.show(ViewColumn.Three);
+	});
 	window.onDidChangeActiveTextEditor((editor) =>{
 		if(editor && editor.document && editor.document.languageId === "java"){
 			item.show();
