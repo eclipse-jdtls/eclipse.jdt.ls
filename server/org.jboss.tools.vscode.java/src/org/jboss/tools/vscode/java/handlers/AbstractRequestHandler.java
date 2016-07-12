@@ -45,9 +45,13 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 		return null;		
 	}
 	
-	protected Location getLocation(ICompilationUnit unit, IJavaElement element) throws JavaModelException {
+	protected Location getLocation(IJavaElement element) throws JavaModelException {
+		ICompilationUnit unit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+		if (unit == null) {
+			return null;
+		}
 		Location $ = new Location();
-		$.setUri("file://"+ element.getResource().getLocationURI().getPath());
+		$.setUri("file://"+ element.getResource().getLocationURI().getRawPath());
 		if (element instanceof ISourceReference) {
 			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
 			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(),nameRange.getOffset());
@@ -68,7 +72,7 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 	
 	protected Location getLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
 		Location result = new Location();
-		result.setUri("file://" + unit.getResource().getLocationURI().getPath());
+		result.setUri("file://" + unit.getResource().getLocationURI().getRawPath());
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
 

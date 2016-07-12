@@ -7,12 +7,9 @@ import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.ISourceRange;
-import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.model.Location;
 import org.jboss.tools.vscode.java.model.SymbolInformation;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -87,7 +84,7 @@ public class DocumentSymbolHandler extends AbstractRequestHandler {
 			si.setKind(SymbolInformation.mapKind(element));
 			if(element.getParent() != null )
 				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(getLocation(unit, element));
+			si.setLocation(getLocation(element));
 			symbols.add(si);
 		}
 	}

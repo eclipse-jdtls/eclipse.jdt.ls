@@ -44,7 +44,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
 		JSONRPC2Notification notification = new JSONRPC2Notification("textDocument/publishDiagnostics");
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("uri","file://" + this.resource.getLocationURI().getPath());
+		params.put("uri","file://" + this.resource.getLocationURI().getRawPath());
 		params.put("diagnostics",toDiagnosticsArray());
 		notification.setNamedParams(params);
 		this.connection.sendNotification(notification);

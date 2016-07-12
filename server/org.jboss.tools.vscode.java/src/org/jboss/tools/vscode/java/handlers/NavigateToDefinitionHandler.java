@@ -60,7 +60,7 @@ public class NavigateToDefinitionHandler extends AbstractRequestHandler {
 			// if the selected element corresponds to a resource in workspace,
 			// navigate to it
 			if (resource != null && resource.getProject() != null) {
-				return getLocation(unit, element);
+				return getLocation(element);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  unit.getElementName(), e);
