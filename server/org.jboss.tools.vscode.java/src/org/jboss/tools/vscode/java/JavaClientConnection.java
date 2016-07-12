@@ -15,12 +15,12 @@ import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
-import org.jboss.tools.vscode.java.handlers.FindSymbolsHandler;
 import org.jboss.tools.vscode.java.handlers.HoverHandler;
 import org.jboss.tools.vscode.java.handlers.LogHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
 import org.jboss.tools.vscode.java.handlers.ReferencesHandler;
 import org.jboss.tools.vscode.java.handlers.WorkspaceEventsHandler;
+import org.jboss.tools.vscode.java.handlers.WorkspaceSymbolHandler;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -50,7 +50,7 @@ public class JavaClientConnection {
 		handlers.add(new NavigateToDefinitionHandler());
 		handlers.add(new WorkspaceEventsHandler(pm));
 		handlers.add(new DocumentSymbolHandler());
-		handlers.add(new FindSymbolsHandler());
+		handlers.add(new WorkspaceSymbolHandler());
 		handlers.add(new ReferencesHandler());
 		handlers.add(new DocumentHighlightHandler());
 		return handlers;
