@@ -11,7 +11,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.JavaClientConnection;
@@ -26,12 +25,14 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
  * Handler for the VS Code extension life cycle events.
  * 
  * @author Gorkem Ercan
+ * @author IBM Corporation (Markus Keller)
  *
  */
 final public class ExtensionLifeCycleHandler implements RequestHandler {
 	
 	private static final String REQ_INIT = "initialize";
 	private static final String REQ_SHUTDOWN  = "shutdown";
+	private static final String REQ_EXIT  = "exit";
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 
@@ -42,17 +43,23 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 
 	@Override
 	public boolean canHandle(final String request) {
-		return request != null && (REQ_INIT.equals(request) || REQ_SHUTDOWN.equals(request));
+		return REQ_INIT.equals(request)
+				|| REQ_SHUTDOWN.equals(request)
+				|| REQ_EXIT.equals(request);
 	}
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
 		JavaLanguageServerPlugin.logInfo("ExtensionLifeCycleHandler process: " + request.toJSONString());
-		if(REQ_INIT.equals(request.getMethod()))
+		switch (request.getMethod()) {
+		case REQ_INIT:
 			return handleInit(request);
-		if(REQ_SHUTDOWN.equals(request.getMethod()))
+		case REQ_SHUTDOWN:
 			return handleShutdown(request);
-		
+		case REQ_EXIT:
+			return handleExit(request);
+		}
+
 		return JsonRpcHelpers.methodNotFound(request);
 	}
 	
@@ -80,6 +87,9 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 		String root = (String) request.getNamedParams().get("rootPath");
 		triggerInitialization(root);
 		
+		Long parentProcess = (Long) request.getNamedParams().get("processId");
+		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(parentProcess.longValue());
+		
 		JSONRPC2Response $ =  new JSONRPC2Response(request.getID());
 		Map<String, Object> capabilities = new HashMap<String,Object>();
 		//textDocumentSync
@@ -106,12 +116,18 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 		return $;
 	}
 	
-	private JSONRPC2Response handleShutdown(JSONRPC2Request request){
+	private JSONRPC2Response handleShutdown(JSONRPC2Request request) {
+		JavaLanguageServerPlugin.logInfo("Shutting down Java Language Server");
+		JavaLanguageServerPlugin.getLanguageServer().shutdown();
+		return new JSONRPC2Response(request.getID());
+	}
+
+	private JSONRPC2Response handleExit(JSONRPC2Request request) {
 		JavaLanguageServerPlugin.logInfo("Exiting Java Language Server");
 		System.exit(0);
 		return new JSONRPC2Response(request.getID());
 	}
-
+	
 	@Override
 	public void  process(JSONRPC2Notification request) {
 	}
