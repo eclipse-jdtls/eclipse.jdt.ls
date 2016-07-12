@@ -15,4 +15,8 @@ public class Range {
 		result.put("end", end.convertForRPC());
 		return result;
 	}
+	@Override
+	public String toString() {
+		return start + " .. " + end;
+	}
 }

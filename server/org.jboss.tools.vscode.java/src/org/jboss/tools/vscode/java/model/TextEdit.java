@@ -20,5 +20,8 @@ public class TextEdit {
 	public void setNewText(String newText) {
 		this.newText = newText;
 	}
-	
+	@Override
+	public String toString() {
+		return "{" + range + ", newText=" + newText + "}";
+	}
 }

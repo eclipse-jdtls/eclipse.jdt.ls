@@ -56,6 +56,9 @@ public class Location {
 	public void setEndColumn(int endColumn) {
 		this.endColumn = endColumn;
 	}
-	
-	
+	@Override
+	public String toString() {
+		return line + ":" + column + " .. " + endLine + ":" + endColumn
+				+ "\n" +  uri;
+	}
 }

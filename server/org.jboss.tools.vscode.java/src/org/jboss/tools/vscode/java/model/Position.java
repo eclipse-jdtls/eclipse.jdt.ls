@@ -25,5 +25,8 @@ public class Position {
 		result.put("character", character);
 		return result;
 	}
-
+	@Override
+	public String toString() {
+		return line + ":" + character;
+	}
 }
