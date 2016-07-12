@@ -2,12 +2,15 @@ package org.jboss.tools.vscode.java.handlers;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.TextUtilities;
@@ -38,7 +41,7 @@ public class FormatterHandler extends AbstractRequestHandler {
 
 	@Override
 	public JSONRPC2Response process(JSONRPC2Request request) {
-		List<org.jboss.tools.vscode.java.model.TextEdit> edits = format(resolveCompilationUnit(request));
+		List<org.jboss.tools.vscode.java.model.TextEdit> edits = format(request);
 		JSONRPC2Response response = new JSONRPC2Response(request.getID());
 		response.setResult(edits);
 		return response;
@@ -49,8 +52,10 @@ public class FormatterHandler extends AbstractRequestHandler {
 		// not needed
 	}
 
-	public List<org.jboss.tools.vscode.java.model.TextEdit> format(ICompilationUnit cu) {
-		CodeFormatter formatter = ToolFactory.createCodeFormatter(cu.getJavaProject().getOptions(true));
+	private List<org.jboss.tools.vscode.java.model.TextEdit> format(JSONRPC2Request request) {
+		ICompilationUnit cu = resolveCompilationUnit(request);
+		Map<String, String> eclipseOptions = getOptions(cu, request);
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(eclipseOptions);
 		try {
 			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
@@ -61,6 +66,21 @@ public class FormatterHandler extends AbstractRequestHandler {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return null;
 		}
+	}
+
+	private Map<String, String> getOptions(ICompilationUnit cu, JSONRPC2Request request) {
+		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
+		@SuppressWarnings("unchecked")
+		Map<String, Object> namedParams = (Map<String, Object>) request.getNamedParams().get("options");
+		Long tabSize = (Long) namedParams.get("tabSize");
+		if (tabSize != null && tabSize > 0) {
+			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, tabSize.toString());
+		}
+		Boolean insertSpaces = (Boolean) namedParams.get("insertSpaces");
+		if (insertSpaces != null) {
+			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
+		}
+		return eclipseOptions;
 	}
 
 
