@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.jface.internal.text.html.SubstitutionTextReader;
-
 import org.eclipse.jdt.core.dom.TagElement;
+
+import copied.org.eclipse.jface.internal.text.html.SubstitutionTextReader;
 
 
 /**

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.internal.corext.dom;
+package copied.org.eclipse.jdt.internal.corext.dom;
 
 import java.util.Iterator;
 import java.util.List;

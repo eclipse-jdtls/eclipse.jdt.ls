@@ -9,17 +9,18 @@ import org.jboss.tools.vscode.ipc.IPC;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
 import org.jboss.tools.vscode.java.handlers.ExtensionLifeCycleHandler;
-import org.jboss.tools.vscode.java.handlers.FindSymbolsHandler;
 import org.jboss.tools.vscode.java.handlers.HoverHandler;
 import org.jboss.tools.vscode.java.handlers.LogHandler;
 import org.jboss.tools.vscode.java.handlers.NavigateToDefinitionHandler;
 import org.jboss.tools.vscode.java.handlers.ReferencesHandler;
 import org.jboss.tools.vscode.java.handlers.WorkspaceEventsHandler;
+import org.jboss.tools.vscode.java.handlers.WorkspaceSymbolHandler;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
@@ -49,7 +50,7 @@ public class JavaClientConnection {
 		handlers.add(new NavigateToDefinitionHandler());
 		handlers.add(new WorkspaceEventsHandler(pm));
 		handlers.add(new DocumentSymbolHandler());
-		handlers.add(new FindSymbolsHandler());
+		handlers.add(new WorkspaceSymbolHandler());
 		handlers.add(new ReferencesHandler());
 		handlers.add(new DocumentHighlightHandler());
 		return handlers;
@@ -71,11 +72,11 @@ public class JavaClientConnection {
 	 * Sends a status to the client to be presented to users
 	 * @param msg The status to send back to the client
 	 */
-	public void sendStatus(MessageType type, String status) {
+	public void sendStatus(ServiceStatus serverStatus, String status) {
 		JSONRPC2Notification note = new JSONRPC2Notification("language/status");
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("message", status);
-		params.put("type", type.name());
+		params.put("type", serverStatus.name());
 		note.setNamedParams(params);
 		rcpConnection.sendNotification(note);
 	}

@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.jdt.internal.corext.util;
+package copied.org.eclipse.jdt.internal.corext.util;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

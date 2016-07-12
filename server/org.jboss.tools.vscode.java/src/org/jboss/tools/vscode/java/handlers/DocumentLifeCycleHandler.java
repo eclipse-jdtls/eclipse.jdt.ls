@@ -7,6 +7,10 @@ import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.IDocument;
@@ -49,15 +53,25 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 
 	@Override
 	public void process(JSONRPC2Notification request) {
-		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.process");
-		if(REQ_OPENED.equals(request.getMethod())) {
-			handleOpen(request);
-		}
-		if(REQ_CLOSED.equals(request.getMethod())) {
-			handleClosed(request);
-		}
-		if(REQ_CHANGED.equals(request.getMethod())) {
-			handleChanged(request);
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				@Override
+				public void run(IProgressMonitor arg0) throws CoreException {
+					JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.process");
+					if(REQ_OPENED.equals(request.getMethod())) {
+						handleOpen(request);
+					}
+					if(REQ_CLOSED.equals(request.getMethod())) {
+						handleClosed(request);
+					}
+					if(REQ_CHANGED.equals(request.getMethod())) {
+						handleChanged(request);
+					}
+				}
+			}, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
@@ -71,6 +85,7 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
 			unit.reconcile();
 		} catch (JavaModelException e) {
+			int x = 20 + 20;
 		}
 	}
 

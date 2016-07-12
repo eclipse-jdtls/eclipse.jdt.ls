@@ -127,19 +127,8 @@ public class ReferencesHandler extends AbstractRequestHandler {
 	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
-		List<IPackageFragmentRoot> sources = new ArrayList<>();
-
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		for (IJavaProject project : projects) {
-			IPackageFragmentRoot[] roots = project.getPackageFragmentRoots();
-			for (IPackageFragmentRoot pkgRoot : roots) {
-				if (pkgRoot.getKind() == IPackageFragmentRoot.K_SOURCE) {
-					sources.add(pkgRoot);
-				}
-			}
-		}
-
-		return SearchEngine.createJavaSearchScope(sources.toArray(new IPackageFragmentRoot[sources.size()]));
+		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
 	}
 }
 
