@@ -49,7 +49,7 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 		Location $ = new Location();
 		$.setUri("file://"+ element.getResource().getLocationURI().getPath());
 		if (element instanceof ISourceReference) {
-			ISourceRange nameRange = ((ISourceReference) element).getSourceRange();
+			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
 			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(),nameRange.getOffset());
 			int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset() + nameRange.getLength());
 			
