@@ -35,6 +35,9 @@ public class LanguageServer implements IApplication {
 	 * @return true iff the parent process is still running
 	 */
 	private boolean parentProcessStillRunning() {
+		// Wait until parent process id is available
+		long parentProcessId = getParentProcessId();
+		if (parentProcessId == 0) return true;
 		
 		String command;
 	    if (Platform.OS_WIN32.equals(Platform.getOS())) {
@@ -62,8 +65,12 @@ public class LanguageServer implements IApplication {
 		System.out.println("Shutting down language server");
 		shutdown = true;
 	}
+	
+	public synchronized long getParentProcessId() {
+		return parentProcessId;
+	}
 
-	public void setParentProcessId(long processId) {
+	public synchronized void setParentProcessId(long processId) {
 		parentProcessId = processId;
 	}
 
