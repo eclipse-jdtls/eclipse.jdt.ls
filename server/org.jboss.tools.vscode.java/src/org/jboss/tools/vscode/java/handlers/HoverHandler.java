@@ -26,15 +26,18 @@ public class HoverHandler extends AbstractRequestHandler {
 	public JSONRPC2Response process(JSONRPC2Request request) {
 		ICompilationUnit unit = resolveCompilationUnit(request);
 		int[] position = JsonRpcHelpers.readTextDocumentPosition(request);
+	
+		JSONRPC2Response response = new JSONRPC2Response(request.getID());
+		Map<String,Object> result = new HashMap<String,Object>();		
 		
 		String hover = computeHover(unit ,position[0],position[1]);
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		Map<String,Object> result = new HashMap<String,Object>();
-//		Map<String,Object> markedString = new HashMap<String,Object>();
-//		markedString.put("language","html");
-//		markedString.put("value",hover);
-		result.put("contents",hover);
-		response.setResult(result);
+		if (hover != null && hover.length() > 0) {
+//			Map<String,Object> markedString = new HashMap<String,Object>();
+//			markedString.put("language","html");
+//			markedString.put("value",hover);
+			result.put("contents",hover);
+			response.setResult(result);
+		}
 		return response;
 	}
 
