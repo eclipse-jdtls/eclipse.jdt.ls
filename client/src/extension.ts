@@ -8,8 +8,8 @@ import * as fs from 'fs';
 var electron = require('./electron_j');
 var rimraf = require('rimraf');
 
-import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn} from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType } from 'vscode-languageclient';
+import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn, Uri} from 'vscode';
+import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType, Position as LSPosition, Location as LSLocation, Protocol2Code} from 'vscode-languageclient';
 
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
@@ -108,6 +108,9 @@ export function activate(context: ExtensionContext) {
 	});
 	commands.registerCommand("java.open.output", ()=>{
 		languageClient.outputChannel.show(ViewColumn.Three);
+	});
+	commands.registerCommand("java.show.references", (uri:string, position: LSPosition, locations:LSLocation[])=>{
+		commands.executeCommand('editor.action.showReferences', Uri.parse(uri), Protocol2Code.asPosition(position), locations.map(Protocol2Code.asLocation));
 	});
 	window.onDidChangeActiveTextEditor((editor) =>{
 		if(editor && editor.document && editor.document.languageId === "java"){

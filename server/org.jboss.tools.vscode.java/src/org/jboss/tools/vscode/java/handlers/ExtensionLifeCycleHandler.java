@@ -111,6 +111,9 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 		//Format Document
 		capabilities.put("documentFormattingProvider", Boolean.TRUE);
 		
+		Map<String, Object> codeLensProvider = new HashMap<String, Object>();
+		codeLensProvider.put("resolveProvider", Boolean.TRUE);
+		capabilities.put("codeLensProvider", codeLensProvider);
 		
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("capabilities",capabilities);

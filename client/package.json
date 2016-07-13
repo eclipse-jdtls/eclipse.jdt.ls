@@ -12,7 +12,9 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:java"
+		"onLanguage:java",
+		"onCommand:java.show.references",
+		"onCommand:java.open.output"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
