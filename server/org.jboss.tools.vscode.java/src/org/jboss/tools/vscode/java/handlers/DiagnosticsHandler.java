@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
+import static org.jboss.tools.vscode.java.handlers.AbstractRequestHandler.getFileURI;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 
@@ -44,7 +45,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
 		JSONRPC2Notification notification = new JSONRPC2Notification("textDocument/publishDiagnostics");
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("uri","file://" + this.resource.getLocationURI().getRawPath());
+		params.put("uri",getFileURI(this.resource));
 		params.put("diagnostics",toDiagnosticsArray());
 		notification.setNamedParams(params);
 		this.connection.sendNotification(notification);

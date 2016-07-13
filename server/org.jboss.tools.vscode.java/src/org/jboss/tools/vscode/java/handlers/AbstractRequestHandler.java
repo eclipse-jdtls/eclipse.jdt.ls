@@ -2,8 +2,11 @@ package org.jboss.tools.vscode.java.handlers;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -14,6 +17,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.model.Location;
+import org.jboss.tools.vscode.java.model.Position;
+import org.jboss.tools.vscode.java.model.Range;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
@@ -51,7 +56,7 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 			return null;
 		}
 		Location $ = new Location();
-		$.setUri("file://"+ element.getResource().getLocationURI().getRawPath());
+		$.setUri(getFileURI(unit));
 		if (element instanceof ISourceReference) {
 			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
 			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(),nameRange.getOffset());
@@ -72,7 +77,7 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 	
 	protected Location getLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
 		Location result = new Location();
-		result.setUri("file://" + unit.getResource().getLocationURI().getRawPath());
+		result.setUri(getFileURI(unit));
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
 
@@ -85,5 +90,28 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 			result.setEndColumn(endLoc[1]);
 		}
 		return result;
+	}
+	
+	protected Range getRange(ICompilationUnit unit, int offset, int length) throws JavaModelException {
+		Range result = new Range();
+		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
+		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
+
+		if (loc != null && endLoc != null) {
+			result.start = new Position(loc[0], loc[1]);
+			result.end = new Position(endLoc[0], endLoc[1]);
+		}
+		return result;
+
+	}
+	
+	public static String getFileURI(ICompilationUnit cu) {
+		return getFileURI(cu.getResource());
+	}
+	
+	public static String getFileURI(IResource resource) {
+		String uri = resource.getLocation().toFile().toURI().toString();
+		return uri.replaceFirst("file:/([^/])", "file:///$1");
 	}	
 }
+ 
