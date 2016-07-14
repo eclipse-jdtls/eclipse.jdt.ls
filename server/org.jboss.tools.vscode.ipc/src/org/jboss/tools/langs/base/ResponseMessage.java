@@ -9,10 +9,12 @@ import com.google.gson.annotations.SerializedName;
  * Response Message sent as a result of a request.
  * 
  */
-public class ResponseMessage <R extends Params>
+public class ResponseMessage <R>
     extends Message
 {
 
+	private transient String method;
+	
     /**
      * The request id.
      * 
@@ -94,5 +96,19 @@ public class ResponseMessage <R extends Params>
     public void setError(Object error) {
         this.error = error;
     }
+
+	/**
+	 * @return the method
+	 */
+	public String getMethod() {
+		return method;
+	}
+
+	/**
+	 * @param method the method to set
+	 */
+	void setMethod(String method) {
+		this.method = method;
+	}
 
 }

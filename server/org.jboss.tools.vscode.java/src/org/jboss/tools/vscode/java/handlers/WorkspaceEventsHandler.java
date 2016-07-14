@@ -3,6 +3,7 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.managers.ProjectsManager.CHANGE_TYPE;
@@ -11,7 +12,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class WorkspaceEventsHandler extends AbstractRequestHandler {
+public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFilesParams, Object> {
 
 	private static final String REQ_FILE_CHANGE = "workspace/didChangeWatchedFiles";
 	private static final int CHANGE_TYPE_CREATED = 1;
@@ -60,4 +61,10 @@ public class WorkspaceEventsHandler extends AbstractRequestHandler {
 			throw new UnsupportedOperationException();
 		}
 	}
+	@Override
+	public Object handle(DidChangeWatchedFilesParams param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

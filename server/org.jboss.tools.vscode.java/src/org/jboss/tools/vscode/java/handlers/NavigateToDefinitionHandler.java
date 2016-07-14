@@ -1,10 +1,10 @@
 package org.jboss.tools.vscode.java.handlers;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
@@ -14,7 +14,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class NavigateToDefinitionHandler extends AbstractRequestHandler {
+public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentPositionParams, List<org.jboss.tools.langs.Location>>{
 
 	private static final String REQ_DEFINITION = "textDocument/definition";
 	
@@ -83,6 +83,12 @@ public class NavigateToDefinitionHandler extends AbstractRequestHandler {
 		range.put("start",start);
 		range.put("end",end);
 		return range;
+	}
+
+	@Override
+	public List<org.jboss.tools.langs.Location> handle(TextDocumentPositionParams param) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

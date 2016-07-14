@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -20,10 +18,12 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class CompletionHandler extends AbstractRequestHandler {
+public class CompletionHandler extends AbstractRequestHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
 	private static final String REQ_COMPLETION = "textDocument/completion";
+	private final DocumentsManager dm;
 	
-	public CompletionHandler() {
+	public CompletionHandler(DocumentsManager manager) {
+		this.dm = manager;
 	}
 	
 	@Override
@@ -83,5 +83,11 @@ public class CompletionHandler extends AbstractRequestHandler {
 	@Override
 	public void process(JSONRPC2Notification request) {
 		//not implemented
+	}
+
+	@Override
+	public CompletionList handle(TextDocumentPositionParams param) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -10,7 +10,6 @@ import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.IDocument;
@@ -26,7 +25,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class DocumentLifeCycleHandler extends AbstractRequestHandler {
+public class DocumentLifeCycleHandler implements RequestHandler<DidOpenTextDocumentParams,Object>{
 	
 	private static final String REQ_OPENED = "textDocument/didOpen";
 	private static final String REQ_CLOSED = "textDocument/didClose";
@@ -138,6 +137,12 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler {
 		} catch (JavaModelException e) {			
 		} catch (org.eclipse.jface.text.BadLocationException e) {
 		}
+	}
+
+	@Override
+	public Object handle(DidOpenTextDocumentParams param) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 		
 	private void handleClosed(JSONRPC2Notification notification) {

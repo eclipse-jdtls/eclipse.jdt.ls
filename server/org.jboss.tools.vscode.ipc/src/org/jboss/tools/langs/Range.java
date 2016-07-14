@@ -5,16 +5,15 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * A range in a text document expressed as (zero-based) start and end positions.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class Range {
 
     /**
      * Position in a text document expressed as zero-based line and character offset.
+     * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
      * 
      */
     @SerializedName("start")
@@ -23,6 +22,10 @@ public class Range {
     /**
      * Position in a text document expressed as zero-based line and character offset.
      * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
+     * 
      */
     @SerializedName("end")
     @Expose
@@ -30,6 +33,10 @@ public class Range {
 
     /**
      * Position in a text document expressed as zero-based line and character offset.
+     * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
      * 
      * @return
      *     The start
@@ -41,6 +48,10 @@ public class Range {
     /**
      * Position in a text document expressed as zero-based line and character offset.
      * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
+     * 
      * @param start
      *     The start
      */
@@ -48,8 +59,17 @@ public class Range {
         this.start = start;
     }
 
+    public Range withStart(Position start) {
+        this.start = start;
+        return this;
+    }
+
     /**
      * Position in a text document expressed as zero-based line and character offset.
+     * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
      * 
      * @return
      *     The end
@@ -61,11 +81,20 @@ public class Range {
     /**
      * Position in a text document expressed as zero-based line and character offset.
      * 
+     * The Position namespace provides helper functions to work with
+     * 
+     * [Position](#Position) literals.
+     * 
      * @param end
      *     The end
      */
     public void setEnd(Position end) {
         this.end = end;
+    }
+
+    public Range withEnd(Position end) {
+        this.end = end;
+        return this;
     }
 
 }

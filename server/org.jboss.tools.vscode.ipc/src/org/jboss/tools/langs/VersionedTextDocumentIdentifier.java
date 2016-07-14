@@ -5,15 +5,8 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * An identifier to denote a specific version of a text document.
- * 
- */
 @Generated("org.jsonschema2pojo")
-public class VersionedTextDocumentIdentifier
-    extends TextDocumentIdentifier
-{
+public class VersionedTextDocumentIdentifier {
 
     /**
      * The version number of this document.
@@ -21,7 +14,14 @@ public class VersionedTextDocumentIdentifier
      */
     @SerializedName("version")
     @Expose
-    private Integer version;
+    private Double version;
+    /**
+     * The text document's uri.
+     * 
+     */
+    @SerializedName("uri")
+    @Expose
+    private String uri;
 
     /**
      * The version number of this document.
@@ -29,7 +29,7 @@ public class VersionedTextDocumentIdentifier
      * @return
      *     The version
      */
-    public Integer getVersion() {
+    public Double getVersion() {
         return version;
     }
 
@@ -39,8 +39,38 @@ public class VersionedTextDocumentIdentifier
      * @param version
      *     The version
      */
-    public void setVersion(Integer version) {
+    public void setVersion(Double version) {
         this.version = version;
+    }
+
+    public VersionedTextDocumentIdentifier withVersion(Double version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+     * The text document's uri.
+     * 
+     * @return
+     *     The uri
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    /**
+     * The text document's uri.
+     * 
+     * @param uri
+     *     The uri
+     */
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public VersionedTextDocumentIdentifier withUri(String uri) {
+        this.uri = uri;
+        return this;
     }
 
 }

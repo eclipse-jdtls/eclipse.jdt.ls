@@ -5,11 +5,6 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * An item to transfer a text document from the client to the server.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class TextDocumentItem {
 
@@ -28,14 +23,16 @@ public class TextDocumentItem {
     @Expose
     private String languageId;
     /**
-     * The version number of this document (it will strictly increase after each change, including undo/redo).
+     * The version number of this document (it will strictly increase after each
+     * 
+     * change, including undo/redo).
      * 
      */
     @SerializedName("version")
     @Expose
-    private Integer version;
+    private Double version;
     /**
-     * The content of the opened  text document.
+     * The content of the opened text document.
      * 
      */
     @SerializedName("text")
@@ -62,6 +59,11 @@ public class TextDocumentItem {
         this.uri = uri;
     }
 
+    public TextDocumentItem withUri(String uri) {
+        this.uri = uri;
+        return this;
+    }
+
     /**
      * The text document's language identifier
      * 
@@ -82,28 +84,42 @@ public class TextDocumentItem {
         this.languageId = languageId;
     }
 
+    public TextDocumentItem withLanguageId(String languageId) {
+        this.languageId = languageId;
+        return this;
+    }
+
     /**
-     * The version number of this document (it will strictly increase after each change, including undo/redo).
+     * The version number of this document (it will strictly increase after each
+     * 
+     * change, including undo/redo).
      * 
      * @return
      *     The version
      */
-    public Integer getVersion() {
+    public Double getVersion() {
         return version;
     }
 
     /**
-     * The version number of this document (it will strictly increase after each change, including undo/redo).
+     * The version number of this document (it will strictly increase after each
+     * 
+     * change, including undo/redo).
      * 
      * @param version
      *     The version
      */
-    public void setVersion(Integer version) {
+    public void setVersion(Double version) {
         this.version = version;
     }
 
+    public TextDocumentItem withVersion(Double version) {
+        this.version = version;
+        return this;
+    }
+
     /**
-     * The content of the opened  text document.
+     * The content of the opened text document.
      * 
      * @return
      *     The text
@@ -113,13 +129,18 @@ public class TextDocumentItem {
     }
 
     /**
-     * The content of the opened  text document.
+     * The content of the opened text document.
      * 
      * @param text
      *     The text
      */
     public void setText(String text) {
         this.text = text;
+    }
+
+    public TextDocumentItem withText(String text) {
+        this.text = text;
+        return this;
     }
 
 }

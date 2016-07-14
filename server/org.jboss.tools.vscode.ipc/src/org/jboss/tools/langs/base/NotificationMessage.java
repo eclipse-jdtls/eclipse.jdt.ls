@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
  * A notification message. A processed notification message must not send a response back.They work like events.
  * 
  */
-public class NotificationMessage <R extends Params> extends Message
+public class NotificationMessage <R> extends Message
 {
 
     /**

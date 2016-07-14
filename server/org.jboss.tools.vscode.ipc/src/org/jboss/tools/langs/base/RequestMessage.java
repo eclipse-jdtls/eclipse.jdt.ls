@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
  * A request message to describe a request between the client and the server. Every processed request must send a response back to the sender of the request.
  * 
  */
-public class RequestMessage <R extends Params>
+public class RequestMessage <R>
     extends Message
 {
 
@@ -100,10 +100,13 @@ public class RequestMessage <R extends Params>
      * @param p
      * @return result
      */
-    public <P extends Params> ResponseMessage<P> responseWith(P p){
+    public <P> ResponseMessage<P> responseWith(P p){
     	ResponseMessage<P> response = new ResponseMessage<P>();
     	response.setId(this.getId());
-    	response.setResult(p);
+    	response.setMethod(this.getMethod());
+    	if( p != null ){
+    		response.setResult(p);
+    	}
     	return response;
     }
 

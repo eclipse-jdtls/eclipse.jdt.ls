@@ -5,37 +5,32 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects are only valid in the scope of a resource.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class Diagnostic {
 
-    /**
-     * A range in a text document expressed as (zero-based) start and end positions.
-     * 
-     */
     @SerializedName("range")
     @Expose
     private Range range;
     /**
-     * The diagnostic's severity. Can be omitted. If omitted it is up to the client to interpret diagnostics as error, warning, info or hint.
+     * The diagnostic's severity. Can be omitted. If omitted it is up to the
+     * 
+     * client to interpret diagnostics as error, warning, info or hint.
      * 
      */
     @SerializedName("severity")
     @Expose
-    private Integer severity;
+    private Double severity;
     /**
      * The diagnostic's code. Can be omitted.
      * 
      */
     @SerializedName("code")
     @Expose
-    private Integer code;
+    private Object code;
     /**
-     * A human-readable string describing the source of this diagnostic, e.g. 'typescript' or 'super lint'..
+     * A human-readable string describing the source of this
+     * 
+     * diagnostic, e.g. 'typescript' or 'super lint'.
      * 
      */
     @SerializedName("source")
@@ -50,7 +45,6 @@ public class Diagnostic {
     private String message;
 
     /**
-     * A range in a text document expressed as (zero-based) start and end positions.
      * 
      * @return
      *     The range
@@ -60,7 +54,6 @@ public class Diagnostic {
     }
 
     /**
-     * A range in a text document expressed as (zero-based) start and end positions.
      * 
      * @param range
      *     The range
@@ -69,24 +62,38 @@ public class Diagnostic {
         this.range = range;
     }
 
+    public Diagnostic withRange(Range range) {
+        this.range = range;
+        return this;
+    }
+
     /**
-     * The diagnostic's severity. Can be omitted. If omitted it is up to the client to interpret diagnostics as error, warning, info or hint.
+     * The diagnostic's severity. Can be omitted. If omitted it is up to the
+     * 
+     * client to interpret diagnostics as error, warning, info or hint.
      * 
      * @return
      *     The severity
      */
-    public Integer getSeverity() {
+    public Double getSeverity() {
         return severity;
     }
 
     /**
-     * The diagnostic's severity. Can be omitted. If omitted it is up to the client to interpret diagnostics as error, warning, info or hint.
+     * The diagnostic's severity. Can be omitted. If omitted it is up to the
+     * 
+     * client to interpret diagnostics as error, warning, info or hint.
      * 
      * @param severity
      *     The severity
      */
-    public void setSeverity(Integer severity) {
+    public void setSeverity(Double severity) {
         this.severity = severity;
+    }
+
+    public Diagnostic withSeverity(Double severity) {
+        this.severity = severity;
+        return this;
     }
 
     /**
@@ -95,7 +102,7 @@ public class Diagnostic {
      * @return
      *     The code
      */
-    public Integer getCode() {
+    public Object getCode() {
         return code;
     }
 
@@ -105,12 +112,19 @@ public class Diagnostic {
      * @param code
      *     The code
      */
-    public void setCode(Integer code) {
+    public void setCode(Object code) {
         this.code = code;
     }
 
+    public Diagnostic withCode(Object code) {
+        this.code = code;
+        return this;
+    }
+
     /**
-     * A human-readable string describing the source of this diagnostic, e.g. 'typescript' or 'super lint'..
+     * A human-readable string describing the source of this
+     * 
+     * diagnostic, e.g. 'typescript' or 'super lint'.
      * 
      * @return
      *     The source
@@ -120,13 +134,20 @@ public class Diagnostic {
     }
 
     /**
-     * A human-readable string describing the source of this diagnostic, e.g. 'typescript' or 'super lint'..
+     * A human-readable string describing the source of this
+     * 
+     * diagnostic, e.g. 'typescript' or 'super lint'.
      * 
      * @param source
      *     The source
      */
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public Diagnostic withSource(String source) {
+        this.source = source;
+        return this;
     }
 
     /**
@@ -147,6 +168,11 @@ public class Diagnostic {
      */
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Diagnostic withMessage(String message) {
+        this.message = message;
+        return this;
     }
 
 }

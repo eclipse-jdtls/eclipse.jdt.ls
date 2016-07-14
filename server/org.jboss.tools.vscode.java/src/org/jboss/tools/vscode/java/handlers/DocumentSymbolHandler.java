@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -16,7 +15,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class DocumentSymbolHandler extends AbstractRequestHandler {
+public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParams,List<org.jboss.tools.langs.SymbolInformation>>{
 
 	private static final String  REQ_DOC_SYMBOL = "textDocument/documentSymbol";
 	
@@ -92,4 +91,10 @@ public class DocumentSymbolHandler extends AbstractRequestHandler {
 	@Override
 	public void process(JSONRPC2Notification request) {
 	}
+	@Override
+	public List<org.jboss.tools.langs.SymbolInformation> handle(DocumentSymbolParams param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

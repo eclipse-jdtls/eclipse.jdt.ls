@@ -4,17 +4,9 @@ package org.jboss.tools.langs;
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import org.jboss.tools.langs.base.Params;
 
-
-/**
- * The result returned from an initilize request.
- * 
- */
 @Generated("org.jsonschema2pojo")
-public class InitializeResult
-    extends Params
-{
+public class InitializeResult {
 
     /**
      * Defines the capabilities provided by a language
@@ -48,6 +40,11 @@ public class InitializeResult
      */
     public void setCapabilities(ServerCapabilities capabilities) {
         this.capabilities = capabilities;
+    }
+
+    public InitializeResult withCapabilities(ServerCapabilities capabilities) {
+        this.capabilities = capabilities;
+        return this;
     }
 
 }

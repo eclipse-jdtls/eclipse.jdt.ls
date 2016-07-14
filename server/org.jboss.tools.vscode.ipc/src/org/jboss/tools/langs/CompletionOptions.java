@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
  * 
  */
 @Generated("org.jsonschema2pojo")
-public class CompletionProvider {
+public class CompletionOptions {
 
     /**
      * The server provides support to resolve additional
@@ -56,6 +56,11 @@ public class CompletionProvider {
         this.resolveProvider = resolveProvider;
     }
 
+    public CompletionOptions withResolveProvider(Boolean resolveProvider) {
+        this.resolveProvider = resolveProvider;
+        return this;
+    }
+
     /**
      * The characters that trigger completion automatically.
      * 
@@ -74,6 +79,11 @@ public class CompletionProvider {
      */
     public void setTriggerCharacters(List<String> triggerCharacters) {
         this.triggerCharacters = triggerCharacters;
+    }
+
+    public CompletionOptions withTriggerCharacters(List<String> triggerCharacters) {
+        this.triggerCharacters = triggerCharacters;
+        return this;
     }
 
 }

@@ -3,6 +3,8 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jboss.tools.langs.Hover;
+import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.jboss.tools.vscode.java.HoverInfoProvider;
 
@@ -10,7 +12,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
-public class HoverHandler extends AbstractRequestHandler {
+public class HoverHandler implements RequestHandler<TextDocumentPositionParams, Hover>{
 	
 	private static final String REQ_HOVER = "textDocument/hover";
 
@@ -51,4 +53,10 @@ public class HoverHandler extends AbstractRequestHandler {
 		return provider.computeHover(line,column);
 		
 	}	
+	@Override
+	public Hover handle(TextDocumentPositionParams param) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

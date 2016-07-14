@@ -11,7 +11,7 @@ import com.google.gson.annotations.SerializedName;
  * 
  */
 @Generated("org.jsonschema2pojo")
-public class CodeLensProvider {
+public class CodeLensOptions {
 
     /**
      * Code lens has a resolve provider as well.
@@ -39,6 +39,11 @@ public class CodeLensProvider {
      */
     public void setResolveProvider(Boolean resolveProvider) {
         this.resolveProvider = resolveProvider;
+    }
+
+    public CodeLensOptions withResolveProvider(Boolean resolveProvider) {
+        this.resolveProvider = resolveProvider;
+        return this;
     }
 
 }

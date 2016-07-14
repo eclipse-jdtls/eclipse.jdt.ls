@@ -35,14 +35,14 @@ public class ServerCapabilities {
      */
     @SerializedName("completionProvider")
     @Expose
-    private CompletionProvider completionProvider;
+    private CompletionOptions completionProvider;
     /**
      * Signature help options.
      * 
      */
     @SerializedName("signatureHelpProvider")
     @Expose
-    private SignatureHelpProvider signatureHelpProvider;
+    private SignatureHelpOptions signatureHelpProvider;
     /**
      * The server provides goto definition support.
      * 
@@ -91,7 +91,7 @@ public class ServerCapabilities {
      */
     @SerializedName("codeLensProvider")
     @Expose
-    private CodeLensProvider codeLensProvider;
+    private CodeLensOptions codeLensProvider;
     /**
      * The server provides document formatting.
      * 
@@ -112,7 +112,7 @@ public class ServerCapabilities {
      */
     @SerializedName("documentOnTypeFormattingProvider")
     @Expose
-    private DocumentOnTypeFormattingProvider documentOnTypeFormattingProvider;
+    private DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider;
     /**
      * The server provides rename support.
      * 
@@ -141,6 +141,11 @@ public class ServerCapabilities {
         this.textDocumentSync = textDocumentSync;
     }
 
+    public ServerCapabilities withTextDocumentSync(Double textDocumentSync) {
+        this.textDocumentSync = textDocumentSync;
+        return this;
+    }
+
     /**
      * The server provides hover support.
      * 
@@ -161,13 +166,18 @@ public class ServerCapabilities {
         this.hoverProvider = hoverProvider;
     }
 
+    public ServerCapabilities withHoverProvider(Boolean hoverProvider) {
+        this.hoverProvider = hoverProvider;
+        return this;
+    }
+
     /**
      * Completion options.
      * 
      * @return
      *     The completionProvider
      */
-    public CompletionProvider getCompletionProvider() {
+    public CompletionOptions getCompletionProvider() {
         return completionProvider;
     }
 
@@ -177,8 +187,13 @@ public class ServerCapabilities {
      * @param completionProvider
      *     The completionProvider
      */
-    public void setCompletionProvider(CompletionProvider completionProvider) {
+    public void setCompletionProvider(CompletionOptions completionProvider) {
         this.completionProvider = completionProvider;
+    }
+
+    public ServerCapabilities withCompletionProvider(CompletionOptions completionProvider) {
+        this.completionProvider = completionProvider;
+        return this;
     }
 
     /**
@@ -187,7 +202,7 @@ public class ServerCapabilities {
      * @return
      *     The signatureHelpProvider
      */
-    public SignatureHelpProvider getSignatureHelpProvider() {
+    public SignatureHelpOptions getSignatureHelpProvider() {
         return signatureHelpProvider;
     }
 
@@ -197,8 +212,13 @@ public class ServerCapabilities {
      * @param signatureHelpProvider
      *     The signatureHelpProvider
      */
-    public void setSignatureHelpProvider(SignatureHelpProvider signatureHelpProvider) {
+    public void setSignatureHelpProvider(SignatureHelpOptions signatureHelpProvider) {
         this.signatureHelpProvider = signatureHelpProvider;
+    }
+
+    public ServerCapabilities withSignatureHelpProvider(SignatureHelpOptions signatureHelpProvider) {
+        this.signatureHelpProvider = signatureHelpProvider;
+        return this;
     }
 
     /**
@@ -221,6 +241,11 @@ public class ServerCapabilities {
         this.definitionProvider = definitionProvider;
     }
 
+    public ServerCapabilities withDefinitionProvider(Boolean definitionProvider) {
+        this.definitionProvider = definitionProvider;
+        return this;
+    }
+
     /**
      * The server provides find references support.
      * 
@@ -239,6 +264,11 @@ public class ServerCapabilities {
      */
     public void setReferencesProvider(Boolean referencesProvider) {
         this.referencesProvider = referencesProvider;
+    }
+
+    public ServerCapabilities withReferencesProvider(Boolean referencesProvider) {
+        this.referencesProvider = referencesProvider;
+        return this;
     }
 
     /**
@@ -261,6 +291,11 @@ public class ServerCapabilities {
         this.documentHighlightProvider = documentHighlightProvider;
     }
 
+    public ServerCapabilities withDocumentHighlightProvider(Boolean documentHighlightProvider) {
+        this.documentHighlightProvider = documentHighlightProvider;
+        return this;
+    }
+
     /**
      * The server provides document symbol support.
      * 
@@ -279,6 +314,11 @@ public class ServerCapabilities {
      */
     public void setDocumentSymbolProvider(Boolean documentSymbolProvider) {
         this.documentSymbolProvider = documentSymbolProvider;
+    }
+
+    public ServerCapabilities withDocumentSymbolProvider(Boolean documentSymbolProvider) {
+        this.documentSymbolProvider = documentSymbolProvider;
+        return this;
     }
 
     /**
@@ -301,6 +341,11 @@ public class ServerCapabilities {
         this.workspaceSymbolProvider = workspaceSymbolProvider;
     }
 
+    public ServerCapabilities withWorkspaceSymbolProvider(Boolean workspaceSymbolProvider) {
+        this.workspaceSymbolProvider = workspaceSymbolProvider;
+        return this;
+    }
+
     /**
      * The server provides code actions.
      * 
@@ -321,13 +366,18 @@ public class ServerCapabilities {
         this.codeActionProvider = codeActionProvider;
     }
 
+    public ServerCapabilities withCodeActionProvider(Boolean codeActionProvider) {
+        this.codeActionProvider = codeActionProvider;
+        return this;
+    }
+
     /**
      * Code Lens options.
      * 
      * @return
      *     The codeLensProvider
      */
-    public CodeLensProvider getCodeLensProvider() {
+    public CodeLensOptions getCodeLensProvider() {
         return codeLensProvider;
     }
 
@@ -337,8 +387,13 @@ public class ServerCapabilities {
      * @param codeLensProvider
      *     The codeLensProvider
      */
-    public void setCodeLensProvider(CodeLensProvider codeLensProvider) {
+    public void setCodeLensProvider(CodeLensOptions codeLensProvider) {
         this.codeLensProvider = codeLensProvider;
+    }
+
+    public ServerCapabilities withCodeLensProvider(CodeLensOptions codeLensProvider) {
+        this.codeLensProvider = codeLensProvider;
+        return this;
     }
 
     /**
@@ -361,6 +416,11 @@ public class ServerCapabilities {
         this.documentFormattingProvider = documentFormattingProvider;
     }
 
+    public ServerCapabilities withDocumentFormattingProvider(Boolean documentFormattingProvider) {
+        this.documentFormattingProvider = documentFormattingProvider;
+        return this;
+    }
+
     /**
      * The server provides document range formatting.
      * 
@@ -381,13 +441,18 @@ public class ServerCapabilities {
         this.documentRangeFormattingProvider = documentRangeFormattingProvider;
     }
 
+    public ServerCapabilities withDocumentRangeFormattingProvider(Boolean documentRangeFormattingProvider) {
+        this.documentRangeFormattingProvider = documentRangeFormattingProvider;
+        return this;
+    }
+
     /**
      * Format document on type options
      * 
      * @return
      *     The documentOnTypeFormattingProvider
      */
-    public DocumentOnTypeFormattingProvider getDocumentOnTypeFormattingProvider() {
+    public DocumentOnTypeFormattingOptions getDocumentOnTypeFormattingProvider() {
         return documentOnTypeFormattingProvider;
     }
 
@@ -397,8 +462,13 @@ public class ServerCapabilities {
      * @param documentOnTypeFormattingProvider
      *     The documentOnTypeFormattingProvider
      */
-    public void setDocumentOnTypeFormattingProvider(DocumentOnTypeFormattingProvider documentOnTypeFormattingProvider) {
+    public void setDocumentOnTypeFormattingProvider(DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider) {
         this.documentOnTypeFormattingProvider = documentOnTypeFormattingProvider;
+    }
+
+    public ServerCapabilities withDocumentOnTypeFormattingProvider(DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider) {
+        this.documentOnTypeFormattingProvider = documentOnTypeFormattingProvider;
+        return this;
     }
 
     /**
@@ -419,6 +489,11 @@ public class ServerCapabilities {
      */
     public void setRenameProvider(Boolean renameProvider) {
         this.renameProvider = renameProvider;
+    }
+
+    public ServerCapabilities withRenameProvider(Boolean renameProvider) {
+        this.renameProvider = renameProvider;
+        return this;
     }
 
 }

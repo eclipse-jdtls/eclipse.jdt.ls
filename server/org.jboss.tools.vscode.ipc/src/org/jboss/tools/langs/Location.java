@@ -5,21 +5,12 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * Represents a location inside a resource, such as a line inside a text file.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class Location {
 
     @SerializedName("uri")
     @Expose
     private String uri;
-    /**
-     * A range in a text document expressed as (zero-based) start and end positions.
-     * 
-     */
     @SerializedName("range")
     @Expose
     private Range range;
@@ -42,8 +33,12 @@ public class Location {
         this.uri = uri;
     }
 
+    public Location withUri(String uri) {
+        this.uri = uri;
+        return this;
+    }
+
     /**
-     * A range in a text document expressed as (zero-based) start and end positions.
      * 
      * @return
      *     The range
@@ -53,13 +48,17 @@ public class Location {
     }
 
     /**
-     * A range in a text document expressed as (zero-based) start and end positions.
      * 
      * @param range
      *     The range
      */
     public void setRange(Range range) {
         this.range = range;
+    }
+
+    public Location withRange(Range range) {
+        this.range = range;
+        return this;
     }
 
 }

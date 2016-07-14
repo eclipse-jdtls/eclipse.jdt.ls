@@ -3,9 +3,7 @@ package org.jboss.tools.vscode.java;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jboss.tools.langs.base.LSPClient;
-import org.jboss.tools.langs.base.LSPClient.MessageCallback;
-import org.jboss.tools.langs.base.Message;
+import org.jboss.tools.langs.base.LSPServer;
 import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
@@ -22,14 +20,14 @@ import org.jboss.tools.vscode.java.managers.ProjectsManager;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-public class JavaLanguageServerPlugin implements BundleActivator, MessageCallback {
+public class JavaLanguageServerPlugin implements BundleActivator {
 
 	public static JavaLanguageServerPlugin instance;
 	private static BundleContext context;
 	private ProjectsManager pm;
 	private DocumentsManager dm;
 	private JsonRpcConnection connection;
-	private LSPClient client;
+	private LSPServer client;
 
 	static BundleContext getContext() {
 		return context;
@@ -47,23 +45,23 @@ public class JavaLanguageServerPlugin implements BundleActivator, MessageCallbac
 		JavaLanguageServerPlugin.context = bundleContext;
 		pm = new ProjectsManager();
 		dm = new DocumentsManager(connection,pm);
-		client = LSPClient.getInstance();
-		client.connect(this);
+		client = LSPServer.getInstance();
+		client.connect(handlers());
 	}
 
 	/**
 	 * @return
 	 */
-	private List<RequestHandler> handlers() {
-		List<RequestHandler> handlers = new ArrayList<RequestHandler>();
+	private List<RequestHandler<?,?>> handlers() {
+		List<RequestHandler<?,?>> handlers = new ArrayList<RequestHandler<?,?>>();
 		handlers.add(new ExtensionLifeCycleHandler(pm));
-		handlers.add(new DocumentLifeCycleHandler(dm));
-		handlers.add(new CompletionHandler(dm));
-		handlers.add(new HoverHandler(dm));
-		handlers.add(new NavigateToDefinitionHandler(dm));
-		handlers.add(new WorkspaceEventsHandler(pm,dm));
-		handlers.add(new DocumentSymbolHandler(dm));
-		handlers.add(new FindSymbolsHandler());
+//		handlers.add(new DocumentLifeCycleHandler(dm));
+//		handlers.add(new CompletionHandler(dm));
+//		handlers.add(new HoverHandler(dm));
+//		handlers.add(new NavigateToDefinitionHandler(dm));
+//		handlers.add(new WorkspaceEventsHandler(pm,dm));
+//		handlers.add(new DocumentSymbolHandler(dm));
+//		handlers.add(new FindSymbolsHandler());
 		return handlers;
 	}
 
@@ -87,10 +85,4 @@ public class JavaLanguageServerPlugin implements BundleActivator, MessageCallbac
 		instance.connection.logMessage(type, msg);
 	}
 
-	@Override
-	public void messageReceived(Message message) {
-		
-	System.out.print(	message.getJsonrpc());
-		
-	}
 }

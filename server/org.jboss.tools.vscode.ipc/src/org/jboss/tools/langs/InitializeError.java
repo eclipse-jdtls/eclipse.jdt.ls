@@ -5,11 +5,6 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * The error returned if the initilize request fails.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class InitializeError {
 
@@ -51,6 +46,11 @@ public class InitializeError {
      */
     public void setRetry(Boolean retry) {
         this.retry = retry;
+    }
+
+    public InitializeError withRetry(Boolean retry) {
+        this.retry = retry;
+        return this;
     }
 
 }

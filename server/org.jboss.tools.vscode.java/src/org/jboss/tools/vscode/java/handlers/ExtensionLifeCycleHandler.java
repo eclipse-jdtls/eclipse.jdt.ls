@@ -6,10 +6,6 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.ipc.ServiceStatus;
@@ -28,7 +24,7 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
  * @author IBM Corporation (Markus Keller)
  *
  */
-final public class ExtensionLifeCycleHandler implements RequestHandler {
+final public class ExtensionLifeCycleHandler implements RequestHandler<InitializeParams,InitializeResult> {
 	
 	private static final String REQ_INIT = "initialize";
 	private static final String REQ_SHUTDOWN  = "shutdown";
@@ -137,6 +133,22 @@ final public class ExtensionLifeCycleHandler implements RequestHandler {
 	@Override
 	public void  process(JSONRPC2Notification request) {
 	}
+
+	@Override
+	public InitializeResult handle(InitializeParams param) {
+		projectsManager.createProject(param.getRootPath());
+		InitializeResult result = new InitializeResult();
+		ServerCapabilities capabilities = new ServerCapabilities();
+		capabilities
+		.withTextDocumentSync(new Double(2))
+		.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.FALSE))
+		.withHoverProvider(Boolean.TRUE)
+		.withDefinitionProvider(Boolean.TRUE)
+		.withDocumentSymbolProvider(Boolean.TRUE)
+		.withWorkspaceSymbolProvider(Boolean.TRUE);
+		return result.withCapabilities(capabilities);
+	}
+
 	
 	private class ServerStatusMonitor extends NullProgressMonitor{
 		private double totalWork;

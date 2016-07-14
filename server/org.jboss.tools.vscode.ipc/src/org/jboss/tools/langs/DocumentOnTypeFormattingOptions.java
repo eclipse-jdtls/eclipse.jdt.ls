@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
  * 
  */
 @Generated("org.jsonschema2pojo")
-public class DocumentOnTypeFormattingProvider {
+public class DocumentOnTypeFormattingOptions {
 
     /**
      * A character on which formatting should be triggered, like `}`.
@@ -50,6 +50,11 @@ public class DocumentOnTypeFormattingProvider {
         this.firstTriggerCharacter = firstTriggerCharacter;
     }
 
+    public DocumentOnTypeFormattingOptions withFirstTriggerCharacter(String firstTriggerCharacter) {
+        this.firstTriggerCharacter = firstTriggerCharacter;
+        return this;
+    }
+
     /**
      * More trigger characters.
      * 
@@ -68,6 +73,11 @@ public class DocumentOnTypeFormattingProvider {
      */
     public void setMoreTriggerCharacter(List<String> moreTriggerCharacter) {
         this.moreTriggerCharacter = moreTriggerCharacter;
+    }
+
+    public DocumentOnTypeFormattingOptions withMoreTriggerCharacter(List<String> moreTriggerCharacter) {
+        this.moreTriggerCharacter = moreTriggerCharacter;
+        return this;
     }
 
 }

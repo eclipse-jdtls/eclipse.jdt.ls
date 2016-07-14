@@ -5,11 +5,11 @@ import javax.annotation.Generated;
 
 
 /**
- * Defines the capabilities provided by the client.
+ * Holds changes to existing resources.
  * 
  */
 @Generated("org.jsonschema2pojo")
-public class ClientCapabilities {
+public class Changes {
 
 
 }

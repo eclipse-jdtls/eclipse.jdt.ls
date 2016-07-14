@@ -1,17 +1,12 @@
 
 package org.jboss.tools.langs;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * Represents a reference to a command. Provides a title which will be used to represent a command in the UI and, optionally, an array of arguments which will be passed to the command handler function when invoked.
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class Command {
 
@@ -30,12 +25,14 @@ public class Command {
     @Expose
     private String command;
     /**
-     * Arguments that the command handler should be invoked with.
+     * Arguments that the command handler should be
+     * 
+     * invoked with.
      * 
      */
     @SerializedName("arguments")
     @Expose
-    private Set<Object> arguments = new LinkedHashSet<Object>();
+    private List<Object> arguments = new ArrayList<Object>();
 
     /**
      * Title of the command, like `save`.
@@ -55,6 +52,11 @@ public class Command {
      */
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Command withTitle(String title) {
+        this.title = title;
+        return this;
     }
 
     /**
@@ -77,24 +79,38 @@ public class Command {
         this.command = command;
     }
 
+    public Command withCommand(String command) {
+        this.command = command;
+        return this;
+    }
+
     /**
-     * Arguments that the command handler should be invoked with.
+     * Arguments that the command handler should be
+     * 
+     * invoked with.
      * 
      * @return
      *     The arguments
      */
-    public Set<Object> getArguments() {
+    public List<Object> getArguments() {
         return arguments;
     }
 
     /**
-     * Arguments that the command handler should be invoked with.
+     * Arguments that the command handler should be
+     * 
+     * invoked with.
      * 
      * @param arguments
      *     The arguments
      */
-    public void setArguments(Set<Object> arguments) {
+    public void setArguments(List<Object> arguments) {
         this.arguments = arguments;
+    }
+
+    public Command withArguments(List<Object> arguments) {
+        this.arguments = arguments;
+        return this;
     }
 
 }

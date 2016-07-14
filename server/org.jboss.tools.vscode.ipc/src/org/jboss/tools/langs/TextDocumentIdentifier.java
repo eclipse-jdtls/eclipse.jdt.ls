@@ -5,11 +5,6 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-
-/**
- * Text documents are identified using an URI. On the protocol level URI's are passed as strings
- * 
- */
 @Generated("org.jsonschema2pojo")
 public class TextDocumentIdentifier {
 
@@ -39,6 +34,11 @@ public class TextDocumentIdentifier {
      */
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public TextDocumentIdentifier withUri(String uri) {
+        this.uri = uri;
+        return this;
     }
 
 }

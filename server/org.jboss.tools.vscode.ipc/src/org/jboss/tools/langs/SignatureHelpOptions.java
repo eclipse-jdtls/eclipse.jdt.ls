@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
  * 
  */
 @Generated("org.jsonschema2pojo")
-public class SignatureHelpProvider {
+public class SignatureHelpOptions {
 
     /**
      * The characters that trigger signature help
@@ -47,6 +47,11 @@ public class SignatureHelpProvider {
      */
     public void setTriggerCharacters(List<String> triggerCharacters) {
         this.triggerCharacters = triggerCharacters;
+    }
+
+    public SignatureHelpOptions withTriggerCharacters(List<String> triggerCharacters) {
+        this.triggerCharacters = triggerCharacters;
+        return this;
     }
 
 }

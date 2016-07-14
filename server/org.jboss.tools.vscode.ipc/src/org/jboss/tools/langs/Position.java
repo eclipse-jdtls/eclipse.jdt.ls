@@ -9,6 +9,10 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Position in a text document expressed as zero-based line and character offset.
  * 
+ * The Position namespace provides helper functions to work with
+ * 
+ * [Position](#Position) literals.
+ * 
  */
 @Generated("org.jsonschema2pojo")
 public class Position {
@@ -19,14 +23,14 @@ public class Position {
      */
     @SerializedName("line")
     @Expose
-    private Integer line;
+    private Double line;
     /**
      * Character offset on a line in a document (zero-based).
      * 
      */
     @SerializedName("character")
     @Expose
-    private Integer character;
+    private Double character;
 
     /**
      * Line position in a document (zero-based).
@@ -34,7 +38,7 @@ public class Position {
      * @return
      *     The line
      */
-    public Integer getLine() {
+    public Double getLine() {
         return line;
     }
 
@@ -44,8 +48,13 @@ public class Position {
      * @param line
      *     The line
      */
-    public void setLine(Integer line) {
+    public void setLine(Double line) {
         this.line = line;
+    }
+
+    public Position withLine(Double line) {
+        this.line = line;
+        return this;
     }
 
     /**
@@ -54,7 +63,7 @@ public class Position {
      * @return
      *     The character
      */
-    public Integer getCharacter() {
+    public Double getCharacter() {
         return character;
     }
 
@@ -64,8 +73,13 @@ public class Position {
      * @param character
      *     The character
      */
-    public void setCharacter(Integer character) {
+    public void setCharacter(Double character) {
         this.character = character;
+    }
+
+    public Position withCharacter(Double character) {
+        this.character = character;
+        return this;
     }
 
 }

@@ -32,7 +32,7 @@ public class InitializeParams {
      */
     @SerializedName("capabilities")
     @Expose
-    private ClientCapabilities capabilities;
+    private Object capabilities;
     /**
      * User provided initialization options.
      * 
@@ -65,6 +65,11 @@ public class InitializeParams {
         this.processId = processId;
     }
 
+    public InitializeParams withProcessId(Double processId) {
+        this.processId = processId;
+        return this;
+    }
+
     /**
      * The rootPath of the workspace. Is null
      * 
@@ -89,13 +94,18 @@ public class InitializeParams {
         this.rootPath = rootPath;
     }
 
+    public InitializeParams withRootPath(String rootPath) {
+        this.rootPath = rootPath;
+        return this;
+    }
+
     /**
      * Defines the capabilities provided by the client.
      * 
      * @return
      *     The capabilities
      */
-    public ClientCapabilities getCapabilities() {
+    public Object getCapabilities() {
         return capabilities;
     }
 
@@ -105,8 +115,13 @@ public class InitializeParams {
      * @param capabilities
      *     The capabilities
      */
-    public void setCapabilities(ClientCapabilities capabilities) {
+    public void setCapabilities(Object capabilities) {
         this.capabilities = capabilities;
+    }
+
+    public InitializeParams withCapabilities(Object capabilities) {
+        this.capabilities = capabilities;
+        return this;
     }
 
     /**
@@ -127,6 +142,11 @@ public class InitializeParams {
      */
     public void setInitializationOptions(Object initializationOptions) {
         this.initializationOptions = initializationOptions;
+    }
+
+    public InitializeParams withInitializationOptions(Object initializationOptions) {
+        this.initializationOptions = initializationOptions;
+        return this;
     }
 
 }
