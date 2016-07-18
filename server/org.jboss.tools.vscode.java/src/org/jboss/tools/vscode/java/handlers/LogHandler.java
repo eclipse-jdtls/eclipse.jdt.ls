@@ -34,7 +34,7 @@ public class LogHandler {
 
 	public void install(JavaClientConnection rcpConnection) {
 	    this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-	    this.logLevelMask = getLogLevelMask(System.getProperty("log.level"));
+	    this.logLevelMask = getLogLevelMask(System.getProperty("log.level", ""));//Empty by default
 	    this.calendar = Calendar.getInstance();
 	    this.connection = rcpConnection;
 		
