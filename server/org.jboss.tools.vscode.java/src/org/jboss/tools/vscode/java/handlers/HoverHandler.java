@@ -1,62 +1,38 @@
 package org.jboss.tools.vscode.java.handlers;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.jboss.tools.langs.Hover;
 import org.jboss.tools.langs.TextDocumentPositionParams;
-import org.eclipse.jdt.core.ICompilationUnit;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.HoverInfoProvider;
 
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
-
-public class HoverHandler implements RequestHandler<TextDocumentPositionParams, Hover>{
+public class HoverHandler extends AbstractRequestHandler implements RequestHandler<TextDocumentPositionParams, Hover>{
 	
-	private static final String REQ_HOVER = "textDocument/hover";
-
 	public HoverHandler() {
 	}
 
 	@Override
 	public boolean canHandle(String request) {
-		return REQ_HOVER.equals(request);
+		return LSPMethods.DOCUMENT_HOVER.getMethod().equals(request);
 	}
 
 	@Override
-	public JSONRPC2Response process(JSONRPC2Request request) {
-		ICompilationUnit unit = resolveCompilationUnit(request);
-		int[] position = JsonRpcHelpers.readTextDocumentPosition(request);
-	
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		Map<String,Object> result = new HashMap<String,Object>();		
+	public Hover handle(TextDocumentPositionParams param) {
+		ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
 		
-		String hover = computeHover(unit ,position[0],position[1]);
+		String hover = computeHover(unit ,param.getPosition().getLine().intValue(),
+				param.getPosition().getCharacter().intValue());
 		if (hover != null && hover.length() > 0) {
-//			Map<String,Object> markedString = new HashMap<String,Object>();
-//			markedString.put("language","html");
-//			markedString.put("value",hover);
-			result.put("contents",hover);
-			response.setResult(result);
+			return new Hover().withContents(hover);
 		}
-		return response;
+		return null;
 	}
 
-	@Override
-	public void process(JSONRPC2Notification request) {
-		// not needed
-	}
-	 
+
 	public String computeHover(ICompilationUnit unit, int line, int column) {
 		HoverInfoProvider provider = new HoverInfoProvider(unit);
 		return provider.computeHover(line,column);
-		
 	}	
-	@Override
-	public Hover handle(TextDocumentPositionParams param) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

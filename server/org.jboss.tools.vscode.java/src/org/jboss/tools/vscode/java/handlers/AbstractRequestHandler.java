@@ -2,8 +2,6 @@ package org.jboss.tools.vscode.java.handlers;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -15,24 +13,11 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.model.Location;
-import org.jboss.tools.vscode.java.model.Position;
-import org.jboss.tools.vscode.java.model.Range;
+import org.jboss.tools.langs.Location;
+import org.jboss.tools.langs.Range;
 
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
+public abstract class AbstractRequestHandler {
 
-public abstract class AbstractRequestHandler implements RequestHandler {
-
-	protected ICompilationUnit resolveCompilationUnit(JSONRPC2Request request) {
-		return resolveCompilationUnit(JsonRpcHelpers.readTextDocumentUri(request));		
-	}
-	
-	protected ICompilationUnit resolveCompilationUnit(JSONRPC2Notification notification) {
-		return resolveCompilationUnit(JsonRpcHelpers.readTextDocumentUri(notification));		
-	}
-	
 	protected ICompilationUnit resolveCompilationUnit(String uri) {
 		String path = null;
 		try {
@@ -50,7 +35,8 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 		return null;		
 	}
 	
-	protected Location getLocation(IJavaElement element) throws JavaModelException {
+	
+	protected Location toLocation(IJavaElement element) throws JavaModelException{
 		ICompilationUnit unit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 		if (unit == null) {
 			return null;
@@ -61,49 +47,55 @@ public abstract class AbstractRequestHandler implements RequestHandler {
 			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
 			int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(),nameRange.getOffset());
 			int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), nameRange.getOffset() + nameRange.getLength());
+			org.jboss.tools.langs.Range range = new org.jboss.tools.langs.Range();
 			
 			if(loc != null){
-				$.setLine(loc[0]);
-				$.setColumn(loc[1]);
+				range.setStart(new org.jboss.tools.langs.Position().withLine(new Double(loc[0]))
+						.withCharacter(new Double(loc[1])));
 			}
 			if(endLoc != null ){
-				$.setEndLine(endLoc[0]);
-				$.setEndColumn(endLoc[1]);
+				range.setEnd(new org.jboss.tools.langs.Position().withLine(new Double(endLoc[0]))
+						.withCharacter(new Double(endLoc[1])));
 			}
-			return $;
+			return $.withRange(range);
 		}
 		return null;
 	}
 	
-	protected Location getLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
+	protected Location toLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
 		Location result = new Location();
 		result.setUri(getFileURI(unit));
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
-
+		
+		org.jboss.tools.langs.Range range = new org.jboss.tools.langs.Range();
 		if (loc != null) {
-			result.setLine(loc[0]);
-			result.setColumn(loc[1]);
+			range.withStart(new org.jboss.tools.langs.Position().withLine(Double.valueOf(loc[0]))
+					.withCharacter(Double.valueOf(loc[1])));
 		}
 		if (endLoc != null) {
-			result.setEndLine(endLoc[0]);
-			result.setEndColumn(endLoc[1]);
+			range.withEnd(new org.jboss.tools.langs.Position().withLine(Double.valueOf(endLoc[0]))
+					.withCharacter(Double.valueOf(endLoc[1])));
 		}
-		return result;
+		return result.withRange(range);
 	}
 	
-	protected Range getRange(ICompilationUnit unit, int offset, int length) throws JavaModelException {
+	protected Range toRange(ICompilationUnit unit, int offset, int length) throws JavaModelException {
 		Range result = new Range();
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
 
 		if (loc != null && endLoc != null) {
-			result.start = new Position(loc[0], loc[1]);
-			result.end = new Position(endLoc[0], endLoc[1]);
+			result.setStart(new org.jboss.tools.langs.Position().withLine(Double.valueOf(loc[0]))
+					.withCharacter(Double.valueOf(loc[1])));
+			
+			result.setEnd(new org.jboss.tools.langs.Position().withLine(Double.valueOf(endLoc[0]))
+					.withCharacter(Double.valueOf(endLoc[1])));
+					
 		}
 		return result;
-
 	}
+	
 	
 	public static String getFileURI(ICompilationUnit cu) {
 		return getFileURI(cu.getResource());

@@ -14,7 +14,7 @@ public abstract class Message
 
     @SerializedName("jsonrpc")
     @Expose
-    private String jsonrpc;
+    private String jsonrpc ="2.0";
 
     /**
      * 

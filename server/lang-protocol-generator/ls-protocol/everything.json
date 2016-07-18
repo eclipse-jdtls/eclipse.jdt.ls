@@ -190,6 +190,12 @@
         },
         "documentSymbolParams": {
             "$ref": "#/definitions/DocumentSymbolParams"
+        },
+        "referenceParams": {
+            "$ref": "#/definitions/ReferenceParams"
+        },
+        "codeLensParams": {
+            "$ref": "#/definitions/CodeLensParams"
         }
     },
     "additionalProperties": false,
@@ -1164,6 +1170,43 @@
                 "textDocument": {
                     "$ref": "#/definitions/TextDocumentIdentifier",
                     "description": "The text document."
+                }
+            },
+            "additionalProperties": false
+        },
+        "ReferenceParams": {
+            "type": "object",
+            "properties": {
+                "context": {
+                    "$ref": "#/definitions/ReferenceContext"
+                },
+                "textDocument": {
+                    "$ref": "#/definitions/TextDocumentIdentifier",
+                    "description": "The text document."
+                },
+                "position": {
+                    "$ref": "#/definitions/Position",
+                    "description": "The position inside the text document."
+                }
+            },
+            "additionalProperties": false
+        },
+        "ReferenceContext": {
+            "type": "object",
+            "properties": {
+                "includeDeclaration": {
+                    "description": "Include the declaration of the current symbol.",
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "CodeLensParams": {
+            "type": "object",
+            "properties": {
+                "textDocument": {
+                    "$ref": "#/definitions/TextDocumentIdentifier",
+                    "description": "The document to request code lens for."
                 }
             },
             "additionalProperties": false

@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
 import java.nio.charset.Charset;
 
+import org.jboss.tools.vscode.ipc.IPCPlugin;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
@@ -38,6 +39,7 @@ public class NamedPipeConnection extends AbstractConnection {
 					message = TransportMessage.fromStream(stream, DEFAULT_CHARSET);
 					if(message == null ){
 						//Stream disconnected exit reader thread
+						IPCPlugin.logError("Empty message read");
 						break;
 					}
 					inboundQueue.add(message);
@@ -59,17 +61,17 @@ public class NamedPipeConnection extends AbstractConnection {
 		
 		@Override
 		public void run() {
-			try {
-				TransportMessage message=  outboundQueue.take();
-				message.send(stream, DEFAULT_CHARSET);
-				stream.flush();
-				
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			while (true) {
+				try {
+					TransportMessage message = outboundQueue.take();
+					message.send(stream, DEFAULT_CHARSET);
+					stream.flush();
+				} catch (InterruptedException e) {
+					break;//exit
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}

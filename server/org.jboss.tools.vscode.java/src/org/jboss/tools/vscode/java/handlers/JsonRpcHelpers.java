@@ -7,53 +7,7 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Error;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
-
 final public class JsonRpcHelpers {
-
-	public static JSONRPC2Response methodNotFound(JSONRPC2Request request){
-		return new JSONRPC2Response(new JSONRPC2Error(JSONRPC2Error.METHOD_NOT_FOUND.getCode(), request.getMethod() +  " not found"),request.getID());
-		
-	}
-	
-	public static String readTextDocumentUri(JSONRPC2Request request) {
-        Map<String, Object> params = request.getNamedParams();
-        if (!params.containsKey("textDocument")) {
-            return null;
-        }
-        @SuppressWarnings("unchecked")
-		Map<String, Object> textDocument = (Map<String, Object>) params.get("textDocument");
-        return (String) textDocument.get("uri");
-    }
-	
-	public static String readTextDocumentUri(JSONRPC2Notification notification) {
-		Map<String, Object> params = notification.getNamedParams();
-		if (!params.containsKey("textDocument")) {
-			return null;
-		}
-		@SuppressWarnings("unchecked")
-		Map<String, Object> textDocument = (Map<String, Object>) params.get("textDocument");
-		return (String) textDocument.get("uri");
-	}
-	
-	/**
-	 * Returns line number on slot 0 and column on slot 1 of the 
-	 * returned array.
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public static int[] readTextDocumentPosition(JSONRPC2Request request){
-		Map<String, Object> params = request.getNamedParams();
-		if(!params.containsKey("position")) return null;
-		Map<String, Object> position = (Map<String, Object>) params.get("position");
-		Number line = (Number) position.get("line");
-		Number charn = (Number) position.get("character"); 
-		return new int[] {line.intValue(), charn.intValue()};
-	}
 	
 	/**
 	 * Convert line, column to a document offset.  

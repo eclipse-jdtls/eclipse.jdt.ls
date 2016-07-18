@@ -20,7 +20,7 @@ import {
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 		RenameRequest, RenameParams,
-		DocumentSymbolParams
+		DocumentSymbolParams, ReferenceParams, CodeLensParams
 } from './protocol';
 import {
 		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
@@ -92,6 +92,8 @@ export interface AllMessages{
 		documentOnTypeFormattingParams:DocumentOnTypeFormattingParams,
 		renameParams:RenameParams
 		documentSymbolParams:DocumentSymbolParams
+		referenceParams: ReferenceParams
+		codeLensParams : CodeLensParams
 }
 
 export interface AllProtocol{
@@ -151,4 +153,6 @@ export interface AllProtocol{
 		documentOnTypeFormattingParams:DocumentOnTypeFormattingParams,
 		renameParams:RenameParams
 		documentSymbolParams:DocumentSymbolParams
+		referenceParams : ReferenceParams
+		codeLensParams : CodeLensParams
 }

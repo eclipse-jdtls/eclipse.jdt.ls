@@ -19,13 +19,14 @@ import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.langs.DocumentFormattingParams;
+import org.jboss.tools.langs.DocumentRangeFormattingParams;
+import org.jboss.tools.langs.FormattingOptions;
+import org.jboss.tools.langs.Position;
+import org.jboss.tools.langs.Range;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.model.Position;
-import org.jboss.tools.vscode.java.model.Range;
-
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
 import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
 
@@ -34,36 +35,45 @@ import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
  */
 public class FormatterHandler extends AbstractRequestHandler {
 	
-	private static final String REQ_FORMATTING = "textDocument/formatting";
-	private static final String REQ_RANGE_FORMATTING = "textDocument/rangeFormatting";
+	
+	public class DocFormatter implements RequestHandler<DocumentFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
 
-	@Override
-	public boolean canHandle(String request) {
-		return REQ_FORMATTING.equals(request)
-				|| REQ_RANGE_FORMATTING.equals(request);
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_FORMATTING.getMethod().equals(request);
+		}
+
+		@Override
+		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param) {
+			ICompilationUnit cu = resolveCompilationUnit(param.getTextDocument().getUri());
+			return format(cu,param.getOptions(), null);
+		}
+		
 	}
+	
+	public class RangeFormatter implements RequestHandler<DocumentRangeFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
 
-	@Override
-	public JSONRPC2Response process(JSONRPC2Request request) {
-		List<org.jboss.tools.vscode.java.model.TextEdit> edits = format(request);
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		response.setResult(edits);
-		return response;
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_RANGE_FORMATTING.getMethod().equals(request);
+		}
+
+		@Override
+		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param) {
+			ICompilationUnit cu = resolveCompilationUnit(param.getTextDocument().getUri());
+			return format(cu,param.getOptions(),param.getRange());
+		}
 	}
-
-	@Override
-	public void process(JSONRPC2Notification request) {
-		// not needed
-	}
-
-	private List<org.jboss.tools.vscode.java.model.TextEdit> format(JSONRPC2Request request) {
-		ICompilationUnit cu = resolveCompilationUnit(request);
-		Map<String, String> eclipseOptions = getOptions(request, cu);
-		CodeFormatter formatter = ToolFactory.createCodeFormatter(eclipseOptions);
+	
+	private List<org.jboss.tools.langs.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
+	
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
 		try {
 			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
-			IRegion region = getRegion(request, document);
+			IRegion region = (range == null ? new Region(0,document.getLength()) : getRegion(range,document));
+			// could not calculate region abort.
+			if(region == null ) return null;	
 			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, document.get(), region.getOffset(), region.getLength(), 0, lineDelimiter);
 			MultiTextEdit flatEdit = TextEditUtil.flatten(format);
 			return convertEdits(flatEdit.getChildren(), document);
@@ -73,37 +83,27 @@ public class FormatterHandler extends AbstractRequestHandler {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private IRegion getRegion(JSONRPC2Request request, IDocument document) {
-		if (REQ_RANGE_FORMATTING.equals(request.getMethod())) {
-			Map<String, Object> range = (Map<String, Object>) request.getNamedParams().get("range");
-			Map<String, Object> start = (Map<String, Object>) range.get("start");
-			Long line = (Long) start.get("line");
-			Long character = (Long) start.get("character");
+	private IRegion getRegion(Range range, IDocument document) {
 			try {
-				int offset = document.getLineOffset(line.intValue()) + character.intValue();
-				Map<String, Object> end = (Map<String, Object>) range.get("end");
-				line = (Long) end.get("line");
-				character = (Long) end.get("character");
-				int endOffset = document.getLineOffset(line.intValue()) + character.intValue();
+				int offset = document.getLineOffset(range.getStart().getLine().intValue()) 
+						+ range.getStart().getCharacter().intValue();
+				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) 
+						+ range.getEnd().getCharacter().intValue();
 				int length = endOffset - offset;
 				return new Region(offset, length);
 			} catch (BadLocationException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
-		}
-		return new Region(0, document.getLength());
+			return null;
 	}
 
-	private static Map<String, String> getOptions(JSONRPC2Request request, ICompilationUnit cu) {
+	private static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
 		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
-		@SuppressWarnings("unchecked")
-		Map<String, Object> namedParams = (Map<String, Object>) request.getNamedParams().get("options");
-		Long tabSize = (Long) namedParams.get("tabSize");
+		Long tabSize = options.getTabSize().longValue();
 		if (tabSize != null && tabSize > 0) {
 			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, tabSize.toString());
 		}
-		Boolean insertSpaces = (Boolean) namedParams.get("insertSpaces");
+		Boolean insertSpaces = options.getInsertSpaces();
 		if (insertSpaces != null) {
 			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 		}
@@ -111,20 +111,18 @@ public class FormatterHandler extends AbstractRequestHandler {
 	}
 
 
-	private static List<org.jboss.tools.vscode.java.model.TextEdit> convertEdits(TextEdit[] edits, IDocument document) {
+	private static List<org.jboss.tools.langs.TextEdit> convertEdits(TextEdit[] edits, IDocument document) {
 		return Arrays.stream(edits).map(t -> convertEdit(t, document)).collect(Collectors.toList());
 	}
 
-	private static org.jboss.tools.vscode.java.model.TextEdit convertEdit(TextEdit edit, IDocument document) {
-		org.jboss.tools.vscode.java.model.TextEdit textEdit = new org.jboss.tools.vscode.java.model.TextEdit();
+	private static org.jboss.tools.langs.TextEdit convertEdit(TextEdit edit, IDocument document) {
+		org.jboss.tools.langs.TextEdit textEdit  = new org.jboss.tools.langs.TextEdit();
 		if (edit instanceof ReplaceEdit) {
 			ReplaceEdit replaceEdit = (ReplaceEdit) edit;
 			textEdit.setNewText(replaceEdit.getText());
-			Range range = new Range();
 			int offset = edit.getOffset();
-			range.start = createPosition(document, offset);
-			range.end = createPosition(document, offset + edit.getLength());
-			textEdit.setRange(range);
+			return textEdit.withRange(new Range().withStart(createPosition(document,offset))
+					.withEnd(createPosition(document, offset + edit.getLength())));
 		}
 		return textEdit;
 	}
@@ -134,8 +132,8 @@ public class FormatterHandler extends AbstractRequestHandler {
 		Position start =  new Position();
 		try {
 			int lineOfOffset = document.getLineOfOffset(offset);
-			start.line = lineOfOffset;
-			start.character = offset - document.getLineOffset(lineOfOffset);
+			start.setLine( Double.valueOf(lineOfOffset));
+			start.setCharacter(Double.valueOf( offset - document.getLineOffset(lineOfOffset)));
 		} catch (BadLocationException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}

@@ -12,7 +12,6 @@ import java.util.Calendar;
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.jboss.tools.vscode.ipc.JsonRpcConnection;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 

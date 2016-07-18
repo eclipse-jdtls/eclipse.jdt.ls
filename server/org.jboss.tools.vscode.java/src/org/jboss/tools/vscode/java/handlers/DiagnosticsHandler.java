@@ -1,19 +1,22 @@
 package org.jboss.tools.vscode.java.handlers;
 
+import static org.jboss.tools.vscode.java.handlers.AbstractRequestHandler.getFileURI;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
+import org.jboss.tools.langs.Diagnostic;
+import org.jboss.tools.langs.Position;
+import org.jboss.tools.langs.PublishDiagnosticsParams;
+import org.jboss.tools.langs.Range;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.langs.base.NotificationMessage;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import static org.jboss.tools.vscode.java.handlers.AbstractRequestHandler.getFileURI;
-
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
 
 public class DiagnosticsHandler implements IProblemRequestor {
 	
@@ -43,23 +46,22 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		JSONRPC2Notification notification = new JSONRPC2Notification("textDocument/publishDiagnostics");
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("uri",getFileURI(this.resource));
-		params.put("diagnostics",toDiagnosticsArray());
-		notification.setNamedParams(params);
-		this.connection.sendNotification(notification);
+		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<PublishDiagnosticsParams>();
+		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
+		message.setParams(new PublishDiagnosticsParams().withUri(getFileURI(this.resource))
+				.withDiagnostics(toDiagnosticsArray()));
+		this.connection.send(message);
 	}
 
-	private List<?> toDiagnosticsArray() {
-		List<Map<String,Object>> array = new ArrayList<Map<String,Object>>();
+	private List<Diagnostic> toDiagnosticsArray() {
+		List<Diagnostic> array = new ArrayList<Diagnostic>();
 		for (IProblem problem : problems) {
-			Map<String, Object> diag = new HashMap<String,Object>();
-			diag.put("range", convertRange(problem));
-			diag.put("severity", convertSeverity(problem));
-			diag.put("code", problem.getID());
-			diag.put("source","Java");
-			diag.put("message",problem.getMessage());
+			Diagnostic diag = new Diagnostic();
+			diag.setSource("Java");
+			diag.setMessage(problem.getMessage());
+			diag.setCode(Integer.valueOf(problem.getID()));
+			diag.setSeverity(Double.valueOf(convertSeverity(problem).doubleValue()));
+			diag.setRange(convertRange(problem));
 			array.add(diag);
 		}
 		return array;
@@ -73,24 +75,23 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		return new Integer(3);
 	}
 
-	private Map<String, Object> convertRange(IProblem problem) {
-		Map<String, Object> range = new HashMap<String, Object>();
-		Map<String, Object> start = new HashMap<String, Object>();
-		Map<String, Object> end = new HashMap<String, Object>();
-		start.put("line",problem.getSourceLineNumber()-1);// VSCode is 0-based
-		end.put("line",problem.getSourceLineNumber()-1);
+	private Range convertRange(IProblem problem) {
+		Range range = new Range();
+		Position start = new Position();
+		Position end = new Position();
+		
+		start.setLine(Double.valueOf(problem.getSourceLineNumber()-1));// VSCode is 0-based
+		end.setLine(Double.valueOf(problem.getSourceLineNumber()-1));
 		if(problem instanceof DefaultProblem){
 			DefaultProblem dProblem = (DefaultProblem)problem;
-			start.put("character", dProblem.getSourceColumnNumber() - 1);
+			start.setCharacter(Double.valueOf(dProblem.getSourceColumnNumber() - 1));
 			int offset = 0;
 			if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {
 				offset = dProblem.getSourceEnd() - dProblem.getSourceStart() + 1;
 			}
-			end.put("character", dProblem.getSourceColumnNumber() - 1 + offset);
+			end.setCharacter(Double.valueOf(dProblem.getSourceColumnNumber() - 1 + offset));
 		}
-		range.put("start",start);
-		range.put("end",end);
-		return range;
+		return range.withEnd(end).withStart(start);
 	}
 
 	@Override

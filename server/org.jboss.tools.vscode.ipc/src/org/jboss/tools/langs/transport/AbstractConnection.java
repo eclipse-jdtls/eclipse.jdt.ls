@@ -2,15 +2,12 @@ package org.jboss.tools.langs.transport;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.jboss.tools.vscode.ipc.IPCPlugin;
 
 public abstract class AbstractConnection implements Connection {
 
-	private static final Logger LOGGER = Logger.getLogger(AbstractConnection.class.getName());
-
 	private MessageListener listener;
-
 
 	protected final BlockingQueue<TransportMessage> inboundQueue = new LinkedBlockingQueue<TransportMessage>();
 	protected final BlockingQueue<TransportMessage> outboundQueue = new LinkedBlockingQueue<TransportMessage>();
@@ -31,16 +28,16 @@ public abstract class AbstractConnection implements Connection {
 					message = inboundQueue.take();
 					if (listener != null) {
 						try {
+							IPCPlugin.logInfo("Dispatch incoming" + message.getContent());
 							listener.messageReceived(message);
 						} catch (Exception e) {
-							LOGGER.log(Level.SEVERE, "Exception on incoming message dispatcher", e);
+							IPCPlugin.logException("Exception on incoming message dispatcher", e);
 						}
 					}
 				}
 			} catch (InterruptedException e) {
 				// stop the dispatcher thread
 			}
-
 		}
 	}
 

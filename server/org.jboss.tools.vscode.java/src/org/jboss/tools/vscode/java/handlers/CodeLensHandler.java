@@ -3,7 +3,6 @@ package org.jboss.tools.vscode.java.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,63 +24,62 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.jboss.tools.langs.CodeLens;
+import org.jboss.tools.langs.CodeLensParams;
+import org.jboss.tools.langs.Command;
+import org.jboss.tools.langs.Location;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.model.Location;
-import org.jboss.tools.vscode.java.model.Range;
-
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 
 public class CodeLensHandler extends AbstractRequestHandler {
-	public static final String REQ_CODE_LENSE = "textDocument/codeLens";
-	public static final String REQ_CODE_LENSE_RESOLVE = "codeLens/resolve";
 
-	public CodeLensHandler() {
-	}
+	public class CodeLensProvider implements RequestHandler<CodeLensParams, List<CodeLens>>{
 
-	@Override
-	public boolean canHandle(String request) {
-		return REQ_CODE_LENSE.equals(request) || REQ_CODE_LENSE_RESOLVE.equals(request);
-	}
-
-	@Override
-	public JSONRPC2Response process(JSONRPC2Request request) {
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		if (REQ_CODE_LENSE.equals(request.getMethod())) {
-			ICompilationUnit unit = this.resolveCompilationUnit(request);
-			List<Map<String, Object>> result = getCodeLensSymbols(unit);
-			response.setResult(result);
-		} else {
-			Map<String, Object> result = resolve(request.getNamedParams());
-			response.setResult(result);
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_CODELENS.getMethod().equals(request);
 		}
-		return response;
+
+		@Override
+		public List<CodeLens> handle(CodeLensParams param) {
+			ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
+			return getCodeLensSymbols(unit);
+		}
+		
 	}
+	
+	public class CodeLensResolver implements RequestHandler<CodeLens, CodeLens>{
+
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.CODELENS_RESOLVE.getMethod().equals(request);
+		}
+
+		@Override
+		public CodeLens handle(CodeLens param) {
+			return resolve(param);
+		}
+	}
+	
 
 	@SuppressWarnings("unchecked")
-	private Map<String, Object> resolve(Map<String, Object> namedParams) {
+	private  CodeLens resolve(CodeLens lens) {
 		try {
-			HashMap<String, Object> lens = new HashMap<String, Object>();
-			lens.putAll(namedParams);
-			List<Object> data = (List<Object>) lens.get("data");
+			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
 			Map<String, Object> position = (Map<String, Object>) data.get(1);
-
 			ICompilationUnit unit = resolveCompilationUnit(uri);
-			IJavaElement element = findElementAtSelection(unit, ((Long) position.get("line")).intValue(), ((Long) position.get("character")).intValue());
-			List<Map<String, Object>> locations = findReferences(element);
+			IJavaElement element = findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
+			List<Location> locations = findReferences(element);
 			int nReferences = locations.size();
-			Map<String, Object> command = new HashMap<String, Object>();
-			command.put("title", nReferences == 1 ? "1 reference" : nReferences + " references");
-			command.put("command", "java.show.references");
-			command.put("arguments", Arrays.asList(uri, position, locations));
-			lens.put("command", command);
-			return lens;
+			lens.setCommand(new Command().withTitle(nReferences == 1 ? "1 reference" : nReferences + " references")
+					.withCommand("java.show.references")
+					.withArguments(Arrays.asList(uri, position, locations)));
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
 		}
-		return namedParams;
+		return lens;
 	}
 
 	private IJavaElement findElementAtSelection(ICompilationUnit unit, int line, int column) throws JavaModelException {
@@ -93,9 +91,9 @@ public class CodeLensHandler extends AbstractRequestHandler {
 
 	}
 
-	private List<Map<String, Object>> findReferences(IJavaElement element) throws JavaModelException, CoreException {
+	private List<Location> findReferences(IJavaElement element) throws JavaModelException, CoreException {
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
-		final List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+		final List<Location> result = new ArrayList<Location>();
 		SearchEngine engine = new SearchEngine();
 		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 				createSearchScope(), new SearchRequestor() {
@@ -110,12 +108,8 @@ public class CodeLensHandler extends AbstractRequestHandler {
 							if (compilationUnit == null) {
 								return;
 							}
-							Location location = getLocation(compilationUnit, match.getOffset(), match.getLength());
-							Map<String, Object> l = new HashMap<String, Object>();
-							l.put("uri", location.getUri());
-							l.put("range", JsonRpcHelpers.convertRange(location.getLine(), location.getColumn(),
-									location.getEndLine(), location.getEndColumn()));
-							result.add(l);
+							Location location = toLocation(compilationUnit, match.getOffset(), match.getLength());
+							result.add(location);
 
 						}
 
@@ -125,10 +119,10 @@ public class CodeLensHandler extends AbstractRequestHandler {
 		return result;
 	}
 
-	private List<Map<String, Object>> getCodeLensSymbols(ICompilationUnit unit) {
+	private List<CodeLens> getCodeLensSymbols(ICompilationUnit unit) {
 		try {
 			IJavaElement[] elements = unit.getChildren();
-			ArrayList<Map<String, Object>> lenses = new ArrayList<Map<String, Object>>(elements.length);
+			ArrayList<CodeLens> lenses = new ArrayList<CodeLens>(elements.length);
 			collectChildren(unit, elements, lenses);
 			return lenses;
 		} catch (JavaModelException e) {
@@ -137,7 +131,7 @@ public class CodeLensHandler extends AbstractRequestHandler {
 		return Collections.emptyList();
 	}
 
-	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<Map<String, Object>> lenses)
+	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<CodeLens> lenses)
 			throws JavaModelException {
 		for (IJavaElement element : elements) {
 			if (element.getElementType() == IJavaElement.TYPE) {
@@ -145,31 +139,18 @@ public class CodeLensHandler extends AbstractRequestHandler {
 			} else if (element.getElementType() != IJavaElement.METHOD) {
 				continue;
 			}
+
+			CodeLens lens = new CodeLens();
 			ISourceRange r = ((ISourceReference) element).getNameRange();
-			Range range = getRange(unit, r.getOffset(), r.getLength());
-
-			HashMap<String, Object> lens = new HashMap<String, Object>();
-			lens.put("range", range.convertForRPC());
-			lens.put("data", Arrays.asList(getFileURI(unit), range.start.convertForRPC()));
-
+			final org.jboss.tools.langs.Range range = toRange(unit, r.getOffset(), r.getLength());
+			lens.setRange(range);
+			lens.setData(Arrays.asList(getFileURI(unit), range.getStart()));
 			lenses.add(lens);
 		}
-	}
-
-	@Override
-	public void process(JSONRPC2Notification request) {
-		// not implemented
 	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
 	}
-}
-
-class CodeLensParams {
-	/**
-	 * The text document's uri.
-	 */
-	String uri;
 }

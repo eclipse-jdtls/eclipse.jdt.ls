@@ -1,7 +1,6 @@
 package org.jboss.tools.vscode.java.handlers;
 
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
@@ -10,6 +9,8 @@ import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.IDocument;
@@ -18,64 +19,96 @@ import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.langs.DidChangeTextDocumentParams;
+import org.jboss.tools.langs.DidCloseTextDocumentParams;
+import org.jboss.tools.langs.DidOpenTextDocumentParams;
+import org.jboss.tools.langs.Range;
+import org.jboss.tools.langs.TextDocumentContentChangeEvent;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
-
-public class DocumentLifeCycleHandler implements RequestHandler<DidOpenTextDocumentParams,Object>{
-	
-	private static final String REQ_OPENED = "textDocument/didOpen";
-	private static final String REQ_CLOSED = "textDocument/didClose";
-	private static final String REQ_CHANGED = "textDocument/didChange";
-	
+public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 	
 	private JavaClientConnection connection;
+	
+	public class ClosedHandler implements RequestHandler<DidCloseTextDocumentParams, Object>{
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_CLOSED.getMethod().equals(request);
+		}
+
+		@Override
+		public Object handle(DidCloseTextDocumentParams param) {
+			try {
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						handleClosed(param);
+					}
+				}, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Handle document close ", e);
+			}
+			return null;
+		}
+		
+	}
+	
+	public class OpenHandler implements RequestHandler<DidOpenTextDocumentParams, Object>{
+
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_OPENED.getMethod().equals(request);
+		}
+
+		@Override
+		public Object handle(DidOpenTextDocumentParams param) {
+			try {
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						handleOpen(param);
+					}
+				}, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Handle document open ", e);
+			}
+			return null;
+		}
+	}
+	
+	public class ChangeHandler implements RequestHandler<DidChangeTextDocumentParams, Object>{
+
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_CHANGED.getMethod().equals(request);
+		}
+
+		@Override
+		public Object handle(DidChangeTextDocumentParams param) {
+			try {
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						handleChanged(param);
+					}
+				}, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Handle document open ", e);
+			}
+			return null;
+		}
+		
+	}
 	
 	public DocumentLifeCycleHandler(JavaClientConnection connection) {
 		this.connection = connection;
 	}
 	
-	@Override
-	public boolean canHandle(String request) {
-		return REQ_OPENED.equals(request) 
-				|| REQ_CLOSED.equals(request)
-				|| REQ_CHANGED.equals(request);
-	}
-
-	@Override
-	public JSONRPC2Response process(JSONRPC2Request request) {
-		return JsonRpcHelpers.methodNotFound(request);
-	}
-
-	@Override
-	public void process(JSONRPC2Notification request) {
-		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor arg0) throws CoreException {
-					JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.process");
-					if(REQ_OPENED.equals(request.getMethod())) {
-						handleOpen(request);
-					}
-					if(REQ_CLOSED.equals(request.getMethod())) {
-						handleClosed(request);
-					}
-					if(REQ_CHANGED.equals(request.getMethod())) {
-						handleChanged(request);
-					}
-				}
-			}, null);
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	private void handleOpen(JSONRPC2Notification request) {
-		ICompilationUnit unit = resolveCompilationUnit(request);
+	private void handleOpen(DidOpenTextDocumentParams params) {
+		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return;
 		}
@@ -84,12 +117,12 @@ public class DocumentLifeCycleHandler implements RequestHandler<DidOpenTextDocum
 			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
 			unit.reconcile();
 		} catch (JavaModelException e) {
-			int x = 20 + 20;
+			JavaLanguageServerPlugin.logException("Creating working copy ",e);
 		}
 	}
 
-	private void handleChanged(JSONRPC2Notification notification) {
-		ICompilationUnit unit = resolveCompilationUnit(notification);
+	private void handleChanged(DidChangeTextDocumentParams params) {
+		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
 		
 		if (!unit.isWorkingCopy()) {
 			return;
@@ -101,31 +134,22 @@ public class DocumentLifeCycleHandler implements RequestHandler<DidOpenTextDocum
 		
 		try {			
 			MultiTextEdit root = new MultiTextEdit();
-			
-			List<Object> contentChanges = (List<Object>) notification.getNamedParams().get("contentChanges");
-			for (Object object : contentChanges) {
-				Map<String, Object> change = (Map<String, Object>) object;
-				String text = (String) change.get("text");
-				Map<String, Object> range = (Map<String, Object>) change.get("range");
-				Map<String, Object> start = (Map<String, Object>) range.get("start");
-				Map<String, Object> end = (Map<String, Object>) range.get("end");
+			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
+			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 				
-				Number startLine = (Number) start.get("line");
-				Number startChar = (Number) start.get("character");
-				Number endLine = (Number) end.get("line");
-				Number endChar = (Number) end.get("character");
+				Range range = changeEvent.getRange();
 				
-				int startOffset = document.getLineOffset(startLine.intValue()) + startChar.intValue(); 
-				int endOffset = document.getLineOffset(endLine.intValue()) + endChar.intValue(); 
+				int startOffset = document.getLineOffset(range.getStart().getLine().intValue()) + range.getStart().getCharacter().intValue(); 
+				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) + range.getEnd().getCharacter().intValue(); 
 				int length = endOffset - startOffset;
 				
 				TextEdit edit = null;
 				if (length == 0) {
-					edit = new InsertEdit(startOffset, text);
-				} else if (text.length() == 0) {
+					edit = new InsertEdit(startOffset, changeEvent.getText());
+				} else if (changeEvent.getText().length() == 0) {
 					edit = new DeleteEdit(startOffset, length);
 				} else {
-					edit = new ReplaceEdit(startOffset, length, text);
+					edit = new ReplaceEdit(startOffset, length, changeEvent.getText());
 				}
 				root.addChild(edit);
 			}
@@ -139,19 +163,14 @@ public class DocumentLifeCycleHandler implements RequestHandler<DidOpenTextDocum
 		}
 	}
 
-	@Override
-	public Object handle(DidOpenTextDocumentParams param) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-		
-	private void handleClosed(JSONRPC2Notification notification) {
-		ICompilationUnit unit = resolveCompilationUnit(notification);
+	private void handleClosed(DidCloseTextDocumentParams params) {
+		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleClosed");
+		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return;
 		}
 		try {
-			unit.discardWorkingCopy();			
+			unit.discardWorkingCopy();
 		} catch (JavaModelException e) {
 		}
 	}

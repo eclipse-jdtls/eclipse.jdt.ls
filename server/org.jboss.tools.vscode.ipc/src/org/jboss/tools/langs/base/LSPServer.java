@@ -65,13 +65,13 @@ public class LSPServer implements MessageListener{
 			}
 			else if(object.has("method")){
 				subType = RequestMessage.class;
-				String method = object.get("method").getAsString();
-				LSPMethods lspm = LSPMethods.fromMethod(method);
-				if(lspm == null){
-					throw new UnsupportedOperationException(method +" is not available at "+LSPMethods.class.getName());
-				}
-				paramType = LSPMethods.fromMethod(method).getRequestType();
 			}
+			String method = object.get("method").getAsString();
+			LSPMethods lspm = LSPMethods.fromMethod(method);
+			if(lspm == null){
+				throw new UnsupportedOperationException(method +" is not available at "+LSPMethods.class.getName());
+			}
+			paramType = LSPMethods.fromMethod(method).getRequestType();
 			return context.deserialize(jsonElement, new ParameterizedTypeImpl(subType,paramType));
 		}
 
@@ -111,7 +111,7 @@ public class LSPServer implements MessageListener{
 	private static LSPServer instance;
 	private List<RequestHandler<?, ?>> handlers;
 	
-	private LSPServer(){
+	protected LSPServer(){
 		GsonBuilder builder = new GsonBuilder();
 		gson = builder.registerTypeAdapter(Message.class,new MessageJSONHandler())
 				.create();
@@ -124,7 +124,7 @@ public class LSPServer implements MessageListener{
 		return instance;
 	}
 	
-	public void connect(List<RequestHandler<?,?>> handlers ) throws LSPClientException{
+	public void connect(List<RequestHandler<?,?>> handlers ) throws LSPException{
 		this.handlers = handlers;
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
 		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
@@ -134,7 +134,7 @@ public class LSPServer implements MessageListener{
 		try {
 			connection.start();
 		} catch (IOException e) {
-			throw new LSPClientException(e);
+			throw new LSPException(e);
 		}
 	}
 	
@@ -162,6 +162,7 @@ public class LSPServer implements MessageListener{
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
 			if (requestHandler.canHandle(request.getMethod())) {
 				send(request.responseWith(requestHandler.handle(request.getParams())));
+				break;
 			}
 		}
 	}
@@ -172,6 +173,7 @@ public class LSPServer implements MessageListener{
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
 			if(requestHandler.canHandle(nm.getMethod())){
 				requestHandler.handle(nm.getParams());
+				break;
 			}
 		}
 	}

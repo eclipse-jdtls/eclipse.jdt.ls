@@ -1,58 +1,28 @@
 package org.jboss.tools.vscode.java.handlers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.jboss.tools.langs.DocumentSymbolParams;
+import org.jboss.tools.langs.SymbolInformation;
+import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.model.SymbolInformation;
 
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Notification;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
-import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
+public class DocumentSymbolHandler extends AbstractRequestHandler implements RequestHandler<DocumentSymbolParams, List<SymbolInformation>>{
 
-public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParams,List<org.jboss.tools.langs.SymbolInformation>>{
-
-	private static final String  REQ_DOC_SYMBOL = "textDocument/documentSymbol";
 	
 	public DocumentSymbolHandler() {
 	}
 
 	@Override
 	public boolean canHandle(String request) {
-		return REQ_DOC_SYMBOL.equals(request);
-	}
-
-	@Override
-	public JSONRPC2Response process(JSONRPC2Request request) {
-		ICompilationUnit unit = this.resolveCompilationUnit(request);
-		String uri = JsonRpcHelpers.readTextDocumentUri(request);
-		
-		SymbolInformation[] elements  = this.getOutline(unit);
-		JSONRPC2Response response = new JSONRPC2Response(request.getID());
-		List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
-		for ( SymbolInformation element : elements ) {
-			Map<String,Object> outlineItem = new HashMap<String,Object>();
-			outlineItem.put("name", element.getName());
-			outlineItem.put("kind", element.getKind());
-			if(element.getContainerName() != null ){
-				outlineItem.put("containerName", element.getContainerName());
-			}
-			Map<String,Object> l = new HashMap<String,Object>();
-			l.put("uri", uri);
-			l.put("range",JsonRpcHelpers.convertRange(element.getLocation().getLine(),
-					element.getLocation().getColumn(),
-					element.getLocation().getEndLine(),
-					element.getLocation().getEndColumn()));
-			outlineItem.put("location",l);
-			result.add(outlineItem);			
-		}
-		response.setResult(result);
-		return response;
+		return LSPMethods.DOCUMENT_SYMBOL.getMethod().equals(request);
 	}
 
 	private SymbolInformation[] getOutline(ICompilationUnit unit) {
@@ -78,23 +48,76 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 					){
 				continue;
 			}
+			
 			SymbolInformation si = new SymbolInformation();
 			si.setName(element.getElementName());
-			si.setKind(SymbolInformation.mapKind(element));
+			si.setKind(new Double(mapKind(element)));
 			if(element.getParent() != null )
 				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(getLocation(element));
+			si.setLocation(toLocation(element));
 			symbols.add(si);
 		}
 	}
 	
 	@Override
-	public void process(JSONRPC2Notification request) {
+	public List<SymbolInformation> handle(DocumentSymbolParams param) {
+		ICompilationUnit unit = this.resolveCompilationUnit(param.getTextDocument().getUri());
+		SymbolInformation[] elements  = this.getOutline(unit);
+		return Arrays.asList(elements);
 	}
-	@Override
-	public List<org.jboss.tools.langs.SymbolInformation> handle(DocumentSymbolParams param) {
-		// TODO Auto-generated method stub
-		return null;
+	
+	public static int mapKind(IJavaElement element) {
+//		/**
+//		* A symbol kind.
+//		*/
+//		export enum SymbolKind {
+//		  File = 1,
+//		  Module = 2,
+//		  Namespace = 3,
+//		  Package = 4,
+//		  Class = 5,
+//		  Method = 6,
+//		  Property = 7,
+//		  Field = 8,
+//		  Constructor = 9,
+//		  Enum = 10,
+//		  Interface = 11,
+//		  Function = 12,
+//		  Variable = 13,
+//		  Constant = 14,
+//		  String = 15,
+//		  Number = 16,
+//		  Boolean = 17,
+//		  Array = 18,
+//		}
+		switch (element.getElementType()) {
+		case IJavaElement.ANNOTATION:
+			return 7; // TODO: find a better mapping 
+		case IJavaElement.CLASS_FILE:
+		case IJavaElement.COMPILATION_UNIT:
+			return 1;
+		case IJavaElement.FIELD:
+			return 8;
+		case IJavaElement.IMPORT_CONTAINER:
+		case IJavaElement.IMPORT_DECLARATION:
+			return 2;
+		case IJavaElement.INITIALIZER:
+			return 9;
+		case IJavaElement.LOCAL_VARIABLE:
+		case IJavaElement.TYPE_PARAMETER:
+			return 13;
+		case IJavaElement.METHOD:
+			return 12;
+		case IJavaElement.PACKAGE_DECLARATION:
+			return 3;
+		case IJavaElement.TYPE:
+			try {
+				return ( ((IType)element).isInterface() ? 11 : 5);
+			} catch (JavaModelException e) {
+				return 5; //fallback 
+			}
+		}
+		return 15;
 	}
 
 }

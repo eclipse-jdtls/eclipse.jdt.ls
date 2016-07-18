@@ -55,7 +55,6 @@ function fork(modulePath, args, options, callback) {
     
     var newEnv = generatePatchedEnv(options.env || process.env, stdInPipeName, stdOutPipeName);
     var childProcess;
-    let serversConnected = 0;
     let streamInfo = {writer : null,
                       reader: null} ;
     // Begin listening to stdout pipe
