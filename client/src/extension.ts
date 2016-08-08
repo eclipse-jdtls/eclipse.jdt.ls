@@ -6,13 +6,13 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 
 var electron = require('./electron_j');
-var rimraf = require('rimraf');
 
 import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn, Uri} from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType, Position as LSPosition, Location as LSLocation, Protocol2Code} from 'vscode-languageclient';
 
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
+var storagePath;
 
 interface StatusReport {
 	message: string;
@@ -27,7 +27,8 @@ function runJavaServer(){
 	return new Promise(function(resolve, reject){
 			let child = 'java';
 			let params = [];
-			let workspacePath = path.resolve( __dirname,"../../server/vscodesws_"+makeRandomHexString(5));
+			let workspacePath = path.resolve( storagePath+'/jdt_ws');
+
 			if (DEBUG) {
 				params.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044');
 				// suspend=y is the default. Use this form if you need to debug the server startup code:
@@ -61,9 +62,8 @@ function runJavaServer(){
 
 export function activate(context: ExtensionContext) {
 
-	//clean old workspaces 
-	//TODO: run this during shutdown.
-	cleanWorkspaces();
+	//Save storage path for later
+	storagePath = context.storagePath;
 
 	// If the extension is launch in debug mode the debug server options are use
 	// Otherwise the run options are used
@@ -125,28 +125,4 @@ export function activate(context: ExtensionContext) {
 	// Push the disposable to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
-}
-
-
-function makeRandomHexString(length) {
-    var chars = ['0', '1', '2', '3', '4', '5', '6', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-    var result = '';
-    for (var i = 0; i < length; i++) {
-        var idx = Math.floor(chars.length * Math.random());
-        result += chars[idx];
-    }
-    return result;
-}
-
-function cleanWorkspaces(){
-	let serverDir = path.resolve( __dirname,"../../server/");
-	
-	fs.readdir(serverDir, function (err, files){
-		if(err) return;
-		files.forEach(function(item,index, array){
-			if(item.startsWith('vscodesws_')){
-				rimraf.sync(path.resolve(serverDir, item));
-			}
-		});
-	});
 }
