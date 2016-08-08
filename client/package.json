@@ -3,7 +3,7 @@
 	"displayName": "Java Language Support by Red Hat",
 	"description": "Java language support for Visual Studio Code",
 	"author": "Red Hat Inc.",
-	"license": "MIT",
+	"license": "Eclipse Public License 1.0",
 	"version": "0.0.1",
 	"publisher": "redhat",
 	"engines": {
