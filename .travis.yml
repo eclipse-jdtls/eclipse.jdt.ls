@@ -1,2 +1,5 @@
 language: java
+sudo: false
 script: mvn -f ./server/pom.xml clean verify
+jdk:
+  - oraclejdk8
