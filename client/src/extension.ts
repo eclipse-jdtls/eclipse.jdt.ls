@@ -5,10 +5,12 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 
-var electron = require('./electron_j');
-
-import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn, Uri} from 'vscode';
+import { workspace, Disposable, ExtensionContext, StatusBarItem, window, StatusBarAlignment, commands, ViewColumn, Uri, } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, NotificationType, Position as LSPosition, Location as LSLocation, Protocol2Code} from 'vscode-languageclient';
+
+var electron = require('./electron_j');
+import * as requirements from './requirements';
+
 
 declare var v8debug;
 var DEBUG =( typeof v8debug === 'object');
@@ -24,8 +26,17 @@ namespace StatusNotification {
 }
 
 function runJavaServer(){
-	return new Promise(function(resolve, reject){
-			let child = 'java';
+	return requirements.resolveRequirements().catch(error =>{
+		//show error
+		window.showErrorMessage(error.message, error.label).then((selection )=>{
+			if(error.label && error.label == selection && error.openUrl)
+				commands.executeCommand('vscode.open', error.openUrl);
+		});
+		// rethrow to disrupt the chain.
+		throw error;
+	})
+	.then(requirements => new Promise(function(resolve, reject){
+			let child = path.resolve (requirements.java_home + '/bin/java');
 			let params = [];
 			let workspacePath = path.resolve( storagePath+'/jdt_ws');
 
@@ -57,27 +68,22 @@ function runJavaServer(){
 				if(err) reject(err);
 				if(result) resolve(result);
 			});
-	});
+	}));
 }
 
 export function activate(context: ExtensionContext) {
 
-	//Save storage path for later
 	storagePath = context.storagePath;
 
-	// If the extension is launch in debug mode the debug server options are use
-	// Otherwise the run options are used
 	let serverOptions= runJavaServer;
-	
-	
+
+
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
 		// Register the server for java
 		documentSelector: ['java'],
 		synchronize: {
-			// Synchronize the setting section 'languageServerExample' to the server
-			configurationSection: 'languageServerExample',
-			// Notify the server about file changes to '.clientrc files contain in the workspace
+			// Notify the server about file changes to .java files contain in the workspace
 			fileEvents: workspace.createFileSystemWatcher('**/*.java')
 		}
 	}

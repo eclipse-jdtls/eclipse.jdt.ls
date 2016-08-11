@@ -47,6 +47,7 @@
 		"vscode": "^0.11.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "next"
+		"vscode-languageclient": "next",
+		"find-java-home": "^0.1.2"
 	}
 }
