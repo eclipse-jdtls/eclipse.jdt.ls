@@ -3,7 +3,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-    <parent>
+	<parent>
 		<version>1.0.0-SNAPSHOT</version>
 		<groupId>org.jboss.tools.vscode</groupId>
 		<artifactId>parent</artifactId>
@@ -17,6 +17,14 @@
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-p2-repository-plugin</artifactId>
 				<version>${tycho-version}</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>archive-repository</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
 					<includeAllDependencies>true</includeAllDependencies>
 					<compress>false</compress>
@@ -43,98 +51,93 @@
 							<goal>materialize-products</goal>
 						</goals>
 					</execution>
-				</executions> 
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.7</version>
-				<executions>
-    				<execution>
-        			<phase>clean</phase>
-       				 <goals>
-          				  <goal>run</goal>
-       				 </goals>
-       				 <configuration>
-       	     		<target>
-                		<delete>
-                    		<fileset dir="{basedir}/../../../client/server" />
-                		</delete>
-            		</target>
-        			</configuration>
-    				</execution>
 				</executions>
 			</plugin>
-      		<plugin>
-        		<artifactId>maven-resources-plugin</artifactId>
-        		<version>3.0.1</version>
-        		<executions>
-         			 <execution>
-            		<id>copy-resources</id>
-            		<!-- here the phase you need -->
-            		<phase>verify</phase>
-            		<goals>
-              		<goal>copy-resources</goal>
-            		</goals>
-            		<configuration>
-             			 <outputDirectory>${basedir}/../../client/server</outputDirectory>
-              			<resources>          
-                		<resource>
-                  			<directory>${basedir}/target/repository</directory>
-                		</resource>
-              			</resources>              
-            		</configuration>            
-          			</execution>
-          			<execution>
-            		<id>copy-config-mac</id>
-            		<!-- here the phase you need -->
-            		<phase>verify</phase>
-            		<goals>
-              		<goal>copy-resources</goal>
-            		</goals>
-            		<configuration>
-             			 <outputDirectory>${basedir}/../../client/server/config_mac</outputDirectory>
-              			<resources>          
-                		<resource>
-                  			<directory>${basedir}/target/products/languageServer.product/macosx/cocoa/x86_64/Eclipse.app/Contents/Eclipse/configuration</directory>
-                		</resource>
-              			</resources>              
-            		</configuration>
-					</execution>
-            		<execution>
-            		<id>copy-config-win</id>
-            		<!-- here the phase you need -->
-            		<phase>verify</phase>
-            		<goals>
-              		<goal>copy-resources</goal>
-            		</goals>
-            		<configuration>
-             			 <outputDirectory>${basedir}/../../client/server/config_win</outputDirectory>
-              			<resources>          
-                		<resource>
-                  			<directory>${basedir}/target/products/languageServer.product/win32/win32/x86_64/configuration</directory>
-                		</resource>
-              			</resources>              
-            		</configuration>            
-          			</execution>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
 					<execution>
-            		<id>copy-config-linux</id>
-            		<!-- here the phase you need -->
-            		<phase>verify</phase>
-            		<goals>
-              		<goal>copy-resources</goal>
-            		</goals>
-            		<configuration>
-             			 <outputDirectory>${basedir}/../../client/server/config_linux</outputDirectory>
-              			<resources>          
-                		<resource>
-                  			<directory>${basedir}/target/products/languageServer.product/linux/gtk/x86_64/configuration</directory>
-                		</resource>
-              			</resources>              
-            		</configuration>            
-          			</execution>
-        		</executions>
-      		</plugin>
+						<id>copy-config-mac</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_mac</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/macosx/cocoa/x86_64/Eclipse.app/Contents/Eclipse/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-win</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_win</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/win32/win32/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-linux</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_linux</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/linux/gtk/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
 	</build>
+	<profiles>
+		<profile>
+			<id>vscode-build</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>3.0.1</version>
+						<executions>
+							<execution>
+								<id>copy-resources</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${env.PWD}/server</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/target/repository</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
