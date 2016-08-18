@@ -1,11 +1,14 @@
 package org.jboss.tools.vscode.java.handlers;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -43,7 +46,7 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
+		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
 	}
 
 	@Override
@@ -54,6 +57,9 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 			IJavaElement elementToSearch = findElementAtSelection(resolveCompilationUnit(param.getTextDocument().getUri()),
 					param.getPosition().getLine().intValue(),
 					param.getPosition().getCharacter().intValue());
+			
+			if(elementToSearch == null) 
+				return Collections.emptyList();
 
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
 			List<org.jboss.tools.langs.Location> locations = new ArrayList<org.jboss.tools.langs.Location>();
@@ -67,12 +73,22 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 								IJavaElement element = (IJavaElement) o;
 								ICompilationUnit compilationUnit = (ICompilationUnit) element
 										.getAncestor(IJavaElement.COMPILATION_UNIT);
-								if (compilationUnit == null) {
-									return;
+								org.jboss.tools.langs.Location location = null;
+								if (compilationUnit != null) {
+									location = toLocation(compilationUnit, match.getOffset(),
+											match.getLength());
 								}
-								org.jboss.tools.langs.Location location = toLocation(compilationUnit, match.getOffset(),
-										match.getLength());
-								locations.add(location);
+								else{
+									IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+									if (cf != null) {
+										try {
+											location = toLocation(cf, match.getOffset(), match.getLength());
+										} catch (URISyntaxException e) {
+										}
+									}
+								}
+								if (location != null )
+									locations.add(location);
 
 							}
 

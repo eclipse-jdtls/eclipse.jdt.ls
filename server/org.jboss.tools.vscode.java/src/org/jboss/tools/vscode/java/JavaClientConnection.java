@@ -1,9 +1,7 @@
 package org.jboss.tools.vscode.java;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jboss.tools.langs.LogMessageParams;
 import org.jboss.tools.langs.base.LSPException;
@@ -14,6 +12,7 @@ import org.jboss.tools.langs.ext.StatusReport;
 import org.jboss.tools.vscode.ipc.MessageType;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.ipc.ServiceStatus;
+import org.jboss.tools.vscode.java.handlers.ClassfileContentHandler;
 import org.jboss.tools.vscode.java.handlers.CodeLensHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
@@ -66,6 +65,7 @@ public class JavaClientConnection extends LSPServer{
 		final CodeLensHandler codeLensHandler = new CodeLensHandler();
 		handlers.add(codeLensHandler.new CodeLensProvider());
 		handlers.add(codeLensHandler.new CodeLensResolver());
+		handlers.add(new ClassfileContentHandler());
 		return handlers;
 	}	
 	/**

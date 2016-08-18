@@ -21,6 +21,7 @@ import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.LogMessageParams;
 import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.ReferenceParams;
+import org.jboss.tools.langs.TextDocumentIdentifier;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.WorkspaceSymbolParams;
 import org.jboss.tools.langs.ext.StatusReport;
@@ -47,7 +48,9 @@ public enum LSPMethods {
 	WORKSPACE_CHANGED_FILES("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.class, Object.class),
 	WORKSPACE_SYMBOL("workspace/symbol", WorkspaceSymbolParams.class, List.class),
 	WINDOW_LOGMESSAGE("window/logMessage",LogMessageParams.class,Object.class),
-	LANGUAGE_STATUS("language/status", StatusReport.class, Object.class);
+	//extensions
+	LANGUAGE_STATUS("language/status", StatusReport.class, Object.class),
+	CLASSFILECONTENTS("java/ClassFileContents",TextDocumentIdentifier.class, String.class);
 	
 	private final String method;
 	private final Type requestType;
