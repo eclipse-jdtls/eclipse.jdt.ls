@@ -38,6 +38,6 @@ public interface RequestHandler<R,S> {
 	 * @return result
 	 * @throws LSPException
 	 */
-	public S handle(R param) throws LSPException;
+	public S handle(R param) ;
 	
 }

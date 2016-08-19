@@ -5,7 +5,7 @@ package org.jboss.tools.langs.base;
  * @author Gorkem Ercan
  *
  */
-public class LSPException extends Exception {
+public class LSPException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	private final int code;
@@ -33,11 +33,5 @@ public class LSPException extends Exception {
 	public Object getData() {
 		return data;
 	}
-	
-	
-	
-	
-	
-
 	
 }

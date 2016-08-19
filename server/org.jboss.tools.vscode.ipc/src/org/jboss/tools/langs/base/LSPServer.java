@@ -12,7 +12,6 @@ import org.jboss.tools.langs.transport.Connection.MessageListener;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
 import org.jboss.tools.vscode.ipc.RequestHandler;
-import org.omg.CORBA.Request;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -71,7 +70,7 @@ public class LSPServer implements MessageListener{
 			String method = object.get("method").getAsString();
 			LSPMethods lspm = LSPMethods.fromMethod(method);
 			if(lspm == null){
-				throw new UnsupportedOperationException(method +" is not available at "+LSPMethods.class.getName());
+				throw new LSPException(ReservedCode.METHOD_NOT_FOUND.code(), method + " is not handled ", null, null);
 			}
 			paramType = LSPMethods.fromMethod(method).getRequestType();
 			return context.deserialize(jsonElement, new ParameterizedTypeImpl(subType,paramType));
@@ -178,21 +177,30 @@ public class LSPServer implements MessageListener{
 	 * @return
 	 */
 	private Message maybeParseMessage(TransportMessage message) {
-		try{
-			return gson.fromJson(message.getContent(),Message.class);
-		}catch (Exception e) {
-			ResponseMessage<?> rm = new ResponseMessage();
-			ResponseError error = new ResponseError();
+			ResponseError error = null;
+		try {
+			return gson.fromJson(message.getContent(), Message.class);
+		} catch (LSPException e) {
+			error = new ResponseError();
+			error.setCode(e.getCode());
+			error.setMessage(e.getMessage());
+			error.setData(e.getData());
+		} catch (Exception e) {
+			error = new ResponseError();
 			error.setCode(ReservedCode.PARSE_ERROR.code());
 			error.setMessage(e.getMessage());
 			error.setData(message.getContent());
+		}
+		if (error != null) {
+			@SuppressWarnings("rawtypes")
+			ResponseMessage rm = new ResponseMessage();
 			rm.setError(error);
 			send(rm);
-			return null;
 		}
+		return null;
 	}
 
-	private void dispatchRequest(RequestMessage<?> request) throws LSPException{
+	private void dispatchRequest(RequestMessage<?> request) {
 		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
@@ -204,7 +212,7 @@ public class LSPServer implements MessageListener{
 		throw new LSPException(ReservedCode.METHOD_NOT_FOUND.code(), request.getMethod() + " is not handled", null,null);
 	}
 
-	private void dispatchNotification(NotificationMessage<?> nm) throws LSPException{
+	private void dispatchNotification(NotificationMessage<?> nm) {
 		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
@@ -218,5 +226,4 @@ public class LSPServer implements MessageListener{
 	public void shutdown(){
 		connection.close();
 	}
-
 }
