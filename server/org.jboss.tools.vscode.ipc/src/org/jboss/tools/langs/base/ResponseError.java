@@ -5,6 +5,32 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 public class ResponseError {
+	
+	public enum ReservedCode{
+	
+		PARSE_ERROR(-32700), 
+		INVALID_REQUEST(-32600),
+		METHOD_NOT_FOUND(-32601),
+		INVALID_PARAMS(-32602),
+		INTERNAL_ERROR(-32603),
+		
+		SERVER_ERROR_START(-32000),
+		SERVER_ERROR_END(-32099);
+		
+		private final int code;
+		
+		private ReservedCode(int code) {
+			this.code = code;
+		}
+
+		/**
+		 * @return the code
+		 */
+		public int code() {
+			return code;
+		}
+				
+	}
 
     /**
      * A number indicating the error type that occurred.
@@ -12,7 +38,7 @@ public class ResponseError {
      */
     @SerializedName("code")
     @Expose
-    private Double code;
+    private Integer code;
     /**
      * A string providing a short description of the error.
      * 
@@ -34,7 +60,7 @@ public class ResponseError {
      * @return
      *     The code
      */
-    public Double getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -44,7 +70,7 @@ public class ResponseError {
      * @param code
      *     The code
      */
-    public void setCode(Double code) {
+    public void setCode(Integer code) {
         this.code = code;
     }
 

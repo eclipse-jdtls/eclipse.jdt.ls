@@ -1,5 +1,6 @@
 package org.jboss.tools.vscode.java;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,7 +93,7 @@ public class JavaClientConnection extends LSPServer{
 	}
 	
 	
-	public void connect() throws LSPException {
+	public void connect() throws IOException {
 		connect(handlers(projectsManager));
 	}
 

@@ -109,5 +109,17 @@ public class RequestMessage <R>
     	}
     	return response;
     }
+    
+    public ResponseMessage<?> respondWithError(int code, String message, Object data){
+    	ResponseMessage<?> $ = new ResponseMessage();
+    	$.setId(this.getId());
+    	$.setMethod(this.getMethod());
+    	ResponseError error = new ResponseError();
+    	error.setCode(Integer.valueOf(code));
+    	error.setMessage(message);
+    	error.setData(data);
+    	$.setError(error);
+    	return $;
+    }
 
 }

@@ -6,11 +6,13 @@ import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jboss.tools.langs.base.ResponseError.ReservedCode;
 import org.jboss.tools.langs.transport.Connection;
 import org.jboss.tools.langs.transport.Connection.MessageListener;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.omg.CORBA.Request;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -124,18 +126,14 @@ public class LSPServer implements MessageListener{
 		return instance;
 	}
 	
-	public void connect(List<RequestHandler<?,?>> handlers ) throws LSPException{
+	public void connect(List<RequestHandler<?,?>> handlers ) throws IOException{
 		this.handlers = handlers;
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
 		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
 
 		connection = new NamedPipeConnection(stdOutName, stdInName);
 		connection.setMessageListener(this);
-		try {
-			connection.start();
-		} catch (IOException e) {
-			throw new LSPException(e);
-		}
+		connection.start();
 	}
 	
 	public void send (Message message){
@@ -145,29 +143,68 @@ public class LSPServer implements MessageListener{
 
 	@Override
 	public void messageReceived(TransportMessage message) {
-		Message msg = gson.fromJson(message.getContent(),Message.class);
+		Message msg = maybeParseMessage(message);
+		if(msg == null )
+			return;
+		
 		if(msg instanceof NotificationMessage){
 			NotificationMessage<?> nm = (NotificationMessage<?>) msg;
-			dispatchNotification(nm);
+			try {
+				dispatchNotification(nm);
+			} catch (LSPException e) {
+				e.printStackTrace();
+			}
 		}
+		
 		if(msg instanceof RequestMessage){
 			RequestMessage<?> rm = (RequestMessage<?>) msg;
-			dispatchRequest(rm);
+			try{
+				dispatchRequest(rm);
+			}
+			catch (LSPException e) {
+				send(rm.respondWithError(e.getCode(),e.getMessage(),e.getData()));
+			}
+			catch(Exception e){
+				send(rm.respondWithError(ReservedCode.INTERNAL_ERROR.code(), e.getMessage(),null));
+			}
 		}
 	}
 
-	private void dispatchRequest(RequestMessage<?> request) {
+	/**
+	 * Parses the message notifies client if parse fails and returns null 
+	 * 
+	 * @param message
+	 * @param msg
+	 * @return
+	 */
+	private Message maybeParseMessage(TransportMessage message) {
+		try{
+			return gson.fromJson(message.getContent(),Message.class);
+		}catch (Exception e) {
+			ResponseMessage<?> rm = new ResponseMessage();
+			ResponseError error = new ResponseError();
+			error.setCode(ReservedCode.PARSE_ERROR.code());
+			error.setMessage(e.getMessage());
+			error.setData(message.getContent());
+			rm.setError(error);
+			send(rm);
+			return null;
+		}
+	}
+
+	private void dispatchRequest(RequestMessage<?> request) throws LSPException{
 		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
 			if (requestHandler.canHandle(request.getMethod())) {
 				send(request.responseWith(requestHandler.handle(request.getParams())));
-				break;
+				return;
 			}
 		}
+		throw new LSPException(ReservedCode.METHOD_NOT_FOUND.code(), request.getMethod() + " is not handled", null,null);
 	}
 
-	private void dispatchNotification(NotificationMessage<?> nm) {
+	private void dispatchNotification(NotificationMessage<?> nm) throws LSPException{
 		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();

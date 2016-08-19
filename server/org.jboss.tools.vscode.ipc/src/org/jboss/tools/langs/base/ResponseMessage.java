@@ -35,7 +35,7 @@ public class ResponseMessage <R>
      */
     @SerializedName("error")
     @Expose
-    private Object error;
+    private ResponseError error;
 
     /**
      * The request id.
@@ -83,7 +83,7 @@ public class ResponseMessage <R>
      * @return
      *     The error
      */
-    public Object getError() {
+    public ResponseError getError() {
         return error;
     }
 
@@ -93,7 +93,7 @@ public class ResponseMessage <R>
      * @param error
      *     The error
      */
-    public void setError(Object error) {
+    public void setError(ResponseError error) {
         this.error = error;
     }
 
