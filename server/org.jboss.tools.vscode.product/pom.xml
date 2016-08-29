@@ -28,6 +28,7 @@
 				<configuration>
 					<includeAllDependencies>true</includeAllDependencies>
 					<compress>false</compress>
+					<skipArchive>true</skipArchive>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -128,7 +129,7 @@
 								<configuration>
 									<target>
 										<delete>
-											<fileset dir="${env.PWD}/server"/>
+											<fileset dir="${env.PWD}/server" />
 										</delete>
 									</target>
 								</configuration>
@@ -152,6 +153,36 @@
 											<directory>${basedir}/target/repository</directory>
 										</resource>
 									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>server-distro</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<version>2.5.4</version>
+						<executions>
+							<execution>
+								<id>pack-for-distribution</id>
+								<phase>package</phase>
+								<goals>
+									<goal>single</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>distro</outputDirectory>
+									<appendAssemblyId>false</appendAssemblyId>
+									<descriptors>
+										<descriptor>publish-assembly.xml</descriptor>
+									</descriptors>
 								</configuration>
 							</execution>
 						</executions>
