@@ -2,4 +2,10 @@ language: java
 sudo: false
 script: mvn -f ./server/pom.xml -Pserver-distro clean verify
 jdk:
-  - oraclejdk8
+- oraclejdk8
+deploy:
+  provider: bintray
+  file: "./server/descriptor.json"
+  user: gorkem
+  key:
+    secure: e9bgz2HPEzbwLv6F5b+JW0164LZWH5SxOesf2lsvjOK0+flzrqDdHiwGdN+1ND0E1Qc4eLNmhbi1fYblfzzIcWgtXuW5nZ0wdz08WlR1NrlUZ+u85ol9/7PFdbZSWqgDcQ7JPjrJ+pNozy7bV9jbEq7XU2ziRJQgicoIxRYe+AoJoPD3YC9TIvMW6TwtArCgWZndaqvoq9JLJqVJ5zUGeocbygaEyZmItUNyhYMUUkuFrtGChAMHY074dC0KEza7nCwXhBwg4hC1CZ7nm89p4PFSwvVQY3/ZaQrwFUqNyg8J42/DPzjkSyyycv89ylZnoCzAY+S8S5nIj33LANwG3bEhQlKVqlgzQd80mb7EvOHccWOkj/8xLvRCsD4kVbfrUJM4JVDjPO+DEtSFq5ptOiY4zc0XEkeWFvstmRIVOvpukS76ZbF/AyTMvEDHHVNIC7mZhegTFOK2+RFMGXAx4A8Ry+RE59EL0qInQlMQ2+eCPmVcOolEzMDVjig5EvZLIfmEUPdROUL9vFenlGQ1vBwg2ZYSnzO8ENHbruoLl9rAYOtRFezTodVvqFvLSlQGoKW/DfSAq8sCBccG8XbmQC5RHCgmN9Hck3QGs6O+ovEOl162LSTgtTTwdG3HY5CT+rsvqvyHEZ+7aE5gUd4yQESDZAHrdsOmXIA3cHb+TGw=
