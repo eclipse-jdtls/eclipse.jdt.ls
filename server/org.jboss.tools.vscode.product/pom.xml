@@ -213,7 +213,7 @@
 							</algorithms>
 							<fileSets>
 								<fileSet>
-									<directory>${env.PWD}/org.jboss.tools.vscode.product/distro/</directory>
+									<directory>${project.basedir}/distro/</directory>
 									<includes>
 										<include>**/*.gz</include>
 									</includes>
@@ -234,8 +234,8 @@
 								</goals>
 								<configuration>
 									<target>
-										<delete>
-											<fileset dir="${env.PWD}/org.jboss.tools.vscode.product/distro/" />
+										<delete quiet="true">
+											<fileset dir="${project.basedir}/distro/" />
 										</delete>
 									</target>
 								</configuration>
