@@ -1,5 +1,5 @@
 language: java
 sudo: false
-script: mvn -f ./server/pom.xml clean verify
+script: mvn -f ./server/pom.xml -Pserver-distro clean verify
 jdk:
   - oraclejdk8
