@@ -1,6 +1,6 @@
 {
     "package": {
-        "name": "java-server",
+        "name": "java-language-server",
         "repo": "java-language-server", 
         "subject": "gorkem"
     },
@@ -12,7 +12,6 @@
     "files":
         [
         {"includePattern": "org.jboss.tools.vscode.product/target/distor/(.*)"}
-
         ],
     "publish": true
 }
