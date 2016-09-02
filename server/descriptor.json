@@ -11,7 +11,7 @@
 
     "files":
         [
-        {"includePattern": "server/org.jboss.tools.vscode.product/target/distro/(.*)"}
+        {"includePattern": "server/org.jboss.tools.vscode.product/distro/(.*)"}
         ],
     "publish": true
 }
