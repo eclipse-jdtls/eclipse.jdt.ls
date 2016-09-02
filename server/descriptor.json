@@ -11,7 +11,7 @@
 
     "files":
         [
-        {"includePattern": "org.jboss.tools.vscode.product/target/distro/(.*)"}
+        {"includePattern": "org.jboss.tools.vscode.product/target/distor/(.*)"}
         ],
     "publish": true
 }
