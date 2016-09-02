@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="30">
+<?pde version="3.8"?><target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="31">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.equinox.sdk.feature.group" version="3.12.0.v20160606-1311"/>
 <unit id="org.eclipse.jdt.feature.group" version="3.12.0.v20160606-1100"/>
+<unit id="org.eclipse.pde.source.feature.group" version="3.12.0.v20160606-1100"/>
 <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.12.0.v20160603-1336"/>
 <unit id="org.eclipse.platform.ide" version="4.6.0.I20160606-1100"/>
 <unit id="org.eclipse.m2e.feature.feature.group" version="1.7.0.20160603-1933"/>
