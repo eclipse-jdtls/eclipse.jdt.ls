@@ -1,18 +1,20 @@
 {
     "package": {
         "name": "java-language-server",
-        "repo": "java-language-server", 
+        "repo": "java-language-server",
         "subject": "gorkem"
     },
-
     "version": {
         "name": "latest"
     },
-
-    "files":
-        [
-        {"includePattern": "server/org.jboss.tools.vscode.product/distro/(.*)"}
-        ],
+    "files": [
+        {
+            "includePattern": "server/org.jboss.tools.vscode.product/distro/(.*)",
+            "uploadPattern": "$1",
+            "matrixParams": {
+                "override": 1
+            }
+        }
+    ],
     "publish": true
 }
-
