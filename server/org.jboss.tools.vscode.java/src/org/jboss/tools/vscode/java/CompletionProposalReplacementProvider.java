@@ -197,8 +197,9 @@ public class CompletionProposalReplacementProvider {
 			
 			positions.add(buffer.length());
 			positions.add(argument.length);
-
+			buffer.append("{{");
 			buffer.append(argument);
+			buffer.append("}}");
 		}
 	}
 	
