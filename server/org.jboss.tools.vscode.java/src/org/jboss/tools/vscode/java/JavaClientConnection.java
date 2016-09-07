@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.tools.langs.LogMessageParams;
-import org.jboss.tools.langs.base.LSPException;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.LSPServer;
 import org.jboss.tools.langs.base.NotificationMessage;
@@ -53,9 +52,10 @@ public class JavaClientConnection extends LSPServer{
 		handlers.add(dh.new ChangeHandler());
 		handlers.add(dh.new ClosedHandler());
 		handlers.add(dh.new OpenHandler());
+		handlers.add(dh.new SaveHandler());
 		handlers.add(new CompletionHandler());
 		handlers.add(new NavigateToDefinitionHandler());
-		handlers.add(new WorkspaceEventsHandler(pm));
+		handlers.add(new WorkspaceEventsHandler(pm,this));
 		handlers.add(new DocumentSymbolHandler());
 		handlers.add(new WorkspaceSymbolHandler());
 		handlers.add(new ReferencesHandler());

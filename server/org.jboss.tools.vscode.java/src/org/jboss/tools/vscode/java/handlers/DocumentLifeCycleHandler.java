@@ -6,11 +6,13 @@ import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.IDocument;
@@ -22,6 +24,7 @@ import org.eclipse.text.edits.TextEdit;
 import org.jboss.tools.langs.DidChangeTextDocumentParams;
 import org.jboss.tools.langs.DidCloseTextDocumentParams;
 import org.jboss.tools.langs.DidOpenTextDocumentParams;
+import org.jboss.tools.langs.DidSaveTextDocumentParams;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.TextDocumentContentChangeEvent;
 import org.jboss.tools.langs.base.LSPMethods;
@@ -100,7 +103,20 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 			}
 			return null;
 		}
-		
+	}
+	
+	public class SaveHandler implements RequestHandler<DidSaveTextDocumentParams, Object>{
+
+		@Override
+		public boolean canHandle(String request) {
+			return LSPMethods.DOCUMENT_SAVED.getMethod().equals(request);
+		}
+
+		@Override
+		public Object handle(DidSaveTextDocumentParams param) {
+			// Nothing to do just keeping the clients happy with a response
+			return null;
+		}
 	}
 	
 	public DocumentLifeCycleHandler(JavaClientConnection connection) {
@@ -113,7 +129,21 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 			return;
 		}
 		try {
-			// ToDo wire up cancelation.
+			// The open event can happen before the workspace element added event when a new file is added. 
+			// checks if the underlying resource exists and refreshes to sync the newly created file.
+			if(unit.getResource() != null && !unit.getResource().isAccessible()){
+				try {
+					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
+				} catch (CoreException e) {
+					// ignored
+				}
+			}
+			
+			IBuffer buffer = unit.getBuffer();
+			if(buffer != null)
+				buffer.setContents(params.getTextDocument().getText());
+
+			// TODO: wire up cancellation.
 			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
 			unit.reconcile();
 		} catch (JavaModelException e) {
@@ -131,7 +161,6 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 		ITextFileBuffer buffer = manager.getTextFileBuffer(unit.getResource().getFullPath(), LocationKind.IFILE);
 		IDocument document = buffer.getDocument();
-		
 		try {			
 			MultiTextEdit root = new MultiTextEdit();
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();

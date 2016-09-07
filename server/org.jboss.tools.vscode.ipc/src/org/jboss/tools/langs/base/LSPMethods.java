@@ -10,6 +10,7 @@ import org.jboss.tools.langs.DidChangeTextDocumentParams;
 import org.jboss.tools.langs.DidChangeWatchedFilesParams;
 import org.jboss.tools.langs.DidCloseTextDocumentParams;
 import org.jboss.tools.langs.DidOpenTextDocumentParams;
+import org.jboss.tools.langs.DidSaveTextDocumentParams;
 import org.jboss.tools.langs.DocumentFormattingParams;
 import org.jboss.tools.langs.DocumentHighlight;
 import org.jboss.tools.langs.DocumentRangeFormattingParams;
@@ -35,6 +36,7 @@ public enum LSPMethods {
 	DOCUMENT_OPENED("textDocument/didOpen",DidOpenTextDocumentParams.class, Object.class),
 	DOCUMENT_CLOSED("textDocument/didClose",DidCloseTextDocumentParams.class, Object.class),
 	DOCUMENT_CHANGED("textDocument/didChange",DidChangeTextDocumentParams.class, Object.class),
+	DOCUMENT_SAVED("textDocument/didSave",DidSaveTextDocumentParams.class, Object.class),
 	DOCUMENT_HOVER("textDocument/hover", TextDocumentPositionParams.class, Hover.class),
 	DOCUMENT_DEFINITION("textDocument/definition", TextDocumentPositionParams.class, Location.class),
 	DOCUMENT_REFERENCES("textDocument/references", ReferenceParams.class, List.class),
