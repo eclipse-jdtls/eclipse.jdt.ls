@@ -59,7 +59,7 @@ public class TypeProposalUtils {
 		List<String> result= new ArrayList<String>(5);
 		createName(type, false, result);
 	
-		StringBuffer buffer= new StringBuffer();
+		StringBuilder buffer= new StringBuilder();
 		for (int i= 0; i < result.size(); i++) {
 			if (i > 0) {
 				buffer.append('.');
@@ -178,7 +178,7 @@ public class TypeProposalUtils {
 	}
 
 	private static String concatenateName(String name1, String name2) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		if (name1 != null && name1.length() > 0) {
 			buf.append(name1);
 		}

@@ -145,7 +145,7 @@ public class HoverInfoProvider {
 	 * @return the reader content as string
 	 */
 	private static String getString(Reader reader) {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		char[] buffer= new char[1024];
 		int count;
 		try {
@@ -190,7 +190,7 @@ public class HoverInfoProvider {
 	 * @return the concatenated lines
 	 */
 	public static String concatenate(String[] lines, String delimiter) {
-		StringBuffer buffer= new StringBuffer();
+		StringBuilder buffer= new StringBuilder();
 		for (int i= 0; i < lines.length; i++) {
 			if (i > 0)
 				buffer.append(delimiter);

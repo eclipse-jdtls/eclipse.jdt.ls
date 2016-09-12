@@ -264,7 +264,7 @@ public final class SignatureUtil {
 			signature= fix83600(signature);
 		}
 
-		StringBuffer res= new StringBuffer("("); //$NON-NLS-1$
+		StringBuilder res= new StringBuilder("("); //$NON-NLS-1$
 		char[][] parameters= Signature.getParameterTypes(signature);
 		for (int i= 0; i < parameters.length; i++) {
 			char[] param= parameters[i];

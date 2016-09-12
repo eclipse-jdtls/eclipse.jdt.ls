@@ -54,7 +54,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		setSkipWhitespace(false);
 	}
 
-	private int getTag(StringBuffer buffer) throws IOException {
+	private int getTag(StringBuilder buffer) throws IOException {
 		int c= nextChar();
 		while (c == '.' || c != -1 && Character.isLetter((char) c)) {
 			buffer.append((char) c);
@@ -63,7 +63,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		return c;
 	}
 
-	private int getContent(StringBuffer buffer, char stopChar) throws IOException {
+	private int getContent(StringBuilder buffer, char stopChar) throws IOException {
 		int c= nextChar();
 		while (c != -1 && c != stopChar) {
 			buffer.append((char) c);
@@ -72,7 +72,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		return c;
 	}
 
-	private int getContentUntilNextTag(StringBuffer buffer) throws IOException {
+	private int getContentUntilNextTag(StringBuilder buffer) throws IOException {
 		int c= nextChar();
         boolean blockStartRead= false;
 		while (c != -1) {
@@ -128,7 +128,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		return result;
 	}
 
-	private void printDefinitions(StringBuffer buffer, List<String> list, boolean firstword) {
+	private void printDefinitions(StringBuilder buffer, List<String> list, boolean firstword) {
 		Iterator<String> e= list.iterator();
 		while (e.hasNext()) {
 			String s= e.next();
@@ -178,7 +178,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		return i;
 	}
 
-	private void print(StringBuffer buffer, String tag, List<String> elements, boolean firstword) {
+	private void print(StringBuilder buffer, String tag, List<String> elements, boolean firstword) {
 		if ( !elements.isEmpty()) {
 			buffer.append("* **"); //$NON-NLS-1$
 			buffer.append(tag);
@@ -187,7 +187,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		}
 	}
 
-	private void print(StringBuffer buffer, String tag, String content) {
+	private void print(StringBuilder buffer, String tag, String content) {
 		if  (content != null) {
 			buffer.append("* **"); //$NON-NLS-1$
 			buffer.append(tag);
@@ -198,7 +198,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		}
 	}
 
-	private void printRest(StringBuffer buffer) {
+	private void printRest(StringBuilder buffer) {
 		if ( !fRest.isEmpty()) {
 			Iterator<Pair> e= fRest.iterator();
 			while (e.hasNext()) {
@@ -218,7 +218,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 	}
 
 	private String printSimpleTag() {
-		StringBuffer buffer= new StringBuffer();
+		StringBuilder buffer= new StringBuilder();
 		buffer.append("\n");
 		print(buffer, "See Also:",fSees, false);
 		print(buffer, "Parameters:", fParameters, true);
@@ -265,7 +265,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		fSince= new ArrayList<>();
 		fRest= new ArrayList<>();
 
-		StringBuffer buffer= new StringBuffer();
+		StringBuilder buffer= new StringBuilder();
 		int c= '@';
 		while (c != -1) {
 			buffer.setLength(0);
@@ -352,13 +352,13 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		int c= nextChar();
 
 		if (c != '@') {
-			StringBuffer buffer= new StringBuffer();
+			StringBuilder buffer= new StringBuilder();
 			buffer.append('{');
 			buffer.append((char) c);
 			return buffer.toString();
 		}
 
-		StringBuffer buffer= new StringBuffer();
+		StringBuilder buffer= new StringBuilder();
 		if (c != -1) {
 
 			buffer.setLength(0);

@@ -93,7 +93,7 @@ public class CompletionProposalReplacementProvider {
 //					completionBuffer.append(';');
 //				}
 //			} else {
-//				StringBuffer buffer= new StringBuffer(getReplacementString());
+//				StringBuilder buffer= new StringBuilder(getReplacementString());
 //
 //				// fix for PR #5533. Assumes that no eating takes place.
 //				if ((getCursorPosition() > 0 && getCursorPosition() <= buffer.length() && buffer.charAt(getCursorPosition() - 1) != trigger)) {
@@ -358,7 +358,7 @@ public class CompletionProposalReplacementProvider {
 			if (!onlyAppendArguments) {
 				buffer.append(LESS);
 			}
-			StringBuffer separator= new StringBuffer(3);
+			StringBuilder separator= new StringBuilder(3);
 			separator.append(COMMA);
 	
 			for (int i= 0; i != typeArguments.length; i++) {
@@ -479,7 +479,7 @@ public class CompletionProposalReplacementProvider {
 	}
 	
 	private static String concatenateName(String name1, String name2) {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder buf= new StringBuilder();
 		if (name1 != null && name1.length() > 0) {
 			buf.append(name1);
 		}
