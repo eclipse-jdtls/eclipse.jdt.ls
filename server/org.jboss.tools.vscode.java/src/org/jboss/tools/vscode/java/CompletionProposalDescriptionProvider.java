@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2014 IBM Corporation and others.
+ * Copyright (c) 2005, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,14 +8,19 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Pivotal Software, Inc. - adopted for Flux
+ *     Red Hat - adopted for JDT Server
  *******************************************************************************/
 package org.jboss.tools.vscode.java;
+
+import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
+import org.jboss.tools.langs.CompletionItem;
+import org.jboss.tools.vscode.java.handlers.CompletionResolveHandler;
 
 /**
  * Provides string labels for completionProposals. 
@@ -26,7 +31,6 @@ import org.eclipse.jdt.core.Signature;
  */
 public class CompletionProposalDescriptionProvider {
 
-	private static final String QUALIFIER_SEPARATOR = " - ";
 	private static final String RETURN_TYPE_SEPARATOR = " : ";
 	private static final String VAR_TYPE_SEPARATOR = RETURN_TYPE_SEPARATOR;
 
@@ -38,6 +42,7 @@ public class CompletionProposalDescriptionProvider {
 
 	/**
 	 * Creates a new label provider.
+	 * @param iCompilationUnit 
 	 */
 	public CompletionProposalDescriptionProvider(CompletionContext context) {
 		super();
@@ -220,7 +225,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	/**
-	 * Creates a display label for the given method proposal. The display label
+	 * Updates a display label for the given method proposal to item. The display label
 	 * consists of:
 	 * <ul>
 	 *   <li>the method name</li>
@@ -237,9 +242,9 @@ public class CompletionProposalDescriptionProvider {
 	 * </p>
 	 *
 	 * @param methodProposal the method proposal to display
-	 * @return the display label for the given method proposal
+	 * @param item to update 
 	 */
-	StringBuilder createMethodProposalLabel(CompletionProposal methodProposal) {
+	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder description = new StringBuilder();
 		
 		// method name
@@ -258,56 +263,49 @@ public class CompletionProposalDescriptionProvider {
 			description.append(returnType);
 		}
 		
+		item.setLabel(description.toString());
 		// declaring type
-		description.append(QUALIFIER_SEPARATOR);
+		StringBuilder typeInfo = new StringBuilder();
 		String declaringType= extractDeclaringTypeFQN(methodProposal);
-
+		
 		if (methodProposal.getRequiredProposals() != null) {
 			String qualifier= Signature.getQualifier(declaringType);
 			if (qualifier.length() > 0) {
-				description.append(qualifier);
-				description.append('.');
+				typeInfo.append(qualifier);
+				typeInfo.append('.');
 			}
 		}
 
 		declaringType= Signature.getSimpleName(declaringType);
-		description.append(declaringType);
+		typeInfo.append(declaringType);
+		item.setDetail(typeInfo.toString());
 		
-		return description;
+		setSignature(item, String.valueOf(methodProposal.getSignature()));
+		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature())); 
+		setName(item, String.valueOf(methodProposal.getName()));
+		
 	}
 
 	/**
-	 * Creates a display label for the given method proposal. The display label consists of:
+	 * Updates the label and detail for {@link CompletionItem} with 
 	 * <ul>
 	 * <li>the method name</li>
 	 * <li>the raw simple name of the declaring type</li>
 	 * </ul>
-	 * <p>
-	 * Examples: For the <code>get(int)</code> method of a variable of type
-	 * <code>List<? extends Number></code>, the following display name is returned <code>get(int) - List</code>.<br>
-	 * For the <code>add(E)</code> method of a variable of type <code>List</code>, the
-	 * following display name is returned:
-	 * <code>add(Object) - List</code>.<br>
-	 * </p>
 	 *
 	 * @param methodProposal the method proposal to display
-	 * @return the display label for the given method proposal
-	 * @since 3.2
+	 * @param item the item to set values to
 	 */
-	StringBuilder createJavadocMethodProposalLabel(CompletionProposal methodProposal) {
-		StringBuilder nameBuffer= new StringBuilder();
-		
+	private void createJavadocMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		// method name
-		nameBuffer.append(methodProposal.getCompletion());
+		item.setLabel(String.valueOf(methodProposal.getCompletion()));
 		// declaring type
-		nameBuffer.append(QUALIFIER_SEPARATOR);
 		String declaringType= extractDeclaringTypeFQN(methodProposal);
 		declaringType= Signature.getSimpleName(declaringType);
-		nameBuffer.append(declaringType);
-		return nameBuffer;
+		item.setDetail(declaringType);
 	}
 
-	StringBuilder createOverrideMethodProposalLabel(CompletionProposal methodProposal) {
+	private void createOverrideMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
 		
 		// method name
@@ -323,14 +321,18 @@ public class CompletionProposalDescriptionProvider {
 		// TODO remove SignatureUtil.fix83600 call when bugs are fixed
 		char[] returnType= createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(methodProposal.getSignature()))));
 		nameBuffer.append(returnType);
+		item.setLabel(nameBuffer.toString());
 
 		// declaring type
-		nameBuffer.append(QUALIFIER_SEPARATOR);
+		StringBuilder typeBuffer = new StringBuilder();
 		String declaringType= extractDeclaringTypeFQN(methodProposal);
 		declaringType= Signature.getSimpleName(declaringType);
-		nameBuffer.append(String.format("Override method in '%s'", declaringType));
-
-		return nameBuffer;
+		typeBuffer.append(String.format("Override method in '%s'", declaringType));
+		item.setDetail(typeBuffer.toString());
+		
+		setSignature(item, String.valueOf(methodProposal.getSignature()));
+		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature())); 
+		setName(item, String.valueOf(methodProposal.getName()));
 	}
 
 	/**
@@ -350,7 +352,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	/**
-	 * Creates a display label for a given type proposal. The display label
+	 * Updates a display label for a given type proposal. The display label
 	 * consists of:
 	 * <ul>
 	 *   <li>the simple type name (erased when the context is in javadoc)</li>
@@ -363,29 +365,29 @@ public class CompletionProposalDescriptionProvider {
 	 * </p>
 	 *
 	 * @param typeProposal the method proposal to display
-	 * @return the display label for the given type proposal
+	 * @param item the completion to update
 	 */
-	StringBuilder createTypeProposalLabel(CompletionProposal typeProposal) {
+	private void createTypeProposalLabel(CompletionProposal typeProposal, CompletionItem item) {
 		char[] signature;
 		if (fContext != null && fContext.isInJavadoc())
 			signature= Signature.getTypeErasure(typeProposal.getSignature());
 		else
 			signature= typeProposal.getSignature();
 		char[] fullName= Signature.toCharArray(signature);
-		return createTypeProposalLabel(fullName);
+		createTypeProposalLabel(fullName, item);
+		setDeclarationSignature(item, String.valueOf(signature));
 	}
 
-	StringBuilder createJavadocTypeProposalLabel(CompletionProposal typeProposal) {
+	private void createJavadocTypeProposalLabel(CompletionProposal typeProposal, CompletionItem item) {
 		char[] fullName= Signature.toCharArray(typeProposal.getSignature());
-		return createJavadocTypeProposalLabel(fullName);
+		createJavadocTypeProposalLabel(fullName, item);
 	}
 
-	StringBuilder createJavadocSimpleProposalLabel(CompletionProposal proposal) {
-		// TODO get rid of this
-		return createSimpleLabel(proposal);
+	private void createJavadocSimpleProposalLabel(CompletionProposal proposal, CompletionItem item) {
+		item.setLabel(createSimpleLabel(proposal).toString());
 	}
 
-	StringBuilder createTypeProposalLabel(char[] fullName) {
+	StringBuilder createTypeProposalLabel(char[] fullName, CompletionItem item) {
 		// only display innermost type name as type name, using any
 		// enclosing types as qualification
 		int qIndex= findSimpleNameStart(fullName);
@@ -393,16 +395,15 @@ public class CompletionProposalDescriptionProvider {
 		StringBuilder nameBuffer= new StringBuilder();
 		
 		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
+		item.setLabel(nameBuffer.toString());
 		
 		if (qIndex > 0) {
-			nameBuffer.append(QUALIFIER_SEPARATOR);
-			nameBuffer.append(new String(fullName, 0, qIndex - 1));
+			item.setDetail(new String(fullName, 0, qIndex - 1));
 		}
-
 		return nameBuffer;
 	}
 
-	StringBuilder createJavadocTypeProposalLabel(char[] fullName) {
+	private void createJavadocTypeProposalLabel(char[] fullName, CompletionItem item) {
 		// only display innermost type name as type name, using any
 		// enclosing types as qualification
 		int qIndex= findSimpleNameStart(fullName);
@@ -413,12 +414,11 @@ public class CompletionProposalDescriptionProvider {
 		nameBuffer.append("{@link "); //$NON-NLS-1$
 		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
 		nameBuffer.append('}');
+		item.setLabel(nameBuffer.toString());
 		
 		if (qIndex > 0) {
-			nameBuffer.append(QUALIFIER_SEPARATOR);
-			nameBuffer.append(new String(fullName, 0, qIndex - 1));
+			item.setDetail(new String(fullName, 0, qIndex - 1));
 		}
-		return nameBuffer;
 	}
 
 	private int findSimpleNameStart(char[] array) {
@@ -434,7 +434,7 @@ public class CompletionProposalDescriptionProvider {
 		return lastDot;
 	}
 
-	StringBuilder createSimpleLabelWithType(CompletionProposal proposal) {
+	private void createSimpleLabelWithType(CompletionProposal proposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
 		nameBuffer.append(proposal.getCompletion());
 		char[] typeName= Signature.getSignatureSimpleName(proposal.getSignature());
@@ -442,11 +442,11 @@ public class CompletionProposalDescriptionProvider {
 			nameBuffer.append(VAR_TYPE_SEPARATOR);
 			nameBuffer.append(typeName);
 		}
-		return nameBuffer;
+		item.setLabel(nameBuffer.toString());
 	}
 
 	/**
-	 * Returns whether the given string starts with "this.".
+	 * Returns whether the given string starts with "this.". 	
 	 *
 	 * @param string string to test
 	 * @return <code>true</code> if the given string starts with "this."
@@ -457,7 +457,7 @@ public class CompletionProposalDescriptionProvider {
 		return string[0] == 't' && string[1] == 'h' && string[2] == 'i' && string[3] == 's' && string[4] == '.';
 	}
 
-	StringBuilder createLabelWithTypeAndDeclaration(CompletionProposal proposal) {
+	private void createLabelWithTypeAndDeclaration(CompletionProposal proposal, CompletionItem item) {
 		char[] name= proposal.getCompletion();
 		if (!isThisPrefix(name))
 			name= proposal.getName();
@@ -469,31 +469,32 @@ public class CompletionProposalDescriptionProvider {
 			buf.append(VAR_TYPE_SEPARATOR);
 			buf.append(typeName);
 		}
+		item.setLabel(buf.toString());
 		
 		char[] declaration= proposal.getDeclarationSignature();
 		if (declaration != null) {
+			setDeclarationSignature(item, String.valueOf(declaration));	
+			StringBuilder declBuf = new StringBuilder();
 			declaration= Signature.getSignatureSimpleName(declaration);
 			if (declaration.length > 0) {
-				buf.append(QUALIFIER_SEPARATOR);
 				if (proposal.getRequiredProposals() != null) {
 					String declaringType= extractDeclaringTypeFQN(proposal);
 					String qualifier= Signature.getQualifier(declaringType);
 					if (qualifier.length() > 0) {
-						buf.append(qualifier);
-						buf.append('.');
+						declBuf.append(qualifier);
+						declBuf.append('.');
 					}
 				}
-				buf.append(declaration);
+				declBuf.append(declaration);
+				item.setDetail(declBuf.toString());
 			}
 		}
-		return buf;
+		setName(item,String.valueOf(name));
 	}
 
-	StringBuilder createPackageProposalLabel(CompletionProposal proposal) {
+	private void createPackageProposalLabel(CompletionProposal proposal, CompletionItem item) {
 		Assert.isTrue(proposal.getKind() == CompletionProposal.PACKAGE_REF);
-		StringBuilder buf= new StringBuilder();
-		buf.append(String.valueOf(proposal.getDeclarationSignature()));
-		return buf;
+		item.setLabel(String.valueOf(proposal.getDeclarationSignature()));
 	}
 
 	StringBuilder createSimpleLabel(CompletionProposal proposal) {
@@ -502,7 +503,7 @@ public class CompletionProposalDescriptionProvider {
 		return buf;
 	}
 
-	StringBuilder createAnonymousTypeLabel(CompletionProposal proposal) {
+	private void createAnonymousTypeLabel(CompletionProposal proposal, CompletionItem item) {
 		char[] declaringTypeSignature= proposal.getDeclarationSignature();
 		declaringTypeSignature= Signature.getTypeErasure(declaringTypeSignature);
 
@@ -514,77 +515,106 @@ public class CompletionProposalDescriptionProvider {
 		buf.append(')');
 		buf.append("  "); //$NON-NLS-1$
 		buf.append("Anonymous Inner Type"); //TODO: consider externalization
+		item.setLabel(buf.toString());
+		
 		if (proposal.getRequiredProposals() != null) {
 			char[] signatureQualifier= Signature.getSignatureQualifier(declaringTypeSignature);
 			if (signatureQualifier.length > 0) {
-				buf.append(",");
-				buf.append(QUALIFIER_SEPARATOR);
-				buf.append(signatureQualifier);
+				item.setDetail(String.valueOf(signatureQualifier));
 			}
 		}
-		return buf;
+		setDeclarationSignature(item, String.valueOf(declaringTypeSignature));
+	}
+	
+	/**
+	 * Sets the signature for use on the resolve call.
+	 * @param item
+	 * @param signature
+	 */
+	@SuppressWarnings("unchecked")
+	private void setSignature(CompletionItem item, String signature){
+		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_SIGNATURE,String.valueOf(signature));
+	}
+	/**
+	 * Sets the declaration signature to data that is used on the resolve call.
+	 * @param item
+	 * @param signature
+	 */
+	@SuppressWarnings("unchecked")
+	private void setDeclarationSignature(CompletionItem item, String signature){
+		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_DECLARATION_SIGNATURE,String.valueOf(signature));
+	}
+	
+	/**
+	 * Sets the name to data that is used on the resolve call. 
+	 * @param item
+	 * @param name
+	 */
+	@SuppressWarnings("unchecked")
+	private void setName(CompletionItem item, String name){
+		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_NAME,String.valueOf(name));
 	}
 
 	/**
-	 * Creates a display label with styles for a given <code>CompletionProposal</code>.
-	 *
-	 * @param proposal the completion proposal to create the display label for
-	 * @return the display label for <code>proposal</code>
-	 *
-	 * @since 3.4
+	 * Updates the description fields of the item. 
+	 *  
+	 * @param proposal
+	 * @param item
 	 */
-	public StringBuilder createDescription(CompletionProposal proposal) {
+	public void updateDescription(CompletionProposal proposal, CompletionItem item) {
 		switch (proposal.getKind()) {
 			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.METHOD_REF:
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-				if (fContext != null && fContext.isInJavadoc())
-					return createJavadocMethodProposalLabel(proposal);
-				return createMethodProposalLabel(proposal);
+				if (fContext != null && fContext.isInJavadoc()){
+					createJavadocMethodProposalLabel(proposal, item);
+					break;
+				}
+				 createMethodProposalLabel(proposal,item);
+				 break;
 			case CompletionProposal.METHOD_DECLARATION:
-				return createOverrideMethodProposalLabel(proposal);
+				createOverrideMethodProposalLabel(proposal,item);
+				break;
 			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				return createAnonymousTypeLabel(proposal);
+				createAnonymousTypeLabel(proposal, item);
+				break;
 			case CompletionProposal.TYPE_REF:
-				return createTypeProposalLabel(proposal);
+				createTypeProposalLabel(proposal, item);
+				break;
 			case CompletionProposal.JAVADOC_TYPE_REF:
-				return createJavadocTypeProposalLabel(proposal);
+				createJavadocTypeProposalLabel(proposal, item);
+				break;
 			case CompletionProposal.JAVADOC_FIELD_REF:
 			case CompletionProposal.JAVADOC_VALUE_REF:
 			case CompletionProposal.JAVADOC_BLOCK_TAG:
 			case CompletionProposal.JAVADOC_INLINE_TAG:
 			case CompletionProposal.JAVADOC_PARAM_REF:
-				return createJavadocSimpleProposalLabel(proposal);
+				createJavadocSimpleProposalLabel(proposal, item);
+				break;
 			case CompletionProposal.JAVADOC_METHOD_REF:
-				return createJavadocMethodProposalLabel(proposal);
+				createJavadocMethodProposalLabel(proposal, item);
+				break;
 			case CompletionProposal.PACKAGE_REF:
-				return createPackageProposalLabel(proposal);
+				createPackageProposalLabel(proposal, item);
+				break;
 			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
 			case CompletionProposal.FIELD_REF:
 			case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-				return createLabelWithTypeAndDeclaration(proposal);
+				createLabelWithTypeAndDeclaration(proposal, item);
+				break;
 			case CompletionProposal.LOCAL_VARIABLE_REF:
 			case CompletionProposal.VARIABLE_DECLARATION:
-				return createSimpleLabelWithType(proposal);
+				createSimpleLabelWithType(proposal, item);
+				break;
 			case CompletionProposal.KEYWORD:
 			case CompletionProposal.LABEL_REF:
-				return createSimpleLabel(proposal);
+				item.setLabel(createSimpleLabel(proposal).toString());
+				break;
 			default:
 				Assert.isTrue(false);
-				return null;
 		}
-	}
-	
-	public StringBuilder createMetadata(CompletionProposal proposal) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("{ 'kind' : ");
-		buf.append(proposal.getKind());
-		buf.append(", 'flags' : ");
-		buf.append(proposal.getFlags());
-		buf.append("}");
-		return buf;
 	}
 }

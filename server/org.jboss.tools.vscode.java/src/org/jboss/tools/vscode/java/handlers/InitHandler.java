@@ -52,7 +52,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		ServerCapabilities capabilities = new ServerCapabilities();
 		return result.withCapabilities(
 				capabilities.withTextDocumentSync(new Double(2))
-				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.FALSE))
+				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.TRUE))
 				.withHoverProvider(Boolean.TRUE)
 				.withDefinitionProvider(Boolean.TRUE)
 				.withDocumentSymbolProvider(Boolean.TRUE)

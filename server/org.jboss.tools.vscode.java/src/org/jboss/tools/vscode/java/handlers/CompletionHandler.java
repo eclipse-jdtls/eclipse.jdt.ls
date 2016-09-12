@@ -17,7 +17,6 @@ import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.CompletionProposalRequestor;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.model.CodeCompletionItem;
 
 public class CompletionHandler extends AbstractRequestHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
 	
@@ -29,23 +28,16 @@ public class CompletionHandler extends AbstractRequestHandler implements Request
 	@Override
 	public CompletionList handle(TextDocumentPositionParams param) {
 		ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
-		List<CodeCompletionItem> proposals = this.computeContentAssist(unit, 
+		List<CompletionItem> completionItems = this.computeContentAssist(unit, 
 				param.getPosition().getLine().intValue(), 
 				param.getPosition().getCharacter().intValue());
-		List<CompletionItem> completionItems = new ArrayList<CompletionItem>();
-		for (CodeCompletionItem p : proposals) {
-			completionItems.add(new CompletionItem()
-					.withLabel(p.getLabel())
-					.withKind(Double.valueOf(p.getKind()))
-					.withInsertText(p.getInsertText()));
-		}
 		JavaLanguageServerPlugin.logInfo("Completion request completed");
 		return new CompletionList().withItems(completionItems);
 	}
 	
-	private List<CodeCompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column) {
+	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column) {
 		if (unit == null) return Collections.emptyList();
-		final List<CodeCompletionItem> proposals = new ArrayList<CodeCompletionItem>();
+		final List<CompletionItem> proposals = new ArrayList<CompletionItem>();
 		final CompletionContext[] completionContextParam = new CompletionContext[] { null };
 		try {
 			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals);

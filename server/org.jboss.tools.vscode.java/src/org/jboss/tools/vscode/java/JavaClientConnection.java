@@ -15,6 +15,7 @@ import org.jboss.tools.vscode.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.handlers.ClassfileContentHandler;
 import org.jboss.tools.vscode.java.handlers.CodeLensHandler;
 import org.jboss.tools.vscode.java.handlers.CompletionHandler;
+import org.jboss.tools.vscode.java.handlers.CompletionResolveHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentHighlightHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentLifeCycleHandler;
 import org.jboss.tools.vscode.java.handlers.DocumentSymbolHandler;
@@ -54,6 +55,7 @@ public class JavaClientConnection extends LSPServer{
 		handlers.add(dh.new OpenHandler());
 		handlers.add(dh.new SaveHandler());
 		handlers.add(new CompletionHandler());
+		handlers.add(new CompletionResolveHandler());
 		handlers.add(new NavigateToDefinitionHandler());
 		handlers.add(new WorkspaceEventsHandler(pm,this));
 		handlers.add(new DocumentSymbolHandler());

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.jboss.tools.langs.CodeLens;
 import org.jboss.tools.langs.CodeLensParams;
+import org.jboss.tools.langs.CompletionItem;
 import org.jboss.tools.langs.CompletionList;
 import org.jboss.tools.langs.DidChangeTextDocumentParams;
 import org.jboss.tools.langs.DidChangeWatchedFilesParams;
@@ -33,6 +34,7 @@ public enum LSPMethods {
 	EXIT("exit",Object.class, Object.class),
 	SHUTDOWN("shutdown",Object.class, Object.class),
 	DOCUMENT_COMPLETION("textDocument/completion",TextDocumentPositionParams.class, CompletionList.class),
+	COMPLETION_RESOLVE("completionItem/resolve", CompletionItem.class, CompletionItem.class),
 	DOCUMENT_OPENED("textDocument/didOpen",DidOpenTextDocumentParams.class, Object.class),
 	DOCUMENT_CLOSED("textDocument/didClose",DidCloseTextDocumentParams.class, Object.class),
 	DOCUMENT_CHANGED("textDocument/didChange",DidChangeTextDocumentParams.class, Object.class),
