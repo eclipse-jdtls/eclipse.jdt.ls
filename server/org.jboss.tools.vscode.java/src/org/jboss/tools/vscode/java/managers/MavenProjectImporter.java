@@ -10,39 +10,54 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
-import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
-import org.eclipse.osgi.util.NLS;
 
-public class MavenProjectImporter {
+public class MavenProjectImporter extends AbstractProjectImporter {
 
 	private static final String POM_FILE = "pom.xml";
-	private final File rootFolder;
 
-	public MavenProjectImporter(File projectFolder) {
-		this.rootFolder = projectFolder;
-	}
-
+	private Set<MavenProjectInfo> projectInfos = null;
 	
-	public List<IProject> importToWorkspace(IProgressMonitor monitor)
-			throws CoreException, InterruptedException {
-		MavenPluginActivator mavenPlugin = MavenPluginActivator.getDefault();
-		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)mavenPlugin.getMavenConfiguration();
+	@Override
+	public boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException {
+		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
+		return files != null && !files.isEmpty();
+	}
+	
+	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
+		if (projectInfos == null) {
+			projectInfos = collectMavenProjectInfo(monitor);
+		}
+		return projectInfos;
+	}
+	
+	Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
+		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+		return getMavenProjects(getProjectDirectory(), modelManager, monitor);
+	}
+	
+	@Override
+	public void reset() {
+		projectInfos = null;
+	}
+	
+	@Override
+	@SuppressWarnings("restriction")
+	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
+		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
-		IProjectConfigurationManager configurationManager = mavenPlugin.getProjectConfigurationManager();
-		
-		MavenModelManager modelManager = mavenPlugin.getMavenModelManager();
-		Set<MavenProjectInfo> projectInfos = getMavenProjects(getProjectDirectory(), modelManager);
+		IProjectConfigurationManager configurationManager = MavenPlugin.getProjectConfigurationManager();
+		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor); 
 		ProjectImportConfiguration projectImportConfiguration = new ProjectImportConfiguration();
 		List<IMavenProjectImportResult> importResults =
-				configurationManager.importProjects(projectInfos, projectImportConfiguration, monitor);
+				configurationManager.importProjects(files, projectImportConfiguration, monitor);
 		
 		return toProjects(importResults);
 	}
@@ -64,10 +79,9 @@ public class MavenProjectImporter {
 		return projects;
 	}
 
-	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager) throws InterruptedException {
-		LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false,
-				modelManager);
-		scanner.run(new NullProgressMonitor());
+	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws InterruptedException {
+		LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false, modelManager);
+		scanner.run(monitor);
 		return collectProjects(scanner.getProjects());
 	}
 

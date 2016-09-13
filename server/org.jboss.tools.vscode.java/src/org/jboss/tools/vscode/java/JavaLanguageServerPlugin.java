@@ -53,7 +53,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.context = null;
 		if (connection != null) {
 			connection.disconnect();
-			connection = null;	
 		}
 		connection = null; 
 	}
