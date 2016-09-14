@@ -73,9 +73,21 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 				if (status.isOK()) {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} else {
-					connection.sendStatus(ServiceStatus.Error, "Initialization Failed");
+					connection.sendStatus(ServiceStatus.Error, getMessage(status));
 				}
 				return Status.OK_STATUS;
+			}
+
+			private String getMessage(IStatus status) {
+				String msg = status.getMessage();
+				if  (msg != null && !msg.isEmpty()) {
+					return msg;
+				}
+				msg = "Initialization failed";
+				if (status.getException() != null && status.getException().getMessage() != null) {
+					msg = msg + ": "+ status.getException().getMessage();
+				}
+				return msg;
 			}
 		};
 		job.setPriority(Job.BUILD);

@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.JavaCore;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.StatusFactory;
 
 public class ProjectsManager {
 	
@@ -32,7 +33,7 @@ public class ProjectsManager {
 		try {
 			IProjectImporter importer = getImporter(new File(projectName), monitor);
 			if (importer == null) {
-				return Status.OK_STATUS;
+				return StatusFactory.UNSUPPORTED_PROJECT;
 			}
 			List<IProject> projects = importer.importToWorkspace(monitor);
 			
@@ -49,7 +50,7 @@ public class ProjectsManager {
 			return Status.OK_STATUS;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
-			return new Status(IStatus.ERROR, "", "Import failed: " + e.getMessage());
+			return StatusFactory.newErrorStatus("Import failed: " + e.getMessage(), e);
 		} catch (InterruptedException e) {
 			JavaLanguageServerPlugin.logInfo("Import cancelled");
 			return Status.CANCEL_STATUS;
@@ -82,5 +83,4 @@ public class ProjectsManager {
 		//TODO read extension point
 		return Arrays.asList(new MavenProjectImporter(), new EclipseProjectImporter());
 	}
-
 }

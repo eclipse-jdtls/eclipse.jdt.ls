@@ -13,6 +13,7 @@ import org.osgi.framework.BundleContext;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
 
+	public static final String PLUGIN_ID = "org.jboss.tools.vscode.java";
 	private static BundleContext context;
 	static LanguageServer languageServer;
 	private JavaClientConnection connection;
