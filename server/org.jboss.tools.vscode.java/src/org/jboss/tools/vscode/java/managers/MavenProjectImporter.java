@@ -7,9 +7,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
@@ -24,6 +28,17 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	private static final String POM_FILE = "pom.xml";
 
 	private Set<MavenProjectInfo> projectInfos = null;
+
+	private IProjectConfigurationManager configurationManager;
+	
+	public MavenProjectImporter() {
+		this(MavenPlugin.getProjectConfigurationManager());
+	}
+	
+	public MavenProjectImporter(IProjectConfigurationManager configurationManager) {
+		this.configurationManager = configurationManager;
+	}
+	
 	
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException {
@@ -53,26 +68,33 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
-		IProjectConfigurationManager configurationManager = MavenPlugin.getProjectConfigurationManager();
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor); 
-		ProjectImportConfiguration projectImportConfiguration = new ProjectImportConfiguration();
-		List<IMavenProjectImportResult> importResults =
-				configurationManager.importProjects(files, projectImportConfiguration, monitor);
-		
-		return toProjects(importResults);
+		ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+		List<IMavenProjectImportResult> importResults = configurationManager.importProjects(files, importConfig, monitor);
+		return collectProjects(importConfig, importResults, monitor);
 	}
 
 	private File getProjectDirectory() {
 		return rootFolder;
 	}
 
-
-	private List<IProject> toProjects(List<IMavenProjectImportResult> importResults) {
+	private List<IProject> collectProjects(ProjectImportConfiguration importConfig, List<IMavenProjectImportResult> importResults, IProgressMonitor monitor) throws CoreException {
 		List<IProject> projects = new ArrayList<>();
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		for (IMavenProjectImportResult importResult : importResults) {
 			IProject project = importResult.getProject();
+			if (project == null) {
+				//project already existed?
+				File projectDir = importResult.getMavenProjectInfo().getPomFile().getParentFile();
+				IContainer container = root.getContainerForLocation(new Path(projectDir.getAbsolutePath()));
+				if (container instanceof IProject) {
+					project = (IProject)container;
+					project.open(monitor);
+					configurationManager.updateProjectConfiguration(project, monitor);
+				}
+			} 
 			if (project != null) {
-				projects.add(importResult.getProject());
+				projects.add(project);
 			}
 		}
 
