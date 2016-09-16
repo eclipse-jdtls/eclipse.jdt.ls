@@ -12,8 +12,6 @@
 		<tycho-version>0.26.0</tycho-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/gorkem/java-language-server.git</tycho.scmUrl>
-		<jacoco.exec>${project.basedir}/../target/jacoco.exec</jacoco.exec>
-		<sonar.jacoco.reportPath>${jacoco.exec}</sonar.jacoco.reportPath>
 		<sonar.language>java</sonar.language>
 		<sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -184,6 +182,10 @@
 					<exists>META-INF/MANIFEST.MF</exists>
 				</file>
 			</activation>
+			<properties>
+				<jacoco.destFile>${project.basedir}/../target/jacoco.exec</jacoco.destFile>
+				<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
