@@ -1,6 +1,7 @@
 package org.jboss.tools.vscode.java.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -52,7 +53,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		ServerCapabilities capabilities = new ServerCapabilities();
 		return result.withCapabilities(
 				capabilities.withTextDocumentSync(new Double(2))
-				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.TRUE))
+				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.TRUE).withTriggerCharacters(Arrays.asList(".","@","#")))
 				.withHoverProvider(Boolean.TRUE)
 				.withDefinitionProvider(Boolean.TRUE)
 				.withDocumentSymbolProvider(Boolean.TRUE)
