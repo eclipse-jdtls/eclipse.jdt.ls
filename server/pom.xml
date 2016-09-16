@@ -7,11 +7,13 @@
 	<name>Java language server for VS Code</name>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	
+
 	<properties>
 		<tycho-version>0.26.0</tycho-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
-		<tycho.scmUrl>scm:git:https://github.com/eclipse/thym.git</tycho.scmUrl>
+		<tycho.scmUrl>scm:git:https://github.com/gorkem/java-language-server.git</tycho.scmUrl>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		<coverage.filter>org.jboss.tools.vscode.*</coverage.filter>
 	</properties>
 
 	<modules>
@@ -73,9 +75,9 @@
 					</environments>
 					<includePackedArtifacts>false</includePackedArtifacts>
 					<dependency-resolution>
-					  <optionalDependencies>ignore</optionalDependencies>
+						<optionalDependencies>ignore</optionalDependencies>
 					</dependency-resolution>
-					
+
 				</configuration>
 			</plugin>
 			<plugin>
@@ -169,5 +171,43 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>code-coverage</id>
+			<activation>
+				<!-- Enable jacoco only on plugin projects -->
+				<file>
+					<exists>META-INF/MANIFEST.MF</exists>
+				</file>
+			</activation>
+			<properties>
+				<jacoco.destFile>${project.basedir}/../target/jacoco.exec</jacoco.destFile>
+				<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>0.7.7.201606060606</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>${coverage.filter}</include>
+									</includes>
+									<!-- Merge reports from all executions -->
+									<append>true</append>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
 	
