@@ -129,7 +129,11 @@ public class LSPServer implements MessageListener{
 		this.handlers = handlers;
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
 		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
-
+		if (stdInName == null || stdOutName == null) {
+			//XXX temporary hack to let unit tests run
+			System.err.println("Unable to connect to named pipes");
+			return;
+		}
 		connection = new NamedPipeConnection(stdOutName, stdInName);
 		connection.setMessageListener(this);
 		connection.start();

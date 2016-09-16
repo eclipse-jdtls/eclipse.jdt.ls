@@ -7,6 +7,6 @@
 		<artifactId>parent</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>org.jboss.tools.vscode.java</artifactId>
-	<packaging>eclipse-plugin</packaging>
+	<artifactId>org.jboss.tools.vscode.tests</artifactId>
+	<packaging>eclipse-test-plugin</packaging>
 </project>
