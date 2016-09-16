@@ -1,8 +1,13 @@
 package org.jboss.tools.vscode.java.handlers;
 
+import java.net.URISyntaxException;
+
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.Position;
@@ -29,13 +34,27 @@ public class NavigateToDefinitionHandler extends AbstractRequestHandler implemen
 			if (elements == null || elements.length != 1)
 				return null;
 			IJavaElement element = elements[0];
-			IResource resource = element.getResource();
-
-			// if the selected element corresponds to a resource in workspace,
-			// navigate to it
-			if (resource != null && resource.getProject() != null) {
-				return toLocation(element);
+			ICompilationUnit compilationUnit = (ICompilationUnit) element
+					.getAncestor(IJavaElement.COMPILATION_UNIT);
+			Location location = null;
+			if (compilationUnit != null) {
+				location = toLocation(element);
 			}
+			else{
+				IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+				if (cf != null && cf.getSourceRange() != null) {
+					try {
+						ISourceRange range = cf.getSourceRange();
+						if(element instanceof ISourceReference ){
+							range = ((ISourceReference)element).getNameRange();
+						}
+						location = toLocation(cf, range.getOffset(), range.getLength());
+					} catch (URISyntaxException e) {
+					}
+				}
+			}
+			return location;
+
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  unit.getElementName(), e);
 		}

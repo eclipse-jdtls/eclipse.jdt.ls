@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 
@@ -73,14 +74,14 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 								IJavaElement element = (IJavaElement) o;
 								ICompilationUnit compilationUnit = (ICompilationUnit) element
 										.getAncestor(IJavaElement.COMPILATION_UNIT);
-								org.jboss.tools.langs.Location location = null;
+								Location location = null;
 								if (compilationUnit != null) {
 									location = toLocation(compilationUnit, match.getOffset(),
 											match.getLength());
 								}
 								else{
 									IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-									if (cf != null) {
+									if (cf != null && cf.getSourceRange() != null ) {
 										try {
 											location = toLocation(cf, match.getOffset(), match.getLength());
 										} catch (URISyntaxException e) {
