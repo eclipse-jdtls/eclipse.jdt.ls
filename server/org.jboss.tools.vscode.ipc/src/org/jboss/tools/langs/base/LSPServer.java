@@ -195,12 +195,10 @@ public class LSPServer implements MessageListener{
 			error.setMessage(e.getMessage());
 			error.setData(message.getContent());
 		}
-		if (error != null) {
-			@SuppressWarnings("rawtypes")
-			ResponseMessage rm = new ResponseMessage();
-			rm.setError(error);
-			send(rm);
-		}
+		@SuppressWarnings("rawtypes")
+		ResponseMessage rm = new ResponseMessage();
+		rm.setError(error);
+		send(rm);
 		return null;
 	}
 

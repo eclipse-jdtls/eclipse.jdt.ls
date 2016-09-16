@@ -5,8 +5,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;

@@ -37,16 +37,15 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
-
-import copied.org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import copied.org.eclipse.jdt.internal.corext.dom.Bindings;
-
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+
+import copied.org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import copied.org.eclipse.jdt.internal.corext.dom.Bindings;
 
 
 public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder {
