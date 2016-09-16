@@ -12,6 +12,8 @@
 		<tycho-version>0.26.0</tycho-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/eclipse/thym.git</tycho.scmUrl>
+		<jacoco.exec>../target/jacoco.exec</jacoco.exec>
+		<sonar.jacoco.reportPath>${jacoco.exec}</sonar.jacoco.reportPath>
 		<coverage.filter>org.jboss.tools.vscode.*</coverage.filter>
 	</properties>
 
