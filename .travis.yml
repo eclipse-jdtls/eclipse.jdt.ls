@@ -1,11 +1,17 @@
 language: java
 sudo: false
-script: mvn -f ./server/pom.xml -Pserver-distro clean verify
+script: mvn -f ./server/pom.xml -Pserver-distro clean verify sonar:sonar -Dsonar.login=$SONAR_TOKEN
 jdk:
 - oraclejdk8
+addons:
+  sonarqube: true
 cache:
   directories:
   - $HOME/.m2
+  - $HOME/.sonar/cache
+env:
+  global:
+  - secure: TLYwD3fGznXcBAINNARSDqfFDEYq4vdMuZj+xOTHL+XHEL0PhVLA9twzTr5AZwZEnQdGoNuRkDQkEgYGIaLy6iv31hZuaXg0/u9uoQXVfDi93b/giugne0GB+ZKelxrzOtqD/o/chtd0VCI+iTZ18jt//1CBViIXYYHB72dTgDtaN9/Txl66Gfm7Bp/J2b0EXys3K1D/Nbbyiq9WhHxrN7d47mJTWrBovjVywx/gksl+/V3B7bm00Jhu512vkE7nYdJEU/pRJ7T6OVwRZm1ahlJcj+eromilDTky5f0ygW8zu+FiJcPQsQGma2deNBH0WBt45ulHMJHMO729bCdBmy88jPitGaHufk6DY1/VUen3HWz0zPO+z/YLzDM3AxrzdEDaE3uJ8J8+2SpjiMcf65AwHWWaZzHHbnmJ5hf6qnvWEvtHx1V2zH2Rr4Fd78zqhdmY1SpxuXJOcd69fAozyFDDYEEkV/E1K/z0YVk2dEJeDCA4BuyWrJb6t8P15C+PvREv2ADWyruvssJ/liJeHSgaq5Whg22IRknX7Ym/LpJG3pcJdKDrbVcC8+a5yy5zmIV18mZMh0XEZaopt6Z7gVQp62S/zyCt3nPwAXBE7q82rgcLTnXjIPESpBzVm3qsQITt44LCLVMDXqs7Sgdqluufk6M6VQYbp0FMt9A6oFA=
 deploy:
   provider: bintray
   file: "./server/descriptor.json"
