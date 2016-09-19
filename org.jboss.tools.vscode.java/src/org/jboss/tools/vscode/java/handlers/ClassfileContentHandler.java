@@ -30,13 +30,13 @@ public class ClassfileContentHandler implements RequestHandler<TextDocumentIdent
 	public String handle(TextDocumentIdentifier param) {
 		try {
 			IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
-				if (cf != null) {
-					IBuffer buffer = cf.getBuffer();
-					if (buffer != null) {
-						JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
-						return buffer.getContents();
-					}
+			if (cf != null) {
+				IBuffer buffer = cf.getBuffer();
+				if (buffer != null) {
+					JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
+					return buffer.getContents();
 				}
+			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
 		}

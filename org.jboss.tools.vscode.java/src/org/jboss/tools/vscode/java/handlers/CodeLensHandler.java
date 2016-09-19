@@ -57,9 +57,9 @@ public class CodeLensHandler {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			return getCodeLensSymbols(unit);
 		}
-		
+
 	}
-	
+
 	public class CodeLensResolver implements RequestHandler<CodeLens, CodeLens>{
 
 		@Override
@@ -72,7 +72,7 @@ public class CodeLensHandler {
 			return resolve(param);
 		}
 	}
-	
+
 
 	@SuppressWarnings("unchecked")
 	private  CodeLens resolve(CodeLens lens) {
@@ -104,28 +104,28 @@ public class CodeLensHandler {
 
 	private List<Location> findReferences(IJavaElement element) throws JavaModelException, CoreException {
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
-		final List<Location> result = new ArrayList<Location>();
+		final List<Location> result = new ArrayList<>();
 		SearchEngine engine = new SearchEngine();
 		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 				createSearchScope(), new SearchRequestor() {
 
-					@Override
-					public void acceptSearchMatch(SearchMatch match) throws CoreException {
-						Object o = match.getElement();
-						if (o instanceof IJavaElement) {
-							IJavaElement element = (IJavaElement) o;
-							ICompilationUnit compilationUnit = (ICompilationUnit) element
-									.getAncestor(IJavaElement.COMPILATION_UNIT);
-							if (compilationUnit == null) {
-								return;
-							}
-							Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
-							result.add(location);
-
-						}
-
+			@Override
+			public void acceptSearchMatch(SearchMatch match) throws CoreException {
+				Object o = match.getElement();
+				if (o instanceof IJavaElement) {
+					IJavaElement element = (IJavaElement) o;
+					ICompilationUnit compilationUnit = (ICompilationUnit) element
+							.getAncestor(IJavaElement.COMPILATION_UNIT);
+					if (compilationUnit == null) {
+						return;
 					}
-				}, new NullProgressMonitor());
+					Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
+					result.add(location);
+
+				}
+
+			}
+		}, new NullProgressMonitor());
 
 		return result;
 	}
@@ -134,7 +134,7 @@ public class CodeLensHandler {
 		if(unit == null ) return Collections.emptyList();
 		try {
 			IJavaElement[] elements = unit.getChildren();
-			ArrayList<CodeLens> lenses = new ArrayList<CodeLens>(elements.length);
+			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
 			collectChildren(unit, elements, lenses);
 			return lenses;
 		} catch (JavaModelException e) {

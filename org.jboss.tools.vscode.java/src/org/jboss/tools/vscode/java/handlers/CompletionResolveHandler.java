@@ -50,7 +50,7 @@ public class CompletionResolveHandler implements RequestHandler<CompletionItem, 
 		Map<String, String> data = (Map<String, String>) param.getData();
 		// clean resolve data
 		param.setData(null);
-		
+
 		if (data.containsKey(DATA_FIELD_URI) && data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(data.get(DATA_FIELD_URI));
 			String typeName = SignatureUtil.stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));
@@ -101,7 +101,7 @@ public class CompletionResolveHandler implements RequestHandler<CompletionItem, 
 	 * @return the reader content as string
 	 */
 	private static String getString(Reader reader) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		char[] buffer = new char[1024];
 		int count;
 		try {

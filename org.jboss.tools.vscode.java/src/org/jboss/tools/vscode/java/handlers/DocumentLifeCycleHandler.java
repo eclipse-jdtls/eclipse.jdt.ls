@@ -44,9 +44,9 @@ import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 public class DocumentLifeCycleHandler {
-	
+
 	private JavaClientConnection connection;
-	
+
 	public class ClosedHandler implements RequestHandler<DidCloseTextDocumentParams, Object>{
 		@Override
 		public boolean canHandle(String request) {
@@ -67,9 +67,9 @@ public class DocumentLifeCycleHandler {
 			}
 			return null;
 		}
-		
+
 	}
-	
+
 	public class OpenHandler implements RequestHandler<DidOpenTextDocumentParams, Object>{
 
 		@Override
@@ -92,7 +92,7 @@ public class DocumentLifeCycleHandler {
 			return null;
 		}
 	}
-	
+
 	public class ChangeHandler implements RequestHandler<DidChangeTextDocumentParams, Object>{
 
 		@Override
@@ -115,7 +115,7 @@ public class DocumentLifeCycleHandler {
 			return null;
 		}
 	}
-	
+
 	public class SaveHandler implements RequestHandler<DidSaveTextDocumentParams, Object>{
 
 		@Override
@@ -129,18 +129,18 @@ public class DocumentLifeCycleHandler {
 			return null;
 		}
 	}
-	
+
 	public DocumentLifeCycleHandler(JavaClientConnection connection) {
 		this.connection = connection;
 	}
-	
+
 	private void handleOpen(DidOpenTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return;
 		}
 		try {
-			// The open event can happen before the workspace element added event when a new file is added. 
+			// The open event can happen before the workspace element added event when a new file is added.
 			// checks if the underlying resource exists and refreshes to sync the newly created file.
 			if(unit.getResource() != null && !unit.getResource().isAccessible()){
 				try {
@@ -149,7 +149,7 @@ public class DocumentLifeCycleHandler {
 					// ignored
 				}
 			}
-			
+
 			IBuffer buffer = unit.getBuffer();
 			if(buffer != null)
 				buffer.setContents(params.getTextDocument().getText());
@@ -164,25 +164,25 @@ public class DocumentLifeCycleHandler {
 
 	private void handleChanged(DidChangeTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		
+
 		if (!unit.isWorkingCopy()) {
 			return;
 		}
-		
+
 		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 		ITextFileBuffer buffer = manager.getTextFileBuffer(unit.getResource().getFullPath(), LocationKind.IFILE);
 		IDocument document = buffer.getDocument();
-		try {			
+		try {
 			MultiTextEdit root = new MultiTextEdit();
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
-				
+
 				Range range = changeEvent.getRange();
-				
-				int startOffset = document.getLineOffset(range.getStart().getLine().intValue()) + range.getStart().getCharacter().intValue(); 
-				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) + range.getEnd().getCharacter().intValue(); 
+
+				int startOffset = document.getLineOffset(range.getStart().getLine().intValue()) + range.getStart().getCharacter().intValue();
+				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) + range.getEnd().getCharacter().intValue();
 				int length = endOffset - startOffset;
-				
+
 				TextEdit edit = null;
 				if (length == 0) {
 					edit = new InsertEdit(startOffset, changeEvent.getText());
@@ -193,12 +193,12 @@ public class DocumentLifeCycleHandler {
 				}
 				root.addChild(edit);
 			}
-		
+
 			if (root.hasChildren()) {
 				root.apply(document);
-				unit.reconcile();					
+				unit.reconcile();
 			}
-		} catch (JavaModelException e) {			
+		} catch (JavaModelException e) {
 		} catch (org.eclipse.jface.text.BadLocationException e) {
 		}
 	}

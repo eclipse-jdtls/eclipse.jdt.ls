@@ -30,7 +30,7 @@ import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 public class CompletionHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
-	
+
 	@Override
 	public boolean canHandle(String request) {
 		return LSPMethods.DOCUMENT_COMPLETION.getMethod().equals(request);
@@ -39,16 +39,16 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 	@Override
 	public CompletionList handle(TextDocumentPositionParams param) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
-		List<CompletionItem> completionItems = this.computeContentAssist(unit, 
-				param.getPosition().getLine().intValue(), 
+		List<CompletionItem> completionItems = this.computeContentAssist(unit,
+				param.getPosition().getLine().intValue(),
 				param.getPosition().getCharacter().intValue());
 		JavaLanguageServerPlugin.logInfo("Completion request completed");
 		return new CompletionList().withItems(completionItems);
 	}
-	
+
 	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column) {
 		if (unit == null) return Collections.emptyList();
-		final List<CompletionItem> proposals = new ArrayList<CompletionItem>();
+		final List<CompletionItem> proposals = new ArrayList<>();
 		final CompletionContext[] completionContextParam = new CompletionContext[] { null };
 		try {
 			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals);
@@ -67,11 +67,11 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
 
 			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
-			
+
 			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector, new NullProgressMonitor());
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for" +  unit.getElementName(), e);
 		}
 		return proposals;
-	}	
+	}
 }
