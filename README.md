@@ -1,69 +1,56 @@
+[![Build Status](https://travis-ci.org/gorkem/java-language-server.svg?branch=master)](https://travis-ci.org/gorkem/java-language-server)
+
+This repository contains only the server implementation. 
+For Visual Studio Code extension that uses this server visit
+[vscode-java](https://github.com/gorkem/vscode-java)
+=========================
+
 java-language-server 
 =====================
 
-java-language-server is a Java language extension for Visual Studio Code!
+java-language-server is a server implementation that provides Java language smartness.
 The server adheres to the [language server protocol](https://github.com/Microsoft/language-server-protocol) 
-and can be used with any editor that supports the protocol.  
+and can be used with any editor that supports the protocol.  The server utilizes [Eclipse 
+JDT](http://www.eclipse.org/jdt/), [M2Eeclipse](http://www.eclipse.org/m2e/).
 
-This preview provides the following features:
-* IntelliSense, Go to Definition, Outline, Open Type
-* Support for Maven pom.xml to resolve dependencies
-
-
-Developing and Contributing
-----------------------------
-
-*server* folder contains the java-server implemementation that is independent from VS Code
-
-*client* folder contains the VS Code extension. 
-
-This command will build the server and put a copy under `client/server` folder:
-    
-    $ cd server
-    $ mvn clean verify 
+Features 
+--------------
+* As you type reporting of parsing and compilation errors
+* Code completion
+* Javadoc hovers 
+* Code outline
+* Code navigation
+* Code lens (references)
+* Highlights
+* Code formatting
+* Maven pom.xml project support
 
 
-For building VS Code extension see the [guide](https://code.visualstudio.com/docs/extensions/overview).
-The above command copies a server under client/server folder.
-
-Setup vscode
------------
-
-Install latest Visual Code - Insider edition from
-https://code.visualstudio.com/insiders
-
-Install latest Node (v6.3+) https://nodejs.org/en/download/current/
-
-   cd client
-   npm install
-   vscode-insiders .
- 
- 
-Setup Eclipse
------------
-
-Install Eclipse Neon Java EE from
-http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neonr
-that will have most needed already installed.
-
-You can also get the
-http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/neonr
+First Time Setup
+--------------
+0. Fork and clone the repository
+1. Install Eclipse [Neon Java EE](http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neonr)
+that will have most needed already installed. Alternately, 
+you can get the [Eclipse IDE for Java developers](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/neonr)
 and just instal Eclipse PDE from marketplace.
 
-Once installed use `File > Open Projects from File System...` and
+2. Once installed use `File > Open Projects from File System...` and
 point it `java-language-server` and Eclipse should automatically
 detect the projects and import it properly.
 
-If you after import sees an error on `pom.xml` about Tycho, you can use Quick Fix
+3. If you after import sees an error on `pom.xml` about Tycho, you can use Quick Fix
 (Ctrl+1) to install the Tycho maven integration.
 
-Generate simple java app for testing
--------------------------------
 
-    mvn archetype:generate -DgroupId=com.mycompany.app
-    -DartifactId=my-app
-    -DarchetypeArtifactId=maven-archetype-quickstart
-    -DinteractiveMode=false
+Building from command line
+----------------------------
+
+1. Install [Apache Maven](https://maven.apache.org/)
+
+2. This command will build the server into `/org.jboss.tools.vscode.product/target/repository` folder:
+```bash    
+    $ mvn clean verify 
+````
 
 
 Feedback
@@ -75,4 +62,4 @@ Feedback
 
 License
 -------
-See [LICENSE](LICENSE) file.
+EPL 1.0, See [LICENSE](LICENSE) file.
