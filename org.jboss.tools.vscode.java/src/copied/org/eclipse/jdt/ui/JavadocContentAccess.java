@@ -22,7 +22,7 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.vscode.javadoc.JavaDoc2MarkdownTextReader;
+import org.jboss.tools.vscode.javadoc.internal.JavaDoc2MarkdownTextReader;
 
 import copied.org.eclipse.jdt.internal.corext.javadoc.JavaDocCommentReader;
 import copied.org.eclipse.jdt.internal.corext.util.MethodOverrideTester;

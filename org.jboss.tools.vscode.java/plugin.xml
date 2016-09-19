@@ -9,7 +9,7 @@
             thread="main"
             visible="true">
          <run
-               class="org.jboss.tools.vscode.java.LanguageServer">
+               class="org.jboss.tools.vscode.java.internal.LanguageServer">
          </run>
       </application>
    </extension>

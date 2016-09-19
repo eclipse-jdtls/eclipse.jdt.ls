@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Java
 Bundle-SymbolicName: org.jboss.tools.vscode.java;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: org.jboss.tools.vscode.java.JavaLanguageServerPlugin
+Bundle-Activator: org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
@@ -16,5 +16,5 @@ Require-Bundle: org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
  com.ibm.icu;bundle-version="56.1.0",
  org.eclipse.core.filebuffers;bundle-version="3.6.0",
  org.eclipse.m2e.maven.runtime
-Export-Package: org.jboss.tools.vscode.java;x-friends:="org.jboss.tools.vscode.tests",
- org.jboss.tools.vscode.java.managers;x-friends:="org.jboss.tools.vscode.tests"
+Export-Package: org.jboss.tools.vscode.java.internal;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests"

@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+org.moreunit.generateCommentsForTestMethod=true
 org.moreunit.preferences.version=2
 org.moreunit.test_annotation=BY_NAME
 org.moreunit.unitsourcefolder=org.jboss.tools.vscode.java\:src\:org.jboss.tools.vscode.tests\:src

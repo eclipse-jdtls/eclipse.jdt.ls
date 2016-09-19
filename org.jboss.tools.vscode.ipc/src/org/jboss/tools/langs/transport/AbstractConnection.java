@@ -13,7 +13,7 @@ package org.jboss.tools.langs.transport;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jboss.tools.vscode.ipc.IPCPlugin;
+import org.jboss.tools.vscode.internal.ipc.IPCPlugin;
 
 public abstract class AbstractConnection implements Connection {
 

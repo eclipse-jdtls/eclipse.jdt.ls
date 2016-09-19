@@ -19,9 +19,9 @@ import java.util.List;
 import org.jboss.tools.langs.base.ResponseError.ReservedCode;
 import org.jboss.tools.langs.transport.Connection;
 import org.jboss.tools.langs.transport.Connection.MessageListener;
+import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
-import org.jboss.tools.vscode.ipc.RequestHandler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

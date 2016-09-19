@@ -18,7 +18,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
 import java.nio.charset.Charset;
 
-import org.jboss.tools.vscode.ipc.IPCPlugin;
+import org.jboss.tools.vscode.internal.ipc.IPCPlugin;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
