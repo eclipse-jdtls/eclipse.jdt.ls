@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Red Hat, Inc. 
+ * Copyright (c) 2016 Red Hat, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,10 +40,10 @@ public final class JDTUtils {
 
 	/**
 	 * Given the uri returns a {@link ICompilationUnit}.
-	 * May return null if it can not associate the uri with a Java 
-	 * file. 
-	 * 
-	 * @param uri 
+	 * May return null if it can not associate the uri with a Java
+	 * file.
+	 *
+	 * @param uri
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uri) {
@@ -58,14 +58,14 @@ public final class JDTUtils {
 		if (element instanceof ICompilationUnit) {
 			return (ICompilationUnit)element;
 		}
-		return null;		
+		return null;
 	}
-	
+
 	/**
 	 * Given the uri returns a {@link IClassFile}.
 	 * May return null if it can not resolve the uri to a
 	 * library.
-	 * 
+	 *
 	 * @see #toLocation(IClassFile, int, int)
 	 * @param uri with 'jdt' scheme
 	 * @return class file
@@ -77,27 +77,27 @@ public final class JDTUtils {
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 		}
-		if (uri != null && uri.getScheme().equals("jdt") && uri.getAuthority().equals("contents")) {
+		if (uri != null && "jdt".equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
 			String handleId = uri.getQuery();
 			IJavaElement element = JavaCore.create(handleId);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			return cf;
 		}
 		return null;
-		
+
 	}
-	
+
 	/**
 	 * Convenience method that combines {@link #resolveClassFile(String)} and
-	 * {@link #resolveCompilationUnit(String)}. 
-	 * 
+	 * {@link #resolveCompilationUnit(String)}.
+	 *
 	 * @param uri
-	 * @return either a class file or compilation unit 
+	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString) {
 		try {
 			URI uri = new URI(uriString);
-			if (uri.getScheme().equals("jdt")) {
+			if ("jdt".equals(uri.getScheme())) {
 				return resolveClassFile(uriString);
 			}
 			return resolveCompilationUnit(uriString);
@@ -106,11 +106,11 @@ public final class JDTUtils {
 			return null;
 		}
 	}
-	
+
 	/**
-	 * Creates a location for a given java element. 
+	 * Creates a location for a given java element.
 	 * Element can be a {@link ICompilationUnit} or {@link IClassFile}
-	 * 
+	 *
 	 * @param element
 	 * @return location or null
 	 * @throws JavaModelException
@@ -131,10 +131,10 @@ public final class JDTUtils {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Creates location to the given offset and length for the compilation unit 
-	 * 
+	 * Creates location to the given offset and length for the compilation unit
+	 *
 	 * @param unit
 	 * @param offset
 	 * @param length
@@ -146,7 +146,7 @@ public final class JDTUtils {
 		result.setUri(getFileURI(unit));
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
-		
+
 		Range range = new Range();
 		if (loc != null) {
 			range.withStart(new Position().withLine(Double.valueOf(loc[0]))
@@ -158,10 +158,10 @@ public final class JDTUtils {
 		}
 		return result.withRange(range);
 	}
-	
+
 	/**
 	 * Creates location to the given offset and length for the class file.
-	 * 
+	 *
 	 * @param unit
 	 * @param offset
 	 * @param length
@@ -193,11 +193,11 @@ public final class JDTUtils {
 					.withCharacter(Double.valueOf(endLoc[1])));
 		}
 		return result.withRange(range);
-	} 
-	
+	}
+
 	/**
 	 * Creates a range for the given offset and length for a compilation unit
-	 * 
+	 *
 	 * @param unit
 	 * @param offset
 	 * @param length
@@ -212,14 +212,14 @@ public final class JDTUtils {
 		if (loc != null && endLoc != null) {
 			result.setStart(new Position().withLine(Double.valueOf(loc[0]))
 					.withCharacter(Double.valueOf(loc[1])));
-			
+
 			result.setEnd(new Position().withLine(Double.valueOf(endLoc[0]))
 					.withCharacter(Double.valueOf(endLoc[1])));
-					
+
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Returns uri for a compilation unit
 	 * @param cu
@@ -228,15 +228,14 @@ public final class JDTUtils {
 	public static String getFileURI(ICompilationUnit cu) {
 		return getFileURI(cu.getResource());
 	}
-	
+
 	/**
-	 * Returns uri for a resource 
+	 * Returns uri for a resource
 	 * @param resource
 	 * @return
 	 */
 	public static String getFileURI(IResource resource) {
 		String uri = resource.getLocation().toFile().toURI().toString();
 		return uri.replaceFirst("file:/([^/])", "file:///$1");
-	}	
+	}
 }
- 

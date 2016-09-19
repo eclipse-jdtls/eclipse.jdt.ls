@@ -34,17 +34,17 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 public class LSPServer implements MessageListener{
-	
+
 	private class ParameterizedTypeImpl implements ParameterizedType{
 
 		final private Type rawType;
 		final private Type paramType;
-		
+
 		public ParameterizedTypeImpl(Type rawType, Type paramType) {
 			this.rawType = rawType;
 			this.paramType = paramType;
 		}
-		
+
 		@Override
 		public Type[] getActualTypeArguments() {
 			return new Type[]{paramType};
@@ -59,9 +59,9 @@ public class LSPServer implements MessageListener{
 		public Type getOwnerType() {
 			return null;
 		}
-		
+
 	}
-	
+
 	private class MessageJSONHandler implements JsonSerializer<Message>, JsonDeserializer<Message>{
 
 		@Override
@@ -69,10 +69,9 @@ public class LSPServer implements MessageListener{
 				throws JsonParseException {
 			JsonObject object = jsonElement.getAsJsonObject();
 			Type subType = ResponseMessage.class;
-			Type paramType = null;
 			if(!object.has("id")){
 				subType = NotificationMessage.class;
-				//TODO: Resolve result type from id. 
+				//TODO: Resolve result type from id.
 			}
 			else if(object.has("method")){
 				subType = RequestMessage.class;
@@ -82,13 +81,13 @@ public class LSPServer implements MessageListener{
 			if(lspm == null){
 				throw new LSPException(ReservedCode.METHOD_NOT_FOUND.code(), method + " is not handled ", null, null);
 			}
-			paramType = LSPMethods.fromMethod(method).getRequestType();
+			Type paramType = LSPMethods.fromMethod(method).getRequestType();
 			return context.deserialize(jsonElement, new ParameterizedTypeImpl(subType,paramType));
 		}
 
 		@Override
 		public JsonElement serialize(Message message, Type type, JsonSerializationContext context) {
-			Type rawType = null; 
+			Type rawType = null;
 			Type paramType = Object.class;
 			if(message instanceof NotificationMessage){
 				rawType = NotificationMessage.class;
@@ -115,26 +114,26 @@ public class LSPServer implements MessageListener{
 				throw new RuntimeException("Unrecognized message type");
 			return context.serialize(message,new ParameterizedTypeImpl(rawType,paramType));
 		}
-		
+
 	}
 	private Connection connection;
 	private final Gson gson;
 	private static LSPServer instance;
 	private List<RequestHandler<?, ?>> handlers;
-	
+
 	protected LSPServer(){
 		GsonBuilder builder = new GsonBuilder();
 		gson = builder.registerTypeAdapter(Message.class,new MessageJSONHandler())
 				.create();
 	}
-	
+
 	public static LSPServer getInstance(){
 		if(instance == null ){
 			instance = new LSPServer();
 		}
 		return instance;
 	}
-	
+
 	public void connect(List<RequestHandler<?,?>> handlers ) throws IOException{
 		this.handlers = handlers;
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
@@ -148,7 +147,7 @@ public class LSPServer implements MessageListener{
 		connection.setMessageListener(this);
 		connection.start();
 	}
-	
+
 	public void send (Message message){
 		TransportMessage tm = new TransportMessage(gson.toJson(message));
 		connection.send(tm);
@@ -159,7 +158,7 @@ public class LSPServer implements MessageListener{
 		Message msg = maybeParseMessage(message);
 		if(msg == null )
 			return;
-		
+
 		if(msg instanceof NotificationMessage){
 			NotificationMessage<?> nm = (NotificationMessage<?>) msg;
 			try {
@@ -168,7 +167,7 @@ public class LSPServer implements MessageListener{
 				e.printStackTrace();
 			}
 		}
-		
+
 		if(msg instanceof RequestMessage){
 			RequestMessage<?> rm = (RequestMessage<?>) msg;
 			try{
@@ -184,14 +183,14 @@ public class LSPServer implements MessageListener{
 	}
 
 	/**
-	 * Parses the message notifies client if parse fails and returns null 
-	 * 
+	 * Parses the message notifies client if parse fails and returns null
+	 *
 	 * @param message
 	 * @param msg
 	 * @return
 	 */
 	private Message maybeParseMessage(TransportMessage message) {
-			ResponseError error = null;
+		ResponseError error = null;
 		try {
 			return gson.fromJson(message.getContent(), Message.class);
 		} catch (LSPException e) {
@@ -234,7 +233,7 @@ public class LSPServer implements MessageListener{
 			}
 		}
 	}
-	
+
 	public void shutdown(){
 		connection.close();
 	}

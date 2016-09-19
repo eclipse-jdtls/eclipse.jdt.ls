@@ -20,14 +20,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
- * 
+ *
+ *
  * Adopted from org.eclipse.wst.jsdt.chromium.internal.transport.Message
  *
  */
 public class TransportMessage {
 
-	 private static final Logger LOGGER = Logger.getLogger(TransportMessage.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(TransportMessage.class.getName());
 
 	private static final byte[] HEADER_TERMINATOR_BYTES = "\r\n".getBytes();
 
@@ -39,7 +39,7 @@ public class TransportMessage {
 	private static final String CONTENT_LENGTH = "Content-Length";
 
 	private final String content;
-	
+
 	public TransportMessage(String content) {
 		this.content = content;
 	}
@@ -51,7 +51,7 @@ public class TransportMessage {
 
 	void send(OutputStream outputStream, Charset charset) throws IOException {
 		byte[] contentBytes = content.getBytes(charset);
-		if (!charset.name().equalsIgnoreCase("UTF-8")) {
+		if (!"UTF-8".equalsIgnoreCase(charset.name())) {
 			writeHeaderField(CONTENT_TYPE, CT_VSCODE + ";charset=" + charset.name(), outputStream, charset);
 		}
 		writeHeaderField(CONTENT_LENGTH, String.valueOf(contentBytes.length), outputStream, charset);
@@ -70,7 +70,7 @@ public class TransportMessage {
 	static TransportMessage fromStream(InputStream inputStream, Charset charset)
 			throws IOException {
 
-		Map<String, String> headers = new LinkedHashMap<String, String>();
+		Map<String, String> headers = new LinkedHashMap<>();
 
 		String contentLengthValue = null;
 		LineReader reader = new LineReader(inputStream);
@@ -99,7 +99,7 @@ public class TransportMessage {
 		}
 
 		// Read payload if applicable
-		int contentLength = Integer.valueOf(contentLengthValue.trim());
+		int contentLength = Integer.parseInt(contentLengthValue.trim());
 		byte[] contentBytes = new byte[contentLength];
 		int totalRead = 0;
 		LOGGER.log(Level.FINER, "Reading payload: {0} bytes", contentLength);
