@@ -29,10 +29,11 @@ import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.TextDocumentContentChangeEvent;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class DocumentLifeCycleHandler extends AbstractRequestHandler{
+public class DocumentLifeCycleHandler {
 	
 	private JavaClientConnection connection;
 	
@@ -124,7 +125,7 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 	}
 	
 	private void handleOpen(DidOpenTextDocumentParams params) {
-		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return;
 		}
@@ -152,7 +153,7 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 	}
 
 	private void handleChanged(DidChangeTextDocumentParams params) {
-		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		
 		if (!unit.isWorkingCopy()) {
 			return;
@@ -194,7 +195,7 @@ public class DocumentLifeCycleHandler extends AbstractRequestHandler{
 
 	private void handleClosed(DidCloseTextDocumentParams params) {
 		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleClosed");
-		ICompilationUnit unit = resolveCompilationUnit(params.getTextDocument().getUri());
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return;
 		}

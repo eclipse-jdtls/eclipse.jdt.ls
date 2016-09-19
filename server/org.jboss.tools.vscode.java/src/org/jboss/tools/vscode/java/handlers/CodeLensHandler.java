@@ -30,9 +30,10 @@ import org.jboss.tools.langs.Command;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class CodeLensHandler extends AbstractRequestHandler {
+public class CodeLensHandler {
 
 	public class CodeLensProvider implements RequestHandler<CodeLensParams, List<CodeLens>>{
 
@@ -43,7 +44,7 @@ public class CodeLensHandler extends AbstractRequestHandler {
 
 		@Override
 		public List<CodeLens> handle(CodeLensParams param) {
-			ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			return getCodeLensSymbols(unit);
 		}
 		
@@ -69,7 +70,7 @@ public class CodeLensHandler extends AbstractRequestHandler {
 			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
 			Map<String, Object> position = (Map<String, Object>) data.get(1);
-			ICompilationUnit unit = resolveCompilationUnit(uri);
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 			IJavaElement element = findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
 			List<Location> locations = findReferences(element);
 			int nReferences = locations.size();
@@ -108,7 +109,7 @@ public class CodeLensHandler extends AbstractRequestHandler {
 							if (compilationUnit == null) {
 								return;
 							}
-							Location location = toLocation(compilationUnit, match.getOffset(), match.getLength());
+							Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
 							result.add(location);
 
 						}
@@ -120,6 +121,7 @@ public class CodeLensHandler extends AbstractRequestHandler {
 	}
 
 	private List<CodeLens> getCodeLensSymbols(ICompilationUnit unit) {
+		if(unit == null ) return Collections.emptyList();
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<CodeLens>(elements.length);
@@ -142,9 +144,9 @@ public class CodeLensHandler extends AbstractRequestHandler {
 
 			CodeLens lens = new CodeLens();
 			ISourceRange r = ((ISourceReference) element).getNameRange();
-			final org.jboss.tools.langs.Range range = toRange(unit, r.getOffset(), r.getLength());
+			final org.jboss.tools.langs.Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
 			lens.setRange(range);
-			lens.setData(Arrays.asList(getFileURI(unit), range.getStart()));
+			lens.setData(Arrays.asList(JDTUtils.getFileURI(unit), range.getStart()));
 			lenses.add(lens);
 		}
 	}

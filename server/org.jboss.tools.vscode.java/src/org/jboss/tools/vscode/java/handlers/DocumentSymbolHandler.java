@@ -4,17 +4,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.DocumentSymbolParams;
 import org.jboss.tools.langs.SymbolInformation;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class DocumentSymbolHandler extends AbstractRequestHandler implements RequestHandler<DocumentSymbolParams, List<SymbolInformation>>{
+public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParams, List<SymbolInformation>>{
 
 	
 	public DocumentSymbolHandler() {
@@ -25,7 +26,7 @@ public class DocumentSymbolHandler extends AbstractRequestHandler implements Req
 		return LSPMethods.DOCUMENT_SYMBOL.getMethod().equals(request);
 	}
 
-	private SymbolInformation[] getOutline(ICompilationUnit unit) {
+	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<SymbolInformation> symbols = new ArrayList<SymbolInformation>(elements.length);
@@ -37,7 +38,7 @@ public class DocumentSymbolHandler extends AbstractRequestHandler implements Req
 		return new SymbolInformation[0];
 	}
 	
-	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
+	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
 			if(element.getElementType() == IJavaElement.TYPE){
@@ -54,14 +55,14 @@ public class DocumentSymbolHandler extends AbstractRequestHandler implements Req
 			si.setKind(new Double(mapKind(element)));
 			if(element.getParent() != null )
 				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(toLocation(element));
+			si.setLocation(JDTUtils.toLocation(element));
 			symbols.add(si);
 		}
 	}
 	
 	@Override
 	public List<SymbolInformation> handle(DocumentSymbolParams param) {
-		ICompilationUnit unit = this.resolveCompilationUnit(param.getTextDocument().getUri());
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
 		SymbolInformation[] elements  = this.getOutline(unit);
 		return Arrays.asList(elements);
 	}

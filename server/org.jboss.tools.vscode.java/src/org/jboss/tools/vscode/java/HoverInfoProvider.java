@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.io.Reader;
 
 import org.eclipse.jdt.core.IBuffer;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.util.Util;
 import org.eclipse.jface.text.BadLocationException;
@@ -25,8 +25,8 @@ import copied.org.eclipse.jdt.ui.JavadocContentAccess;
 
 public class HoverInfoProvider {
 	
-	private final ICompilationUnit unit;
-	public HoverInfoProvider(ICompilationUnit aUnit) {
+	private final ITypeRoot unit;
+	public HoverInfoProvider(ITypeRoot aUnit) {
 		this.unit = aUnit;
 	}
 	

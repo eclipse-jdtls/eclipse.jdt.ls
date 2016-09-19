@@ -1,6 +1,5 @@
 package org.jboss.tools.vscode.java.handlers;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +11,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
@@ -22,10 +22,13 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.jboss.tools.langs.Location;
+import org.jboss.tools.langs.ReferenceParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
+import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class ReferencesHandler extends AbstractRequestHandler implements RequestHandler<org.jboss.tools.langs.ReferenceParams, List<org.jboss.tools.langs.Location>>{
+public class ReferencesHandler implements RequestHandler<ReferenceParams, List<Location>>{
 
 	public ReferencesHandler() {
 	}
@@ -36,7 +39,8 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 	}
 
 
-	private IJavaElement findElementAtSelection(ICompilationUnit unit, int line, int column) throws JavaModelException {
+	private IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
+		if(unit == null ) return null;
 		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
 
 		if (elements == null || elements.length != 1)
@@ -55,7 +59,7 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 		SearchEngine engine = new SearchEngine();
 
 		try {
-			IJavaElement elementToSearch = findElementAtSelection(resolveCompilationUnit(param.getTextDocument().getUri()),
+			IJavaElement elementToSearch = findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
 					param.getPosition().getLine().intValue(),
 					param.getPosition().getCharacter().intValue());
 			
@@ -76,16 +80,13 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 										.getAncestor(IJavaElement.COMPILATION_UNIT);
 								Location location = null;
 								if (compilationUnit != null) {
-									location = toLocation(compilationUnit, match.getOffset(),
+									location = JDTUtils.toLocation(compilationUnit, match.getOffset(),
 											match.getLength());
 								}
 								else{
 									IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-									if (cf != null && cf.getSourceRange() != null ) {
-										try {
-											location = toLocation(cf, match.getOffset(), match.getLength());
-										} catch (URISyntaxException e) {
-										}
+									if (cf != null && cf.getSourceRange() != null) {
+										location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
 									}
 								}
 								if (location != null )
@@ -98,8 +99,7 @@ public class ReferencesHandler extends AbstractRequestHandler implements Request
 
 			return locations;
 		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Find references failure ", e);
 		}
 		return null;
 	}

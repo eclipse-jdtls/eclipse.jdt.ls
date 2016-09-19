@@ -1,19 +1,15 @@
 package org.jboss.tools.vscode.java.handlers;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.TextDocumentIdentifier;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class ClassfileContentHandler extends AbstractRequestHandler implements RequestHandler<TextDocumentIdentifier, String> {
+public class ClassfileContentHandler implements RequestHandler<TextDocumentIdentifier, String> {
 
 	@Override
 	public boolean canHandle(String request) {
@@ -23,11 +19,7 @@ public class ClassfileContentHandler extends AbstractRequestHandler implements R
 	@Override
 	public String handle(TextDocumentIdentifier param) {
 		try {
-			URI uri = new URI(param.getUri());
-			if (uri.getAuthority().equals("contents")) {
-				String handleId = uri.getQuery();
-				IJavaElement element = JavaCore.create(handleId);
-				IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+			IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
 				if (cf != null) {
 					IBuffer buffer = cf.getBuffer();
 					if (buffer != null) {
@@ -35,9 +27,6 @@ public class ClassfileContentHandler extends AbstractRequestHandler implements R
 						return buffer.getContents();
 					}
 				}
-			}
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Problem reading URI " + param.getUri(), e);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
 		}

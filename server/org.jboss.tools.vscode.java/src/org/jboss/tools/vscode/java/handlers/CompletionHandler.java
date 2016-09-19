@@ -16,9 +16,10 @@ import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.CompletionProposalRequestor;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class CompletionHandler extends AbstractRequestHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
+public class CompletionHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
 	
 	@Override
 	public boolean canHandle(String request) {
@@ -27,7 +28,7 @@ public class CompletionHandler extends AbstractRequestHandler implements Request
 
 	@Override
 	public CompletionList handle(TextDocumentPositionParams param) {
-		ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 		List<CompletionItem> completionItems = this.computeContentAssist(unit, 
 				param.getPosition().getLine().intValue(), 
 				param.getPosition().getCharacter().intValue());

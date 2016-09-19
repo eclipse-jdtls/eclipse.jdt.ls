@@ -1,6 +1,5 @@
 package org.jboss.tools.vscode.java.handlers;
 
-import static org.jboss.tools.vscode.java.handlers.AbstractRequestHandler.getFileURI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +14,7 @@ import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.NotificationMessage;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
@@ -48,7 +48,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
 		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<PublishDiagnosticsParams>();
 		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
-		message.setParams(new PublishDiagnosticsParams().withUri(getFileURI(this.resource))
+		message.setParams(new PublishDiagnosticsParams().withUri(JDTUtils.getFileURI(this.resource))
 				.withDiagnostics(toDiagnosticsArray()));
 		this.connection.send(message);
 	}

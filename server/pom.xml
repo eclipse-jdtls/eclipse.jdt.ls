@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jboss.tools.vscode</groupId>
 	<artifactId>parent</artifactId>
-	<name>Java language server for VS Code</name>
+	<name>JDT Language Server</name>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 

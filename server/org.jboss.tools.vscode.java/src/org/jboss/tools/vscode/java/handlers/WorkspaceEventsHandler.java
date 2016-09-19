@@ -10,11 +10,12 @@ import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.NotificationMessage;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaClientConnection;
 import org.jboss.tools.vscode.java.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.managers.ProjectsManager.CHANGE_TYPE;
 
-public class WorkspaceEventsHandler extends AbstractRequestHandler implements RequestHandler<DidChangeWatchedFilesParams, Object> {
+public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFilesParams, Object> {
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
@@ -47,7 +48,7 @@ public class WorkspaceEventsHandler extends AbstractRequestHandler implements Re
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
 			Double eventType = fileEvent.getType();
-			ICompilationUnit unit = resolveCompilationUnit(fileEvent.getUri());
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if(toChangeType(eventType)==CHANGE_TYPE.DELETED){
 				cleanUpDiagnostics(fileEvent.getUri());
 			}

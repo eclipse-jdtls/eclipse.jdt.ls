@@ -15,13 +15,13 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.jboss.tools.langs.CompletionItem;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.SignatureUtil;
 
 import copied.org.eclipse.jdt.ui.JavadocContentAccess;
 
-public class CompletionResolveHandler extends AbstractRequestHandler
-		implements RequestHandler<CompletionItem, CompletionItem> {
+public class CompletionResolveHandler implements RequestHandler<CompletionItem, CompletionItem> {
 
 	public static final String DATA_FIELD_URI = "uri";
 	public static final String DATA_FIELD_DECLARATION_SIGNATURE = "decl_signature";
@@ -42,7 +42,7 @@ public class CompletionResolveHandler extends AbstractRequestHandler
 		param.setData(null);
 		
 		if (data.containsKey(DATA_FIELD_URI) && data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
-			ICompilationUnit unit = resolveCompilationUnit(data.get(DATA_FIELD_URI));
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(data.get(DATA_FIELD_URI));
 			String typeName = SignatureUtil.stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));
 			try {
 				IMember member = null;

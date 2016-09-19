@@ -24,7 +24,7 @@ import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
-public class WorkspaceSymbolHandler extends AbstractRequestHandler implements RequestHandler<WorkspaceSymbolParams, List<SymbolInformation>> {
+public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolParams, List<SymbolInformation>> {
 
 	public WorkspaceSymbolHandler() {
 	}

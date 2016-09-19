@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -15,14 +15,14 @@ import org.jboss.tools.langs.DocumentHighlight;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
 import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
 import copied.org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 
-public class DocumentHighlightHandler extends AbstractRequestHandler implements
-RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
+public class DocumentHighlightHandler implements RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
 	
 	
 	public DocumentHighlightHandler() {
@@ -33,7 +33,7 @@ RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
 		return LSPMethods.DOCUMENT_HIGHLIGHT.getMethod().equals(request);
 	}
 
-	private List<DocumentHighlight> computeOccurrences(ICompilationUnit unit, int line, int column) {
+	private List<DocumentHighlight> computeOccurrences(ITypeRoot unit, int line, int column) {
 		if (unit != null) {
 			try {
 				int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
@@ -60,7 +60,7 @@ RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
 		return Collections.emptyList();
 	}
 
-	private DocumentHighlight convertToHighlight(ICompilationUnit unit, OccurrenceLocation occurrence)
+	private DocumentHighlight convertToHighlight(ITypeRoot unit, OccurrenceLocation occurrence)
 			throws JavaModelException {
 		DocumentHighlight h = new DocumentHighlight();
 		if ((occurrence.getFlags() | IOccurrencesFinder.F_WRITE_OCCURRENCE) == IOccurrencesFinder.F_WRITE_OCCURRENCE) {
@@ -82,8 +82,8 @@ RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
 
 	@Override
 	public List<DocumentHighlight> handle(TextDocumentPositionParams param) {
-		ICompilationUnit unit = resolveCompilationUnit(param.getTextDocument().getUri());
-		return computeOccurrences(unit, param.getPosition().getLine().intValue(), 
+		ITypeRoot type = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
+		return computeOccurrences(type, param.getPosition().getLine().intValue(), 
 				param.getPosition().getCharacter().intValue());
 	}
 }

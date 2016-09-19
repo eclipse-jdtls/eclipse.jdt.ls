@@ -1,6 +1,7 @@
 package org.jboss.tools.vscode.java.handlers;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import org.jboss.tools.langs.Position;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.ipc.RequestHandler;
+import org.jboss.tools.vscode.java.JDTUtils;
 import org.jboss.tools.vscode.java.JavaLanguageServerPlugin;
 
 import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
@@ -33,7 +35,7 @@ import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
 /**
  * @author IBM Corporation (Markus Keller)
  */
-public class FormatterHandler extends AbstractRequestHandler {
+public class FormatterHandler {
 	
 	
 	public class DocFormatter implements RequestHandler<DocumentFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
@@ -45,7 +47,9 @@ public class FormatterHandler extends AbstractRequestHandler {
 
 		@Override
 		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param) {
-			ICompilationUnit cu = resolveCompilationUnit(param.getTextDocument().getUri());
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
+			if(cu == null )
+				return Collections.emptyList();
 			return format(cu,param.getOptions(), null);
 		}
 		
@@ -60,7 +64,9 @@ public class FormatterHandler extends AbstractRequestHandler {
 
 		@Override
 		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param) {
-			ICompilationUnit cu = resolveCompilationUnit(param.getTextDocument().getUri());
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
+			if(cu == null )
+				return Collections.emptyList();
 			return format(cu,param.getOptions(),param.getRange());
 		}
 	}
