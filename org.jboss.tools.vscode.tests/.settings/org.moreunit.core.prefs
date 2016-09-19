@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+org.moreunit.core.anyLanguage.srcFolderPathTemplate=${srcProject}
+org.moreunit.core.anyLanguage.testFileNameTemplate=${srcFile}Test
+org.moreunit.core.anyLanguage.testFolderPathTemplate=${srcProject}
