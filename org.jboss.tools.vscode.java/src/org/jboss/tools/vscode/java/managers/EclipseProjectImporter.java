@@ -39,12 +39,13 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 	public static final String METADATA_FOLDER = ".metadata"; //$NON-NLS-1$
 
 	private Collection<File> projectFiles = null;
-	
+
+	@Override
 	public boolean applies(IProgressMonitor monitor) throws InterruptedException {
 		Collection<File> files = getProjectFiles(monitor);
 		return files != null && !files.isEmpty();
 	}
-	
+
 	synchronized Collection<File> getProjectFiles(IProgressMonitor monitor) throws InterruptedException {
 		if (projectFiles == null) {
 			projectFiles = collectProjectFiles(monitor);
@@ -58,36 +59,35 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		collectProjectFilesFromDirectory(files, rootFolder, visitedDirectories, true, monitor);
 		return files;
 	}
-	
+
 	@Override
 	public void reset() {
 		projectFiles = null;
 	}
-	
-	
+
+
 	@Override
-	@SuppressWarnings("restriction")
 	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
-	
+
 		Collection<File> files = getProjectFiles(monitor);
 		if (files == null || files.isEmpty()) {
 			return Collections.emptyList();
 		}
-		
+
 		List<IProject> projects = new ArrayList<>(files.size());
-    	for(File file : files) {
-    		if (monitor.isCanceled()) {
-    			throw new InterruptedException();
-    		}
-    		IProject project = createProject(file, monitor);
-    		if (project != null) {
-    			 projects.add(project);
-    		}
-    	}
-		
+		for(File file : files) {
+			if (monitor.isCanceled()) {
+				throw new InterruptedException();
+			}
+			IProject project = createProject(file, monitor);
+			if (project != null) {
+				projects.add(project);
+			}
+		}
+
 		return projects;
 	}
-	
+
 	IProject createProject(File file, IProgressMonitor monitor) throws CoreException {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IPath dotProjectPath = new Path(file.getAbsolutePath());
@@ -113,10 +113,12 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		return project;
 	}
 
-	IProject findUniqueProject(IWorkspace workspace, String name) {
+	//XXX should be package protected. Temporary fix (ahaha!) until test fragment can work in tycho builds
+	public IProject findUniqueProject(IWorkspace workspace, String basename) {
 		IProject project = null;
-		for (int i =0; project == null || !project.exists(); i++) {
-			name = (i == 0)? name:name + " ("+ i +")";
+		String name;
+		for (int i = 1; project == null || project.exists(); i++) {
+			name = (i < 2)? basename:basename + " ("+ i +")";
 			project = workspace.getRoot().getProject(name);
 		}
 		return project;
@@ -136,7 +138,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 	 * @param monitor
 	 *            The monitor to report to
 	 * @return boolean <code>true</code> if the operation was completed.
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
 	static boolean collectProjectFilesFromDirectory(Collection<File> files, File directory,
 			Set<String> directoriesVisited, boolean nestedProjects, IProgressMonitor monitor) throws InterruptedException {

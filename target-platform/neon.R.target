@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="30">
+<?pde version="3.8"?><target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="31">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.equinox.sdk.feature.group" version="3.12.0.v20160606-1311"/>
@@ -14,6 +14,10 @@
 <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.3.200.v20160606-1311"/>
 <repository location="http://download.eclipse.org/releases/neon"/>
 </location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.mockito.mockito-all" version="1.9.5"/>
+<repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
+</location>
 </locations>
-<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 </target>
