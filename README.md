@@ -42,27 +42,15 @@ detect the projects and import it properly.
 (Ctrl+1) to install the Tycho maven integration.
 
 
-Building command line
+Building from command line
 ----------------------------
-
-*server* folder contains the java-server implemementation and does not depend to 
-any client 
 
 1. Install [Apache Maven](https://maven.apache.org/)
 
 2. This command will build the server into `/org.jboss.tools.vscode.product/target/repository` folder:
 ```bash    
-    $ cd server
     $ mvn clean verify 
 ````
-
-Generating simple java app for testing
--------------------------------
-
-    mvn archetype:generate -DgroupId=com.mycompany.app
-    -DartifactId=my-app
-    -DarchetypeArtifactId=maven-archetype-quickstart
-    -DinteractiveMode=false
 
 
 Feedback
