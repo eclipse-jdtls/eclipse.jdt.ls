@@ -19,9 +19,9 @@ import java.util.List;
 import org.jboss.tools.langs.base.ResponseError.ReservedCode;
 import org.jboss.tools.langs.transport.Connection;
 import org.jboss.tools.langs.transport.Connection.MessageListener;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
+import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,7 +33,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-public class LSPServer implements MessageListener{
+public abstract class LSPServer implements MessageListener{
 
 	private class ParameterizedTypeImpl implements ParameterizedType{
 
@@ -118,20 +118,12 @@ public class LSPServer implements MessageListener{
 	}
 	private Connection connection;
 	private final Gson gson;
-	private static LSPServer instance;
 	private List<RequestHandler<?, ?>> handlers;
 
 	protected LSPServer(){
 		GsonBuilder builder = new GsonBuilder();
 		gson = builder.registerTypeAdapter(Message.class,new MessageJSONHandler())
 				.create();
-	}
-
-	public static LSPServer getInstance(){
-		if(instance == null ){
-			instance = new LSPServer();
-		}
-		return instance;
 	}
 
 	public void connect(List<RequestHandler<?,?>> handlers ) throws IOException{
