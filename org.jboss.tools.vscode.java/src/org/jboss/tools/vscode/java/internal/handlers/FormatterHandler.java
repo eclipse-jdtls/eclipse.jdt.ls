@@ -36,6 +36,7 @@ import org.jboss.tools.langs.FormattingOptions;
 import org.jboss.tools.langs.Position;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -46,8 +47,8 @@ import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
  * @author IBM Corporation (Markus Keller)
  */
 public class FormatterHandler {
-	
-	
+
+
 	public class DocFormatter implements RequestHandler<DocumentFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
 
 		@Override
@@ -56,15 +57,15 @@ public class FormatterHandler {
 		}
 
 		@Override
-		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param) {
+		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param, CancelMonitor cm) {
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			if(cu == null )
 				return Collections.emptyList();
 			return format(cu,param.getOptions(), null);
 		}
-		
+
 	}
-	
+
 	public class RangeFormatter implements RequestHandler<DocumentRangeFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
 
 		@Override
@@ -73,23 +74,23 @@ public class FormatterHandler {
 		}
 
 		@Override
-		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param) {
+		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param, CancelMonitor cm) {
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			if(cu == null )
 				return Collections.emptyList();
 			return format(cu,param.getOptions(),param.getRange());
 		}
 	}
-	
+
 	private List<org.jboss.tools.langs.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
-	
+
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
 		try {
 			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
 			IRegion region = (range == null ? new Region(0,document.getLength()) : getRegion(range,document));
 			// could not calculate region abort.
-			if(region == null ) return null;	
+			if(region == null ) return null;
 			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, document.get(), region.getOffset(), region.getLength(), 0, lineDelimiter);
 			MultiTextEdit flatEdit = TextEditUtil.flatten(format);
 			return convertEdits(flatEdit.getChildren(), document);
@@ -100,17 +101,17 @@ public class FormatterHandler {
 	}
 
 	private IRegion getRegion(Range range, IDocument document) {
-			try {
-				int offset = document.getLineOffset(range.getStart().getLine().intValue()) 
-						+ range.getStart().getCharacter().intValue();
-				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) 
-						+ range.getEnd().getCharacter().intValue();
-				int length = endOffset - offset;
-				return new Region(offset, length);
-			} catch (BadLocationException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			return null;
+		try {
+			int offset = document.getLineOffset(range.getStart().getLine().intValue())
+					+ range.getStart().getCharacter().intValue();
+			int endOffset = document.getLineOffset(range.getEnd().getLine().intValue())
+					+ range.getEnd().getCharacter().intValue();
+			int length = endOffset - offset;
+			return new Region(offset, length);
+		} catch (BadLocationException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return null;
 	}
 
 	private static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {

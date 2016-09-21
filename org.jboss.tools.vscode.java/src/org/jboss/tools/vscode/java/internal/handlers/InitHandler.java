@@ -26,6 +26,7 @@ import org.jboss.tools.langs.InitializeParams;
 import org.jboss.tools.langs.InitializeResult;
 import org.jboss.tools.langs.ServerCapabilities;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.internal.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
@@ -34,13 +35,13 @@ import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 
 /**
  * Handler for the VS Code extension life cycle events.
- * 
+ *
  * @author Gorkem Ercan
  * @author IBM Corporation (Markus Keller)
  *
  */
 final public class InitHandler implements RequestHandler<InitializeParams, InitializeResult> {
-	
+
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 
@@ -54,9 +55,9 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		return LSPMethods.INITIALIZE.getMethod().equals(request);
 	}
 
-	
+
 	@Override
-	public InitializeResult handle(InitializeParams param) {
+	public InitializeResult handle(InitializeParams param, CancelMonitor cm) {
 		triggerInitialization(param.getRootPath());
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();
@@ -73,11 +74,12 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 				.withDocumentFormattingProvider(Boolean.TRUE)
 				.withDocumentRangeFormattingProvider(Boolean.TRUE)
 				.withCodeLensProvider(new CodeLensOptions().withResolveProvider(Boolean.TRUE))
-		);
+				);
 	}
 
 	private void triggerInitialization(String root) {
 		Job job = new Job("Initialize Workspace") {
+			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), new ServerStatusMonitor());
@@ -105,13 +107,13 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule(); // small delay to not start sending status before initialize message has arrived
 	}
-	
+
 	private class ServerStatusMonitor extends NullProgressMonitor{
 		private double totalWork;
 		private double progress;
 		@Override
 		public void beginTask(String arg0, int totalWork) {
-			this.totalWork = totalWork; 
+			this.totalWork = totalWork;
 		}
 
 		@Override
@@ -119,6 +121,6 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 			progress += work;
 			connection.sendStatus(ServiceStatus.Starting,  String.format( "%.0f%%", progress/totalWork * 100));
 		}
-		
+
 	}
 }

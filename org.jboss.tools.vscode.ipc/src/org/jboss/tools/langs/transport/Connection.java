@@ -11,12 +11,13 @@
 package org.jboss.tools.langs.transport;
 
 import java.io.IOException;
-
+/**
+ * The connection implementation used by the server.
+ *
+ * @author Gorkem Ercan
+ *
+ */
 public interface Connection {
-
-	public interface MessageListener {
-		void messageReceived(TransportMessage message);
-	}
 
 	/**
 	 * Sends the specified message.
@@ -27,21 +28,21 @@ public interface Connection {
 	void send(TransportMessage message);
 
 	/**
+	 * Takes the next available message,
+	 * this method blocks until a new message is available.
+	 *
+	 * @return
+	 * @throws InterruptedException
+	 */
+	TransportMessage take() throws InterruptedException;
+
+	/**
 	 * Starts up the transport and acquire all needed resources. Does nothing if
 	 * the connection has already been started.
 	 *
 	 * @throws IOException
 	 */
 	void start() throws IOException;
-	
-	/**
-	 * Sets the message listener that this connection will notify 
-	 * the incoming messages to. Can be set only once
-	 * 
-	 * @param listener
-	 * @throws IllegalStateException - if set more than once.
-	 */
-	void setMessageListener(MessageListener listener);
 
 	/**
 	 * Shuts down the transport freeing all acquired resources. Does nothing if

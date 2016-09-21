@@ -23,26 +23,25 @@ import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 public class NamedPipeConnection extends AbstractConnection {
-	
-	
+
+
 	private class ReaderThread extends Thread{
-		
+
 		private final InputStream stream;
-		
+
 		public ReaderThread(InputStream input ) {
 			super("LSP_ReaderThread");
 			this.stream = input;
 		}
-		
+
 		@Override
 		public void run() {
-			startDispatcherThread();
 			try {
 				startWriterThread();
 			} catch (IOException e1) {
 				//TODO: write failed to connect.
 			}
-			
+
 			while(true){
 				TransportMessage message;
 				try {
@@ -59,16 +58,16 @@ public class NamedPipeConnection extends AbstractConnection {
 			}
 		}
 	}
-	
+
 	private class WriterThread extends Thread{
-		
+
 		private final OutputStream stream;
-		
+
 		public WriterThread(OutputStream output) {
 			super("LSP_WriterThread");
 			this.stream = output;
-		} 
-		
+		}
+
 		@Override
 		public void run() {
 			while (true) {
@@ -85,29 +84,23 @@ public class NamedPipeConnection extends AbstractConnection {
 			}
 		}
 	}
-	
+
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
-	
+
 	private final String readFileName;
 	private final String writeFileName;
-	
+
 	//used for windows
 	private RandomAccessFile writeFile;
 	private RandomAccessFile readFile;
 	// used on POSIX
 	private AFUNIXSocket writeSocket;
 	private AFUNIXSocket readSocket;
-	
+
 	public NamedPipeConnection(String readFileName, String writeFileName) {
 		this.readFileName = readFileName;
 		this.writeFileName = writeFileName;
-	}
-
-	@Override
-	public void send(TransportMessage message) {
-		if(message != null)
-			outboundQueue.add(message);
 	}
 
 	@Override
@@ -117,20 +110,20 @@ public class NamedPipeConnection extends AbstractConnection {
 		readerThread.setDaemon(true);
 		readerThread.start();
 	}
-	
+
 	public void startWriterThread() throws IOException{
 		OutputStream stream = connectWriteChannel();
 		WriterThread writerThread = new WriterThread(stream);
 		writerThread.setDaemon(true);
 		writerThread.start();
 	}
-	
+
 	@Override
 	public void close() {
 		try {
-			if (writeFile != null) 
+			if (writeFile != null)
 				writeFile.close();
-			if (readFile != null) 
+			if (readFile != null)
 				readFile.close();
 			if(readSocket != null)
 				readSocket.close();
@@ -140,7 +133,7 @@ public class NamedPipeConnection extends AbstractConnection {
 			// TODO: handle exception
 		}
 	}
-	
+
 	private InputStream connectReadChannel() throws IOException{
 		final File rFile = new File(readFileName);
 		if(isWindows()){
@@ -152,10 +145,10 @@ public class NamedPipeConnection extends AbstractConnection {
 			return readSocket.getInputStream();
 		}
 	}
-	
+
 	private  OutputStream connectWriteChannel() throws IOException{
 		final File wFile = new File(writeFileName);
-		
+
 		if(isWindows()){
 			writeFile = new RandomAccessFile(wFile, "rwd");
 			return Channels.newOutputStream(writeFile.getChannel());
@@ -165,9 +158,9 @@ public class NamedPipeConnection extends AbstractConnection {
 			return writeSocket.getOutputStream();
 		}
 	}
-	
+
 	private boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
+		return (OS.indexOf("win") >= 0);
 	}
 
 }

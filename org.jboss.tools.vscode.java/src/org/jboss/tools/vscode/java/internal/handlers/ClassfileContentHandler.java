@@ -15,6 +15,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.TextDocumentIdentifier;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -27,12 +28,12 @@ public class ClassfileContentHandler implements RequestHandler<TextDocumentIdent
 	}
 
 	@Override
-	public String handle(TextDocumentIdentifier param) {
+	public String handle(TextDocumentIdentifier param, CancelMonitor cm) {
 		try {
 			IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
 			if (cf != null) {
 				IBuffer buffer = cf.getBuffer();
-				if (buffer != null) {
+				if (buffer != null && !cm.cancelled()) {
 					JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
 					return buffer.getContents();
 				}

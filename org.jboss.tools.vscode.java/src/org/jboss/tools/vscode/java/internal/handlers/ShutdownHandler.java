@@ -11,6 +11,7 @@
 package org.jboss.tools.vscode.java.internal.handlers;
 
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
@@ -23,7 +24,7 @@ public class ShutdownHandler implements RequestHandler<Object, Object> {
 	}
 
 	@Override
-	public Object handle(Object param) {
+	public Object handle(Object param, CancelMonitor cm) {
 		JavaLanguageServerPlugin.logInfo("Shutting down Java Language Server");
 		JavaLanguageServerPlugin.getLanguageServer().shutdown();
 		return new Object();

@@ -31,6 +31,7 @@ import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.SymbolInformation;
 import org.jboss.tools.langs.WorkspaceSymbolParams;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
@@ -46,10 +47,10 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 
 	private List<SymbolInformation> search(String query) {
 		try {
-			ArrayList<SymbolInformation> symbols = new ArrayList<SymbolInformation>();
-			
+			ArrayList<SymbolInformation> symbols = new ArrayList<>();
+
 			new SearchEngine().searchAllTypeNames(null,SearchPattern.R_PATTERN_MATCH, query.toCharArray(), SearchPattern.R_PREFIX_MATCH,IJavaSearchConstants.TYPE, createSearchScope(),new TypeNameMatchRequestor() {
-				
+
 				@Override
 				public void acceptTypeNameMatch(TypeNameMatch match) {
 					SymbolInformation symbolInformation = new SymbolInformation();
@@ -63,7 +64,7 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 					symbols.add(symbolInformation.withLocation(location));
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
-		
+
 			return symbols;
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem getting search for" +  query, e);
@@ -74,10 +75,10 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
 	}
-	
+
 
 	@Override
-	public List<org.jboss.tools.langs.SymbolInformation> handle(WorkspaceSymbolParams param) {
+	public List<org.jboss.tools.langs.SymbolInformation> handle(WorkspaceSymbolParams param, CancelMonitor cm) {
 		return this.search(param.getQuery());
 	}
 }

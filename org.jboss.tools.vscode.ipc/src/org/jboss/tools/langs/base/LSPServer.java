@@ -13,16 +13,23 @@ package org.jboss.tools.langs.base;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import org.jboss.tools.langs.base.ResponseError.ReservedCode;
 import org.jboss.tools.langs.transport.Connection;
-import org.jboss.tools.langs.transport.Connection.MessageListener;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
+import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -32,8 +39,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-
-public abstract class LSPServer implements MessageListener{
+/**
+ * Base server implementation
+ *
+ * @author Gorkem Ercan
+ *
+ */
+public abstract class LSPServer {
 
 	private class ParameterizedTypeImpl implements ParameterizedType{
 
@@ -118,7 +130,11 @@ public abstract class LSPServer implements MessageListener{
 	}
 	private Connection connection;
 	private final Gson gson;
-	private List<RequestHandler<?, ?>> handlers;
+	private List<RequestHandler<?, ?>> requestHandlers;
+	private List<NotificationHandler<?, ?>> notificationHandlers;
+
+	private Map<Integer, CancelMonitor> cancelMonitors = new HashMap<>();
+	private ExecutorService executor;
 
 	protected LSPServer(){
 		GsonBuilder builder = new GsonBuilder();
@@ -126,8 +142,10 @@ public abstract class LSPServer implements MessageListener{
 				.create();
 	}
 
-	public void connect(List<RequestHandler<?,?>> handlers ) throws IOException{
-		this.handlers = handlers;
+	public void connect() throws IOException{
+		this.notificationHandlers = buildNotificationHandlers();
+		this.requestHandlers = buildRequestHandlers();
+
 		final String stdInName = System.getenv("STDIN_PIPE_NAME");
 		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
 		if (stdInName == null || stdOutName == null) {
@@ -135,9 +153,21 @@ public abstract class LSPServer implements MessageListener{
 			System.err.println("Unable to connect to named pipes");
 			return;
 		}
+		initExecutor();
 		connection = new NamedPipeConnection(stdOutName, stdInName);
-		connection.setMessageListener(this);
 		connection.start();
+		startDispatching();
+	}
+
+	/**
+	 *
+	 */
+	private void initExecutor() {
+		final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setNameFormat("LSP Executor-%d")
+				.setDaemon(true)
+				.build();
+		executor = Executors.newCachedThreadPool(threadFactory);
 	}
 
 	public void send (Message message){
@@ -145,34 +175,51 @@ public abstract class LSPServer implements MessageListener{
 		connection.send(tm);
 	}
 
-	@Override
-	public void messageReceived(TransportMessage message) {
-		Message msg = maybeParseMessage(message);
-		if(msg == null )
-			return;
-
-		if(msg instanceof NotificationMessage){
-			NotificationMessage<?> nm = (NotificationMessage<?>) msg;
+	private void startDispatching() {
+		Thread t = new Thread(() -> {
 			try {
-				dispatchNotification(nm);
-			} catch (LSPException e) {
+				while (true) {
+					TransportMessage message = connection.take();
+					runMessage(message);
+				}
+			} catch (InterruptedException e) {
+				//Exit dispatch
 				e.printStackTrace();
 			}
-		}
-
-		if(msg instanceof RequestMessage){
-			RequestMessage<?> rm = (RequestMessage<?>) msg;
-			try{
-				dispatchRequest(rm);
-			}
-			catch (LSPException e) {
-				send(rm.respondWithError(e.getCode(),e.getMessage(),e.getData()));
-			}
-			catch(Exception e){
-				send(rm.respondWithError(ReservedCode.INTERNAL_ERROR.code(), e.getMessage(),null));
-			}
-		}
+		});
+		t.start();
 	}
+
+	private void runMessage(final TransportMessage message ){
+		executor.execute(() -> {
+
+			Message msg = maybeParseMessage(message);
+			if (msg == null)
+				return;
+
+			if (msg instanceof NotificationMessage) {
+				NotificationMessage<?> nm = (NotificationMessage<?>) msg;
+				try {
+					dispatchNotification(nm);
+				} catch (LSPException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if (msg instanceof RequestMessage) {
+				RequestMessage<?> rm = (RequestMessage<?>) msg;
+				try {
+					dispatchRequest(rm);
+				} catch (LSPException e) {
+					send(rm.respondWithError(e.getCode(), e.getMessage(), e.getData()));
+				} catch (Exception e) {
+					send(rm.respondWithError(ReservedCode.INTERNAL_ERROR.code(), e.getMessage(), null));
+				}
+			}
+		});
+	}
+
+
 
 	/**
 	 * Parses the message notifies client if parse fails and returns null
@@ -204,21 +251,34 @@ public abstract class LSPServer implements MessageListener{
 	}
 
 	private void dispatchRequest(RequestMessage<?> request) {
-		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
+		for (Iterator<RequestHandler<?, ?>> iterator = requestHandlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
 			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
 			if (requestHandler.canHandle(request.getMethod())) {
-				send(request.responseWith(requestHandler.handle(request.getParams())));
-				return;
+				try{
+					CancelMonitor cm = newCancelMonitor();
+					cancelMonitors.put(request.getId(),cm);
+					send(request.responseWith(requestHandler.handle(request.getParams(), cm)));
+					return;
+				}finally{
+					cancelMonitors.remove(request.getId());
+				}
 			}
 		}
 		throw new LSPException(ReservedCode.METHOD_NOT_FOUND.code(), request.getMethod() + " is not handled", null,null);
 	}
 
 	private void dispatchNotification(NotificationMessage<?> nm) {
-		for (Iterator<RequestHandler<?, ?>> iterator = handlers.iterator(); iterator.hasNext();) {
+		if(LSPMethods.CANCEL.getMethod().equals(nm.getMethod())){
+			CancelParams params = (CancelParams)nm.getParams();
+			CancelMonitor monitor = cancelMonitors.remove(params.getId());
+			if(monitor != null){
+				monitor.onCancel();
+			}
+		}
+		for (Iterator<NotificationHandler<?, ?>> iterator = notificationHandlers.iterator(); iterator.hasNext();) {
 			@SuppressWarnings("unchecked")
-			RequestHandler<Object, Object> requestHandler = (RequestHandler<Object, Object>) iterator.next();
+			NotificationHandler<Object, Object> requestHandler =  (NotificationHandler<Object, Object>) iterator.next();
 			if(requestHandler.canHandle(nm.getMethod())){
 				requestHandler.handle(nm.getParams());
 				break;
@@ -227,6 +287,25 @@ public abstract class LSPServer implements MessageListener{
 	}
 
 	public void shutdown(){
+		executor.shutdown();
 		connection.close();
 	}
+
+	/**
+	 * Factory method for creating new CancelMonitors that are passed to request handlers.
+	 * Cancel monitors can not be shared implementors must return a new instance for every call.
+	 *
+	 * @return cancelMonitor
+	 */
+	protected abstract CancelMonitor newCancelMonitor();
+
+	/**
+	 * Returns the list of request handlers.
+	 * Called once
+	 * @return
+	 */
+	protected abstract List<RequestHandler<?, ?>> buildRequestHandlers();
+
+	protected abstract List<NotificationHandler<?, ?>> buildNotificationHandlers();
+
 }

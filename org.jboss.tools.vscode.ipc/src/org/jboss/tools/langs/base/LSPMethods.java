@@ -62,14 +62,16 @@ public enum LSPMethods {
 	WORKSPACE_CHANGED_FILES("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.class, Object.class),
 	WORKSPACE_SYMBOL("workspace/symbol", WorkspaceSymbolParams.class, List.class),
 	WINDOW_LOGMESSAGE("window/logMessage",LogMessageParams.class,Object.class),
+	//cancel is a built-in method
+	CANCEL("$/cancelRequest",CancelParams.class, Object.class),
 	//extensions
 	LANGUAGE_STATUS("language/status", StatusReport.class, Object.class),
 	CLASSFILECONTENTS("java/ClassFileContents",TextDocumentIdentifier.class, String.class);
-	
+
 	private final String method;
 	private final Type requestType;
 	private final Type resultType;
-	
+
 	LSPMethods(String method, Type request, Type result ) {
 		this.method = method;
 		this.requestType = request;
@@ -96,14 +98,14 @@ public enum LSPMethods {
 	public String getMethod() {
 		return method;
 	}
-	
+
 	public static LSPMethods fromMethod(String method){
 		LSPMethods[] values = LSPMethods.values();
 		for (LSPMethods lspmethod : values) {
 			if(lspmethod.getMethod().equals(method))
-			return lspmethod;
+				return lspmethod;
 		}
 		return null;
 	}
-	
+
 }

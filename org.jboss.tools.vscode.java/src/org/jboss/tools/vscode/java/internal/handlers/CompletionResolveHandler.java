@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.jboss.tools.langs.CompletionItem;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -44,7 +45,7 @@ public class CompletionResolveHandler implements RequestHandler<CompletionItem, 
 	}
 
 	@Override
-	public CompletionItem handle(CompletionItem param) {
+	public CompletionItem handle(CompletionItem param, CancelMonitor cm) {
 
 		@SuppressWarnings("unchecked")
 		Map<String, String> data = (Map<String, String>) param.getData();

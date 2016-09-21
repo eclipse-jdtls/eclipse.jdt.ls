@@ -19,6 +19,7 @@ import org.jboss.tools.langs.FileEvent;
 import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.NotificationMessage;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
@@ -29,12 +30,12 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
-	
+
 	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection ) {
 		this.pm = projects;
 		this.connection = connection;
 	}
-	
+
 	@Override
 	public boolean canHandle(String request) {
 		return LSPMethods.WORKSPACE_CHANGED_FILES.getMethod().equals(request);
@@ -44,7 +45,7 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 		switch (vtype.intValue()) {
 		case 1:
 			return CHANGE_TYPE.CREATED;
-		case 2: 
+		case 2:
 			return CHANGE_TYPE.CHANGED;
 		case 3:
 			return CHANGE_TYPE.DELETED;
@@ -52,9 +53,9 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	@Override
-	public Object handle(DidChangeWatchedFilesParams param) {
+	public Object handle(DidChangeWatchedFilesParams param, CancelMonitor cm) {
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
 			Double eventType = fileEvent.getType();
@@ -65,17 +66,17 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 			if (unit.isWorkingCopy()) {
 				continue;
 			}
-			pm.fileChanged(fileEvent.getUri(), toChangeType(eventType));			
+			pm.fileChanged(fileEvent.getUri(), toChangeType(eventType));
 		}
 		return null;
 	}
-	
+
 	private void cleanUpDiagnostics(String uri){
-		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<PublishDiagnosticsParams>();
+		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<>();
 		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
 		message.setParams(new PublishDiagnosticsParams().withUri(uri)
-			.withDiagnostics(Collections.emptyList()));
+				.withDiagnostics(Collections.emptyList()));
 		this.connection.send(message);
 	}
-	
+
 }

@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.ReferenceParams;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -57,7 +58,7 @@ public class ReferencesHandler implements RequestHandler<ReferenceParams, List<L
 			return null;
 		return elements[0];
 
-	}	
+	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
@@ -65,47 +66,47 @@ public class ReferencesHandler implements RequestHandler<ReferenceParams, List<L
 	}
 
 	@Override
-	public List<org.jboss.tools.langs.Location> handle(org.jboss.tools.langs.ReferenceParams param) {
+	public List<org.jboss.tools.langs.Location> handle(org.jboss.tools.langs.ReferenceParams param, CancelMonitor cm) {
 		SearchEngine engine = new SearchEngine();
 
 		try {
 			IJavaElement elementToSearch = findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
 					param.getPosition().getLine().intValue(),
 					param.getPosition().getCharacter().intValue());
-			
-			if(elementToSearch == null) 
+
+			if(elementToSearch == null)
 				return Collections.emptyList();
 
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
-			List<org.jboss.tools.langs.Location> locations = new ArrayList<org.jboss.tools.langs.Location>();
+			List<org.jboss.tools.langs.Location> locations = new ArrayList<>();
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 					createSearchScope(), new SearchRequestor() {
 
-						@Override
-						public void acceptSearchMatch(SearchMatch match) throws CoreException {
-							Object o = match.getElement();
-							if (o instanceof IJavaElement) {
-								IJavaElement element = (IJavaElement) o;
-								ICompilationUnit compilationUnit = (ICompilationUnit) element
-										.getAncestor(IJavaElement.COMPILATION_UNIT);
-								Location location = null;
-								if (compilationUnit != null) {
-									location = JDTUtils.toLocation(compilationUnit, match.getOffset(),
-											match.getLength());
-								}
-								else{
-									IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-									if (cf != null && cf.getSourceRange() != null) {
-										location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
-									}
-								}
-								if (location != null )
-									locations.add(location);
-
-							}
-
+				@Override
+				public void acceptSearchMatch(SearchMatch match) throws CoreException {
+					Object o = match.getElement();
+					if (o instanceof IJavaElement) {
+						IJavaElement element = (IJavaElement) o;
+						ICompilationUnit compilationUnit = (ICompilationUnit) element
+								.getAncestor(IJavaElement.COMPILATION_UNIT);
+						Location location = null;
+						if (compilationUnit != null) {
+							location = JDTUtils.toLocation(compilationUnit, match.getOffset(),
+									match.getLength());
 						}
-					}, new NullProgressMonitor());
+						else{
+							IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+							if (cf != null && cf.getSourceRange() != null) {
+								location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
+							}
+						}
+						if (location != null )
+							locations.add(location);
+
+					}
+
+				}
+			}, new NullProgressMonitor());
 
 			return locations;
 		} catch (CoreException e) {

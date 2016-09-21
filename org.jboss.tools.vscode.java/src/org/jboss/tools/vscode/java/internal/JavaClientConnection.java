@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +18,9 @@ import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.LSPServer;
 import org.jboss.tools.langs.base.NotificationMessage;
 import org.jboss.tools.langs.ext.StatusReport;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.MessageType;
+import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.internal.ipc.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.handlers.ClassfileContentHandler;
@@ -42,51 +43,43 @@ import org.jboss.tools.vscode.java.internal.handlers.WorkspaceSymbolHandler;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 
 public class JavaClientConnection extends LSPServer{
-	
+
 	private LogHandler logHandler;
 	private ProjectsManager projectsManager;
+
+	public class JavaCancelMonitor implements CancelMonitor{
+
+		private volatile boolean isCancelled;
+
+		/* (non-Javadoc)
+		 * @see org.jboss.tools.vscode.internal.ipc.CancelMonitor#cancelled()
+		 */
+		@Override
+		public boolean cancelled() {
+			return isCancelled;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jboss.tools.vscode.internal.ipc.CancelMonitor#onCancel()
+		 */
+		@Override
+		public void onCancel() {
+			isCancelled = true;
+		}
+	}
 
 	public JavaClientConnection() {
 		projectsManager = new ProjectsManager();
 		logHandler = new LogHandler();
-		logHandler.install(this);		
+		logHandler.install(this);
 	}
-	
-	private List<RequestHandler<?,?>> handlers(ProjectsManager pm) {
-		List<RequestHandler<?,?>> handlers = new ArrayList<RequestHandler<?,?>>();
-		//server lifeCycle
-		handlers.add(new InitHandler(pm, this));
-		handlers.add(new ShutdownHandler());
-		handlers.add(new ExitHandler());
-		handlers.add(new HoverHandler());
-		DocumentLifeCycleHandler dh = new DocumentLifeCycleHandler(this);
-		handlers.add(dh.new ChangeHandler());
-		handlers.add(dh.new ClosedHandler());
-		handlers.add(dh.new OpenHandler());
-		handlers.add(dh.new SaveHandler());
-		handlers.add(new CompletionHandler());
-		handlers.add(new CompletionResolveHandler());
-		handlers.add(new NavigateToDefinitionHandler());
-		handlers.add(new WorkspaceEventsHandler(pm,this));
-		handlers.add(new DocumentSymbolHandler());
-		handlers.add(new WorkspaceSymbolHandler());
-		handlers.add(new ReferencesHandler());
-		handlers.add(new DocumentHighlightHandler());
-		FormatterHandler formatterHandler = new FormatterHandler();
-		handlers.add(formatterHandler.new DocFormatter());
-		handlers.add(formatterHandler.new RangeFormatter());
-		final CodeLensHandler codeLensHandler = new CodeLensHandler();
-		handlers.add(codeLensHandler.new CodeLensProvider());
-		handlers.add(codeLensHandler.new CodeLensResolver());
-		handlers.add(new ClassfileContentHandler());
-		return handlers;
-	}	
+
 	/**
 	 * Sends the logMessage message back to the client as a notification
 	 * @param msg The message to send back to the client
 	 */
 	public void logMessage(MessageType type, String msg) {
-		NotificationMessage<LogMessageParams> message= new NotificationMessage<LogMessageParams>();
+		NotificationMessage<LogMessageParams> message= new NotificationMessage<>();
 		message.setMethod(LSPMethods.WINDOW_LOGMESSAGE.getMethod());
 		message.setParams(new LogMessageParams().withMessage(msg)
 				.withType(Double.valueOf(type.getType())));
@@ -98,16 +91,12 @@ public class JavaClientConnection extends LSPServer{
 	 * @param msg The status to send back to the client
 	 */
 	public void sendStatus(ServiceStatus serverStatus, String status) {
-		NotificationMessage<StatusReport> message = new NotificationMessage<StatusReport>();
+		NotificationMessage<StatusReport> message = new NotificationMessage<>();
 		message.setMethod(LSPMethods.LANGUAGE_STATUS.getMethod());
 		message.setParams(new StatusReport().withMessage(status).withType(serverStatus.name()));
 		send(message);
 	}
-	
-	
-	public void connect() throws IOException {
-		connect(handlers(projectsManager));
-	}
+
 
 	public void disconnect() {
 		super.shutdown();
@@ -115,6 +104,57 @@ public class JavaClientConnection extends LSPServer{
 			logHandler.uninstall();
 			logHandler = null;
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.jboss.tools.langs.base.LSPServer#newCancelMonitor()
+	 */
+	@Override
+	protected CancelMonitor newCancelMonitor() {
+		return new JavaCancelMonitor();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.jboss.tools.langs.base.LSPServer#buildRequestHandlers()
+	 */
+	@Override
+	protected List<RequestHandler<?, ?>> buildRequestHandlers() {
+		List<RequestHandler<?,?>> $= new ArrayList<>();
+		//server lifeCycle
+		$.add(new InitHandler(this.projectsManager, this));
+		$.add(new ShutdownHandler());
+		$.add(new HoverHandler());
+		$.add(new CompletionHandler());
+		$.add(new CompletionResolveHandler());
+		$.add(new NavigateToDefinitionHandler());
+		$.add(new WorkspaceEventsHandler(this.projectsManager,this));
+		$.add(new DocumentSymbolHandler());
+		$.add(new WorkspaceSymbolHandler());
+		$.add(new ReferencesHandler());
+		$.add(new DocumentHighlightHandler());
+		FormatterHandler formatterHandler = new FormatterHandler();
+		$.add(formatterHandler.new DocFormatter());
+		$.add(formatterHandler.new RangeFormatter());
+		final CodeLensHandler codeLensHandler = new CodeLensHandler();
+		$.add(codeLensHandler.new CodeLensProvider());
+		$.add(codeLensHandler.new CodeLensResolver());
+		$.add(new ClassfileContentHandler());
+		return $;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.jboss.tools.langs.base.LSPServer#buildNotificationHandlers()
+	 */
+	@Override
+	protected List<NotificationHandler<?, ?>> buildNotificationHandlers() {
+		List<NotificationHandler<?, ?>> $ = new ArrayList<>();
+		DocumentLifeCycleHandler dh = new DocumentLifeCycleHandler(this);
+		$.add(dh.new ChangeHandler());
+		$.add(dh.new ClosedHandler());
+		$.add(dh.new OpenHandler());
+		$.add(dh.new SaveHandler());
+		$.add(new ExitHandler());
+		return $;
 	}
 
 }

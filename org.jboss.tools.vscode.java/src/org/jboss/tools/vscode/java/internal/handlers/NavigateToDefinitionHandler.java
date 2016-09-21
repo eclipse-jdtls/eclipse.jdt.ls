@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -26,7 +27,7 @@ public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentP
 
 	public NavigateToDefinitionHandler() {
 	}
-	
+
 	@Override
 	public boolean canHandle(String request) {
 		return LSPMethods.DOCUMENT_DEFINITION.getMethod().equals(request);
@@ -52,11 +53,11 @@ public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentP
 		}
 		return null;
 	}
-	
+
 	@Override
-	public org.jboss.tools.langs.Location handle(TextDocumentPositionParams param) {
+	public org.jboss.tools.langs.Location handle(TextDocumentPositionParams param, CancelMonitor cm) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-		
+
 		return computeDefinitonNavigation(unit, param.getPosition().getLine().intValue(),
 				param.getPosition().getCharacter().intValue());
 	}

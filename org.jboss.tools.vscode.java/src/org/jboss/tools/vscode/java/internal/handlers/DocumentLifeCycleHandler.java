@@ -38,7 +38,7 @@ import org.jboss.tools.langs.DidSaveTextDocumentParams;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.TextDocumentContentChangeEvent;
 import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -47,7 +47,7 @@ public class DocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
 
-	public class ClosedHandler implements RequestHandler<DidCloseTextDocumentParams, Object>{
+	public class ClosedHandler implements NotificationHandler<DidCloseTextDocumentParams, Object>{
 		@Override
 		public boolean canHandle(String request) {
 			return LSPMethods.DOCUMENT_CLOSED.getMethod().equals(request);
@@ -70,7 +70,7 @@ public class DocumentLifeCycleHandler {
 
 	}
 
-	public class OpenHandler implements RequestHandler<DidOpenTextDocumentParams, Object>{
+	public class OpenHandler implements NotificationHandler<DidOpenTextDocumentParams, Object>{
 
 		@Override
 		public boolean canHandle(String request) {
@@ -93,7 +93,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	public class ChangeHandler implements RequestHandler<DidChangeTextDocumentParams, Object>{
+	public class ChangeHandler implements NotificationHandler<DidChangeTextDocumentParams, Object>{
 
 		@Override
 		public boolean canHandle(String request) {
@@ -116,7 +116,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	public class SaveHandler implements RequestHandler<DidSaveTextDocumentParams, Object>{
+	public class SaveHandler implements NotificationHandler<DidSaveTextDocumentParams, Object>{
 
 		@Override
 		public boolean canHandle(String request) {

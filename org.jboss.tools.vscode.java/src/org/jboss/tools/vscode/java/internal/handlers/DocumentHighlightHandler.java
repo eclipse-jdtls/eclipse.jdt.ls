@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.jboss.tools.langs.DocumentHighlight;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -33,8 +34,8 @@ import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLo
 import copied.org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 
 public class DocumentHighlightHandler implements RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
-	
-	
+
+
 	public DocumentHighlightHandler() {
 	}
 
@@ -91,9 +92,9 @@ public class DocumentHighlightHandler implements RequestHandler<TextDocumentPosi
 
 
 	@Override
-	public List<DocumentHighlight> handle(TextDocumentPositionParams param) {
+	public List<DocumentHighlight> handle(TextDocumentPositionParams param, CancelMonitor cm) {
 		ITypeRoot type = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-		return computeOccurrences(type, param.getPosition().getLine().intValue(), 
+		return computeOccurrences(type, param.getPosition().getLine().intValue(),
 				param.getPosition().getCharacter().intValue());
 	}
 }

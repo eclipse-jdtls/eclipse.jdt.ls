@@ -11,10 +11,10 @@
 package org.jboss.tools.vscode.java.internal.handlers;
 
 import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class ExitHandler implements RequestHandler<Object, Object> {
+public class ExitHandler implements NotificationHandler<Object, Object> {
 
 	@Override
 	public boolean canHandle(String request) {

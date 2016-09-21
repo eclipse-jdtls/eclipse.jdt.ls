@@ -21,13 +21,14 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.DocumentSymbolParams;
 import org.jboss.tools.langs.SymbolInformation;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParams, List<SymbolInformation>>{
 
-	
+
 	public DocumentSymbolHandler() {
 	}
 
@@ -39,7 +40,7 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
 			IJavaElement[] elements = unit.getChildren();
-			ArrayList<SymbolInformation> symbols = new ArrayList<SymbolInformation>(elements.length);
+			ArrayList<SymbolInformation> symbols = new ArrayList<>(elements.length);
 			collectChildren(unit, elements, symbols);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
@@ -47,7 +48,7 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 		}
 		return new SymbolInformation[0];
 	}
-	
+
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
@@ -59,7 +60,7 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 					){
 				continue;
 			}
-			
+
 			SymbolInformation si = new SymbolInformation();
 			si.setName(element.getElementName());
 			si.setKind(new Double(mapKind(element)));
@@ -69,41 +70,41 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 			symbols.add(si);
 		}
 	}
-	
+
 	@Override
-	public List<SymbolInformation> handle(DocumentSymbolParams param) {
+	public List<SymbolInformation> handle(DocumentSymbolParams param, CancelMonitor cm) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
 		SymbolInformation[] elements  = this.getOutline(unit);
 		return Arrays.asList(elements);
 	}
-	
+
 	public static int mapKind(IJavaElement element) {
-//		/**
-//		* A symbol kind.
-//		*/
-//		export enum SymbolKind {
-//		  File = 1,
-//		  Module = 2,
-//		  Namespace = 3,
-//		  Package = 4,
-//		  Class = 5,
-//		  Method = 6,
-//		  Property = 7,
-//		  Field = 8,
-//		  Constructor = 9,
-//		  Enum = 10,
-//		  Interface = 11,
-//		  Function = 12,
-//		  Variable = 13,
-//		  Constant = 14,
-//		  String = 15,
-//		  Number = 16,
-//		  Boolean = 17,
-//		  Array = 18,
-//		}
+		//		/**
+		//		* A symbol kind.
+		//		*/
+		//		export enum SymbolKind {
+		//		  File = 1,
+		//		  Module = 2,
+		//		  Namespace = 3,
+		//		  Package = 4,
+		//		  Class = 5,
+		//		  Method = 6,
+		//		  Property = 7,
+		//		  Field = 8,
+		//		  Constructor = 9,
+		//		  Enum = 10,
+		//		  Interface = 11,
+		//		  Function = 12,
+		//		  Variable = 13,
+		//		  Constant = 14,
+		//		  String = 15,
+		//		  Number = 16,
+		//		  Boolean = 17,
+		//		  Array = 18,
+		//		}
 		switch (element.getElementType()) {
 		case IJavaElement.ANNOTATION:
-			return 7; // TODO: find a better mapping 
+			return 7; // TODO: find a better mapping
 		case IJavaElement.CLASS_FILE:
 		case IJavaElement.COMPILATION_UNIT:
 			return 1;
@@ -125,7 +126,7 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 			try {
 				return ( ((IType)element).isInterface() ? 11 : 5);
 			} catch (JavaModelException e) {
-				return 5; //fallback 
+				return 5; //fallback
 			}
 		}
 		return 15;

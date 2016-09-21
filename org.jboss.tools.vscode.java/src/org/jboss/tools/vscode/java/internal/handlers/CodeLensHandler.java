@@ -39,6 +39,7 @@ import org.jboss.tools.langs.CodeLensParams;
 import org.jboss.tools.langs.Command;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -53,7 +54,7 @@ public class CodeLensHandler {
 		}
 
 		@Override
-		public List<CodeLens> handle(CodeLensParams param) {
+		public List<CodeLens> handle(CodeLensParams param,CancelMonitor cm) {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			return getCodeLensSymbols(unit);
 		}
@@ -68,7 +69,7 @@ public class CodeLensHandler {
 		}
 
 		@Override
-		public CodeLens handle(CodeLens param) {
+		public CodeLens handle(CodeLens param, CancelMonitor cm) {
 			return resolve(param);
 		}
 	}
