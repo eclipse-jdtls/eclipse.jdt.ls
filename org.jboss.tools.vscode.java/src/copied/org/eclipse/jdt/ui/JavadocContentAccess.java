@@ -16,13 +16,14 @@ import java.io.StringReader;
 
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelStatusConstants;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.vscode.javadoc.internal.JavaDoc2MarkdownTextReader;
+import org.jboss.tools.vscode.javadoc.internal.JavaDoc2MarkdownConverter;
 
 import copied.org.eclipse.jdt.internal.corext.javadoc.JavaDocCommentReader;
 import copied.org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
@@ -128,8 +129,13 @@ public class JavadocContentAccess {
 	 */
 	public static Reader getHTMLContentReader(IMember member, boolean allowInherited, boolean useAttachedJavadoc) throws JavaModelException {
 		Reader contentReader= internalGetContentReader(member);
-		if (contentReader != null)
-			return new JavaDoc2MarkdownTextReader(contentReader);
+		if (contentReader != null) {
+			try {
+				return new JavaDoc2MarkdownConverter(contentReader).getAsReader();
+			} catch (IOException e) {
+				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
+			}
+		}
 
 		if (useAttachedJavadoc && member.getOpenable().getBuffer() == null) { // only if no source available
 			String s= member.getAttachedJavadoc(null);
@@ -141,26 +147,6 @@ public class JavadocContentAccess {
 			return findDocInHierarchy((IMethod) member, true, useAttachedJavadoc);
 
 		return null;
-	}
-
-
-
-	/**
-	 * Gets a reader for an IMember's Javadoc comment content from the source attachment.
-	 * and renders the tags in HTML.
-	 * Returns <code>null</code> if the member does not contain a Javadoc comment or if no source is available.
-	 *
-	 * @param member The member to get the Javadoc of.
-	 * @param allowInherited For methods with no (Javadoc) comment, the comment of the overridden class
-	 * is returned if <code>allowInherited</code> is <code>true</code>.
-	 * @return Returns a reader for the Javadoc comment content in HTML or <code>null</code> if the member
-	 * does not contain a Javadoc comment or if no source is available
-	 * @throws JavaModelException is thrown when the elements javadoc can not be accessed
-	 * @deprecated As of 3.2, replaced by {@link #getHTMLContentReader(IMember, boolean, boolean)}
-	 */
-	@Deprecated
-	public static Reader getHTMLContentReader(IMember member, boolean allowInherited) throws JavaModelException {
-		return getHTMLContentReader(member, allowInherited, false);
 	}
 
 	private static Reader findDocInHierarchy(IMethod method, boolean isHTML, boolean useAttachedJavadoc) throws JavaModelException {

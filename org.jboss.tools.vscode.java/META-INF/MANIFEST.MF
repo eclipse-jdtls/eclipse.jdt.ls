@@ -15,6 +15,12 @@ Require-Bundle: org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
  org.eclipse.m2e.core,
  com.ibm.icu,
  org.eclipse.core.filebuffers;bundle-version="3.6.0",
- org.eclipse.m2e.maven.runtime
+ org.eclipse.m2e.maven.runtime,
+ com.google.guava
 Export-Package: org.jboss.tools.vscode.java.internal;x-friends:="org.jboss.tools.vscode.tests",
- org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests"
+ org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.javadoc.internal;x-friends:="org.jboss.tools.vscode.tests"
+Bundle-ClassPath: lib/commons-lang3-3.4.jar,
+ lib/jsoup-1.9.2.jar,
+ lib/remark-1.0.0.jar,
+ .

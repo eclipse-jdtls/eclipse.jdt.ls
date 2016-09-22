@@ -10,4 +10,32 @@
 	<artifactId>org.jboss.tools.vscode.java</artifactId>
 	<packaging>eclipse-plugin</packaging>
 	<name>${base.name} :: Java</name>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<configuration>
+					<artifactItems>
+						<artifactItem>
+							<groupId>com.kotcrab.remark</groupId>
+							<artifactId>remark</artifactId>
+							<version>1.0.0</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.apache.commons</groupId>
+							<artifactId>commons-lang3</artifactId>
+							<version>3.4</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.jsoup</groupId>
+							<artifactId>jsoup</artifactId>
+							<version>1.9.2</version>
+						</artifactItem>
+					</artifactItems>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

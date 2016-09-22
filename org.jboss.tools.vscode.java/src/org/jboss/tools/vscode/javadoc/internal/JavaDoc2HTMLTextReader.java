@@ -1,16 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *     Brock Janiczak (brockj_eclipse@ihug.com.au) - https://bugs.eclipse.org/bugs/show_bug.cgi?id=20644
- *     Brock Janiczak (brockj_eclipse@ihug.com.au) - https://bugs.eclipse.org/bugs/show_bug.cgi?id=83607
- *     Benjamin Muskalla <b.muskalla@gmx.net> - [navigation][hovering] Javadoc view cannot find URL with anchor - https://bugs.eclipse.org/bugs/show_bug.cgi?id=70870
- *******************************************************************************/
 package org.jboss.tools.vscode.javadoc.internal;
 
 import java.io.IOException;
@@ -26,9 +13,8 @@ import copied.org.eclipse.jface.internal.text.html.SubstitutionTextReader;
 
 /**
  * Processes JavaDoc tags.
- * based on org.eclipse.jdt.internal.ui.text.javadoc.JavaDoc2HTMLTextReader on JDT UI
  */
-public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
+public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 
 
 	static private class Pair {
@@ -49,7 +35,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 	private List<String> fSince;
 	private List<Pair> fRest; // list of Pair objects
 
-	public JavaDoc2MarkdownTextReader(Reader reader) {
+	public JavaDoc2HTMLTextReader(Reader reader) {
 		super(reader);
 		setSkipWhitespace(false);
 	}
@@ -74,7 +60,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 
 	private int getContentUntilNextTag(StringBuilder buffer) throws IOException {
 		int c= nextChar();
-        boolean blockStartRead= false;
+		boolean blockStartRead= false;
 		while (c != -1) {
 			if (c == '@') {
 				int index= buffer.length();
@@ -89,15 +75,15 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 					}
 				}
 			}
-            if (blockStartRead) {
-                buffer.append(processBlockTag());
-                blockStartRead= false;
-            } else {
-                buffer.append((char) c);
-            }
+			if (blockStartRead) {
+				buffer.append(processBlockTag());
+				blockStartRead= false;
+			} else {
+				buffer.append((char) c);
+			}
 
 			c= nextChar();
-            blockStartRead= c == '{';
+			blockStartRead= c == '{';
 		}
 		return c;
 	}
@@ -132,25 +118,23 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		Iterator<String> e= list.iterator();
 		while (e.hasNext()) {
 			String s= e.next();
-			if(s.trim().isEmpty())
-				continue;
-			
-			buffer.append("    * "); //$NON-NLS-1$
+			buffer.append("<li>"); //$NON-NLS-1$
 			if (!firstword)
 				buffer.append(s);
 			else {
-				buffer.append("**"); //$NON-NLS-1$
+				buffer.append("<b>"); //$NON-NLS-1$
 
 				int i= getParamEndOffset(s);
 				if (i <= s.length()) {
+					//buffer.append(convertToHTMLContent(s.substring(0, i)));
 					buffer.append(s.substring(0, i));
-					buffer.append("**"); //$NON-NLS-1$
+					buffer.append("</b>"); //$NON-NLS-1$
 					buffer.append(s.substring(i));
 				} else {
-					buffer.append("**"); //$NON-NLS-1$
+					buffer.append("</b>"); //$NON-NLS-1$
 				}
 			}
-			buffer.append("\n"); //$NON-NLS-1$
+			buffer.append("</li>"); //$NON-NLS-1$
 		}
 	}
 
@@ -180,21 +164,21 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 
 	private void print(StringBuilder buffer, String tag, List<String> elements, boolean firstword) {
 		if ( !elements.isEmpty()) {
-			buffer.append("* **"); //$NON-NLS-1$
+			buffer.append("<li><b>"); //$NON-NLS-1$
 			buffer.append(tag);
-			buffer.append("**\n"); //$NON-NLS-1$
+			buffer.append("</b><ul>");
 			printDefinitions(buffer, elements, firstword);
+			buffer.append("</ul></li>"); //$NON-NLS-1$
 		}
 	}
 
 	private void print(StringBuilder buffer, String tag, String content) {
 		if  (content != null) {
-			buffer.append("* **"); //$NON-NLS-1$
+			buffer.append("<li><b>"); //$NON-NLS-1$
 			buffer.append(tag);
-			buffer.append("**\n"); //$NON-NLS-1$
-			buffer.append("    * "); //$NON-NLS-1$
+			buffer.append("</b><ul><li>"); //$NON-NLS-1$
 			buffer.append(content);
-			buffer.append("\n"); //$NON-NLS-1$
+			buffer.append("</li></ul></li>"); //$NON-NLS-1$
 		}
 	}
 
@@ -203,23 +187,20 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 			Iterator<Pair> e= fRest.iterator();
 			while (e.hasNext()) {
 				Pair p= e.next();
-				if (p.fTag != null){
-					buffer.append("* "); //$NON-NLS-1$
+				buffer.append("<li>"); //$NON-NLS-1$
+				if (p.fTag != null)
 					buffer.append(p.fTag);
-					buffer.append("\n"); //$NON-NLS-1$
-				}
-				if (p.fContent != null){
-					buffer.append("* "); //$NON-NLS-1$
+				buffer.append("<ul><li>"); //$NON-NLS-1$
+				if (p.fContent != null)
 					buffer.append(p.fContent);
-					buffer.append("\n"); //$NON-NLS-1$
-				}
+				buffer.append("</li></ul></li>"); //$NON-NLS-1$
 			}
 		}
 	}
 
 	private String printSimpleTag() {
 		StringBuilder buffer= new StringBuilder();
-		buffer.append("\n");
+		buffer.append("<ul>"); //$NON-NLS-1$
 		print(buffer, "See Also:",fSees, false);
 		print(buffer, "Parameters:", fParameters, true);
 		print(buffer, "Returns:", fReturn);
@@ -227,6 +208,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		print(buffer, "Author:", fAuthors, false);
 		print(buffer, "Since:", fSince, false);
 		printRest(buffer);
+		buffer.append("</ul>"); //$NON-NLS-1$
 
 		return buffer.toString();
 	}
@@ -268,6 +250,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 		StringBuilder buffer= new StringBuilder();
 		int c= '@';
 		while (c != -1) {
+
 			buffer.setLength(0);
 			buffer.append((char) c);
 			c= getTag(buffer);
@@ -318,15 +301,15 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 				}
 			}
 			if (TagElement.TAG_LINK.equals(tag))
-				return "`" + substituteQualification(tagContent.substring(labelStart)) + "`";  //$NON-NLS-1$//$NON-NLS-2$
+				return "<code>" + substituteQualification(tagContent.substring(labelStart)) + "</code>";  //$NON-NLS-1$//$NON-NLS-2$
 			else
 				return substituteQualification(tagContent.substring(labelStart));
 
-		} else if (TagElement.TAG_LITERAL.equals(tag)) {
+		} else if (TagElement.TAG_LITERAL.equals(tag) || TagElement.TAG_CODE.equals(tag)) {
 			return printLiteral(tagContent);
 
 		} else if (TagElement.TAG_CODE.equals(tag)) {
-			return "`" + printLiteral(tagContent) + "`"; //$NON-NLS-1$//$NON-NLS-2$
+			return "<code>" + printLiteral(tagContent) + "</code>"; //$NON-NLS-1$//$NON-NLS-2$
 		}
 
 		// If something went wrong at least replace the {} with the content
@@ -341,7 +324,7 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 				break;
 			}
 		}
-		return tagContent.substring(contentStart);
+		return convertToHTMLContent(tagContent.substring(contentStart));
 	}
 
 	/*
@@ -384,37 +367,50 @@ public class JavaDoc2MarkdownTextReader extends SubstitutionTextReader {
 	 */
 	@Override
 	protected String computeSubstitution(int c) throws IOException {
-		//skip new lines
-		if(c == '\n' )
-			return "";
-		
-		// replace HTML
-		if(c == '<')
-			return replaceHTML();
-		
 		if (c == '@' && fWasWhiteSpace)
 			return processSimpleTag();
-		
+
 		if (c == '{')
 			return processBlockTag();
 
 		return null;
 	}
 
-	private String replaceHTML() throws IOException {
-		int c = nextChar();
-		StringBuilder tag = new StringBuilder();
-		boolean tagFound = false;
-		while (c != '>'){
-			if(!tagFound && Character.isWhitespace(c))
-				tagFound = true;
-			if(!tagFound && Character.isLetter(c))
-				tag.append((char)c);
-			c = nextChar();
+	/**
+	 * Escapes reserved HTML characters in the given string.
+	 * <p>
+	 * <b>Warning:</b> Does not preserve whitespace.
+	 *
+	 * @param content the input string
+	 * @return the string with escaped characters
+	 *
+	 * @see #convertToHTMLContentWithWhitespace(String) for use in browsers
+	 * @see #addPreFormatted(StringBuilder, String) for rendering with an {@link HTML2TextReader}
+	 */
+	private static String convertToHTMLContent(String content) {
+		content= replace(content, '&', "&amp;"); //$NON-NLS-1$
+		content= replace(content, '"', "&quot;"); //$NON-NLS-1$
+		content= replace(content, '<', "&lt;"); //$NON-NLS-1$
+		return replace(content, '>', "&gt;"); //$NON-NLS-1$
+	}
+
+	private static String replace(String text, char c, String s) {
+
+		int previous= 0;
+		int current= text.indexOf(c, previous);
+
+		if (current == -1)
+			return text;
+
+		StringBuilder buffer= new StringBuilder();
+		while (current > -1) {
+			buffer.append(text.substring(previous, current));
+			buffer.append(s);
+			previous= current + 1;
+			current= text.indexOf(c, previous);
 		}
-		if("p".equals(tag.toString())){
-			return "\n ";
-		}
-		return "";
+		buffer.append(text.substring(previous));
+
+		return buffer.toString();
 	}
 }
