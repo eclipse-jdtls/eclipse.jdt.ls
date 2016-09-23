@@ -15,6 +15,8 @@
 		<tycho.scmUrl>scm:git:https://github.com/gorkem/java-language-server.git</tycho.scmUrl>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 		<coverage.filter>org.jboss.tools.vscode.*</coverage.filter>
+		<jacoco.destFile>${project.build.directory}/jacoco.exec</jacoco.destFile>
+		<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
 		<!-- To handle OSX-specific settings -->
 		<os.testArgs></os.testArgs>
 	</properties>
@@ -223,7 +225,6 @@
 			</activation>
 			<properties>
 				<jacoco.destFile>${project.basedir}/../target/jacoco.exec</jacoco.destFile>
-				<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
 			</properties>
 			<build>
 				<plugins>
