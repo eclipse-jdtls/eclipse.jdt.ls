@@ -59,11 +59,11 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
 			Double eventType = fileEvent.getType();
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if(toChangeType(eventType)==CHANGE_TYPE.DELETED){
 				cleanUpDiagnostics(fileEvent.getUri());
 			}
-			if (unit.isWorkingCopy()) {
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
+			if (unit != null && unit.isWorkingCopy()) {
 				continue;
 			}
 			pm.fileChanged(fileEvent.getUri(), toChangeType(eventType));

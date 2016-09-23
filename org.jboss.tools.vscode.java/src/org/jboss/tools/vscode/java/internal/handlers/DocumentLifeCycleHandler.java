@@ -165,7 +165,7 @@ public class DocumentLifeCycleHandler {
 	private void handleChanged(DidChangeTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 
-		if (!unit.isWorkingCopy()) {
+		if (unit == null || !unit.isWorkingCopy()) {
 			return;
 		}
 

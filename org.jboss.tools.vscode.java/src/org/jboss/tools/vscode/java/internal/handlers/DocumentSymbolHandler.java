@@ -12,6 +12,7 @@ package org.jboss.tools.vscode.java.internal.handlers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.IJavaElement;
@@ -74,6 +75,8 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 	@Override
 	public List<SymbolInformation> handle(DocumentSymbolParams param, CancelMonitor cm) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
+		if(unit == null )
+			return Collections.emptyList();
 		SymbolInformation[] elements  = this.getOutline(unit);
 		return Arrays.asList(elements);
 	}

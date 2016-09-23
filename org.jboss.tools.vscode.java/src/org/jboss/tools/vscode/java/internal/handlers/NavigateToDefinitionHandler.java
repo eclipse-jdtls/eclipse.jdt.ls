@@ -55,9 +55,11 @@ public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentP
 	}
 
 	@Override
-	public org.jboss.tools.langs.Location handle(TextDocumentPositionParams param, CancelMonitor cm) {
+	public Location handle(TextDocumentPositionParams param, CancelMonitor cm) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-
+		if(unit == null){
+			return new Location();
+		}
 		return computeDefinitonNavigation(unit, param.getPosition().getLine().intValue(),
 				param.getPosition().getCharacter().intValue());
 	}
