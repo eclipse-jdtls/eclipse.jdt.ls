@@ -119,7 +119,7 @@ public class JavaClientConnection extends LSPServer{
 	 */
 	@Override
 	protected List<RequestHandler<?, ?>> buildRequestHandlers() {
-		List<RequestHandler<?,?>> $= new ArrayList<>();
+		List<RequestHandler<?,?>> $= new ArrayList<>(16);
 		//server lifeCycle
 		$.add(new InitHandler(this.projectsManager, this));
 		$.add(new ShutdownHandler());
@@ -147,7 +147,7 @@ public class JavaClientConnection extends LSPServer{
 	 */
 	@Override
 	protected List<NotificationHandler<?, ?>> buildNotificationHandlers() {
-		List<NotificationHandler<?, ?>> $ = new ArrayList<>();
+		List<NotificationHandler<?, ?>> $ = new ArrayList<>(5);
 		DocumentLifeCycleHandler dh = new DocumentLifeCycleHandler(this);
 		$.add(dh.new ChangeHandler());
 		$.add(dh.new ClosedHandler());

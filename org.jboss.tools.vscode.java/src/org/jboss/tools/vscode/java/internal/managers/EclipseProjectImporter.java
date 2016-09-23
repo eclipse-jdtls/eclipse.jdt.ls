@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
@@ -68,18 +69,20 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
-
-		Collection<File> files = getProjectFiles(monitor);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		Collection<File> files = getProjectFiles(subMonitor.split(5));
 		if (files == null || files.isEmpty()) {
 			return Collections.emptyList();
 		}
 
-		List<IProject> projects = new ArrayList<>(files.size());
+		int projectSize = files.size();
+		List<IProject> projects = new ArrayList<>(projectSize);
+		subMonitor.setWorkRemaining(projectSize);
 		for(File file : files) {
 			if (monitor.isCanceled()) {
 				throw new InterruptedException();
 			}
-			IProject project = createProject(file, monitor);
+			IProject project = createProject(file, subMonitor.split(1));
 			if (project != null) {
 				projects.add(project);
 			}
@@ -88,7 +91,8 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		return projects;
 	}
 
-	IProject createProject(File file, IProgressMonitor monitor) throws CoreException {
+	IProject createProject(File file, IProgressMonitor m) throws CoreException {
+		SubMonitor monitor = SubMonitor.convert(m, 100);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IPath dotProjectPath = new Path(file.getAbsolutePath());
 		IProjectDescription descriptor = workspace.loadProjectDescription(dotProjectPath);
@@ -110,6 +114,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		}
 		project.create(descriptor, monitor);
 		project.open(IResource.NONE, monitor);
+		monitor.done();
 		return project;
 	}
 

@@ -25,12 +25,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
 
 public class ProjectsManager {
-	
+
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
 
 	private static final String TMP_PROJECT_NAME = "tmpProject";
@@ -40,13 +41,14 @@ public class ProjectsManager {
 	}
 
 	public IStatus createProject(final String projectName, List<IProject> resultingProjects, IProgressMonitor monitor) {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
-			IProjectImporter importer = getImporter(new File(projectName), monitor);
+			IProjectImporter importer = getImporter(new File(projectName), subMonitor.split(20));
 			if (importer == null) {
 				return StatusFactory.UNSUPPORTED_PROJECT;
 			}
-			List<IProject> projects = importer.importToWorkspace(monitor);
-			
+			List<IProject> projects = importer.importToWorkspace(subMonitor.split(80));
+
 			List<IProject> javaProjects = projects.stream().filter(p -> {
 				try {
 					return p.hasNature(JavaCore.NATURE_ID);
@@ -54,7 +56,7 @@ public class ProjectsManager {
 					return false;
 				}
 			}).collect(Collectors.toList());
-			
+
 			JavaLanguageServerPlugin.logInfo("Number of created projects " + javaProjects.size());
 			resultingProjects.addAll(javaProjects);
 			return Status.OK_STATUS;
@@ -78,17 +80,19 @@ public class ProjectsManager {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
 	}
-	
+
 	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws InterruptedException, CoreException {
-		for (IProjectImporter importer : importers()) {
+		Collection<IProjectImporter> importers = importers();
+		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());
+		for (IProjectImporter importer : importers) {
 			importer.initialize(rootFolder);
-			if (importer.applies(monitor)) {
+			if (importer.applies(subMonitor.split(1))) {
 				return importer;
 			}
 		}
 		return null;
 	}
-	
+
 	private Collection<IProjectImporter> importers() {
 		//TODO read extension point
 		return Arrays.asList(new MavenProjectImporter(), new EclipseProjectImporter());

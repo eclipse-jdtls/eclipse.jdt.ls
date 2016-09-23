@@ -24,6 +24,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
@@ -40,47 +41,48 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	private Set<MavenProjectInfo> projectInfos = null;
 
 	private IProjectConfigurationManager configurationManager;
-	
+
 	public MavenProjectImporter() {
 		this(MavenPlugin.getProjectConfigurationManager());
 	}
-	
+
 	public MavenProjectImporter(IProjectConfigurationManager configurationManager) {
 		this.configurationManager = configurationManager;
 	}
-	
-	
+
+
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException {
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
 		return files != null && !files.isEmpty();
 	}
-	
+
 	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
 		if (projectInfos == null) {
 			projectInfos = collectMavenProjectInfo(monitor);
 		}
 		return projectInfos;
 	}
-	
+
 	Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
 		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
 		return getMavenProjects(getProjectDirectory(), modelManager, monitor);
 	}
-	
+
 	@Override
 	public void reset() {
 		projectInfos = null;
 	}
-	
+
 	@Override
 	@SuppressWarnings("restriction")
 	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
-		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor); 
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));
 		ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
-		List<IMavenProjectImportResult> importResults = configurationManager.importProjects(files, importConfig, monitor);
+		List<IMavenProjectImportResult> importResults = configurationManager.importProjects(files, importConfig, subMonitor.split(95));
 		return collectProjects(importConfig, importResults, monitor);
 	}
 
@@ -102,7 +104,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					project.open(monitor);
 					configurationManager.updateProjectConfiguration(project, monitor);
 				}
-			} 
+			}
 			if (project != null) {
 				projects.add(project);
 			}
@@ -120,7 +122,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	public boolean isMavenProject() {
 		return  isMavenProject(getProjectDirectory());
 	}
-	
+
 	private boolean isMavenProject(File dir) {
 		if (!isReadable(dir)
 				|| !dir.isDirectory()) {
@@ -128,12 +130,12 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}
 		return isReadable(new File(dir, POM_FILE));
 	}
-	
+
 	private boolean isReadable(File destination) {
 		return destination != null
 				&& destination.canRead();
 	}
-	
+
 	public Set<MavenProjectInfo> collectProjects(
 			Collection<MavenProjectInfo> projects) {
 		return new LinkedHashSet<MavenProjectInfo>() {
