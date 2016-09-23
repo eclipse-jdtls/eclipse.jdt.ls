@@ -29,9 +29,16 @@ public class TransportMessage {
 
 	private static final Logger LOGGER = Logger.getLogger(TransportMessage.class.getName());
 
-	private static final byte[] HEADER_TERMINATOR_BYTES = "\r\n".getBytes();
 
-	private static byte[] FIELD_SEPARATOR_BYTES = ":".getBytes();
+	/*
+	 * Each header field is comprised of a name and a value, separated by ': ' (a colon and a space).
+	 */
+	private static byte[] FIELD_SEPARATOR_BYTES = ": ".getBytes();
+
+	/*
+	 * Each header field is terminated by '\r\n'
+	 */
+	private static final byte[] HEADER_TERMINATOR_BYTES = "\r\n".getBytes();
 
 	private static final String CT_VSCODE = "application/vscode-jsonrpc";
 
