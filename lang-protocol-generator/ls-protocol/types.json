@@ -61,7 +61,11 @@
                             "type": "string"
                         }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "required": [
+                        "language",
+                        "value"
+                    ]
                 }
             ]
         },
@@ -112,6 +116,35 @@
         }
     },
     "additionalProperties": false,
+    "required": [
+        "range",
+        "position",
+        "location",
+        "diagnostic",
+        "DiagnosticSeverity",
+        "command",
+        "textEdit",
+        "workspaceEdit",
+        "workspaceChange",
+        "textEditChange",
+        "textDocumentIdentifier",
+        "completionItemKind",
+        "completionItem",
+        "completionList",
+        "hover",
+        "markedString",
+        "signatureHelp",
+        "signatureInformation",
+        "parameterInformation",
+        "definition",
+        "codeActionContext",
+        "documentHighlight",
+        "documentHighlightKind",
+        "symbolInformation",
+        "symbolKind",
+        "codeLens",
+        "formattingOptions"
+    ],
     "definitions": {
         "Range": {
             "type": "object",
@@ -125,7 +158,11 @@
                     "description": "The range's end position"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "start",
+                "end"
+            ]
         },
         "Position": {
             "description": "Position in a text document expressed as zero-based line and character offset.\n\nThe Position namespace provides helper functions to work with\n\n[Position](#Position) literals.",
@@ -140,7 +177,11 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "line",
+                "character"
+            ]
         },
         "Location": {
             "type": "object",
@@ -152,7 +193,11 @@
                     "$ref": "#/definitions/Range"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri",
+                "range"
+            ]
         },
         "Diagnostic": {
             "type": "object",
@@ -185,7 +230,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range",
+                "message"
+            ]
         },
         "DiagnosticSeverity": {
             "type": "string"
@@ -207,7 +256,11 @@
                     "items": {}
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "title",
+                "command"
+            ]
         },
         "TextEdit": {
             "type": "object",
@@ -221,7 +274,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range",
+                "newText"
+            ]
         },
         "WorkspaceEdit": {
             "type": "object",
@@ -238,7 +295,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "changes"
+            ]
         },
         "WorkspaceChange": {
             "type": "object",
@@ -256,7 +316,13 @@
                     "additionalProperties": false
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "workspaceEdit",
+                "textEditChanges",
+                "edit",
+                "getTextEditChange"
+            ]
         },
         "TextEditChange": {
             "type": "object",
@@ -292,7 +358,14 @@
                     "additionalProperties": false
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "all",
+                "clear",
+                "insert",
+                "replace",
+                "delete"
+            ]
         },
         "TextDocumentIdentifier": {
             "type": "object",
@@ -302,7 +375,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri"
+            ]
         },
         "CompletionItemKind": {
             "type": "string"
@@ -346,7 +422,10 @@
                     "description": "An data entry field that is preserved on a completion item between\n\na [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]\n\n(#CompletionResolveRequest)"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "CompletionList": {
             "type": "object",
@@ -364,7 +443,11 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "isIncomplete",
+                "items"
+            ]
         },
         "Hover": {
             "type": "object",
@@ -385,7 +468,11 @@
                                     "type": "string"
                                 }
                             },
-                            "additionalProperties": false
+                            "additionalProperties": false,
+                            "required": [
+                                "language",
+                                "value"
+                            ]
                         },
                         {
                             "type": "array",
@@ -404,7 +491,11 @@
                                                 "type": "string"
                                             }
                                         },
-                                        "additionalProperties": false
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "language",
+                                            "value"
+                                        ]
                                     }
                                 ]
                             }
@@ -416,7 +507,10 @@
                     "description": "An optional range"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "contents"
+            ]
         },
         "SignatureHelp": {
             "type": "object",
@@ -438,7 +532,10 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "signatures"
+            ]
         },
         "SignatureInformation": {
             "type": "object",
@@ -460,7 +557,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "ParameterInformation": {
             "type": "object",
@@ -474,7 +574,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "CodeActionContext": {
             "type": "object",
@@ -488,7 +591,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "diagnostics"
+            ]
         },
         "DocumentHighlight": {
             "type": "object",
@@ -502,7 +608,10 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range"
+            ]
         },
         "DocumentHighlightKind": {
             "type": "string"
@@ -527,7 +636,12 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "kind",
+                "location"
+            ]
         },
         "SymbolKind": {
             "type": "string"
@@ -547,7 +661,10 @@
                     "description": "An data entry field that is preserved on a code lens item between\n\na [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]\n\n(#CodeLensResolveRequest)"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range"
+            ]
         },
         "FormattingOptions": {
             "type": "object",
@@ -561,7 +678,11 @@
                     "type": "boolean"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "tabSize",
+                "insertSpaces"
+            ]
         }
     },
     "$schema": "http://json-schema.org/draft-04/schema#"

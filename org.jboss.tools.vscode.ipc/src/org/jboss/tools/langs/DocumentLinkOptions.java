@@ -13,47 +13,43 @@ package org.jboss.tools.langs;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class InitializeResult {
+
+/**
+ * Document link options
+ *
+ */
+public class DocumentLinkOptions {
 
 	/**
-	 * Defines the capabilities provided by a language
-	 *
-	 * server.
-	 * (Required)
+	 * Document links have a resolve provider as well.
 	 *
 	 */
-	@SerializedName("capabilities")
+	@SerializedName("resolveProvider")
 	@Expose
-	private ServerCapabilities capabilities;
+	private Boolean resolveProvider;
 
 	/**
-	 * Defines the capabilities provided by a language
-	 *
-	 * server.
-	 * (Required)
+	 * Document links have a resolve provider as well.
 	 *
 	 * @return
-	 *     The capabilities
+	 *     The resolveProvider
 	 */
-	public ServerCapabilities getCapabilities() {
-		return capabilities;
+	public Boolean getResolveProvider() {
+		return resolveProvider;
 	}
 
 	/**
-	 * Defines the capabilities provided by a language
+	 * Document links have a resolve provider as well.
 	 *
-	 * server.
-	 * (Required)
-	 *
-	 * @param capabilities
-	 *     The capabilities
+	 * @param resolveProvider
+	 *     The resolveProvider
 	 */
-	public void setCapabilities(ServerCapabilities capabilities) {
-		this.capabilities = capabilities;
+	public void setResolveProvider(Boolean resolveProvider) {
+		this.resolveProvider = resolveProvider;
 	}
 
-	public InitializeResult withCapabilities(ServerCapabilities capabilities) {
-		this.capabilities = capabilities;
+	public DocumentLinkOptions withResolveProvider(Boolean resolveProvider) {
+		this.resolveProvider = resolveProvider;
 		return this;
 	}
 

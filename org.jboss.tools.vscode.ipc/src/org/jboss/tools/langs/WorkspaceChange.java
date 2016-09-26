@@ -8,132 +8,158 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-
 package org.jboss.tools.langs;
-
-import javax.annotation.Generated;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-@Generated("org.jsonschema2pojo")
 public class WorkspaceChange {
 
-    @SerializedName("workspaceEdit")
-    @Expose
-    private Object workspaceEdit;
-    @SerializedName("textEditChanges")
-    @Expose
-    private Object textEditChanges;
-    @SerializedName("edit")
-    @Expose
-    private WorkspaceEdit edit;
-    /**
-     * Returns the [TextEditChange](#TextEditChange) to manage text edits
-     * 
-     * for resources.
-     * 
-     */
-    @SerializedName("getTextEditChange")
-    @Expose
-    private Object getTextEditChange;
+	/**
+	 *
+	 * (Required)
+	 *
+	 */
+	@SerializedName("workspaceEdit")
+	@Expose
+	private Object workspaceEdit;
+	/**
+	 *
+	 * (Required)
+	 *
+	 */
+	@SerializedName("textEditChanges")
+	@Expose
+	private Object textEditChanges;
+	/**
+	 *
+	 * (Required)
+	 *
+	 */
+	@SerializedName("edit")
+	@Expose
+	private WorkspaceEdit edit;
+	/**
+	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 *
+	 * for resources.
+	 * (Required)
+	 *
+	 */
+	@SerializedName("getTextEditChange")
+	@Expose
+	private Object getTextEditChange;
 
-    /**
-     * 
-     * @return
-     *     The workspaceEdit
-     */
-    public Object getWorkspaceEdit() {
-        return workspaceEdit;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @return
+	 *     The workspaceEdit
+	 */
+	public Object getWorkspaceEdit() {
+		return workspaceEdit;
+	}
 
-    /**
-     * 
-     * @param workspaceEdit
-     *     The workspaceEdit
-     */
-    public void setWorkspaceEdit(Object workspaceEdit) {
-        this.workspaceEdit = workspaceEdit;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @param workspaceEdit
+	 *     The workspaceEdit
+	 */
+	public void setWorkspaceEdit(Object workspaceEdit) {
+		this.workspaceEdit = workspaceEdit;
+	}
 
-    public WorkspaceChange withWorkspaceEdit(Object workspaceEdit) {
-        this.workspaceEdit = workspaceEdit;
-        return this;
-    }
+	public WorkspaceChange withWorkspaceEdit(Object workspaceEdit) {
+		this.workspaceEdit = workspaceEdit;
+		return this;
+	}
 
-    /**
-     * 
-     * @return
-     *     The textEditChanges
-     */
-    public Object getTextEditChanges() {
-        return textEditChanges;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @return
+	 *     The textEditChanges
+	 */
+	public Object getTextEditChanges() {
+		return textEditChanges;
+	}
 
-    /**
-     * 
-     * @param textEditChanges
-     *     The textEditChanges
-     */
-    public void setTextEditChanges(Object textEditChanges) {
-        this.textEditChanges = textEditChanges;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @param textEditChanges
+	 *     The textEditChanges
+	 */
+	public void setTextEditChanges(Object textEditChanges) {
+		this.textEditChanges = textEditChanges;
+	}
 
-    public WorkspaceChange withTextEditChanges(Object textEditChanges) {
-        this.textEditChanges = textEditChanges;
-        return this;
-    }
+	public WorkspaceChange withTextEditChanges(Object textEditChanges) {
+		this.textEditChanges = textEditChanges;
+		return this;
+	}
 
-    /**
-     * 
-     * @return
-     *     The edit
-     */
-    public WorkspaceEdit getEdit() {
-        return edit;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @return
+	 *     The edit
+	 */
+	public WorkspaceEdit getEdit() {
+		return edit;
+	}
 
-    /**
-     * 
-     * @param edit
-     *     The edit
-     */
-    public void setEdit(WorkspaceEdit edit) {
-        this.edit = edit;
-    }
+	/**
+	 *
+	 * (Required)
+	 *
+	 * @param edit
+	 *     The edit
+	 */
+	public void setEdit(WorkspaceEdit edit) {
+		this.edit = edit;
+	}
 
-    public WorkspaceChange withEdit(WorkspaceEdit edit) {
-        this.edit = edit;
-        return this;
-    }
+	public WorkspaceChange withEdit(WorkspaceEdit edit) {
+		this.edit = edit;
+		return this;
+	}
 
-    /**
-     * Returns the [TextEditChange](#TextEditChange) to manage text edits
-     * 
-     * for resources.
-     * 
-     * @return
-     *     The getTextEditChange
-     */
-    public Object getGetTextEditChange() {
-        return getTextEditChange;
-    }
+	/**
+	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 *
+	 * for resources.
+	 * (Required)
+	 *
+	 * @return
+	 *     The getTextEditChange
+	 */
+	public Object getGetTextEditChange() {
+		return getTextEditChange;
+	}
 
-    /**
-     * Returns the [TextEditChange](#TextEditChange) to manage text edits
-     * 
-     * for resources.
-     * 
-     * @param getTextEditChange
-     *     The getTextEditChange
-     */
-    public void setGetTextEditChange(Object getTextEditChange) {
-        this.getTextEditChange = getTextEditChange;
-    }
+	/**
+	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 *
+	 * for resources.
+	 * (Required)
+	 *
+	 * @param getTextEditChange
+	 *     The getTextEditChange
+	 */
+	public void setGetTextEditChange(Object getTextEditChange) {
+		this.getTextEditChange = getTextEditChange;
+	}
 
-    public WorkspaceChange withGetTextEditChange(Object getTextEditChange) {
-        this.getTextEditChange = getTextEditChange;
-        return this;
-    }
+	public WorkspaceChange withGetTextEditChange(Object getTextEditChange) {
+		this.getTextEditChange = getTextEditChange;
+		return this;
+	}
 
 }

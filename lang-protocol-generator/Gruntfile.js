@@ -24,9 +24,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-shell');  
 
-  grunt.registerTask('default', ['shell:gitclone','generate_schema']);
-
   grunt.registerTask('copyTypes','copy types to be generated', function(){
+      grunt.file.delete('./nodeClient/vscode-languageserver-node/client/src/generatedTypes.ts');
       grunt.file.copy('./generatedTypes.ts' ,'./nodeClient/vscode-languageserver-node/client/src/generatedTypes.ts');
   });
 
@@ -50,7 +49,7 @@ function createJSONSchema(element, destFile) {
     useDefaultProperties: false,
     disableExtraProperties: true,
     usePropertyOrder: false,
-    generateRequired: false,
+    generateRequired: true,
     out: undefined
   };
   args.out = destFile;

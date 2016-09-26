@@ -61,7 +61,11 @@
                             "type": "string"
                         }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "required": [
+                        "language",
+                        "value"
+                    ]
                 }
             ]
         },
@@ -199,6 +203,64 @@
         }
     },
     "additionalProperties": false,
+    "required": [
+        "range",
+        "position",
+        "location",
+        "diagnostic",
+        "DiagnosticSeverity",
+        "command",
+        "textEdit",
+        "workspaceEdit",
+        "workspaceChange",
+        "textEditChange",
+        "textDocumentIdentifier",
+        "completionItemKind",
+        "completionItem",
+        "completionList",
+        "hover",
+        "markedString",
+        "signatureHelp",
+        "signatureInformation",
+        "parameterInformation",
+        "definition",
+        "codeActionContext",
+        "documentHighlight",
+        "documentHighlightKind",
+        "symbolInformation",
+        "symbolKind",
+        "codeLens",
+        "formattingOptions",
+        "initializeParams",
+        "initializeResult",
+        "intializeError",
+        "clientCapabilities",
+        "serverCapabilities",
+        "textDocumentSyncKind",
+        "logMessageParams",
+        "messageType",
+        "showMessageParams",
+        "showMessageRequestParams",
+        "didChangeConfigurationParams",
+        "textDocumentPositionParams",
+        "didOpenTextDocumentParams",
+        "didChangeTextDocumentParams",
+        "didCloseTextDocumentParams",
+        "didSaveTextDocumentParams",
+        "didChangeWatchedFilesParams",
+        "fileEvent",
+        "fileChangeType",
+        "publishDiagnosticsParams",
+        "workspaceSymbolParams",
+        "codeActionParams",
+        "documentFormattingParams",
+        "documentRangeFormattingParams",
+        "documentOnTypeFormattingParams",
+        "renameParams",
+        "documentSymbolParams",
+        "referenceParams",
+        "codeLensParams"
+    ],
     "definitions": {
         "Range": {
             "type": "object",
@@ -212,7 +274,11 @@
                     "description": "The range's end position"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "start",
+                "end"
+            ]
         },
         "Position": {
             "description": "Position in a text document expressed as zero-based line and character offset.\n\nThe Position namespace provides helper functions to work with\n\n[Position](#Position) literals.",
@@ -227,7 +293,11 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "line",
+                "character"
+            ]
         },
         "Location": {
             "type": "object",
@@ -239,7 +309,11 @@
                     "$ref": "#/definitions/Range"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri",
+                "range"
+            ]
         },
         "Diagnostic": {
             "type": "object",
@@ -272,7 +346,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range",
+                "message"
+            ]
         },
         "DiagnosticSeverity": {
             "type": "string"
@@ -294,7 +372,11 @@
                     "items": {}
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "title",
+                "command"
+            ]
         },
         "TextEdit": {
             "type": "object",
@@ -308,7 +390,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range",
+                "newText"
+            ]
         },
         "WorkspaceEdit": {
             "type": "object",
@@ -325,7 +411,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "changes"
+            ]
         },
         "WorkspaceChange": {
             "type": "object",
@@ -343,7 +432,13 @@
                     "additionalProperties": false
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "workspaceEdit",
+                "textEditChanges",
+                "edit",
+                "getTextEditChange"
+            ]
         },
         "TextEditChange": {
             "type": "object",
@@ -379,7 +474,14 @@
                     "additionalProperties": false
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "all",
+                "clear",
+                "insert",
+                "replace",
+                "delete"
+            ]
         },
         "TextDocumentIdentifier": {
             "type": "object",
@@ -389,7 +491,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri"
+            ]
         },
         "CompletionItemKind": {
             "type": "string"
@@ -433,7 +538,10 @@
                     "description": "An data entry field that is preserved on a completion item between\n\na [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]\n\n(#CompletionResolveRequest)"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "CompletionList": {
             "type": "object",
@@ -451,7 +559,11 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "isIncomplete",
+                "items"
+            ]
         },
         "Hover": {
             "type": "object",
@@ -472,7 +584,11 @@
                                     "type": "string"
                                 }
                             },
-                            "additionalProperties": false
+                            "additionalProperties": false,
+                            "required": [
+                                "language",
+                                "value"
+                            ]
                         },
                         {
                             "type": "array",
@@ -491,7 +607,11 @@
                                                 "type": "string"
                                             }
                                         },
-                                        "additionalProperties": false
+                                        "additionalProperties": false,
+                                        "required": [
+                                            "language",
+                                            "value"
+                                        ]
                                     }
                                 ]
                             }
@@ -503,7 +623,10 @@
                     "description": "An optional range"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "contents"
+            ]
         },
         "SignatureHelp": {
             "type": "object",
@@ -525,7 +648,10 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "signatures"
+            ]
         },
         "SignatureInformation": {
             "type": "object",
@@ -547,7 +673,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "ParameterInformation": {
             "type": "object",
@@ -561,7 +690,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "label"
+            ]
         },
         "CodeActionContext": {
             "type": "object",
@@ -575,7 +707,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "diagnostics"
+            ]
         },
         "DocumentHighlight": {
             "type": "object",
@@ -589,7 +724,10 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range"
+            ]
         },
         "DocumentHighlightKind": {
             "type": "string"
@@ -614,7 +752,12 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "name",
+                "kind",
+                "location"
+            ]
         },
         "SymbolKind": {
             "type": "string"
@@ -634,7 +777,10 @@
                     "description": "An data entry field that is preserved on a code lens item between\n\na [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]\n\n(#CodeLensResolveRequest)"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "range"
+            ]
         },
         "FormattingOptions": {
             "type": "object",
@@ -648,7 +794,11 @@
                     "type": "boolean"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "tabSize",
+                "insertSpaces"
+            ]
         },
         "InitializeParams": {
             "type": "object",
@@ -667,9 +817,18 @@
                 },
                 "initializationOptions": {
                     "description": "User provided initialization options."
+                },
+                "trace": {
+                    "description": "The initial trace setting. If omitted trace is disabled ('off').",
+                    "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "processId",
+                "rootPath",
+                "capabilities"
+            ]
         },
         "ClientCapabilities": {
             "description": "Defines the capabilities provided by the client.",
@@ -685,7 +844,10 @@
                     "description": "The capabilities the language server provides."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "capabilities"
+            ]
         },
         "ServerCapabilities": {
             "description": "Defines the capabilities provided by a language\n\nserver.",
@@ -750,6 +912,10 @@
                 "renameProvider": {
                     "description": "The server provides rename support.",
                     "type": "boolean"
+                },
+                "documentLinkProvider": {
+                    "$ref": "#/definitions/DocumentLinkOptions",
+                    "description": "The server provides document link support."
                 }
             },
             "additionalProperties": false
@@ -813,6 +979,20 @@
                     }
                 }
             },
+            "additionalProperties": false,
+            "required": [
+                "firstTriggerCharacter"
+            ]
+        },
+        "DocumentLinkOptions": {
+            "description": "Document link options",
+            "type": "object",
+            "properties": {
+                "resolveProvider": {
+                    "description": "Document links have a resolve provider as well.",
+                    "type": "boolean"
+                }
+            },
             "additionalProperties": false
         },
         "InitializeError": {
@@ -823,7 +1003,10 @@
                     "type": "boolean"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "retry"
+            ]
         },
         "TextDocumentSyncKind": {
             "type": "string"
@@ -840,7 +1023,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "message"
+            ]
         },
         "MessageType": {
             "type": "string"
@@ -857,7 +1044,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "message"
+            ]
         },
         "ShowMessageRequestParams": {
             "type": "object",
@@ -878,7 +1069,11 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "message"
+            ]
         },
         "MessageActionItem": {
             "type": "object",
@@ -888,7 +1083,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "title"
+            ]
         },
         "DidChangeConfigurationParams": {
             "type": "object",
@@ -897,7 +1095,10 @@
                     "description": "The actual changed settings"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "settings"
+            ]
         },
         "TextDocumentPositionParams": {
             "type": "object",
@@ -911,7 +1112,11 @@
                     "description": "The position inside the text document."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "position"
+            ]
         },
         "DidOpenTextDocumentParams": {
             "type": "object",
@@ -921,7 +1126,10 @@
                     "description": "The document that was opened."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument"
+            ]
         },
         "TextDocumentItem": {
             "type": "object",
@@ -943,7 +1151,13 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri",
+                "languageId",
+                "version",
+                "text"
+            ]
         },
         "DidChangeTextDocumentParams": {
             "type": "object",
@@ -961,7 +1175,11 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "contentChanges"
+            ]
         },
         "VersionedTextDocumentIdentifier": {
             "type": "object",
@@ -975,7 +1193,11 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "version",
+                "uri"
+            ]
         },
         "TextDocumentContentChangeEvent": {
             "type": "object",
@@ -993,7 +1215,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "text"
+            ]
         },
         "DidCloseTextDocumentParams": {
             "type": "object",
@@ -1003,7 +1228,10 @@
                     "description": "The document that was closed."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument"
+            ]
         },
         "DidSaveTextDocumentParams": {
             "type": "object",
@@ -1013,7 +1241,10 @@
                     "description": "The document that was closed."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument"
+            ]
         },
         "DidChangeWatchedFilesParams": {
             "type": "object",
@@ -1027,7 +1258,10 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "changes"
+            ]
         },
         "FileEvent": {
             "type": "object",
@@ -1041,7 +1275,11 @@
                     "type": "number"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri",
+                "type"
+            ]
         },
         "FileChangeType": {
             "type": "string"
@@ -1062,7 +1300,11 @@
                     }
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "uri",
+                "diagnostics"
+            ]
         },
         "WorkspaceSymbolParams": {
             "type": "object",
@@ -1072,7 +1314,10 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "query"
+            ]
         },
         "CodeActionParams": {
             "type": "object",
@@ -1090,7 +1335,12 @@
                     "description": "Context carrying additional information."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "range",
+                "context"
+            ]
         },
         "DocumentFormattingParams": {
             "type": "object",
@@ -1104,7 +1354,11 @@
                     "description": "The format options"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "options"
+            ]
         },
         "DocumentRangeFormattingParams": {
             "type": "object",
@@ -1122,7 +1376,12 @@
                     "description": "The format options"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "range",
+                "options"
+            ]
         },
         "DocumentOnTypeFormattingParams": {
             "type": "object",
@@ -1144,7 +1403,13 @@
                     "description": "The format options."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "position",
+                "ch",
+                "options"
+            ]
         },
         "RenameParams": {
             "type": "object",
@@ -1162,7 +1427,12 @@
                     "type": "string"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument",
+                "position",
+                "newName"
+            ]
         },
         "DocumentSymbolParams": {
             "type": "object",
@@ -1172,7 +1442,10 @@
                     "description": "The text document."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument"
+            ]
         },
         "ReferenceParams": {
             "type": "object",
@@ -1189,7 +1462,12 @@
                     "description": "The position inside the text document."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "context",
+                "textDocument",
+                "position"
+            ]
         },
         "ReferenceContext": {
             "type": "object",
@@ -1199,7 +1477,10 @@
                     "type": "boolean"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "includeDeclaration"
+            ]
         },
         "CodeLensParams": {
             "type": "object",
@@ -1209,7 +1490,10 @@
                     "description": "The document to request code lens for."
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "textDocument"
+            ]
         }
     },
     "$schema": "http://json-schema.org/draft-04/schema#"
