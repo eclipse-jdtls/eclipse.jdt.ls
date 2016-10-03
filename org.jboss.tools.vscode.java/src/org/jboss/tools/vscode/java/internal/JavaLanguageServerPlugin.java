@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal;
 
+import java.io.IOException;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
@@ -24,24 +26,26 @@ import org.osgi.framework.BundleContext;
 public class JavaLanguageServerPlugin implements BundleActivator {
 
 	public static final String PLUGIN_ID = "org.jboss.tools.vscode.java";
+	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
-	static LanguageServer languageServer;
+
+	private LanguageServer languageServer;
 	private JavaClientConnection connection;
 
-	static BundleContext getContext() {
-		return context;
-	}
-
 	public static LanguageServer getLanguageServer() {
-		return languageServer;
+		return pluginInstance == null? null: pluginInstance.languageServer;
 	}
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
-	public void start(BundleContext bundleContext) throws Exception {
+	public void start(BundleContext bundleContext) {
 		JavaLanguageServerPlugin.context = bundleContext;
+		JavaLanguageServerPlugin.pluginInstance = this;
+	}
+
+	private void startConnection() throws IOException {
 		connection = new JavaClientConnection();
 		connection.connect();
 
@@ -63,11 +67,14 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
+		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
 		if (connection != null) {
 			connection.disconnect();
 		}
 		connection = null;
+		languageServer = null;
+
 	}
 
 	public JavaClientConnection getConnection(){
@@ -88,5 +95,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	public static void logException(String message, Throwable ex) {
 		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
+	}
+
+	public static void startLanguageServer(LanguageServer newLanguageServer) throws IOException {
+		if (pluginInstance != null) {
+			pluginInstance.languageServer = newLanguageServer;
+			pluginInstance.startConnection();
+		}
 	}
 }

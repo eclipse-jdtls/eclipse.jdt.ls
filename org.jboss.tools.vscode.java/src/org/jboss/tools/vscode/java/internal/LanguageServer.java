@@ -23,9 +23,7 @@ public class LanguageServer implements IApplication {
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
-		JavaLanguageServerPlugin.languageServer = this;
-		
-		JavaLanguageServerPlugin.getContext().getBundle().start();
+		JavaLanguageServerPlugin.startLanguageServer(this);
 
 		while (!shutdown && parentProcessStillRunning()) {
 			try {
@@ -40,22 +38,22 @@ public class LanguageServer implements IApplication {
 
 	/**
 	 * Checks whether the parent process is still running.
-	 * If not, then we assume it has crashed, and we have to terminate the Java Language Server. 
-	 * 
+	 * If not, then we assume it has crashed, and we have to terminate the Java Language Server.
+	 *
 	 * @return true iff the parent process is still running
 	 */
 	private boolean parentProcessStillRunning() {
 		// Wait until parent process id is available
 		long parentProcessId = getParentProcessId();
 		if (parentProcessId == 0) return true;
-		
+
 		String command;
-	    if (Platform.OS_WIN32.equals(Platform.getOS())) {
-	        command = "cmd /c \"tasklist /FI \"PID eq " + parentProcessId + "\" | findstr " + parentProcessId + "\"";
-	    } else {
-	        command = "ps -p " + parentProcessId;
-	    }
-	    try {
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			command = "cmd /c \"tasklist /FI \"PID eq " + parentProcessId + "\" | findstr " + parentProcessId + "\"";
+		} else {
+			command = "ps -p " + parentProcessId;
+		}
+		try {
 			Process process = Runtime.getRuntime().exec(command);
 			int processResult = process.waitFor();
 			return processResult == 0;
@@ -75,7 +73,7 @@ public class LanguageServer implements IApplication {
 		System.out.println("Shutting down language server");
 		shutdown = true;
 	}
-	
+
 	public synchronized long getParentProcessId() {
 		return parentProcessId;
 	}
