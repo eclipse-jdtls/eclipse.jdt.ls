@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import org.jboss.tools.langs.base.ResponseError.ReservedCode;
 import org.jboss.tools.langs.transport.Connection;
 import org.jboss.tools.langs.transport.NamedPipeConnection;
+import org.jboss.tools.langs.transport.SocketConnection;
 import org.jboss.tools.langs.transport.TransportMessage;
 import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
@@ -145,18 +146,32 @@ public abstract class LSPServer {
 	public void connect() throws IOException{
 		this.notificationHandlers = buildNotificationHandlers();
 		this.requestHandlers = buildRequestHandlers();
-
-		final String stdInName = System.getenv("STDIN_PIPE_NAME");
-		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
-		if (stdInName == null || stdOutName == null) {
-			//XXX temporary hack to let unit tests run
-			System.err.println("Unable to connect to named pipes");
+		initExecutor();
+		connection = initConnection();
+		if(connection == null ){
+			//Temporary for tests to run
+			System.err.println("Failied to initialize connection");
 			return;
 		}
-		initExecutor();
-		connection = new NamedPipeConnection(stdOutName, stdInName);
 		connection.start();
 		startDispatching();
+	}
+
+
+	private Connection initConnection(){
+		final String stdInName = System.getenv("STDIN_PIPE_NAME");
+		final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
+		if (stdInName != null && stdOutName != null) {
+			return new NamedPipeConnection(stdOutName, stdInName);
+		}
+		final String wHost = System.getenv().getOrDefault("STDIN_HOST","localhost");
+		final String rHost = System.getenv().getOrDefault("STDOUT_HOST","localhost");
+		final String wPort = System.getenv().get("STDIN_PORT");
+		final String rPort = System.getenv().get("STDOUT_PORT");
+		if(rPort != null && wPort != null ){
+			return new SocketConnection(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
+		}
+		return null;
 	}
 
 	/**
