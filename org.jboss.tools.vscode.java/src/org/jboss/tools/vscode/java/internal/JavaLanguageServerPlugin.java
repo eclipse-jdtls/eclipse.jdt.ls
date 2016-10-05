@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -36,6 +37,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private LanguageServer languageServer;
 	private JavaClientConnection connection;
+	private ProjectsManager projectsManager;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null? null: pluginInstance.languageServer;
@@ -48,10 +50,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public void start(BundleContext bundleContext) {
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
+		projectsManager = new ProjectsManager();
 	}
 
 	private void startConnection() throws IOException {
-		connection = new JavaClientConnection();
+		connection = new JavaClientConnection(projectsManager);
 		connection.connect();
 
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
@@ -77,6 +80,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		if (connection != null) {
 			connection.disconnect();
 		}
+		projectsManager = null;
 		connection = null;
 		languageServer = null;
 
@@ -107,5 +111,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 			pluginInstance.languageServer = newLanguageServer;
 			pluginInstance.startConnection();
 		}
+	}
+	/**
+	 * @return
+	 */
+	public static ProjectsManager getProjectsManager() {
+		return pluginInstance.projectsManager;
 	}
 }

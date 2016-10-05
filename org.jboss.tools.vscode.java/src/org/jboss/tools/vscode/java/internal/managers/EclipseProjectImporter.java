@@ -74,7 +74,6 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		if (files == null || files.isEmpty()) {
 			return Collections.emptyList();
 		}
-
 		int projectSize = files.size();
 		List<IProject> projects = new ArrayList<>(projectSize);
 		subMonitor.setWorkRemaining(projectSize);
@@ -87,7 +86,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 				projects.add(project);
 			}
 		}
-
+		subMonitor.done();
 		return projects;
 	}
 
