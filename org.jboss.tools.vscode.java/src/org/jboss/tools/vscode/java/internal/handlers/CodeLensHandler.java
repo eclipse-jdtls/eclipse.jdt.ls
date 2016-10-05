@@ -80,8 +80,11 @@ public class CodeLensHandler {
 		try {
 			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
-			Map<String, Object> position = (Map<String, Object>) data.get(1);
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+			if (unit == null) {
+				return lens;
+			}
+			Map<String, Object> position = (Map<String, Object>) data.get(1);
 			IJavaElement element = findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
 			List<Location> locations = findReferences(element);
 			int nReferences = locations.size();

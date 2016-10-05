@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal.managers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,6 +115,9 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws InterruptedException {
+		if (directory == null) {
+			return Collections.emptySet();
+		}
 		LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false, modelManager);
 		scanner.run(monitor);
 		return collectProjects(scanner.getProjects());

@@ -151,6 +151,9 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		if (monitor.isCanceled()) {
 			throw new InterruptedException();
 		}
+		if (directory == null) {
+			return true;
+		}
 		//monitor.subTask(NLS.bind(
 		//		DataTransferMessages.WizardProjectsImportPage_CheckingMessage,
 		//		directory.getPath()));

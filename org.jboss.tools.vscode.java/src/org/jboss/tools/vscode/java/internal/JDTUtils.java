@@ -53,11 +53,14 @@ public final class JDTUtils {
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uri, e);
 		}
-		IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(Path.fromOSString(path));
-		IJavaElement element = JavaCore.create(resource);
-		if (element instanceof ICompilationUnit) {
-			return (ICompilationUnit)element;
+		if (path != null) {
+			IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(Path.fromOSString(path));
+			IJavaElement element = JavaCore.create(resource);
+			if (element instanceof ICompilationUnit) {
+				return (ICompilationUnit)element;
+			}
 		}
+
 		return null;
 	}
 
@@ -238,4 +241,5 @@ public final class JDTUtils {
 		String uri = resource.getLocation().toFile().toURI().toString();
 		return uri.replaceFirst("file:/([^/])", "file:///$1");
 	}
+
 }

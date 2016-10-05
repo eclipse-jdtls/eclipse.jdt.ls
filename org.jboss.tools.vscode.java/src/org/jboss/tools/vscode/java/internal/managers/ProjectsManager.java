@@ -11,19 +11,23 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
@@ -34,16 +38,11 @@ public class ProjectsManager {
 
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
 
-	private static final String TMP_PROJECT_NAME = "tmpProject";
-
-	public IProject getCurrentProject() {
-		return getWorkspace().getRoot().getProject(TMP_PROJECT_NAME);
-	}
-
 	public IStatus createProject(final String projectName, List<IProject> resultingProjects, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
-			IProjectImporter importer = getImporter(new File(projectName), subMonitor.split(20));
+			File projectRoot = (projectName == null)?null:new File(projectName);
+			IProjectImporter importer = getImporter(projectRoot, subMonitor.split(20));
 			if (importer == null) {
 				return StatusFactory.UNSUPPORTED_PROJECT;
 			}
@@ -69,13 +68,29 @@ public class ProjectsManager {
 		}
 	}
 
-	private IWorkspace getWorkspace() {
-		return ResourcesPlugin.getWorkspace();
+	private IWorkspaceRoot getWorkspaceRoot() {
+		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 	public void fileChanged(String uri, CHANGE_TYPE changeType) {
+		String path = null;
 		try {
-			this.getCurrentProject().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+			path = new URI(uri).getPath();
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException("Failed to resolve "+uri, e);
+		}
+		IFile resource = getWorkspaceRoot().getFileForLocation(Path.fromOSString(path));
+		if (resource == null) {
+			return;
+		}
+		IResource toRefresh = resource;
+		try {
+			if (changeType == CHANGE_TYPE.DELETED) {
+				toRefresh = resource.getParent();
+			}
+			if (toRefresh != null) {
+				toRefresh.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
