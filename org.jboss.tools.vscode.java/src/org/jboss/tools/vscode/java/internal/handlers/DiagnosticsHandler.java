@@ -33,24 +33,30 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	private final List<IProblem> problems;
 	private final IResource resource;
 	private final JavaClientConnection connection;
+	private boolean reportAllErrors = true;
 
-	public DiagnosticsHandler(JavaClientConnection conn, IResource resource) {
+	public DiagnosticsHandler(JavaClientConnection conn, IResource resource, boolean reportOnlySyntaxErrors) {
 		problems = new ArrayList<>();
 		this.resource = resource;
 		this.connection = conn;
+		this.reportAllErrors = !reportOnlySyntaxErrors;
 	}
 
 	@Override
 	public void acceptProblem(IProblem problem) {
-		JavaLanguageServerPlugin.logInfo("accept problem for "+ this.resource.getName());
-		problems.add(problem);
+		if (reportAllErrors || isSyntaxError(problem)) {
+			problems.add(problem);
+		}
+	}
+
+	public boolean isSyntaxError(IProblem problem) {
+		return (problem.getID() & IProblem.Syntax) != 0;
 	}
 
 	@Override
 	public void beginReporting() {
 		JavaLanguageServerPlugin.logInfo("begin problem for "+ this.resource.getName());
 		problems.clear();
-
 	}
 
 	@Override
@@ -63,7 +69,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		this.connection.send(message);
 	}
 
-	private List<Diagnostic> toDiagnosticsArray() {
+	protected List<Diagnostic> toDiagnosticsArray() {
 		List<Diagnostic> array = new ArrayList<>();
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
@@ -79,12 +85,13 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	private Integer convertSeverity(IProblem problem) {
 		if(problem.isError())
-			return new Integer(1);
+			return Integer.valueOf(1);
 		if(problem.isWarning())
-			return new Integer(2);
-		return new Integer(3);
+			return Integer.valueOf(2);
+		return Integer.valueOf(3);
 	}
 
+	@SuppressWarnings("restriction")
 	private Range convertRange(IProblem problem) {
 		Range range = new Range();
 		Position start = new Position();
@@ -108,5 +115,4 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	public boolean isActive() {
 		return true;
 	}
-
 }

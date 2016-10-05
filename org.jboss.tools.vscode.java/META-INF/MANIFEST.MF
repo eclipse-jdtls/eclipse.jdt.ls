@@ -16,7 +16,8 @@ Require-Bundle: org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
  com.ibm.icu,
  org.eclipse.core.filebuffers;bundle-version="3.6.0",
  org.eclipse.m2e.maven.runtime,
- com.google.guava
+ com.google.guava,
+ org.eclipse.jdt.launching
 Export-Package: org.jboss.tools.vscode.java.internal;x-friends:="org.jboss.tools.vscode.tests",
  org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests",
  org.jboss.tools.vscode.java.internal.javadoc;x-friends:="org.jboss.tools.vscode.tests"

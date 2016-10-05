@@ -36,20 +36,20 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void importSimpleJavaProject() throws Exception {
-		IProject project = importProject("eclipse/hello");
+		IProject project = importProjects("eclipse/hello").get(1);
 		assertIsJavaProject(project);
 	}
 
 	@Test
 	public void importMultipleJavaProject() throws Exception {
 		List<IProject> projects = importProjects("eclipse/multi");
-		assertEquals(2, projects.size());
+		assertEquals(3, projects.size());
 
-		IProject bar = projects.get(0);
+		IProject bar = projects.get(1);
 		assertIsJavaProject(bar);
 		assertEquals("bar", bar.getName());
 
-		IProject foo = projects.get(1);
+		IProject foo = projects.get(2);
 		assertEquals("foo", foo.getName());
 		assertIsJavaProject(foo);
 	}

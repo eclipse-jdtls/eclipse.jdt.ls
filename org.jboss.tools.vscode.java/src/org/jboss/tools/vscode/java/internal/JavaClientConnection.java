@@ -69,8 +69,8 @@ public class JavaClientConnection extends LSPServer{
 		}
 	}
 
-	public JavaClientConnection() {
-		projectsManager = new ProjectsManager();
+	public JavaClientConnection(ProjectsManager projectsManager) {
+		this.projectsManager = projectsManager;
 		logHandler = new LogHandler();
 		logHandler.install(this);
 	}

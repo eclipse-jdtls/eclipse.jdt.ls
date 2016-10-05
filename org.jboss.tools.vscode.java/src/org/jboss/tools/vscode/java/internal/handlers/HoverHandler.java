@@ -41,6 +41,8 @@ public class HoverHandler implements RequestHandler<TextDocumentPositionParams, 
 		Hover $ = new Hover();
 		if (hover != null && hover.length() > 0) {
 			return $.withContents(hover);
+		} else {
+			$.withContents("");
 		}
 		return $.withContents("");
 	}

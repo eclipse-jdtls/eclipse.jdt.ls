@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -29,31 +31,40 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
 
 public class ProjectsManager {
+
+	public static final String DEFAULT_PROJECT_NAME= "jdt.ls-java-project";
 
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
 
 	public IStatus createProject(final String projectName, List<IProject> resultingProjects, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
-			File projectRoot = (projectName == null)?null:new File(projectName);
+			IProject defaultJavaProject = createJavaProject(subMonitor.split(10));
+			resultingProjects.add(defaultJavaProject);
 
-			IProjectImporter importer = getImporter(projectRoot, subMonitor.split(20));
-			if (importer == null) {
-				return StatusFactory.UNSUPPORTED_PROJECT;
+			File userProjectRoot = (projectName == null)?null:new File(projectName);
+
+			IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
+			if (importer != null) {
+				List<IProject> projects = importer.importToWorkspace(subMonitor.split(70));
+				List<IProject> javaProjects = projects.stream().filter(p -> isJavaProject(p)).collect(Collectors.toList());
+				resultingProjects.addAll(javaProjects);
 			}
-			List<IProject> projects = importer.importToWorkspace(subMonitor.split(80));
 
-			List<IProject> javaProjects = projects.stream().filter(p -> isJavaProject(p)).collect(Collectors.toList());
-
-			JavaLanguageServerPlugin.logInfo("Number of created projects " + javaProjects.size());
-			resultingProjects.addAll(javaProjects);
+			JavaLanguageServerPlugin.logInfo("Number of created projects " + resultingProjects.size());
 			return Status.OK_STATUS;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
@@ -64,11 +75,14 @@ public class ProjectsManager {
 		}
 	}
 
-	private IWorkspaceRoot getWorkspaceRoot() {
+	private static IWorkspaceRoot getWorkspaceRoot() {
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 	public void fileChanged(String uri, CHANGE_TYPE changeType) {
+		if (uri == null) {
+			return;
+		}
 		String path = null;
 		try {
 			path = new URI(uri).getPath();
@@ -104,8 +118,54 @@ public class ProjectsManager {
 		return null;
 	}
 
+	public IProject getDefaultProject() {
+		return getWorkspaceRoot().getProject(DEFAULT_PROJECT_NAME);
+	}
+
 	private Collection<IProjectImporter> importers() {
-		//TODO read extension point
 		return Arrays.asList(new MavenProjectImporter(), new EclipseProjectImporter());
 	}
+
+	private IProject createJavaProject(IProgressMonitor monitor) throws CoreException, OperationCanceledException, InterruptedException {
+		IProject project = getDefaultProject();
+		if (project.exists()) {
+			return project;
+		}
+		JavaLanguageServerPlugin.logInfo("Creating the default Java project");
+		//Create project
+		project.create(monitor);
+		project.open(monitor);
+
+		//Turn into Java project
+		IProjectDescription description = project.getDescription();
+		description.setNatureIds(new String[] { JavaCore.NATURE_ID });
+		project.setDescription(description, monitor);
+		IJavaProject javaProject = JavaCore.create(project);
+
+		//Add build output folder
+		IFolder output = project.getFolder("bin");
+		if (!output.exists()) {
+			output.create(true, true, monitor);
+		}
+		javaProject.setOutputLocation(output.getFullPath(), monitor);
+
+		//Add source folder
+		IFolder source = project.getFolder("src");
+		if (!source.exists()) {
+			source.create(true, true, monitor);
+		}
+		IPackageFragmentRoot root = javaProject.getPackageFragmentRoot(source);
+		IClasspathEntry src =JavaCore.newSourceEntry(root.getPath());
+
+		//Find default JVM
+		IClasspathEntry jre = JavaRuntime.getDefaultJREContainerEntry();
+
+		//Add JVM to project class path
+		javaProject.setRawClasspath(new IClasspathEntry[]{jre, src} , monitor);
+
+		JavaLanguageServerPlugin.logInfo("Finished creating the default Java project");
+		return project;
+	}
+
+
 }

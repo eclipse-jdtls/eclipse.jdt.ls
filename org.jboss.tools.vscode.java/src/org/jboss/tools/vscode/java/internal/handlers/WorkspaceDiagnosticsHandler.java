@@ -64,9 +64,13 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 	public boolean visit(IResourceDelta delta) throws CoreException {
 		IResource resource = delta.getResource();
 		// Check if resource is accessible.
-		// We do not deal with the markers for deleted files here 
-		// WorkspaceEventsHandler removes the diagnostics for deleted resources. 
-		if(resource == null || !resource.isAccessible()) return false;
+		// We do not deal with the markers for deleted files here
+		// WorkspaceEventsHandler removes the diagnostics for deleted resources.
+		if(resource == null || !resource.isAccessible()
+				//ignore problems caused by standalone files
+				|| JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+			return false;
+		}
 		// No marker changes continue to visit
 		if((delta.getFlags() & IResourceDelta.MARKERS) == 0 ) return true;
 

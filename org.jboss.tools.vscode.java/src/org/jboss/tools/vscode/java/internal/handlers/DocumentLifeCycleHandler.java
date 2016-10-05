@@ -38,6 +38,7 @@ import org.jboss.tools.langs.DidSaveTextDocumentParams;
 import org.jboss.tools.langs.Range;
 import org.jboss.tools.langs.TextDocumentContentChangeEvent;
 import org.jboss.tools.langs.base.LSPMethods;
+import org.jboss.tools.vscode.internal.ipc.MessageType;
 import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
@@ -135,7 +136,8 @@ public class DocumentLifeCycleHandler {
 	}
 
 	private void handleOpen(DidOpenTextDocumentParams params) {
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		String uri = params.getTextDocument().getUri();
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null || unit.getResource() == null) {
 			return;
 		}
@@ -149,8 +151,14 @@ public class DocumentLifeCycleHandler {
 					// ignored
 				}
 			}
+			//Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
+			boolean reportOnlySyntaxErrors = unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+			if (reportOnlySyntaxErrors) {
+				connection.showNotificationMessage(MessageType.Warning, "Classpath is incomplete. Only syntax errors will be reported.");
+			}
 
-			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
+			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
+			unit.becomeWorkingCopy(problemRequestor, null);
 			IBuffer buffer = unit.getBuffer();
 			if(buffer != null) {
 				buffer.setContents(params.getTextDocument().getText());
@@ -205,13 +213,14 @@ public class DocumentLifeCycleHandler {
 
 	private void handleClosed(DidCloseTextDocumentParams params) {
 		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleClosed");
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		String uri = params.getTextDocument().getUri();
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null) {
 			return;
 		}
 		try {
 			unit.discardWorkingCopy();
-		} catch (JavaModelException e) {
+		} catch (CoreException e) {
 		}
 	}
 }
