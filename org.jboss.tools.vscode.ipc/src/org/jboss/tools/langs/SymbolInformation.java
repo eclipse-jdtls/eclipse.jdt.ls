@@ -30,7 +30,7 @@ public class SymbolInformation {
 	 */
 	@SerializedName("kind")
 	@Expose
-	private Double kind;
+	private Integer kind;
 	/**
 	 *
 	 * (Required)
@@ -81,7 +81,7 @@ public class SymbolInformation {
 	 * @return
 	 *     The kind
 	 */
-	public Double getKind() {
+	public Integer getKind() {
 		return kind;
 	}
 
@@ -92,11 +92,11 @@ public class SymbolInformation {
 	 * @param kind
 	 *     The kind
 	 */
-	public void setKind(Double kind) {
+	public void setKind(Integer kind) {
 		this.kind = kind;
 	}
 
-	public SymbolInformation withKind(Double kind) {
+	public SymbolInformation withKind(Integer kind) {
 		this.kind = kind;
 		return this;
 	}

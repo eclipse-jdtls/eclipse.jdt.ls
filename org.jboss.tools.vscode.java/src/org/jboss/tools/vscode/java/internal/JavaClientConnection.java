@@ -82,7 +82,7 @@ public class JavaClientConnection extends LSPServer{
 		NotificationMessage<LogMessageParams> message= new NotificationMessage<>();
 		message.setMethod(LSPMethods.WINDOW_LOGMESSAGE.getMethod());
 		message.setParams(new LogMessageParams().withMessage(msg)
-				.withType(Double.valueOf(type.getType())));
+				.withType(type.getType()));
 		send(message);
 	}
 

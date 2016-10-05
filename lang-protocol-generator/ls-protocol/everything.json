@@ -286,11 +286,11 @@
             "properties": {
                 "line": {
                     "description": "Line position in a document (zero-based).",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "character": {
                     "description": "Character offset on a line in a document (zero-based).",
-                    "type": "number"
+                    "type": "integer"
                 }
             },
             "additionalProperties": false,
@@ -324,13 +324,13 @@
                 },
                 "severity": {
                     "description": "The diagnostic's severity. Can be omitted. If omitted it is up to the\n\nclient to interpret diagnostics as error, warning, info or hint.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "code": {
                     "description": "The diagnostic's code. Can be omitted.",
                     "oneOf": [
                         {
-                            "type": "number"
+                            "type": "integer"
                         },
                         {
                             "type": "string"
@@ -508,7 +508,7 @@
                 },
                 "kind": {
                     "description": "The kind of this completion item. Based of the kind\n\nan icon is chosen by the editor.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "detail": {
                     "description": "A human-readable string with additional information\n\nabout this item, like type or symbol information.",
@@ -641,11 +641,11 @@
                 },
                 "activeSignature": {
                     "description": "The active signature.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "activeParameter": {
                     "description": "The active parameter of the active signature.",
-                    "type": "number"
+                    "type": "integer"
                 }
             },
             "additionalProperties": false,
@@ -721,7 +721,7 @@
                 },
                 "kind": {
                     "description": "The highlight kind, default is [text](#DocumentHighlightKind.Text).",
-                    "type": "number"
+                    "type": "integer"
                 }
             },
             "additionalProperties": false,
@@ -741,7 +741,7 @@
                 },
                 "kind": {
                     "description": "The kind of this symbol.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "location": {
                     "$ref": "#/definitions/Location",
@@ -787,7 +787,7 @@
             "properties": {
                 "tabSize": {
                     "description": "Size of a tab in spaces.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "insertSpaces": {
                     "description": "Prefer spaces over tabs.",
@@ -805,7 +805,7 @@
             "properties": {
                 "processId": {
                     "description": "The process Id of the parent process that started\n\nthe server.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "rootPath": {
                     "description": "The rootPath of the workspace. Is null\n\nif no folder is open.",
@@ -855,7 +855,7 @@
             "properties": {
                 "textDocumentSync": {
                     "description": "Defines how text documents are synced.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "hoverProvider": {
                     "description": "The server provides hover support.",
@@ -1016,7 +1016,7 @@
             "properties": {
                 "type": {
                     "description": "The message type. See {",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "message": {
                     "description": "The actual message",
@@ -1037,7 +1037,7 @@
             "properties": {
                 "type": {
                     "description": "The message type. See {",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "message": {
                     "description": "The actual message",
@@ -1055,7 +1055,7 @@
             "properties": {
                 "type": {
                     "description": "The message type. See {",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "message": {
                     "description": "The actual message",
@@ -1144,7 +1144,7 @@
                 },
                 "version": {
                     "description": "The version number of this document (it will strictly increase after each\n\nchange, including undo/redo).",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "text": {
                     "description": "The content of the opened text document.",
@@ -1186,7 +1186,7 @@
             "properties": {
                 "version": {
                     "description": "The version number of this document.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "uri": {
                     "description": "The text document's uri.",
@@ -1208,7 +1208,7 @@
                 },
                 "rangeLength": {
                     "description": "The length of the range that got replaced.",
-                    "type": "number"
+                    "type": "integer"
                 },
                 "text": {
                     "description": "The new text of the document.",
@@ -1272,7 +1272,7 @@
                 },
                 "type": {
                     "description": "The change type.",
-                    "type": "number"
+                    "type": "integer"
                 }
             },
             "additionalProperties": false,

@@ -41,7 +41,7 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 		return LSPMethods.WORKSPACE_CHANGED_FILES.getMethod().equals(request);
 	}
 
-	private CHANGE_TYPE toChangeType(Number vtype){
+	private CHANGE_TYPE toChangeType(Integer vtype){
 		switch (vtype.intValue()) {
 		case 1:
 			return CHANGE_TYPE.CREATED;
@@ -58,15 +58,15 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 	public Object handle(DidChangeWatchedFilesParams param, CancelMonitor cm) {
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
-			Double eventType = fileEvent.getType();
-			if(toChangeType(eventType)==CHANGE_TYPE.DELETED){
+			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
+			if(changeType==CHANGE_TYPE.DELETED){
 				cleanUpDiagnostics(fileEvent.getUri());
 			}
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if (unit != null && unit.isWorkingCopy()) {
 				continue;
 			}
-			pm.fileChanged(fileEvent.getUri(), toChangeType(eventType));
+			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
 		return null;
 	}

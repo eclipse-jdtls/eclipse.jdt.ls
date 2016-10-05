@@ -31,7 +31,7 @@ public class Diagnostic {
 	 */
 	@SerializedName("severity")
 	@Expose
-	private Double severity;
+	private Integer severity;
 	/**
 	 * The diagnostic's code. Can be omitted.
 	 *
@@ -92,7 +92,7 @@ public class Diagnostic {
 	 * @return
 	 *     The severity
 	 */
-	public Double getSeverity() {
+	public Integer getSeverity() {
 		return severity;
 	}
 
@@ -104,11 +104,11 @@ public class Diagnostic {
 	 * @param severity
 	 *     The severity
 	 */
-	public void setSeverity(Double severity) {
+	public void setSeverity(Integer severity) {
 		this.severity = severity;
 	}
 
-	public Diagnostic withSeverity(Double severity) {
+	public Diagnostic withSeverity(Integer severity) {
 		this.severity = severity;
 		return this;
 	}

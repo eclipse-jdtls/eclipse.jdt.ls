@@ -25,7 +25,7 @@ public class ShowMessageRequestParams {
 	 */
 	@SerializedName("type")
 	@Expose
-	private Double type;
+	private Integer type;
 	/**
 	 * The actual message
 	 * (Required)
@@ -49,7 +49,7 @@ public class ShowMessageRequestParams {
 	 * @return
 	 *     The type
 	 */
-	public Double getType() {
+	public Integer getType() {
 		return type;
 	}
 
@@ -60,11 +60,11 @@ public class ShowMessageRequestParams {
 	 * @param type
 	 *     The type
 	 */
-	public void setType(Double type) {
+	public void setType(Integer type) {
 		this.type = type;
 	}
 
-	public ShowMessageRequestParams withType(Double type) {
+	public ShowMessageRequestParams withType(Integer type) {
 		this.type = type;
 		return this;
 	}

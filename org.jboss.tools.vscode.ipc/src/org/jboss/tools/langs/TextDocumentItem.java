@@ -40,7 +40,7 @@ public class TextDocumentItem {
 	 */
 	@SerializedName("version")
 	@Expose
-	private Double version;
+	private Integer version;
 	/**
 	 * The content of the opened text document.
 	 * (Required)
@@ -113,7 +113,7 @@ public class TextDocumentItem {
 	 * @return
 	 *     The version
 	 */
-	public Double getVersion() {
+	public Integer getVersion() {
 		return version;
 	}
 
@@ -126,11 +126,11 @@ public class TextDocumentItem {
 	 * @param version
 	 *     The version
 	 */
-	public void setVersion(Double version) {
+	public void setVersion(Integer version) {
 		this.version = version;
 	}
 
-	public TextDocumentItem withVersion(Double version) {
+	public TextDocumentItem withVersion(Integer version) {
 		this.version = version;
 		return this;
 	}

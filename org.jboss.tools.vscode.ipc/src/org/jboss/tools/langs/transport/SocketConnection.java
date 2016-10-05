@@ -35,10 +35,13 @@ public class SocketConnection extends AbstractConnection {
 			try {
 				stream = connectReadChannel();
 				startWriterThread();
-			} catch (IOException e1) {
-				//TODO: write failed to connect.
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-
+			if (stream == null) {
+				// TODO need proper error handling
+				return;
+			}
 			while(true){
 				TransportMessage message;
 				try {
@@ -68,9 +71,12 @@ public class SocketConnection extends AbstractConnection {
 		public void run() {
 			try {
 				stream = connectWriteChannel();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if (stream == null) {
+				// TODO need proper error handling
+				return;
 			}
 			while (true) {
 				try {

@@ -31,7 +31,7 @@ public class Position {
 	 */
 	@SerializedName("line")
 	@Expose
-	private Double line;
+	private Integer line;
 	/**
 	 * Character offset on a line in a document (zero-based).
 	 * (Required)
@@ -39,7 +39,7 @@ public class Position {
 	 */
 	@SerializedName("character")
 	@Expose
-	private Double character;
+	private Integer character;
 
 	/**
 	 * Line position in a document (zero-based).
@@ -48,7 +48,7 @@ public class Position {
 	 * @return
 	 *     The line
 	 */
-	public Double getLine() {
+	public Integer getLine() {
 		return line;
 	}
 
@@ -59,11 +59,11 @@ public class Position {
 	 * @param line
 	 *     The line
 	 */
-	public void setLine(Double line) {
+	public void setLine(Integer line) {
 		this.line = line;
 	}
 
-	public Position withLine(Double line) {
+	public Position withLine(Integer line) {
 		this.line = line;
 		return this;
 	}
@@ -75,7 +75,7 @@ public class Position {
 	 * @return
 	 *     The character
 	 */
-	public Double getCharacter() {
+	public Integer getCharacter() {
 		return character;
 	}
 
@@ -86,11 +86,11 @@ public class Position {
 	 * @param character
 	 *     The character
 	 */
-	public void setCharacter(Double character) {
+	public void setCharacter(Integer character) {
 		this.character = character;
 	}
 
-	public Position withCharacter(Double character) {
+	public Position withCharacter(Integer character) {
 		this.character = character;
 		return this;
 	}

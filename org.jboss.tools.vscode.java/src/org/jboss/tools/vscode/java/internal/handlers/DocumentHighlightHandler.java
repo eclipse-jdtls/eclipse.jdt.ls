@@ -75,19 +75,19 @@ public class DocumentHighlightHandler implements RequestHandler<TextDocumentPosi
 			throws JavaModelException {
 		DocumentHighlight h = new DocumentHighlight();
 		if ((occurrence.getFlags() | IOccurrencesFinder.F_WRITE_OCCURRENCE) == IOccurrencesFinder.F_WRITE_OCCURRENCE) {
-			h.setKind(Double.valueOf(3));
+			h.setKind(3);
 		} else if ((occurrence.getFlags()
 				| IOccurrencesFinder.F_READ_OCCURRENCE) == IOccurrencesFinder.F_READ_OCCURRENCE) {
-			h.setKind(Double.valueOf(2));
+			h.setKind(2);
 		}
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset());
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset() + occurrence.getLength());
 
 		return h.withRange(new org.jboss.tools.langs.Range().
 				withStart(new org.jboss.tools.langs.Position().
-						withLine(Double.valueOf(loc[0])).withCharacter(Double.valueOf(loc[1])))
+						withLine(loc[0]).withCharacter(loc[1]))
 				.withEnd(new org.jboss.tools.langs.Position().
-						withLine(Double.valueOf(endLoc[0])).withCharacter(Double.valueOf(endLoc[1]))));
+						withLine(endLoc[0]).withCharacter(endLoc[1])));
 	}
 
 

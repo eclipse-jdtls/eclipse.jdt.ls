@@ -149,12 +149,12 @@ public final class JDTUtils {
 
 		Range range = new Range();
 		if (loc != null) {
-			range.withStart(new Position().withLine(Double.valueOf(loc[0]))
-					.withCharacter(Double.valueOf(loc[1])));
+			range.withStart(new Position().withLine(loc[0])
+					.withCharacter(loc[1]));
 		}
 		if (endLoc != null) {
-			range.withEnd(new Position().withLine(Double.valueOf(endLoc[0]))
-					.withCharacter(Double.valueOf(endLoc[1])));
+			range.withEnd(new Position().withLine(endLoc[0])
+					.withCharacter(endLoc[1]));
 		}
 		return result.withRange(range);
 	}
@@ -185,12 +185,12 @@ public final class JDTUtils {
 
 		Range range = new Range();
 		if (loc != null) {
-			range.withStart(new Position().withLine(Double.valueOf(loc[0]))
-					.withCharacter(Double.valueOf(loc[1])));
+			range.withStart(new Position().withLine(loc[0])
+					.withCharacter(loc[1]));
 		}
 		if (endLoc != null) {
-			range.withEnd(new Position().withLine(Double.valueOf(endLoc[0]))
-					.withCharacter(Double.valueOf(endLoc[1])));
+			range.withEnd(new Position().withLine(endLoc[0])
+					.withCharacter(endLoc[1]));
 		}
 		return result.withRange(range);
 	}
@@ -210,11 +210,11 @@ public final class JDTUtils {
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
 
 		if (loc != null && endLoc != null) {
-			result.setStart(new Position().withLine(Double.valueOf(loc[0]))
-					.withCharacter(Double.valueOf(loc[1])));
+			result.setStart(new Position().withLine(loc[0])
+					.withCharacter(loc[1]));
 
-			result.setEnd(new Position().withLine(Double.valueOf(endLoc[0]))
-					.withCharacter(Double.valueOf(endLoc[1])));
+			result.setEnd(new Position().withLine(endLoc[0])
+					.withCharacter(endLoc[1]));
 
 		}
 		return result;

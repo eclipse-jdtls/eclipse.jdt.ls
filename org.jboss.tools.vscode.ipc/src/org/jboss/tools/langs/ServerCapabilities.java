@@ -28,7 +28,7 @@ public class ServerCapabilities {
 	 */
 	@SerializedName("textDocumentSync")
 	@Expose
-	private Double textDocumentSync;
+	private Integer textDocumentSync;
 	/**
 	 * The server provides hover support.
 	 *
@@ -141,7 +141,7 @@ public class ServerCapabilities {
 	 * @return
 	 *     The textDocumentSync
 	 */
-	public Double getTextDocumentSync() {
+	public Integer getTextDocumentSync() {
 		return textDocumentSync;
 	}
 
@@ -151,11 +151,11 @@ public class ServerCapabilities {
 	 * @param textDocumentSync
 	 *     The textDocumentSync
 	 */
-	public void setTextDocumentSync(Double textDocumentSync) {
+	public void setTextDocumentSync(Integer textDocumentSync) {
 		this.textDocumentSync = textDocumentSync;
 	}
 
-	public ServerCapabilities withTextDocumentSync(Double textDocumentSync) {
+	public ServerCapabilities withTextDocumentSync(Integer textDocumentSync) {
 		this.textDocumentSync = textDocumentSync;
 		return this;
 	}

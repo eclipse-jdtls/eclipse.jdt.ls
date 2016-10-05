@@ -29,7 +29,7 @@ public class DocumentHighlight {
 	 */
 	@SerializedName("kind")
 	@Expose
-	private Double kind;
+	private Integer kind;
 
 	/**
 	 *
@@ -64,7 +64,7 @@ public class DocumentHighlight {
 	 * @return
 	 *     The kind
 	 */
-	public Double getKind() {
+	public Integer getKind() {
 		return kind;
 	}
 
@@ -74,11 +74,11 @@ public class DocumentHighlight {
 	 * @param kind
 	 *     The kind
 	 */
-	public void setKind(Double kind) {
+	public void setKind(Integer kind) {
 		this.kind = kind;
 	}
 
-	public DocumentHighlight withKind(Double kind) {
+	public DocumentHighlight withKind(Integer kind) {
 		this.kind = kind;
 		return this;
 	}

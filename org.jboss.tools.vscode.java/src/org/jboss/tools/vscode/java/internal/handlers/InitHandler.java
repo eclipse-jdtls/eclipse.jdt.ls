@@ -63,7 +63,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
 		return result.withCapabilities(
-				capabilities.withTextDocumentSync(new Double(2))
+				capabilities.withTextDocumentSync(2)
 				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.TRUE).withTriggerCharacters(Arrays.asList(".","@","#")))
 				.withHoverProvider(Boolean.TRUE)
 				.withDefinitionProvider(Boolean.TRUE)

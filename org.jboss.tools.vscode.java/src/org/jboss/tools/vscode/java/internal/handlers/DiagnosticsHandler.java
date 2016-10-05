@@ -29,13 +29,13 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class DiagnosticsHandler implements IProblemRequestor {
-	
+
 	private final List<IProblem> problems;
 	private final IResource resource;
 	private final JavaClientConnection connection;
-	
+
 	public DiagnosticsHandler(JavaClientConnection conn, IResource resource) {
-		problems = new ArrayList<IProblem>();
+		problems = new ArrayList<>();
 		this.resource = resource;
 		this.connection = conn;
 	}
@@ -56,7 +56,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<PublishDiagnosticsParams>();
+		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<>();
 		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
 		message.setParams(new PublishDiagnosticsParams().withUri(JDTUtils.getFileURI(this.resource))
 				.withDiagnostics(toDiagnosticsArray()));
@@ -64,13 +64,13 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	private List<Diagnostic> toDiagnosticsArray() {
-		List<Diagnostic> array = new ArrayList<Diagnostic>();
+		List<Diagnostic> array = new ArrayList<>();
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
 			diag.setSource("Java");
 			diag.setMessage(problem.getMessage());
-			diag.setCode(Integer.valueOf(problem.getID()));
-			diag.setSeverity(Double.valueOf(convertSeverity(problem).doubleValue()));
+			diag.setCode(problem.getID());
+			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(problem));
 			array.add(diag);
 		}
@@ -89,17 +89,17 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		Range range = new Range();
 		Position start = new Position();
 		Position end = new Position();
-		
-		start.setLine(Double.valueOf(problem.getSourceLineNumber()-1));// VSCode is 0-based
-		end.setLine(Double.valueOf(problem.getSourceLineNumber()-1));
+
+		start.setLine(problem.getSourceLineNumber()-1);// VSCode is 0-based
+		end.setLine(problem.getSourceLineNumber()-1);
 		if(problem instanceof DefaultProblem){
 			DefaultProblem dProblem = (DefaultProblem)problem;
-			start.setCharacter(Double.valueOf(dProblem.getSourceColumnNumber() - 1));
+			start.setCharacter(dProblem.getSourceColumnNumber() - 1);
 			int offset = 0;
 			if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {
 				offset = dProblem.getSourceEnd() - dProblem.getSourceStart() + 1;
 			}
-			end.setCharacter(Double.valueOf(dProblem.getSourceColumnNumber() - 1 + offset));
+			end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
 		}
 		return range.withEnd(end).withStart(start);
 	}

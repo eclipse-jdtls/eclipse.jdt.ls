@@ -59,8 +59,9 @@ public class FormatterHandler {
 		@Override
 		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param, CancelMonitor cm) {
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
-			if(cu == null )
+			if(cu == null ) {
 				return Collections.emptyList();
+			}
 			return format(cu,param.getOptions(), null);
 		}
 
@@ -77,7 +78,7 @@ public class FormatterHandler {
 		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param, CancelMonitor cm) {
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
 			if(cu == null )
-				return Collections.emptyList();
+				return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
 			return format(cu,param.getOptions(),param.getRange());
 		}
 	}
@@ -85,18 +86,24 @@ public class FormatterHandler {
 	private List<org.jboss.tools.langs.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
 
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
+
 		try {
 			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
 			IRegion region = (range == null ? new Region(0,document.getLength()) : getRegion(range,document));
 			// could not calculate region abort.
 			if(region == null ) return null;
-			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, document.get(), region.getOffset(), region.getLength(), 0, lineDelimiter);
+			String sourceToFormat = document.get();
+			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
+			if (format == null || format.getChildren().length == 0) {
+				// nothing to return
+				return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
+			}
 			MultiTextEdit flatEdit = TextEditUtil.flatten(format);
 			return convertEdits(flatEdit.getChildren(), document);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			return null;
+			return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
 		}
 	}
 
@@ -116,9 +123,12 @@ public class FormatterHandler {
 
 	private static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
 		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
-		Long tabSize = options.getTabSize().longValue();
-		if (tabSize != null && tabSize > 0) {
-			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, tabSize.toString());
+		Integer tabSize = options.getTabSize();
+		if (tabSize != null) {
+			int tSize = tabSize.intValue();
+			if (tSize > 0) {
+				eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, Integer.toString(tSize));
+			}
 		}
 		Boolean insertSpaces = options.getInsertSpaces();
 		if (insertSpaces != null) {
@@ -149,8 +159,8 @@ public class FormatterHandler {
 		Position start =  new Position();
 		try {
 			int lineOfOffset = document.getLineOfOffset(offset);
-			start.setLine( Double.valueOf(lineOfOffset));
-			start.setCharacter(Double.valueOf( offset - document.getLineOffset(lineOfOffset)));
+			start.setLine( Integer.valueOf(lineOfOffset));
+			start.setCharacter(Integer.valueOf( offset - document.getLineOffset(lineOfOffset)));
 		} catch (BadLocationException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}

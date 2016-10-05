@@ -32,14 +32,14 @@ public class SignatureHelp {
 	 */
 	@SerializedName("activeSignature")
 	@Expose
-	private Double activeSignature;
+	private Integer activeSignature;
 	/**
 	 * The active parameter of the active signature.
 	 *
 	 */
 	@SerializedName("activeParameter")
 	@Expose
-	private Double activeParameter;
+	private Integer activeParameter;
 
 	/**
 	 * One or more signatures.
@@ -74,7 +74,7 @@ public class SignatureHelp {
 	 * @return
 	 *     The activeSignature
 	 */
-	public Double getActiveSignature() {
+	public Integer getActiveSignature() {
 		return activeSignature;
 	}
 
@@ -84,11 +84,11 @@ public class SignatureHelp {
 	 * @param activeSignature
 	 *     The activeSignature
 	 */
-	public void setActiveSignature(Double activeSignature) {
+	public void setActiveSignature(Integer activeSignature) {
 		this.activeSignature = activeSignature;
 	}
 
-	public SignatureHelp withActiveSignature(Double activeSignature) {
+	public SignatureHelp withActiveSignature(Integer activeSignature) {
 		this.activeSignature = activeSignature;
 		return this;
 	}
@@ -99,7 +99,7 @@ public class SignatureHelp {
 	 * @return
 	 *     The activeParameter
 	 */
-	public Double getActiveParameter() {
+	public Integer getActiveParameter() {
 		return activeParameter;
 	}
 
@@ -109,11 +109,11 @@ public class SignatureHelp {
 	 * @param activeParameter
 	 *     The activeParameter
 	 */
-	public void setActiveParameter(Double activeParameter) {
+	public void setActiveParameter(Integer activeParameter) {
 		this.activeParameter = activeParameter;
 	}
 
-	public SignatureHelp withActiveParameter(Double activeParameter) {
+	public SignatureHelp withActiveParameter(Integer activeParameter) {
 		this.activeParameter = activeParameter;
 		return this;
 	}

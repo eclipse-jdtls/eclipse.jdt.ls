@@ -27,7 +27,7 @@ public class TextDocumentContentChangeEvent {
 	 */
 	@SerializedName("rangeLength")
 	@Expose
-	private Double rangeLength;
+	private Integer rangeLength;
 	/**
 	 * The new text of the document.
 	 * (Required)
@@ -66,7 +66,7 @@ public class TextDocumentContentChangeEvent {
 	 * @return
 	 *     The rangeLength
 	 */
-	public Double getRangeLength() {
+	public Integer getRangeLength() {
 		return rangeLength;
 	}
 
@@ -76,11 +76,11 @@ public class TextDocumentContentChangeEvent {
 	 * @param rangeLength
 	 *     The rangeLength
 	 */
-	public void setRangeLength(Double rangeLength) {
+	public void setRangeLength(Integer rangeLength) {
 		this.rangeLength = rangeLength;
 	}
 
-	public TextDocumentContentChangeEvent withRangeLength(Double rangeLength) {
+	public TextDocumentContentChangeEvent withRangeLength(Integer rangeLength) {
 		this.rangeLength = rangeLength;
 		return this;
 	}

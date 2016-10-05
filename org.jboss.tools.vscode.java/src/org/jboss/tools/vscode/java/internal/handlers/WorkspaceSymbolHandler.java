@@ -56,11 +56,11 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 					SymbolInformation symbolInformation = new SymbolInformation();
 					symbolInformation.setContainerName(match.getTypeContainerName());
 					symbolInformation.setName(match.getSimpleTypeName());
-					symbolInformation.setKind(new Double(DocumentSymbolHandler.mapKind(match.getType())));
+					symbolInformation.setKind(DocumentSymbolHandler.mapKind(match.getType()));
 					Location location = new Location();
 					location.setUri(match.getType().getResource().getLocationURI().toString());
-					location.setRange(new Range().withEnd(new Position().withLine(Double.valueOf(0)).withCharacter(Double.valueOf(0)))
-							.withStart(new Position().withLine(Double.valueOf(0)).withCharacter(Double.valueOf(0))));
+					location.setRange(new Range().withEnd(new Position().withLine(0).withCharacter(0))
+							.withStart(new Position().withLine(0).withCharacter(0)));
 					symbols.add(symbolInformation.withLocation(location));
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());

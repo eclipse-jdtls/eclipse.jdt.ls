@@ -22,7 +22,7 @@ public class FormattingOptions {
 	 */
 	@SerializedName("tabSize")
 	@Expose
-	private Double tabSize;
+	private Integer tabSize;
 	/**
 	 * Prefer spaces over tabs.
 	 * (Required)
@@ -39,7 +39,7 @@ public class FormattingOptions {
 	 * @return
 	 *     The tabSize
 	 */
-	public Double getTabSize() {
+	public Integer getTabSize() {
 		return tabSize;
 	}
 
@@ -50,11 +50,11 @@ public class FormattingOptions {
 	 * @param tabSize
 	 *     The tabSize
 	 */
-	public void setTabSize(Double tabSize) {
+	public void setTabSize(Integer tabSize) {
 		this.tabSize = tabSize;
 	}
 
-	public FormattingOptions withTabSize(Double tabSize) {
+	public FormattingOptions withTabSize(Integer tabSize) {
 		this.tabSize = tabSize;
 		return this;
 	}

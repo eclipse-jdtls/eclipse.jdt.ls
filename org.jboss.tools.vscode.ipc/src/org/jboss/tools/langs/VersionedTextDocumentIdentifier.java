@@ -22,7 +22,7 @@ public class VersionedTextDocumentIdentifier {
 	 */
 	@SerializedName("version")
 	@Expose
-	private Double version;
+	private Integer version;
 	/**
 	 * The text document's uri.
 	 * (Required)
@@ -39,7 +39,7 @@ public class VersionedTextDocumentIdentifier {
 	 * @return
 	 *     The version
 	 */
-	public Double getVersion() {
+	public Integer getVersion() {
 		return version;
 	}
 
@@ -50,11 +50,11 @@ public class VersionedTextDocumentIdentifier {
 	 * @param version
 	 *     The version
 	 */
-	public void setVersion(Double version) {
+	public void setVersion(Integer version) {
 		this.version = version;
 	}
 
-	public VersionedTextDocumentIdentifier withVersion(Double version) {
+	public VersionedTextDocumentIdentifier withVersion(Integer version) {
 		this.version = version;
 		return this;
 	}

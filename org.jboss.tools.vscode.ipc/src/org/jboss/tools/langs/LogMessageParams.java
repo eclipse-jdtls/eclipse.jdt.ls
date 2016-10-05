@@ -22,7 +22,7 @@ public class LogMessageParams {
 	 */
 	@SerializedName("type")
 	@Expose
-	private Double type;
+	private Integer type;
 	/**
 	 * The actual message
 	 * (Required)
@@ -39,7 +39,7 @@ public class LogMessageParams {
 	 * @return
 	 *     The type
 	 */
-	public Double getType() {
+	public Integer getType() {
 		return type;
 	}
 
@@ -50,11 +50,11 @@ public class LogMessageParams {
 	 * @param type
 	 *     The type
 	 */
-	public void setType(Double type) {
+	public void setType(Integer type) {
 		this.type = type;
 	}
 
-	public LogMessageParams withType(Double type) {
+	public LogMessageParams withType(Integer type) {
 		this.type = type;
 		return this;
 	}

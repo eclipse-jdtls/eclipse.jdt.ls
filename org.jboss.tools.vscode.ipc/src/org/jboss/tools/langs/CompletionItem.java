@@ -35,7 +35,7 @@ public class CompletionItem {
 	 */
 	@SerializedName("kind")
 	@Expose
-	private Double kind;
+	private Integer kind;
 	/**
 	 * A human-readable string with additional information
 	 *
@@ -146,7 +146,7 @@ public class CompletionItem {
 	 * @return
 	 *     The kind
 	 */
-	public Double getKind() {
+	public Integer getKind() {
 		return kind;
 	}
 
@@ -158,11 +158,11 @@ public class CompletionItem {
 	 * @param kind
 	 *     The kind
 	 */
-	public void setKind(Double kind) {
+	public void setKind(Integer kind) {
 		this.kind = kind;
 	}
 
-	public CompletionItem withKind(Double kind) {
+	public CompletionItem withKind(Integer kind) {
 		this.kind = kind;
 		return this;
 	}

@@ -24,7 +24,7 @@ public class InitializeParams {
 	 */
 	@SerializedName("processId")
 	@Expose
-	private Double processId;
+	private Integer processId;
 	/**
 	 * The rootPath of the workspace. Is null
 	 *
@@ -67,7 +67,7 @@ public class InitializeParams {
 	 * @return
 	 *     The processId
 	 */
-	public Double getProcessId() {
+	public Integer getProcessId() {
 		return processId;
 	}
 
@@ -80,11 +80,11 @@ public class InitializeParams {
 	 * @param processId
 	 *     The processId
 	 */
-	public void setProcessId(Double processId) {
+	public void setProcessId(Integer processId) {
 		this.processId = processId;
 	}
 
-	public InitializeParams withProcessId(Double processId) {
+	public InitializeParams withProcessId(Integer processId) {
 		this.processId = processId;
 		return this;
 	}

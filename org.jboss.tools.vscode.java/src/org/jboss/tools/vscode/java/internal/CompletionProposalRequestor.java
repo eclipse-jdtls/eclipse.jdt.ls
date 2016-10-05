@@ -27,7 +27,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private final ICompilationUnit unit;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionProposalDescriptionProvider descriptionProvider;
-	
+
 
 	public CompletionProposalRequestor( ICompilationUnit aUnit, List<CompletionItem> proposals) {
 		this.proposals = proposals;
@@ -38,8 +38,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	public void accept(CompletionProposal proposal) {
 		if(isIgnored(proposal.getKind())) return;
 		final CompletionItem $ = new CompletionItem();
-		$.setKind(Double.valueOf(mapKind(proposal.getKind())));
-		Map<String, String> data = new HashMap<String,String>();
+		$.setKind(mapKind(proposal.getKind()));
+		Map<String, String> data = new HashMap<>();
 		data.put(CompletionResolveHandler.DATA_FIELD_URI,unit.getResource().getLocationURI().toString());
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
@@ -54,7 +54,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.proposalProvider = new CompletionProposalReplacementProvider(unit,context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
-	
+
 
 	private int mapKind(final int kind) {
 		switch (kind) {
@@ -85,7 +85,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 			return 3;//Function
-		//text
+			//text
 		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
 		case CompletionProposal.JAVADOC_BLOCK_TAG:
 		case CompletionProposal.JAVADOC_FIELD_REF:
@@ -97,24 +97,24 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		default:
 			return 1; //Text
 		}
-// vscode kinds		
-//			Text = 1,
-//				  Method = 2,
-//				  Function = 3,
-//				  Constructor = 4,
-//				  Field = 5,
-//				  Variable = 6,
-//				  Class = 7,
-//				  Interface = 8,
-//				  Module = 9,
-//				  Property = 10,
-//				  Unit = 11,
-//				  Value = 12,
-//				  Enum = 13,
-//				  Keyword = 14,
-//				  Snippet = 15,
-//				  Color = 16,
-//				  File = 17,
-//				  Reference = 18
+		// vscode kinds
+		//			Text = 1,
+		//				  Method = 2,
+		//				  Function = 3,
+		//				  Constructor = 4,
+		//				  Field = 5,
+		//				  Variable = 6,
+		//				  Class = 7,
+		//				  Interface = 8,
+		//				  Module = 9,
+		//				  Property = 10,
+		//				  Unit = 11,
+		//				  Value = 12,
+		//				  Enum = 13,
+		//				  Keyword = 14,
+		//				  Snippet = 15,
+		//				  Color = 16,
+		//				  File = 17,
+		//				  Reference = 18
 	}
 }

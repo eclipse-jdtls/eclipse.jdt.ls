@@ -30,7 +30,7 @@ public class FileEvent {
 	 */
 	@SerializedName("type")
 	@Expose
-	private Double type;
+	private Integer type;
 
 	/**
 	 * The file's uri.
@@ -66,7 +66,7 @@ public class FileEvent {
 	 * @return
 	 *     The type
 	 */
-	public Double getType() {
+	public Integer getType() {
 		return type;
 	}
 
@@ -77,11 +77,11 @@ public class FileEvent {
 	 * @param type
 	 *     The type
 	 */
-	public void setType(Double type) {
+	public void setType(Integer type) {
 		this.type = type;
 	}
 
-	public FileEvent withType(Double type) {
+	public FileEvent withType(Integer type) {
 		this.type = type;
 		return this;
 	}

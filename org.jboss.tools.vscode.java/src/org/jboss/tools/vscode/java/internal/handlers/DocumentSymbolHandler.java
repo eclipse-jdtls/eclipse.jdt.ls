@@ -64,7 +64,7 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 
 			SymbolInformation si = new SymbolInformation();
 			si.setName(element.getElementName());
-			si.setKind(new Double(mapKind(element)));
+			si.setKind(mapKind(element));
 			if(element.getParent() != null )
 				si.setContainerName(element.getParent().getElementName());
 			si.setLocation(JDTUtils.toLocation(element));
