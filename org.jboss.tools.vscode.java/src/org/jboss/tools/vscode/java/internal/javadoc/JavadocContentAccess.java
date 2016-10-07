@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.javadoc;
 
 import java.io.IOException;
 import java.io.Reader;
