@@ -28,9 +28,8 @@ import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.JavadocContentAccess;
 import org.jboss.tools.vscode.java.internal.SignatureUtil;
-
-import copied.org.eclipse.jdt.ui.JavadocContentAccess;
 
 public class CompletionResolveHandler implements RequestHandler<CompletionItem, CompletionItem> {
 

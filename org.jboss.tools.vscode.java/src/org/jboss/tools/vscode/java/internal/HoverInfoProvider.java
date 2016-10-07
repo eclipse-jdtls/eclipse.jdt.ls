@@ -12,6 +12,7 @@ package org.jboss.tools.vscode.java.internal;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -23,8 +24,6 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.jboss.tools.vscode.java.internal.handlers.JsonRpcHelpers;
-
-import copied.org.eclipse.jdt.ui.JavadocContentAccess;
 
 public class HoverInfoProvider {
 
@@ -43,6 +42,7 @@ public class HoverInfoProvider {
 			if (elements.length != 1) {
 				// they could be package fragments.
 				// We need to select the one that matches the package fragment of the current unit
+<<<<<<< HEAD
 				IJavaElement found = null;
 				IPackageFragment packageFragment = (IPackageFragment) unit.getParent();
 				loop: for (IJavaElement element : elements) {
@@ -51,6 +51,15 @@ public class HoverInfoProvider {
 						break loop;
 					}
 				}
+=======
+				IPackageFragment packageFragment = (IPackageFragment) unit.getParent();
+				IJavaElement found =
+						Stream
+						.of(elements)
+						.filter(e -> e.equals(packageFragment))
+						.findFirst()
+						.orElse(null);
+>>>>>>> e944b4f2041bd206d80d53861dc1579cbec6d266
 				if (found == null) {
 					// this would be a binary package fragment
 					return computeJavadocHover(elements[0]);
