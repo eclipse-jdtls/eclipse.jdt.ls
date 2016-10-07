@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal.hover;
+package org.jboss.tools.vscode.java.internal.javadoc;
 
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
