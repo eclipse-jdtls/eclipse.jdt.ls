@@ -23,6 +23,8 @@ public class JavaDocCommentReader extends SingleCharReader {
 
 	private IBuffer fBuffer;
 
+	private String fSource;
+
 	private int fCurrPos;
 
 	private int fStartPos;
@@ -39,21 +41,29 @@ public class JavaDocCommentReader extends SingleCharReader {
 		reset();
 	}
 
+	public JavaDocCommentReader(String source, int start, int end) {
+		fSource= source;
+		fStartPos= start + 3;
+		fEndPos= end - 2;
+
+		reset();
+	}
+
 	/**
 	 * @see java.io.Reader#read()
 	 */
 	@Override
 	public int read() {
 		if (fCurrPos < fEndPos) {
-			char ch= fBuffer.getChar(fCurrPos++);
+			char ch= getChar(fCurrPos++);
 			if (fWasNewLine && !IndentManipulation.isLineDelimiterChar(ch)) {
 				while (fCurrPos < fEndPos && Character.isWhitespace(ch)) {
-					ch= fBuffer.getChar(fCurrPos++);
+					ch= getChar(fCurrPos++);
 				}
 				if (ch == '*') {
 					if (fCurrPos < fEndPos) {
 						do {
-							ch= fBuffer.getChar(fCurrPos++);
+							ch= getChar(fCurrPos++);
 						} while (ch == '*');
 					} else {
 						return -1;
@@ -72,6 +82,7 @@ public class JavaDocCommentReader extends SingleCharReader {
 	 */
 	@Override
 	public void close() {
+		fSource = null;
 		fBuffer= null;
 	}
 
@@ -83,23 +94,27 @@ public class JavaDocCommentReader extends SingleCharReader {
 		fCurrPos= fStartPos;
 		fWasNewLine= true;
 		// skip first line delimiter:
-		if (fCurrPos < fEndPos && '\r' == fBuffer.getChar(fCurrPos)) {
+		if (fCurrPos < fEndPos && '\r' == getChar(fCurrPos)) {
 			fCurrPos++;
 		}
-		if (fCurrPos < fEndPos && '\n' == fBuffer.getChar(fCurrPos)) {
+		if (fCurrPos < fEndPos && '\n' == getChar(fCurrPos)) {
 			fCurrPos++;
 		}
 	}
 
+	private char getChar(int pos) {
+		if (fBuffer != null) {
+			return fBuffer.getChar(fCurrPos);
+		}
+		return fSource.charAt(pos);
+	}
 
 	/**
 	 * Returns the offset of the last read character in the passed buffer.
-	 * 
+	 *
 	 * @return the offset
 	 */
 	public int getOffset() {
 		return fCurrPos;
 	}
-
-
 }
