@@ -34,7 +34,6 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.jboss.tools.vscode.javadoc.internal.JavaDoc2MarkdownConverter;
 
 import copied.org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 

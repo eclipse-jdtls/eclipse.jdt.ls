@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.javadoc.internal;
+package org.jboss.tools.vscode.java.internal.javadoc;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
