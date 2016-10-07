@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.Reader;
 
+import org.jboss.tools.vscode.java.internal.Util;
 import org.junit.Test;
 
 /**
@@ -171,7 +172,7 @@ public class JavaDoc2MarkdownConverterTest {
 	@Test
 	public void testGetAsString() throws IOException {
 		String result = new JavaDoc2MarkdownConverter(RAW_JAVADOC_0).getAsString();
-		assertEquals(MARKDOWN_0, result);
+		assertEquals(Util.convertToIndependentLineDelimiter(MARKDOWN_0), Util.convertToIndependentLineDelimiter(result));
 	}
 
 	@Test
