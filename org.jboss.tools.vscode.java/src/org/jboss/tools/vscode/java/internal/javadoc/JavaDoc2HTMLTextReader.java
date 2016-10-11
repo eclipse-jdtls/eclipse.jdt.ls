@@ -126,8 +126,7 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 
 				int i= getParamEndOffset(s);
 				if (i <= s.length()) {
-					//buffer.append(convertToHTMLContent(s.substring(0, i)));
-					buffer.append(s.substring(0, i));
+					buffer.append(convertToHTMLContent(s.substring(0, i)));
 					buffer.append("</b>"); //$NON-NLS-1$
 					buffer.append(s.substring(i));
 				} else {
@@ -153,6 +152,7 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 				++i;
 			while (i < length && s.charAt(i) != '>')
 				++i;
+			++i; // >
 		} else {
 			// simply read an identifier
 			while (i < length && Character.isJavaIdentifierPart(s.charAt(i)))
