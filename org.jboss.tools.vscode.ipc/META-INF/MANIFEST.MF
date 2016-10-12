@@ -20,6 +20,7 @@ Export-Package: com.google.gson.annotations,
  org.jboss.tools.langs,
  org.jboss.tools.langs.base,
  org.jboss.tools.langs.ext,
+ org.jboss.tools.langs.transport,
  org.jboss.tools.vscode.internal.ipc
 Bundle-Activator: org.jboss.tools.vscode.internal.ipc.IPCPlugin
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0"
