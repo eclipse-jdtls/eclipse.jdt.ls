@@ -56,7 +56,7 @@ public abstract class LSPServer {
 		connection = initConnection();
 		if(connection == null ){
 			//Temporary for tests to run
-			System.err.println("Failied to initialize connection");
+			System.err.println("Failed to initialize connection");
 			return;
 		}
 		connection.start();
