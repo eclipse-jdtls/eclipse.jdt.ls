@@ -10,33 +10,34 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
-import static org.jboss.tools.vscode.java.internal.JobHelpers.waitForJobsToComplete;
+import static org.jboss.tools.vscode.java.internal.ProjectUtils.getJavaSourceLevel;
+import static org.jboss.tools.vscode.java.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-
 import org.eclipse.core.resources.IProject;
-import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
+import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.junit.Test;
 
 /**
  * @author Fred Bricon
  *
  */
-public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
+public class GradleProjectImporterTest extends AbstractProjectsManagerBasedTest{
 
 	@Test
-	public void testCreateDefaultProject() throws Exception {
-		projectsManager.initializeProjects(null, monitor);
-		waitForJobsToComplete();
-		List<IProject> projects = WorkspaceHelper.getAllProjects();
-		assertEquals(1, projects.size());
-		IProject result = projects.get(0);
-		assertNotNull(result);
-		assertEquals(projectsManager.getDefaultProject(), result);
-		assertTrue("the default project doesn't exist", result.exists());
+	public void importSimpleGradleProject() throws Exception {
+		String name = "simple-gradle";
+		importProjects("gradle/"+name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertIsGradleProject(project);
+		assertEquals("1.7", getJavaSourceLevel(project));
 	}
 
+	protected void assertIsGradleProject(IProject project) {
+		assertNotNull(project);
+		assertTrue(project.getName() +" is missing the Gradle nature", ProjectUtils.isGradleProject(project));
+	}
 }

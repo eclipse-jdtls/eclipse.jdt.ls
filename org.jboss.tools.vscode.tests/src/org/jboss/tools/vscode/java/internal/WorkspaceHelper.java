@@ -12,7 +12,6 @@ package org.jboss.tools.vscode.java.internal;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,8 +31,7 @@ public class WorkspaceHelper {
 	}
 
 	public static void initWorkspace() {
-		List<IProject> projects = new ArrayList<>(1);
-		JavaLanguageServerPlugin.getProjectsManager().createProject(null, projects, new NullProgressMonitor());
+		JavaLanguageServerPlugin.getProjectsManager().initializeProjects(null, new NullProgressMonitor());
 		assertEquals(1, getAllProjects().size());
 	}
 

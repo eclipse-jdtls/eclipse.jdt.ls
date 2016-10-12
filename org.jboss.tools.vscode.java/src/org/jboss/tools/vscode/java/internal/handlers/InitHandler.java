@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -86,7 +84,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
-				IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), new ServerStatusMonitor());
+				IStatus status = projectsManager.initializeProjects(root, new ServerStatusMonitor());
 				try {
 					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 				} catch (CoreException e) {
@@ -114,7 +112,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		};
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
-		job.schedule(); // small delay to not start sending status before initialize message has arrived
+		job.schedule();
 	}
 
 	private class ServerStatusMonitor extends NullProgressMonitor{

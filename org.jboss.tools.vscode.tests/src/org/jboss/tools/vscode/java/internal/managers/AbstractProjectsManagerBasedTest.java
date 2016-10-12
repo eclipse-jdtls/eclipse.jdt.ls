@@ -15,13 +15,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.jboss.tools.vscode.java.internal.JobHelpers;
 import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.junit.After;
@@ -41,18 +41,20 @@ public abstract class AbstractProjectsManagerBasedTest {
 		projectsManager = new ProjectsManager();
 	}
 
-	protected List<IProject> importProjects(String path) throws IOException {
-
+	protected List<IProject> importProjects(String path) throws Exception {
 		File from = new File(getSourceProjectDirectory(), path);
 		File to = new File(getWorkingProjectDirectory(), path);
 		if (to.exists()) {
 			FileUtils.forceDelete(to);
 		}
 		FileUtils.copyDirectory(from, to);
+		projectsManager.initializeProjects(to.getAbsolutePath(), monitor);
+		waitForBackgroundJobs();
+		return WorkspaceHelper.getAllProjects();
+	}
 
-		List<IProject> resultingProjects = new ArrayList<>();
-		projectsManager.createProject(to.getAbsolutePath(), resultingProjects , monitor);
-		return resultingProjects;
+	protected void waitForBackgroundJobs() throws Exception {
+		JobHelpers.waitForJobsToComplete(monitor);
 	}
 
 	protected File getSourceProjectDirectory() {

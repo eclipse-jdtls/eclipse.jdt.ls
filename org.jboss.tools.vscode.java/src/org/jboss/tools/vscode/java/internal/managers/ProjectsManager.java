@@ -10,15 +10,11 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
-import static org.jboss.tools.vscode.java.internal.ProjectUtils.isJavaProject;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -48,22 +44,17 @@ public class ProjectsManager {
 
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
 
-	public IStatus createProject(final String projectName, List<IProject> resultingProjects, IProgressMonitor monitor) {
+	public IStatus initializeProjects(final String projectName, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
-			IProject defaultJavaProject = createJavaProject(subMonitor.split(10));
-			resultingProjects.add(defaultJavaProject);
+			createJavaProject(subMonitor.split(10));
 
 			File userProjectRoot = (projectName == null)?null:new File(projectName);
 
 			IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
 			if (importer != null) {
-				List<IProject> projects = importer.importToWorkspace(subMonitor.split(70));
-				List<IProject> javaProjects = projects.stream().filter(p -> isJavaProject(p)).collect(Collectors.toList());
-				resultingProjects.addAll(javaProjects);
+				importer.importToWorkspace(subMonitor.split(70));
 			}
-
-			JavaLanguageServerPlugin.logInfo("Number of created projects " + resultingProjects.size());
 			return Status.OK_STATUS;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
@@ -122,7 +113,7 @@ public class ProjectsManager {
 	}
 
 	private Collection<IProjectImporter> importers() {
-		return Arrays.asList(new MavenProjectImporter(), new EclipseProjectImporter());
+		return Arrays.asList(new GradleProjectImporter(), new MavenProjectImporter(), new EclipseProjectImporter());
 	}
 
 	private IProject createJavaProject(IProgressMonitor monitor) throws CoreException, OperationCanceledException, InterruptedException {
