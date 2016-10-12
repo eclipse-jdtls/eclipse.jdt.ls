@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.contentassist;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +23,7 @@ import org.jboss.tools.langs.CompletionItem;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
 
 public final class CompletionProposalRequestor extends CompletionRequestor {
+
 	private final List<CompletionItem> proposals;
 	private final ICompilationUnit unit;
 	private CompletionProposalReplacementProvider proposalProvider;
@@ -45,6 +46,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.descriptionProvider.updateDescription(proposal, $);
 		StringBuilder replacement = this.proposalProvider.createReplacement(proposal,' ',new ArrayList<Integer>());
 		$.setInsertText(replacement.toString());
+		$.setSortText(SortTextHelper.computeSortText(proposal));
 		proposals.add($);
 	}
 
@@ -117,4 +119,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		//				  File = 17,
 		//				  Reference = 18
 	}
+
+
+
 }

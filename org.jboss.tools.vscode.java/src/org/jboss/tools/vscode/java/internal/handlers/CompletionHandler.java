@@ -26,9 +26,9 @@ import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
 import org.jboss.tools.vscode.internal.ipc.RequestHandler;
-import org.jboss.tools.vscode.java.internal.CompletionProposalRequestor;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.contentassist.CompletionProposalRequestor;
 
 public class CompletionHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
 

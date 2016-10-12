@@ -22,9 +22,9 @@ import org.eclipse.jdt.core.Signature;
  *
  * @see Signature
  * @since 3.1
- * 
+ *
  * Copied from Flux project.
- * 
+ *
  */
 public final class SignatureUtil {
 
@@ -304,31 +304,31 @@ public final class SignatureUtil {
 		int depth= 0;
 		while (pos < signature.length) {
 			switch (signature[pos]) {
-				case Signature.C_GENERIC_START:
-					depth++;
-					break;
-				case Signature.C_GENERIC_END:
-					if (depth == 0)
-						return pos;
-					depth--;
-					break;
-				case Signature.C_SEMICOLON:
-					if (depth == 0)
-						return pos + 1;
-					break;
+			case Signature.C_GENERIC_START:
+				depth++;
+				break;
+			case Signature.C_GENERIC_END:
+				if (depth == 0)
+					return pos;
+				depth--;
+				break;
+			case Signature.C_SEMICOLON:
+				if (depth == 0)
+					return pos + 1;
+				break;
 			}
 			pos++;
 		}
 		return pos + 1;
 	}
-	
-	
-	static String getQualifiedTypeName(CompletionProposal proposal) {
+
+
+	public static String getQualifiedTypeName(CompletionProposal proposal) {
 		return String.valueOf(Signature.toCharArray(Signature
 				.getTypeErasure(proposal.getSignature())));
 	}
 
-	static String getSimpleTypeName(CompletionProposal proposal) {
+	public static String getSimpleTypeName(CompletionProposal proposal) {
 		return Signature.getSimpleName(getQualifiedTypeName(proposal));
 	}
 }

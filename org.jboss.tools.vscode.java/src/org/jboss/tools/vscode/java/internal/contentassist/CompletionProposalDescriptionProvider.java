@@ -10,7 +10,7 @@
  *     Pivotal Software, Inc. - adopted for Flux
  *     Red Hat - adopted for JDT Server
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.contentassist;
 
 import java.util.Map;
 
@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
 import org.jboss.tools.langs.CompletionItem;
+import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
 
 /**

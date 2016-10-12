@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.contentassist;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.jboss.tools.vscode.java.internal.SignatureUtil;
 
 /**
  * Utility to calculate the completion replacement string based on JDT Core
