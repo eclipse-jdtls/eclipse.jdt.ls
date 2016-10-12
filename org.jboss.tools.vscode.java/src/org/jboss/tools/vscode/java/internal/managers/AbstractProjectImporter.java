@@ -25,5 +25,9 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 		this.rootFolder = rootFolder;
 	}
 
-	
+	@Override
+	public void reset() {
+		// No-Op
+	}
+
 }

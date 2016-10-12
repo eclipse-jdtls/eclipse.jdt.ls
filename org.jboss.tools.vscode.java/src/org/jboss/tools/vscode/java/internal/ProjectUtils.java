@@ -12,6 +12,7 @@ package org.jboss.tools.vscode.java.internal;
 
 import java.util.Map;
 
+import org.eclipse.buildship.core.configuration.GradleProjectNature;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
@@ -42,6 +43,10 @@ public class ProjectUtils {
 
 	public static boolean isMavenProject(IProject project) {
 		return hasNature(project, IMavenConstants.NATURE_ID);
+	}
+
+	public static boolean isGradleProject(IProject project) {
+		return hasNature(project, GradleProjectNature.ID);
 	}
 
 	public static String getJavaSourceLevel(IProject project) {

@@ -11,7 +11,6 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -77,22 +76,21 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	@SuppressWarnings("restriction")
-	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
+	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));
 		ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
 		List<IMavenProjectImportResult> importResults = configurationManager.importProjects(files, importConfig, subMonitor.split(95));
-		return collectProjects(importConfig, importResults, monitor);
+		updateProjects(importConfig, importResults, monitor);
 	}
 
 	private File getProjectDirectory() {
 		return rootFolder;
 	}
 
-	private List<IProject> collectProjects(ProjectImportConfiguration importConfig, List<IMavenProjectImportResult> importResults, IProgressMonitor monitor) throws CoreException {
-		List<IProject> projects = new ArrayList<>();
+	private void updateProjects(ProjectImportConfiguration importConfig, List<IMavenProjectImportResult> importResults, IProgressMonitor monitor) throws CoreException {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		for (IMavenProjectImportResult importResult : importResults) {
 			IProject project = importResult.getProject();
@@ -106,12 +104,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					configurationManager.updateProjectConfiguration(project, monitor);
 				}
 			}
-			if (project != null) {
-				projects.add(project);
-			}
 		}
-
-		return projects;
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws InterruptedException {

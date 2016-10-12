@@ -25,6 +25,7 @@
       <plugin id="com.ibm.icu"/>
       <plugin id="javax.xml"/>
       <plugin id="org.eclipse.ant.core"/>
+      <plugin id="org.eclipse.buildship.core"/>
       <plugin id="org.eclipse.compare.core"/>
       <plugin id="org.eclipse.core.commands"/>
       <plugin id="org.eclipse.core.contenttype"/>
@@ -52,7 +53,7 @@
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.eclipse.osgi.services"/>
-     <plugin id="org.eclipse.text"/>
+      <plugin id="org.eclipse.text"/>
       <plugin id="org.jboss.tools.vscode.ipc"/>
       <plugin id="org.jboss.tools.vscode.java"/>
    </plugins>

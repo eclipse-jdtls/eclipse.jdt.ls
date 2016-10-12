@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,26 +67,21 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 
 
 	@Override
-	public List<IProject> importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
+	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		Collection<File> files = getProjectFiles(subMonitor.split(5));
 		if (files == null || files.isEmpty()) {
-			return Collections.emptyList();
+			return;
 		}
 		int projectSize = files.size();
-		List<IProject> projects = new ArrayList<>(projectSize);
 		subMonitor.setWorkRemaining(projectSize);
 		for(File file : files) {
 			if (monitor.isCanceled()) {
 				throw new InterruptedException();
 			}
-			IProject project = createProject(file, subMonitor.split(1));
-			if (project != null) {
-				projects.add(project);
-			}
+			createProject(file, subMonitor.split(1));
 		}
 		subMonitor.done();
-		return projects;
 	}
 
 	IProject createProject(File file, IProgressMonitor m) throws CoreException {
