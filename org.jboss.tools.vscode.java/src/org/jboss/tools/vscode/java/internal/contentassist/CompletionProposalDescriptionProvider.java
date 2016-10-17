@@ -24,15 +24,16 @@ import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
 
 /**
- * Provides string labels for completionProposals. 
+ * Provides string labels for completionProposals.
  * Functionality is copied from org.eclipse.jdt.ui.text.java.CompletionProposalLabelProvider
- * 
+ *
  * Copied from Flux project.
  *
  */
 public class CompletionProposalDescriptionProvider {
 
 	private static final String RETURN_TYPE_SEPARATOR = " : ";
+	private static final String PACKAGE_NAME_SEPARATOR = " - ";
 	private static final String VAR_TYPE_SEPARATOR = RETURN_TYPE_SEPARATOR;
 
 
@@ -43,7 +44,7 @@ public class CompletionProposalDescriptionProvider {
 
 	/**
 	 * Creates a new label provider.
-	 * @param iCompilationUnit 
+	 * @param iCompilationUnit
 	 */
 	public CompletionProposalDescriptionProvider(CompletionContext context) {
 		super();
@@ -56,32 +57,32 @@ public class CompletionProposalDescriptionProvider {
 	 * returned.
 	 * <p>
 	 * Examples:
-	 * 
+	 *
 	 * <pre>
 	 *   &quot;void method(int i, String s)&quot; -&gt; &quot;int i, String s&quot;
 	 *   &quot;? extends Number method(java.lang.String s, ? super Number n)&quot; -&gt; &quot;String s, Number n&quot;
 	 * </pre>
-	 * 
+	 *
 	 * </p>
-	 * 
+	 *
 	 * @param proposal the proposal to create the parameter list for
 	 * @return the list of comma-separated parameters suitable for display
 	 */
 	public StringBuilder createParameterList(CompletionProposal proposal) {
 		int kind= proposal.getKind();
 		switch (kind) {
-			case CompletionProposal.METHOD_REF:
-			case CompletionProposal.CONSTRUCTOR_INVOCATION:
-				return appendUnboundedParameterList(new StringBuilder(), proposal);
-			case CompletionProposal.TYPE_REF:
-			case CompletionProposal.JAVADOC_TYPE_REF:
-				return appendTypeParameterList(new StringBuilder(), proposal);
-			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				return appendUnboundedParameterList(new StringBuilder(), proposal);
-			default:
-				Assert.isLegal(false);
-				return null; // dummy
+		case CompletionProposal.METHOD_REF:
+		case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			return appendUnboundedParameterList(new StringBuilder(), proposal);
+		case CompletionProposal.TYPE_REF:
+		case CompletionProposal.JAVADOC_TYPE_REF:
+			return appendTypeParameterList(new StringBuilder(), proposal);
+		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			return appendUnboundedParameterList(new StringBuilder(), proposal);
+		default:
+			Assert.isLegal(false);
+			return null; // dummy
 		}
 	}
 
@@ -145,25 +146,25 @@ public class CompletionProposalDescriptionProvider {
 	 * @param typeName the type name to convert
 	 * @return the converted type name
 	 */
-    private char[] convertToVararg(char[] typeName) {
-    	if (typeName == null)
-    		return typeName;
-    	final int len= typeName.length;
+	private char[] convertToVararg(char[] typeName) {
+		if (typeName == null)
+			return typeName;
+		final int len= typeName.length;
 		if (len < 2)
-    		return typeName;
+			return typeName;
 
-    	if (typeName[len - 1] != ']')
-    		return typeName;
-    	if (typeName[len - 2] != '[')
-    		return typeName;
+		if (typeName[len - 1] != ']')
+			return typeName;
+		if (typeName[len - 2] != '[')
+			return typeName;
 
 		char[] vararg= new char[len + 1];
 		System.arraycopy(typeName, 0, vararg, 0, len - 2);
 		vararg[len - 2]= '.';
 		vararg[len - 1]= '.';
 		vararg[len]= '.';
-	    return vararg;
-    }
+		return vararg;
+	}
 
 	/**
 	 * Returns the display string for a java type signature.
@@ -243,11 +244,11 @@ public class CompletionProposalDescriptionProvider {
 	 * </p>
 	 *
 	 * @param methodProposal the method proposal to display
-	 * @param item to update 
+	 * @param item to update
 	 */
 	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder description = new StringBuilder();
-		
+
 		// method name
 		description.append(methodProposal.getName());
 
@@ -263,12 +264,12 @@ public class CompletionProposalDescriptionProvider {
 			description.append(RETURN_TYPE_SEPARATOR);
 			description.append(returnType);
 		}
-		
+
 		item.setLabel(description.toString());
 		// declaring type
 		StringBuilder typeInfo = new StringBuilder();
 		String declaringType= extractDeclaringTypeFQN(methodProposal);
-		
+
 		if (methodProposal.getRequiredProposals() != null) {
 			String qualifier= Signature.getQualifier(declaringType);
 			if (qualifier.length() > 0) {
@@ -280,15 +281,15 @@ public class CompletionProposalDescriptionProvider {
 		declaringType= Signature.getSimpleName(declaringType);
 		typeInfo.append(declaringType);
 		item.setDetail(typeInfo.toString());
-		
+
 		setSignature(item, String.valueOf(methodProposal.getSignature()));
-		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature())); 
+		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
 		setName(item, String.valueOf(methodProposal.getName()));
-		
+
 	}
 
 	/**
-	 * Updates the label and detail for {@link CompletionItem} with 
+	 * Updates the label and detail for {@link CompletionItem} with
 	 * <ul>
 	 * <li>the method name</li>
 	 * <li>the raw simple name of the declaring type</li>
@@ -308,7 +309,7 @@ public class CompletionProposalDescriptionProvider {
 
 	private void createOverrideMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
-		
+
 		// method name
 		nameBuffer.append(methodProposal.getName());
 		// parameters
@@ -330,9 +331,9 @@ public class CompletionProposalDescriptionProvider {
 		declaringType= Signature.getSimpleName(declaringType);
 		typeBuffer.append(String.format("Override method in '%s'", declaringType));
 		item.setDetail(typeBuffer.toString());
-		
+
 		setSignature(item, String.valueOf(methodProposal.getSignature()));
-		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature())); 
+		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
 		setName(item, String.valueOf(methodProposal.getName()));
 	}
 
@@ -388,35 +389,31 @@ public class CompletionProposalDescriptionProvider {
 		item.setLabel(createSimpleLabel(proposal).toString());
 	}
 
-	StringBuilder createTypeProposalLabel(char[] fullName, CompletionItem item) {
+	void createTypeProposalLabel(char[] fullName, CompletionItem item) {
 		// only display innermost type name as type name, using any
 		// enclosing types as qualification
 		int qIndex= findSimpleNameStart(fullName);
 
 		StringBuilder nameBuffer= new StringBuilder();
-		
 		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
+		nameBuffer.append(PACKAGE_NAME_SEPARATOR);
+		nameBuffer.append(new String(fullName,0,qIndex-1));
 		item.setLabel(nameBuffer.toString());
-		
-		if (qIndex > 0) {
-			item.setDetail(new String(fullName, 0, qIndex - 1));
-		}
-		return nameBuffer;
 	}
 
 	private void createJavadocTypeProposalLabel(char[] fullName, CompletionItem item) {
 		// only display innermost type name as type name, using any
 		// enclosing types as qualification
 		int qIndex= findSimpleNameStart(fullName);
-		
+
 		StringBuilder nameBuffer= new StringBuilder();
-		
+
 
 		nameBuffer.append("{@link "); //$NON-NLS-1$
 		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
 		nameBuffer.append('}');
 		item.setLabel(nameBuffer.toString());
-		
+
 		if (qIndex > 0) {
 			item.setDetail(new String(fullName, 0, qIndex - 1));
 		}
@@ -447,7 +444,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	/**
-	 * Returns whether the given string starts with "this.". 	
+	 * Returns whether the given string starts with "this.".
 	 *
 	 * @param string string to test
 	 * @return <code>true</code> if the given string starts with "this."
@@ -471,10 +468,10 @@ public class CompletionProposalDescriptionProvider {
 			buf.append(typeName);
 		}
 		item.setLabel(buf.toString());
-		
+
 		char[] declaration= proposal.getDeclarationSignature();
 		if (declaration != null) {
-			setDeclarationSignature(item, String.valueOf(declaration));	
+			setDeclarationSignature(item, String.valueOf(declaration));
 			StringBuilder declBuf = new StringBuilder();
 			declaration= Signature.getSignatureSimpleName(declaration);
 			if (declaration.length > 0) {
@@ -509,7 +506,7 @@ public class CompletionProposalDescriptionProvider {
 		declaringTypeSignature= Signature.getTypeErasure(declaringTypeSignature);
 
 		StringBuilder buf= new StringBuilder();
-		
+
 		buf.append(Signature.getSignatureSimpleName(declaringTypeSignature));
 		buf.append('(');
 		appendUnboundedParameterList(buf, proposal);
@@ -517,7 +514,7 @@ public class CompletionProposalDescriptionProvider {
 		buf.append("  "); //$NON-NLS-1$
 		buf.append("Anonymous Inner Type"); //TODO: consider externalization
 		item.setLabel(buf.toString());
-		
+
 		if (proposal.getRequiredProposals() != null) {
 			char[] signatureQualifier= Signature.getSignatureQualifier(declaringTypeSignature);
 			if (signatureQualifier.length > 0) {
@@ -526,7 +523,7 @@ public class CompletionProposalDescriptionProvider {
 		}
 		setDeclarationSignature(item, String.valueOf(declaringTypeSignature));
 	}
-	
+
 	/**
 	 * Sets the signature for use on the resolve call.
 	 * @param item
@@ -545,9 +542,9 @@ public class CompletionProposalDescriptionProvider {
 	private void setDeclarationSignature(CompletionItem item, String signature){
 		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_DECLARATION_SIGNATURE,String.valueOf(signature));
 	}
-	
+
 	/**
-	 * Sets the name to data that is used on the resolve call. 
+	 * Sets the name to data that is used on the resolve call.
 	 * @param item
 	 * @param name
 	 */
@@ -557,65 +554,65 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	/**
-	 * Updates the description fields of the item. 
-	 *  
+	 * Updates the description fields of the item.
+	 *
 	 * @param proposal
 	 * @param item
 	 */
 	public void updateDescription(CompletionProposal proposal, CompletionItem item) {
 		switch (proposal.getKind()) {
-			case CompletionProposal.METHOD_NAME_REFERENCE:
-			case CompletionProposal.METHOD_REF:
-			case CompletionProposal.CONSTRUCTOR_INVOCATION:
-			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
-			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-				if (fContext != null && fContext.isInJavadoc()){
-					createJavadocMethodProposalLabel(proposal, item);
-					break;
-				}
-				 createMethodProposalLabel(proposal,item);
-				 break;
-			case CompletionProposal.METHOD_DECLARATION:
-				createOverrideMethodProposalLabel(proposal,item);
-				break;
-			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				createAnonymousTypeLabel(proposal, item);
-				break;
-			case CompletionProposal.TYPE_REF:
-				createTypeProposalLabel(proposal, item);
-				break;
-			case CompletionProposal.JAVADOC_TYPE_REF:
-				createJavadocTypeProposalLabel(proposal, item);
-				break;
-			case CompletionProposal.JAVADOC_FIELD_REF:
-			case CompletionProposal.JAVADOC_VALUE_REF:
-			case CompletionProposal.JAVADOC_BLOCK_TAG:
-			case CompletionProposal.JAVADOC_INLINE_TAG:
-			case CompletionProposal.JAVADOC_PARAM_REF:
-				createJavadocSimpleProposalLabel(proposal, item);
-				break;
-			case CompletionProposal.JAVADOC_METHOD_REF:
+		case CompletionProposal.METHOD_NAME_REFERENCE:
+		case CompletionProposal.METHOD_REF:
+		case CompletionProposal.CONSTRUCTOR_INVOCATION:
+		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+			if (fContext != null && fContext.isInJavadoc()){
 				createJavadocMethodProposalLabel(proposal, item);
 				break;
-			case CompletionProposal.PACKAGE_REF:
-				createPackageProposalLabel(proposal, item);
-				break;
-			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
-			case CompletionProposal.FIELD_REF:
-			case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-				createLabelWithTypeAndDeclaration(proposal, item);
-				break;
-			case CompletionProposal.LOCAL_VARIABLE_REF:
-			case CompletionProposal.VARIABLE_DECLARATION:
-				createSimpleLabelWithType(proposal, item);
-				break;
-			case CompletionProposal.KEYWORD:
-			case CompletionProposal.LABEL_REF:
-				item.setLabel(createSimpleLabel(proposal).toString());
-				break;
-			default:
-				Assert.isTrue(false);
+			}
+			createMethodProposalLabel(proposal,item);
+			break;
+		case CompletionProposal.METHOD_DECLARATION:
+			createOverrideMethodProposalLabel(proposal,item);
+			break;
+		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			createAnonymousTypeLabel(proposal, item);
+			break;
+		case CompletionProposal.TYPE_REF:
+			createTypeProposalLabel(proposal, item);
+			break;
+		case CompletionProposal.JAVADOC_TYPE_REF:
+			createJavadocTypeProposalLabel(proposal, item);
+			break;
+		case CompletionProposal.JAVADOC_FIELD_REF:
+		case CompletionProposal.JAVADOC_VALUE_REF:
+		case CompletionProposal.JAVADOC_BLOCK_TAG:
+		case CompletionProposal.JAVADOC_INLINE_TAG:
+		case CompletionProposal.JAVADOC_PARAM_REF:
+			createJavadocSimpleProposalLabel(proposal, item);
+			break;
+		case CompletionProposal.JAVADOC_METHOD_REF:
+			createJavadocMethodProposalLabel(proposal, item);
+			break;
+		case CompletionProposal.PACKAGE_REF:
+			createPackageProposalLabel(proposal, item);
+			break;
+		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+		case CompletionProposal.FIELD_REF:
+		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
+			createLabelWithTypeAndDeclaration(proposal, item);
+			break;
+		case CompletionProposal.LOCAL_VARIABLE_REF:
+		case CompletionProposal.VARIABLE_DECLARATION:
+			createSimpleLabelWithType(proposal, item);
+			break;
+		case CompletionProposal.KEYWORD:
+		case CompletionProposal.LABEL_REF:
+			item.setLabel(createSimpleLabel(proposal).toString());
+			break;
+		default:
+			Assert.isTrue(false);
 		}
 	}
 }
