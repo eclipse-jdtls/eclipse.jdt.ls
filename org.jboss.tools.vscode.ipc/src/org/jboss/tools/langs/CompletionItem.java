@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.langs;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -91,17 +93,34 @@ public class CompletionItem {
 	@SerializedName("textEdit")
 	@Expose
 	private TextEdit textEdit;
-	/**
-	 * An data entry field that is preserved on a completion item between
-	 *
-	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
-	 *
-	 * (#CompletionResolveRequest)
-	 *
-	 */
-	@SerializedName("data")
-	@Expose
-	private Object data;
+    /**
+     * An optional array of additional [text edits](#TextEdit) that are applied when
+     * 
+     * selecting this completion. Edits must not overlap with the main [edit](#CompletionItem.textEdit)
+     * 
+     * nor with themselves.
+     * 
+     */
+    @SerializedName("additionalTextEdits")
+    @Expose
+    private List<TextEdit> additionalTextEdits = new ArrayList<TextEdit>();
+    /**
+     * 
+     */
+    @SerializedName("command")
+    @Expose
+    private Command command;
+    /**
+     * An data entry field that is preserved on a completion item between
+     * 
+     * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
+     * 
+     * (#CompletionResolveRequest)
+     * 
+     */
+    @SerializedName("data")
+    @Expose
+    private Object data;
 
 	/**
 	 * The label of this completion item. By default
@@ -343,19 +362,75 @@ public class CompletionItem {
 		return this;
 	}
 
-	/**
-	 * An data entry field that is preserved on a completion item between
-	 *
-	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
-	 *
-	 * (#CompletionResolveRequest)
-	 *
-	 * @return
-	 *     The data
-	 */
-	public Object getData() {
-		return data;
-	}
+    /**
+     * An optional array of additional [text edits](#TextEdit) that are applied when
+     * 
+     * selecting this completion. Edits must not overlap with the main [edit](#CompletionItem.textEdit)
+     * 
+     * nor with themselves.
+     * 
+     * @return
+     *     The additionalTextEdits
+     */
+    public List<TextEdit> getAdditionalTextEdits() {
+        return additionalTextEdits;
+    }
+
+    /**
+     * An optional array of additional [text edits](#TextEdit) that are applied when
+     * 
+     * selecting this completion. Edits must not overlap with the main [edit](#CompletionItem.textEdit)
+     * 
+     * nor with themselves.
+     * 
+     * @param additionalTextEdits
+     *     The additionalTextEdits
+     */
+    public void setAdditionalTextEdits(List<TextEdit> additionalTextEdits) {
+        this.additionalTextEdits = additionalTextEdits;
+    }
+
+    public CompletionItem withAdditionalTextEdits(List<TextEdit> additionalTextEdits) {
+        this.additionalTextEdits = additionalTextEdits;
+        return this;
+    }
+
+    /**
+     * 
+     * @return
+     *     The command
+     */
+    public Command getCommand() {
+        return command;
+    }
+
+    /**
+     * 
+     * @param command
+     *     The command
+     */
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+
+    public CompletionItem withCommand(Command command) {
+        this.command = command;
+        return this;
+    }
+
+    /**
+     * An data entry field that is preserved on a completion item between
+     * 
+     * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
+     * 
+     * (#CompletionResolveRequest)
+     * 
+     * @return
+     *     The data
+     */
+    public Object getData() {
+        return data;
+    }
 
 	/**
 	 * An data entry field that is preserved on a completion item between
