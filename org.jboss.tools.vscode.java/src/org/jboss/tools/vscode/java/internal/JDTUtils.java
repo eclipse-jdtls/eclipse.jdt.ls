@@ -209,8 +209,9 @@ public final class JDTUtils {
 	 */
 	public static Range toRange(ICompilationUnit unit, int offset, int length) throws JavaModelException {
 		Range result = new Range();
-		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
-		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
+		final IBuffer buffer = unit.getBuffer();
+		int[] loc = JsonRpcHelpers.toLine(buffer, offset);
+		int[] endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
 
 		if (loc != null && endLoc != null) {
 			result.setStart(new Position().withLine(loc[0])

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -32,40 +34,56 @@ import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.langs.CompletionItem;
+import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.SignatureUtil;
+import org.jboss.tools.vscode.java.internal.TextEditConverter;
 
 /**
  * Utility to calculate the completion replacement string based on JDT Core
  * {@link CompletionProposal}. This class is based on the implementation of JDT
  * UI <code>AbstractJavaCompletionProposal</code> and its subclasses.
- * 
+ *
  * @author aboyko
  *
  * Copied from Flux project.
  *
  */
 public class CompletionProposalReplacementProvider {
-	
+
 	final private static char SPACE = ' ';
 	final private static char LPAREN = '(';
 	final private static char RPAREN = ')';
 	final private static char SEMICOLON = ';';
 	final private static char COMMA = ',';
-	
+
 	private ICompilationUnit compilationUnit;
 	private int offset;
 	private String prefix="";
 	private CompletionContext context;
 	private ImportRewrite importRewrite;
-		
+
 	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context ) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
-		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 	}
-	
-	public StringBuilder createReplacement(CompletionProposal proposal, char trigger, List<Integer> positions) {
+
+
+	/**
+	 * Updates the replacement and any additional replacement for the given item.
+	 *
+	 * @param proposal
+	 * @param item
+	 * @param trigger
+	 * @param positions
+	 */
+	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, List<Integer> positions) {
+
+		// reset importRewrite
+		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
+
 		StringBuilder completionBuffer = new StringBuilder();
 		if (isSupportingRequiredProposals(proposal)) {
 			CompletionProposal[] requiredProposals= proposal.getRequiredProposals();
@@ -83,74 +101,48 @@ public class CompletionProposalReplacementProvider {
 					 * In 3.3 we only support the above required proposals, see
 					 * CompletionProposal#getRequiredProposals()
 					 */
-					 Assert.isTrue(false);
+					Assert.isTrue(false);
 				}
 			}
 		}
 
-//			boolean isSmartTrigger= isSmartTrigger(trigger);
-			
-			appendReplacementString(completionBuffer, proposal, positions);
+		appendReplacementString(completionBuffer, proposal, positions);
+		item.setInsertText(completionBuffer.toString());
+		addImports(item);
+	}
 
-//			String replacement;
-//			if (isSmartTrigger || trigger == (char) 0) {
-//				int referenceOffset= offset - prefix.length() + completionBuffer.length();
-//				//add ; to the replacement string if replacement string do not end with a semicolon and the document do not already have a ; at the reference offset.
-//				if (trigger == ';'
-//					&& proposal.getCompletion()[proposal.getCompletion().length - 1] != ';'
-//					&& (referenceOffset >= compilationUnit.getBuffer()
-//							.getLength() || compilationUnit.getBuffer()
-//							.getChar(referenceOffset) != ';')) {
-//					completionBuffer.append(';');
-//				}
-//			} else {
-//				StringBuilder buffer= new StringBuilder(getReplacementString());
-//
-//				// fix for PR #5533. Assumes that no eating takes place.
-//				if ((getCursorPosition() > 0 && getCursorPosition() <= buffer.length() && buffer.charAt(getCursorPosition() - 1) != trigger)) {
-//					// insert trigger ';' for methods with parameter at the end of the replacement string and not at the cursor position.
-//					int length= getReplacementString().length();
-//					if (trigger == ';' && getCursorPosition() != length) {
-//						if (buffer.charAt(length - 1) != trigger) {
-//							buffer.insert(length, trigger);
-//						}
-//					} else {
-//						buffer.insert(getCursorPosition(), trigger);
-//						setCursorPosition(getCursorPosition() + 1);
-//					}
-//				}
-//
-//				replacement= buffer.toString();
-//				setReplacementString(replacement);
-//			}
-//
-//			// PR 47097
-//			if (isSmartTrigger) {
-//				// avoid inserting redundant semicolon when smart insert is enabled.
-//				if (!(trigger == ';' && (completionBuffer.charAt(completionBuffer.length() - 1) == ';' /*|| document.getChar(referenceOffset) == ';'*/))) { //$NON-NLS-1$
-//					handleSmartTrigger(trigger, offset - prefix.length() + completionBuffer.length());
-//				}
-//			}
-
-			return completionBuffer;
+	/**
+	 * Adds imports collected by importRewrite to item
+	 * @param item
+	 */
+	private void addImports(CompletionItem item) {
+		if(this.importRewrite != null ){
+			try {
+				TextEdit edit =  this.importRewrite.rewriteImports(new NullProgressMonitor());
+				TextEditConverter converter = new TextEditConverter(this.compilationUnit, edit);
+				item.setAdditionalTextEdits(converter.convert());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Error adding imports",e);
+			}
+		}
 	}
 
 	private boolean isSupportingRequiredProposals(CompletionProposal proposal) {
 		return proposal != null
 				&& (proposal.getKind() == CompletionProposal.METHOD_REF
-						|| proposal.getKind() == CompletionProposal.FIELD_REF
-						|| proposal.getKind() == CompletionProposal.TYPE_REF
-						|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal
-						.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION);
+				|| proposal.getKind() == CompletionProposal.FIELD_REF
+				|| proposal.getKind() == CompletionProposal.TYPE_REF
+				|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal
+				.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION);
 	}
-	
+
 	protected boolean hasArgumentList(CompletionProposal proposal) {
 		if (CompletionProposal.METHOD_NAME_REFERENCE == proposal.getKind())
 			return false;
 		char[] completion= proposal.getCompletion();
 		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == ')';
 	}
-	
+
 	private boolean isInJavadoc() {
 		return context.isInJavadoc();
 	}
@@ -169,7 +161,7 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		buffer.append(RPAREN);
-		
+
 		if (canAutomaticallyAppendSemicolon(proposal))
 			buffer.append(SEMICOLON);
 	}
@@ -181,9 +173,9 @@ public class CompletionProposalReplacementProvider {
 	private void appendMethodNameReplacement(StringBuilder buffer, CompletionProposal proposal) {
 		if (proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER) {
 			String coreCompletion= String.valueOf(proposal.getCompletion());
-//			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(getTextViewer().getDocument());
-//			String replacement= CodeFormatterUtil.format(CodeFormatter.K_EXPRESSION, coreCompletion, 0, lineDelimiter, fInvocationContext.getProject());
-//			buffer.append(replacement.substring(0, replacement.lastIndexOf('.') + 1));
+			//			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(getTextViewer().getDocument());
+			//			String replacement= CodeFormatterUtil.format(CodeFormatter.K_EXPRESSION, coreCompletion, 0, lineDelimiter, fInvocationContext.getProject());
+			//			buffer.append(replacement.substring(0, replacement.lastIndexOf('.') + 1));
 			buffer.append(coreCompletion);
 		}
 
@@ -205,7 +197,7 @@ public class CompletionProposalReplacementProvider {
 			}
 
 			char[] argument = parameterNames[i];
-			
+
 			positions.add(buffer.length());
 			positions.add(argument.length);
 			buffer.append("{{");
@@ -213,17 +205,17 @@ public class CompletionProposalReplacementProvider {
 			buffer.append("}}");
 		}
 	}
-	
+
 	private final boolean canAutomaticallyAppendSemicolon(CompletionProposal proposal) {
 		return !proposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(proposal.getSignature()));
 	}
-	
+
 	private StringBuilder appendRequiredType(StringBuilder buffer, CompletionProposal typeProposal, char trigger, List<Integer> positions) {
-		
+
 		appendReplacementString(buffer, typeProposal, positions);
-		
+
 		if (compilationUnit == null /*|| getContext() != null && getContext().isInJavadoc()*/) {
-			return buffer; 
+			return buffer;
 		}
 
 		IJavaProject project= compilationUnit.getJavaProject();
@@ -249,7 +241,7 @@ public class CompletionProposalReplacementProvider {
 		}
 		return buffer;
 	}
-	
+
 	private final boolean shouldProposeGenerics(IJavaProject project) {
 		String sourceVersion;
 		if (project != null)
@@ -259,7 +251,7 @@ public class CompletionProposalReplacementProvider {
 
 		return !isVersionLessThan(sourceVersion, JavaCore.VERSION_1_5);
 	}
-	
+
 	public static boolean isVersionLessThan(String version1, String version2) {
 		if (JavaCore.VERSION_CLDC_1_1.equals(version1)) {
 			version1= JavaCore.VERSION_1_1 + 'a';
@@ -269,26 +261,26 @@ public class CompletionProposalReplacementProvider {
 		}
 		return version1.compareTo(version2) < 0;
 	}
-	
+
 	private IJavaElement resolveJavaElement(IJavaProject project, CompletionProposal proposal) throws JavaModelException {
 		char[] signature= proposal.getSignature();
 		String typeName= SignatureUtil.stripSignatureToFQN(String.valueOf(signature));
 		return project.findType(typeName);
 	}
-	
+
 	private String[] computeTypeArgumentProposals(CompletionProposal proposal) {
 		try {
 			IType type = (IType) resolveJavaElement(
 					compilationUnit.getJavaProject(), proposal);
 			if (type == null)
 				return new String[0];
-	
+
 			ITypeParameter[] parameters = type.getTypeParameters();
 			if (parameters.length == 0)
 				return new String[0];
-	
+
 			String[] arguments = new String[parameters.length];
-	
+
 			ITypeBinding expectedTypeBinding = getExpectedTypeForGenericParameters();
 			if (expectedTypeBinding != null && expectedTypeBinding.isParameterizedType()) {
 				// in this case, the type arguments we propose need to be compatible
@@ -319,7 +311,7 @@ public class CompletionProposalReplacementProvider {
 					}
 				}
 			}
-			
+
 			// for type arguments that are not mapped through to the expected type,
 			// take the lower bound of the type parameter
 			for (int i = 0; i < arguments.length; i++) {
@@ -348,7 +340,7 @@ public class CompletionProposalReplacementProvider {
 
 			if (binding.isUpperbound()) {
 				// replace the wildcard ? with the type parameter name to get "E extends Bound" instead of "? extends Bound"
-//				String contextName= name.replaceFirst("\\?", parameter.getElementName()); //$NON-NLS-1$
+				//				String contextName= name.replaceFirst("\\?", parameter.getElementName()); //$NON-NLS-1$
 				// upper bound - the upper bound is the bound itself
 				return binding.getBound().getName();
 			}
@@ -361,7 +353,7 @@ public class CompletionProposalReplacementProvider {
 		// not a wildcard but a type or type variable - this is unambigously the right thing to insert
 		return name;
 	}
-	
+
 	private StringBuilder appendParameterList(StringBuilder buffer, String[] typeArguments, List<Integer> positions, boolean onlyAppendArguments) {
 		if (typeArguments != null && typeArguments.length > 0) {
 			final char LESS= '<';
@@ -371,23 +363,23 @@ public class CompletionProposalReplacementProvider {
 			}
 			StringBuilder separator= new StringBuilder(3);
 			separator.append(COMMA);
-	
+
 			for (int i= 0; i != typeArguments.length; i++) {
 				if (i != 0)
 					buffer.append(separator);
-	
+
 				positions.add(buffer.length());
 				positions.add(typeArguments[i].length());
 				buffer.append(typeArguments[i]);
 			}
-	
+
 			if (!onlyAppendArguments)
 				buffer.append(GREATER);
 		}
 		return buffer;
 	}
 
-	
+
 	private boolean shouldAppendArguments(CompletionProposal proposal,
 			char trigger) {
 		/*
@@ -422,35 +414,35 @@ public class CompletionProposalReplacementProvider {
 		return ch != '<' && ch != '\n';
 
 	}
-	
+
 	private StringBuilder appendImportProposal(StringBuilder buffer, CompletionProposal proposal, int coreKind) {
 		int proposalKind= proposal.getKind();
 		String qualifiedTypeName= null;
 		char[] qualifiedType= null;
- 		if (proposalKind == CompletionProposal.TYPE_IMPORT) {
- 			qualifiedType= proposal.getSignature();
- 	 		qualifiedTypeName= String.valueOf(Signature.toCharArray(qualifiedType));
- 		} else if (proposalKind == CompletionProposal.METHOD_IMPORT || proposalKind == CompletionProposal.FIELD_IMPORT) {
-            qualifiedType= Signature.getTypeErasure(proposal.getDeclarationSignature());
-            qualifiedTypeName= String.valueOf(Signature.toCharArray(qualifiedType));
+		if (proposalKind == CompletionProposal.TYPE_IMPORT) {
+			qualifiedType= proposal.getSignature();
+			qualifiedTypeName= String.valueOf(Signature.toCharArray(qualifiedType));
+		} else if (proposalKind == CompletionProposal.METHOD_IMPORT || proposalKind == CompletionProposal.FIELD_IMPORT) {
+			qualifiedType= Signature.getTypeErasure(proposal.getDeclarationSignature());
+			qualifiedTypeName= String.valueOf(Signature.toCharArray(qualifiedType));
 		} else {
 			/*
 			 * In 3.3 we only support the above import proposals, see
 			 * CompletionProposal#getRequiredProposals()
 			 */
-			 Assert.isTrue(false);
+			Assert.isTrue(false);
 		}
 
- 		/* Add imports if the preference is on. */
- 		if (importRewrite != null) {
-	 		if (proposalKind == CompletionProposal.TYPE_IMPORT) {
-	 			String simpleType= importRewrite.addImport(qualifiedTypeName, null);
-		 		if (coreKind == CompletionProposal.METHOD_REF) {
-		 			buffer.append(simpleType);
-		 			buffer.append(',');
-		 			return buffer;
-		 		}
- 			} else {
+		/* Add imports if the preference is on. */
+		if (importRewrite != null) {
+			if (proposalKind == CompletionProposal.TYPE_IMPORT) {
+				String simpleType= importRewrite.addImport(qualifiedTypeName, null);
+				if (coreKind == CompletionProposal.METHOD_REF) {
+					buffer.append(simpleType);
+					buffer.append(',');
+					return buffer;
+				}
+			} else {
 				String res= importRewrite.addStaticImport(qualifiedTypeName, String.valueOf(proposal.getName()), proposalKind == CompletionProposal.FIELD_IMPORT, null);
 				int dot= res.lastIndexOf('.');
 				if (dot != -1) {
@@ -459,8 +451,8 @@ public class CompletionProposalReplacementProvider {
 					return buffer;
 				}
 			}
-	 		return buffer; //$NON-NLS-1$
-	 	}
+			return buffer;
+		}
 
 		// Case where we don't have an import rewrite (see allowAddingImports)
 
@@ -468,7 +460,7 @@ public class CompletionProposalReplacementProvider {
 			/* No imports for implicit imports. */
 
 			if (proposal.getKind() == CompletionProposal.TYPE_IMPORT && coreKind == CompletionProposal.FIELD_REF)
-				return buffer; //$NON-NLS-1$
+				return buffer;
 			qualifiedTypeName= String.valueOf(Signature.getSignatureSimpleName(qualifiedType));
 		}
 		buffer.append(qualifiedTypeName);
@@ -488,7 +480,7 @@ public class CompletionProposalReplacementProvider {
 		String mainTypeName= concatenateName(packageName, typeName);
 		return qualifier.equals(mainTypeName);
 	}
-	
+
 	private static String concatenateName(String name1, String name2) {
 		StringBuilder buf= new StringBuilder();
 		if (name1 != null && name1.length() > 0) {
@@ -502,7 +494,7 @@ public class CompletionProposalReplacementProvider {
 		}
 		return buf.toString();
 	}
-	
+
 	private ITypeBinding getExpectedTypeForGenericParameters() {
 		char[][] chKeys= context.getExpectedTypesKeys();
 		if (chKeys == null || chKeys.length == 0)
@@ -518,7 +510,7 @@ public class CompletionProposalReplacementProvider {
 		parser.setResolveBindings(true);
 		parser.setStatementsRecovery(true);
 
-		final Map<String, IBinding> bindings= new HashMap<String, IBinding>();
+		final Map<String, IBinding> bindings= new HashMap<>();
 		ASTRequestor requestor= new ASTRequestor() {
 			@Override
 			public void acceptBinding(String bindingKey, IBinding binding) {
@@ -580,12 +572,12 @@ public class CompletionProposalReplacementProvider {
 		if (replacement.indexOf('.') == -1) {
 			if (isInJavadoc())
 				return SignatureUtil.getSimpleTypeName(proposal); // don't use
-																	// the
-																	// braces
-																	// added for
-																	// javadoc
-																	// link
-																	// proposals
+			// the
+			// braces
+			// added for
+			// javadoc
+			// link
+			// proposals
 			return replacement;
 		}
 
@@ -605,6 +597,7 @@ public class CompletionProposalReplacementProvider {
 			return Signature.getSimpleName(qualifiedTypeName);
 		}
 
+
 		/* Default: use the fully qualified type name. */
 		return qualifiedTypeName;
 	}
@@ -621,15 +614,15 @@ public class CompletionProposalReplacementProvider {
 		 * in static imports.
 		 */
 		return last == ';' || last == '.';
-	}		
-		
-	
-//	private boolean isSmartTrigger(char trigger) {
-//		return false;
-//	}
-//
-//	private void handleSmartTrigger(char trigger, int refrenceOffset) {
-//
-//	}
+	}
+
+
+	//	private boolean isSmartTrigger(char trigger) {
+	//		return false;
+	//	}
+	//
+	//	private void handleSmartTrigger(char trigger, int refrenceOffset) {
+	//
+	//	}
 
 }

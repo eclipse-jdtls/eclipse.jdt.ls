@@ -41,11 +41,11 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		final CompletionItem $ = new CompletionItem();
 		$.setKind(mapKind(proposal.getKind()));
 		Map<String, String> data = new HashMap<>();
+		// append data field so that resolve request can use it.
 		data.put(CompletionResolveHandler.DATA_FIELD_URI,unit.getResource().getLocationURI().toString());
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
-		StringBuilder replacement = this.proposalProvider.createReplacement(proposal,' ',new ArrayList<Integer>());
-		$.setInsertText(replacement.toString());
+		this.proposalProvider.updateReplacement(proposal,$, ' ',new ArrayList<Integer>());
 		$.setSortText(SortTextHelper.computeSortText(proposal));
 		proposals.add($);
 	}
