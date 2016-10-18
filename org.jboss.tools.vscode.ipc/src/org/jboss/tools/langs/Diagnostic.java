@@ -38,7 +38,7 @@ public class Diagnostic {
 	 */
 	@SerializedName("code")
 	@Expose
-	private Object code;
+	private Integer code;
 	/**
 	 * A human-readable string describing the source of this
 	 *
@@ -119,7 +119,7 @@ public class Diagnostic {
 	 * @return
 	 *     The code
 	 */
-	public Object getCode() {
+	public Integer getCode() {
 		return code;
 	}
 
@@ -129,11 +129,11 @@ public class Diagnostic {
 	 * @param code
 	 *     The code
 	 */
-	public void setCode(Object code) {
+	public void setCode(Integer code) {
 		this.code = code;
 	}
 
-	public Diagnostic withCode(Object code) {
+	public Diagnostic withCode(Integer code) {
 		this.code = code;
 		return this;
 	}

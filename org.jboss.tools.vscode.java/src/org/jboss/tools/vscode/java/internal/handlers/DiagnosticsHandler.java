@@ -69,7 +69,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			Diagnostic diag = new Diagnostic();
 			diag.setSource("Java");
 			diag.setMessage(problem.getMessage());
-			diag.setCode(problem.getID());
+			diag.setCode(Integer.valueOf(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(problem));
 			array.add(diag);
