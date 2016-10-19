@@ -180,13 +180,12 @@ public class DocumentLifeCycleHandler {
 				Range range = changeEvent.getRange();
 
 				int startOffset = document.getLineOffset(range.getStart().getLine().intValue()) + range.getStart().getCharacter().intValue();
-				int endOffset = document.getLineOffset(range.getEnd().getLine().intValue()) + range.getEnd().getCharacter().intValue();
-				int length = endOffset - startOffset;
+				int length = changeEvent.getRangeLength().intValue();
 
 				TextEdit edit = null;
 				if (length == 0) {
 					edit = new InsertEdit(startOffset, changeEvent.getText());
-				} else if (changeEvent.getText().length() == 0) {
+				} else if (changeEvent.getText().isEmpty()){
 					edit = new DeleteEdit(startOffset, length);
 				} else {
 					edit = new ReplaceEdit(startOffset, length, changeEvent.getText());
