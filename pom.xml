@@ -41,7 +41,7 @@
 							<goals>
 								<goal>copy</goal>
 							</goals>
-							<phase>generate-resources</phase>
+							<phase>validate</phase>
 						</execution>
 					</executions>
 					<configuration>
