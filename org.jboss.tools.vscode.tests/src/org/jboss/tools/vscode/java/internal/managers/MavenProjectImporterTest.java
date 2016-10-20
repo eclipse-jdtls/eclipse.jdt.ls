@@ -28,7 +28,7 @@ public class MavenProjectImporterTest extends AbstractProjectsManagerBasedTest {
 	public void importSimpleJavaProject() throws Exception {
 		IProject project = importProject("maven/salut");
 		assertIsJavaProject(project);
-		assertIsJavaProject(project);
+		assertIsMavenProject(project);
 		assertEquals("1.7", getJavaSourceLevel(project));
 	}
 
