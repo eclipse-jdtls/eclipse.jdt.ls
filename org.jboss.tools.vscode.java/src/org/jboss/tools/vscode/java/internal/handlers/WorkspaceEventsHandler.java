@@ -19,14 +19,13 @@ import org.jboss.tools.langs.FileEvent;
 import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.NotificationMessage;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager.CHANGE_TYPE;
 
-public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFilesParams, Object> {
+public class WorkspaceEventsHandler implements NotificationHandler<DidChangeWatchedFilesParams, Object> {
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
@@ -55,7 +54,7 @@ public class WorkspaceEventsHandler implements RequestHandler<DidChangeWatchedFi
 	}
 
 	@Override
-	public Object handle(DidChangeWatchedFilesParams param, CancelMonitor cm) {
+	public Object handle(DidChangeWatchedFilesParams param) {
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());

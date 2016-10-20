@@ -127,7 +127,7 @@ public class JavaClientConnection extends LSPServer{
 		$.add(new CompletionHandler());
 		$.add(new CompletionResolveHandler());
 		$.add(new NavigateToDefinitionHandler());
-		$.add(new WorkspaceEventsHandler(this.projectsManager,this));
+
 		$.add(new DocumentSymbolHandler());
 		$.add(new WorkspaceSymbolHandler());
 		$.add(new ReferencesHandler());
@@ -154,6 +154,7 @@ public class JavaClientConnection extends LSPServer{
 		$.add(dh.new OpenHandler());
 		$.add(dh.new SaveHandler());
 		$.add(new ExitHandler());
+		$.add(new WorkspaceEventsHandler(this.projectsManager,this));
 		return $;
 	}
 
