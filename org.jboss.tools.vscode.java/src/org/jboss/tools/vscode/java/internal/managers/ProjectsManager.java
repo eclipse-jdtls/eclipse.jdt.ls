@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
+import static org.jboss.tools.vscode.java.internal.ProjectUtils.isJavaProject;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,7 +32,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.jdt.core.JavaCore;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
 
@@ -42,19 +43,14 @@ public class ProjectsManager {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
 			File projectRoot = (projectName == null)?null:new File(projectName);
+
 			IProjectImporter importer = getImporter(projectRoot, subMonitor.split(20));
 			if (importer == null) {
 				return StatusFactory.UNSUPPORTED_PROJECT;
 			}
 			List<IProject> projects = importer.importToWorkspace(subMonitor.split(80));
 
-			List<IProject> javaProjects = projects.stream().filter(p -> {
-				try {
-					return p.hasNature(JavaCore.NATURE_ID);
-				} catch (CoreException e) {
-					return false;
-				}
-			}).collect(Collectors.toList());
+			List<IProject> javaProjects = projects.stream().filter(p -> isJavaProject(p)).collect(Collectors.toList());
 
 			JavaLanguageServerPlugin.logInfo("Number of created projects " + javaProjects.size());
 			resultingProjects.addAll(javaProjects);
