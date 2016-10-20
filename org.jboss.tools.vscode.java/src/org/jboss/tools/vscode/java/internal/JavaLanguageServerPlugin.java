@@ -25,6 +25,11 @@ import org.osgi.framework.BundleContext;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
 
+	/**
+	* Source string send to clients for messages such as diagnostics.
+	**/
+	public static final String SERVER_SOURCE_ID = "Java";
+
 	public static final String PLUGIN_ID = "org.jboss.tools.vscode.java";
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
