@@ -6,15 +6,17 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
-Require-Bundle: org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
+Require-Bundle: org.jboss.tools.vscode.java,
+ org.jboss.tools.vscode.ipc;bundle-version="1.0.0",
  org.eclipse.core.runtime;bundle-version="3.12.0",
  org.eclipse.core.resources,
  org.eclipse.jdt.core,
  org.eclipse.text;bundle-version="3.6.0",
- org.eclipse.m2e.core,
- com.ibm.icu;bundle-version="56.1.0",
  org.eclipse.core.filebuffers;bundle-version="3.6.0",
- org.junit;bundle-version="4.12.0",
+ org.eclipse.m2e.core,
  org.eclipse.m2e.maven.runtime,
+ org.eclipse.m2e.jdt,
+ com.ibm.icu;bundle-version="56.1.0",
+ org.junit;bundle-version="4.12.0",
  org.mockito.mockito-all;bundle-version="1.9.5",
- org.jboss.tools.vscode.java
+ org.apache.commons.io;bundle-version="2.2.0"

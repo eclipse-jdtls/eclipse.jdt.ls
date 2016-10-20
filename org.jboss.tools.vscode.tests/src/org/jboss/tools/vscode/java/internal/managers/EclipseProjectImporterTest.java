@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
@@ -22,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 
-public class EclipseProjectImporterTest {
+public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
 
 	private EclipseProjectImporter importer;
 
@@ -30,6 +33,28 @@ public class EclipseProjectImporterTest {
 	public void setUp() {
 		importer = new EclipseProjectImporter();
 	}
+
+	@Test
+	public void importSimpleJavaProject() throws Exception {
+		IProject project = importProject("eclipse/hello");
+		assertIsJavaProject(project);
+	}
+
+	@Test
+	public void importMultipleJavaProject() throws Exception {
+		List<IProject> projects = importProjects("eclipse/multi");
+		assertEquals(2, projects.size());
+
+		IProject bar = projects.get(0);
+		assertIsJavaProject(bar);
+		assertEquals("bar", bar.getName());
+
+		IProject foo = projects.get(1);
+		assertEquals("foo", foo.getName());
+		assertIsJavaProject(foo);
+	}
+
+
 
 	@Test
 	public void testFindUniqueProject() throws Exception {
@@ -78,7 +103,7 @@ public class EclipseProjectImporterTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void after() {
 		importer = null;
 	}
 
