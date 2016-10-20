@@ -67,7 +67,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		List<Diagnostic> array = new ArrayList<>();
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
-			diag.setSource("Java");
+			diag.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 			diag.setMessage(problem.getMessage());
 			diag.setCode(Integer.valueOf(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));

@@ -14,7 +14,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -59,6 +62,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 	@Override
 	public InitializeResult handle(InitializeParams param, CancelMonitor cm) {
 		triggerInitialization(param.getRootPath());
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection), IResourceChangeEvent.POST_BUILD);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
@@ -83,6 +87,11 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 			protected IStatus run(IProgressMonitor monitor) {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				IStatus status = projectsManager.createProject(root, new ArrayList<IProject>(), new ServerStatusMonitor());
+				try {
+					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Buid failed ", e);
+				}
 				if (status.isOK()) {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} else {
