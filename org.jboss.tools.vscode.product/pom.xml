@@ -121,6 +121,9 @@
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
+			<properties>
+				<vscode.location>${env.PWD}</vscode.location>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -136,7 +139,7 @@
 								<configuration>
 									<target>
 										<delete>
-											<fileset dir="${env.PWD}/server" />
+											<fileset dir="${vscode.location}/server" />
 										</delete>
 									</target>
 								</configuration>
@@ -154,7 +157,7 @@
 									<goal>copy-resources</goal>
 								</goals>
 								<configuration>
-									<outputDirectory>${env.PWD}/server</outputDirectory>
+									<outputDirectory>${vscode.location}/server</outputDirectory>
 									<resources>
 										<resource>
 											<directory>${basedir}/target/repository</directory>
