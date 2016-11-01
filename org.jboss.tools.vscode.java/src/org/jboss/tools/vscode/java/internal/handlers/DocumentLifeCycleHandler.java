@@ -136,13 +136,13 @@ public class DocumentLifeCycleHandler {
 
 	private void handleOpen(DidOpenTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		if (unit == null) {
+		if (unit == null || unit.getResource() == null) {
 			return;
 		}
 		try {
 			// The open event can happen before the workspace element added event when a new file is added.
 			// checks if the underlying resource exists and refreshes to sync the newly created file.
-			if(unit.getResource() != null && !unit.getResource().isAccessible()){
+			if(!unit.getResource().isAccessible()){
 				try {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 				} catch (CoreException e) {
@@ -150,12 +150,13 @@ public class DocumentLifeCycleHandler {
 				}
 			}
 
+			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
 			IBuffer buffer = unit.getBuffer();
-			if(buffer != null)
+			if(buffer != null) {
 				buffer.setContents(params.getTextDocument().getText());
+			}
 
 			// TODO: wire up cancellation.
-			unit.becomeWorkingCopy(new DiagnosticsHandler(connection, unit.getUnderlyingResource()), null);
 			unit.reconcile();
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Creating working copy ",e);

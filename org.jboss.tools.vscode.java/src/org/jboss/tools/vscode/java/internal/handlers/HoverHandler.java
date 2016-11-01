@@ -42,7 +42,7 @@ public class HoverHandler implements RequestHandler<TextDocumentPositionParams, 
 		if (hover != null && hover.length() > 0) {
 			return $.withContents(hover);
 		}
-		return $;
+		return $.withContents("");
 	}
 
 

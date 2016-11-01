@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -50,7 +49,6 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column) {
 		if (unit == null) return Collections.emptyList();
 		final List<CompletionItem> proposals = new ArrayList<>();
-		final CompletionContext[] completionContextParam = new CompletionContext[] { null };
 		try {
 			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals);
 			// Allow completions for unresolved types - since 3.3
@@ -71,7 +69,7 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 
 			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector, new NullProgressMonitor());
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem with codeComplete for" +  unit.getElementName(), e);
+			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  unit.getElementName(), e);
 		}
 		return proposals;
 	}

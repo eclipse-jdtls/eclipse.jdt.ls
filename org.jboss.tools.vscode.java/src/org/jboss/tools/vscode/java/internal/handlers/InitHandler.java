@@ -90,7 +90,7 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 				try {
 					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Buid failed ", e);
+					JavaLanguageServerPlugin.logException("Build failed ", e);
 				}
 				if (status.isOK()) {
 					connection.sendStatus(ServiceStatus.Started, "Ready");

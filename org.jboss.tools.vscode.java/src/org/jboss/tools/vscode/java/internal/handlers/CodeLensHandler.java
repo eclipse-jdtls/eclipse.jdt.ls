@@ -107,6 +107,10 @@ public class CodeLensHandler {
 	}
 
 	private List<Location> findReferences(IJavaElement element) throws JavaModelException, CoreException {
+		if (element == null) {
+			return Collections.emptyList();
+		}
+
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
 		final List<Location> result = new ArrayList<>();
 		SearchEngine engine = new SearchEngine();
@@ -135,7 +139,7 @@ public class CodeLensHandler {
 	}
 
 	private List<CodeLens> getCodeLensSymbols(ICompilationUnit unit) {
-		if(unit == null ) return Collections.emptyList();
+		if(unit == null || !unit.getResource().exists()) return Collections.emptyList();
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);

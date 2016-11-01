@@ -79,7 +79,7 @@ public class TransportMessage {
 
 		Map<String, String> headers = new LinkedHashMap<>();
 
-		String contentLengthValue = null;
+		String contentLengthValue = "0";
 		LineReader reader = new LineReader(inputStream);
 		while (true) { // read headers
 			String line = reader.readLine(charset);
