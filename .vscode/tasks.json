@@ -9,7 +9,8 @@
     "tasks": [
         {
             "taskName": "watch",
-            "args": ["-B", "-Dvscode.location=${cwd}/../vscode-java","-Dmaven.test.skip=true","-Pvscode-build", "fizzed-watcher:run"]
+            "args": ["-B", "-Dvscode.location=${cwd}/../vscode-java","-Dmaven.test.skip=true","-Pvscode-build", "fizzed-watcher:run"],
+            "isWatching": true
         },
         {
             "taskName": "verify",
