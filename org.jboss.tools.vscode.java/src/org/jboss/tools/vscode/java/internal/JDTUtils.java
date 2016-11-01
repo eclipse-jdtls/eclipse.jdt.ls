@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.core.JavaModelException;
 import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.Position;
@@ -55,12 +56,16 @@ public final class JDTUtils {
 		}
 		if (path != null) {
 			IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(Path.fromOSString(path));
+			//Check if this is a Java project. In some cases project import fails 
+			// to recognize project type and creates a general project
+			if(!JavaProject.hasJavaNature(resource.getProject())){
+				return null;
+			}
 			IJavaElement element = JavaCore.create(resource);
 			if (element instanceof ICompilationUnit) {
 				return (ICompilationUnit)element;
 			}
 		}
-
 		return null;
 	}
 
@@ -87,7 +92,6 @@ public final class JDTUtils {
 			return cf;
 		}
 		return null;
-
 	}
 
 	/**
