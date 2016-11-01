@@ -85,7 +85,7 @@ public class CodeLensHandler {
 				return lens;
 			}
 			Map<String, Object> position = (Map<String, Object>) data.get(1);
-			IJavaElement element = findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
+			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
 			List<Location> locations = findReferences(element);
 			int nReferences = locations.size();
 			lens.setCommand(new Command().withTitle(nReferences == 1 ? "1 reference" : nReferences + " references")
@@ -95,15 +95,6 @@ public class CodeLensHandler {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
 		}
 		return lens;
-	}
-
-	private IJavaElement findElementAtSelection(ICompilationUnit unit, int line, int column) throws JavaModelException {
-		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
-
-		if (elements == null || elements.length != 1)
-			return null;
-		return elements[0];
-
 	}
 
 	private List<Location> findReferences(IJavaElement element) throws JavaModelException, CoreException {

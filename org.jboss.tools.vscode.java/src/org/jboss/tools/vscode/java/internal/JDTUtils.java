@@ -246,4 +246,23 @@ public final class JDTUtils {
 		return uri.replaceFirst("file:/([^/])", "file:///$1");
 	}
 
+	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
+		IJavaElement[] elements = findElementsAtSelection(unit, line, column);
+		if (elements != null && elements.length == 1) {
+			return elements[0];
+		}
+		return null;
+	}
+
+	public static IJavaElement[] findElementsAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
+		if (unit == null) {
+			return null;
+		}
+		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+		if (offset > -1) {
+			return unit.codeSelect(offset, 0);
+		}
+		return null;
+	}
+
 }

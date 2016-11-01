@@ -23,7 +23,6 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
-import org.jboss.tools.vscode.java.internal.handlers.JsonRpcHelpers;
 import org.jboss.tools.vscode.java.internal.javadoc.JavadocContentAccess;
 
 public class HoverInfoProvider {
@@ -35,7 +34,7 @@ public class HoverInfoProvider {
 
 	public String computeHover(int line, int column) {
 		try {
-			IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(),line,column),0);
+			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column);
 			if(elements == null || elements.length == 0) {
 				return null;
 			}

@@ -67,7 +67,10 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 
 			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
 
-			unit.codeComplete(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), collector, new NullProgressMonitor());
+			int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+			if (offset >-1) {
+				unit.codeComplete(offset, collector, new NullProgressMonitor());
+			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  unit.getElementName(), e);
 		}

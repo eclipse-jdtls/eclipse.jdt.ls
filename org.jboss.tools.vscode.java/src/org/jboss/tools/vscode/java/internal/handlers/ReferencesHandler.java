@@ -21,7 +21,6 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
@@ -49,17 +48,6 @@ public class ReferencesHandler implements RequestHandler<ReferenceParams, List<L
 		return LSPMethods.DOCUMENT_REFERENCES.getMethod().equals(request);
 	}
 
-
-	private IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
-		if(unit == null ) return null;
-		IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
-
-		if (elements == null || elements.length != 1)
-			return null;
-		return elements[0];
-
-	}
-
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
@@ -70,7 +58,7 @@ public class ReferencesHandler implements RequestHandler<ReferenceParams, List<L
 		SearchEngine engine = new SearchEngine();
 
 		try {
-			IJavaElement elementToSearch = findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
+			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
 					param.getPosition().getLine().intValue(),
 					param.getPosition().getCharacter().intValue());
 

@@ -35,13 +35,11 @@ public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentP
 
 	private Location computeDefinitonNavigation(ITypeRoot unit, int line, int column) {
 		try {
-			IJavaElement[] elements = unit.codeSelect(JsonRpcHelpers.toOffset(unit.getBuffer(), line, column), 0);
-
-			if (elements == null || elements.length != 1)
+			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column);
+			if (element == null) {
 				return null;
-			IJavaElement element = elements[0];
-			ICompilationUnit compilationUnit = (ICompilationUnit) element
-					.getAncestor(IJavaElement.COMPILATION_UNIT);
+			}
+			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)  ) {
 				return JDTUtils.toLocation(element);
