@@ -13,6 +13,11 @@
             "isBuildCommand": true
         },
         {
+            "taskName": "verify",
+            "args": ["-B", "clean","verify"],
+            "isBuildCommand": true
+        },
+        {
             "taskName": "test",
             "args": ["-B", "test"],
             "isTestCommand": true
