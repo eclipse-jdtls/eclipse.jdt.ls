@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.tools.langs.LogMessageParams;
+import org.jboss.tools.langs.ShowMessageParams;
 import org.jboss.tools.langs.base.LSPMethods;
 import org.jboss.tools.langs.base.LSPServer;
 import org.jboss.tools.langs.base.NotificationMessage;
@@ -82,6 +83,21 @@ public class JavaClientConnection extends LSPServer{
 		NotificationMessage<LogMessageParams> message= new NotificationMessage<>();
 		message.setMethod(LSPMethods.WINDOW_LOGMESSAGE.getMethod());
 		message.setParams(new LogMessageParams().withMessage(msg)
+				.withType(type.getType()));
+		send(message);
+	}
+
+	/**
+	 * Sends the message to the client to be displayed on a UI element.
+	 *
+	 * @param type
+	 * @param msg
+	 */
+	public void showNotificationMessage(MessageType type, String msg){
+		if(msg == null ) return;
+		NotificationMessage<ShowMessageParams> message = new NotificationMessage<>();
+		message.setMethod(LSPMethods.WINDOW_SHOW_MESSAGE.getMethod());
+		message.setParams(new ShowMessageParams().withMessage(msg)
 				.withType(type.getType()));
 		send(message);
 	}

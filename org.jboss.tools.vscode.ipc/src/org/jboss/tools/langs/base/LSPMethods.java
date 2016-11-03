@@ -33,6 +33,7 @@ import org.jboss.tools.langs.Location;
 import org.jboss.tools.langs.LogMessageParams;
 import org.jboss.tools.langs.PublishDiagnosticsParams;
 import org.jboss.tools.langs.ReferenceParams;
+import org.jboss.tools.langs.ShowMessageParams;
 import org.jboss.tools.langs.TextDocumentIdentifier;
 import org.jboss.tools.langs.TextDocumentPositionParams;
 import org.jboss.tools.langs.WorkspaceSymbolParams;
@@ -62,6 +63,7 @@ public enum LSPMethods {
 	WORKSPACE_CHANGED_FILES("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.class, Object.class),
 	WORKSPACE_SYMBOL("workspace/symbol", WorkspaceSymbolParams.class, List.class),
 	WINDOW_LOGMESSAGE("window/logMessage",LogMessageParams.class,Object.class),
+	WINDOW_SHOW_MESSAGE("window/showMessage",ShowMessageParams.class,Object.class),
 	//cancel is a built-in method
 	CANCEL("$/cancelRequest",CancelParams.class, Object.class),
 	//extensions
