@@ -45,7 +45,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		data.put(CompletionResolveHandler.DATA_FIELD_URI,unit.getResource().getLocationURI().toString());
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
-		this.proposalProvider.updateReplacement(proposal,$, ' ',new ArrayList<Integer>());
+		this.proposalProvider.updateReplacement(proposal,$, '\0',new ArrayList<Integer>());
 		$.setSortText(SortTextHelper.computeSortText(proposal));
 		proposals.add($);
 	}
