@@ -33,6 +33,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	public CompletionProposalRequestor( ICompilationUnit aUnit, List<CompletionItem> proposals) {
 		this.proposals = proposals;
 		this.unit = aUnit;
+		setRequireExtendedContext(true);
 	}
 
 	@Override
@@ -118,6 +119,14 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		//				  Color = 16,
 		//				  File = 17,
 		//				  Reference = 18
+	}
+
+	@Override
+	public void setIgnored(int completionProposalKind, boolean ignore) {
+		super.setIgnored(completionProposalKind, ignore);
+		if (completionProposalKind == CompletionProposal.METHOD_DECLARATION && !ignore) {
+			setRequireExtendedContext(true);
+		}
 	}
 
 

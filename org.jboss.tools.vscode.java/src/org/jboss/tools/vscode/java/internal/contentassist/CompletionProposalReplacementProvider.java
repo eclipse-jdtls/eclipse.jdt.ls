@@ -89,7 +89,7 @@ public class CompletionProposalReplacementProvider {
 			CompletionProposal[] requiredProposals= proposal.getRequiredProposals();
 			for (int i= 0; requiredProposals != null &&  i < requiredProposals.length; i++) {
 				if (requiredProposals[i].getKind() == CompletionProposal.TYPE_REF) {
-					appendRequiredType(completionBuffer, requiredProposals[i], trigger, positions);
+					appendRequiredType(completionBuffer, requiredProposals[i], trigger, positions, proposal.canUseDiamond(context));
 				} else if (requiredProposals[i].getKind() == CompletionProposal.TYPE_IMPORT) {
 					appendImportProposal(completionBuffer, requiredProposals[i], proposal.getKind());
 				} else if (requiredProposals[i].getKind() == CompletionProposal.METHOD_IMPORT) {
@@ -210,7 +210,7 @@ public class CompletionProposalReplacementProvider {
 		return !proposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(proposal.getSignature()));
 	}
 
-	private StringBuilder appendRequiredType(StringBuilder buffer, CompletionProposal typeProposal, char trigger, List<Integer> positions) {
+	private StringBuilder appendRequiredType(StringBuilder buffer, CompletionProposal typeProposal, char trigger, List<Integer> positions, boolean canUseDiamond) {
 
 		appendReplacementString(buffer, typeProposal, positions);
 
@@ -237,7 +237,10 @@ public class CompletionProposalReplacementProvider {
 			onlyAppendArguments= false;
 		}
 		if (onlyAppendArguments || shouldAppendArguments(typeProposal, trigger)) {
-			appendParameterList(buffer, computeTypeArgumentProposals(typeProposal), positions, onlyAppendArguments);
+			if (canUseDiamond){
+				buffer.append("<>"); //$NON-NLS-1$
+			} else
+				appendParameterList(buffer, computeTypeArgumentProposals(typeProposal), positions, onlyAppendArguments);
 		}
 		return buffer;
 	}
