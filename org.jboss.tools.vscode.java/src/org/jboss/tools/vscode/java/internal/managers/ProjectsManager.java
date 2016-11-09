@@ -32,7 +32,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -79,27 +78,28 @@ public class ProjectsManager {
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
-	public void fileChanged(String uri, CHANGE_TYPE changeType) {
-		if (uri == null) {
+	public void fileChanged(String uriString, CHANGE_TYPE changeType) {
+		if (uriString == null) {
 			return;
 		}
-		String path = null;
+		URI path;
 		try {
-			path = new URI(uri).getPath();
+			path = new URI(uriString);
 		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uri, e);
-		}
-		IFile resource = getWorkspaceRoot().getFileForLocation(Path.fromOSString(path));
-		if (resource == null) {
+			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 			return;
 		}
-		IResource toRefresh = resource;
+		IFile[] resources = getWorkspaceRoot().findFilesForLocationURI(path);
+		if (resources.length < 1) {
+			return;
+		}
+		IResource resource = resources[0];
 		try {
 			if (changeType == CHANGE_TYPE.DELETED) {
-				toRefresh = resource.getParent();
+				resource = resource.getParent();
 			}
-			if (toRefresh != null) {
-				toRefresh.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+			if (resource != null) {
+				resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
