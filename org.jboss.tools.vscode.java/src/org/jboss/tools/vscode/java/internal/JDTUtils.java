@@ -83,12 +83,14 @@ public final class JDTUtils {
 		IFile resource= null;
 		if (uri != null) {
 			resource = findFile(uri);
-			if(resource == null || !ProjectUtils.isJavaProject(resource.getProject())){
-				return null;
-			}
-			IJavaElement element = JavaCore.create(resource);
-			if (element instanceof ICompilationUnit) {
-				return (ICompilationUnit)element;
+			if(resource != null){
+				if(!ProjectUtils.isJavaProject(resource.getProject())){
+					return null;
+				}
+				IJavaElement element = JavaCore.create(resource);
+				if (element instanceof ICompilationUnit) {
+					return (ICompilationUnit)element;
+				}
 			}
 		}
 		if (resource == null) {
