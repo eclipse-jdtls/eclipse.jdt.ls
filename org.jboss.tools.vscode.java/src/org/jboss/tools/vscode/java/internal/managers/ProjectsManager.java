@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -39,6 +38,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
 
@@ -89,11 +89,10 @@ public class ProjectsManager {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 			return;
 		}
-		IFile[] resources = getWorkspaceRoot().findFilesForLocationURI(path);
-		if (resources.length < 1) {
+		IResource resource = JDTUtils.findFile(path);
+		if (resource == null) {
 			return;
 		}
-		IResource resource = resources[0];
 		try {
 			if (changeType == CHANGE_TYPE.DELETED) {
 				resource = resource.getParent();

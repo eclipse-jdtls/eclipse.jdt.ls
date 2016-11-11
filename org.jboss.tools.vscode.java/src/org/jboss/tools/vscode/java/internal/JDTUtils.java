@@ -82,16 +82,13 @@ public final class JDTUtils {
 
 		IFile resource= null;
 		if (uri != null) {
-			IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
-			if (resources.length > 0) {
-				resource = resources[0];
-				if(resource == null || !ProjectUtils.isJavaProject(resource.getProject())){
-					return null;
-				}
-				IJavaElement element = JavaCore.create(resource);
-				if (element instanceof ICompilationUnit) {
-					return (ICompilationUnit)element;
-				}
+			resource = findFile(uri);
+			if(resource == null || !ProjectUtils.isJavaProject(resource.getProject())){
+				return null;
+			}
+			IJavaElement element = JavaCore.create(resource);
+			if (element instanceof ICompilationUnit) {
+				return (ICompilationUnit)element;
 			}
 		}
 		if (resource == null) {
@@ -403,6 +400,30 @@ public final class JDTUtils {
 		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
 		if (offset > -1) {
 			return unit.codeSelect(offset, 0);
+		}
+		return null;
+	}
+
+	public static IFile findFile(URI uri) {
+		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+		switch(resources.length) {
+		case 0:
+			return null;
+		case 1:
+			return resources[0];
+		default://several candidates if a linked resource was created before the real project was configured
+			for (IFile f : resources) {
+				//delete linked resource
+				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
+					try {
+						f.delete(true, null);
+					} catch (CoreException e) {
+						e.printStackTrace();
+					}
+				} else {
+					return f;
+				}
+			}
 		}
 		return null;
 	}
