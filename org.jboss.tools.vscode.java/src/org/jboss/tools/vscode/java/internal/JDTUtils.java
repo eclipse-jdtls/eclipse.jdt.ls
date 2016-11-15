@@ -414,6 +414,7 @@ public final class JDTUtils {
 		case 1:
 			return resources[0];
 		default://several candidates if a linked resource was created before the real project was configured
+			IFile file = null;
 			for (IFile f : resources) {
 				//delete linked resource
 				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
@@ -422,12 +423,14 @@ public final class JDTUtils {
 					} catch (CoreException e) {
 						e.printStackTrace();
 					}
-				} else {
-					return f;
+				}
+				//find closest project containing that file, in case of nested projects
+				if (file == null ||f.getProjectRelativePath().segmentCount() < file.getProjectRelativePath().segmentCount()) {
+					file = f;
 				}
 			}
+			return file;
 		}
-		return null;
 	}
 
 }
