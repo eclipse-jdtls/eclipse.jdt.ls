@@ -89,7 +89,7 @@ public abstract class LSPServer {
 				.setNameFormat("LSP Executor-%d")
 				.setDaemon(true)
 				.build();
-		executor = Executors.newCachedThreadPool(threadFactory);
+		executor = Executors.newSingleThreadExecutor(threadFactory);
 	}
 
 	public void send (Message message){
