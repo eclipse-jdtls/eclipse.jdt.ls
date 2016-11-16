@@ -14,29 +14,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.langs.DocumentSymbolParams;
-import org.jboss.tools.langs.SymbolInformation;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParams, List<SymbolInformation>>{
-
-
-	public DocumentSymbolHandler() {
-	}
-
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_SYMBOL.getMethod().equals(request);
-	}
+public class DocumentSymbolHandler {
 
 	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
@@ -72,67 +62,45 @@ public class DocumentSymbolHandler implements RequestHandler<DocumentSymbolParam
 		}
 	}
 
-	@Override
-	public List<SymbolInformation> handle(DocumentSymbolParams param, CancelMonitor cm) {
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-		if(unit == null )
-			return Collections.emptyList();
-		SymbolInformation[] elements  = this.getOutline(unit);
-		return Arrays.asList(elements);
+	CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
+		return CompletableFuture.supplyAsync(()->{
+			ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
+			if(unit == null )
+				return Collections.emptyList();
+			SymbolInformation[] elements  = this.getOutline(unit);
+			return Arrays.asList(elements);
+		});
 	}
 
-	public static int mapKind(IJavaElement element) {
-		//		/**
-		//		* A symbol kind.
-		//		*/
-		//		export enum SymbolKind {
-		//		  File = 1,
-		//		  Module = 2,
-		//		  Namespace = 3,
-		//		  Package = 4,
-		//		  Class = 5,
-		//		  Method = 6,
-		//		  Property = 7,
-		//		  Field = 8,
-		//		  Constructor = 9,
-		//		  Enum = 10,
-		//		  Interface = 11,
-		//		  Function = 12,
-		//		  Variable = 13,
-		//		  Constant = 14,
-		//		  String = 15,
-		//		  Number = 16,
-		//		  Boolean = 17,
-		//		  Array = 18,
-		//		}
+	public static SymbolKind mapKind(IJavaElement element) {
 		switch (element.getElementType()) {
 		case IJavaElement.ANNOTATION:
-			return 7; // TODO: find a better mapping
+			return SymbolKind.Property; // TODO: find a better mapping
 		case IJavaElement.CLASS_FILE:
 		case IJavaElement.COMPILATION_UNIT:
-			return 1;
+			return SymbolKind.File;
 		case IJavaElement.FIELD:
-			return 8;
+			return SymbolKind.Field;
 		case IJavaElement.IMPORT_CONTAINER:
 		case IJavaElement.IMPORT_DECLARATION:
-			return 2;
+			return SymbolKind.Module;
 		case IJavaElement.INITIALIZER:
-			return 9;
+			return SymbolKind.Constructor;
 		case IJavaElement.LOCAL_VARIABLE:
 		case IJavaElement.TYPE_PARAMETER:
-			return 13;
+			return SymbolKind.Variable;
 		case IJavaElement.METHOD:
-			return 12;
+			return SymbolKind.Function;
 		case IJavaElement.PACKAGE_DECLARATION:
-			return 3;
+			return SymbolKind.Package;
 		case IJavaElement.TYPE:
 			try {
-				return ( ((IType)element).isInterface() ? 11 : 5);
+				return ( ((IType)element).isInterface() ? SymbolKind.Interface : SymbolKind.Class);
 			} catch (JavaModelException e) {
-				return 5; //fallback
+				return SymbolKind.Class;
 			}
 		}
-		return 15;
+		return SymbolKind.String;
 	}
 
 }

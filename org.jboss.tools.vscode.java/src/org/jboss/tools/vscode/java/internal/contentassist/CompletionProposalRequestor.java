@@ -19,7 +19,8 @@ import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.jboss.tools.langs.CompletionItem;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
 
 public final class CompletionProposalRequestor extends CompletionRequestor {
@@ -59,35 +60,35 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 
-	private int mapKind(final int kind) {
+	private CompletionItemKind mapKind(final int kind) {
 		switch (kind) {
 		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 		case CompletionProposal.CONSTRUCTOR_INVOCATION:
-			return 4;//Constructor
+			return CompletionItemKind.Constructor;
 		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
 		case CompletionProposal.TYPE_REF:
-			return 7;// Class
+			return CompletionItemKind.Class;
 		case CompletionProposal.FIELD_IMPORT:
 		case CompletionProposal.METHOD_IMPORT:
 		case CompletionProposal.METHOD_NAME_REFERENCE:
 		case CompletionProposal.PACKAGE_REF:
 		case CompletionProposal.TYPE_IMPORT:
-			return 9;//Module
+			return CompletionItemKind.Module;
 		case CompletionProposal.FIELD_REF:
 		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-			return 5;//Field
+			return CompletionItemKind.Field;
 		case CompletionProposal.KEYWORD:
-			return 14;//Keyword
+			return CompletionItemKind.Keyword;
 		case CompletionProposal.LABEL_REF:
-			return 18;//Reference
+			return CompletionItemKind.Reference;
 		case CompletionProposal.LOCAL_VARIABLE_REF:
 		case CompletionProposal.VARIABLE_DECLARATION:
-			return 6; //Variable
+			return CompletionItemKind.Variable;
 		case CompletionProposal.METHOD_DECLARATION:
 		case CompletionProposal.METHOD_REF:
 		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-			return 3;//Function
+			return CompletionItemKind.Function;
 			//text
 		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
 		case CompletionProposal.JAVADOC_BLOCK_TAG:
@@ -98,27 +99,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.JAVADOC_TYPE_REF:
 		case CompletionProposal.JAVADOC_VALUE_REF:
 		default:
-			return 1; //Text
+			return CompletionItemKind.Text;
 		}
-		// vscode kinds
-		//			Text = 1,
-		//				  Method = 2,
-		//				  Function = 3,
-		//				  Constructor = 4,
-		//				  Field = 5,
-		//				  Variable = 6,
-		//				  Class = 7,
-		//				  Interface = 8,
-		//				  Module = 9,
-		//				  Property = 10,
-		//				  Unit = 11,
-		//				  Value = 12,
-		//				  Enum = 13,
-		//				  Keyword = 14,
-		//				  Snippet = 15,
-		//				  Color = 16,
-		//				  File = 17,
-		//				  Reference = 18
 	}
 
 	@Override
@@ -128,7 +110,4 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			setRequireExtendedContext(true);
 		}
 	}
-
-
-
 }

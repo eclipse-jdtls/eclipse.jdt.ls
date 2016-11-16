@@ -8,32 +8,24 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.langs.base;
+package org.jboss.tools.vscode.java.internal;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+import java.util.concurrent.CompletableFuture;
+
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 
 /**
- * Parameters for $/cancelRequest
+ * Interface for protocol extensions for Java
+ *
  * @author Gorkem Ercan
  *
  */
-public class CancelParams {
+@JsonSegment("java")
+public interface JavaProtocolExtensions {
 
-	/**
-	 * Id of the canceled request
-	 *
-	 */
-	@SerializedName("id")
-	@Expose
-	private Integer id;
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
-	}
+	@JsonRequest
+	CompletableFuture<String> ClassFileContents(TextDocumentIdentifier param);
 
 }

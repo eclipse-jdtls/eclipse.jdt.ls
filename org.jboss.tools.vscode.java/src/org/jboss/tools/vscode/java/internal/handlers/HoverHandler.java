@@ -10,45 +10,37 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.jdt.core.ITypeRoot;
-import org.jboss.tools.langs.Hover;
-import org.jboss.tools.langs.TextDocumentPositionParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.jboss.tools.vscode.java.internal.HoverInfoProvider;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 
-public class HoverHandler implements RequestHandler<TextDocumentPositionParams, Hover>{
+public class HoverHandler{
 
-	public HoverHandler() {
+	CompletableFuture<Hover> hover(TextDocumentPositionParams position){
+		return CompletableFutures.computeAsync(cancelToken->{
+			ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+
+			String hover = null;
+			if(unit !=null){
+				cancelToken.checkCanceled();
+				hover = computeHover(unit ,position.getPosition().getLine(),
+						position.getPosition().getCharacter());
+			}
+			Hover $ = new Hover();
+			if (hover != null && hover.length() > 0) {
+				$.setContents(Arrays.asList(hover));
+			}
+			return $;
+		});
 	}
 
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_HOVER.getMethod().equals(request);
-	}
-
-	@Override
-	public Hover handle(TextDocumentPositionParams param, CancelMonitor cm) {
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-
-		String hover = null;
-		if(!cm.cancelled() && unit !=null){
-			hover = computeHover(unit ,param.getPosition().getLine().intValue(),
-					param.getPosition().getCharacter().intValue());
-		}
-		Hover $ = new Hover();
-		if (hover != null && hover.length() > 0) {
-			return $.withContents(hover);
-		} else {
-			$.withContents("");
-		}
-		return $.withContents("");
-	}
-
-
-	public String computeHover(ITypeRoot unit, int line, int column) {
+	private String computeHover(ITypeRoot unit, int line, int column) {
 		HoverInfoProvider provider = new HoverInfoProvider(unit);
 		return provider.computeHover(line,column);
 	}

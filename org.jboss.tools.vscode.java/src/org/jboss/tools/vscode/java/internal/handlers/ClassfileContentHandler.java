@@ -10,38 +10,35 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.langs.TextDocumentIdentifier;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class ClassfileContentHandler implements RequestHandler<TextDocumentIdentifier, String> {
+public class ClassfileContentHandler {
 
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.CLASSFILECONTENTS.getMethod().equals(request);
-	}
-
-	@Override
-	public String handle(TextDocumentIdentifier param, CancelMonitor cm) {
-		try {
-			IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
-			if (cf != null) {
-				IBuffer buffer = cf.getBuffer();
-				if (buffer != null && !cm.cancelled()) {
-					JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
-					return buffer.getContents();
+	public CompletableFuture<String> contents(TextDocumentIdentifier param) {
+		return CompletableFutures.computeAsync(cm->{
+			try {
+				IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
+				if (cf != null) {
+					IBuffer buffer = cf.getBuffer();
+					if (buffer != null){
+						cm.checkCanceled();
+						JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
+						return buffer.getContents();
+					}
 				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Exception getting java element ", e);
 			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
-		}
-		return null;
+			return null;
+		});
 	}
 
 }

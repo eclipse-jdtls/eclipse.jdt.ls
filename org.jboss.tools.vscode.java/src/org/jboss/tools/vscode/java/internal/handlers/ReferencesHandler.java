@@ -30,43 +30,32 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.ReferenceParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.ReferenceParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class ReferencesHandler implements RequestHandler<ReferenceParams, List<Location>>{
+public class ReferencesHandler {
 
-	public ReferencesHandler() {
-	}
-
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_REFERENCES.getMethod().equals(request);
-	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
 	}
 
-	@Override
-	public List<org.jboss.tools.langs.Location> handle(org.jboss.tools.langs.ReferenceParams param, CancelMonitor cm) {
+	List<Location> findReferences(ReferenceParams param) {
 		SearchEngine engine = new SearchEngine();
 
 		try {
 			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
-					param.getPosition().getLine().intValue(),
-					param.getPosition().getCharacter().intValue());
+					param.getPosition().getLine(),
+					param.getPosition().getCharacter());
 
 			if(elementToSearch == null)
 				return Collections.emptyList();
 
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
-			List<org.jboss.tools.langs.Location> locations = new ArrayList<>();
+			List<Location> locations = new ArrayList<>();
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 					createSearchScope(), new SearchRequestor() {
 

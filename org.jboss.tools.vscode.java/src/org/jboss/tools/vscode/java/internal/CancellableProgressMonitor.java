@@ -8,26 +8,33 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.internal.ipc;
+package org.jboss.tools.vscode.java.internal;
+
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 /**
- * An interface passed to {@link RequestHandler}
- * to notify cancellation.
  *
  * @author Gorkem Ercan
- *
  */
-public interface CancelMonitor {
+public class CancellableProgressMonitor extends NullProgressMonitor {
 
+	private final CancelChecker cancelChecker;
 	/**
-	 * Returns the state of this monitor.
 	 *
-	 * @return
 	 */
-	boolean cancelled();
-	/**
-	 * Called when a cancel notification is receieved.
-	 */
-	void onCancel();
+	public CancellableProgressMonitor(CancelChecker checker) {
+		this.cancelChecker = checker;
+	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.NullProgressMonitor#isCanceled()
+	 */
+	@Override
+	public boolean isCanceled() {
+		if(cancelChecker != null ){
+			cancelChecker.checkCanceled();
+		}
+		return false;
+	}
 }

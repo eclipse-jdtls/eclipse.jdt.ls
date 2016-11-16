@@ -29,7 +29,7 @@ public class TextEditConverter extends TextEditVisitor{
 
 	private final TextEdit source;
 	private final ICompilationUnit compilationUnit;
-	private final List<org.jboss.tools.langs.TextEdit> converted;
+	private final List<org.eclipse.lsp4j.TextEdit> converted;
 
 	public TextEditConverter(ICompilationUnit unit, TextEdit edit) {
 		this.source = edit;
@@ -40,7 +40,7 @@ public class TextEditConverter extends TextEditVisitor{
 		this.compilationUnit = unit;
 	}
 
-	public List<org.jboss.tools.langs.TextEdit> convert(){
+	public List<org.eclipse.lsp4j.TextEdit> convert(){
 		if(this.source != null){
 			this.source.accept(this);
 		}
@@ -52,10 +52,11 @@ public class TextEditConverter extends TextEditVisitor{
 	 */
 	@Override
 	public boolean visit(InsertEdit edit) {
-		org.jboss.tools.langs.TextEdit te = new org.jboss.tools.langs.TextEdit();
 		try {
-			converted.add(te.withNewText(edit.getText()).
-					withRange(JDTUtils.toRange(compilationUnit,edit.getOffset(),edit.getLength())));
+			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+			te.setNewText(edit.getText());
+			te.setRange(JDTUtils.toRange(compilationUnit,edit.getOffset(),edit.getLength()));
+			converted.add(te);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}

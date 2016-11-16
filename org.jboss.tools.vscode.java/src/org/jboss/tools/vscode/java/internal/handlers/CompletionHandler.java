@@ -13,40 +13,38 @@ package org.jboss.tools.vscode.java.internal.handlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.langs.CompletionItem;
-import org.jboss.tools.langs.CompletionList;
-import org.jboss.tools.langs.TextDocumentPositionParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.jboss.tools.vscode.java.internal.CancellableProgressMonitor;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.contentassist.CompletionProposalRequestor;
 
-public class CompletionHandler implements RequestHandler<TextDocumentPositionParams, CompletionList> {
+public class CompletionHandler{
 
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_COMPLETION.getMethod().equals(request);
+	CompletableFuture<CompletionList> completion(TextDocumentPositionParams position){
+		return CompletableFutures.computeAsync(cancelChecker->{
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
+			List<CompletionItem> completionItems = this.computeContentAssist(unit,
+					position.getPosition().getLine(),
+					position.getPosition().getCharacter(), new CancellableProgressMonitor(cancelChecker));
+			CompletionList $ = new CompletionList();
+			$.setItems(completionItems);
+			JavaLanguageServerPlugin.logInfo("Completion request completed");
+			return $;
+		});
 	}
 
-	@Override
-	public CompletionList handle(TextDocumentPositionParams param, CancelMonitor cm) {
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
-		List<CompletionItem> completionItems = this.computeContentAssist(unit,
-				param.getPosition().getLine().intValue(),
-				param.getPosition().getCharacter().intValue());
-		JavaLanguageServerPlugin.logInfo("Completion request completed");
-		return new CompletionList().withItems(completionItems);
-	}
-
-	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column) {
+	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) {
 		if (unit == null) return Collections.emptyList();
 		final List<CompletionItem> proposals = new ArrayList<>();
 		try {
@@ -68,8 +66,9 @@ public class CompletionHandler implements RequestHandler<TextDocumentPositionPar
 			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
 
 			int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
-			if (offset >-1) {
-				unit.codeComplete(offset, collector, new NullProgressMonitor());
+
+			if (offset >-1 && !monitor.isCanceled()) {
+				unit.codeComplete(offset, collector, monitor);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  unit.getElementName(), e);

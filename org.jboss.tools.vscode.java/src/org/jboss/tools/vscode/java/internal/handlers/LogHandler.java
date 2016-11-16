@@ -22,7 +22,7 @@ import java.util.Calendar;
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.jboss.tools.vscode.internal.ipc.MessageType;
+import org.eclipse.lsp4j.MessageType;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 
 /**
@@ -31,10 +31,10 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection;
  * 'Java Language Support' channel.
  */
 public class LogHandler {
-	
+
 	// if set, the all log entries will be written to USER_DIR/langserver.log as well.
 	public static final boolean LOG_TO_FILE = true;
-	
+
 	private ILogListener logListener;
 	private FileWriter logWriter;
 	private DateFormat dateFormat;
@@ -43,12 +43,13 @@ public class LogHandler {
 	private Calendar calendar;
 
 	public void install(JavaClientConnection rcpConnection) {
-	    this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-	    this.logLevelMask = getLogLevelMask(System.getProperty("log.level", ""));//Empty by default
-	    this.calendar = Calendar.getInstance();
-	    this.connection = rcpConnection;
-		
+		this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
+		this.logLevelMask = getLogLevelMask(System.getProperty("log.level", ""));//Empty by default
+		this.calendar = Calendar.getInstance();
+		this.connection = rcpConnection;
+
 		this.logListener = new ILogListener() {
+			@Override
 			public void logging(IStatus status, String bundleId) {
 				processLogMessage(status);
 			}
@@ -67,20 +68,20 @@ public class LogHandler {
 			this.logWriter = null;
 		}
 	}
-	
+
 	private int getLogLevelMask(String logLevel) {
 		switch (logLevel) {
-			case "ALL":
-				return -1;
-			case "ERROR":
-				return IStatus.ERROR;
-			case "WARNING":
-			default:
-				return IStatus.ERROR | IStatus.WARNING;
+		case "ALL":
+			return -1;
+		case "ERROR":
+			return IStatus.ERROR;
+		case "WARNING":
+		default:
+			return IStatus.ERROR | IStatus.WARNING;
 
 		}
 	}
-	
+
 	private void processLogMessage(IStatus status) {
 		String dateString = this.dateFormat.format(this.calendar.getTime());
 		String message = status.getMessage();
@@ -91,16 +92,16 @@ public class LogHandler {
 			String exceptionAsString = sw.toString();
 			message = message + '\n' + exceptionAsString;
 		}
-		
+
 		if (status.matches(this.logLevelMask)) {
 			connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' '+ message);
 		}
 		if (LOG_TO_FILE) {
 			// log all messages
 			logToFile("[" + getLabelFromSeverity(status.getSeverity()) + "] " + dateString + ' ' + message);
-		}		
+		}
 	}
-	
+
 	private MessageType getMessageTypeFromSeverity(int severity) {
 		switch (severity) {
 		case IStatus.ERROR:

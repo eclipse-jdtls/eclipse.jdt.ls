@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -27,17 +28,14 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.DocumentRangeFormattingParams;
+import org.eclipse.lsp4j.FormattingOptions;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
-import org.jboss.tools.langs.DocumentFormattingParams;
-import org.jboss.tools.langs.DocumentRangeFormattingParams;
-import org.jboss.tools.langs.FormattingOptions;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.Range;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
@@ -48,42 +46,27 @@ import copied.org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
  */
 public class FormatterHandler {
 
-
-	public class DocFormatter implements RequestHandler<DocumentFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_FORMATTING.getMethod().equals(request);
-		}
-
-		@Override
-		public List<org.jboss.tools.langs.TextEdit> handle(DocumentFormattingParams param, CancelMonitor cm) {
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
+	CompletableFuture<List<? extends org.eclipse.lsp4j.TextEdit>> formatting(DocumentFormattingParams params){
+		return CompletableFuture.supplyAsync( ()->{
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 			if(cu == null ) {
 				return Collections.emptyList();
 			}
-			return format(cu,param.getOptions(), null);
-		}
+			return format(cu,params.getOptions(), null);
+		});
 
 	}
 
-	public class RangeFormatter implements RequestHandler<DocumentRangeFormattingParams, List<org.jboss.tools.langs.TextEdit>>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_RANGE_FORMATTING.getMethod().equals(request);
-		}
-
-		@Override
-		public List<org.jboss.tools.langs.TextEdit> handle(DocumentRangeFormattingParams param, CancelMonitor cm) {
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
+	CompletableFuture<List<? extends org.eclipse.lsp4j.TextEdit>> rangeFormatting(DocumentRangeFormattingParams params){
+		return CompletableFuture.supplyAsync(()->{
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 			if(cu == null )
-				return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
-			return format(cu,param.getOptions(),param.getRange());
-		}
+				return Collections.emptyList();
+			return format(cu, params.getOptions(), params.getRange());
+		});
 	}
 
-	private List<org.jboss.tools.langs.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
+	private List<org.eclipse.lsp4j.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
 
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
 
@@ -97,22 +80,22 @@ public class FormatterHandler {
 			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
 			if (format == null || format.getChildren().length == 0) {
 				// nothing to return
-				return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
+				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 			}
 			MultiTextEdit flatEdit = TextEditUtil.flatten(format);
 			return convertEdits(flatEdit.getChildren(), document);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			return Collections.<org.jboss.tools.langs.TextEdit>emptyList();
+			return Collections.emptyList();
 		}
 	}
 
 	private IRegion getRegion(Range range, IDocument document) {
 		try {
-			int offset = document.getLineOffset(range.getStart().getLine().intValue())
-					+ range.getStart().getCharacter().intValue();
-			int endOffset = document.getLineOffset(range.getEnd().getLine().intValue())
-					+ range.getEnd().getCharacter().intValue();
+			int offset = document.getLineOffset(range.getStart().getLine())
+					+ range.getStart().getCharacter();
+			int endOffset = document.getLineOffset(range.getEnd().getLine())
+					+ range.getEnd().getCharacter();
 			int length = endOffset - offset;
 			return new Region(offset, length);
 		} catch (BadLocationException e) {
@@ -130,30 +113,29 @@ public class FormatterHandler {
 				eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, Integer.toString(tSize));
 			}
 		}
-		Boolean insertSpaces = options.getInsertSpaces();
-		if (insertSpaces != null) {
+		boolean insertSpaces = options.isInsertSpaces();
+		if (insertSpaces) {
 			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 		}
 		return eclipseOptions;
 	}
 
 
-	private static List<org.jboss.tools.langs.TextEdit> convertEdits(TextEdit[] edits, IDocument document) {
+	private static List<org.eclipse.lsp4j.TextEdit> convertEdits(TextEdit[] edits, IDocument document) {
 		return Arrays.stream(edits).map(t -> convertEdit(t, document)).collect(Collectors.toList());
 	}
 
-	private static org.jboss.tools.langs.TextEdit convertEdit(TextEdit edit, IDocument document) {
-		org.jboss.tools.langs.TextEdit textEdit  = new org.jboss.tools.langs.TextEdit();
+	private static org.eclipse.lsp4j.TextEdit convertEdit(TextEdit edit, IDocument document) {
+		org.eclipse.lsp4j.TextEdit textEdit  = new org.eclipse.lsp4j.TextEdit();
 		if (edit instanceof ReplaceEdit) {
 			ReplaceEdit replaceEdit = (ReplaceEdit) edit;
 			textEdit.setNewText(replaceEdit.getText());
 			int offset = edit.getOffset();
-			return textEdit.withRange(new Range().withStart(createPosition(document,offset))
-					.withEnd(createPosition(document, offset + edit.getLength())));
+			textEdit.setRange( new Range(createPosition(document, offset),
+					createPosition(document, offset+edit.getLength())));
 		}
 		return textEdit;
 	}
-
 
 	private static Position createPosition(IDocument document, int offset) {
 		Position start =  new Position();

@@ -9,7 +9,7 @@
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
 
-package org.jboss.tools.langs.ext;
+package org.jboss.tools.vscode.java.internal;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

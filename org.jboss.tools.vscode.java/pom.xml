@@ -33,9 +33,87 @@
 							<artifactId>jsoup</artifactId>
 							<version>1.9.2</version>
 						</artifactItem>
+						<artifactItem>
+							<groupId>org.eclipse.lsp4j</groupId>
+							<artifactId>org.eclipse.lsp4j</artifactId>
+							<version>0.1.0-SNAPSHOT</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.eclipse.lsp4j</groupId>
+							<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
+							<version>0.1.0-SNAPSHOT</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.eclipse.lsp4j</groupId>
+							<artifactId>org.eclipse.lsp4j.annotations</artifactId>
+							<version>0.1.0-SNAPSHOT</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>com.kohlschutter.junixsocket</groupId>
+							<artifactId>junixsocket-native-common</artifactId>
+							<version>2.0.4</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>com.kohlschutter.junixsocket</groupId>
+							<artifactId>junixsocket-common</artifactId>
+							<version>2.0.4</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>log4j</groupId>
+							<artifactId>log4j</artifactId>
+							<version>1.2.17</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.scijava</groupId>
+							<artifactId>native-lib-loader</artifactId>
+							<version>2.0.2</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>com.google.code.gson</groupId>
+							<artifactId>gson</artifactId>
+							<version>2.7</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.eclipse.xtend</groupId>
+							<artifactId>org.eclipse.xtend.lib</artifactId>
+							<version>2.10.0</version>
+						</artifactItem>
+						<artifactItem>
+							<groupId>org.eclipse.xtext</groupId>
+							<artifactId>org.eclipse.xtext.xbase.lib</artifactId>
+							<version>2.10.0</version>
+						</artifactItem>
 					</artifactItems>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.kohlschutter.junixsocket</groupId>
+			<artifactId>junixsocket-common</artifactId>
+			<version>2.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.kohlschutter.junixsocket</groupId>
+			<artifactId>junixsocket-native-common</artifactId>
+			<version>2.0.4</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.lsp4j</groupId>
+			<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.lsp4j</groupId>
+			<artifactId>org.eclipse.lsp4j</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 </project>

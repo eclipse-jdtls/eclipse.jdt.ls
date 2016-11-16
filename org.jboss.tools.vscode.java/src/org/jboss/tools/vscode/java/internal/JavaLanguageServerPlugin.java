@@ -16,6 +16,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.jboss.tools.vscode.java.internal.JavaClientConnection.JavaLanguageClient;
+import org.jboss.tools.vscode.java.internal.handlers.JDTLanguageServer;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -32,9 +35,9 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private static BundleContext context;
 
 	private LanguageServer languageServer;
-	private JavaClientConnection connection;
 	private ProjectsManager projectsManager;
-	private LanguageServerWorkingCopyOwner workingCopyOwner;
+
+	private JDTLanguageServer protocol;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null? null: pluginInstance.languageServer;
@@ -51,10 +54,14 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	}
 
 	private void startConnection() throws IOException {
-		connection = new JavaClientConnection(projectsManager);
-		connection.connect();
-		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(connection);
-		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
+
+		protocol = new JDTLanguageServer(projectsManager);
+		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class,
+				ConnectionStreamFactory.getInputStream(),
+				ConnectionStreamFactory.getOutputStream());
+		protocol.connectClient(launcher.getRemoteProxy());
+		launcher.startListening();
+
 	}
 
 	/*
@@ -65,21 +72,13 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public void stop(BundleContext bundleContext) throws Exception {
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
-		if (connection != null) {
-			connection.disconnect();
-		}
 		projectsManager = null;
-		connection = null;
 		languageServer = null;
 
 	}
 
-	public JavaClientConnection getConnection(){
-		return connection;
-	}
-
 	public WorkingCopyOwner getWorkingCopyOwner(){
-		return this.workingCopyOwner;
+		return this.protocol.getWorkingCopyOwner();
 	}
 
 	public static JavaLanguageServerPlugin getInstance(){

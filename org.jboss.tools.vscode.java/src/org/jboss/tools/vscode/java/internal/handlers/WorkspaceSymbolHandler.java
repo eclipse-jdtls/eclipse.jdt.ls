@@ -25,27 +25,15 @@ import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
-import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.Range;
-import org.jboss.tools.langs.SymbolInformation;
-import org.jboss.tools.langs.WorkspaceSymbolParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SymbolInformation;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolParams, List<SymbolInformation>> {
+public class WorkspaceSymbolHandler{
 
-	public WorkspaceSymbolHandler() {
-	}
-
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.WORKSPACE_SYMBOL.getMethod().equals(request);
-	}
-
-	private List<SymbolInformation> search(String query) {
+	List<SymbolInformation> search(String query) {
 		try {
 			ArrayList<SymbolInformation> symbols = new ArrayList<>();
 
@@ -59,9 +47,9 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 					symbolInformation.setKind(DocumentSymbolHandler.mapKind(match.getType()));
 					Location location = new Location();
 					location.setUri(match.getType().getResource().getLocationURI().toString());
-					location.setRange(new Range().withEnd(new Position().withLine(0).withCharacter(0))
-							.withStart(new Position().withLine(0).withCharacter(0)));
-					symbols.add(symbolInformation.withLocation(location));
+					location.setRange(new Range(new Position(0,0), new Position(0, 0)));
+					symbolInformation.setLocation(location);
+					symbols.add(symbolInformation);
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
 
@@ -71,14 +59,10 @@ public class WorkspaceSymbolHandler implements RequestHandler<WorkspaceSymbolPar
 		}
 		return Collections.emptyList();
 	}
+
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
 	}
 
-
-	@Override
-	public List<org.jboss.tools.langs.SymbolInformation> handle(WorkspaceSymbolParams param, CancelMonitor cm) {
-		return this.search(param.getQuery());
-	}
 }

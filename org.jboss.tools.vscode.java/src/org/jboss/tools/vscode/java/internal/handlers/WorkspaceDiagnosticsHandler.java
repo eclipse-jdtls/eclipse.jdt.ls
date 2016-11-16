@@ -23,12 +23,11 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
-import org.jboss.tools.langs.Diagnostic;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.PublishDiagnosticsParams;
-import org.jboss.tools.langs.Range;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.langs.base.NotificationMessage;
+import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -80,13 +79,14 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 		if(!JavaCore.isJavaLikeFileName(file.getName())) return true;
 
 		IMarker[]  markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false,IResource.DEPTH_ONE);
-		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<>();
-		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
-		message.setParams(new PublishDiagnosticsParams().withUri(JDTUtils.getFileURI(resource))
-				.withDiagnostics(toDiagnosticsArray(markers)));
-		this.connection.send(message);
+
+		this.connection.publishDiagnostics(
+				new PublishDiagnosticsParams(
+						JDTUtils.getFileURI(resource),
+						toDiagnosticsArray(markers)));
 		return true;
 	}
+
 	/**
 	 * @param markers
 	 * @return
@@ -97,12 +97,11 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 			Diagnostic d = new Diagnostic();
 			d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 			d.setMessage(marker.getAttribute(IMarker.MESSAGE,""));
-			d.setCode(marker.getAttribute(IJavaModelMarker.ID,0));
+			d.setCode(marker.getAttribute(IJavaModelMarker.ID,"0"));
 			d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY,-1)));
 			d.setRange(convertRange(marker));
 			diagnostics.add(d);
 		}
-
 		return diagnostics;
 	}
 
@@ -115,22 +114,22 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 		int cStart = marker.getAttribute(IMarker.CHAR_START, -1) -1 ;
 		int cEnd = marker.getAttribute(IMarker.CHAR_END, -1) -1;
 
-		return new Range().withStart(new Position().withLine(line).withCharacter(cStart))
-				.withEnd(new Position().withLine(line).withCharacter(cEnd));
+		return new Range(new Position(line,cStart),
+				new Position(line,cEnd));
 	}
 
 	/**
 	 * @param attribute
 	 * @return
 	 */
-	private Integer convertSeverity(int severity) {
+	private DiagnosticSeverity convertSeverity(int severity) {
 		if(severity == IMarker.SEVERITY_ERROR){
-			return new Integer(1);
+			return DiagnosticSeverity.Error;
 		}
 		if(severity == IMarker.SEVERITY_WARNING){
-			return new Integer(2);
+			return DiagnosticSeverity.Warning;
 		}
-		return new Integer(3);
+		return DiagnosticSeverity.Information;
 	}
 
 }

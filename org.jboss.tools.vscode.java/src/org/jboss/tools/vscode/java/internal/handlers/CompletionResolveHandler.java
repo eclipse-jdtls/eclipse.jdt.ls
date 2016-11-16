@@ -22,29 +22,21 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.jboss.tools.langs.CompletionItem;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.CompletionItem;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.javadoc.JavadocContentAccess;
 
-public class CompletionResolveHandler implements RequestHandler<CompletionItem, CompletionItem> {
+public class CompletionResolveHandler {
 
 	public static final String DATA_FIELD_URI = "uri";
 	public static final String DATA_FIELD_DECLARATION_SIGNATURE = "decl_signature";
 	public static final String DATA_FIELD_SIGNATURE= "signature";
 	public static final String DATA_FIELD_NAME = "name";
 
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.COMPLETION_RESOLVE.getMethod().equals(request);
-	}
 
-	@Override
-	public CompletionItem handle(CompletionItem param, CancelMonitor cm) {
+	CompletionItem resolve(CompletionItem param) {
 
 		@SuppressWarnings("unchecked")
 		Map<String, String> data = (Map<String, String>) param.getData();

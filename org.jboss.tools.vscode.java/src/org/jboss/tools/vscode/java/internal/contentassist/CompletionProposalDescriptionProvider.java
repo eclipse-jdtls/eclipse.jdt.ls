@@ -19,7 +19,7 @@ import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
-import org.jboss.tools.langs.CompletionItem;
+import org.eclipse.lsp4j.CompletionItem;
 import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
 

@@ -21,17 +21,15 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.jboss.tools.langs.CodeLensOptions;
-import org.jboss.tools.langs.CompletionOptions;
-import org.jboss.tools.langs.InitializeParams;
-import org.jboss.tools.langs.InitializeResult;
-import org.jboss.tools.langs.ServerCapabilities;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
-import org.jboss.tools.vscode.internal.ipc.ServiceStatus;
+import org.eclipse.lsp4j.CodeLensOptions;
+import org.eclipse.lsp4j.CompletionOptions;
+import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 
 /**
@@ -41,7 +39,7 @@ import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
  * @author IBM Corporation (Markus Keller)
  *
  */
-final public class InitHandler implements RequestHandler<InitializeParams, InitializeResult> {
+final public class InitHandler {
 
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
@@ -51,32 +49,26 @@ final public class InitHandler implements RequestHandler<InitializeParams, Initi
 		this.connection = connection;
 	}
 
-	@Override
-	public boolean canHandle(final String request) {
-		return LSPMethods.INITIALIZE.getMethod().equals(request);
-	}
 
-
-	@Override
-	public InitializeResult handle(InitializeParams param, CancelMonitor cm) {
+	InitializeResult initialize(InitializeParams param){
 		triggerInitialization(param.getRootPath());
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection), IResourceChangeEvent.POST_BUILD);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
-		return result.withCapabilities(
-				capabilities.withTextDocumentSync(2)
-				.withCompletionProvider(new CompletionOptions().withResolveProvider(Boolean.TRUE).withTriggerCharacters(Arrays.asList(".","@","#")))
-				.withHoverProvider(Boolean.TRUE)
-				.withDefinitionProvider(Boolean.TRUE)
-				.withDocumentSymbolProvider(Boolean.TRUE)
-				.withWorkspaceSymbolProvider(Boolean.TRUE)
-				.withReferencesProvider(Boolean.TRUE)
-				.withDocumentHighlightProvider(Boolean.TRUE)
-				.withDocumentFormattingProvider(Boolean.TRUE)
-				.withDocumentRangeFormattingProvider(Boolean.TRUE)
-				.withCodeLensProvider(new CodeLensOptions().withResolveProvider(Boolean.TRUE))
-				);
+		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
+		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".","@","#")));
+		capabilities.setHoverProvider(Boolean.TRUE);
+		capabilities.setDefinitionProvider(Boolean.TRUE);
+		capabilities.setDocumentSymbolProvider(Boolean.TRUE);
+		capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
+		capabilities.setReferencesProvider(Boolean.TRUE);
+		capabilities.setDocumentHighlightProvider(Boolean.TRUE);
+		capabilities.setDocumentFormattingProvider(Boolean.TRUE);
+		capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
+		capabilities.setCodeLensProvider(new CodeLensOptions(Boolean.TRUE));
+		result.setCapabilities(capabilities);
+		return result;
 	}
 
 	private void triggerInitialization(String root) {

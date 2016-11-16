@@ -54,7 +54,6 @@
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
-      <plugin id="org.jboss.tools.vscode.ipc"/>
       <plugin id="org.jboss.tools.vscode.java"/>
    </plugins>
 

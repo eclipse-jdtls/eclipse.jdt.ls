@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal.handlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -21,11 +22,11 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.jboss.tools.langs.DocumentHighlight;
-import org.jboss.tools.langs.TextDocumentPositionParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentHighlightKind;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
@@ -33,16 +34,8 @@ import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
 import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
 import copied.org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 
-public class DocumentHighlightHandler implements RequestHandler<TextDocumentPositionParams, List<DocumentHighlight>>{
+public class DocumentHighlightHandler{
 
-
-	public DocumentHighlightHandler() {
-	}
-
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_HIGHLIGHT.getMethod().equals(request);
-	}
 
 	private List<DocumentHighlight> computeOccurrences(ITypeRoot unit, int line, int column) {
 		if (unit != null) {
@@ -75,26 +68,27 @@ public class DocumentHighlightHandler implements RequestHandler<TextDocumentPosi
 			throws JavaModelException {
 		DocumentHighlight h = new DocumentHighlight();
 		if ((occurrence.getFlags() | IOccurrencesFinder.F_WRITE_OCCURRENCE) == IOccurrencesFinder.F_WRITE_OCCURRENCE) {
-			h.setKind(3);
+			h.setKind(DocumentHighlightKind.Write);
 		} else if ((occurrence.getFlags()
 				| IOccurrencesFinder.F_READ_OCCURRENCE) == IOccurrencesFinder.F_READ_OCCURRENCE) {
-			h.setKind(2);
+			h.setKind(DocumentHighlightKind.Read);
 		}
 		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset());
 		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), occurrence.getOffset() + occurrence.getLength());
 
-		return h.withRange(new org.jboss.tools.langs.Range().
-				withStart(new org.jboss.tools.langs.Position().
-						withLine(loc[0]).withCharacter(loc[1]))
-				.withEnd(new org.jboss.tools.langs.Position().
-						withLine(endLoc[0]).withCharacter(endLoc[1])));
+		h.setRange(new Range(
+				new Position(loc[0], loc[1]),
+				new Position(endLoc[0],endLoc[1])
+				));
+		return h;
 	}
 
-
-	@Override
-	public List<DocumentHighlight> handle(TextDocumentPositionParams param, CancelMonitor cm) {
-		ITypeRoot type = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-		return computeOccurrences(type, param.getPosition().getLine().intValue(),
-				param.getPosition().getCharacter().intValue());
+	CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position){
+		return CompletableFuture.supplyAsync(()->{
+			ITypeRoot type = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+			return computeOccurrences(type, position.getPosition().getLine(),
+					position.getPosition().getCharacter());
+		});
 	}
+
 }

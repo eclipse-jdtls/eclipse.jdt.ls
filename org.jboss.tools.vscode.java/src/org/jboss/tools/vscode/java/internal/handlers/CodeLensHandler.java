@@ -34,49 +34,17 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.jboss.tools.langs.CodeLens;
-import org.jboss.tools.langs.CodeLensParams;
-import org.jboss.tools.langs.Command;
-import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class CodeLensHandler {
 
-	public class CodeLensProvider implements RequestHandler<CodeLensParams, List<CodeLens>>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_CODELENS.getMethod().equals(request);
-		}
-
-		@Override
-		public List<CodeLens> handle(CodeLensParams param,CancelMonitor cm) {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(param.getTextDocument().getUri());
-			return getCodeLensSymbols(unit);
-		}
-
-	}
-
-	public class CodeLensResolver implements RequestHandler<CodeLens, CodeLens>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.CODELENS_RESOLVE.getMethod().equals(request);
-		}
-
-		@Override
-		public CodeLens handle(CodeLens param, CancelMonitor cm) {
-			return resolve(param);
-		}
-	}
-
-
 	@SuppressWarnings("unchecked")
-	private  CodeLens resolve(CodeLens lens) {
+	CodeLens resolve(CodeLens lens){
 		try {
 			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
@@ -88,9 +56,10 @@ public class CodeLensHandler {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
 			List<Location> locations = findReferences(element);
 			int nReferences = locations.size();
-			lens.setCommand(new Command().withTitle(nReferences == 1 ? "1 reference" : nReferences + " references")
-					.withCommand("java.show.references")
-					.withArguments(Arrays.asList(uri, position, locations)));
+			Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references",
+					"java.show.references",
+					Arrays.asList(uri, position, locations));
+			lens.setCommand(command);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
 		}
@@ -129,7 +98,8 @@ public class CodeLensHandler {
 		return result;
 	}
 
-	private List<CodeLens> getCodeLensSymbols(ICompilationUnit unit) {
+	List<CodeLens> getCodeLensSymbols(String uri) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if(unit == null || !unit.getResource().exists()) return Collections.emptyList();
 		try {
 			IJavaElement[] elements = unit.getChildren();
@@ -153,7 +123,7 @@ public class CodeLensHandler {
 
 			CodeLens lens = new CodeLens();
 			ISourceRange r = ((ISourceReference) element).getNameRange();
-			final org.jboss.tools.langs.Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
+			final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
 			lens.setRange(range);
 			lens.setData(Arrays.asList(JDTUtils.getFileURI(unit), range.getStart()));
 			lenses.add(lens);

@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.internal.ipc;
+package org.jboss.tools.vscode.java.internal;
 
 public enum ServiceStatus {
  Starting, Started, Error

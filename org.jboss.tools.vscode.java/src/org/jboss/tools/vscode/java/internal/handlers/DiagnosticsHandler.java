@@ -18,12 +18,11 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.jboss.tools.langs.Diagnostic;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.PublishDiagnosticsParams;
-import org.jboss.tools.langs.Range;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.langs.base.NotificationMessage;
+import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -62,11 +61,8 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<>();
-		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
-		message.setParams(new PublishDiagnosticsParams().withUri(JDTUtils.getFileURI(this.resource))
-				.withDiagnostics(toDiagnosticsArray()));
-		this.connection.send(message);
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(JDTUtils.getFileURI(this.resource), toDiagnosticsArray());
+		this.connection.publishDiagnostics($);
 	}
 
 	protected List<Diagnostic> toDiagnosticsArray() {
@@ -75,7 +71,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			Diagnostic diag = new Diagnostic();
 			diag.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 			diag.setMessage(problem.getMessage());
-			diag.setCode(Integer.valueOf(problem.getID()));
+			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(problem));
 			array.add(diag);
@@ -83,17 +79,16 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		return array;
 	}
 
-	private Integer convertSeverity(IProblem problem) {
+	private DiagnosticSeverity convertSeverity(IProblem problem) {
 		if(problem.isError())
-			return Integer.valueOf(1);
+			return DiagnosticSeverity.Error;
 		if(problem.isWarning())
-			return Integer.valueOf(2);
-		return Integer.valueOf(3);
+			return DiagnosticSeverity.Warning;
+		return DiagnosticSeverity.Information;
 	}
 
 	@SuppressWarnings("restriction")
 	private Range convertRange(IProblem problem) {
-		Range range = new Range();
 		Position start = new Position();
 		Position end = new Position();
 
@@ -108,7 +103,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			}
 			end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
 		}
-		return range.withEnd(end).withStart(start);
+		return new Range(start, end);
 	}
 
 	@Override

@@ -23,20 +23,18 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.DidCloseTextDocumentParams;
+import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
-import org.jboss.tools.langs.DidChangeTextDocumentParams;
-import org.jboss.tools.langs.DidCloseTextDocumentParams;
-import org.jboss.tools.langs.DidOpenTextDocumentParams;
-import org.jboss.tools.langs.DidSaveTextDocumentParams;
-import org.jboss.tools.langs.Range;
-import org.jboss.tools.langs.TextDocumentContentChangeEvent;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.MessageType;
-import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -45,87 +43,49 @@ public class DocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
 
-	public class ClosedHandler implements NotificationHandler<DidCloseTextDocumentParams, Object>{
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_CLOSED.getMethod().equals(request);
-		}
 
-		@Override
-		public Object handle(DidCloseTextDocumentParams param) {
-			try {
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleClosed(param);
-					}
-				}, new NullProgressMonitor());
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Handle document close ", e);
-			}
-			return null;
-		}
-
-	}
-
-	public class OpenHandler implements NotificationHandler<DidOpenTextDocumentParams, Object>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_OPENED.getMethod().equals(request);
-		}
-
-		@Override
-		public Object handle(DidOpenTextDocumentParams param) {
-			try {
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleOpen(param);
-					}
-				}, new NullProgressMonitor());
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Handle document open ", e);
-			}
-			return null;
+	void didClose(DidCloseTextDocumentParams params){
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				@Override
+				public void run(IProgressMonitor monitor) throws CoreException {
+					handleClosed(params);
+				}
+			}, new NullProgressMonitor());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Handle document close ", e);
 		}
 	}
 
-	public class ChangeHandler implements NotificationHandler<DidChangeTextDocumentParams, Object>{
-
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_CHANGED.getMethod().equals(request);
-		}
-
-		@Override
-		public Object handle(DidChangeTextDocumentParams param) {
-			try {
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleChanged(param);
-					}
-				}, new NullProgressMonitor());
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Handle document open ", e);
-			}
-			return null;
+	void didOpen(DidOpenTextDocumentParams params){
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				@Override
+				public void run(IProgressMonitor monitor) throws CoreException {
+					handleOpen(params);
+				}
+			}, new NullProgressMonitor());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Handle document open ", e);
 		}
 	}
 
-	public class SaveHandler implements NotificationHandler<DidSaveTextDocumentParams, Object>{
+	void didChange(DidChangeTextDocumentParams params){
 
-		@Override
-		public boolean canHandle(String request) {
-			return LSPMethods.DOCUMENT_SAVED.getMethod().equals(request);
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				@Override
+				public void run(IProgressMonitor monitor) throws CoreException {
+					handleChanged(params);
+				}
+			}, new NullProgressMonitor());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Handle document open ", e);
 		}
+	}
 
-		@Override
-		public Object handle(DidSaveTextDocumentParams param) {
-			// Nothing to do just keeping the clients happy with a response
-			return null;
-		}
+	void didSave(DidSaveTextDocumentParams params){
+
 	}
 
 	public DocumentLifeCycleHandler(JavaClientConnection connection) {
@@ -178,6 +138,7 @@ public class DocumentLifeCycleHandler {
 		try {
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
+
 				Range range = changeEvent.getRange();
 				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 				int length = changeEvent.getRangeLength().intValue();

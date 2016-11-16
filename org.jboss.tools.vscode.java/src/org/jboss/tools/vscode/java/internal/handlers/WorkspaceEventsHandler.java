@@ -14,18 +14,16 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.jboss.tools.langs.DidChangeWatchedFilesParams;
-import org.jboss.tools.langs.FileEvent;
-import org.jboss.tools.langs.PublishDiagnosticsParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.langs.base.NotificationMessage;
-import org.jboss.tools.vscode.internal.ipc.NotificationHandler;
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
+import org.eclipse.lsp4j.FileChangeType;
+import org.eclipse.lsp4j.FileEvent;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager.CHANGE_TYPE;
 
-public class WorkspaceEventsHandler implements NotificationHandler<DidChangeWatchedFilesParams, Object> {
+public class WorkspaceEventsHandler {
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
@@ -35,26 +33,20 @@ public class WorkspaceEventsHandler implements NotificationHandler<DidChangeWatc
 		this.connection = connection;
 	}
 
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.WORKSPACE_CHANGED_FILES.getMethod().equals(request);
-	}
-
-	private CHANGE_TYPE toChangeType(Integer vtype){
-		switch (vtype.intValue()) {
-		case 1:
+	private CHANGE_TYPE toChangeType(FileChangeType vtype){
+		switch (vtype) {
+		case Created:
 			return CHANGE_TYPE.CREATED;
-		case 2:
+		case Changed:
 			return CHANGE_TYPE.CHANGED;
-		case 3:
+		case Deleted:
 			return CHANGE_TYPE.DELETED;
 		default:
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	@Override
-	public Object handle(DidChangeWatchedFilesParams param) {
+	void didChangeWatchedFiles(DidChangeWatchedFilesParams param){
 		List<FileEvent> changes = param.getChanges();
 		for (FileEvent fileEvent : changes) {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
@@ -67,15 +59,10 @@ public class WorkspaceEventsHandler implements NotificationHandler<DidChangeWatc
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
-		return null;
 	}
 
 	private void cleanUpDiagnostics(String uri){
-		NotificationMessage<PublishDiagnosticsParams> message = new NotificationMessage<>();
-		message.setMethod(LSPMethods.DOCUMENT_DIAGNOSTICS.getMethod());
-		message.setParams(new PublishDiagnosticsParams().withUri(uri)
-				.withDiagnostics(Collections.emptyList()));
-		this.connection.send(message);
+		this.connection.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.emptyList()));
 	}
 
 }

@@ -20,7 +20,6 @@
 		<os.testArgs></os.testArgs>
 	</properties>
 	<modules>
-		<module>org.jboss.tools.vscode.ipc</module>
 		<module>org.jboss.tools.vscode.java</module>
 		<module>org.jboss.tools.vscode.tests</module>
 		<module>org.jboss.tools.vscode.product</module>
@@ -227,6 +226,13 @@
 			</plugin>
 		</plugins>
 	</build>
+	<repositories>
+		<repository>
+			<id>oss.sonatype.org</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<snapshots><enabled>true</enabled></snapshots>
+		</repository>
+	</repositories>
 	<profiles>
 		<profile>
 			<id>code-coverage</id>

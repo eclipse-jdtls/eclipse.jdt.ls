@@ -43,9 +43,9 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.Position;
-import org.jboss.tools.langs.Range;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.handlers.JsonRpcHelpers;
 
 import com.google.common.base.Charsets;
@@ -296,14 +296,13 @@ public final class JDTUtils {
 
 		Range range = new Range();
 		if (loc != null) {
-			range.withStart(new Position().withLine(loc[0])
-					.withCharacter(loc[1]));
+			range.setStart(new Position(loc[0],loc[1]));
 		}
 		if (endLoc != null) {
-			range.withEnd(new Position().withLine(endLoc[0])
-					.withCharacter(endLoc[1]));
+			range.setEnd(new Position(endLoc[0],endLoc[1]));
 		}
-		return result.withRange(range);
+		result.setRange(range);
+		return result;
 	}
 
 	/**
@@ -332,14 +331,13 @@ public final class JDTUtils {
 
 		Range range = new Range();
 		if (loc != null) {
-			range.withStart(new Position().withLine(loc[0])
-					.withCharacter(loc[1]));
+			range.setStart(new Position(loc[0], loc[1]));
 		}
 		if (endLoc != null) {
-			range.withEnd(new Position().withLine(endLoc[0])
-					.withCharacter(endLoc[1]));
+			range.setEnd(new Position(endLoc[0],endLoc[1]));
 		}
-		return result.withRange(range);
+		result.setRange(range);
+		return result;
 	}
 
 	/**
@@ -358,12 +356,8 @@ public final class JDTUtils {
 		int[] endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
 
 		if (loc != null && endLoc != null) {
-			result.setStart(new Position().withLine(loc[0])
-					.withCharacter(loc[1]));
-
-			result.setEnd(new Position().withLine(endLoc[0])
-					.withCharacter(endLoc[1]));
-
+			result.setStart(new Position(loc[0],loc[1]));
+			result.setEnd(new Position(endLoc[0],endLoc[1]));
 		}
 		return result;
 	}

@@ -10,28 +10,21 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.jboss.tools.langs.Location;
-import org.jboss.tools.langs.TextDocumentPositionParams;
-import org.jboss.tools.langs.base.LSPMethods;
-import org.jboss.tools.vscode.internal.ipc.CancelMonitor;
-import org.jboss.tools.vscode.internal.ipc.RequestHandler;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
-public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentPositionParams, org.jboss.tools.langs.Location>{
-
-	public NavigateToDefinitionHandler() {
-	}
-
-	@Override
-	public boolean canHandle(String request) {
-		return LSPMethods.DOCUMENT_DEFINITION.getMethod().equals(request);
-	}
+public class NavigateToDefinitionHandler {
 
 	private Location computeDefinitonNavigation(ITypeRoot unit, int line, int column) {
 		try {
@@ -52,18 +45,20 @@ public class NavigateToDefinitionHandler implements RequestHandler<TextDocumentP
 		return null;
 	}
 
-	@Override
-	public Location handle(TextDocumentPositionParams param, CancelMonitor cm) {
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
-		Location location = null;
-		if(unit != null){
-			location = computeDefinitonNavigation(unit, param.getPosition().getLine().intValue(),
-					param.getPosition().getCharacter().intValue());
-		}
-		if (location == null) {
-			location = new Location();
-		}
-		return location;
+
+	CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position){
+		return CompletableFuture.supplyAsync(()->{
+			ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+			Location location = null;
+			if(unit != null){
+				location = computeDefinitonNavigation(unit, position.getPosition().getLine(),
+						position.getPosition().getCharacter());
+			}
+			if (location == null) {
+				location = new Location();
+			}
+			return Arrays.asList(location);
+		});
 	}
 
 }
