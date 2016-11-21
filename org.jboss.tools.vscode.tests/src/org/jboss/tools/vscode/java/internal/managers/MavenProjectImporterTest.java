@@ -11,6 +11,7 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import static org.jboss.tools.vscode.java.internal.ProjectUtils.getJavaSourceLevel;
+import static org.jboss.tools.vscode.java.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +27,9 @@ public class MavenProjectImporterTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void importSimpleJavaProject() throws Exception {
-		IProject project = importProjects("maven/salut").get(1);
+		String name = "salut";
+		importProjects("maven/"+name);
+		IProject project = getProject(name);
 		assertIsJavaProject(project);
 		assertIsMavenProject(project);
 		assertEquals("1.7", getJavaSourceLevel(project));

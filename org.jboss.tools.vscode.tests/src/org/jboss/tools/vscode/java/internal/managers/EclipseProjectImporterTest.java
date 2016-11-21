@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
+import static org.jboss.tools.vscode.java.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
@@ -36,7 +37,9 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void importSimpleJavaProject() throws Exception {
-		IProject project = importProjects("eclipse/hello").get(1);
+		String name = "hello";
+		importProjects("eclipse/"+name);
+		IProject project = getProject(name );
 		assertIsJavaProject(project);
 	}
 
@@ -45,12 +48,10 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		List<IProject> projects = importProjects("eclipse/multi");
 		assertEquals(3, projects.size());
 
-		IProject bar = projects.get(1);
+		IProject bar = getProject("bar");
 		assertIsJavaProject(bar);
-		assertEquals("bar", bar.getName());
 
-		IProject foo = projects.get(2);
-		assertEquals("foo", foo.getName());
+		IProject foo = getProject("foo");
 		assertIsJavaProject(foo);
 	}
 
