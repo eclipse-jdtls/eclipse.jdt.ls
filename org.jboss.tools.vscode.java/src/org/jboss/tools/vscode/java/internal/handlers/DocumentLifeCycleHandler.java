@@ -21,9 +21,11 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
-import org.eclipse.text.edits.MultiTextEdit;
+import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.jboss.tools.langs.DidChangeTextDocumentParams;
@@ -174,11 +176,8 @@ public class DocumentLifeCycleHandler {
 		}
 
 		try {
-			MultiTextEdit root = new MultiTextEdit();
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for(int i= contentChanges.size()-1; i>=0; i--){
-				TextDocumentContentChangeEvent changeEvent = contentChanges.get(i);
-
+			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 				Range range = changeEvent.getRange();
 				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 				int length = changeEvent.getRangeLength().intValue();
@@ -192,14 +191,11 @@ public class DocumentLifeCycleHandler {
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
-				root.addChild(edit);
+				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+				edit.apply(document, TextEdit.NONE);
 			}
-
-			if (root.hasChildren()) {
-				unit.applyTextEdit(root, new NullProgressMonitor());
-				unit.reconcile(ICompilationUnit.NO_AST, true, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null);
-			}
-		} catch (JavaModelException e) {
+			unit.reconcile(ICompilationUnit.NO_AST, true, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null);
+		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
 			JavaLanguageServerPlugin.logException("Failed to apply changes",e);
 		}
 	}
