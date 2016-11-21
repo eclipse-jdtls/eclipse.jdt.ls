@@ -176,7 +176,8 @@ public class DocumentLifeCycleHandler {
 		try {
 			MultiTextEdit root = new MultiTextEdit();
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
+			for(int i= contentChanges.size()-1; i>=0; i--){
+				TextDocumentContentChangeEvent changeEvent = contentChanges.get(i);
 
 				Range range = changeEvent.getRange();
 				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
