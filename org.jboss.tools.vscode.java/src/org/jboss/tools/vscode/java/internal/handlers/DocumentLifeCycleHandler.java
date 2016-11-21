@@ -12,10 +12,6 @@ package org.jboss.tools.vscode.java.internal.handlers;
 
 import java.util.List;
 
-import org.eclipse.core.filebuffers.FileBuffers;
-import org.eclipse.core.filebuffers.ITextFileBuffer;
-import org.eclipse.core.filebuffers.ITextFileBufferManager;
-import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -25,7 +21,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MultiTextEdit;
@@ -157,15 +152,15 @@ public class DocumentLifeCycleHandler {
 				connection.showNotificationMessage(MessageType.Warning, "Classpath is incomplete. Only syntax errors will be reported.");
 			}
 
-			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
-			unit.becomeWorkingCopy(problemRequestor, null);
+			//			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
+			unit.becomeWorkingCopy(new NullProgressMonitor());
 			IBuffer buffer = unit.getBuffer();
 			if(buffer != null) {
 				buffer.setContents(params.getTextDocument().getText());
 			}
 
 			// TODO: wire up cancellation.
-			unit.reconcile();
+			unit.reconcile(ICompilationUnit.NO_AST, true/*don't force problem detection*/, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null/*no progress monitor*/);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Creating working copy ",e);
 		}
@@ -178,36 +173,33 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 
-		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
-		ITextFileBuffer buffer = manager.getTextFileBuffer(unit.getResource().getFullPath(), LocationKind.IFILE);
-		IDocument document = buffer.getDocument();
 		try {
 			MultiTextEdit root = new MultiTextEdit();
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
 				Range range = changeEvent.getRange();
-
-				int startOffset = document.getLineOffset(range.getStart().getLine().intValue()) + range.getStart().getCharacter().intValue();
+				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 				int length = changeEvent.getRangeLength().intValue();
 
 				TextEdit edit = null;
+				String text = changeEvent.getText();
 				if (length == 0) {
-					edit = new InsertEdit(startOffset, changeEvent.getText());
-				} else if (changeEvent.getText().isEmpty()){
+					edit = new InsertEdit(startOffset, text);
+				} else if (text.isEmpty()){
 					edit = new DeleteEdit(startOffset, length);
 				} else {
-					edit = new ReplaceEdit(startOffset, length, changeEvent.getText());
+					edit = new ReplaceEdit(startOffset, length, text);
 				}
 				root.addChild(edit);
 			}
 
 			if (root.hasChildren()) {
-				root.apply(document);
-				unit.reconcile();
+				unit.applyTextEdit(root, new NullProgressMonitor());
+				unit.reconcile(ICompilationUnit.NO_AST, true, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null);
 			}
 		} catch (JavaModelException e) {
-		} catch (org.eclipse.jface.text.BadLocationException e) {
+			JavaLanguageServerPlugin.logException("Failed to apply changes",e);
 		}
 	}
 

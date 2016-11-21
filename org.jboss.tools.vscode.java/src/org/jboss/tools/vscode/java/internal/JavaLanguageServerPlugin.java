@@ -12,13 +12,9 @@ package org.jboss.tools.vscode.java.internal;
 
 import java.io.IOException;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.IBuffer;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.osgi.framework.BundleActivator;
@@ -27,8 +23,8 @@ import org.osgi.framework.BundleContext;
 public class JavaLanguageServerPlugin implements BundleActivator {
 
 	/**
-	* Source string send to clients for messages such as diagnostics.
-	**/
+	 * Source string send to clients for messages such as diagnostics.
+	 **/
 	public static final String SERVER_SOURCE_ID = "Java";
 
 	public static final String PLUGIN_ID = "org.jboss.tools.vscode.java";
@@ -38,6 +34,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private LanguageServer languageServer;
 	private JavaClientConnection connection;
 	private ProjectsManager projectsManager;
+	private LanguageServerWorkingCopyOwner workingCopyOwner;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null? null: pluginInstance.languageServer;
@@ -56,17 +53,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private void startConnection() throws IOException {
 		connection = new JavaClientConnection(projectsManager);
 		connection.connect();
-
-		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
-			@Override
-			public IBuffer createBuffer(ICompilationUnit workingCopy) {
-				ICompilationUnit original= workingCopy.getPrimary();
-				IResource resource= original.getResource();
-				if (resource instanceof IFile)
-					return new DocumentAdapter(workingCopy, (IFile)resource);
-				return DocumentAdapter.Null;
-			}
-		});
+		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(connection);
+		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
 	}
 
 	/*
@@ -90,6 +78,14 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return connection;
 	}
 
+	public WorkingCopyOwner getWorkingCopyOwner(){
+		return this.workingCopyOwner;
+	}
+
+	public static JavaLanguageServerPlugin getInstance(){
+		return pluginInstance;
+	}
+
 	public static void log(IStatus status) {
 		Platform.getLog(JavaLanguageServerPlugin.context.getBundle()).log(status);
 	}
@@ -106,12 +102,14 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
 	}
 
-	public static void startLanguageServer(LanguageServer newLanguageServer) throws IOException {
+	static void startLanguageServer(LanguageServer newLanguageServer) throws IOException {
 		if (pluginInstance != null) {
 			pluginInstance.languageServer = newLanguageServer;
 			pluginInstance.startConnection();
 		}
 	}
+
+
 	/**
 	 * @return
 	 */
