@@ -237,10 +237,13 @@ public class CompletionProposalReplacementProvider {
 			onlyAppendArguments= false;
 		}
 		if (onlyAppendArguments || shouldAppendArguments(typeProposal, trigger)) {
-			if (canUseDiamond){
-				buffer.append("<>"); //$NON-NLS-1$
-			} else
-				appendParameterList(buffer, computeTypeArgumentProposals(typeProposal), positions, onlyAppendArguments);
+			String[] typeArguments = computeTypeArgumentProposals(typeProposal);
+			if(typeArguments.length > 0){
+				if (canUseDiamond){
+					buffer.append("<>"); //$NON-NLS-1$
+				} else
+					appendParameterList(buffer,typeArguments, positions, onlyAppendArguments);
+			}
 		}
 		return buffer;
 	}
