@@ -130,7 +130,7 @@ public class JobHelpers {
 	}
 
 	private static void waitForBuildJobs() {
-		waitForJobs(BuildJobMatcher.INSTANCE, 60 * 1000);
+		waitForJobs(BuildJobMatcher.INSTANCE, 300000);
 	}
 
 	public static void waitForJobs(IJobMatcher matcher, int maxWaitMillis) {
