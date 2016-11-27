@@ -31,6 +31,7 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceInitializer;
 
 /**
  * Handler for the VS Code extension life cycle events.
@@ -72,6 +73,9 @@ final public class InitHandler {
 	}
 
 	private void triggerInitialization(String root) {
+		// Adjust any default preferences to server use
+		PreferenceInitializer.adjustPreferences();
+
 		Job job = new Job("Initialize Workspace") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -105,6 +109,7 @@ final public class InitHandler {
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule();
+
 	}
 
 	private class ServerStatusMonitor extends NullProgressMonitor{
