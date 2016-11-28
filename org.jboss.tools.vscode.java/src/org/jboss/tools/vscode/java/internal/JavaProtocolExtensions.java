@@ -26,6 +26,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 public interface JavaProtocolExtensions {
 
 	@JsonRequest
-	CompletableFuture<String> ClassFileContents(TextDocumentIdentifier param);
+	CompletableFuture<String> classFileContents(TextDocumentIdentifier param);
 
 }
