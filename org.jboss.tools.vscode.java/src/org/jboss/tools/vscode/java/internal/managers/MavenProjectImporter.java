@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -33,6 +34,7 @@ import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
+import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class MavenProjectImporter extends AbstractProjectImporter {
 
@@ -77,6 +79,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	@Override
 	@SuppressWarnings("restriction")
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
+		JavaLanguageServerPlugin.logInfo("Importing Maven project(s)");
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
@@ -101,6 +104,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				if (container instanceof IProject) {
 					project = (IProject)container;
 					project.open(monitor);
+					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 					configurationManager.updateProjectConfiguration(project, monitor);
 				}
 			}

@@ -19,6 +19,7 @@ import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper.Distribu
 import org.eclipse.buildship.core.workspace.NewProjectHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 import com.gradleware.tooling.toolingclient.GradleDistribution;
 import com.gradleware.tooling.toolingmodel.repository.FixedRequestAttributes;
@@ -51,6 +52,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (new File(rootFolder, "gradlew").exists()) {
 			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
 		}
+		JavaLanguageServerPlugin.logInfo("Importing Gradle project(s)");
 		startSynchronization(rootFolder, distribution, NewProjectHandler.IMPORT_AND_MERGE);
 	}
 

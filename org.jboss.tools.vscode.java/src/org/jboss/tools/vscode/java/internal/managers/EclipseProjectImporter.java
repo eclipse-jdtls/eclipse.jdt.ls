@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
+import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
 
@@ -73,6 +74,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		if (files == null || files.isEmpty()) {
 			return;
 		}
+		JavaLanguageServerPlugin.logInfo("Importing Eclipse project(s)");
 		int projectSize = files.size();
 		subMonitor.setWorkRemaining(projectSize);
 		for(File file : files) {
