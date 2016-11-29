@@ -9,8 +9,8 @@
     },
     "files": [
         {
-            "includePattern": "org.jboss.tools.vscode.product/distro/(.*)",
-            "uploadPattern": "$1",
+            "includePattern": "org.jboss.tools.vscode.product/distro/(.*)(-\\d{12})(.*)",
+            "uploadPattern": "$1-latest$3",
             "matrixParams": {
                 "override": 1
             }
