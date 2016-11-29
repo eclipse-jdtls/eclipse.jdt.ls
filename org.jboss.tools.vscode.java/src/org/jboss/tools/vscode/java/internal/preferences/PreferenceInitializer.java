@@ -8,24 +8,26 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.preferences;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Hashtable;
 
-import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
-import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
-
+import org.eclipse.jdt.core.JavaCore;
 /**
- * Interface for protocol extensions for Java
+ * Preference initializer. Used for adjusting the default
+ * preference values of used bundles to match server functionality.
  *
  * @author Gorkem Ercan
  *
  */
-@JsonSegment("java")
-public interface JavaProtocolExtensions {
+public class PreferenceInitializer {
 
-	@JsonRequest
-	CompletableFuture<String> classFileContents(TextDocumentIdentifier param);
+	public static void adjustPreferences() {
+
+		// Update JavaCore options
+		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
+		JavaCore.setOptions(javaCoreOptions);
+	}
 
 }
