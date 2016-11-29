@@ -9,7 +9,7 @@
     },
     "files": [
         {
-            "includePattern": "server/org.jboss.tools.vscode.product/distro/(.*)",
+            "includePattern": "org.jboss.tools.vscode.product/distro/(.*)",
             "uploadPattern": "$1",
             "matrixParams": {
                 "override": 1
