@@ -95,10 +95,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.LanguageServer#shutdown()
 	 */
 	@Override
-	public CompletableFuture<Void> shutdown() {
+	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
 		JavaLanguageServerPlugin.getLanguageServer().shutdown();
-		return CompletableFuture.completedFuture(null);
+		return CompletableFuture.completedFuture(new Object());
 	}
 
 	/* (non-Javadoc)
