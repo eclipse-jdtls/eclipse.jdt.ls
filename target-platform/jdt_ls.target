@@ -24,7 +24,7 @@
 <repository location="http://download.eclipse.org/releases/oxygen"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20161130-2000"/>
+<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20161205-0823"/>
 <repository location="http://download.eclipse.org/eclipse/updates/4.7-I-builds"/>
 </location>
 </locations>
