@@ -11,10 +11,10 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -22,6 +22,7 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -36,7 +37,10 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.ProjectUtils;
+import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
+
 
 public class ProjectsManager {
 
@@ -73,14 +77,7 @@ public class ProjectsManager {
 		if (uriString == null) {
 			return;
 		}
-		URI path;
-		try {
-			path = new URI(uriString);
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
-			return;
-		}
-		IResource resource = JDTUtils.findFile(path);
+		IResource resource = JDTUtils.findFile(uriString);
 		if (resource == null) {
 			return;
 		}
@@ -157,5 +154,40 @@ public class ProjectsManager {
 		return project;
 	}
 
+	public void updateProject(IProject project) {
+		if (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project)) {
+			return;
+		}
+		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating "+ project.getName() + " configuration");
+		WorkspaceJob job = new WorkspaceJob("Update project "+project.getName()) {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) {
+				IStatus status = Status.OK_STATUS;
+				String projectName = project.getName();
+				try {
+					long start = System.currentTimeMillis();
+					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
+					if (buildSupport.isPresent()) {
+						buildSupport.get().update(project, monitor);
+					}
+					long elapsed = System.currentTimeMillis() - start;
+					JavaLanguageServerPlugin.logInfo("Updated "+projectName + " in "+ elapsed +" ms");
+				} catch (CoreException e) {
+					String msg = "Error updating "+projectName;
+					JavaLanguageServerPlugin.logError(msg);
+					status = StatusFactory.newErrorStatus(msg, e);
+				}
+				return status;
+			}
+		};
+		job.schedule();
+	}
 
+	private Optional<IBuildSupport> getBuildSupport(IProject project) {
+		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
+	}
+
+	private Stream<IBuildSupport> buildSupports() {
+		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport());
+	}
 }

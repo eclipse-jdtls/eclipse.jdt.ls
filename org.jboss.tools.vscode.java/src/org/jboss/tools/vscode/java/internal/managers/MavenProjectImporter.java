@@ -33,6 +33,7 @@ import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
+import org.eclipse.m2e.core.project.MavenUpdateRequest;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
@@ -105,7 +106,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					project = (IProject)container;
 					project.open(monitor);
 					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-					configurationManager.updateProjectConfiguration(project, monitor);
+					configurationManager.updateProjectConfiguration(new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true), monitor);
 				}
 			}
 		}

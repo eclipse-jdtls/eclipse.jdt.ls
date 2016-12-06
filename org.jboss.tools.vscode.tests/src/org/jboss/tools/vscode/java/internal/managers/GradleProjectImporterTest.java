@@ -10,34 +10,17 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
-import static org.jboss.tools.vscode.java.internal.ProjectUtils.getJavaSourceLevel;
-import static org.jboss.tools.vscode.java.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import org.eclipse.core.resources.IProject;
-import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.junit.Test;
 
 /**
  * @author Fred Bricon
  *
  */
-public class GradleProjectImporterTest extends AbstractProjectsManagerBasedTest{
+public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void importSimpleGradleProject() throws Exception {
-		String name = "simple-gradle";
-		importProjects("gradle/"+name);
-		IProject project = getProject(name);
-		assertIsJavaProject(project);
-		assertIsGradleProject(project);
-		assertEquals("1.7", getJavaSourceLevel(project));
+		importSimpleJavaProject();
 	}
 
-	protected void assertIsGradleProject(IProject project) {
-		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Gradle nature", ProjectUtils.isGradleProject(project));
-	}
 }

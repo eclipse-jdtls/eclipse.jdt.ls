@@ -55,6 +55,7 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection.JavaLanguageCli
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.JavaProtocolExtensions;
 import org.jboss.tools.vscode.java.internal.LanguageServerWorkingCopyOwner;
+import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 
 /**
@@ -358,6 +359,22 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> java/classFileContents");
 		ClassfileContentHandler handler = new ClassfileContentHandler();
 		return  handler.contents(param);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.jboss.tools.vscode.java.internal.JavaProtocolExtensions#projectConfigurationUpdate(org.eclipse.lsp4j.TextDocumentIdentifier)
+	 */
+	@Override
+	public void projectConfigurationUpdate(TextDocumentIdentifier param) {
+		logInfo(">> java/projectConfigurationUpdate");
+		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
+		handler.updateConfiguration(param);
+	}
+
+	public void sendStatus(ServiceStatus serverStatus, String status) {
+		if (client != null) {
+			client.sendStatus(serverStatus, status);
+		}
 	}
 
 }

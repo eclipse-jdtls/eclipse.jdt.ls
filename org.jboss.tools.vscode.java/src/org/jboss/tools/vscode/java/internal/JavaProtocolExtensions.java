@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 
@@ -26,6 +27,12 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 public interface JavaProtocolExtensions {
 
 	@JsonRequest
-	CompletableFuture<String> classFileContents(TextDocumentIdentifier param);
+	CompletableFuture<String> classFileContents(TextDocumentIdentifier documentUri);
 
+	/**
+	 * Request a project configuration update
+	 * @param documentUri the document from which the project configuration will be updated
+	 */
+	@JsonNotification
+	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
 }

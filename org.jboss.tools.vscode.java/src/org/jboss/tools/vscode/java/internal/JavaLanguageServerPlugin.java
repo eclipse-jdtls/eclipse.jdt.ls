@@ -101,6 +101,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
 	}
 
+	public static void sendStatus(ServiceStatus serverStatus, String status) {
+		if (pluginInstance != null && pluginInstance.protocol != null) {
+			pluginInstance.protocol.sendStatus(serverStatus, status);
+		}
+	}
+
 	static void startLanguageServer(LanguageServer newLanguageServer) throws IOException {
 		if (pluginInstance != null) {
 			pluginInstance.languageServer = newLanguageServer;
