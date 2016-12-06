@@ -14,8 +14,8 @@
 	<name>${base.name} :: Product</name>
 
 	<properties>
-	   <timestamp>${maven.build.timestamp}</timestamp>
-	   <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 	</properties>
 
 	<build>
@@ -128,23 +128,15 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.7</version>
-						<executions>
-							<execution>
-								<phase>clean</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<target>
-										<delete>
-											<fileset dir="${vscode.location}/server" />
-										</delete>
-									</target>
-								</configuration>
-							</execution>
-						</executions>
+						<artifactId>maven-clean-plugin</artifactId>
+						<version>3.0.0</version>
+						<configuration>
+							<filesets>
+								<fileset>
+									<directory>${vscode.location}/server</directory>
+								</fileset>
+							</filesets>
+						</configuration>
 					</plugin>
 					<plugin>
 						<artifactId>maven-resources-plugin</artifactId>
@@ -167,6 +159,19 @@
 							</execution>
 						</executions>
 					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>target-platform-configuration</artifactId>
+						<configuration>
+							<environments>
+								<environment>
+									<os>${environment.os}</os>
+									<ws>${environment.ws}</ws>
+									<arch>${environment.arch}</arch>
+								</environment>
+							</environments>
+						</configuration>
+					</plugin>
 				</plugins>
 			</build>
 		</profile>
@@ -177,28 +182,27 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- get major.minor.incremental from this pom, then use 
-					 ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}
-					 to use the x.y.z version without the -SNAPSHOT suffix -->
+					<!-- get major.minor.incremental from this pom, then use ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion} 
+						to use the x.y.z version without the -SNAPSHOT suffix -->
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>build-helper-maven-plugin</artifactId>
 						<version>1.9.1</version>
 						<executions>
-						  <execution>
-						    <phase>validate</phase>
-						    <id>parse-version</id>
-						    <goals>
-						      <goal>parse-version</goal>
-						    </goals>
-						    <configuration>
-						      <versionString>${project.version}</versionString>
-						    </configuration>
-						  </execution>
+							<execution>
+								<phase>validate</phase>
+								<id>parse-version</id>
+								<goals>
+									<goal>parse-version</goal>
+								</goals>
+								<configuration>
+									<versionString>${project.version}</versionString>
+								</configuration>
+							</execution>
 						</executions>
 					</plugin>
 					<!-- generate .sha256 file -->
-   					<plugin>
+					<plugin>
 						<groupId>net.ju-n.maven.plugins</groupId>
 						<artifactId>checksum-maven-plugin</artifactId>
 						<version>1.2</version>
@@ -228,23 +232,15 @@
 					<!-- clean leftovers from previous runs -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.7</version>
-						<executions>
-							<execution>
-								<phase>clean</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<target>
-										<delete quiet="true">
-											<fileset dir="${project.basedir}/distro/" />
-										</delete>
-									</target>
-								</configuration>
-							</execution>
-						</executions>
+						<artifactId>maven-clean-plugin</artifactId>
+						<version>3.0.0</version>
+						<configuration>
+							<filesets>
+								<fileset>
+									<directory>${project.basedir}/distro/</directory>
+								</fileset>
+							</filesets>
+						</configuration>
 					</plugin>
 					<plugin>
 						<artifactId>maven-assembly-plugin</artifactId>
@@ -270,6 +266,45 @@
 					</plugin>
 				</plugins>
 			</build>
+		</profile>
+		<profile>
+			<id>linux</id>
+			<activation>
+				<os>
+					<family>linux</family>
+				</os>
+			</activation>
+			<properties>
+				<environment.os>linux</environment.os>
+				<environment.ws>gtk</environment.ws>
+				<environment.arch>x86_64</environment.arch>
+			</properties>
+		</profile>
+		<profile>
+			<id>mac</id>
+			<activation>
+				<os>
+					<family>mac</family>
+				</os>
+			</activation>
+			<properties>
+				<environment.os>macosx</environment.os>
+				<environment.ws>cocoa</environment.ws>
+				<environment.arch>x86_64</environment.arch>
+			</properties>
+		</profile>
+		<profile>
+			<id>windows</id>
+			<activation>
+				<os>
+					<family>windows</family>
+				</os>
+			</activation>
+			<properties>
+				<environment.os>win32</environment.os>
+				<environment.ws>win32</environment.ws>
+				<environment.arch>x86_64</environment.arch>
+			</properties>
 		</profile>
 	</profiles>
 </project>
