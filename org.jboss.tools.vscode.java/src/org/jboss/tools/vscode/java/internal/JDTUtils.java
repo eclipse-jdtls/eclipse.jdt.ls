@@ -401,6 +401,9 @@ public final class JDTUtils {
 	}
 
 	public static IFile findFile(URI uri) {
+		if (uri == null || !"file".equals(uri.getScheme())) {
+			return null;
+		}
 		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
 		switch(resources.length) {
 		case 0:

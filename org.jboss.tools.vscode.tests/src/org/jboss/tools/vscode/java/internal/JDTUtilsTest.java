@@ -15,6 +15,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,6 +86,22 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertNull(JDTUtils.resolveCompilationUnit(null));
 		assertNull(JDTUtils.resolveCompilationUnit("foo/bar/Clazz.java"));
 		assertNull(JDTUtils.resolveCompilationUnit("file:///foo/bar/Clazz.java"));
+	}
+
+	@Test
+	public void testIgnoredUnknownSchemes() {
+		PrintStream originalOut = System.out;
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			System.setOut(new PrintStream(baos, true));
+			System.out.flush();
+			JDTUtils.resolveCompilationUnit("inmemory:///foo/bar/Clazz.java");
+
+			assertEquals("",baos.toString());
+
+		} finally {
+			System.setOut(originalOut);
+		}
 	}
 
 }

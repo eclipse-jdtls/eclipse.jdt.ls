@@ -21,8 +21,11 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
@@ -38,7 +41,7 @@ import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
  * @author Gorkem Ercan
  *
  */
-final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IResourceDeltaVisitor {
+public final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IResourceDeltaVisitor {
 	private final JavaClientConnection connection;
 
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection) {
@@ -79,19 +82,23 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 		if(!JavaCore.isJavaLikeFileName(file.getName())) return true;
 
 		IMarker[]  markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false,IResource.DEPTH_ONE);
-
-		this.connection.publishDiagnostics(
-				new PublishDiagnosticsParams(
-						JDTUtils.getFileURI(resource),
-						toDiagnosticsArray(markers)));
+		String uri = JDTUtils.getFileURI(resource);
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		if (cu != null) {
+			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			this.connection.publishDiagnostics(
+					new PublishDiagnosticsParams(uri,
+							toDiagnosticsArray(document, markers)));
+		}
 		return true;
 	}
 
 	/**
 	 * @param markers
+	 * @param document
 	 * @return
 	 */
-	private List<Diagnostic> toDiagnosticsArray(IMarker[] markers) {
+	public List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
 		List<Diagnostic> diagnostics = new ArrayList<>();
 		for(IMarker marker: markers){
 			Diagnostic d = new Diagnostic();
@@ -99,7 +106,7 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 			d.setMessage(marker.getAttribute(IMarker.MESSAGE,""));
 			d.setCode(marker.getAttribute(IJavaModelMarker.ID,"0"));
 			d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY,-1)));
-			d.setRange(convertRange(marker));
+			d.setRange(convertRange(document, marker));
 			diagnostics.add(d);
 		}
 		return diagnostics;
@@ -109,10 +116,17 @@ final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IRes
 	 * @param marker
 	 * @return
 	 */
-	private Range convertRange(IMarker marker) {
+	private Range convertRange(IDocument document, IMarker marker) {
 		int line = marker.getAttribute(IMarker.LINE_NUMBER,-1) -1;
-		int cStart = marker.getAttribute(IMarker.CHAR_START, -1) -1 ;
-		int cEnd = marker.getAttribute(IMarker.CHAR_END, -1) -1;
+		int lineOffset = 0;
+		try {
+			lineOffset = document.getLineOffset(line);
+		} catch (BadLocationException unlikelyException) {
+			JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
+			return new Range();
+		}
+		int cStart = marker.getAttribute(IMarker.CHAR_START, -1) -lineOffset ;
+		int cEnd = marker.getAttribute(IMarker.CHAR_END, -1) -lineOffset;
 
 		return new Range(new Position(line,cStart),
 				new Position(line,cEnd));

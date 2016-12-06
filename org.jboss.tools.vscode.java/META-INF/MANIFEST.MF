@@ -22,9 +22,11 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0",
  com.gradleware.tooling.utils;bundle-version="0.14.0",
  org.gradle.toolingapi,
  org.eclipse.jdt.launching
-Export-Package: org.jboss.tools.vscode.java.internal;x-friends:="org.jboss.tools.vscode.tests",
- org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests",
- org.jboss.tools.vscode.java.internal.javadoc;x-friends:="org.jboss.tools.vscode.tests"
+Export-Package: org.eclipse.lsp4j;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.java.internal;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.java.internal.handlers;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.java.internal.javadoc;x-friends:="org.jboss.tools.vscode.tests",
+ org.jboss.tools.vscode.java.internal.managers;x-friends:="org.jboss.tools.vscode.tests"
 Bundle-ClassPath: lib/commons-lang3-3.4.jar,
  lib/jsoup-1.9.2.jar,
  lib/remark-1.0.0.jar,
