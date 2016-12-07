@@ -71,8 +71,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals(1, hover.getContents().size());
-		assertTrue(hover.getContents().get(0).startsWith("The \"standard\" output stream"));
+		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
+		assertTrue("Unexpected hover "+hover.getContents().get(0), hover.getContents().get(0).startsWith("The \"standard\" output stream"));
 	}
 
 	@Test
@@ -88,8 +88,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals(1, hover.getContents().size());
-		assertTrue(hover.getContents().get(0).startsWith("The \"standard\" output stream"));
+		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
+		assertTrue("Unexpected hover "+hover.getContents().get(0), hover.getContents().get(0).startsWith("The \"standard\" output stream"));
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
