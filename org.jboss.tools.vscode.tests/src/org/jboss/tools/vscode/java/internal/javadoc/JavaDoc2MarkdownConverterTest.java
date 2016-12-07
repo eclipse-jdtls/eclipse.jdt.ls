@@ -162,11 +162,11 @@ public class JavaDoc2MarkdownConverterTest {
 
 	@Test
 	public void testBoundaries() throws IOException {
+		assertTrue(new JavaDoc2MarkdownConverter("").getAsString().isEmpty());
 		assertNull(new JavaDoc2MarkdownConverter((Reader)null).getAsString());
 		assertNull(new JavaDoc2MarkdownConverter((Reader)null).getAsReader());
 		assertNull(new JavaDoc2MarkdownConverter((String)null).getAsString());
 		assertNull(new JavaDoc2MarkdownConverter((String)null).getAsReader());
-		assertTrue(new JavaDoc2MarkdownConverter("").getAsString().isEmpty());
 	}
 
 	@Test
