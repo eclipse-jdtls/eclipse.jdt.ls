@@ -73,7 +73,7 @@ public class ConnectionStreamFactory {
 		}
 
 		private boolean isWindows() {
-			return (OS.indexOf("win") >= 0);
+			return OS.indexOf("win") > -1;
 		}
 	}
 

@@ -67,49 +67,45 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
-		if (uriString == null) {
+		return resolveCompilationUnit(toURI(uriString));
+	}
+
+	/**
+	 * Given the uri returns a {@link ICompilationUnit}.
+	 * May return null if it can not associate the uri with a Java
+	 * file.
+	 *
+	 * @param uriString
+	 * @return compilation unit
+	 */
+	public static ICompilationUnit resolveCompilationUnit(URI uri) {
+		if (uri == null || "jdt".equals(uri.getScheme()) || !uri.isAbsolute()){
 			return null;
 		}
-		URI uri = null;
-		try {
-			uri = new URI(uriString);
-			if ("jdt".equals(uri.getScheme()) || !uri.isAbsolute()){
+
+		IFile resource = findFile(uri);
+		if(resource != null){
+			if(!ProjectUtils.isJavaProject(resource.getProject())){
 				return null;
 			}
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
-		}
-
-		IFile resource= null;
-		if (uri != null) {
-			resource = findFile(uri);
-			if(resource != null){
-				if(!ProjectUtils.isJavaProject(resource.getProject())){
-					return null;
-				}
-				IJavaElement element = JavaCore.create(resource);
-				if (element instanceof ICompilationUnit) {
-					return (ICompilationUnit)element;
-				}
+			IJavaElement element = JavaCore.create(resource);
+			if (element instanceof ICompilationUnit) {
+				return (ICompilationUnit)element;
 			}
 		}
 		if (resource == null) {
-			return getFakeCompilationUnit(uriString);
+			return getFakeCompilationUnit(uri);
 		}
 		//the resource is not null but no compilation unit could be created (eg. project not ready yet)
 		return null;
 	}
 
-	static ICompilationUnit getFakeCompilationUnit(String uriString) {
-		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
-		if (project == null || !project.isAccessible()) {
+	static ICompilationUnit getFakeCompilationUnit(URI uri) {
+		if (uri == null) {
 			return null;
 		}
-		final URI uri;
-		try {
-			uri = new URI(uriString);
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
+		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
+		if (project == null || !project.isAccessible()) {
 			return null;
 		}
 		IJavaProject javaProject = JavaCore.create(project);
@@ -205,15 +201,7 @@ public final class JDTUtils {
 	 * @return class file
 	 */
 	public static IClassFile resolveClassFile(String uriString){
-		URI uri = null;
-		try {
-			uri = new URI(uriString);
-			return resolveClassFile(uri);
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
-		}
-		return null;
-
+		return resolveClassFile(toURI(uriString));
 	}
 
 	/**
@@ -242,16 +230,14 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString) {
-		try {
-			URI uri = new URI(uriString);
-			if ("jdt".equals(uri.getScheme())) {
-				return resolveClassFile(uri);
-			}
-			return resolveCompilationUnit(uriString);
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
+		URI uri = toURI(uriString);
+		if (uri == null) {
 			return null;
 		}
+		if ("jdt".equals(uri.getScheme())) {
+			return resolveClassFile(uri);
+		}
+		return resolveCompilationUnit(uri);
 	}
 
 	/**
@@ -400,6 +386,10 @@ public final class JDTUtils {
 		return null;
 	}
 
+	public static IFile findFile(String uriString) {
+		return findFile(toURI(uriString));
+	}
+
 	public static IFile findFile(URI uri) {
 		if (uri == null || !"file".equals(uri.getScheme())) {
 			return null;
@@ -427,6 +417,18 @@ public final class JDTUtils {
 				}
 			}
 			return file;
+		}
+	}
+
+	public static URI toURI(String uriString) {
+		if (uriString == null || uriString.isEmpty()) {
+			return null;
+		}
+		try {
+			return new URI(uriString);
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
+			return null;
 		}
 	}
 
