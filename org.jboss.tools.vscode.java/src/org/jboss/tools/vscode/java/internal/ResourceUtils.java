@@ -34,29 +34,29 @@ import com.google.common.io.Files;
 public class ResourceUtils {
 
 	private ResourceUtils() {
-		//No instanciation
+		// No instanciation
 	}
 
-	public static List<IMarker> findMarkers(IResource resource, Integer... severities)
-			throws CoreException {
+	public static List<IMarker> findMarkers(IResource resource, Integer... severities) throws CoreException {
 		if (resource == null) {
 			return null;
 		}
-		Set<Integer> targetSeverities = severities == null?Collections.emptySet():new HashSet<>(Arrays.asList(severities));
-		IMarker[] allmarkers = resource.findMarkers(null /* all markers */, true /* subtypes */, IResource.DEPTH_INFINITE);
-		List<IMarker> markers = Stream.of(allmarkers)
-				.filter( m -> targetSeverities.isEmpty() || targetSeverities.contains(m.getAttribute(IMarker.SEVERITY, 0)))
+		Set<Integer> targetSeverities = severities == null ? Collections.emptySet()
+				: new HashSet<>(Arrays.asList(severities));
+		IMarker[] allmarkers = resource.findMarkers(null /* all markers */, true /* subtypes */,
+				IResource.DEPTH_INFINITE);
+		List<IMarker> markers = Stream.of(allmarkers).filter(
+				m -> targetSeverities.isEmpty() || targetSeverities.contains(m.getAttribute(IMarker.SEVERITY, 0)))
 				.collect(Collectors.toList());
 		return markers;
 	}
 
-	public static List<IMarker> getErrorMarkers(IResource resource)
-			throws CoreException {
+	public static List<IMarker> getErrorMarkers(IResource resource) throws CoreException {
 		return findMarkers(resource, IMarker.SEVERITY_ERROR);
 	}
 
 	public static String toString(List<IMarker> markers) {
-		if(markers == null || markers.isEmpty()) {
+		if (markers == null || markers.isEmpty()) {
 			return "";
 		}
 		String s = markers.stream().map(m -> toString(m)).collect(Collectors.joining(", "));
@@ -64,17 +64,14 @@ public class ResourceUtils {
 	}
 
 	public static String toString(IMarker marker) {
-		if(marker == null) {
+		if (marker == null) {
 			return null;
 		}
 		try {
-			StringBuilder sb = new StringBuilder("Type=")
-					.append(marker.getType())
-					.append(":Message=")
-					.append(marker.getAttribute(IMarker.MESSAGE))
-					.append(":LineNumber=")
+			StringBuilder sb = new StringBuilder("Type=").append(marker.getType()).append(":Message=")
+					.append(marker.getAttribute(IMarker.MESSAGE)).append(":LineNumber=")
 					.append(marker.getAttribute(IMarker.LINE_NUMBER));
-			return  sb.toString();
+			return sb.toString();
 		} catch (CoreException e) {
 			e.printStackTrace();
 			return "Unknown marker";
@@ -92,13 +89,14 @@ public class ResourceUtils {
 		try {
 			content = Files.toString(new File(fileURI), Charsets.UTF_8);
 		} catch (IOException e) {
-			throw new CoreException(StatusFactory.newErrorStatus("Can not get "+ fileURI +" content", e));
+			throw new CoreException(StatusFactory.newErrorStatus("Can not get " + fileURI + " content", e));
 		}
 		return content;
 	}
 
 	/**
-	 * Writes content to file, outside the workspace. No change event is emitted.
+	 * Writes content to file, outside the workspace. No change event is
+	 * emitted.
 	 */
 	public static void setContent(URI fileURI, String content) throws CoreException {
 		if (content == null) {
@@ -107,7 +105,15 @@ public class ResourceUtils {
 		try {
 			Files.write(content, new File(fileURI), Charsets.UTF_8);
 		} catch (IOException e) {
-			throw new CoreException(StatusFactory.newErrorStatus("Can not write to "+ fileURI, e));
+			throw new CoreException(StatusFactory.newErrorStatus("Can not write to " + fileURI, e));
 		}
+	}
+
+	/**
+	 * Fix uris by adding missing // to single file:/ prefix
+	 */
+	public static String fixURI(URI uri) {
+		String uriString = uri.toString();
+		return uriString.replaceFirst("file:/([^/])", "file:///$1");
 	}
 }

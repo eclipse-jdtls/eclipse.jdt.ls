@@ -363,8 +363,7 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String getFileURI(IResource resource) {
-		String uri = resource.getRawLocationURI().toString();
-		return uri.replaceFirst("file:/([^/])", "file:///$1");
+		return ResourceUtils.fixURI(resource.getRawLocationURI());
 	}
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {

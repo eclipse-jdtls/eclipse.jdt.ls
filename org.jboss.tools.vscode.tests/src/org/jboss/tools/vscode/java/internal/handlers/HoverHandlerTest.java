@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.jboss.tools.vscode.java.internal.ResourceUtils;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
@@ -97,7 +98,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	String createHoverRequest(URI file, int line, int kar) {
-		String fileURI = file.toString();
+		String fileURI = ResourceUtils.fixURI(file);
 		return HOVER_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
