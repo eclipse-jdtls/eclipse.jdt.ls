@@ -27,10 +27,7 @@ import org.junit.Test;
  */
 public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	/**
-	 * Hovers on the System.out
-	 */
-	private static String MSG_TEMPLATE =
+	private static String HOVER_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
 					"    \"method\": \"textDocument/hover\",\n" +
@@ -59,6 +56,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHover() throws Exception {
 		//given
+		//Hovers on the System.out
 		String payload = createHoverRequest("src/java/Foo.java", 5, 10);
 		TextDocumentPositionParams position = getParams(payload);
 
@@ -73,7 +71,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	String createHoverRequest(String file, int line, int kar) {
 		String fileURI = project.getFile(file).getRawLocationURI().toString();
-		return MSG_TEMPLATE.replace("${file}", fileURI)
+		return HOVER_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
 	}
