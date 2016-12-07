@@ -15,9 +15,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
+import java.nio.file.Paths;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +53,9 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Before
 	public void setup() throws Exception {
+		importProjects("eclipse/hello");
+		project = WorkspaceHelper.getProject("hello");
 		handler = new HoverHandler();
-		project = importProject("eclipse/hello");
 	}
 
 	@Test
@@ -69,8 +74,30 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(hover.getContents().get(0).startsWith("The \"standard\" output stream"));
 	}
 
+	@Test
+	public void testHoverStandalone() throws Exception {
+		//given
+		//Hovers on the System.out
+		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
+		String payload = createHoverRequest(standalone, 7, 11);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position).get();
+
+		//then
+		assertNotNull(hover);
+		assertEquals(1, hover.getContents().size());
+		assertTrue(hover.getContents().get(0).startsWith("The \"standard\" output stream"));
+	}
+
 	String createHoverRequest(String file, int line, int kar) {
-		String fileURI = project.getFile(file).getRawLocationURI().toString();
+		URI uri = project.getFile(file).getRawLocationURI();
+		return createHoverRequest(uri, line, kar);
+	}
+
+	String createHoverRequest(URI file, int line, int kar) {
+		String fileURI = file.toString();
 		return HOVER_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
