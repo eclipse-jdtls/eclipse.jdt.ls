@@ -80,7 +80,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//given
 		//Hovers on the System.out
 		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
-		String payload = createHoverRequest(standalone, 7, 11);
+		String payload = createHoverRequest(standalone, 10, 70);
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
@@ -89,7 +89,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//then
 		assertNotNull(hover);
 		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
-		assertTrue("Unexpected hover "+hover.getContents().get(0), hover.getContents().get(0).startsWith("The \"standard\" output stream"));
+		assertEquals("Unexpected hover "+hover.getContents().get(0), "This is foo", hover.getContents().get(0));
 	}
 
 	String createHoverRequest(String file, int line, int kar) {

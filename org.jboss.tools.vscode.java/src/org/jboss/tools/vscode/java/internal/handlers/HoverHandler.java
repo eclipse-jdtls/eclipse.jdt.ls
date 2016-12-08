@@ -33,7 +33,7 @@ public class HoverHandler{
 						position.getPosition().getCharacter());
 			}
 			Hover $ = new Hover();
-			if (hover != null && hover.length() > 0) {
+			if (hover != null && !hover.isEmpty()) {
 				$.setContents(Arrays.asList(hover));
 			}
 			return $;
