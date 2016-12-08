@@ -27,7 +27,7 @@ public class JavaDoc2MarkdownConverter {
 
 	private static Remark remark;
 
-	private static String markDown;
+	private String markDown;
 
 	static {
 		Options options = new Options();
@@ -49,9 +49,7 @@ public class JavaDoc2MarkdownConverter {
 
 
 	public JavaDoc2MarkdownConverter(String javadoc) {
-		if (javadoc != null) {
-			setJavaDoc2HTMLTextReader(new StringReader(javadoc));
-		}
+		setJavaDoc2HTMLTextReader(javadoc== null? null:new StringReader(javadoc));
 	}
 
 	private void setJavaDoc2HTMLTextReader(Reader reader) {

@@ -82,8 +82,10 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 	}
 
 	@Test
-	public void testUnresolvableCompilationUnits() {
-		assertNull(JDTUtils.resolveCompilationUnit(null));
+	public void testUnresolvableCompilationUnits() throws Exception {
+		assertNull(JDTUtils.resolveCompilationUnit((String)null));
+		assertNull(JDTUtils.resolveCompilationUnit((URI)null));
+		assertNull(JDTUtils.resolveCompilationUnit(new URI("gopher://meh")));
 		assertNull(JDTUtils.resolveCompilationUnit("foo/bar/Clazz.java"));
 		assertNull(JDTUtils.resolveCompilationUnit("file:///foo/bar/Clazz.java"));
 	}

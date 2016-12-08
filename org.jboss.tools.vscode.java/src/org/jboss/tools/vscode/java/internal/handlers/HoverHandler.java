@@ -22,7 +22,7 @@ import org.jboss.tools.vscode.java.internal.JDTUtils;
 
 public class HoverHandler{
 
-	CompletableFuture<Hover> hover(TextDocumentPositionParams position){
+	public CompletableFuture<Hover> hover(TextDocumentPositionParams position){
 		return CompletableFutures.computeAsync(cancelToken->{
 			ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 
@@ -33,7 +33,7 @@ public class HoverHandler{
 						position.getPosition().getCharacter());
 			}
 			Hover $ = new Hover();
-			if (hover != null && hover.length() > 0) {
+			if (hover != null && !hover.isEmpty()) {
 				$.setContents(Arrays.asList(hover));
 			}
 			return $;

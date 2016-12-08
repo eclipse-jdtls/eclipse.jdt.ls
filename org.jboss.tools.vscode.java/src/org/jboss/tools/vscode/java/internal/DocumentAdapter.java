@@ -36,48 +36,68 @@ import org.eclipse.jface.text.ISynchronizable;
 public class DocumentAdapter implements IBuffer, IDocumentListener {
 
 	private static class NullBuffer implements IBuffer {
+		@Override
 		public void addBufferChangedListener(IBufferChangedListener listener) {}
+		@Override
 		public void append(char[] text) {}
+		@Override
 		public void append(String text) {}
+		@Override
 		public void close() {}
+		@Override
 		public char getChar(int position) { return 0; }
+		@Override
 		public char[] getCharacters() { return null; }
+		@Override
 		public String getContents() { return null; }
+		@Override
 		public int getLength() { return 0; }
+		@Override
 		public IOpenable getOwner() { return null; }
+		@Override
 		public String getText(int offset, int length) { return null; }
+		@Override
 		public IResource getUnderlyingResource() { return null; }
+		@Override
 		public boolean hasUnsavedChanges() { return false; }
+		@Override
 		public boolean isClosed() { return false; }
+		@Override
 		public boolean isReadOnly() { return true; }
+		@Override
 		public void removeBufferChangedListener(IBufferChangedListener listener) {}
+		@Override
 		public void replace(int position, int length, char[] text) {}
+		@Override
 		public void replace(int position, int length, String text) {}
+		@Override
 		public void save(IProgressMonitor progress, boolean force) throws JavaModelException {}
+		@Override
 		public void setContents(char[] contents) {}
+		@Override
 		public void setContents(String contents) {}
 	}
-	
+
 	public static final IBuffer Null = new NullBuffer();
-	
-	private Object lock = new Object();	
-	
+
+	private Object lock = new Object();
+
 	private IOpenable fOwner;
 	private IFile fFile;
 	private boolean fIsClosed;
-	
+
 	private List<IBufferChangedListener> fBufferListeners;
-	
+
 	private ITextFileBuffer fTextFileBuffer;
 	private IDocument fDocument;
-	
-	
+
+
 	public DocumentAdapter(IOpenable owner, IFile file) {
 		fOwner = owner;
 		fFile = file;
-		fBufferListeners = new ArrayList<IBufferChangedListener>(3);
+		fBufferListeners = new ArrayList<>(3);
 		fIsClosed = false;
-		
+
 		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 		try {
 			manager.connect(file.getFullPath(), LocationKind.IFILE, null);
@@ -92,9 +112,9 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 
 	@Override
 	public void addBufferChangedListener(IBufferChangedListener listener) {
-		synchronized (lock) {			
+		synchronized (lock) {
 			if (!fBufferListeners.contains(listener)) {
-				fBufferListeners.add(listener);			
+				fBufferListeners.add(listener);
 			}
 		}
 	}
@@ -102,7 +122,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	@Override
 	public synchronized void removeBufferChangedListener(IBufferChangedListener listener) {
 		synchronized (lock) {
-			fBufferListeners.remove(listener);			
+			fBufferListeners.remove(listener);
 		}
 	}
 
@@ -114,21 +134,21 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	@Override
 	public void append(String text) {
 		try {
-			fDocument.replace(fDocument.getLength(), 0, text);			
+			fDocument.replace(fDocument.getLength(), 0, text);
 		} catch (BadLocationException e) {
-			new IndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException(e.getMessage());
 		}
 	}
 
 	@Override
 	public void close() {
-		synchronized (lock) {			
+		synchronized (lock) {
 			if (fIsClosed)
 				return;
-			
+
 			fIsClosed= true;
 			fDocument.removeDocumentListener(this);
-			
+
 			if (fTextFileBuffer != null) {
 				try {
 					ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
@@ -138,7 +158,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 				}
 				fTextFileBuffer= null;
 			}
-			
+
 			fireBufferChanged(new BufferChangedEvent(this, 0, 0, null));
 			fBufferListeners.clear();
 			fDocument = null;
@@ -150,7 +170,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 		try {
 			return fDocument.getChar(position);
 		} catch (BadLocationException x) {
-			throw new IndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException(x.getMessage());
 		}
 	}
 
@@ -180,7 +200,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 		try {
 			return fDocument.get(offset, length);
 		} catch (BadLocationException x) {
-			throw new IndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException(x.getMessage());
 		}
 	}
 
@@ -204,7 +224,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 		if (fTextFileBuffer != null) {
 			return fTextFileBuffer.isCommitable();
 		}
-		
+
 		ResourceAttributes attributes = fFile.getResourceAttributes();
 		return attributes != null ? attributes.isReadOnly() : false;
 	}
@@ -217,9 +237,9 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	@Override
 	public void replace(int position, int length, String text) {
 		try {
-			fDocument.replace(position, length, text);			
+			fDocument.replace(position, length, text);
 		} catch (BadLocationException e) {
-			throw new IndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException(e.getMessage());
 		}
 	}
 
@@ -227,7 +247,7 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	public void save(IProgressMonitor progress, boolean force) throws JavaModelException {
 		try {
 			if (fTextFileBuffer != null) {
-				fTextFileBuffer.commit(progress, force);				
+				fTextFileBuffer.commit(progress, force);
 			}
 		} catch (CoreException e) {
 			throw new JavaModelException(e);
@@ -241,10 +261,10 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 
 	@Override
 	public void setContents(String contents) {
-		synchronized (lock) {			
+		synchronized (lock) {
 			if (fDocument == null) {
 				if (fTextFileBuffer != null) {
-					fDocument = fTextFileBuffer.getDocument(); 
+					fDocument = fTextFileBuffer.getDocument();
 				} else {
 					ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 					fDocument =  manager.createEmptyDocument(fFile.getFullPath(), LocationKind.IFILE);
@@ -265,11 +285,11 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	public void documentChanged(DocumentEvent event) {
 		fireBufferChanged(new BufferChangedEvent(this, event.getOffset(), event.getLength(), event.getText()));
 	}
-	
+
 	private void fireBufferChanged(BufferChangedEvent event) {
-		IBufferChangedListener[] listeners = null;	
+		IBufferChangedListener[] listeners = null;
 		synchronized (lock) {
-			listeners = fBufferListeners.toArray(new IBufferChangedListener[fBufferListeners.size()]);			
+			listeners = fBufferListeners.toArray(new IBufferChangedListener[fBufferListeners.size()]);
 		}
 		for (IBufferChangedListener listener : listeners) {
 			listener.bufferChanged(event);
