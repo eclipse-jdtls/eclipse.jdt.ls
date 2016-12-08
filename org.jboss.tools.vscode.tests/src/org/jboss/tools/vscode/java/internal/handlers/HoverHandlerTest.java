@@ -13,7 +13,6 @@ package org.jboss.tools.vscode.java.internal.handlers;
 import static org.jboss.tools.vscode.java.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -63,7 +62,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testHover() throws Exception {
 		//given
 		//Hovers on the System.out
-		String payload = createHoverRequest("src/java/Foo.java", 5, 10);
+		String payload = createHoverRequest("src/java/Foo.java", 5, 15);
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
@@ -72,7 +71,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//then
 		assertNotNull(hover);
 		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
-		assertTrue("Unexpected hover "+hover.getContents().get(0), hover.getContents().get(0).startsWith("The \"standard\" output stream"));
+		assertEquals("Unexpected hover "+hover.getContents().get(0), "This is foo", hover.getContents().get(0));
 	}
 
 	@Test
@@ -90,6 +89,22 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
 		assertEquals("Unexpected hover "+hover.getContents().get(0), "This is foo", hover.getContents().get(0));
+	}
+
+	@Test
+	public void testEmptyHover() throws Exception {
+		//given
+		//Hovers on the System.out
+		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
+		String payload = createHoverRequest(standalone, 1, 2);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position).get();
+
+		//then
+		assertNotNull(hover);
+		assertEquals("Shouldn't find hover for "+payload, 0, hover.getContents().size());
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
