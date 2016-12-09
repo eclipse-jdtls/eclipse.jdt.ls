@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextEdit;
 
 /**
  * A set of assertion methods about LSP4J entities
@@ -35,4 +36,12 @@ public class Lsp4jAssertions {
 		assertEquals("Unexpected line position from "+position, expectedLine, position.getLine());
 		assertEquals("Unexpected character position from "+position, expectedChar, position.getCharacter());
 	}
+
+	public static void assertTextEdit(int expectedLine, int expectedStart, int expectedEnd, String expectedText, TextEdit edit){
+		assertNotNull("TextEdit is null");
+		assertEquals(expectedText, edit.getNewText());
+		assertRange(expectedLine, expectedStart, expectedEnd, edit.getRange());
+
+	}
+
 }

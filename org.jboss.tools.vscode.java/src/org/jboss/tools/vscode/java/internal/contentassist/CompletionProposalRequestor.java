@@ -27,13 +27,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private final List<CompletionItem> proposals;
 	private final ICompilationUnit unit;
+	private final int triggerOffset;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionProposalDescriptionProvider descriptionProvider;
 
 
-	public CompletionProposalRequestor( ICompilationUnit aUnit, List<CompletionItem> proposals) {
+	public CompletionProposalRequestor( ICompilationUnit aUnit, List<CompletionItem> proposals, int offset) {
 		this.proposals = proposals;
 		this.unit = aUnit;
+		this.triggerOffset = offset;
 		setRequireExtendedContext(true);
 	}
 
@@ -55,7 +57,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	@Override
 	public void acceptContext(CompletionContext context) {
 		super.acceptContext(context);
-		this.proposalProvider = new CompletionProposalReplacementProvider(unit,context);
+		this.proposalProvider = new CompletionProposalReplacementProvider(unit,context, triggerOffset);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
 
