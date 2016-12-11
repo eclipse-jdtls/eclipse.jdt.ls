@@ -11,7 +11,6 @@
 package org.jboss.tools.vscode.java.internal.handlers;
 
 
-import static org.jboss.tools.vscode.java.internal.Lsp4jAssertions.assertRange;
 import static org.jboss.tools.vscode.java.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -163,10 +162,7 @@ public class CompletionTests extends AbstractProjectsManagerBasedTest{
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
 		assertEquals("abj", ci.getSortText());
-		assertNotNull(ci.getTextEdit());
-		TextEdit te = ci.getTextEdit();
-		assertEquals("put({{key}}, {{value}})", te.getNewText());
-		assertRange(5,4,6,te.getRange());
+		assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", ci.getTextEdit());
 		assertNotNull(ci.getAdditionalTextEdits());
 		List<TextEdit> edits = ci.getAdditionalTextEdits();
 		assertEquals(3, edits.size());
