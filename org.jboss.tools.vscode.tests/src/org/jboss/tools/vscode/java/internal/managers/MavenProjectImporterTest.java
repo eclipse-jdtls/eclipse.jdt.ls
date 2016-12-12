@@ -24,6 +24,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -47,6 +48,7 @@ public class MavenProjectImporterTest extends AbstractProjectsManagerBasedTest {
 		return project;
 	}
 
+	@Ignore(value="Test is currently unstable and fails randomly")
 	@Test
 	public void pomChangedTriggersBuild() throws Exception {
 		IProject project = importSimpleJavaProject();
