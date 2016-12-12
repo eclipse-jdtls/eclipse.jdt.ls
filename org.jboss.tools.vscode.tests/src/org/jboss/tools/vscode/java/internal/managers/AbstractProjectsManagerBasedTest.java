@@ -13,7 +13,6 @@ package org.jboss.tools.vscode.java.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,15 +54,6 @@ public abstract class AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(to.getAbsolutePath(), monitor);
 		waitForBackgroundJobs();
 		return WorkspaceHelper.getAllProjects();
-	}
-
-	protected IProject importProject(String path) throws Exception {
-		List<IProject> projects = importProjects(path);
-		if (projects.size() >0){
-			return projects.get(0);
-		}
-		fail("No project was imported");
-		return null;
 	}
 
 	protected void waitForBackgroundJobs() throws Exception {

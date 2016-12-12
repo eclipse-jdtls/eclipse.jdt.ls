@@ -44,7 +44,10 @@ import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 public class CodeLensHandler {
 
 	@SuppressWarnings("unchecked")
-	CodeLens resolve(CodeLens lens){
+	public CodeLens resolve(CodeLens lens){
+		if (lens == null) {
+			return null;
+		}
 		try {
 			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
@@ -98,7 +101,7 @@ public class CodeLensHandler {
 		return result;
 	}
 
-	List<CodeLens> getCodeLensSymbols(String uri) {
+	public List<CodeLens> getCodeLensSymbols(String uri) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if(unit == null || !unit.getResource().exists()) return Collections.emptyList();
 		try {
