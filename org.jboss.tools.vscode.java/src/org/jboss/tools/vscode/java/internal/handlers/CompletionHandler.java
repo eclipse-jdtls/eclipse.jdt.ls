@@ -48,7 +48,8 @@ public class CompletionHandler{
 		if (unit == null) return Collections.emptyList();
 		final List<CompletionItem> proposals = new ArrayList<>();
 		try {
-			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals);
+			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals, offset);
 			// Allow completions for unresolved types - since 3.3
 			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
 			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
@@ -64,8 +65,6 @@ public class CompletionHandler{
 			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
 
 			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
-
-			int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
 
 			if (offset >-1 && !monitor.isCanceled()) {
 				unit.codeComplete(offset, collector, monitor);

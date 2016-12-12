@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.contentassist;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +35,17 @@ import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.TextEditConverter;
+import org.jboss.tools.vscode.java.internal.handlers.JsonRpcHelpers;
 
 /**
  * Utility to calculate the completion replacement string based on JDT Core
@@ -58,17 +65,18 @@ public class CompletionProposalReplacementProvider {
 	final private static char SEMICOLON = ';';
 	final private static char COMMA = ',';
 
-	private ICompilationUnit compilationUnit;
-	private int offset;
-	private String prefix="";
+	private final ICompilationUnit compilationUnit;
+	private final int offset;
 	private CompletionContext context;
 	private ImportRewrite importRewrite;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context ) {
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
+		this.offset = offset;
 	}
+
 
 
 	/**
@@ -84,12 +92,14 @@ public class CompletionProposalReplacementProvider {
 		// reset importRewrite
 		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 
+		List<org.eclipse.lsp4j.TextEdit> additionalTextEdits = new ArrayList<>();
+
 		StringBuilder completionBuffer = new StringBuilder();
 		if (isSupportingRequiredProposals(proposal)) {
 			CompletionProposal[] requiredProposals= proposal.getRequiredProposals();
 			for (int i= 0; requiredProposals != null &&  i < requiredProposals.length; i++) {
 				if (requiredProposals[i].getKind() == CompletionProposal.TYPE_REF) {
-					appendRequiredType(completionBuffer, requiredProposals[i], trigger, positions, proposal.canUseDiamond(context));
+					appendRequiredType(additionalTextEdits, requiredProposals[i], trigger, positions, proposal.canUseDiamond(context));
 				} else if (requiredProposals[i].getKind() == CompletionProposal.TYPE_IMPORT) {
 					appendImportProposal(completionBuffer, requiredProposals[i], proposal.getKind());
 				} else if (requiredProposals[i].getKind() == CompletionProposal.METHOD_IMPORT) {
@@ -107,20 +117,39 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		appendReplacementString(completionBuffer, proposal, positions);
-		item.setInsertText(completionBuffer.toString());
-		addImports(item);
+		Range range = toReplacementRange(proposal);
+		if(range != null){
+			item.setTextEdit(new org.eclipse.lsp4j.TextEdit(toReplacementRange(proposal), completionBuffer.toString()));
+		}else{
+			// fallback
+			item.setInsertText(completionBuffer.toString());
+		}
+		addImports(additionalTextEdits);
+		if(!additionalTextEdits.isEmpty()){
+			item.setAdditionalTextEdits(additionalTextEdits);
+		}
+	}
+
+	private Range toReplacementRange(CompletionProposal proposal){
+		try {
+			return JDTUtils.toRange(compilationUnit, proposal.getReplaceStart(), proposal.getReplaceEnd()-proposal.getReplaceStart());
+		} catch (JavaModelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
 	 * Adds imports collected by importRewrite to item
 	 * @param item
 	 */
-	private void addImports(CompletionItem item) {
+	private void addImports(List<org.eclipse.lsp4j.TextEdit> additionalEdits) {
 		if(this.importRewrite != null ){
 			try {
 				TextEdit edit =  this.importRewrite.rewriteImports(new NullProgressMonitor());
 				TextEditConverter converter = new TextEditConverter(this.compilationUnit, edit);
-				item.setAdditionalTextEdits(converter.convert());
+				additionalEdits.addAll(converter.convert());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Error adding imports",e);
 			}
@@ -210,22 +239,31 @@ public class CompletionProposalReplacementProvider {
 		return !proposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(proposal.getSignature()));
 	}
 
-	private StringBuilder appendRequiredType(StringBuilder buffer, CompletionProposal typeProposal, char trigger, List<Integer> positions, boolean canUseDiamond) {
+	private void appendRequiredType(List<org.eclipse.lsp4j.TextEdit> edits, CompletionProposal typeProposal, char trigger, List<Integer> positions, boolean canUseDiamond) {
 
+		StringBuilder buffer = new StringBuilder();
 		appendReplacementString(buffer, typeProposal, positions);
 
 		if (compilationUnit == null /*|| getContext() != null && getContext().isInJavadoc()*/) {
-			return buffer;
+			Range range = toReplacementRange(typeProposal);
+			edits.add(new org.eclipse.lsp4j.TextEdit(range, buffer.toString()));
+			return;
 		}
 
 		IJavaProject project= compilationUnit.getJavaProject();
-		if (!shouldProposeGenerics(project))
-			return buffer;
+		if (!shouldProposeGenerics(project)){
+			Range range = toReplacementRange(typeProposal);
+			edits.add(new org.eclipse.lsp4j.TextEdit(range, buffer.toString()));
+			return;
+		}
 
 		char[] completion= typeProposal.getCompletion();
 		// don't add parameters for import-completions nor for proposals with an empty completion (e.g. inside the type argument list)
-		if (completion.length > 0 && (completion[completion.length - 1] == ';' || completion[completion.length - 1] == '.'))
-			return buffer;
+		if (completion.length > 0 && (completion[completion.length - 1] == ';' || completion[completion.length - 1] == '.')){
+			Range range = toReplacementRange(typeProposal);
+			edits.add(new org.eclipse.lsp4j.TextEdit(range, buffer.toString()));
+			return;
+		}
 
 		/*
 		 * Add parameter types
@@ -245,7 +283,8 @@ public class CompletionProposalReplacementProvider {
 					appendParameterList(buffer,typeArguments, positions, onlyAppendArguments);
 			}
 		}
-		return buffer;
+		Range range = toReplacementRange(typeProposal);
+		edits.add(new org.eclipse.lsp4j.TextEdit(range, buffer.toString()));
 	}
 
 	private final boolean shouldProposeGenerics(IJavaProject project) {
@@ -407,17 +446,24 @@ public class CompletionProposalReplacementProvider {
 		 * No argument list if there already is a generic signature behind the
 		 * name.
 		 */
-		int index = prefix.length() - 1;
-		while (index >= 0
-				&& Character.isUnicodeIdentifierPart(prefix.charAt(index))
-				&& prefix.charAt(index) != '\n')
-			--index;
+		try {
+			IDocument document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
+			IRegion region= document.getLineInformationOfOffset(proposal.getReplaceEnd());
+			String line= document.get(region.getOffset(),region.getLength());
 
-		if (index < 0)
+			int index= proposal.getReplaceEnd() - region.getOffset();
+			while (index != line.length() && Character.isUnicodeIdentifierPart(line.charAt(index)))
+				++index;
+
+			if (index == line.length())
+				return true;
+
+			char ch= line.charAt(index);
+			return ch != '<';
+
+		} catch (BadLocationException | JavaModelException e) {
 			return true;
-
-		char ch = prefix.charAt(index);
-		return ch != '<' && ch != '\n';
+		}
 
 	}
 
@@ -562,6 +608,14 @@ public class CompletionProposalReplacementProvider {
 		 * If the user types in the qualification, don't force import rewriting
 		 * on him - insert the qualified name.
 		 */
+		String prefix="";
+		try{
+			IDocument document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
+			IRegion region= document.getLineInformationOfOffset(proposal.getReplaceEnd());
+			prefix =  document.get(region.getOffset(), proposal.getReplaceEnd() -region.getOffset()).trim();
+		}catch(BadLocationException | JavaModelException e){
+
+		}
 		int dotIndex = prefix.lastIndexOf('.');
 		// match up to the last dot in order to make higher level matching still
 		// work (camel case...)
@@ -622,13 +676,17 @@ public class CompletionProposalReplacementProvider {
 		return last == ';' || last == '.';
 	}
 
-
-	//	private boolean isSmartTrigger(char trigger) {
-	//		return false;
-	//	}
+	//	private String getPrefixForCompletion(CompletionProposal proposal){
+	//		IDocument document;
+	//		try {
+	//			document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
+	//			IRegion region= document.getLineInformationOfOffset(proposal.getReplaceEnd());
+	//			return document.get(region.getOffset(), );
 	//
-	//	private void handleSmartTrigger(char trigger, int refrenceOffset) {
-	//
+	//		} catch (JavaModelException | BadLocationException e) {
+	//			// return empty;
+	//		}
+	//		return "";
 	//	}
 
 }
