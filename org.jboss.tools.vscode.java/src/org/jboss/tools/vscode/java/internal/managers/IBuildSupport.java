@@ -8,8 +8,19 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.jboss.tools.vscode.java.internal;
+package org.jboss.tools.vscode.java.internal.managers;
 
-public enum ServiceStatus {
-	Starting, Started, Message, Error
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+
+/**
+ * @author Fred Bricon
+ *
+ */
+public interface IBuildSupport {
+
+	boolean applies(IProject project);
+
+	void update(IProject resource, IProgressMonitor monitor) throws CoreException;
 }

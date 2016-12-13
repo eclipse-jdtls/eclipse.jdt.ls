@@ -22,6 +22,10 @@ import org.eclipse.jdt.core.JavaCore;
  */
 public class PreferenceInitializer {
 
+	private PreferenceInitializer() {
+		//no public instanciation
+	}
+
 	public static void adjustPreferences() {
 
 		// Update JavaCore options
