@@ -354,8 +354,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.jboss.tools.vscode.java.internal.JavaProtocolExtensions#ClassFileContents(org.eclipse.lsp4j.TextDocumentIdentifier)
 	 */
 	@Override
-	public CompletableFuture<String> ClassFileContents(TextDocumentIdentifier param) {
-		logInfo(">> java/ClassFileContents");
+	public CompletableFuture<String> classFileContents(TextDocumentIdentifier param) {
+		logInfo(">> java/classFileContents");
 		ClassfileContentHandler handler = new ClassfileContentHandler();
 		return  handler.contents(param);
 	}
