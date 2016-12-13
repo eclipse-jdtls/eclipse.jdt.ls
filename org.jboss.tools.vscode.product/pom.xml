@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project 
+	xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<version>1.0.0-SNAPSHOT</version>
 		<groupId>org.jboss.tools.vscode</groupId>
 		<artifactId>parent</artifactId>
 	</parent>
-
 	<artifactId>org.jboss.tools.vscode.product</artifactId>
 	<packaging>eclipse-repository</packaging>
 	<name>${base.name} :: Product</name>
-
 	<properties>
-	   <timestamp>${maven.build.timestamp}</timestamp>
-	   <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -113,7 +110,6 @@
 				</executions>
 			</plugin>
 		</plugins>
-
 	</build>
 	<profiles>
 		<profile>
@@ -175,6 +171,13 @@
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
+			<properties>
+				<docker.USER_HOME_DIR>root</docker.USER_HOME_DIR>
+				<docker.MAVEN_VERSION>3.3.9</docker.MAVEN_VERSION>
+				<docker.GRADLE_VERSION>3.2.1</docker.GRADLE_VERSION>
+				<docker.JDT_LS_HOME>/usr/share/jdt_ls</docker.JDT_LS_HOME>
+				<docker.skip>true</docker.skip>
+			</properties>
 			<build>
 				<plugins>
 					<!-- get major.minor.incremental from this pom, then use 
@@ -185,20 +188,20 @@
 						<artifactId>build-helper-maven-plugin</artifactId>
 						<version>1.9.1</version>
 						<executions>
-						  <execution>
-						    <phase>validate</phase>
-						    <id>parse-version</id>
-						    <goals>
-						      <goal>parse-version</goal>
-						    </goals>
-						    <configuration>
-						      <versionString>${project.version}</versionString>
-						    </configuration>
-						  </execution>
+							<execution>
+								<phase>validate</phase>
+								<id>parse-version</id>
+								<goals>
+									<goal>parse-version</goal>
+								</goals>
+								<configuration>
+									<versionString>${project.version}</versionString>
+								</configuration>
+							</execution>
 						</executions>
 					</plugin>
 					<!-- generate .sha256 file -->
-   					<plugin>
+					<plugin>
 						<groupId>net.ju-n.maven.plugins</groupId>
 						<artifactId>checksum-maven-plugin</artifactId>
 						<version>1.2</version>
@@ -265,6 +268,68 @@
 										<descriptor>publish-assembly.xml</descriptor>
 									</descriptors>
 								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>io.fabric8</groupId>
+						<artifactId>docker-maven-plugin</artifactId>
+						<version>0.18.1</version>
+						<configuration>
+							<images>
+								<image>
+									<name>jdt_ls</name>
+									<build>
+										<skip>${docker.skip}</skip>
+										<from>openjdk:8-jre-alpine</from>
+										<runCmds>
+											<run>apk add --update curl tar bash</run>
+											<run>rm -rf /var/cache/apk/* </run>
+											<run>mkdir -p /usr/share/maven /usr/share/maven/ref</run>
+											<run>curl -fsSL http://apache.osuosl.org/maven/maven-3/${docker.MAVEN_VERSION}/binaries/apache-maven-${docker.MAVEN_VERSION}-bin.tar.gz | tar -xzC /usr/share/maven --strip-components=1</run>
+											<run>ln -s /usr/share/maven/bin/mvn /usr/bin/mvn</run>
+											<run>curl https://downloads.gradle.org/distributions/gradle-${docker.GRADLE_VERSION}-bin.zip -o gradle-${docker.GRADLE_VERSION}-bin.zip</run>
+											<run>unzip gradle-${docker.GRADLE_VERSION}-bin.zip -d /usr/share/ </run>
+											<run>rm -f gradle-${docker.GRADLE_VERSION}-bin.zip</run>
+											<run>ln -s /usr/share/gradle-${docker.GRADLE_VERSION} /usr/share/gradle</run>
+										</runCmds>
+										<env>
+											<MAVEN_HOME>/usr/share/maven</MAVEN_HOME>
+											<MAVEN_CONFIG>${docker.USER_HOME_DIR}/.m2</MAVEN_CONFIG>
+											<GRADLE_HOME>/usr/share/gradle</GRADLE_HOME>
+											<GRADLE_USER_HOME>${docker.USER_HOME_DIR}/.gradle</GRADLE_USER_HOME>
+											<STDIN_PORT>5001</STDIN_PORT>
+											<STDOUT_PORT>5002</STDOUT_PORT>
+										</env>
+										<assembly>
+											<targetDir>${docker.JDT_LS_HOME}</targetDir>
+											<descriptor>/publish-assembly.xml</descriptor>
+										</assembly>
+										<entryPoint>
+											<exec>
+												<arg>java</arg>
+												<arg>-Declipse.application=org.jboss.tools.vscode.java.id1</arg>
+												<arg>-Dosgi.bundles.defaultStartLevel=4</arg>
+												<arg>-Declipse.product=org.jboss.tools.vscode.java.product</arg>
+												<arg>-jar</arg>
+												<arg>${docker.JDT_LS_HOME}/plugins/org.eclipse.equinox.launcher_1.4.0.v20160926-1553.jar</arg>
+												<arg>-configuration</arg>
+												<arg>${docker.JDT_LS_HOME}/config_linux</arg>
+												<arg>-data</arg>
+												<arg>${docker.USER_HOME_DIR}/workspace</arg>
+											</exec>
+										</entryPoint>
+									</build>
+								</image>
+							</images>
+						</configuration>
+						<executions>
+							<execution>
+								<id>build-image</id>
+								<phase>package</phase>
+								<goals>
+									<goal>build-nofork</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
