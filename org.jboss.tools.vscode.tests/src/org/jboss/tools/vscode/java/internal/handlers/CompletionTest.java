@@ -49,7 +49,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CompletionTests extends AbstractProjectsManagerBasedTest{
+public class CompletionTest extends AbstractProjectsManagerBasedTest{
 
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
