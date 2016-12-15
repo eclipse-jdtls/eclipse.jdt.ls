@@ -22,7 +22,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
@@ -37,19 +36,20 @@ import org.jboss.tools.vscode.java.internal.JsonMessageHelper;
 import org.jboss.tools.vscode.java.internal.LanguageServerWorkingCopyOwner;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
-import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import junit.framework.ComparisonFailure;
+
 /**
  * @author Gorkem Ercan
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CompletionTest extends AbstractProjectsManagerBasedTest{
+public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
@@ -72,17 +72,16 @@ public class CompletionTest extends AbstractProjectsManagerBasedTest{
 
 	private JDTLanguageServer server;
 	private WorkingCopyOwner wcOwner ;
-	private IJavaProject javaProject;
+	private IProject project;
 
 
 
 	@Before
 	public void setup() throws Exception{
 		importProjects("eclipse/hello");
-		IProject project = WorkspaceHelper.getProject("hello");
+		project = WorkspaceHelper.getProject("hello");
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
-		javaProject = JavaCore.create(project);
-		server= new JDTLanguageServer(new ProjectsManager());
+		server= new JDTLanguageServer(projectsManager);
 
 	}
 
@@ -154,15 +153,20 @@ public class CompletionTest extends AbstractProjectsManagerBasedTest{
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
 		System.out.println(list.toString());
 		assertNotNull(list);
-		CompletionItem ci = list.getItems().stream().filter( item->{
-			return item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String");
-		}).findFirst().orElse(null);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
+				.findFirst().orElse(null);
 		assertNotNull(ci);
 
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
 		assertEquals("abj", ci.getSortText());
-		assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", ci.getTextEdit());
+		try {
+			assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", ci.getTextEdit());
+		} catch (ComparisonFailure e) {
+			//In case the JDK has no sources
+			assertTextEdit(5, 4, 6, "put({{arg0}}, {{arg1}})", ci.getTextEdit());
+		}
 		assertNotNull(ci.getAdditionalTextEdits());
 		List<TextEdit> edits = ci.getAdditionalTextEdits();
 		assertEquals(3, edits.size());
@@ -227,7 +231,7 @@ public class CompletionTest extends AbstractProjectsManagerBasedTest{
 	}
 
 	protected IFile getFile(String path) {
-		return javaProject.getProject().getFile(new Path(path));
+		return project.getFile(new Path(path));
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
