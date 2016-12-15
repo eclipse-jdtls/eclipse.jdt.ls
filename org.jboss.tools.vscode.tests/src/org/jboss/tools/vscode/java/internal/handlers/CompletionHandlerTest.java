@@ -37,12 +37,11 @@ import org.jboss.tools.vscode.java.internal.LanguageServerWorkingCopyOwner;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import junit.framework.ComparisonFailure;
 
 /**
  * @author Gorkem Ercan
