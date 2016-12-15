@@ -2,7 +2,7 @@
 
 This repository contains only the server implementation.
 For Visual Studio Code extension that uses this server visit
-[vscode-java](https://github.com/gorkem/vscode-java)
+[vscode-java](https://github.com/redhat-developer/vscode-java)
 =========================
 
 java-language-server

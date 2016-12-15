@@ -49,7 +49,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CompletionTests extends AbstractProjectsManagerBasedTest{
+public class CompletionTest extends AbstractProjectsManagerBasedTest{
 
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
@@ -155,7 +155,7 @@ public class CompletionTests extends AbstractProjectsManagerBasedTest{
 		System.out.println(list.toString());
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream().filter( item->{
-			return item.getLabel().equals("put(String key, String value) : String");
+			return item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String");
 		}).findFirst().orElse(null);
 		assertNotNull(ci);
 
