@@ -80,7 +80,7 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
-		server= new JDTLanguageServer(projectsManager);
+		server= new JDTLanguageServer(projectsManager, null);
 
 	}
 

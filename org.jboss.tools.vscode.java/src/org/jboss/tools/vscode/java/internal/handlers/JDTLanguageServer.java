@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal.handlers;
 import static org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.core.WorkingCopyOwner;
@@ -57,6 +58,8 @@ import org.jboss.tools.vscode.java.internal.JavaProtocolExtensions;
 import org.jboss.tools.vscode.java.internal.LanguageServerWorkingCopyOwner;
 import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
+import org.jboss.tools.vscode.java.internal.preferences.Preferences;
 
 /**
  * @author Gorkem Ercan
@@ -67,13 +70,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private JavaClientConnection client;
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
+	private PreferenceManager preferenceManager;
 
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
 	}
 
-	public JDTLanguageServer(ProjectsManager projects) {
+	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this.pm = projects;
+		this.preferenceManager = preferenceManager;
 	}
 
 	public void connectClient(JavaLanguageClient client) {
@@ -88,7 +93,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
-		InitHandler handler= new InitHandler(pm, client);
+		InitHandler handler= new InitHandler(pm, preferenceManager, client);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -148,6 +153,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		logInfo(">> workspace/didChangeConfiguration");
+		Object settings = params.getSettings();
+		if (settings instanceof Map) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> javaConfig = MapFlattener.flatten((Map<String, Object>)settings);
+			Preferences prefs = Preferences.createFrom(javaConfig);
+			preferenceManager.update(prefs);
+		}
+		logInfo(">> configuration type "+settings.getClass());
+		logInfo(">> configuration: "+settings);
+
 		// Nothing to do for now
 	}
 
@@ -317,7 +332,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didOpen(DidOpenTextDocumentParams params) {
 		logInfo(">> document/didOpen");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
 		handler.didOpen(params);
 	}
 
@@ -327,7 +342,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		logInfo(">> document/didChange");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
 		handler.didChange(params);
 	}
 
@@ -337,7 +352,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didClose(DidCloseTextDocumentParams params) {
 		logInfo(">> document/didClose");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
 		handler.didClose(params);
 	}
 
@@ -347,7 +362,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
 		logInfo(">> document/didSave");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
 		handler.didSave(params);
 	}
 

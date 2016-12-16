@@ -20,6 +20,7 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection.JavaLanguageClient;
 import org.jboss.tools.vscode.java.internal.handlers.JDTLanguageServer;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -39,6 +40,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private JDTLanguageServer protocol;
 
+	private PreferenceManager preferenceManager;
+
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null? null: pluginInstance.languageServer;
 	}
@@ -51,11 +54,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
 		projectsManager = new ProjectsManager();
+		preferenceManager = new PreferenceManager();
+
 	}
 
 	private void startConnection() throws IOException {
-
-		protocol = new JDTLanguageServer(projectsManager);
+		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
 		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class,
 				ConnectionStreamFactory.getInputStream(),
 				ConnectionStreamFactory.getOutputStream());
