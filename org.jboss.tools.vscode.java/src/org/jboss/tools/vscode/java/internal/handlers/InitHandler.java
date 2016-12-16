@@ -31,7 +31,7 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
-import org.jboss.tools.vscode.java.internal.preferences.PreferenceInitializer;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
 
 /**
  * Handler for the VS Code extension life cycle events.
@@ -44,10 +44,12 @@ final public class InitHandler {
 
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
+	private PreferenceManager preferenceManager;
 
-	public InitHandler(ProjectsManager manager, JavaClientConnection connection) {
+	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection) {
 		this.projectsManager = manager;
 		this.connection = connection;
+		this.preferenceManager = preferenceManager;
 	}
 
 
@@ -74,7 +76,7 @@ final public class InitHandler {
 
 	private void triggerInitialization(String root) {
 		// Adjust any default preferences to server use
-		PreferenceInitializer.adjustPreferences();
+		preferenceManager.initialize();
 
 		Job job = new Job("Initialize Workspace") {
 			@Override
