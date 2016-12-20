@@ -14,7 +14,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * @author fbricon
+ * @author Fred Bricon
  *
  */
 public abstract class AbstractWorkspaceTest {

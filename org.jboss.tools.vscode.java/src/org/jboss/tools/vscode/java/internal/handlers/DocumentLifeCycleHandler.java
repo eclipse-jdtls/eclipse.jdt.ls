@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -23,11 +24,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.text.edits.DeleteEdit;
@@ -35,13 +36,18 @@ import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+import org.jboss.tools.vscode.java.internal.ActionableNotification;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
+import org.jboss.tools.vscode.java.internal.preferences.Preferences;
+import org.jboss.tools.vscode.java.internal.preferences.Preferences.Severity;
 
 public class DocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
+	private PreferenceManager preferenceManager;
 
 
 	void didClose(DidCloseTextDocumentParams params){
@@ -88,8 +94,9 @@ public class DocumentLifeCycleHandler {
 
 	}
 
-	public DocumentLifeCycleHandler(JavaClientConnection connection) {
+	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager) {
 		this.connection = connection;
+		this.preferenceManager = preferenceManager;
 	}
 
 	private void handleOpen(DidOpenTextDocumentParams params) {
@@ -111,7 +118,18 @@ public class DocumentLifeCycleHandler {
 			//Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
 			boolean reportOnlySyntaxErrors = unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
 			if (reportOnlySyntaxErrors) {
-				connection.showNotificationMessage(MessageType.Warning, "Classpath is incomplete. Only syntax errors will be reported.");
+				Severity severity = preferenceManager.getPreferences().getIncompleteClasspathSeverity();
+				String msg = "Classpath is incomplete. Only syntax errors will be reported";
+				JavaLanguageServerPlugin.logInfo(msg +" for "+uri);
+				if (severity.compareTo(Preferences.Severity.ignore) > 0){
+					ActionableNotification ignoreIncompleteClasspath = new ActionableNotification()
+							.withSeverity(severity.toMessageType())
+							.withMessage(msg)
+							.withCommands(Collections.singletonList(
+									new Command("Don't show again", "java.ignoreIncompleteClasspath", null)
+									));
+					connection.sendActionableNotification(ignoreIncompleteClasspath);
+				}
 			}
 
 			//			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);

@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal;
 
+import java.util.List;
+
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -27,6 +30,14 @@ public class JavaClientConnection {
 		 */
 		@JsonNotification("language/status")
 		public abstract void sendStatusReport(StatusReport report);
+
+		/**
+		 * The actionable notification is sent from a server to a client to ask
+		 * the client to display a particular message in the user interface, and possible
+		 * commands to execute. The commands must be implemented on the client side.
+		 */
+		@JsonNotification("language/actionableNotification")
+		public abstract void sendActionableNotification(ActionableNotification notification);
 	}
 
 	private final LogHandler logHandler;
@@ -51,7 +62,7 @@ public class JavaClientConnection {
 
 
 	/**
-	 * Sends the message to the client to be displayed on a UI element.
+	 * Sends the message to the client, to be displayed on a UI element.
 	 *
 	 * @param type
 	 * @param msg
@@ -63,7 +74,6 @@ public class JavaClientConnection {
 		client.showMessage($);
 	}
 
-
 	/**
 	 * Sends a status to the client to be presented to users
 	 * @param msg The status to send back to the client
@@ -71,6 +81,22 @@ public class JavaClientConnection {
 	public void sendStatus(ServiceStatus serverStatus, String status) {
 		StatusReport $ = new StatusReport();
 		client.sendStatusReport( $.withMessage(status).withType(serverStatus.name()));
+	}
+
+
+	/**
+	 * Sends a message to the client to be presented to users, with possible commands to execute
+	 */
+	public void sendActionableNotification(MessageType severity, String message, Object data, List<Command> commands) {
+		ActionableNotification notification = new ActionableNotification().withSeverity(severity).withMessage(message).withData(data).withCommands(commands);
+		sendActionableNotification(notification);
+	}
+
+	/**
+	 * Sends a message to the client to be presented to users, with possible commands to execute
+	 */
+	public void sendActionableNotification(ActionableNotification notification) {
+		client.sendActionableNotification(notification);
 	}
 
 	public void publishDiagnostics(PublishDiagnosticsParams diagnostics){

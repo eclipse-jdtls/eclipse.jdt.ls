@@ -14,24 +14,38 @@ import java.util.Hashtable;
 
 import org.eclipse.jdt.core.JavaCore;
 /**
- * Preference initializer. Used for adjusting the default
- * preference values of used bundles to match server functionality.
+ * Preference manager
  *
  * @author Gorkem Ercan
+ * @author Fred Bricon
  *
  */
-public class PreferenceInitializer {
+public class PreferenceManager {
 
-	private PreferenceInitializer() {
-		//no public instanciation
+	private Preferences preferences ;
+
+	public PreferenceManager() {
+		preferences = new Preferences();
 	}
 
-	public static void adjustPreferences() {
-
+	/**
+	 * Initialize default preference values of used bundles to match
+	 * server functionality.
+	 */
+	public void initialize() {
 		// Update JavaCore options
 		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		JavaCore.setOptions(javaCoreOptions);
+	}
+
+	public void update(Preferences preferences) {
+		this.preferences = preferences;
+		//TODO serialize preferences
+	}
+
+	public Preferences getPreferences() {
+		return preferences;
 	}
 
 }
