@@ -53,8 +53,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public void start(BundleContext bundleContext) {
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
-		projectsManager = new ProjectsManager();
 		preferenceManager = new PreferenceManager();
+		projectsManager = new ProjectsManager(preferenceManager);
 
 	}
 

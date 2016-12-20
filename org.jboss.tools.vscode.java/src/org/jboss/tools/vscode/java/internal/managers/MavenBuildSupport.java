@@ -11,6 +11,7 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -40,5 +41,12 @@ public class MavenBuildSupport implements IBuildSupport {
 		IProjectConfigurationManager configurationManager = MavenPlugin.getProjectConfigurationManager();
 		MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
 		configurationManager.updateProjectConfiguration(request, monitor);
+	}
+
+	@Override
+	public boolean isBuildFile(IResource resource) {
+		return resource != null
+				&& resource.getType()== IResource.FILE
+				&& resource.getName().equals("pom.xml");
 	}
 }
