@@ -23,6 +23,7 @@ import org.eclipse.lsp4j.MessageType;
 public class Preferences {
 
 	private Severity incompleteClasspathSeverity;
+	private FeatureStatus updateBuildConfigurationStatus;
 
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -48,11 +49,27 @@ public class Preferences {
 			//'ignore' has no MessageType equivalent
 			return null;
 		}
+	}
 
+	public static enum FeatureStatus {
+		disabled, interactive, automatic ;
+
+		static FeatureStatus fromString(String value, FeatureStatus defaultStatus) {
+			if (value != null) {
+				String val = value.toLowerCase();
+				try {
+					return valueOf(val);
+				} catch(Exception e) {
+					//fall back to default severity
+				}
+			}
+			return defaultStatus;
+		}
 	}
 
 	public Preferences() {
 		incompleteClasspathSeverity = Severity.warning;
+		updateBuildConfigurationStatus = FeatureStatus.interactive;
 	}
 
 	/**
@@ -67,7 +84,17 @@ public class Preferences {
 		if (incompleteClasspathSeverity != null) {
 			prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity.toString(), Severity.warning));
 		}
+
+		Object updateBuildConfiguration = configuration.get("java.configuration.updateBuildConfiguration");
+		if (updateBuildConfiguration != null) {
+			prefs.setUpdateBuildConfigurationStatus(FeatureStatus.fromString(updateBuildConfiguration.toString(), FeatureStatus.interactive));
+		}
 		return prefs;
+	}
+
+	private Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
+		this.updateBuildConfigurationStatus = status;
+		return this;
 	}
 
 	private Preferences setIncompleteClasspathSeverity(Severity severity) {
@@ -77,5 +104,9 @@ public class Preferences {
 
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
+	}
+
+	public FeatureStatus getUpdateBuildConfigurationStatus() {
+		return updateBuildConfigurationStatus;
 	}
 }
