@@ -27,6 +27,7 @@ import org.jboss.tools.vscode.java.internal.JobHelpers;
 import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.jboss.tools.vscode.java.internal.ResourceUtils;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
 import org.junit.After;
 import org.junit.Before;
 
@@ -41,7 +42,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	@Before
 	public void initProjectManager() {
-		projectsManager = new ProjectsManager();
+		projectsManager = new ProjectsManager(new PreferenceManager());
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {

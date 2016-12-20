@@ -84,6 +84,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public void connectClient(JavaLanguageClient client) {
 		this.client = new JavaClientConnection(client);
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
+		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
 	}
 

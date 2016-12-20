@@ -14,6 +14,7 @@ import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.buildship.core.workspace.GradleBuild;
 import org.eclipse.buildship.core.workspace.NewProjectHandler;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -42,5 +43,12 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (gradleBuild.isPresent()) {
 			gradleBuild.get().synchronize(NewProjectHandler.IMPORT_AND_MERGE);
 		}
+	}
+
+	@Override
+	public boolean isBuildFile(IResource resource) {
+		return resource != null
+				&& resource.getType()== IResource.FILE
+				&& resource.getName().endsWith(".gradle");
 	}
 }

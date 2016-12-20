@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,18 +37,31 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.jboss.tools.vscode.java.internal.ActionableNotification;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
+import org.jboss.tools.vscode.java.internal.JavaClientConnection.JavaLanguageClient;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.ProjectUtils;
 import org.jboss.tools.vscode.java.internal.ServiceStatus;
 import org.jboss.tools.vscode.java.internal.StatusFactory;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
+import org.jboss.tools.vscode.java.internal.preferences.Preferences.FeatureStatus;
 
 
 public class ProjectsManager {
 
 	public static final String DEFAULT_PROJECT_NAME= "jdt.ls-java-project";
+	private PreferenceManager preferenceManager;
+	private JavaLanguageClient client;
 
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
+
+	public ProjectsManager(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	public IStatus initializeProjects(final String projectName, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
@@ -88,9 +103,37 @@ public class ProjectsManager {
 			if (resource != null) {
 				resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 			}
+			if (isBuildFile(resource)) {
+				FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
+				switch (status) {
+				case automatic:
+					updateProject(resource.getProject());
+					break;
+				case disabled:
+					break;
+				default:
+					if (client != null) {
+						String cmd = "java.projectConfiguration.status";
+						TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
+						ActionableNotification updateProjectConfigurationNotification = new ActionableNotification()
+								.withSeverity(MessageType.Info)
+								.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?")
+								.withCommands(asList(
+										new Command("Never", cmd, asList(uri,FeatureStatus.disabled)),
+										new Command("Now", cmd, asList(uri, FeatureStatus.interactive)),
+										new Command("Always", cmd, asList(uri, FeatureStatus.automatic))
+										));
+						client.sendActionableNotification(updateProjectConfigurationNotification);
+					}
+				}
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
+	}
+
+	private boolean isBuildFile(IResource resource) {
+		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
 
 	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws InterruptedException, CoreException {
@@ -189,5 +232,9 @@ public class ProjectsManager {
 
 	private Stream<IBuildSupport> buildSupports() {
 		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport());
+	}
+
+	public void setConnection(JavaLanguageClient client) {
+		this.client = client;
 	}
 }

@@ -11,6 +11,7 @@
 package org.jboss.tools.vscode.java.internal.managers;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -21,6 +22,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 public interface IBuildSupport {
 
 	boolean applies(IProject project);
+
+	boolean isBuildFile(IResource resource);
 
 	void update(IProject resource, IProgressMonitor monitor) throws CoreException;
 }
