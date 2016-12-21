@@ -24,14 +24,14 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
-import org.jboss.tools.vscode.java.internal.SignatureUtil;
+import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 
 /**
  * Method implementations extracted from JDT UI. Mostly from
  * <code>org.eclipse.jdt.internal.ui.text.java.LazyJavaTypeCompletionProposal</code>
- * 
+ *
  * @author aboyko
- * 
+ *
  * Copied from Flux project.
  *
  */
@@ -41,7 +41,7 @@ public class TypeProposalUtils {
 	private static final String[] IMPORTS_ORDER = new String[] { "java",
 			"javax", "org", "com" };
 	private static final int IMPORTS_THRESHOLD = 99;
-	 
+
 	static void createName(ITypeBinding type, boolean includePackage,
 			List<String> list) {
 		ITypeBinding baseType = type;
@@ -67,9 +67,9 @@ public class TypeProposalUtils {
 	}
 
 	static String getTypeQualifiedName(ITypeBinding type) {
-		List<String> result= new ArrayList<String>(5);
+		List<String> result= new ArrayList<>(5);
 		createName(type, false, result);
-	
+
 		StringBuilder buffer= new StringBuilder();
 		for (int i= 0; i < result.size(); i++) {
 			if (i > 0) {
@@ -88,23 +88,23 @@ public class TypeProposalUtils {
 	}
 
 	static String findMatchingSuperTypeSignature(IType subType, IType superType) throws JavaModelException {
-			String[] signatures= getSuperTypeSignatures(subType, superType);
-			for (int i= 0; i < signatures.length; i++) {
-				String signature= signatures[i];
-				String qualified= SignatureUtil.qualifySignature(signature, subType);
-				String subFQN= SignatureUtil.stripSignatureToFQN(qualified);
-	
-				String superFQN= superType.getFullyQualifiedName();
-				if (subFQN.equals(superFQN)) {
-					return signature;
-				}
-	
-				// TODO handle local types
+		String[] signatures= getSuperTypeSignatures(subType, superType);
+		for (int i= 0; i < signatures.length; i++) {
+			String signature= signatures[i];
+			String qualified= SignatureUtil.qualifySignature(signature, subType);
+			String subFQN= SignatureUtil.stripSignatureToFQN(qualified);
+
+			String superFQN= superType.getFullyQualifiedName();
+			if (subFQN.equals(superFQN)) {
+				return signature;
 			}
-	
-			return null;
-	//		throw new JavaModelException(new CoreException(new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Illegal hierarchy", null))); //$NON-NLS-1$
+
+			// TODO handle local types
 		}
+
+		return null;
+		//		throw new JavaModelException(new CoreException(new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Illegal hierarchy", null))); //$NON-NLS-1$
+	}
 
 	static int findMatchingTypeArgumentIndex(String signature, String argument) {
 		String[] typeArguments= Signature.getTypeArguments(signature);
@@ -119,10 +119,10 @@ public class TypeProposalUtils {
 		if (pathIndex == 0)
 			// break condition: we've reached the top of the hierarchy
 			return paramIndex;
-	
+
 		IType subType= path[pathIndex];
 		IType superType= path[pathIndex - 1];
-	
+
 		String superSignature= findMatchingSuperTypeSignature(subType, superType);
 		ITypeParameter param= subType.getTypeParameters()[paramIndex];
 		int index= findMatchingTypeArgumentIndex(superSignature, param.getElementName());
@@ -130,33 +130,33 @@ public class TypeProposalUtils {
 			// not mapped through
 			return -1;
 		}
-	
+
 		return mapTypeParameterIndex(path, pathIndex - 1, index);
 	}
 
 	static IType[] computeInheritancePath(IType subType, IType superType) throws JavaModelException {
 		if (superType == null)
 			return null;
-	
+
 		// optimization: avoid building the type hierarchy for the identity case
 		if (superType.equals(subType))
 			return new IType[] { subType };
-	
+
 		ITypeHierarchy hierarchy= subType.newSupertypeHierarchy(new NullProgressMonitor());
 		if (!hierarchy.contains(superType))
 			return null; // no path
-	
-		List<IType> path= new LinkedList<IType>();
+
+		List<IType> path= new LinkedList<>();
 		path.add(superType);
 		do {
 			// any sub type must be on a hierarchy chain from superType to subType
 			superType= hierarchy.getSubtypes(superType)[0];
 			path.add(superType);
 		} while (!superType.equals(subType)); // since the equality case is handled above, we can spare one check
-	
+
 		return path.toArray(new IType[path.size()]);
 	}
-	
+
 	static boolean isPackageInfo(ICompilationUnit cu) {
 		return PACKAGE_INFO_JAVA.equals(cu.getElementName());
 	}

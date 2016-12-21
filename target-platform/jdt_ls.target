@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="37">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="49">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -11,20 +11,20 @@
 <repository location="http://download.eclipse.org/tools/orbit/downloads/drops/S20160916162009/repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.3.200.v20161027-1055"/>
-<unit id="org.eclipse.equinox.p2.rcp.feature.feature.group" version="1.2.200.v20161027-1055"/>
-<unit id="org.eclipse.equinox.sdk.feature.group" version="3.12.0.v20161027-1053"/>
 <unit id="org.eclipse.buildship.feature.group" version="1.0.21.v20161010-1640"/>
 <unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20160921-2002"/>
-<unit id="org.eclipse.platform.ide" version="4.7.0.I20161027-0700"/>
-<unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.0.v20161027-1052"/>
-<unit id="org.eclipse.equinox.executable.feature.group" version="3.6.300.v20161027-1053"/>
-<unit id="org.eclipse.equinox.p2.core.feature.feature.group" version="1.3.200.v20161027-1055"/>
-<unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.0.v20161027-1052"/>
 <repository location="http://download.eclipse.org/releases/oxygen"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20161215-2128"/>
+<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20161220-0530"/>
+<unit id="org.eclipse.sdk.feature.group" version="4.7.0.v20161220-1017"/>
+<unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.0.v20161216-1353"/>
+<unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.0.v20161219-1356"/>
+<unit id="org.eclipse.equinox.executable.feature.group" version="3.7.0.v20161219-1356"/>
+<unit id="org.eclipse.equinox.p2.core.feature.feature.group" version="1.4.0.v20161031-1443"/>
+<unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.4.0.v20161031-1443"/>
+<unit id="org.eclipse.equinox.p2.rcp.feature.feature.group" version="1.3.0.v20161123-1821"/>
+<unit id="org.eclipse.equinox.sdk.feature.group" version="3.13.0.v20161219-1545"/>
 <repository location="http://download.eclipse.org/eclipse/updates/4.7-I-builds"/>
 </location>
 </locations>

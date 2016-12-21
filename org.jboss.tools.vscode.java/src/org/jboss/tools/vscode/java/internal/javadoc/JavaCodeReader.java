@@ -13,11 +13,9 @@ package org.jboss.tools.vscode.java.internal.javadoc;
 
 import java.io.IOException;
 
+import org.eclipse.jface.internal.text.html.SingleCharReader;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
-
-import copied.org.eclipse.jface.internal.text.html.SingleCharReader;
-
 
 /**
  * Reads from a document either forwards or backwards. May be configured to
@@ -128,33 +126,33 @@ public class JavaCodeReader extends SingleCharReader {
 			char current= fDocument.getChar(fOffset++);
 
 			switch (current) {
-				case '/':
+			case '/':
 
-					if (fSkipComments && fOffset < fEnd) {
-						char next= fDocument.getChar(fOffset);
-						if (next == '*') {
-							// a comment starts, advance to the comment end
-							++ fOffset;
-							gotoCommentEnd();
-							continue;
-						} else if (next == '/') {
-							// '//'-comment starts, advance to the line end
-							gotoLineEnd();
-							continue;
-						}
-					}
-
-					return current;
-
-				case '"':
-				case '\'':
-
-					if (fSkipStrings) {
-						gotoStringEnd(current);
+				if (fSkipComments && fOffset < fEnd) {
+					char next= fDocument.getChar(fOffset);
+					if (next == '*') {
+						// a comment starts, advance to the comment end
+						++ fOffset;
+						gotoCommentEnd();
+						continue;
+					} else if (next == '/') {
+						// '//'-comment starts, advance to the line end
+						gotoLineEnd();
 						continue;
 					}
+				}
 
-					return current;
+				return current;
+
+			case '"':
+			case '\'':
+
+				if (fSkipStrings) {
+					gotoStringEnd(current);
+					continue;
+				}
+
+				return current;
 			}
 
 			return current;
@@ -207,30 +205,30 @@ public class JavaCodeReader extends SingleCharReader {
 
 			char current= fDocument.getChar(fOffset);
 			switch (current) {
-				case '/':
+			case '/':
 
-					if (fSkipComments && fOffset > 1) {
-						char next= fDocument.getChar(fOffset - 1);
-						if (next == '*') {
-							// a comment ends, advance to the comment start
-							fOffset -= 2;
-							gotoCommentStart();
-							continue;
-						}
-					}
-
-					return current;
-
-				case '"':
-				case '\'':
-
-					if (fSkipStrings) {
-						-- fOffset;
-						gotoStringStart(current);
+				if (fSkipComments && fOffset > 1) {
+					char next= fDocument.getChar(fOffset - 1);
+					if (next == '*') {
+						// a comment ends, advance to the comment start
+						fOffset -= 2;
+						gotoCommentStart();
 						continue;
 					}
+				}
 
-					return current;
+				return current;
+
+			case '"':
+			case '\'':
+
+				if (fSkipStrings) {
+					-- fOffset;
+					gotoStringStart(current);
+					continue;
+				}
+
+				return current;
 			}
 
 			return current;

@@ -22,6 +22,9 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder;
+import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
+import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentHighlightKind;
 import org.eclipse.lsp4j.Position;
@@ -29,10 +32,6 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
-
-import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder;
-import copied.org.eclipse.jdt.internal.ui.search.IOccurrencesFinder.OccurrenceLocation;
-import copied.org.eclipse.jdt.internal.ui.search.OccurrencesFinder;
 
 public class DocumentHighlightHandler{
 
