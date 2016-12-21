@@ -161,10 +161,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			Preferences prefs = Preferences.createFrom(javaConfig);
 			preferenceManager.update(prefs);
 		}
-		logInfo(">> configuration type "+settings.getClass());
-		logInfo(">> configuration: "+settings);
-
-		// Nothing to do for now
+		logInfo(">>New configuration: "+settings);
 	}
 
 	/* (non-Javadoc)
