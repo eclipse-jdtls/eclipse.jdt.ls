@@ -7,9 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.TagElement;
-import org.eclipse.jface.internal.text.html.HTML2TextReader;
-import org.eclipse.jface.internal.text.html.SubstitutionTextReader;
-
+import org.jboss.tools.vscode.java.internal.javadoc.html.SubstitutionTextReader;
 
 /**
  * Processes JavaDoc tags.

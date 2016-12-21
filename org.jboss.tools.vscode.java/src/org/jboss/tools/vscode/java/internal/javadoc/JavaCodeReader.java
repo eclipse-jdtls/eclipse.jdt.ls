@@ -13,9 +13,9 @@ package org.jboss.tools.vscode.java.internal.javadoc;
 
 import java.io.IOException;
 
-import org.eclipse.jface.internal.text.html.SingleCharReader;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.jboss.tools.vscode.java.internal.javadoc.html.SingleCharReader;
 
 /**
  * Reads from a document either forwards or backwards. May be configured to

@@ -12,7 +12,7 @@ package org.jboss.tools.vscode.java.internal.javadoc;
 
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
-import org.eclipse.jface.internal.text.html.SingleCharReader;
+import org.jboss.tools.vscode.java.internal.javadoc.html.SingleCharReader;
 
 
 /**
