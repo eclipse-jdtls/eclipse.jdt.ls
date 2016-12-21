@@ -34,8 +34,7 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-
-import copied.org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
+import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 
 /**
  * Helper needed to get the content of a Javadoc comment.
