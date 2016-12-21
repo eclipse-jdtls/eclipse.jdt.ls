@@ -22,10 +22,10 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.lsp4j.CompletionItem;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
-import org.jboss.tools.vscode.java.internal.SignatureUtil;
 import org.jboss.tools.vscode.java.internal.javadoc.JavadocContentAccess;
 
 public class CompletionResolveHandler {

@@ -21,7 +21,9 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0",
  com.gradleware.tooling.model;bundle-version="0.14.0",
  com.gradleware.tooling.utils;bundle-version="0.14.0",
  org.gradle.toolingapi,
- org.eclipse.jdt.launching
+ org.eclipse.jdt.launching,
+ org.eclipse.jdt.core.manipulation;bundle-version="1.8.0",
+ org.eclipse.jface.text;bundle-version="3.11.100"
 Export-Package: org.eclipse.lsp4j;x-friends:="org.jboss.tools.vscode.tests",
  org.eclipse.lsp4j.jsonrpc;x-friends:="org.jboss.tools.vscode.tests",
  org.eclipse.lsp4j.jsonrpc.json;x-friends:="org.jboss.tools.vscode.tests",
