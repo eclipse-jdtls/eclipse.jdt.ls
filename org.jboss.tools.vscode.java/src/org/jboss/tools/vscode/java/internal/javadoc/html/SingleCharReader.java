@@ -56,11 +56,11 @@ public abstract class SingleCharReader extends Reader {
 	 * @exception IOException in case reading fails
 	 */
 	public String getString() throws IOException {
-		StringBuffer buf= new StringBuffer();
+		StringBuilder builder= new StringBuilder();
 		int ch;
 		while ((ch= read()) != -1) {
-			buf.append((char)ch);
+			builder.append((char)ch);
 		}
-		return buf.toString();
+		return builder.toString();
 	}
 }

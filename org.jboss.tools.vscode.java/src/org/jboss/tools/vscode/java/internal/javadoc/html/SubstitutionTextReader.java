@@ -37,13 +37,13 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	private boolean fSkipWhiteSpace= true;
 
 	private boolean fReadFromBuffer;
-	private StringBuffer fBuffer;
+	private StringBuilder fBuilder;
 	private int fIndex;
 
 
 	protected SubstitutionTextReader(Reader reader) {
 		fReader= reader;
-		fBuffer= new StringBuffer();
+		fBuilder= new StringBuilder();
 		fIndex= 0;
 		fReadFromBuffer= false;
 		fCharAfterWhiteSpace= -1;
@@ -76,11 +76,11 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	 * @throws IOException in case reading the character fails
 	 */
 	protected int nextChar() throws IOException {
-		fReadFromBuffer= (fBuffer.length() > 0);
+		fReadFromBuffer= (fBuilder.length() > 0);
 		if (fReadFromBuffer) {
-			char ch= fBuffer.charAt(fIndex++);
-			if (fIndex >= fBuffer.length()) {
-				fBuffer.setLength(0);
+			char ch= fBuilder.charAt(fIndex++);
+			if (fIndex >= fBuilder.length()) {
+				fBuilder.setLength(0);
 				fIndex= 0;
 			}
 			return ch;
@@ -118,7 +118,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 				if (s == null)
 					break;
 				if (s.length() > 0)
-					fBuffer.insert(0, s);
+					fBuilder.insert(0, s);
 				c= nextChar();
 			}
 
@@ -151,7 +151,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 		fReader.reset();
 		fWasWhiteSpace= true;
 		fCharAfterWhiteSpace= -1;
-		fBuffer.setLength(0);
+		fBuilder.setLength(0);
 		fIndex= 0;
 	}
 
