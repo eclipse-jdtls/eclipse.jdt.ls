@@ -37,13 +37,13 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	private boolean fSkipWhiteSpace= true;
 
 	private boolean fReadFromBuffer;
-	private StringBuffer fBuffer;
+	private StringBuilder fBuffer;
 	private int fIndex;
 
 
 	protected SubstitutionTextReader(Reader reader) {
 		fReader= reader;
-		fBuffer= new StringBuffer();
+		fBuffer= new StringBuilder();
 		fIndex= 0;
 		fReadFromBuffer= false;
 		fCharAfterWhiteSpace= -1;

@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal.contentassist;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -69,15 +70,7 @@ public class TypeProposalUtils {
 	static String getTypeQualifiedName(ITypeBinding type) {
 		List<String> result= new ArrayList<>(5);
 		createName(type, false, result);
-
-		StringBuilder buffer= new StringBuilder();
-		for (int i= 0; i < result.size(); i++) {
-			if (i > 0) {
-				buffer.append('.');
-			}
-			buffer.append(result.get(i));
-		}
-		return buffer.toString();
+		return result.stream().collect(Collectors.joining("."));
 	}
 
 	static String[] getSuperTypeSignatures(IType subType, IType superType) throws JavaModelException {
@@ -89,8 +82,7 @@ public class TypeProposalUtils {
 
 	static String findMatchingSuperTypeSignature(IType subType, IType superType) throws JavaModelException {
 		String[] signatures= getSuperTypeSignatures(subType, superType);
-		for (int i= 0; i < signatures.length; i++) {
-			String signature= signatures[i];
+		for (String signature : signatures) {
 			String qualified= SignatureUtil.qualifySignature(signature, subType);
 			String subFQN= SignatureUtil.stripSignatureToFQN(qualified);
 
