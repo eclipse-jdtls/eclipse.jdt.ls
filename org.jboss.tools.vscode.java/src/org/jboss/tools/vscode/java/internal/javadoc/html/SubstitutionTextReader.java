@@ -37,7 +37,9 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	private boolean fSkipWhiteSpace= true;
 
 	private boolean fReadFromBuffer;
+
 	private StringBuilder fBuilder;
+
 	private int fIndex;
 
 
