@@ -10,12 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.Calendar;
 
@@ -32,11 +28,7 @@ import org.jboss.tools.vscode.java.internal.JavaClientConnection;
  */
 public class LogHandler {
 
-	// if set, the all log entries will be written to USER_DIR/langserver.log as well.
-	public static final boolean LOG_TO_FILE = true;
-
 	private ILogListener logListener;
-	private FileWriter logWriter;
 	private DateFormat dateFormat;
 	private int logLevelMask;
 	private JavaClientConnection connection;
@@ -59,14 +51,6 @@ public class LogHandler {
 
 	public void uninstall() {
 		Platform.removeLogListener(this.logListener);
-		if (this.logWriter != null) {
-			try {
-				this.logWriter.close();
-			} catch (IOException e) {
-				// ignore
-			}
-			this.logWriter = null;
-		}
 	}
 
 	private int getLogLevelMask(String logLevel) {
@@ -96,10 +80,6 @@ public class LogHandler {
 		if (status.matches(this.logLevelMask)) {
 			connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' '+ message);
 		}
-		if (LOG_TO_FILE) {
-			// log all messages
-			logToFile("[" + getLabelFromSeverity(status.getSeverity()) + "] " + dateString + ' ' + message);
-		}
 	}
 
 	private MessageType getMessageTypeFromSeverity(int severity) {
@@ -112,36 +92,6 @@ public class LogHandler {
 			return MessageType.Info;
 		default:
 			return MessageType.Log;
-		}
-	}
-
-	private String getLabelFromSeverity(int severity) {
-		switch (severity) {
-		case IStatus.ERROR:
-			return "error";
-		case IStatus.WARNING:
-			return "warning";
-		case IStatus.INFO:
-			return "info";
-		case IStatus.OK:
-			return "ok";
-		default:
-			return "cancel";
-		}
-	}
-
-	private void logToFile(String log) {
-		try {
-			if (this.logWriter == null) {
-				Path cwd = Paths.get(System.getProperty("user.home"));
-				Path logPath = cwd.toAbsolutePath().normalize().resolve("langserver.log");
-				this.logWriter = new FileWriter(logPath.toFile());
-			}
-			this.logWriter.write(log + "\n");
-			this.logWriter.flush();
-
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
