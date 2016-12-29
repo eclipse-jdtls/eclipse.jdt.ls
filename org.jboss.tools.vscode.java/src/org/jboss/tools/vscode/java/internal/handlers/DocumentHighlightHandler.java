@@ -46,15 +46,17 @@ public class DocumentHighlightHandler{
 				parser.setResolveBindings(true);
 				ASTNode ast = parser.createAST(new NullProgressMonitor());
 				if (ast instanceof CompilationUnit) {
-					finder.initialize((CompilationUnit) ast, offset, 0);
-					List<DocumentHighlight> result = new ArrayList<>();
-					OccurrenceLocation[] occurrences = finder.getOccurrences();
-					if (occurrences != null) {
-						for (OccurrenceLocation loc : occurrences) {
-							result.add(convertToHighlight(unit, loc));
+					String error = finder.initialize((CompilationUnit) ast, offset, 0);
+					if (error == null){
+						List<DocumentHighlight> result = new ArrayList<>();
+						OccurrenceLocation[] occurrences = finder.getOccurrences();
+						if (occurrences != null) {
+							for (OccurrenceLocation loc : occurrences) {
+								result.add(convertToHighlight(unit, loc));
+							}
 						}
+						return result;
 					}
-					return result;
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Problem with compute occurrences for" + unit.getElementName(), e);
