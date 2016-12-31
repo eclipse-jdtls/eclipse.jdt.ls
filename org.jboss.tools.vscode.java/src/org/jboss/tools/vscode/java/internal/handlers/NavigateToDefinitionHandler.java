@@ -20,13 +20,34 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class NavigateToDefinitionHandler {
 
-	private Location computeDefinitonNavigation(ITypeRoot unit, int line, int column) {
+	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position){
+		return CompletableFuture.supplyAsync(()->{
+			return getDefinition(position);
+		});
+	}
+
+	public List<? extends Location> getDefinition(TextDocumentPositionParams position){
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+		Location location = null;
+		if(unit != null){
+			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
+					position.getPosition().getCharacter());
+		}
+		if (location == null) {
+			location = new Location();
+			location.setRange(new Range());
+		}
+		return Arrays.asList(location);
+	}
+
+	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column) {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column);
 			if (element == null) {
@@ -40,25 +61,10 @@ public class NavigateToDefinitionHandler {
 			return null;
 
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem with codeSelect for" +  unit.getElementName(), e);
+			JavaLanguageServerPlugin.logException("Problem computing definition for" +  unit.getElementName(), e);
 		}
 		return null;
 	}
 
-
-	CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position){
-		return CompletableFuture.supplyAsync(()->{
-			ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
-			Location location = null;
-			if(unit != null){
-				location = computeDefinitonNavigation(unit, position.getPosition().getLine(),
-						position.getPosition().getCharacter());
-			}
-			if (location == null) {
-				location = new Location();
-			}
-			return Arrays.asList(location);
-		});
-	}
 
 }
