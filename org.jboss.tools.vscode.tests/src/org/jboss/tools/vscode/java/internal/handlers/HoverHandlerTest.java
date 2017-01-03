@@ -118,4 +118,20 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
 	}
+
+	@Test
+	public void testHoverVariable() throws Exception {
+		//given
+		//Hover on args parameter
+		String argParam = createHoverRequest("src/java/Foo.java", 7, 37);
+		TextDocumentPositionParams position = getParams(argParam);
+
+		//when
+		Hover hover = handler.hover(position).get();
+
+		//then
+		assertNotNull(hover);
+		assertEquals("Couldn't find hover for "+ argParam, 1, hover.getContents().size());
+		assertEquals("Unexpected hover "+hover.getContents().get(0), "String[] args - java.Foo.main(String[])", hover.getContents().get(0));
+	}
 }
