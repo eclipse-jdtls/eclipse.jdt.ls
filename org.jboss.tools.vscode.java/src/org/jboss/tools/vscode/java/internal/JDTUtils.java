@@ -14,6 +14,8 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -29,11 +31,14 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IAnnotatable;
+import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -57,6 +62,9 @@ import com.google.common.io.Files;
  *
  */
 public final class JDTUtils {
+
+	//Code generators known to cause problems
+	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
 	/**
 	 * Given the uri returns a {@link ICompilationUnit}.
@@ -429,6 +437,47 @@ public final class JDTUtils {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 			return null;
 		}
+	}
+
+	public static boolean isHiddenGeneratedElement(IJavaElement element) {
+		// generated elements are tagged with javax.annotation.Generated and
+		// they need to be filtered out
+		if (element instanceof IAnnotatable) {
+			try {
+				IAnnotation[] annotations = ((IAnnotatable) element).getAnnotations();
+				if (annotations.length != 0) {
+					for (IAnnotation annotation : annotations) {
+						if (isSilencedGeneratedAnnotation(annotation)) {
+							return true;
+						}
+					}
+				}
+			} catch (JavaModelException e) {
+				//ignore
+			}
+		}
+		return false;
+	}
+
+	private static boolean isSilencedGeneratedAnnotation(IAnnotation annotation) throws JavaModelException {
+		if ("javax.annotation.Generated".equals(annotation.getElementName())) {
+			IMemberValuePair[] memberValuePairs = annotation.getMemberValuePairs();
+			for (IMemberValuePair m : memberValuePairs) {
+				if ("value".equals(m.getMemberName())
+						&& IMemberValuePair.K_STRING == m.getValueKind()) {
+					if (m.getValue() instanceof String) {
+						return SILENCED_CODEGENS.contains(m.getValue());
+					} else if (m.getValue() instanceof Object[]) {
+						for (Object val : (Object[])m.getValue()) {
+							if(SILENCED_CODEGENS.contains(val)) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 }

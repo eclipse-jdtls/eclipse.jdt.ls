@@ -120,11 +120,12 @@ public class CodeLensHandler {
 		for (IJavaElement element : elements) {
 			if (element.getElementType() == IJavaElement.TYPE) {
 				collectChildren(unit, ((IType) element).getChildren(), lenses);
-			} else if (element.getElementType() != IJavaElement.METHOD) {
+			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}
 
 			CodeLens lens = new CodeLens();
+
 			ISourceRange r = ((ISourceReference) element).getNameRange();
 			final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
 			lens.setRange(range);

@@ -178,6 +178,31 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNull(result.getCommand());
 	}
 
+	@Test
+	public void testIgnoreLombokCodeLensSymbols() throws Exception {
+		String payload = createCodeLensSymbolsRequest("src/java/Bar.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri);
+
+		//then
+		assertEquals(3, result.size());
+
+		//CodeLens on constructor
+		CodeLens cl = result.get(0);
+		assertRange(7, 11, 14, cl.getRange());
+
+		//CodeLens on somethingFromJPAModelGen
+		cl = result.get(1);
+		assertRange(16, 16, 40, cl.getRange());
+
+		//CodeLens on Bar type
+		cl = result.get(2);
+		assertRange(5, 13, 16, cl.getRange());
+	}
+
 	String createCodeLensSymbolsRequest(String file) {
 		URI uri = project.getFile(file).getRawLocationURI();
 		return createCodeLensSymbolRequest(uri);
