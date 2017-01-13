@@ -124,7 +124,11 @@ public class CodeLensHandler {
 				continue;
 			}
 
+			if (JDTUtils.isGenerated(element)) {
+				continue;
+			}
 			CodeLens lens = new CodeLens();
+
 			ISourceRange r = ((ISourceReference) element).getNameRange();
 			final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
 			lens.setRange(range);

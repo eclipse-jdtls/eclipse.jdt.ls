@@ -29,11 +29,14 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IAnnotatable;
+import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -429,6 +432,37 @@ public final class JDTUtils {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 			return null;
 		}
+	}
+
+	/**
+	 * @param element
+	 * @return
+	 */
+	public static boolean isGenerated(IJavaElement element) {
+		// generated elements are tagged with javax.annotation.Generated and
+		// they need to be filtered out
+		try {
+			if (element instanceof IAnnotatable) {
+				IAnnotation[] annotations = ((IAnnotatable) element).getAnnotations();
+				if (annotations.length != 0) {
+					for (IAnnotation annotation : annotations) {
+						IMemberValuePair[] memberValuePairs = annotation.getMemberValuePairs();
+						if (memberValuePairs.length != 0) {
+							// generated annotation always has at least one member,
+							// the generator name
+							String elementName = annotation.getElementName();
+							if ("javax.annotation.Generated".equals(elementName)) {
+								// skip this element
+								return true;
+							}
+						}
+					}
+				}
+			}
+		} catch(JavaModelException e) {
+			// ignore
+		}
+		return false;
 	}
 
 }
