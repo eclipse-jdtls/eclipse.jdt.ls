@@ -260,8 +260,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
-		// Not yet implemented
-		return null;
+		CodeActionHandler handler = new CodeActionHandler();
+		return CompletableFuture.supplyAsync(()->handler.getCodeActionCommands(params));
 	}
 
 	/* (non-Javadoc)

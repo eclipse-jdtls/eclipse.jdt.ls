@@ -70,6 +70,7 @@ final public class InitHandler {
 		capabilities.setDocumentFormattingProvider(Boolean.TRUE);
 		capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
 		capabilities.setCodeLensProvider(new CodeLensOptions(Boolean.TRUE));
+		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);
 		return result;
 	}

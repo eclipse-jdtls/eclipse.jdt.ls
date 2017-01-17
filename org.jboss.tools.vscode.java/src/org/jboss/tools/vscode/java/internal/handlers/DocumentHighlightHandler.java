@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Red Hat Inc. and others.
+ * Copyright (c) 2017 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,9 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
@@ -32,7 +30,9 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.SharedASTProvider;
 
+@SuppressWarnings("restriction")
 public class DocumentHighlightHandler{
 
 
@@ -41,10 +41,7 @@ public class DocumentHighlightHandler{
 			try {
 				int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
 				OccurrencesFinder finder = new OccurrencesFinder();
-				ASTParser parser = ASTParser.newParser(AST.JLS8);
-				parser.setSource(unit);
-				parser.setResolveBindings(true);
-				ASTNode ast = parser.createAST(new NullProgressMonitor());
+				ASTNode ast = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
 				if (ast instanceof CompilationUnit) {
 					String error = finder.initialize((CompilationUnit) ast, offset, 0);
 					if (error == null){

@@ -40,6 +40,7 @@ import org.jboss.tools.vscode.java.internal.ActionableNotification;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.SharedASTProvider;
 import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
 import org.jboss.tools.vscode.java.internal.preferences.Preferences;
 import org.jboss.tools.vscode.java.internal.preferences.Preferences.Severity;
@@ -154,6 +155,7 @@ public class DocumentLifeCycleHandler {
 		}
 
 		try {
+			SharedASTProvider.getInstance().invalidate(unit);
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
@@ -187,6 +189,7 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 		try {
+			SharedASTProvider.getInstance().invalidate(unit);
 			unit.discardWorkingCopy();
 		} catch (CoreException e) {
 		}

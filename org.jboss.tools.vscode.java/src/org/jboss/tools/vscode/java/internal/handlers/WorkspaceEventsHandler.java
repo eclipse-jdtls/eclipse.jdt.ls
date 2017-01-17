@@ -20,6 +20,7 @@ import org.eclipse.lsp4j.FileEvent;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaClientConnection;
+import org.jboss.tools.vscode.java.internal.SharedASTProvider;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager;
 import org.jboss.tools.vscode.java.internal.managers.ProjectsManager.CHANGE_TYPE;
 
@@ -56,6 +57,9 @@ public class WorkspaceEventsHandler {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if (unit != null && unit.isWorkingCopy()) {
 				continue;
+			}
+			if(changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED){
+				SharedASTProvider.getInstance().invalidate(unit);
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
