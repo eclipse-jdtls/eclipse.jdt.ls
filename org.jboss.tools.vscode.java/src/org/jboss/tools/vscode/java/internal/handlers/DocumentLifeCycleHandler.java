@@ -77,7 +77,6 @@ public class DocumentLifeCycleHandler {
 	}
 
 	void didChange(DidChangeTextDocumentParams params){
-
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
@@ -86,12 +85,11 @@ public class DocumentLifeCycleHandler {
 				}
 			}, new NullProgressMonitor());
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Handle document open ", e);
+			JavaLanguageServerPlugin.logException("Handle document change ", e);
 		}
 	}
 
 	void didSave(DidSaveTextDocumentParams params){
-
 	}
 
 	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager) {

@@ -41,7 +41,7 @@
 				<os><family>mac</family></os>
 			</activation>
 			<properties>
-				<os.testArgs>-XstartOnFirstThread</os.testArgs>
+				<os.testArgs>-XstartOnFirstThread -noverify</os.testArgs>
 			</properties>
 		</profile>
 	</profiles>

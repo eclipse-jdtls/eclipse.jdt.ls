@@ -26,6 +26,8 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.jboss.tools.vscode.java.internal.hover.JavaElementLabels;
 import org.jboss.tools.vscode.java.internal.javadoc.JavadocContentAccess;
 
+import com.google.common.io.CharStreams;
+
 public class HoverInfoProvider {
 
 	private static final long LABEL_FLAGS=
@@ -115,15 +117,11 @@ public class HoverInfoProvider {
 	 * @return the reader content as string
 	 */
 	private static String getString(Reader reader) {
-		StringBuilder buf= new StringBuilder();
-		char[] buffer= new char[1024];
-		int count;
 		try {
-			while ((count= reader.read(buffer)) != -1)
-				buf.append(buffer, 0, count);
-		} catch (IOException e) {
-			return null;
+			return CharStreams.toString(reader);
+		} catch (IOException ignored) {
+			//meh
 		}
-		return buf.toString();
+		return null;
 	}
 }

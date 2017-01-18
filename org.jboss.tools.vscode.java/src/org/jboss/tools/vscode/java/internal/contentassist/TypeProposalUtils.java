@@ -70,7 +70,7 @@ public class TypeProposalUtils {
 	static String getTypeQualifiedName(ITypeBinding type) {
 		List<String> result= new ArrayList<>(5);
 		createName(type, false, result);
-		return result.stream().collect(Collectors.joining("."));
+		return String.join(".",result);
 	}
 
 	static String[] getSuperTypeSignatures(IType subType, IType superType) throws JavaModelException {

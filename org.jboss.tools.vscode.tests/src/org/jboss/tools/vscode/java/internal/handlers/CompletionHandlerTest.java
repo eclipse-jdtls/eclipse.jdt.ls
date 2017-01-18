@@ -11,45 +11,38 @@
 package org.jboss.tools.vscode.java.internal.handlers;
 
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.jboss.tools.vscode.java.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
-import org.jboss.tools.vscode.java.internal.JavaClientConnection;
 import org.jboss.tools.vscode.java.internal.JsonMessageHelper;
-import org.jboss.tools.vscode.java.internal.LanguageServerWorkingCopyOwner;
-import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
-import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import junit.framework.ComparisonFailure;
 
 /**
  * @author Gorkem Ercan
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
+public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
@@ -67,26 +60,13 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	@Mock
-	private JavaClientConnection connection;
-
-	private JDTLanguageServer server;
-	private WorkingCopyOwner wcOwner ;
-	private IProject project;
-
-
-
-	@Before
-	public void setup() throws Exception{
-		importProjects("eclipse/hello");
-		project = WorkspaceHelper.getProject("hello");
-		wcOwner = new LanguageServerWorkingCopyOwner(connection);
-		server= new JDTLanguageServer(projectsManager, null);
-
-	}
-
+	//FIXME Something very fishy here: when run from command line as part of the whole test suite,
+	//no completions are returned maybe 80% of the time if this method runs first in this class,
+	//i.e. if this method is named testCompletion_1. It seems to fail in the IDE too but *very*
+	//infrequently.
+	//When running the test class only, completions are always returned.
 	@Test
-	public void testCompletion_1() throws JavaModelException{
+	public void testCompletion_object() throws Exception{
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -95,11 +75,25 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 						"	}\n"+
 				"}\n");
 		int[] loc = findCompletionLocation(unit, "Objec");
-
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
 		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+		for ( CompletionItem item : list.getItems()) {
+			assertTrue(isNotBlank(item.getLabel()));
+			assertNotNull(item.getKind() );
+			assertTrue(isNotBlank(item.getSortText()));
+			//text edits are not set during calls to "completion"
+			assertNull(item.getTextEdit());
+			assertNull(item.getInsertText());
+			//Check contains data used for completionItem resolution
+			@SuppressWarnings("unchecked")
+			Map<String,String> data = (Map<String, String>) item.getData();
+			assertNotNull(data);
+			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_URI)));
+			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID)));
+			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
+		}
 	}
-
 
 	@Test
 	public void testCompletion_2() throws JavaModelException{
@@ -113,7 +107,6 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 
 		int[] loc = findCompletionLocation(unit, "java.sq");
 
-
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
 
 		assertNotNull(list);
@@ -124,9 +117,13 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertEquals("java.sql",item.getLabel());
 		assertEquals(CompletionItemKind.Module, item.getKind() );
 		assertTrue("Unexpected sortText:"+ item.getSortText() , item.getSortText().endsWith("cbf"));
-		assertNotNull(item.getTextEdit());
+		assertNull(item.getTextEdit());
 
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(item).join();
+		assertNotNull(resolvedItem);
 		TextEdit te = item.getTextEdit();
+		assertNotNull(te);
 		assertEquals("java.sql.*;",te.getNewText());
 		assertNotNull(te.getRange());
 		Range range = te.getRange();
@@ -152,7 +149,6 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 		int[] loc = findCompletionLocation(unit, "map.pu");
 
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
-		System.out.println(list.toString());
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
@@ -162,17 +158,19 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
 		assertTrue("Unexpected sortText:"+ ci.getSortText() , ci.getSortText().endsWith("abj"));
+		assertNull(ci.getTextEdit());
 
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
 		try {
-			assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", ci.getTextEdit());
+			assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", resolvedItem.getTextEdit());
 		} catch (ComparisonFailure e) {
 			//In case the JDK has no sources
-			assertTextEdit(5, 4, 6, "put({{arg0}}, {{arg1}})", ci.getTextEdit());
+			assertTextEdit(5, 4, 6, "put({{arg0}}, {{arg1}})", resolvedItem.getTextEdit());
 		}
-		assertNotNull(ci.getAdditionalTextEdits());
-		List<TextEdit> edits = ci.getAdditionalTextEdits();
+		assertNotNull(resolvedItem.getAdditionalTextEdits());
+		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
 		assertEquals(3, edits.size());
-
 	}
 
 	@Test
@@ -190,56 +188,24 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
 
-		System.out.println(list.toString());
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Class, item.getKind());
 		assertNull(item.getInsertText());
 		assertNull(item.getAdditionalTextEdits());
-		assertTextEdit(3,3,15,"java.util.Map",item.getTextEdit());
+		assertNull(item.getTextEdit());
 
-
+		CompletionItem resolvedItem = server.resolveCompletionItem(item).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(3,3,15,"java.util.Map",resolvedItem.getTextEdit());
 		//Not checking the range end character
 	}
 
-
-
-	/**
-	 * @param unit
-	 * @param str
-	 * @return
-	 * @throws JavaModelException
-	 */
-	private int[] findCompletionLocation(ICompilationUnit unit, String completeBehind) throws JavaModelException {
-		String str= unit.getSource();
-		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
-		return JsonRpcHelpers.toLine(unit.getBuffer(), cursorLocation);
-	}
-
-
-
-
-	public ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
-		ICompilationUnit workingCopy = getCompilationUnit(path);
-		workingCopy.getWorkingCopy(wcOwner,null/*no progress monitor*/);
-		workingCopy.getBuffer().setContents(source);
-		workingCopy.makeConsistent(null/*no progress monitor*/);
-		return workingCopy;
-	}
-
-	protected ICompilationUnit getCompilationUnit(String path) {
-		return (ICompilationUnit)JavaCore.create(getFile(path));
-	}
-
-	protected IFile getFile(String path) {
-		return project.getFile(new Path(path));
-	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
 	}
-
 }
