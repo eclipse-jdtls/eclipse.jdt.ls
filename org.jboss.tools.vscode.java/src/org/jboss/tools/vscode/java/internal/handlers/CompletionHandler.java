@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionProposal;
-import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4j.CompletionItem;
@@ -45,11 +44,14 @@ public class CompletionHandler{
 	}
 
 	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) {
-		if (unit == null) return Collections.emptyList();
-		final List<CompletionItem> proposals = new ArrayList<>();
+		CompletionResponses.clear();
+		if (unit == null) {
+			return Collections.emptyList();
+		}
+		List<CompletionItem> proposals = new ArrayList<>();
 		try {
 			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
-			CompletionRequestor collector = new CompletionProposalRequestor(unit, proposals, offset);
+			CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset);
 			// Allow completions for unresolved types - since 3.3
 			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
 			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
@@ -68,6 +70,7 @@ public class CompletionHandler{
 
 			if (offset >-1 && !monitor.isCanceled()) {
 				unit.codeComplete(offset, collector, monitor);
+				proposals.addAll(collector.getCompletionItems());
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  unit.getElementName(), e);

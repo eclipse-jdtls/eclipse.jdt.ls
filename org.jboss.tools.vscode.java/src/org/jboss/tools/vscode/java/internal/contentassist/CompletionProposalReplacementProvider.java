@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.contentassist;
 
+import static org.jboss.tools.vscode.java.internal.contentassist.TypeProposalUtils.isImplicitImport;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +69,7 @@ public class CompletionProposalReplacementProvider {
 
 	private final ICompilationUnit compilationUnit;
 	private final int offset;
-	private CompletionContext context;
+	private final CompletionContext context;
 	private ImportRewrite importRewrite;
 
 	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset) {
@@ -97,21 +99,24 @@ public class CompletionProposalReplacementProvider {
 		StringBuilder completionBuffer = new StringBuilder();
 		if (isSupportingRequiredProposals(proposal)) {
 			CompletionProposal[] requiredProposals= proposal.getRequiredProposals();
-			for (int i= 0; requiredProposals != null &&  i < requiredProposals.length; i++) {
-				if (requiredProposals[i].getKind() == CompletionProposal.TYPE_REF) {
-					appendRequiredType(additionalTextEdits, requiredProposals[i], trigger, positions, proposal.canUseDiamond(context));
-				} else if (requiredProposals[i].getKind() == CompletionProposal.TYPE_IMPORT) {
-					appendImportProposal(completionBuffer, requiredProposals[i], proposal.getKind());
-				} else if (requiredProposals[i].getKind() == CompletionProposal.METHOD_IMPORT) {
-					appendImportProposal(completionBuffer, requiredProposals[i], proposal.getKind());
-				} else if (requiredProposals[i].getKind() == CompletionProposal.FIELD_IMPORT) {
-					appendImportProposal(completionBuffer, requiredProposals[i], proposal.getKind());
-				} else {
-					/*
-					 * In 3.3 we only support the above required proposals, see
-					 * CompletionProposal#getRequiredProposals()
-					 */
-					Assert.isTrue(false);
+			if (requiredProposals != null) {
+				for (CompletionProposal requiredProposal : requiredProposals) {
+					switch(requiredProposal.getKind()) {
+					case CompletionProposal.TYPE_IMPORT:
+					case CompletionProposal.METHOD_IMPORT:
+					case CompletionProposal.FIELD_IMPORT:
+						appendImportProposal(completionBuffer, requiredProposal, proposal.getKind());
+						break;
+					case CompletionProposal.TYPE_REF:
+						appendRequiredType(additionalTextEdits, requiredProposal, trigger, positions, proposal.canUseDiamond(context));
+						break;
+					default:
+						/*
+						 * In 3.3 we only support the above required proposals, see
+						 * CompletionProposal#getRequiredProposals()
+						 */
+						Assert.isTrue(false);
+					}
 				}
 			}
 		}
@@ -520,33 +525,6 @@ public class CompletionProposalReplacementProvider {
 		return buffer;
 	}
 
-	private static boolean isImplicitImport(String qualifier, ICompilationUnit cu) {
-		if ("java.lang".equals(qualifier)) {  //$NON-NLS-1$
-			return true;
-		}
-		String packageName= cu.getParent().getElementName();
-		if (qualifier.equals(packageName)) {
-			return true;
-		}
-		String typeName= JavaCore.removeJavaLikeExtension(cu.getElementName());
-		String mainTypeName= concatenateName(packageName, typeName);
-		return qualifier.equals(mainTypeName);
-	}
-
-	private static String concatenateName(String name1, String name2) {
-		StringBuilder buf= new StringBuilder();
-		if (name1 != null && name1.length() > 0) {
-			buf.append(name1);
-		}
-		if (name2 != null && name2.length() > 0) {
-			if (buf.length() > 0) {
-				buf.append('.');
-			}
-			buf.append(name2);
-		}
-		return buf.toString();
-	}
-
 	private ITypeBinding getExpectedTypeForGenericParameters() {
 		char[][] chKeys= context.getExpectedTypesKeys();
 		if (chKeys == null || chKeys.length == 0)
@@ -675,18 +653,5 @@ public class CompletionProposalReplacementProvider {
 		 */
 		return last == ';' || last == '.';
 	}
-
-	//	private String getPrefixForCompletion(CompletionProposal proposal){
-	//		IDocument document;
-	//		try {
-	//			document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
-	//			IRegion region= document.getLineInformationOfOffset(proposal.getReplaceEnd());
-	//			return document.get(region.getOffset(), );
-	//
-	//		} catch (JavaModelException | BadLocationException e) {
-	//			// return empty;
-	//		}
-	//		return "";
-	//	}
 
 }

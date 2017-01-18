@@ -22,42 +22,58 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.jboss.tools.vscode.java.internal.handlers.CompletionResolveHandler;
+import org.jboss.tools.vscode.java.internal.handlers.CompletionResponse;
+import org.jboss.tools.vscode.java.internal.handlers.CompletionResponses;
 
 public final class CompletionProposalRequestor extends CompletionRequestor {
 
-	private final List<CompletionItem> proposals;
+	private List<CompletionProposal> proposals = new ArrayList<>();
 	private final ICompilationUnit unit;
-	private final int triggerOffset;
-	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionProposalDescriptionProvider descriptionProvider;
+	private CompletionResponse response;
 
-
-	public CompletionProposalRequestor( ICompilationUnit aUnit, List<CompletionItem> proposals, int offset) {
-		this.proposals = proposals;
+	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset) {
 		this.unit = aUnit;
-		this.triggerOffset = offset;
+		response = new CompletionResponse();
+		response.setOffset(offset);
 		setRequireExtendedContext(true);
 	}
 
 	@Override
 	public void accept(CompletionProposal proposal) {
-		if(isIgnored(proposal.getKind())) return;
+		if(!isIgnored(proposal.getKind())) {
+			proposals.add(proposal);
+		}
+	}
+
+	public List<CompletionItem> getCompletionItems() {
+		response.setProposals(proposals);
+		CompletionResponses.store(response);
+		List<CompletionItem> completionItems = new ArrayList<>(proposals.size());
+		for (int i = 0; i < proposals.size(); i++) {
+			completionItems.add(toCompletionItem(proposals.get(i), i));
+		}
+		return completionItems;
+	}
+
+	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
 		$.setKind(mapKind(proposal.getKind()));
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
 		data.put(CompletionResolveHandler.DATA_FIELD_URI,unit.getResource().getLocationURI().toString());
+		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID,String.valueOf(response.getId()));
+		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID,String.valueOf(index));
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
-		this.proposalProvider.updateReplacement(proposal,$, '\0',new ArrayList<Integer>());
 		$.setSortText(SortTextHelper.computeSortText(proposal));
-		proposals.add($);
+		return $;
 	}
 
 	@Override
 	public void acceptContext(CompletionContext context) {
 		super.acceptContext(context);
-		this.proposalProvider = new CompletionProposalReplacementProvider(unit,context, triggerOffset);
+		response.setContext(context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
 

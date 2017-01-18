@@ -38,7 +38,7 @@ public class Lsp4jAssertions {
 	}
 
 	public static void assertTextEdit(int expectedLine, int expectedStart, int expectedEnd, String expectedText, TextEdit edit){
-		assertNotNull("TextEdit is null");
+		assertNotNull("TextEdit is null", edit);
 		assertEquals(expectedText, edit.getNewText());
 		assertRange(expectedLine, expectedStart, expectedEnd, edit.getRange());
 
