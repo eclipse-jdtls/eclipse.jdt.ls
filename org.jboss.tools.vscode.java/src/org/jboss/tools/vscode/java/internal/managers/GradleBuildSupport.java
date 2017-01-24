@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.managers;
 
-import java.util.Collections;
-
 import org.eclipse.buildship.core.CorePlugin;
-import org.eclipse.buildship.core.workspace.CompositeGradleBuild;
+import org.eclipse.buildship.core.workspace.GradleBuild;
 import org.eclipse.buildship.core.workspace.NewProjectHandler;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -21,6 +19,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 import org.jboss.tools.vscode.java.internal.ProjectUtils;
+
+import com.google.common.base.Optional;
 
 /**
  * @author Fred Bricon
@@ -39,8 +39,10 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for "+project.getName());
-		CompositeGradleBuild build = CorePlugin.gradleWorkspaceManager().getCompositeBuild(Collections.singleton(project));
-		build.synchronize(NewProjectHandler.IMPORT_AND_MERGE);
+		Optional<GradleBuild> build = CorePlugin.gradleWorkspaceManager().getGradleBuild(project);
+		if (build.isPresent()){
+			build.get().synchronize(NewProjectHandler.IMPORT_AND_MERGE);
+		}
 	}
 
 	@Override
