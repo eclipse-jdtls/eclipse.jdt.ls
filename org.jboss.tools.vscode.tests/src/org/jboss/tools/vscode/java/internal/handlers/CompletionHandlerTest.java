@@ -15,6 +15,7 @@ import static org.jboss.tools.vscode.java.internal.Lsp4jAssertions.assertTextEdi
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -122,8 +123,9 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertNull(item.getInsertText());
 		assertEquals("java.sql",item.getLabel());
 		assertEquals(CompletionItemKind.Module, item.getKind() );
-		assertEquals("cbf", item.getSortText());
+		assertTrue("Unexpected sortText:"+ item.getSortText() , item.getSortText().endsWith("cbf"));
 		assertNotNull(item.getTextEdit());
+
 		TextEdit te = item.getTextEdit();
 		assertEquals("java.sql.*;",te.getNewText());
 		assertNotNull(te.getRange());
@@ -159,7 +161,8 @@ public class CompletionHandlerTest extends AbstractProjectsManagerBasedTest{
 
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
-		assertEquals("abj", ci.getSortText());
+		assertTrue("Unexpected sortText:"+ ci.getSortText() , ci.getSortText().endsWith("abj"));
+
 		try {
 			assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", ci.getTextEdit());
 		} catch (ComparisonFailure e) {

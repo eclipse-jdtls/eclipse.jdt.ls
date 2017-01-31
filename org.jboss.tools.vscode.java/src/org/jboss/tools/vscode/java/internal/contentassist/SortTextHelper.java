@@ -28,11 +28,17 @@ public final class SortTextHelper {
 	 * @param proposal
 	 * @return
 	 */
-	private static String convertRelevance(int relevance) {
+	public static String convertRelevance(int relevance) {
 		StringBuilder sb = new StringBuilder();
+		if (relevance < 1) {
+			sb.append("z");
+		}
 		while (relevance > 0) {
 			sb.insert(0,REVERSE_CHAR_MAP[relevance % 10]);
 			relevance = relevance / 10;
+		}
+		while (sb.length() < 10) {
+			sb.insert(0, "z");
 		}
 		return sb.toString();
 	}
