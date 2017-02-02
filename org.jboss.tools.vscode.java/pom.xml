@@ -10,7 +10,9 @@
 	<artifactId>org.jboss.tools.vscode.java</artifactId>
 	<packaging>eclipse-plugin</packaging>
 	<name>${base.name} :: Java</name>
-
+	<properties>
+	<lsp4j.version>0.2.0-SNAPSHOT</lsp4j.version>
+	</properties>
 	<build>
 		<plugins>
 			<plugin>
@@ -31,17 +33,12 @@
 						<artifactItem>
 							<groupId>org.eclipse.lsp4j</groupId>
 							<artifactId>org.eclipse.lsp4j</artifactId>
-							<version>0.1.0-SNAPSHOT</version>
+							<version>${lsp4j.version}</version>
 						</artifactItem>
 						<artifactItem>
 							<groupId>org.eclipse.lsp4j</groupId>
 							<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
-							<version>0.1.0-SNAPSHOT</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.eclipse.lsp4j</groupId>
-							<artifactId>org.eclipse.lsp4j.annotations</artifactId>
-							<version>0.1.0-SNAPSHOT</version>
+							<version>${lsp4j.version}</version>
 						</artifactItem>
 						<artifactItem>
 							<groupId>com.kohlschutter.junixsocket</groupId>
@@ -93,12 +90,12 @@
 		<dependency>
 			<groupId>org.eclipse.lsp4j</groupId>
 			<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>${lsp4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.lsp4j</groupId>
 			<artifactId>org.eclipse.lsp4j</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>${lsp4j.version}</version>
 		</dependency>
 	</dependencies>
 </project>
