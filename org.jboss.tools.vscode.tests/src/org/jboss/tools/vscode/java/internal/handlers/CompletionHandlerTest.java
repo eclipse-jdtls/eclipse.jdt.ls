@@ -19,6 +19,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,11 +34,10 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JsonMessageHelper;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import junit.framework.ComparisonFailure;
 
 /**
  * @author Gorkem Ercan
@@ -78,7 +80,9 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
-		for ( CompletionItem item : list.getItems()) {
+
+		List<CompletionItem> items = list.getItems();
+		for ( CompletionItem item : items) {
 			assertTrue(isNotBlank(item.getLabel()));
 			assertNotNull(item.getKind() );
 			assertTrue(isNotBlank(item.getSortText()));
@@ -94,6 +98,45 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
 		}
 	}
+
+
+	@Test
+	public void testCompletion_constructor() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"		Object o = new O\n"+
+						"	}\n"+
+				"}\n");
+		int[] loc = findCompletionLocation(unit, "new O");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		Comparator<CompletionItem> comparator = (CompletionItem a, CompletionItem b) -> a.getSortText().compareTo(b.getSortText());
+		Collections.sort(items, comparator);
+		CompletionItem ctor = items.get(0);
+		assertEquals("Object()", ctor.getLabel());
+
+
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ctor).join();
+		assertNotNull(resolvedItem);
+		TextEdit te = resolvedItem.getTextEdit();
+		assertNotNull(te);
+		assertEquals("Object()",te.getNewText());
+		assertNotNull(te.getRange());
+		Range range = te.getRange();
+		assertEquals(2, range.getStart().getLine());
+		assertEquals(17, range.getStart().getCharacter());
+		assertEquals(2, range.getEnd().getLine());
+		assertEquals(18, range.getEnd().getCharacter());
+
+
+	}
+
 
 	@Test
 	public void testCompletion_2() throws JavaModelException{
