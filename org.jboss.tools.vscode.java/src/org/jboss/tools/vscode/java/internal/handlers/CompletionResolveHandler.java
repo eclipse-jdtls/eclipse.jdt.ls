@@ -16,7 +16,6 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.stripS
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -68,7 +67,7 @@ public class CompletionResolveHandler {
 			throw new IllegalStateException(NLS.bind("Unable to match Compilation Unit from {0} ", uri));
 		}
 		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset());
-		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0',new ArrayList<Integer>());
+		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			String typeName = stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));
