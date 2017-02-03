@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import static org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin.logInfo;
+
 import java.util.Arrays;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -54,7 +56,8 @@ final public class InitHandler {
 
 
 	InitializeResult initialize(InitializeParams param){
-		triggerInitialization(param.getRootPath());
+		logInfo("Initializing Java Language Server "+JavaLanguageServerPlugin.getVersion());
+		triggerInitialization(param.getRootUri());
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection), IResourceChangeEvent.POST_BUILD);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();
