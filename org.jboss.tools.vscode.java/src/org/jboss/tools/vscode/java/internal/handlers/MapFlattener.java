@@ -14,6 +14,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * Flattens nested Maps so that a map like
+ * <pre>
+ * [foo:[[ bar: value1], [baz: value2]]]
+ * </pre>
+ * is transformed into:
+ * <pre>
+ * [[foo.bar: value1],[foo.baz: value2]]
+ * </pre>
+ *
  * @author Fred Bricon
  *
  */
@@ -24,6 +33,9 @@ public class MapFlattener {
 	}
 
 	public static Map<String, Object> flatten(Map<String, Object> map) {
+		if (map == null) {
+			return null;
+		}
 		Map<String, Object> resultMap = new LinkedHashMap<>();
 		visit(null, resultMap, map);
 		return resultMap;
