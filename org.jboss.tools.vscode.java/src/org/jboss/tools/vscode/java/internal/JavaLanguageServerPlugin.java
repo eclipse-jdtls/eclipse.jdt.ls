@@ -125,4 +125,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
 	}
+
+	/**
+	 * @return the Java Language Server version
+	 */
+	public static String getVersion() {
+		return context == null? "Unknown":context.getBundle().getVersion().toString();
+	}
 }
