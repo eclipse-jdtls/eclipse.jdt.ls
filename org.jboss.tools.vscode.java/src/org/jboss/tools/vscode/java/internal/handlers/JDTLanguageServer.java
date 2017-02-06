@@ -271,7 +271,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		logInfo(">> document/codeLens");
-		CodeLensHandler handler = new CodeLensHandler();
+		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
 		return CompletableFuture.supplyAsync(()->handler.getCodeLensSymbols(params.getTextDocument().getUri()));
 	}
 
@@ -281,7 +281,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
 		logInfo(">> codeLens/resolve");
-		CodeLensHandler handler = new CodeLensHandler();
+		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
 		return CompletableFuture.supplyAsync(()->handler.resolve(unresolved));
 	}
 
