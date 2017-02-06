@@ -22,14 +22,15 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
 
 public class NavigateToDefinitionHandler {
 
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position){
+	public CompletableFuture<Either<Location, List<? extends Location>>> definition(TextDocumentPositionParams position){
 		return CompletableFuture.supplyAsync(()->{
-			return getDefinition(position);
+			return Either.forRight(getDefinition(position));
 		});
 	}
 

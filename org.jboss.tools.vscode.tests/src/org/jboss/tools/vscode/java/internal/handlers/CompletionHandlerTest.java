@@ -75,7 +75,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 						"	}\n"+
 				"}\n");
 		int[] loc = findCompletionLocation(unit, "Objec");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 		for ( CompletionItem item : list.getItems()) {
@@ -107,7 +107,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		int[] loc = findCompletionLocation(unit, "java.sq");
 
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
@@ -148,7 +148,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		int[] loc = findCompletionLocation(unit, "map.pu");
 
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
@@ -186,7 +186,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		int[] loc = findCompletionLocation(unit, "java.util.Ma");
 
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join();
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());

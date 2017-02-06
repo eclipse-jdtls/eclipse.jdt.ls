@@ -13,6 +13,7 @@ package org.jboss.tools.vscode.java.internal.handlers;
 import static org.jboss.tools.vscode.java.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -70,8 +71,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
-		assertEquals("Unexpected hover "+hover.getContents().get(0), "This is foo", hover.getContents().get(0));
+		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		assertEquals("Unexpected hover "+result, "This is foo", result);
 	}
 
 	@Test
@@ -87,8 +88,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals("Couldn't find hover for "+payload, 1, hover.getContents().size());
-		assertEquals("Unexpected hover "+hover.getContents().get(0), "This is foo", hover.getContents().get(0));
+		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		assertEquals("Unexpected hover "+result, "This is foo", result);
 	}
 
 	@Test
@@ -104,7 +105,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals("Shouldn't find hover for "+payload, 0, hover.getContents().size());
+		assertNull("Shouldn't find hover for "+payload, hover.getContents());
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
@@ -131,7 +132,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertEquals("Couldn't find hover for "+ argParam, 1, hover.getContents().size());
-		assertEquals("Unexpected hover "+hover.getContents().get(0), "String[] args - java.Foo.main(String[])", hover.getContents().get(0));
+		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		assertEquals("Unexpected hover "+result, "String[] args - java.Foo.main(String[])", result);
 	}
 }
