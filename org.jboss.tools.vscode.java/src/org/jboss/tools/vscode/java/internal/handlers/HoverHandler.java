@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.core.ITypeRoot;
@@ -34,7 +33,7 @@ public class HoverHandler{
 			}
 			Hover $ = new Hover();
 			if (hover != null && !hover.isEmpty()) {
-				$.setContents(Arrays.asList(hover));
+				$.setContents(hover);
 			}
 			return $;
 		});

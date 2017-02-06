@@ -23,6 +23,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jboss.tools.vscode.java.internal.CancellableProgressMonitor;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
@@ -30,7 +31,7 @@ import org.jboss.tools.vscode.java.internal.contentassist.CompletionProposalRequ
 
 public class CompletionHandler{
 
-	CompletableFuture<CompletionList> completion(TextDocumentPositionParams position){
+	CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position){
 		return CompletableFutures.computeAsync(cancelChecker->{
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
 			List<CompletionItem> completionItems = this.computeContentAssist(unit,
@@ -39,7 +40,7 @@ public class CompletionHandler{
 			CompletionList $ = new CompletionList();
 			$.setItems(completionItems);
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
-			return $;
+			return Either.forRight($);
 		});
 	}
 
