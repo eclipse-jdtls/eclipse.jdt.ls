@@ -22,8 +22,24 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class Preferences {
 
+	/**
+	 * Preference key to enable/disable reference code lenses.
+	 */
+	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
+
+	/**
+	 * Preference key for project build/configuration update settings.
+	 */
+	public static final String CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY = "java.configuration.updateBuildConfiguration";
+
+	/**
+	 * Preference key for incomplete classpath severity messages.
+	 */
+	public static final String ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY = "java.errors.incompleteClasspath.severity";
+
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
+	private boolean referencesCodeLensEnabled;
 
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -70,6 +86,7 @@ public class Preferences {
 	public Preferences() {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
+		referencesCodeLensEnabled = true;
 	}
 
 	/**
@@ -80,16 +97,28 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
-		Object incompleteClasspathSeverity = configuration.get("java.errors.incompleteClasspath.severity");
+		Object incompleteClasspathSeverity = configuration.get(ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY);
 		if (incompleteClasspathSeverity != null) {
 			prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity.toString(), Severity.warning));
 		}
 
-		Object updateBuildConfiguration = configuration.get("java.configuration.updateBuildConfiguration");
+		Object updateBuildConfiguration = configuration.get(CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY);
 		if (updateBuildConfiguration != null) {
 			prefs.setUpdateBuildConfigurationStatus(FeatureStatus.fromString(updateBuildConfiguration.toString(), FeatureStatus.interactive));
 		}
+
+		Object referenceCodelensEnabled = configuration.get(REFERENCES_CODE_LENS_ENABLED_KEY);
+		if (referenceCodelensEnabled != null) {
+			prefs.setReferencesCodelensEnabled(Boolean.valueOf(referenceCodelensEnabled.toString()));
+		}
+
+
 		return prefs;
+	}
+
+	private Preferences setReferencesCodelensEnabled(boolean enabled) {
+		this.referencesCodeLensEnabled = enabled;
+		return this;
 	}
 
 	private Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
@@ -108,5 +137,9 @@ public class Preferences {
 
 	public FeatureStatus getUpdateBuildConfigurationStatus() {
 		return updateBuildConfigurationStatus;
+	}
+
+	public boolean isReferencesCodeLensEnabled() {
+		return referencesCodeLensEnabled;
 	}
 }

@@ -18,8 +18,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -32,8 +35,11 @@ import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.ResourceUtils;
 import org.jboss.tools.vscode.java.internal.WorkspaceHelper;
 import org.jboss.tools.vscode.java.internal.managers.AbstractProjectsManagerBasedTest;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
+import org.jboss.tools.vscode.java.internal.preferences.Preferences;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Fred Bricon
@@ -83,11 +89,15 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IProject project;
 
+	private PreferenceManager preferenceManager;
+
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
-		handler = new CodeLensHandler();
+		preferenceManager = mock(PreferenceManager.class);
+		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
+		handler = new CodeLensHandler(preferenceManager);
 	}
 
 	@Test
@@ -125,6 +135,26 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		result = handler.getCodeLensSymbols(uri);
 		assertEquals(0, result.size());
 	}
+
+	@Test
+	public void testDisableCodeLensSymbols() throws Exception {
+		Preferences noCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, "false"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(noCodeLenses);
+		handler = new CodeLensHandler(preferenceManager);
+
+		String payload = createCodeLensSymbolsRequest("src/java/Foo.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri);
+
+		//then
+		assertEquals(0, result.size());
+	}
+
 
 	@SuppressWarnings("unchecked")
 	@Test

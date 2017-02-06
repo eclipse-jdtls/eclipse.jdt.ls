@@ -40,14 +40,24 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 import org.jboss.tools.vscode.java.internal.JavaLanguageServerPlugin;
+import org.jboss.tools.vscode.java.internal.preferences.PreferenceManager;
 
 public class CodeLensHandler {
+
+	private PreferenceManager preferenceManager;
+
+	public CodeLensHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	@SuppressWarnings("unchecked")
 	public CodeLens resolve(CodeLens lens){
 		if (lens == null) {
 			return null;
 		}
+		//Note that codelens resolution is honored if the request was emitted
+		//before disabling codelenses in the preferences, else invalid codeLenses
+		//(i.e. having no commands) would be returned.
 		try {
 			List<Object> data = (List<Object>) lens.getData();
 			String uri = (String) data.get(0);
@@ -102,6 +112,9 @@ public class CodeLensHandler {
 	}
 
 	public List<CodeLens> getCodeLensSymbols(String uri) {
+		if (!preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+			return Collections.emptyList();
+		}
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if(unit == null || !unit.getResource().exists()) return Collections.emptyList();
 		try {
