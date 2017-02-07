@@ -71,7 +71,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
 		assertEquals("Unexpected hover "+result, "This is foo", result);
 	}
 
@@ -88,7 +88,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
 		assertEquals("Unexpected hover "+result, "This is foo", result);
 	}
 
@@ -132,7 +132,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().getLeft().getLeft();//wow this is so elegant!
+		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
 		assertEquals("Unexpected hover "+result, "String[] args - java.Foo.main(String[])", result);
 	}
 }

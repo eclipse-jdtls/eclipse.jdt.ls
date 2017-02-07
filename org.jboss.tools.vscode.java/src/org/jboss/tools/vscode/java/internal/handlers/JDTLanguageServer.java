@@ -219,7 +219,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<Either<Location, List<? extends Location>>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler();
 		return handler.definition(position);

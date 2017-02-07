@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.jboss.tools.vscode.java.internal.handlers;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jboss.tools.vscode.java.internal.HoverInfoProvider;
 import org.jboss.tools.vscode.java.internal.JDTUtils;
 
@@ -33,7 +35,7 @@ public class HoverHandler{
 			}
 			Hover $ = new Hover();
 			if (hover != null && !hover.isEmpty()) {
-				$.setContents(hover);
+				$.setContents(Arrays.asList(Either.forLeft(hover)));
 			}
 			return $;
 		});
