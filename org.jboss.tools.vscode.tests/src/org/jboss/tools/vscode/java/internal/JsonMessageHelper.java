@@ -31,7 +31,8 @@ public class JsonMessageHelper {
 		handler = new MessageJsonHandler(methods);
 	}
 
-	public JsonMessageHelper() {
+	private JsonMessageHelper() {
+		//no instantiation
 	}
 
 	/**

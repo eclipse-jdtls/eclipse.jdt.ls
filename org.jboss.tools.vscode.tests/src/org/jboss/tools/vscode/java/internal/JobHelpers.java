@@ -35,6 +35,10 @@ import org.junit.Assert;
 @SuppressWarnings("restriction")
 public class JobHelpers {
 
+	private JobHelpers() {
+		//no instantiation
+	}
+
 	private static final int POLLING_DELAY = 10;
 
 	public static void waitForJobsToComplete() {

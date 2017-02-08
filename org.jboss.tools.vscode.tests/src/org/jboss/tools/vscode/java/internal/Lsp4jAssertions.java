@@ -25,6 +25,10 @@ import org.eclipse.lsp4j.TextEdit;
  */
 public class Lsp4jAssertions {
 
+	private Lsp4jAssertions() {
+		//no instantiation
+	}
+
 	public static void assertRange(int expectedLine, int expectedStart, int expectedEnd, Range range) {
 		assertNotNull("Range is null", range);
 		assertPosition(expectedLine, expectedStart, range.getStart());
