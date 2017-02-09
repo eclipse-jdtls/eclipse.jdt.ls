@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="id1"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-global"
+            thread="main"
+            visible="true">
+         <run
+               class="org.eclipse.jdt.ls.core.internal.LanguageServer">
+         </run>
+      </application>
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="org.eclipse.jdt.ls.core.id1"
+            name="Java Language Server">
+         <property
+               name="appName"
+               value="Java Language Server">
+         </property>
+      </product>
+   </extension>
+
+</plugin>

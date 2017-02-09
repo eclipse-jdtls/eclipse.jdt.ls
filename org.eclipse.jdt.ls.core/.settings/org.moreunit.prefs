@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+org.moreunit.generateCommentsForTestMethod=true
+org.moreunit.preferences.version=2
+org.moreunit.test_annotation=BY_NAME
+org.moreunit.unitsourcefolder=org.eclipse.jdt.ls.core\:src\:org.eclipse.jdt.ls.tests\:src
+org.moreunit.useprojectsettings=true

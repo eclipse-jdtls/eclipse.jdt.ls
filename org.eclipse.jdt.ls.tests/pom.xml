@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.eclipse.jdt.ls</groupId>
+		<artifactId>parent</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>org.eclipse.jdt.ls.tests</artifactId>
+	<name>${base.name} :: Tests</name>
+	<packaging>eclipse-test-plugin</packaging>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-surefire-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<configuration>
+						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+					<dependencies>
+						<!-- This feature is required for correct Installed JRE initialization on Mac OS X -->
+						<dependency>
+							<type>eclipse-feature</type>
+							<artifactId>org.eclipse.jdt</artifactId>
+							<version>0.0.0</version>
+						</dependency>
+					</dependencies>
+					</configuration>
+					
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<profiles>
+		<profile>
+			<id>macosx-jvm-flags</id>
+			<activation>
+				<os><family>mac</family></os>
+			</activation>
+			<properties>
+				<os.testArgs>-XstartOnFirstThread -noverify</os.testArgs>
+			</properties>
+		</profile>
+	</profiles>
+	  <repositories>
+    <repository>
+      <id>neon</id>
+      <layout>p2</layout>
+      <url>http://download.eclipse.org/releases/neon</url>
+    </repository>
+	</repositories>
+</project>

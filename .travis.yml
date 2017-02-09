@@ -1,0 +1,23 @@
+language: java
+sudo: false
+script: 
+- 'mvn -Pserver-distro clean verify'
+# - 'if [[ $TRAVIS_PULL_REQUEST == "false" && $TRAVIS_BRANCH == "master" ]]; then mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN}; fi'
+jdk:
+- oraclejdk8
+addons:
+  sonarqube: false
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.sonar/cache
+  - $HOME/.gradle/
+env:
+  global:
+    secure: X+snbuGeonQZa/7sHkRDxSK5+tvYvXTxht9fGaY8sLvVnqvLmY67j3ZMRRGWrfar0pIY6zzPYuqSycA7XXhD8QUyhDVWSy8xCgfqUdG2QyjoYjJjyA6UvZmqoNQONT412w5qoaO7q5lGgxUOIU9b8TJRxkCszpYCyLhFgolmaUUzQRx2X8+s5vkTuAITDkD7XbKEyWmRd88n4g1P6MuvoshIaqUCXIT+5E3RGiP/EIGmdvdXyild1ViHf8+EVXQWUDwT+VMc1NNnSYRm7A8yMq3gW5MMp5SETMySP75HQubf+azuZJ175oucqFlOWI6N8NHsP/u1L7lagdsRGlFsr7/vYEtyQABF8EYXZD6FcROsUIWm9d7ExhNDHo5XRwBVaEts1JW2bJYO4Jrs6I/Bv00tD56qfuj6RoNNkfvHmIoCkgIHbwHzHG5zEiGpjN6rBODKohCTsw6UrpgWk6IbUBcE/7sgH4rKQOyktwwLIdYozSO6QttV38EcqRT2pS4vVBEhJSD7h+7Xr/bA0xC8KUGEsKcvuLWrA+Z27BTtZxevwJ7IjIcfNyMjUKMtQyxmd/jp/OfALHyLs65qK35W1Tkmawe82xBS9++2/+/EpeqRCr8N9eIlgi6S2LbNkKHqMKIZxRFutD6zMe7Z3oCt4NF7sEzqmmkCNtB35ohZ68U=
+deploy:
+  provider: bintray
+  file: ./descriptor.json
+  user: gorkem
+  key:
+    secure: e9bgz2HPEzbwLv6F5b+JW0164LZWH5SxOesf2lsvjOK0+flzrqDdHiwGdN+1ND0E1Qc4eLNmhbi1fYblfzzIcWgtXuW5nZ0wdz08WlR1NrlUZ+u85ol9/7PFdbZSWqgDcQ7JPjrJ+pNozy7bV9jbEq7XU2ziRJQgicoIxRYe+AoJoPD3YC9TIvMW6TwtArCgWZndaqvoq9JLJqVJ5zUGeocbygaEyZmItUNyhYMUUkuFrtGChAMHY074dC0KEza7nCwXhBwg4hC1CZ7nm89p4PFSwvVQY3/ZaQrwFUqNyg8J42/DPzjkSyyycv89ylZnoCzAY+S8S5nIj33LANwG3bEhQlKVqlgzQd80mb7EvOHccWOkj/8xLvRCsD4kVbfrUJM4JVDjPO+DEtSFq5ptOiY4zc0XEkeWFvstmRIVOvpukS76ZbF/AyTMvEDHHVNIC7mZhegTFOK2+RFMGXAx4A8Ry+RE59EL0qInQlMQ2+eCPmVcOolEzMDVjig5EvZLIfmEUPdROUL9vFenlGQ1vBwg2ZYSnzO8ENHbruoLl9rAYOtRFezTodVvqFvLSlQGoKW/DfSAq8sCBccG8XbmQC5RHCgmN9Hck3QGs6O+ovEOl162LSTgtTTwdG3HY5CT+rsvqvyHEZ+7aE5gUd4yQESDZAHrdsOmXIA3cHb+TGw=

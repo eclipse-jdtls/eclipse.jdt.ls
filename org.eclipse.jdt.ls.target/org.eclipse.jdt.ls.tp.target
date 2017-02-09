@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="59">
+<locations>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.mockito.mockito-all" version="1.9.5"/>
+<repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
+<unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
+<unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
+<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/S20160916162009/repository/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.0.v20170123-1654"/>
+<unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.0.v20170118-2208"/>
+<unit id="org.eclipse.equinox.executable.feature.group" version="3.7.0.v20170111-1955"/>
+<unit id="org.eclipse.equinox.p2.core.feature.feature.group" version="1.4.0.v20170111-0945"/>
+<unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.4.0.v20170111-0945"/>
+<unit id="org.eclipse.equinox.p2.rcp.feature.feature.group" version="1.3.0.v20170113-1831"/>
+<unit id="org.eclipse.equinox.sdk.feature.group" version="3.13.0.v20170123-1654"/>
+<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20170126-1030"/>
+<unit id="org.eclipse.sdk.feature.group" version="4.7.0.v20170126-1030"/>
+<repository location="http://download.eclipse.org/releases/oxygen/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="com.google.gson" version="2.7.0.v20161205-1708"/>
+<unit id="com.google.gson.source" version="2.7.0.v20161205-1708"/>
+<repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastSuccessfulBuild/artifact/build/p2-repository/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.buildship.feature.group" version="2.0.0.v20170111-1029"/>
+<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20160921-2002"/>
+<repository location="http://download.eclipse.org/releases/oxygen"/>
+</location>
+</locations>
+<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+</target>

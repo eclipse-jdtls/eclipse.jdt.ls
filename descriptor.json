@@ -1,0 +1,20 @@
+{
+    "package": {
+        "name": "java-language-server",
+        "repo": "java-language-server",
+        "subject": "gorkem"
+    },
+    "version": {
+        "name": "latest"
+    },
+    "files": [
+        {
+            "includePattern": "org.eclipse.jdt.ls.product/distro/(.*)(-\\d{12})(.*)",
+            "uploadPattern": "$1-latest$3",
+            "matrixParams": {
+                "override": 1
+            }
+        }
+    ],
+    "publish": true
+}
