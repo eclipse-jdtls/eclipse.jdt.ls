@@ -86,6 +86,9 @@ This repository contains only the server implementation. Here are some known cli
 
 * [vscode-java](https://github.com/redhat-developer/vscode-java) : an extension for Visual Studio Code
 
+Continuous Integration Builds
+-----------------------------
+Our [CI server](https://ci.eclipse.org/ls/) publishes builds to http://download.eclipse.org/jdtls/snapshots/
 
 
 License
