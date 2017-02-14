@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.jdt.ls.core.internal.handlers.MapFlattener;
 import org.junit.Test;
 
 /**
