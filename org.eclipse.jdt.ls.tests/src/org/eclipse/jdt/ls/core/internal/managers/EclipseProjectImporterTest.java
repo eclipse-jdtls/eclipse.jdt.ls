@@ -21,7 +21,6 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

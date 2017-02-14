@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
-import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceDiagnosticsHandler;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;

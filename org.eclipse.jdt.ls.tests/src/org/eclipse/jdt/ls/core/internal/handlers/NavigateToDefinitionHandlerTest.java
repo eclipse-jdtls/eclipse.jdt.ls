@@ -15,7 +15,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 
-import org.eclipse.jdt.ls.core.internal.handlers.NavigateToDefinitionHandler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
