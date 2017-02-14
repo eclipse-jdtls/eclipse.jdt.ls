@@ -66,7 +66,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	protected List<Diagnostic> toDiagnosticsArray() {
-		List<Diagnostic> array = new ArrayList<>();
+		List<Diagnostic> array = new ArrayList<>(problems.size());
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
 			diag.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
