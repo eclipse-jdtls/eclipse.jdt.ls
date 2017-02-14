@@ -29,7 +29,6 @@ import java.util.Map;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeLensHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -248,6 +247,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		URI uri = project.getFile(file).getRawLocationURI();
 		return createCodeLensRequest(uri, line, start, end);
 	}
+
 	String createCodeLensRequest(URI file, int line, int start, int end) {
 		String fileURI = ResourceUtils.fixURI(file);
 		return CODELENS_TEMPLATE.replace("${file}", fileURI)
