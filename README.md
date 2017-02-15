@@ -20,7 +20,7 @@ Features
 * Highlights
 * Code formatting
 * Maven pom.xml project support
-* Limited Gradle support 
+* Limited Gradle support (Android projects are not supported)
 
 
 First Time Setup
