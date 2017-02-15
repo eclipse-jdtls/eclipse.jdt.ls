@@ -63,6 +63,10 @@ import com.google.common.io.Files;
  */
 public final class JDTUtils {
 
+	/**
+	 * 
+	 */
+	private static final String JDT_SCHEME = "jdt";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
@@ -87,7 +91,7 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(URI uri) {
-		if (uri == null || "jdt".equals(uri.getScheme()) || !uri.isAbsolute()){
+		if (uri == null || JDT_SCHEME.equals(uri.getScheme()) || !uri.isAbsolute()){
 			return null;
 		}
 
@@ -222,7 +226,7 @@ public final class JDTUtils {
 	 * @return class file
 	 */
 	public static IClassFile resolveClassFile(URI uri){
-		if (uri != null && "jdt".equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
+		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
 			String handleId = uri.getQuery();
 			IJavaElement element = JavaCore.create(handleId);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
@@ -242,7 +246,7 @@ public final class JDTUtils {
 		if (uri == null) {
 			return null;
 		}
-		if ("jdt".equals(uri.getScheme())) {
+		if (JDT_SCHEME.equals(uri.getScheme())) {
 			return resolveClassFile(uri);
 		}
 		return resolveCompilationUnit(uri);
@@ -314,7 +318,7 @@ public final class JDTUtils {
 		String jarName = unit.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI("jdt", "contents", "/" + jarName + "/" + packageName + "/" + unit.getElementName(), unit.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + unit.getElementName(), unit.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
