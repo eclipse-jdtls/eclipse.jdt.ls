@@ -165,7 +165,7 @@ public class JobHelpers {
 		return null;
 	}
 
-	public static interface IJobMatcher {
+	interface IJobMatcher {
 
 		boolean matches(Job job);
 

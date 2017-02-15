@@ -29,7 +29,7 @@ public class JavaClientConnection {
 		 * the client to display a particular message in the user interface.
 		 */
 		@JsonNotification("language/status")
-		public abstract void sendStatusReport(StatusReport report);
+		void sendStatusReport(StatusReport report);
 
 		/**
 		 * The actionable notification is sent from a server to a client to ask
@@ -37,7 +37,7 @@ public class JavaClientConnection {
 		 * commands to execute. The commands must be implemented on the client side.
 		 */
 		@JsonNotification("language/actionableNotification")
-		public abstract void sendActionableNotification(ActionableNotification notification);
+		void sendActionableNotification(ActionableNotification notification);
 	}
 
 	private final LogHandler logHandler;
