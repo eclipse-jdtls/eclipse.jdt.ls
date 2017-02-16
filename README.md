@@ -1,3 +1,5 @@
+Hello World!
+
 Eclipse JDT Language Server
 ===========================
 
