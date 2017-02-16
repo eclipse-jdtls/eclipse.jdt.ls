@@ -26,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
@@ -152,6 +153,7 @@ public class DocumentLifeCycleHandler {
 		}
 
 		try {
+			SharedASTProvider.getInstance().invalidate(unit);
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
@@ -185,6 +187,7 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 		try {
+			SharedASTProvider.getInstance().invalidate(unit);
 			unit.discardWorkingCopy();
 		} catch (CoreException e) {
 		}

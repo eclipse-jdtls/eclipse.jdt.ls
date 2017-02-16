@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -56,6 +57,9 @@ public class WorkspaceEventsHandler {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if (unit != null && unit.isWorkingCopy()) {
 				continue;
+			}
+			if(changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED){
+				SharedASTProvider.getInstance().invalidate(unit);
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
