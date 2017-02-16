@@ -49,6 +49,29 @@ Building from command line
     $ mvn clean verify
 ````
 
+Running from the command line
+------------------------------
+1. Choose a connection type from "Managing connection types" section below, and then set those environment variables in your terminal prior to continuing
+
+2. Make sure to build the server using the steps above in the "Building from command line" section
+
+3. `cd` into the build directory of the project: `/org.eclipse.jdt.ls.product/target/repository`
+
+4. Prior to starting the server, make sure that your socket (TCP or sock file) server is running for both the IN and OUT sockets. You will get an error if the JDT server cannot connect on your ports/files specified in the environment variables
+
+5. To start the server in the active terminal, run:
+```bash
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.protocol=true -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data
+```
+
+6. Choosing a value for `-configuration`: this is the path to your platform's configuration directory. For linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
+
+7. Choosing a value for `-data`: the value for your data directory, should be the directory where your active workspace is, and you wish for the java langserver to add in its default files. Should also be the absolute path to this directory, ie., /home/username/workspace
+
+8. Notes about debugging: the `-agentlib:` is for connecting a java debugger agent to the process, and if you wish to debug the server from the start of execution, set `suspend=y` so that the JVM will wait for your debugger prior to starting the server
+
+9. Notes on jar versions: the full name of the build jar file above, `org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar`, may change incrementally as the project version changes. If java complains about jar not found, then look for the latest version of the `org.eclipse.equinox.launcher_*` jar in the `/org.eclipse.jdt.ls.product/target/repository/plugins` directory and replace it in the command after the `-jar`
+
 Managing connection types
 -------------------------
 Java Language server supports socket and named pipes to communicate with the client.
