@@ -13,8 +13,6 @@ package org.eclipse.jdt.ls.core.internal;
 import static org.junit.Assert.assertEquals;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.junit.Test;
 
 public class StatusFactoryTest {

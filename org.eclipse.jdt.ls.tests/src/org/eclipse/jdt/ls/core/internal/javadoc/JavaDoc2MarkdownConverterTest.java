@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.Reader;
 
 import org.eclipse.jdt.ls.core.internal.Util;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavaDoc2MarkdownConverter;
 import org.junit.Test;
 
 /**
