@@ -41,7 +41,7 @@ public class CodeActionHandler {
 	/**
 	 *
 	 */
-	private static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
+	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 
 
