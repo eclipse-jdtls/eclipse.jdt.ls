@@ -74,16 +74,17 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declips
 
 Managing connection types
 -------------------------
-Java Language server supports socket and named pipes to communicate with the client.
-Client can communicate its preferred connection methods by setting up environment
-variables
-* For using named pipes set the following environment variables before starting
+Java Language server supports sockets, named pipes, and standard streams of the server process
+to communicate with the client. Client can communicate its preferred connection methods 
+by setting up environment variables. 
+
+* To use **name pipes**  set the following environment variables before starting
 the server.
 ```
 STDIN_PIPE_NAME --> where client reads from
 STDOUT_PIPE_NAME --> where client writes to
 ```
-* For using plain sockets set the following environment variables before starting the
+* To use **plain sockets** set the following environment variables before starting the
 server.
 ```
 STDIN_PORT --> client reads
@@ -94,7 +95,10 @@ optionally you can set host values for socket connections
 STDIN_HOST
 STDOUT_HOST
 ```
-For both connection types the client is expected to create the connections
+* To use standard streams(stdin, stdout) of the server process do not set any 
+of the above environment variables and the server will fall back to standard streams. 
+
+For socket and named pipes the client is expected to create the connections
 and wait for server the connect.
 
 

@@ -105,6 +105,26 @@ public class ConnectionStreamFactory {
 
 	}
 
+	private final class StdIOStreamProvider implements StreamProvider{
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StreamProvider#getInputStream()
+		 */
+		@Override
+		public InputStream getInputStream() throws IOException {
+			return System.in;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StreamProvider#getOutputStream()
+		 */
+		@Override
+		public OutputStream getOutputStream() throws IOException {
+			return System.out;
+		}
+
+	}
+
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private StreamProvider provider;
 	private static ConnectionStreamFactory instance;
@@ -122,6 +142,9 @@ public class ConnectionStreamFactory {
 			final String rPort = System.getenv().get("STDOUT_PORT");
 			if (rPort != null && wPort != null) {
 				provider = new SocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
+			}
+			if(provider == null ){//Fall back to std io
+				provider = new StdIOStreamProvider();
 			}
 		}
 		return provider;
