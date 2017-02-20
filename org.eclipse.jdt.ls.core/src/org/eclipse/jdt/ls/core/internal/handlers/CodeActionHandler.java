@@ -70,6 +70,7 @@ public class CodeActionHandler {
 		case IProblem.CannotImportPackage:
 		case IProblem.ConflictingImport:
 		case IProblem.ImportNotFound:
+		case IProblem.SuperfluousSemicolon:
 			return true;
 		default:
 			return false;
@@ -98,10 +99,14 @@ public class CodeActionHandler {
 		case IProblem.ConflictingImport:
 		case IProblem.ImportNotFound:
 			//TODO: Add Organize imports command when/if we support it
-			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic);
-			int end = DiagnosticsHelper.getEndOffset(unit, diagnostic);
-			org.eclipse.text.edits.TextEdit te = UnusedCodeCorrections.createUnusedImportTextEdit(getASTRoot(unit), start, end-start-1);
-			return Arrays.asList(textEditToCommand(unit, uri, "Remove unused import", te));
+			return Arrays.asList(textEditToCommand(unit, uri, "Remove unused import", UnusedCodeCorrections.createUnusedImportTextEdit(getASTRoot(unit),
+					DiagnosticsHelper.getStartOffset(unit, diagnostic),
+					DiagnosticsHelper.getLength(unit, diagnostic))));
+		case IProblem.SuperfluousSemicolon:
+			return Arrays.asList(textEditToCommand(unit, uri, "Remove semicolon", UnusedCodeCorrections.createSuperfluousSemicolonTextEdit(getASTRoot(unit),
+					DiagnosticsHelper.getStartOffset(unit, diagnostic),
+					DiagnosticsHelper.getLength(unit, diagnostic))));
+
 		default:
 			return Collections.emptyList();
 		}

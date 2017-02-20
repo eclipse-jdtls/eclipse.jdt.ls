@@ -27,6 +27,7 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +97,35 @@ public class CodeActionHandlerTest extends AbstractCompletionBasedTest {
 		Assert.assertEquals(1, commands.size());
 		Command c = commands.get(0);
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
+	@Test
+	public void testCodeAction_superfluousSemicolon() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						";" +
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.getFileURI(unit)));
+		final Range range = getRange(unit, ";");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
+		List<? extends Command> commands = server.codeAction(params).join();
+		Assert.assertNotNull(commands);
+		Assert.assertEquals(1, commands.size());
+		Command c = commands.get(0);
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		Assert.assertNotNull(c.getArguments());
+		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
+		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.getFileURI(unit));
+		Assert.assertEquals(1, edits.size());
+		Assert.assertEquals("", edits.get(0).getNewText());
+		Assert.assertEquals(range, edits.get(0).getRange());
 	}
 
 	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {

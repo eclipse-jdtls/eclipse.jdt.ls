@@ -17,6 +17,7 @@ import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditGroup;
 
@@ -38,6 +39,9 @@ public class UnusedCodeCorrections {
 		}
 	}
 
+	public static TextEdit createSuperfluousSemicolonTextEdit(CompilationUnit cu, int problemStart, int problemLength){
+		return new ReplaceEdit(problemStart, problemLength, "");
+	}
 
 	private static ImportDeclaration getImportDeclaration(CompilationUnit compilationUnit, int start, int length) {
 		NodeFinder finder = new NodeFinder(compilationUnit, start, length);

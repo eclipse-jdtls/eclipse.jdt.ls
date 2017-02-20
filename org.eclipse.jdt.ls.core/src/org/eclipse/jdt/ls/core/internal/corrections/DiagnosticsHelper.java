@@ -52,6 +52,18 @@ public class DiagnosticsHelper {
 			return -1;
 		}
 	}
+	/**
+	 * Returns the length of the diagnostic
+	 *
+	 * @param unit
+	 * @param diagnostic
+	 * @return length of the diagnostics range.
+	 */
+	public static int getLength(ICompilationUnit unit, Diagnostic diagnostic){
+		int start = DiagnosticsHelper.getStartOffset(unit, diagnostic);
+		int end = DiagnosticsHelper.getEndOffset(unit, diagnostic);
+		return end-start;
+	}
 
 
 }

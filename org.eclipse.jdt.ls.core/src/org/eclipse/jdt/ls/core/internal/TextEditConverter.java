@@ -17,6 +17,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditVisitor;
 
@@ -80,6 +81,19 @@ public class TextEditConverter extends TextEditVisitor{
 		return super.visit(edit);
 	}
 
-
-
+	/* (non-Javadoc)
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.ReplaceEdit)
+	 */
+	@Override
+	public boolean visit(ReplaceEdit edit) {
+		try {
+			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+			te.setNewText(edit.getText());
+			te.setRange(JDTUtils.toRange(compilationUnit,edit.getOffset(),edit.getLength()));
+			converted.add(te);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return super.visit(edit);
+	}
 }
