@@ -191,7 +191,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
-		CompletionResolveHandler handler = new CompletionResolveHandler();
+		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
 		return CompletableFuture.supplyAsync(()->handler.resolve(unresolved));
 	}
 
