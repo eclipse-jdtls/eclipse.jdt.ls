@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import java.util.Hashtable;
+import org.eclipse.lsp4j.ClientCapabilities;
 
-import org.eclipse.jdt.core.JavaCore;
 /**
  * Preference manager
  *
@@ -23,29 +22,36 @@ import org.eclipse.jdt.core.JavaCore;
 public class PreferenceManager {
 
 	private Preferences preferences ;
+	private ClientCapabilities clientCapabilities;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
 	}
 
-	/**
-	 * Initialize default preference values of used bundles to match
-	 * server functionality.
-	 */
-	public void initialize() {
-		// Update JavaCore options
-		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
-		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
-		JavaCore.setOptions(javaCoreOptions);
-	}
-
 	public void update(Preferences preferences) {
+		if(preferences == null){
+			throw new IllegalArgumentException("Preferences can not be null");
+		}
 		this.preferences = preferences;
 		//TODO serialize preferences
 	}
 
 	public Preferences getPreferences() {
 		return preferences;
+	}
+
+	/**
+	 * @return the clientCapabilities
+	 */
+	public ClientCapabilities getClientCapabilities() {
+		return clientCapabilities;
+	}
+
+	/**
+	 * @param clientCapabilities the clientCapabilities to set
+	 */
+	public void setClientCapabilities(ClientCapabilities clientCapabilities) {
+		this.clientCapabilities = clientCapabilities;
 	}
 
 }

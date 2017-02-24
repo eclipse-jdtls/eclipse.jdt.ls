@@ -46,6 +46,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
 
@@ -72,12 +73,14 @@ public class CompletionProposalReplacementProvider {
 	private final int offset;
 	private final CompletionContext context;
 	private ImportRewrite importRewrite;
+	private boolean supportSnippets;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset) {
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, boolean snippetsSupported) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
 		this.offset = offset;
+		this.supportSnippets = snippetsSupported;
 	}
 
 
@@ -128,7 +131,14 @@ public class CompletionProposalReplacementProvider {
 			}
 		}
 
+
+
 		appendReplacementString(completionBuffer, proposal);
+		if(supportSnippets && hasParameters(proposal)){
+			item.setInsertTextFormat(InsertTextFormat.Snippet);
+		}else{
+			item.setInsertTextFormat(InsertTextFormat.PlainText);
+		}
 		if (range == null) {
 			range = toReplacementRange(proposal);
 		}
@@ -240,10 +250,15 @@ public class CompletionProposalReplacementProvider {
 			}
 
 			char[] argument = parameterNames[i];
-
-			buffer.append("{{");
+			if(supportSnippets){
+				buffer.append("${");
+				buffer.append(Integer.toString(i+1));
+				buffer.append(":");
+			}
 			buffer.append(argument);
-			buffer.append("}}");
+			if(supportSnippets){
+				buffer.append("}");
+			}
 		}
 	}
 

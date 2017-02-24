@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.osgi.util.NLS;
 
@@ -37,6 +38,12 @@ import com.google.common.io.CharStreams;
 
 @SuppressWarnings("restriction")
 public class CompletionResolveHandler {
+
+	private final PreferenceManager manager;
+
+	public CompletionResolveHandler(PreferenceManager manager) {
+		this.manager = manager;
+	}
 
 	public static final String DATA_FIELD_URI = "uri";
 	public static final String DATA_FIELD_DECLARATION_SIGNATURE = "decl_signature";
@@ -66,7 +73,10 @@ public class CompletionResolveHandler {
 		if (unit == null) {
 			throw new IllegalStateException(NLS.bind("Unable to match Compilation Unit from {0} ", uri));
 		}
-		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset());
+		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit,
+				completionResponse.getContext(),
+				completionResponse.getOffset(),
+				isSnippetSupported());
 		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
@@ -113,5 +123,15 @@ public class CompletionResolveHandler {
 			}
 		}
 		return param;
+	}
+
+	/**
+	 * @return
+	 */
+	private boolean isSnippetSupported() {
+		if(this.manager.getClientCapabilities().getTextDocument() != null){
+			return this.manager.getClientCapabilities().getTextDocument().getCompletion().getCompletionItem().getSnippetSupport().booleanValue();
+		}
+		return false;
 	}
 }

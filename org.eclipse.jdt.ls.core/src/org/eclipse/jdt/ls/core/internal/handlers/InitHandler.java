@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
@@ -57,6 +58,11 @@ final public class InitHandler {
 
 	InitializeResult initialize(InitializeParams param){
 		logInfo("Initializing Java Language Server "+JavaLanguageServerPlugin.getVersion());
+		if(param.getCapabilities()==null){
+			preferenceManager.setClientCapabilities(new ClientCapabilities());
+		}else{
+			preferenceManager.setClientCapabilities(param.getCapabilities());
+		}
 		triggerInitialization(param.getRootUri() == null? param.getRootPath():param.getRootUri());
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
@@ -79,8 +85,6 @@ final public class InitHandler {
 	}
 
 	private void triggerInitialization(String root) {
-		// Adjust any default preferences to server use
-		preferenceManager.initialize();
 
 		Job job = new Job("Initialize Workspace") {
 			@Override
