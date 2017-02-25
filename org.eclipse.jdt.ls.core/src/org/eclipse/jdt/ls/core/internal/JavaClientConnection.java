@@ -13,10 +13,15 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.List;
 
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
+import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
+import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.ShowMessageRequestParams;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 
@@ -75,6 +80,23 @@ public class JavaClientConnection {
 	}
 
 	/**
+	 * Sends the message to the client, to be displayed on a UI element.
+	 * Waits for an answer from the user and returns the selected
+	 * action.
+	 *
+	 * @param type
+	 * @param msg
+	 * @return
+	 */
+	public MessageActionItem showNotificationMessageRequest(MessageType type, String msg, List<MessageActionItem> actions){
+		ShowMessageRequestParams $ = new ShowMessageRequestParams();
+		$.setMessage(msg);
+		$.setType(type);
+		$.setActions(actions);
+		return client.showMessageRequest($).join();
+	}
+
+	/**
 	 * Sends a status to the client to be presented to users
 	 * @param msg The status to send back to the client
 	 */
@@ -101,6 +123,21 @@ public class JavaClientConnection {
 
 	public void publishDiagnostics(PublishDiagnosticsParams diagnostics){
 		client.publishDiagnostics(diagnostics);
+	}
+
+
+	/**
+	 * Sends a message to client to apply the given workspace edit.
+	 * This is available since LSP v3.0 should be used
+	 * only by checking the ClientCapabilities.
+	 *
+	 * @param edit
+	 */
+	public boolean applyWorkspaceEdit(WorkspaceEdit edit){
+		ApplyWorkspaceEditParams $ = new ApplyWorkspaceEditParams();
+		$.setEdit(edit);
+		ApplyWorkspaceEditResponse response = client.applyEdit($).join();
+		return response.getApplied().booleanValue();
 	}
 
 	public void disconnect() {
