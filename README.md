@@ -32,7 +32,7 @@ you can get the [Eclipse IDE for Java developers](http://www.eclipse.org/downloa
 and just instal Eclipse PDE from marketplace.
 
 2. Once installed use `File > Open Projects from File System...` and
-point it `java-language-server` and Eclipse should automatically
+point it `eclipse.jdt.ls` and Eclipse should automatically
 detect the projects and import it properly.
 
 3. If, after import, you see an error on `pom.xml` about Tycho, you can use Quick Fix
