@@ -47,7 +47,7 @@ import org.mockito.Mockito;
  */
 public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	private static String CODELENS_PARAM_TEMPLATE =
+	private static final String CODELENS_PARAM_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
 					"    \"method\": \"textDocument/codeLens\",\n" +
@@ -59,7 +59,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	private static String CODELENS_TEMPLATE = "{\n" +
+	private static final String CODELENS_TEMPLATE = "{\n" +
 			"    \"id\": \"1\",\n" +
 			"    \"method\": \"codeLens/resolve\",\n" +
 			"    \"params\": {\n" +

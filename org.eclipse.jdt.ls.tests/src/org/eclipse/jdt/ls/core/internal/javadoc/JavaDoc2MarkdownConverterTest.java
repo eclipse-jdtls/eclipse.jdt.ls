@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class JavaDoc2MarkdownConverterTest {
 
-	private static String MARKDOWN_0 = "This Javadoc contains some `code`, a link to `IOException` and a table\n" +
+	private static final String MARKDOWN_0 = "This Javadoc contains some `code`, a link to `IOException` and a table\n" +
 			"\n" +
 			"    | header 1 | header 2 |\n" +
 			"    | -------- | -------- |\n" +
@@ -123,7 +123,7 @@ public class JavaDoc2MarkdownConverterTest {
 	 * @unknown unknown tag
 	 * @unknown another unknown tag
 	 */
-	private static String RAW_JAVADOC_0 =
+	private static final String RAW_JAVADOC_0 =
 			"This Javadoc  contains some <code> code </code>, a link to {@link IOException} and a table \n" +
 					"<table>\n" +
 					"  <thead><tr><th>header 1</th><th>header 2</th></tr></thead>\n" +

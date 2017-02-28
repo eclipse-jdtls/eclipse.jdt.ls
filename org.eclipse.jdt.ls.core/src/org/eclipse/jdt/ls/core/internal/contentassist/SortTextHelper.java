@@ -18,7 +18,7 @@ import org.eclipse.jdt.core.CompletionProposal;
  *
  */
 public final class SortTextHelper {
-	private final static char[] REVERSE_CHAR_MAP = {'j','i','h','g','f','e','d','c','b','a'};
+	private static final char[] REVERSE_CHAR_MAP = {'j','i','h','g','f','e','d','c','b','a'};
 
 	private SortTextHelper(){
 		//No public instantiation

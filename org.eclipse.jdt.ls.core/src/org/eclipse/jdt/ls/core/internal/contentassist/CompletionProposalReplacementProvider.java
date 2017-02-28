@@ -61,12 +61,13 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class CompletionProposalReplacementProvider {
 
-	final private static char SPACE = ' ';
-	final private static char LPAREN = '(';
-	final private static char RPAREN = ')';
-	final private static char SEMICOLON = ';';
-	final private static char COMMA = ',';
-
+	private static final char SPACE = ' ';
+	private static final char LPAREN = '(';
+	private static final char RPAREN = ')';
+	private static final char SEMICOLON = ';';
+	private static final char COMMA = ',';
+	private static final char LESS= '<';
+	private static final char GREATER= '>';
 	private final ICompilationUnit compilationUnit;
 	private final int offset;
 	private final CompletionContext context;
@@ -409,8 +410,6 @@ public class CompletionProposalReplacementProvider {
 
 	private StringBuilder appendParameterList(StringBuilder buffer, String[] typeArguments, boolean onlyAppendArguments) {
 		if (typeArguments != null && typeArguments.length > 0) {
-			final char LESS= '<';
-			final char GREATER= '>';
 			if (!onlyAppendArguments) {
 				buffer.append(LESS);
 			}
