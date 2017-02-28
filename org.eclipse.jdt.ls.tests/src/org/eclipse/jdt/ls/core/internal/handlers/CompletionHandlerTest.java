@@ -29,14 +29,17 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
@@ -177,7 +180,12 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	}
 
 	@Test
-	public void testCompletion_3() throws JavaModelException{
+	public void testCompletion_3_withLSPV2() throws JavaModelException{
+
+		ClientCapabilities mockCapabilies = Mockito.mock(ClientCapabilities.class);
+		Mockito.when(preferenceManager.getClientCapabilities()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.getTextDocument()).thenReturn(null);//return null to force LSP V2
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -190,6 +198,50 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 				"}\n");
 
 		int[] loc = findCompletionLocation(unit, "map.pu");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertNull(ci.getInsertText());
+		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertTrue("Unexpected sortText:"+ ci.getSortText() , ci.getSortText().endsWith("abj"));
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(5, 4, 6, "put(key, value)", resolvedItem.getTextEdit());
+		assertNotNull(resolvedItem.getAdditionalTextEdits());
+		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
+		assertEquals(3, edits.size());
+	}
+
+	@Test
+	public void testCompletion_3_withLSPV3() throws JavaModelException{
+
+		//Mock the preference manager to use LSP v3 support.
+		ClientCapabilities mockCapabilies = Mockito.mock(ClientCapabilities.class);//null checks
+		Mockito.when(preferenceManager.getClientCapabilities()).thenReturn(mockCapabilies); //needed for null checks
+		TextDocumentClientCapabilities mockTextDocs = Mockito.mock(TextDocumentClientCapabilities.class,Mockito.RETURNS_DEEP_STUBS);
+		Mockito.when(mockCapabilies.getTextDocument()).thenReturn(mockTextDocs);
+		Mockito.when(mockTextDocs.getCompletion().getCompletionItem().getSnippetSupport().booleanValue()).thenReturn(Boolean.TRUE);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"System.out.print(\"Hello\");\n" +
+						"System.out.println(\" World!\");\n"+
+						"HashMap<String, String> map = new HashMap<>();\n"+
+						"map.pu\n" +
+						"	}\n"+
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "map.pu");
+
 
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
@@ -206,7 +258,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNotNull(resolvedItem.getTextEdit());
 		try {
-			assertTextEdit(5, 4, 6, "put({{key}}, {{value}})", resolvedItem.getTextEdit());
+			assertTextEdit(5, 4, 6, "put(${1:key}, ${2:value})", resolvedItem.getTextEdit());
 		} catch (ComparisonFailure e) {
 			//In case the JDK has no sources
 			assertTextEdit(5, 4, 6, "put({{arg0}}, {{arg1}})", resolvedItem.getTextEdit());

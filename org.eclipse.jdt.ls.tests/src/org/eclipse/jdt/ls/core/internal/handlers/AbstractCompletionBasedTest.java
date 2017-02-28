@@ -42,7 +42,7 @@ public abstract class AbstractCompletionBasedTest extends AbstractProjectsManage
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
-		server= new JDTLanguageServer(projectsManager, null);
+		server= new JDTLanguageServer(projectsManager, preferenceManager);
 	}
 
 	protected ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
