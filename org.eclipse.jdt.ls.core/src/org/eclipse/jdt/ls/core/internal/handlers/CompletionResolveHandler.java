@@ -129,7 +129,8 @@ public class CompletionResolveHandler {
 	 * @return
 	 */
 	private boolean isSnippetSupported() {
-		if(this.manager.getClientCapabilities().getTextDocument() != null){
+		if(this.manager.getClientCapabilities() != null &&
+				this.manager.getClientCapabilities().getTextDocument() != null){
 			return this.manager.getClientCapabilities().getTextDocument().getCompletion().getCompletionItem().getSnippetSupport().booleanValue();
 		}
 		return false;

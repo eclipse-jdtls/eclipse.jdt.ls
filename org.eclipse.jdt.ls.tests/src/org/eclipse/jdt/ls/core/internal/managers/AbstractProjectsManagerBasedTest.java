@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.After;
 import org.junit.Before;
+import org.mockito.Mock;
 
 /**
  * @author Fred Bricon
@@ -39,10 +40,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected IProgressMonitor monitor = new NullProgressMonitor();
 	protected ProjectsManager projectsManager;
+	@Mock
+	protected PreferenceManager preferenceManager;
 
 	@Before
 	public void initProjectManager() {
-		projectsManager = new ProjectsManager(new PreferenceManager());
+		projectsManager = new ProjectsManager(preferenceManager);
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {
