@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
+import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
@@ -83,6 +84,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		JavaLanguageServerPlugin.logInfo("Importing Maven project(s)");
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
+		configurationImpl.setNotCoveredMojoExecutionSeverity(ProblemSeverity.ignore.toString());
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));
 		ProjectImportConfiguration importConfig = new ProjectImportConfiguration();

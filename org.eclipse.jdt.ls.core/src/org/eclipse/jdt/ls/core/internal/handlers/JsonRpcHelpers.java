@@ -10,7 +10,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.filebuffers.ITextFileBuffer;
+import org.eclipse.core.filebuffers.ITextFileBufferManager;
+import org.eclipse.core.filebuffers.LocationKind;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 
@@ -71,5 +80,37 @@ final public class JsonRpcHelpers {
 			}
 		}
 		return new org.eclipse.jdt.internal.core.DocumentAdapter(buffer);
+	}
+
+
+	/**
+	 * Returns an {@link IDocument} for the given {@link IFile}.
+	 *
+	 * @param file an {@link IFile}
+	 * @return a document with the contents of the file,
+	 * or <code>null</code> if the file can not be opened.
+	 */
+	public static IDocument toDocument(IFile file) {
+		if (file != null && file.isAccessible()) {
+			IPath path = file.getFullPath();
+			ITextFileBufferManager fileBufferManager = FileBuffers.getTextFileBufferManager();
+			LocationKind kind = LocationKind.IFILE;
+			try {
+				fileBufferManager.connect(path, kind, new NullProgressMonitor());
+				ITextFileBuffer fileBuffer = fileBufferManager.getTextFileBuffer(path, kind);
+				if (fileBuffer != null) {
+					return fileBuffer.getDocument();
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to convert "+ file +"  to an IDocument", e);
+			} finally {
+				try {
+					fileBufferManager.disconnect(path, kind, new NullProgressMonitor());
+				} catch (CoreException slurp) {
+					//Don't care
+				}
+			}
+		}
+		return null;
 	}
 }
