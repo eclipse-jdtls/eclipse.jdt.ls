@@ -142,8 +142,8 @@
 						<version>3.0.1</version>
 						<executions>
 							<execution>
-								<id>copy-resources</id>
-								<phase>verify</phase>
+								<id>copy-server-files</id>
+								<phase>package</phase>
 								<goals>
 									<goal>copy-resources</goal>
 								</goals>
