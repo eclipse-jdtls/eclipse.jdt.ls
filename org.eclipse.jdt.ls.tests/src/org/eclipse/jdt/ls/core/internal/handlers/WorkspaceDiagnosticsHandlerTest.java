@@ -143,7 +143,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue("No Foo.java errors were found", fooDiags.isPresent());
 		List<Diagnostic> diags = fooDiags.get().getDiagnostics();
 		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
-			return d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
+			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
+			if (diff == 0) {
+				diff = d1.getMessage().compareTo(d2.getMessage());
+			}
+			return diff;
 		};
 		Collections.sort(diags, comparator );
 		assertEquals(diags.toString(), 2, diags.size());
