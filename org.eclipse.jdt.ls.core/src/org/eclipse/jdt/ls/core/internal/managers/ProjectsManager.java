@@ -132,7 +132,7 @@ public class ProjectsManager {
 		}
 	}
 
-	private boolean isBuildFile(IResource resource) {
+	public boolean isBuildFile(IResource resource) {
 		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
 
