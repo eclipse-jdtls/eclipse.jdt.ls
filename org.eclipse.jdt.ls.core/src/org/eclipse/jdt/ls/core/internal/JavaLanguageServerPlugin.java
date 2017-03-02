@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -55,7 +56,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.pluginInstance = this;
 		preferenceManager = new PreferenceManager();
 		projectsManager = new ProjectsManager(preferenceManager);
-
+		logInfo(getClass()+" is started");
 	}
 
 	private void startConnection() throws IOException {
@@ -65,7 +66,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 				ConnectionStreamFactory.getOutputStream());
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
-
 	}
 
 	/*
@@ -74,11 +74,25 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
+		logInfo(getClass()+" is stopping:");
+		logInfo(getThreadDump());
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
 		projectsManager = null;
 		languageServer = null;
+	}
 
+	private String getThreadDump() {
+		String lineSep = System.getProperty("line.separator");
+		StringBuilder sb = new StringBuilder();
+		Thread.getAllStackTraces().entrySet().forEach(e -> {
+			sb.append(e.getKey());
+			sb.append(lineSep);
+			Stream.of(e.getValue()).forEach(ste -> {
+				sb.append("\tat ").append(ste).append(lineSep);
+			});
+		});
+		return sb.toString();
 	}
 
 	public WorkingCopyOwner getWorkingCopyOwner(){
@@ -90,19 +104,27 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	}
 
 	public static void log(IStatus status) {
-		Platform.getLog(JavaLanguageServerPlugin.context.getBundle()).log(status);
+		if (context != null) {
+			Platform.getLog(JavaLanguageServerPlugin.context.getBundle()).log(status);
+		}
 	}
 
 	public static void logError(String message) {
-		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message));
+		if (context != null) {
+			log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message));
+		}
 	}
 
 	public static void logInfo(String message) {
-		log(new Status(IStatus.INFO, context.getBundle().getSymbolicName(), message));
+		if (context != null) {
+			log(new Status(IStatus.INFO, context.getBundle().getSymbolicName(), message));
+		}
 	}
 
 	public static void logException(String message, Throwable ex) {
-		log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
+		if (context != null) {
+			log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message, ex));
+		}
 	}
 
 	public static void sendStatus(ServiceStatus serverStatus, String status) {
