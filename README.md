@@ -116,7 +116,7 @@ This repository contains only the server implementation. Here are some known cli
 
 Continuous Integration Builds
 -----------------------------
-Our [CI server](https://ci.eclipse.org/ls/) publishes builds to http://download.eclipse.org/jdtls/snapshots/
+Our [CI server](https://ci.eclipse.org/ls/) publishes builds to http://download.eclipse.org/jdtls/snapshots/?d
 
 
 License
