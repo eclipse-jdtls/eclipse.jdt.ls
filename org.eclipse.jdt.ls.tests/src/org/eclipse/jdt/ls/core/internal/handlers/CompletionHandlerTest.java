@@ -29,12 +29,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
-import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
@@ -105,6 +104,10 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	@Test
 	public void testCompletion_constructor() throws Exception{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -142,7 +145,10 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 
 	@Test
-	public void testCompletion_2() throws JavaModelException{
+	public void testCompletion_import_package() throws JavaModelException{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -180,11 +186,13 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	}
 
 	@Test
-	public void testCompletion_3_withLSPV2() throws JavaModelException{
+	public void testCompletion_method_withLSPV2() throws JavaModelException{
 
-		ClientCapabilities mockCapabilies = Mockito.mock(ClientCapabilities.class);
-		Mockito.when(preferenceManager.getClientCapabilities()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.getTextDocument()).thenReturn(null);//return null to force LSP V2
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.FALSE);
+		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.FALSE);
+
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -214,21 +222,22 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNotNull(resolvedItem.getTextEdit());
-		assertTextEdit(5, 4, 6, "put(key, value)", resolvedItem.getTextEdit());
+		assertTextEdit(5, 4, 6, "put", resolvedItem.getTextEdit());
 		assertNotNull(resolvedItem.getAdditionalTextEdits());
 		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
 		assertEquals(3, edits.size());
 	}
 
 	@Test
-	public void testCompletion_3_withLSPV3() throws JavaModelException{
+	public void testCompletion_method_withLSPV3() throws JavaModelException{
 
 		//Mock the preference manager to use LSP v3 support.
-		ClientCapabilities mockCapabilies = Mockito.mock(ClientCapabilities.class);//null checks
-		Mockito.when(preferenceManager.getClientCapabilities()).thenReturn(mockCapabilies); //needed for null checks
-		TextDocumentClientCapabilities mockTextDocs = Mockito.mock(TextDocumentClientCapabilities.class,Mockito.RETURNS_DEEP_STUBS);
-		Mockito.when(mockCapabilies.getTextDocument()).thenReturn(mockTextDocs);
-		Mockito.when(mockTextDocs.getCompletion().getCompletionItem().getSnippetSupport().booleanValue()).thenReturn(Boolean.TRUE);
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
+		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
+
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -261,7 +270,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 			assertTextEdit(5, 4, 6, "put(${1:key}, ${2:value})", resolvedItem.getTextEdit());
 		} catch (ComparisonFailure e) {
 			//In case the JDK has no sources
-			assertTextEdit(5, 4, 6, "put({{arg0}}, {{arg1}})", resolvedItem.getTextEdit());
+			assertTextEdit(5, 4, 6, "put(${1:arg1}, ${2:arg2})", resolvedItem.getTextEdit());
 		}
 		assertNotNull(resolvedItem.getAdditionalTextEdits());
 		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
@@ -269,7 +278,43 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	}
 
 	@Test
-	public void testCompletion_4() throws JavaModelException{
+	public void testCompletion_field() throws JavaModelException{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sq \n" +
+						"public class Foo {\n"+
+						"private String myTestString;\n"+
+						"	void foo() {\n"+
+						"   this.myTestS\n"+
+						"	}\n"+
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "this.myTestS");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Field, item.getKind());
+		assertNull(item.getInsertText());
+		assertNull(item.getAdditionalTextEdits());
+		assertNull(item.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(item).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(4,8,15,"myTestString",resolvedItem.getTextEdit());
+		//Not checking the range end character
+	}
+
+	@Test
+	public void testCompletion_import_type() throws JavaModelException{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +

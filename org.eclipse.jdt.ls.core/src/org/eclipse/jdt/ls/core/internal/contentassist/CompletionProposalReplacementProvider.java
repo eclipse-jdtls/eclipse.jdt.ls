@@ -42,6 +42,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -73,17 +74,15 @@ public class CompletionProposalReplacementProvider {
 	private final int offset;
 	private final CompletionContext context;
 	private ImportRewrite importRewrite;
-	private boolean supportSnippets;
+	private final ClientPreferences client;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, boolean snippetsSupported) {
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, ClientPreferences prefs){
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
 		this.offset = offset;
-		this.supportSnippets = snippetsSupported;
+		this.client = prefs;
 	}
-
-
 
 	/**
 	 * Updates the replacement and any additional replacement for the given item.
@@ -134,7 +133,7 @@ public class CompletionProposalReplacementProvider {
 
 
 		appendReplacementString(completionBuffer, proposal);
-		if(supportSnippets && hasParameters(proposal)){
+		if( client.isCompletionSnippetsSupported() && hasParameters(proposal)){
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		}else{
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
@@ -208,15 +207,20 @@ public class CompletionProposalReplacementProvider {
 
 		// we're inserting a method plus the argument list - respect formatter preferences
 		appendMethodNameReplacement(buffer, proposal);
+		final boolean addParen  = client.isCompletionSnippetsSupported();
+		if(addParen)
+			buffer.append(LPAREN);
 
 		if (hasParameters(proposal)) {
 			appendGuessingCompletion(buffer, proposal);
 		}
 
-		buffer.append(RPAREN);
-
-		if (canAutomaticallyAppendSemicolon(proposal))
-			buffer.append(SEMICOLON);
+		if(addParen){
+			buffer.append(RPAREN);
+			// add semicolons only if there are parentheses
+			if (canAutomaticallyAppendSemicolon(proposal))
+				buffer.append(SEMICOLON);
+		}
 	}
 
 	private boolean hasParameters(CompletionProposal proposal) throws IllegalArgumentException {
@@ -235,7 +239,6 @@ public class CompletionProposalReplacementProvider {
 		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION)
 			buffer.append(proposal.getName());
 
-		buffer.append(LPAREN);
 	}
 
 	private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal) {
@@ -243,20 +246,18 @@ public class CompletionProposalReplacementProvider {
 
 		int count= parameterNames.length;
 
-		for (int i= 0; i < count; i++) {
-			if (i != 0) {
-				buffer.append(COMMA);
-				buffer.append(SPACE);
-			}
+		if(client.isCompletionSnippetsSupported()){
+			for (int i= 0; i < count; i++) {
+				if (i != 0) {
+					buffer.append(COMMA);
+					buffer.append(SPACE);
+				}
 
-			char[] argument = parameterNames[i];
-			if(supportSnippets){
+				char[] argument = parameterNames[i];
 				buffer.append("${");
 				buffer.append(Integer.toString(i+1));
 				buffer.append(":");
-			}
-			buffer.append(argument);
-			if(supportSnippets){
+				buffer.append(argument);
 				buffer.append("}");
 			}
 		}
