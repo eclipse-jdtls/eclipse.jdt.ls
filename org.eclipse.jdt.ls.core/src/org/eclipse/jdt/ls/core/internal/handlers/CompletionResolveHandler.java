@@ -35,7 +35,14 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.osgi.util.NLS;
 
 import com.google.common.io.CharStreams;
-
+/**
+ * Adds the completion string and documentation.
+ * It checks the client capabilities.
+ * If a client supports both SnippetStrings and SignatureHelp
+ * SnippetStrings are prioritized for handling parameters.
+ *
+ *
+ */
 @SuppressWarnings("restriction")
 public class CompletionResolveHandler {
 
@@ -76,7 +83,7 @@ public class CompletionResolveHandler {
 		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit,
 				completionResponse.getContext(),
 				completionResponse.getOffset(),
-				isSnippetSupported());
+				this.manager.getClientPreferences());
 		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
@@ -123,16 +130,5 @@ public class CompletionResolveHandler {
 			}
 		}
 		return param;
-	}
-
-	/**
-	 * @return
-	 */
-	private boolean isSnippetSupported() {
-		if(this.manager.getClientCapabilities() != null &&
-				this.manager.getClientCapabilities().getTextDocument() != null){
-			return this.manager.getClientCapabilities().getTextDocument().getCompletion().getCompletionItem().getSnippetSupport().booleanValue();
-		}
-		return false;
 	}
 }

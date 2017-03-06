@@ -22,7 +22,7 @@ import org.eclipse.lsp4j.ClientCapabilities;
 public class PreferenceManager {
 
 	private Preferences preferences ;
-	private ClientCapabilities clientCapabilities;
+	private ClientPreferences clientPreferences;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
@@ -40,18 +40,15 @@ public class PreferenceManager {
 		return preferences;
 	}
 
-	/**
-	 * @return the clientCapabilities
-	 */
-	public ClientCapabilities getClientCapabilities() {
-		return clientCapabilities;
+	public ClientPreferences getClientPreferences() {
+		return clientPreferences;
 	}
 
 	/**
 	 * @param clientCapabilities the clientCapabilities to set
 	 */
-	public void setClientCapabilities(ClientCapabilities clientCapabilities) {
-		this.clientCapabilities = clientCapabilities;
+	public void updateClientPrefences(ClientCapabilities clientCapabilities) {
+		this.clientPreferences = new ClientPreferences(clientCapabilities);
 	}
 
 }
