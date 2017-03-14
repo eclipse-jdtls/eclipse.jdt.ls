@@ -313,6 +313,12 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	@Test
 	public void testCompletion_import_type() throws JavaModelException{
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		//Mock the preference manager to use LSP v3 support.
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
+		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
+
+
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 
 		ICompilationUnit unit = getWorkingCopy(

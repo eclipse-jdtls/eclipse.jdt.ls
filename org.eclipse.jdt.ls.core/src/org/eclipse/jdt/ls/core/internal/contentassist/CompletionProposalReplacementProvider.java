@@ -224,7 +224,8 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private boolean hasParameters(CompletionProposal proposal) throws IllegalArgumentException {
-		return Signature.getParameterCount(proposal.getSignature()) > 0;
+		return hasArgumentList(proposal) &&
+				Signature.getParameterCount(proposal.getSignature()) > 0;
 	}
 
 	private void appendMethodNameReplacement(StringBuilder buffer, CompletionProposal proposal) {
