@@ -10,7 +10,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.util.Hashtable;
+import java.util.Objects;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 
 /**
  * Preference manager
@@ -23,9 +31,21 @@ public class PreferenceManager {
 
 	private Preferences preferences ;
 	private ClientPreferences clientPreferences;
+	private IMavenConfiguration mavenConfig;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
+	}
+
+	/**
+	 * Initialize default preference values of used bundles to match server
+	 * functionality.
+	 */
+	public void initialize() {
+		// Update JavaCore options
+		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
+		JavaCore.setOptions(javaCoreOptions);
 	}
 
 	public void update(Preferences preferences) {
@@ -33,7 +53,18 @@ public class PreferenceManager {
 			throw new IllegalArgumentException("Preferences can not be null");
 		}
 		this.preferences = preferences;
-		//TODO serialize preferences
+
+		String newMavenSettings = preferences.getMavenUserSettings();
+		String oldMavenSettings = getMavenConfiguration().getUserSettingsFile();
+		if (!Objects.equals(newMavenSettings, oldMavenSettings)) {
+			try {
+				getMavenConfiguration().setUserSettingsFile(newMavenSettings);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("failed to set Maven settings", e);
+				preferences.setMavenUserSettings(oldMavenSettings);
+			}
+		}
+		// TODO serialize preferences
 	}
 
 	public Preferences getPreferences() {
@@ -51,4 +82,17 @@ public class PreferenceManager {
 		this.clientPreferences = new ClientPreferences(clientCapabilities);
 	}
 
+	public IMavenConfiguration getMavenConfiguration() {
+		if (mavenConfig == null) {
+			mavenConfig = MavenPlugin.getMavenConfiguration();
+		}
+		return mavenConfig;
+	}
+
+	/**
+	 * public for testing purposes
+	 */
+	public void setMavenConfiguration(IMavenConfiguration mavenConfig) {
+		this.mavenConfig = mavenConfig;
+	}
 }
