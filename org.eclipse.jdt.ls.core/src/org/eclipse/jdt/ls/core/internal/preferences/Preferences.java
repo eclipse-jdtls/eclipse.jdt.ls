@@ -37,9 +37,17 @@ public class Preferences {
 	 */
 	public static final String ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY = "java.errors.incompleteClasspath.severity";
 
+	/**
+	 * Preference key for Maven user settings.xml location.
+	 */
+	public static final String MAVEN_USER_SETTINGS_KEY = "java.configuration.maven.userSettings";
+
+
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+
+	private String mavenUserSettings;
 
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -112,6 +120,10 @@ public class Preferences {
 			prefs.setReferencesCodelensEnabled(Boolean.valueOf(referenceCodelensEnabled.toString()));
 		}
 
+		Object mavenUserSettings = configuration.get(MAVEN_USER_SETTINGS_KEY);
+		if (mavenUserSettings != null) {
+			prefs.setMavenUserSettings(mavenUserSettings.toString());
+		}
 
 		return prefs;
 	}
@@ -141,5 +153,14 @@ public class Preferences {
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public Preferences setMavenUserSettings(String mavenUserSettings) {
+		this.mavenUserSettings = mavenUserSettings;
+		return this;
+	}
+
+	public String getMavenUserSettings() {
+		return mavenUserSettings;
 	}
 }
