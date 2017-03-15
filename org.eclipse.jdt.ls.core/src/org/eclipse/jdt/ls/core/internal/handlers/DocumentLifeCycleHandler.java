@@ -27,6 +27,8 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
@@ -49,6 +51,7 @@ public class DocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
+	private ProjectsManager projectsManager;
 
 
 	void didClose(DidCloseTextDocumentParams params){
@@ -91,11 +94,22 @@ public class DocumentLifeCycleHandler {
 	}
 
 	void didSave(DidSaveTextDocumentParams params){
+		try {
+			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+				@Override
+				public void run(IProgressMonitor monitor) throws CoreException {
+					handleSaved(params);
+				}
+			}, new NullProgressMonitor());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Handle document save ", e);
+		}
 	}
 
-	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager) {
+	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager) {
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
+		this.projectsManager = projectsManager;
 	}
 
 	private void handleOpen(DidOpenTextDocumentParams params) {
@@ -192,4 +206,14 @@ public class DocumentLifeCycleHandler {
 		} catch (CoreException e) {
 		}
 	}
+
+	private void handleSaved(DidSaveTextDocumentParams params) {
+		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleSaved");
+		String uri = params.getTextDocument().getUri();
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		if (unit != null && unit.isWorkingCopy()) {
+			projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
+		}
+	}
+
 }
