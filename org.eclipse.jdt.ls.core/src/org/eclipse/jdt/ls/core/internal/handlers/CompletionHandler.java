@@ -33,10 +33,16 @@ public class CompletionHandler{
 
 	CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position){
 		return CompletableFutures.computeAsync(cancelChecker->{
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
-			List<CompletionItem> completionItems = this.computeContentAssist(unit,
-					position.getPosition().getLine(),
-					position.getPosition().getCharacter(), new CancellableProgressMonitor(cancelChecker));
+			List<CompletionItem> completionItems;
+			try {
+				ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
+				completionItems = this.computeContentAssist(unit,
+						position.getPosition().getLine(),
+						position.getPosition().getCharacter(), new CancellableProgressMonitor(cancelChecker));
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
+				completionItems = Collections.emptyList();
+			}
 			CompletionList $ = new CompletionList();
 			$.setItems(completionItems);
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
@@ -44,38 +50,36 @@ public class CompletionHandler{
 		});
 	}
 
-	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) {
+	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) throws JavaModelException {
 		CompletionResponses.clear();
 		if (unit == null) {
 			return Collections.emptyList();
 		}
 		List<CompletionItem> proposals = new ArrayList<>();
-		try {
-			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
-			CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset);
-			// Allow completions for unresolved types - since 3.3
-			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.FIELD_IMPORT, true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_REF, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_IMPORT, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.METHOD_IMPORT, true);
+		final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset);
+		// Allow completions for unresolved types - since 3.3
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.FIELD_IMPORT, true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.METHOD_IMPORT, true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
-			collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
 
-			collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
 
-			if (offset >-1 && !monitor.isCanceled()) {
-				unit.codeComplete(offset, collector, monitor);
-				proposals.addAll(collector.getCompletionItems());
-			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  unit.getElementName(), e);
+		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
+
+		if (offset >-1 && !monitor.isCanceled()) {
+			unit.codeComplete(offset, collector, monitor);
+			proposals.addAll(collector.getCompletionItems());
 		}
+
 		return proposals;
 	}
 }
