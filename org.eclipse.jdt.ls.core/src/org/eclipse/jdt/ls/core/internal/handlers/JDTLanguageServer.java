@@ -331,7 +331,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didOpen(DidOpenTextDocumentParams params) {
 		logInfo(">> document/didOpen");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm);
 		handler.didOpen(params);
 	}
 
@@ -341,7 +341,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		logInfo(">> document/didChange");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm);
 		handler.didChange(params);
 	}
 
@@ -351,7 +351,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didClose(DidCloseTextDocumentParams params) {
 		logInfo(">> document/didClose");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm);
 		handler.didClose(params);
 	}
 
@@ -361,7 +361,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
 		logInfo(">> document/didSave");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager);
+		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm);
 		handler.didSave(params);
 	}
 
