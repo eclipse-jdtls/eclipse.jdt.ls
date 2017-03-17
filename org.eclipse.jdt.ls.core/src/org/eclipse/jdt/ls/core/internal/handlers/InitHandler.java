@@ -12,6 +12,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
+import java.net.URI;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -63,7 +65,16 @@ final public class InitHandler {
 		}else{
 			preferenceManager.updateClientPrefences(param.getCapabilities());
 		}
-		triggerInitialization(param.getRootUri() == null? param.getRootPath():param.getRootUri());
+		String rootPath = param.getRootPath();
+		if (param.getRootUri() != null) {
+			URI uri = URI.create(param.getRootUri());
+			if ("file".equals(uri.getScheme())){
+				rootPath = Paths.get(uri).toString();
+			}
+		}
+		if (rootPath != null) {
+			triggerInitialization(rootPath);
+		}
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();

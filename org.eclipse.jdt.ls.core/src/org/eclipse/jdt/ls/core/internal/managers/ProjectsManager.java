@@ -63,24 +63,24 @@ public class ProjectsManager {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public IStatus initializeProjects(final String projectName, IProgressMonitor monitor) {
+	public IStatus initializeProjects(final String projectPath, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
 			createJavaProject(subMonitor.split(10));
 
-			File userProjectRoot = (projectName == null)?null:new File(projectName);
+			File userProjectRoot = (projectPath == null)?null:new File(projectPath);
 
 			IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
 			if (importer != null) {
 				importer.importToWorkspace(subMonitor.split(70));
 			}
 			return Status.OK_STATUS;
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
-			return StatusFactory.newErrorStatus("Import failed: " + e.getMessage(), e);
 		} catch (InterruptedException e) {
 			JavaLanguageServerPlugin.logInfo("Import cancelled");
 			return Status.CANCEL_STATUS;
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
+			return StatusFactory.newErrorStatus("Import failed: " + e.getMessage(), e);
 		}
 	}
 
