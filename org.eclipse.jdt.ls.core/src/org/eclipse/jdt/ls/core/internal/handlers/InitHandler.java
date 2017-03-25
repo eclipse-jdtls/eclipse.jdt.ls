@@ -72,9 +72,11 @@ final public class InitHandler {
 				rootPath = Paths.get(uri).toString();
 			}
 		}
-		if (rootPath != null) {
-			triggerInitialization(rootPath);
+		if (rootPath == null) {
+			rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
+			logInfo("No root uri was defined. Falling back on "+rootPath);
 		}
+		triggerInitialization(rootPath);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
 		InitializeResult result = new InitializeResult();
