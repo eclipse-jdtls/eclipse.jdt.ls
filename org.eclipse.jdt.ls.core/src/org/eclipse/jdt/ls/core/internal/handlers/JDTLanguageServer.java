@@ -15,6 +15,8 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -67,7 +69,10 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  *
  */
 public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
-
+	/**
+	 * Exit code returned when JDTLanguageServer is forced to exit.
+	 */
+	private static final int FORCED_EXIT_CODE = 1;
 	private JavaClientConnection client;
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
@@ -115,7 +120,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void exit() {
 		logInfo(">> exit");
-		System.exit(0);
+		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+			logInfo("Forcing exit after 1 min.");
+			System.exit(FORCED_EXIT_CODE);
+		}, 1, TimeUnit.MINUTES);
 	}
 
 	/* (non-Javadoc)
