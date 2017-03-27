@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
+import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 
@@ -53,4 +55,25 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		assertNoErrors(project);
 	}
 
+	@Test
+	public void testCompileWithErrorProne() throws Exception {
+		testNonStandardCompilerId("compile-with-error-prone");
+	}
+
+	@Test
+	public void testCompileWithEclipse() throws Exception {
+		testNonStandardCompilerId("compile-with-eclipse");
+	}
+
+	@Test
+	public void testCompileWithEclipseTychoJdt() throws Exception {
+		testNonStandardCompilerId("compile-with-tycho-jdt");
+	}
+
+	protected void testNonStandardCompilerId(String projectName) throws Exception {
+		IProject project = importMavenProject(projectName);
+		assertIsJavaProject(project);
+		assertEquals("1.8", getJavaSourceLevel(project));
+		assertNoErrors(project);
+	}
 }
