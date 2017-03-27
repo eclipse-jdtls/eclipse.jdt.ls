@@ -25,5 +25,7 @@
          </property>
       </product>
    </extension>
-
+   <extension
+         point="org.eclipse.m2e.core.lifecycleMappingMetadataSource">
+   </extension>
 </plugin>

@@ -25,12 +25,17 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
  */
 public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBasedTest {
 
-	protected IProject importSimpleJavaProject() throws Exception {
-		String name = "salut";
+	protected IProject importMavenProject(String name) throws Exception {
 		importProjects("maven/"+name);
 		IProject project = getProject(name);
-		assertIsJavaProject(project);
 		assertIsMavenProject(project);
+		return project;
+	}
+
+	protected IProject importSimpleJavaProject() throws Exception {
+		String name = "salut";
+		IProject project = importMavenProject(name);
+		assertIsJavaProject(project);
 		assertEquals("1.7", getJavaSourceLevel(project));
 		assertNoErrors(project);
 		return project;
