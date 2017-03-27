@@ -31,12 +31,12 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 public class ConnectionStreamFactory {
 
 
-	private interface StreamProvider{
+	interface StreamProvider{
 		InputStream getInputStream() throws IOException;
 		OutputStream getOutputStream() throws IOException;
 	}
 
-	private final class NamedPipeStreamProvider implements StreamProvider{
+	protected final class NamedPipeStreamProvider implements StreamProvider{
 
 		private final String readFileName;
 		private final String writeFileName;
@@ -77,7 +77,7 @@ public class ConnectionStreamFactory {
 		}
 	}
 
-	private final class SocketStreamProvider implements StreamProvider{
+	protected final class SocketStreamProvider implements StreamProvider{
 		private final String readHost;
 		private final String writeHost;
 		private final int readPort;
@@ -105,7 +105,7 @@ public class ConnectionStreamFactory {
 
 	}
 
-	private final class StdIOStreamProvider implements StreamProvider{
+	protected final class StdIOStreamProvider implements StreamProvider{
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StreamProvider#getInputStream()
@@ -127,19 +127,22 @@ public class ConnectionStreamFactory {
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private StreamProvider provider;
-	private static ConnectionStreamFactory instance;
 
-	private StreamProvider getSelectedStream(){
+	/**
+	 *
+	 * @return
+	 */
+	public StreamProvider getSelectedStream(){
 		if (provider == null) {
-			final String stdInName = System.getenv("STDIN_PIPE_NAME");
-			final String stdOutName = System.getenv("STDOUT_PIPE_NAME");
+			final String stdInName = Environment.get("STDIN_PIPE_NAME");
+			final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
 			if (stdInName != null && stdOutName != null) {
 				provider= new NamedPipeStreamProvider(stdOutName, stdInName);
 			}
-			final String wHost = System.getenv().getOrDefault("STDIN_HOST", "localhost");
-			final String rHost = System.getenv().getOrDefault("STDOUT_HOST", "localhost");
-			final String wPort = System.getenv().get("STDIN_PORT");
-			final String rPort = System.getenv().get("STDOUT_PORT");
+			final String wHost = Environment.get("STDIN_HOST","localhost");
+			final String rHost = Environment.get("STDOUT_HOST","localhost");
+			final String wPort = Environment.get("STDIN_PORT");
+			final String rPort = Environment.get("STDOUT_PORT");
 			if (rPort != null && wPort != null) {
 				provider = new SocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
 			}
@@ -150,19 +153,13 @@ public class ConnectionStreamFactory {
 		return provider;
 	}
 
-	private static ConnectionStreamFactory getInstance(){
-		if(instance == null){
-			instance= new ConnectionStreamFactory();
-		}
-		return instance;
+
+	public InputStream getInputStream() throws IOException{
+		return getSelectedStream().getInputStream();
 	}
 
-	public static InputStream getInputStream() throws IOException{
-		return getInstance().getSelectedStream().getInputStream();
-	}
-
-	public static OutputStream getOutputStream() throws IOException{
-		return getInstance().getSelectedStream().getOutputStream();
+	public OutputStream getOutputStream() throws IOException{
+		return getSelectedStream().getOutputStream();
 	}
 
 }

@@ -64,9 +64,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private void startConnection() throws IOException {
 		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
+		ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
 		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class,
-				ConnectionStreamFactory.getInputStream(),
-				ConnectionStreamFactory.getOutputStream());
+				connectionFactory.getInputStream(),
+				connectionFactory.getOutputStream());
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
 	}
