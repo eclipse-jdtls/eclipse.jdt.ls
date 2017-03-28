@@ -348,6 +348,21 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		//Not checking the range end character
 	}
 
+	@Test
+	public void testCompletion_noPackage() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/NoPackage.java",
+				"public class NoPackage {\n"
+						+ "    NoP"
+						+"}\n");
+		int[] loc = findCompletionLocation(unit, "    NoP");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found", list.getItems().isEmpty());
+		assertEquals("NoPackage", list.getItems().get(0).getLabel());
+	}
+
+
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))

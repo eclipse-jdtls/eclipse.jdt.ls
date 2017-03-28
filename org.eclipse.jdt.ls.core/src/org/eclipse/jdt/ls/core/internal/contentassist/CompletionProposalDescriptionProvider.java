@@ -396,8 +396,10 @@ public class CompletionProposalDescriptionProvider {
 
 		StringBuilder nameBuffer= new StringBuilder();
 		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
-		nameBuffer.append(PACKAGE_NAME_SEPARATOR);
-		nameBuffer.append(new String(fullName,0,qIndex-1));
+		if (qIndex > 0) {
+			nameBuffer.append(PACKAGE_NAME_SEPARATOR);
+			nameBuffer.append(new String(fullName,0,qIndex-1));
+		}
 		item.setLabel(nameBuffer.toString());
 	}
 
