@@ -70,6 +70,13 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		testNonStandardCompilerId("compile-with-tycho-jdt");
 	}
 
+	@Test
+	public void testBuildHelperSupport() throws Exception {
+		IProject project = importMavenProject("buildhelped");
+		assertIsJavaProject(project);
+		assertNoErrors(project);
+	}
+
 	protected void testNonStandardCompilerId(String projectName) throws Exception {
 		IProject project = importMavenProject(projectName);
 		assertIsJavaProject(project);
