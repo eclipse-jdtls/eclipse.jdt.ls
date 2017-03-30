@@ -20,7 +20,9 @@ import java.net.URI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.jdt.ls.tests.Unstable;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * @author Fred Bricon
@@ -71,6 +73,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		testNonStandardCompilerId("compile-with-tycho-jdt");
 	}
 
+	@Category(Unstable.class)
 	@Test
 	public void testBuildHelperSupport() throws Exception {
 		IProject project = importMavenProject("buildhelped");

@@ -28,6 +28,9 @@
 							<version>0.0.0</version>
 						</dependency>
 					</dependencies>
+					<providerProperties>
+						<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
+					</providerProperties>
 					</configuration>
 					
 				</plugin>
