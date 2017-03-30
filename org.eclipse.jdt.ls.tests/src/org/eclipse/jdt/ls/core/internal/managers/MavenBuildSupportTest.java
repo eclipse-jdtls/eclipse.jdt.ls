@@ -19,6 +19,7 @@ import java.net.URI;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.junit.Test;
 
 /**
@@ -73,6 +74,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	@Test
 	public void testBuildHelperSupport() throws Exception {
 		IProject project = importMavenProject("buildhelped");
+		project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 		assertIsJavaProject(project);
 		assertNoErrors(project);
 	}
