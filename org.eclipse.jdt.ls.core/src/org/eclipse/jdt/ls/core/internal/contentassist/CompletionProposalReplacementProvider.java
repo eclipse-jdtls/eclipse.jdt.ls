@@ -132,7 +132,13 @@ public class CompletionProposalReplacementProvider {
 
 
 
-		appendReplacementString(completionBuffer, proposal);
+		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
+			appendMethodOverideReplacementString(completionBuffer, proposal);
+		}
+		else{
+			appendReplacementString(completionBuffer, proposal);
+		}
+		//select instertTextFormat.
 		if( client.isCompletionSnippetsSupported() && hasParameters(proposal)){
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		}else{
@@ -151,6 +157,15 @@ public class CompletionProposalReplacementProvider {
 		if(!additionalTextEdits.isEmpty()){
 			item.setAdditionalTextEdits(additionalTextEdits);
 		}
+	}
+
+	/**
+	 * @param completionBuffer
+	 * @param proposal
+	 */
+	private void appendMethodOverideReplacementString(StringBuilder completionBuffer, CompletionProposal proposal) {
+		completionBuffer.append(proposal.getCompletion());
+		completionBuffer.append("{}");
 	}
 
 	private Range toReplacementRange(CompletionProposal proposal){
@@ -205,6 +220,7 @@ public class CompletionProposalReplacementProvider {
 			return;
 		}
 
+
 		// we're inserting a method plus the argument list - respect formatter preferences
 		appendMethodNameReplacement(buffer, proposal);
 		final boolean addParen  = client.isCompletionSnippetsSupported();
@@ -220,6 +236,9 @@ public class CompletionProposalReplacementProvider {
 			// add semicolons only if there are parentheses
 			if (canAutomaticallyAppendSemicolon(proposal))
 				buffer.append(SEMICOLON);
+		}
+		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
+			buffer.append("{}");
 		}
 	}
 

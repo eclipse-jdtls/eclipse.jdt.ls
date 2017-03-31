@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
@@ -231,11 +232,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	@Test
 	public void testCompletion_method_withLSPV3() throws JavaModelException{
 
-		//Mock the preference manager to use LSP v3 support.
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
+		mockLSPv3ClientPreferences();
 
 
 		ICompilationUnit unit = getWorkingCopy(
@@ -277,6 +274,19 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals(3, edits.size());
 	}
 
+
+	/**
+	 *
+	 */
+	private ClientPreferences mockLSPv3ClientPreferences() {
+		//Mock the preference manager to use LSP v3 support.
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
+		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
+		return mockCapabilies;
+	}
+
 	@Test
 	public void testCompletion_field() throws JavaModelException{
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
@@ -312,14 +322,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	@Test
 	public void testCompletion_import_type() throws JavaModelException{
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		//Mock the preference manager to use LSP v3 support.
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
-
-
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -360,6 +363,29 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertNotNull(list);
 		assertFalse("No proposals were found", list.getItems().isEmpty());
 		assertEquals("NoPackage", list.getItems().get(0).getLabel());
+	}
+
+	@Test
+	public void testCompletion_methodOverride() throws Exception{
+		mockLSPv3ClientPreferences();
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo implements Runnable{\n"
+						+ "    ru"
+						+"}\n");
+		int[] loc = findCompletionLocation(unit, " ru");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
+			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
+		}).collect(Collectors.toList());
+		assertFalse("No override proposals", filtered.isEmpty());
+		CompletionItem oride = filtered.get(0);
+		assertNull(oride.getInsertText());
+		assertNull(oride.getTextEdit());
+		oride = server.resolveCompletionItem(oride).join();
+		assertNotNull(oride.getTextEdit());
+		assertTrue("No method body detected", oride.getTextEdit().getNewText().endsWith("{}"));
 	}
 
 
