@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -63,6 +64,7 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class CompletionProposalReplacementProvider {
 
+	private static final String CURSOR_POSITION = "${0}";
 	private static final char SPACE = ' ';
 	private static final char LPAREN = '(';
 	private static final char RPAREN = ')';
@@ -132,8 +134,14 @@ public class CompletionProposalReplacementProvider {
 
 
 
-		appendReplacementString(completionBuffer, proposal);
-		if( client.isCompletionSnippetsSupported() && hasParameters(proposal)){
+		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
+			appendMethodOverrideReplacement(completionBuffer, proposal);
+		}
+		else{
+			appendReplacementString(completionBuffer, proposal);
+		}
+		//select insertTextFormat.
+		if( client.isCompletionSnippetsSupported()){
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		}else{
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
@@ -141,16 +149,49 @@ public class CompletionProposalReplacementProvider {
 		if (range == null) {
 			range = toReplacementRange(proposal);
 		}
+		String text = completionBuffer.toString();
 		if(range != null){
-			item.setTextEdit(new org.eclipse.lsp4j.TextEdit(range, completionBuffer.toString()));
+			item.setTextEdit(new org.eclipse.lsp4j.TextEdit(range, text));
 		}else{
 			// fallback
-			item.setInsertText(completionBuffer.toString());
+			item.setInsertText(text);
 		}
 		addImports(additionalTextEdits);
 		if(!additionalTextEdits.isEmpty()){
 			item.setAdditionalTextEdits(additionalTextEdits);
 		}
+	}
+
+	/**
+	 * @param completionBuffer
+	 * @param proposal
+	 */
+	private void appendMethodOverrideReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
+		IDocument document;
+		try {
+			document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
+			String signature = String.valueOf(proposal.getSignature());
+			String[] types = Stream.of(Signature.getParameterTypes(signature)).map(t -> Signature.toString(t))
+					.toArray(String[]::new);
+			String methodName = String.valueOf(proposal.getName());
+			int offset = proposal.getReplaceStart();
+			String completion = new String(proposal.getCompletion());
+			OverrideCompletionProposal overrider = new OverrideCompletionProposal(compilationUnit, methodName, types,
+					completion);
+			String replacement = overrider.updateReplacementString(document, offset, importRewrite,
+					client.isCompletionSnippetsSupported());
+			completionBuffer.append(replacement);
+		} catch (BadLocationException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Failed to compute override replacement", e);
+		}
+	}
+
+	private void appendBody(StringBuilder completionBuffer) {
+		completionBuffer.append(" {\n\t");
+		if (client.isCompletionSnippetsSupported())  {
+			completionBuffer.append(CURSOR_POSITION);
+			completionBuffer.append("\n}");
+		}//if Snippets not supported, we leave an open bracket so users can type in directly
 	}
 
 	private Range toReplacementRange(CompletionProposal proposal){
@@ -223,6 +264,9 @@ public class CompletionProposalReplacementProvider {
 			if (canAutomaticallyAppendSemicolon(proposal)) {
 				buffer.append(SEMICOLON);
 			}
+		}
+		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
+			appendBody(buffer);
 		}
 	}
 

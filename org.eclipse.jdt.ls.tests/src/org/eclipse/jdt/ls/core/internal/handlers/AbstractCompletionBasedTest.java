@@ -20,8 +20,10 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
 
@@ -66,5 +68,10 @@ public abstract class AbstractCompletionBasedTest extends AbstractProjectsManage
 		String str= unit.getSource();
 		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
 		return JsonRpcHelpers.toLine(unit.getBuffer(), cursorLocation);
+	}
+
+	@After
+	public void shutdown() throws Exception {
+		SharedASTProvider.getInstance().invalidateAll();
 	}
 }
