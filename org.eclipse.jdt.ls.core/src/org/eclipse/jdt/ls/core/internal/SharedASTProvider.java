@@ -70,6 +70,9 @@ public final class SharedASTProvider {
 		}
 	}
 
+	public void invalidateAll() {
+		cache.clear();
+	}
 
 	/**
 	 * Creates a new compilation unit AST.

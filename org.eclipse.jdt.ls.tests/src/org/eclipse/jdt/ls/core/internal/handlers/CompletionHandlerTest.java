@@ -24,11 +24,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -107,9 +109,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	@Test
 	public void testCompletion_constructor() throws Exception{
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -148,8 +148,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	@Test
 	public void testCompletion_import_package() throws JavaModelException{
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -190,11 +189,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	@Test
 	public void testCompletion_method_withLSPV2() throws JavaModelException{
 
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.FALSE);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.FALSE);
-
+		mockClientPreferences(false, false);
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -233,12 +228,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 	@Test
 	public void testCompletion_method_withLSPV3() throws JavaModelException{
 
-		//Mock the preference manager to use LSP v3 support.
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
-
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -279,10 +269,25 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals(3, edits.size());
 	}
 
-	@Test
-	public void testCompletion_field() throws JavaModelException{
+
+	/**
+	 * Mocks the preference manager to use LSP v3 support.
+	 */
+	private ClientPreferences mockLSPv3ClientPreferences() {
+		return mockClientPreferences(true, true);
+	}
+
+	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp) {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(supportCompletionSnippets);
+		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
+		return mockCapabilies;
+	}
+
+	@Test
+	public void testCompletion_field() throws JavaModelException{
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -314,14 +319,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	@Test
 	public void testCompletion_import_type() throws JavaModelException{
-		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
-		//Mock the preference manager to use LSP v3 support.
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(Boolean.TRUE);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(Boolean.TRUE);
-
-
-		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		mockLSPv3ClientPreferences();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -372,7 +370,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		ICompilationUnit unit = getWorkingCopy(
 				"src/org/sample/Baz.java",
 				"package o"+
-				"public class Baz {\n"+
+						"public class Baz {\n"+
 				"}\n");
 
 		int[] loc = findCompletionLocation(unit, "package o");
@@ -399,6 +397,131 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals(8, range.getStart().getCharacter());
 		assertEquals(0, range.getEnd().getLine());
 		assertEquals(15, range.getEnd().getCharacter());
+	}
+
+	@Test
+	public void testCompletion_methodOverride() throws Exception{
+		testCompletion_classMethodOverride("hello", true, true);
+	}
+
+	@Test
+	public void testCompletion_interfaceMethodOverride() throws Exception {
+		testCompletion_interfaceMethodOverride("hello", true, true);
+	}
+
+	@Test
+	public void testCompletion_classMethodOverrideNoSnippet() throws Exception {
+		testCompletion_classMethodOverride("hello", false, true);
+	}
+
+	@Test
+	public void testCompletion_interfaceMethodOverrideNoSnippet() throws Exception {
+		testCompletion_interfaceMethodOverride("hello", false, true);
+	}
+
+	@Test
+	public void testCompletion_classMethodOverrideJava4() throws Exception {
+		testCompletion_classMethodOverride("java4", true, false);
+	}
+
+	@Test
+	public void testCompletion_interfaceMethodOverrideJava4() throws Exception {
+		testCompletion_interfaceMethodOverride("java4", true, false);
+	}
+
+	@Test
+	public void testCompletion_classMethodOverrideJava5() throws Exception {
+		testCompletion_classMethodOverride("java5", true, true);
+	}
+
+	@Test
+	public void testCompletion_interfaceMethodOverrideJava5() throws Exception {
+		testCompletion_interfaceMethodOverride("java5", true, false);
+	}
+
+	private void testCompletion_classMethodOverride(String projectName, boolean supportSnippets,
+			boolean overridesSuperClass) throws Exception {
+		if (project == null || !projectName.equals(project.getName())) {
+			importProjects("eclipse/"+projectName);
+			project = WorkspaceHelper.getProject(projectName);
+		}
+		mockClientPreferences(supportSnippets, true);
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"
+						+ "    toStr"
+						+"}\n");
+		int[] loc = findCompletionLocation(unit, " toStr");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
+			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
+		}).collect(Collectors.toList());
+		assertFalse("No override proposals", filtered.isEmpty());
+		CompletionItem oride = filtered.get(0);
+		assertEquals("toString", oride.getInsertText());
+		assertNull(oride.getTextEdit());
+		oride = server.resolveCompletionItem(oride).join();
+		assertNotNull(oride.getTextEdit());
+		String text = oride.getTextEdit().getNewText();
+		StringBuilder expectedText = new StringBuilder();
+		if (overridesSuperClass) {
+			expectedText.append("@Override\n");
+		}
+		expectedText.append("public String toString() {\n\t");
+		if (supportSnippets) {
+			expectedText.append("${0:");
+		}
+		expectedText.append("return super.toString();");
+		if (supportSnippets) {
+			expectedText.append("}");
+		}
+		expectedText.append("\n}");
+
+		assertEquals(expectedText.toString(), text);
+	}
+
+	private void testCompletion_interfaceMethodOverride(String projectName, boolean supportSnippets,
+			boolean overridesInterface) throws Exception {
+		if (project == null || !projectName.equals(project.getName())) {
+			importProjects("eclipse/" + projectName);
+			project = WorkspaceHelper.getProject(projectName);
+		}
+		mockClientPreferences(supportSnippets, true);
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo implements Runnable{\n"
+						+ "    ru"
+						+"}\n");
+		int[] loc = findCompletionLocation(unit, " ru");
+		CompletionList list = server
+				.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join()
+				.getRight();
+		assertNotNull(list);
+		List<CompletionItem> filtered = list.getItems().stream().filter((item) -> {
+			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
+		}).collect(Collectors.toList());
+		assertFalse("No override proposals", filtered.isEmpty());
+		CompletionItem oride = filtered.get(0);
+		assertEquals("run", oride.getInsertText());
+		assertNull(oride.getTextEdit());
+		oride = server.resolveCompletionItem(oride).join();
+		assertNotNull(oride.getTextEdit());
+		String text = oride.getTextEdit().getNewText();
+		StringBuilder expectedText = new StringBuilder();
+		if (overridesInterface) {
+			expectedText.append("@Override\n");
+		}
+		expectedText.append("public void run() {\n\t");
+		if (supportSnippets) {
+			expectedText.append("${0}");
+		}
+		expectedText.append("\n}");
+
+		assertEquals(expectedText.toString(), text);
+
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
