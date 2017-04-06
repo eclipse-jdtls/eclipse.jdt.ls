@@ -10,6 +10,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Test;
 
 /**
@@ -23,4 +29,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		importSimpleJavaProject();
 	}
 
+	@Test
+	public void importNestedGradleProject() throws Exception {
+		List<IProject> projects = importProjects("gradle/nested");
+		assertEquals(3, projects.size());//default + 2 gradle projects
+		IProject gradle1 = WorkspaceHelper.getProject("gradle1");
+		assertIsGradleProject(gradle1);
+		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
+		assertIsGradleProject(gradle2);
+	}
 }
