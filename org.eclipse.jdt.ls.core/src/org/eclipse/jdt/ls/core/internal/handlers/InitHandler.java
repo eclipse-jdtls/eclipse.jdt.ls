@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -103,9 +104,10 @@ final public class InitHandler {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
-				IStatus status = projectsManager.initializeProjects(root, new ServerStatusMonitor());
+				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
+				IStatus status = projectsManager.initializeProjects(root, subMonitor.split(50));
 				try {
-					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
+					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, subMonitor.split(50));
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException("Build failed ", e);
 				}
