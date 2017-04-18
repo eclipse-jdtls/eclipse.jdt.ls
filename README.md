@@ -42,11 +42,9 @@ detect the projects and import it properly.
 Building from command line
 ----------------------------
 
-1. Install [Apache Maven](https://maven.apache.org/)
-
-2. This command will build the server into `/org.eclipse.jdt.ls.product/target/repository` folder:
+This command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
 ```bash    
-    $ mvn clean verify
+    $ ./mvnw clean verify
 ````
 
 Running from the command line
