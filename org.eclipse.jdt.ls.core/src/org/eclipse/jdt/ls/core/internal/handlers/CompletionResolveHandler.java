@@ -14,9 +14,9 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.fix836
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLowerBound;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.stripSignatureToFQN;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -35,6 +35,8 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.osgi.util.NLS;
 
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
 /**
  * Adds the completion string and documentation.
  * It checks the client capabilities.
@@ -116,14 +118,19 @@ public class CompletionResolveHandler {
 				}
 
 				if (member!=null && member.exists()) {
-					Reader reader = JavadocContentAccess.getHTMLContentReader(member, true, true);
-					if (reader != null) {
-						try {
-							param.setDocumentation(CharStreams.toString(reader));
-						} catch (IOException e) {
-							JavaLanguageServerPlugin.logException("Unable to read documentation", e);
-						}
+					String javadoc = null;
+					try {
+						final IMember curMember = member;
+						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
+							Reader reader = JavadocContentAccess.getHTMLContentReader(curMember, true, true);
+							return reader == null? null:CharStreams.toString(reader);
+						}, 500, TimeUnit.MILLISECONDS, true);
+					} catch (UncheckedTimeoutException tooSlow) {
+						JavaLanguageServerPlugin.logError("Unable to get documentation under 500ms");
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
 					}
+					param.setDocumentation(javadoc);
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Unable to resolve compilation", e);
