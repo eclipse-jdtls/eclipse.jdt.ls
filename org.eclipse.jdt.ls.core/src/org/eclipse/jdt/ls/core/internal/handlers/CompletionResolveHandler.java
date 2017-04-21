@@ -126,7 +126,9 @@ public class CompletionResolveHandler {
 							return reader == null? null:CharStreams.toString(reader);
 						}, 500, TimeUnit.MILLISECONDS, true);
 					} catch (UncheckedTimeoutException tooSlow) {
-						JavaLanguageServerPlugin.logError("Unable to get documentation under 500ms");
+						//Ignore error for now as it's spamming clients on content assist.
+						//TODO cache javadoc resolution results?
+						//JavaLanguageServerPlugin.logError("Unable to get documentation under 500ms");
 					} catch (Exception e) {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
 					}
