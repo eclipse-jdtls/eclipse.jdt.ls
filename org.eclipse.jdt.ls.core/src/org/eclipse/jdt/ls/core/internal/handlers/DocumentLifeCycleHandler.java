@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -138,8 +138,9 @@ public class DocumentLifeCycleHandler {
 					ActionableNotification ignoreIncompleteClasspath = new ActionableNotification()
 							.withSeverity(severity.toMessageType())
 							.withMessage(msg)
-							.withCommands(Collections.singletonList(
-									new Command("Don't show again", "java.ignoreIncompleteClasspath", null)
+							.withCommands(Arrays.asList(
+									new Command("Don't show again", "java.ignoreIncompleteClasspath", null),
+									new Command("More info", "java.ignoreIncompleteClasspath.help", null)
 									));
 					connection.sendActionableNotification(ignoreIncompleteClasspath);
 				}
