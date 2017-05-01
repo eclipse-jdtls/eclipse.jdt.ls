@@ -139,8 +139,8 @@ public class DocumentLifeCycleHandler {
 							.withSeverity(severity.toMessageType())
 							.withMessage(msg)
 							.withCommands(Arrays.asList(
-									new Command("Don't show again", "java.ignoreIncompleteClasspath", null),
-									new Command("More info", "java.ignoreIncompleteClasspath.help", null)
+									new Command("More Information", "java.ignoreIncompleteClasspath.help", null),
+									new Command("Don't Show Again", "java.ignoreIncompleteClasspath", null)
 									));
 					connection.sendActionableNotification(ignoreIncompleteClasspath);
 				}
