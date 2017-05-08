@@ -34,25 +34,25 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 		IFile gradle = project.getFile("build.gradle");
 		URI gradleUri = gradle.getRawLocationURI();
 
-		//Remove dependencies to cause compilation errors
 		String originalGradle = getContent(gradleUri);
 
 		URI newGradleUri = project.getFile("build2.gradle").getRawLocationURI();
 
+		//Remove dependencies to cause compilation errors
 		String newGradle = getContent(newGradleUri);
 		setContent(gradleUri, newGradle);
 		waitForBackgroundJobs();
 		//Contents changed outside the workspace, so should not change
 		assertNoErrors(project);
 
+		//Giving a nudge, so that errors show up
 		projectsManager.updateProject(project);
 
-		//Giving a nudge, so that errors show up
 		waitForBackgroundJobs();
 		assertHasErrors(project);
 		assertEquals("1.8", ProjectUtils.getJavaSourceLevel(project));
 
-		//Fix pom, trigger build
+		//Fix gradle file, trigger build
 		setContent(gradleUri, originalGradle);
 		projectsManager.updateProject(project);
 		waitForBackgroundJobs();

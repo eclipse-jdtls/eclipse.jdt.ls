@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="69">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="70">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -33,7 +33,7 @@
 <repository location="http://download.eclipse.org/releases/oxygen"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20170421-1603"/>
+<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20170506-0311"/>
 <repository location="http://download.eclipse.org/technology/m2e/snapshots/1.8.0/latest"/>
 </location>
 </locations>
