@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 
@@ -52,13 +53,16 @@ public class DocumentSymbolHandler {
 				continue;
 			}
 
-			SymbolInformation si = new SymbolInformation();
-			si.setName(element.getElementName());
-			si.setKind(mapKind(element));
-			if(element.getParent() != null )
-				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(JDTUtils.toLocation(element));
-			symbols.add(si);
+			Location location = JDTUtils.toLocation(element);
+			if (location != null) {
+				SymbolInformation si = new SymbolInformation();
+				si.setName(element.getElementName());
+				si.setKind(mapKind(element));
+				if (element.getParent() != null)
+					si.setContainerName(element.getParent().getElementName());
+				si.setLocation(location);
+				symbols.add(si);
+			}
 		}
 	}
 

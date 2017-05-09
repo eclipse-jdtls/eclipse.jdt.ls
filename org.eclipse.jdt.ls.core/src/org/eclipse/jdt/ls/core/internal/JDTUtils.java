@@ -38,12 +38,16 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
+import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -63,9 +67,6 @@ import com.google.common.io.Files;
  */
 public final class JDTUtils {
 
-	/**
-	 * 
-	 */
 	private static final String JDT_SCHEME = "jdt";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
@@ -267,14 +268,39 @@ public final class JDTUtils {
 			return null;
 		}
 		if (element instanceof ISourceReference) {
-			ISourceRange nameRange = ((ISourceReference) element).getNameRange();
-			if(cf == null){
-				return toLocation(unit,nameRange.getOffset(), nameRange.getLength());
-			}else{
-				return toLocation(cf,nameRange.getOffset(), nameRange.getLength());
+			ISourceRange nameRange = getNameRange(element);
+			if (nameRange != null && SourceRange.isAvailable(nameRange)) {
+				if (cf == null) {
+					return toLocation(unit, nameRange.getOffset(), nameRange.getLength());
+				} else {
+					return toLocation(cf, nameRange.getOffset(), nameRange.getLength());
+				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * @param element
+	 * @return
+	 * @throws JavaModelException
+	 */
+	private static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
+		ISourceRange nameRange = null;
+		if (element instanceof IMember) {
+			nameRange = ((IMember) element).getNameRange();
+			if ( (nameRange == null || !SourceRange.isAvailable(nameRange)) && element instanceof ISourceReference) {
+				nameRange = ((ISourceReference) element).getSourceRange();
+			}
+		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
+			nameRange = ((ISourceReference) element).getNameRange();
+		} else if (element instanceof ISourceReference) {
+			nameRange = ((ISourceReference) element).getSourceRange();
+		}
+		if ((nameRange == null || !SourceRange.isAvailable(nameRange)) && element.getParent() != null) {
+			nameRange = getNameRange(element.getParent());
+		}
+		return nameRange;
 	}
 
 	/**
