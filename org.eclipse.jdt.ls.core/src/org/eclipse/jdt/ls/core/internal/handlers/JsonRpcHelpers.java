@@ -56,8 +56,7 @@ final public class JsonRpcHelpers {
 			int column = offset - document.getLineOffset(line);
 			return new int[] {line, column};
 		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		return null;
 	}

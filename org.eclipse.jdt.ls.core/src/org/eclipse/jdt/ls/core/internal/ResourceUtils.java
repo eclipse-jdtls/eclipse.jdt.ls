@@ -116,4 +116,5 @@ public class ResourceUtils {
 		String uriString = uri.toString();
 		return uriString.replaceFirst("file:/([^/])", "file:///$1");
 	}
+
 }

@@ -23,10 +23,13 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 
 public class DocumentSymbolHandler {
+
+	private static final String REGEX = "(<clinit>|^(lambda\\$|^\\$|^this\\$|^access\\$).*$)";
 
 	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
@@ -43,6 +46,9 @@ public class DocumentSymbolHandler {
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
+			if (element.getElementName() == null || element.getElementName().matches(REGEX)) {
+				continue;
+			}
 			if(element.getElementType() == IJavaElement.TYPE){
 				collectChildren(unit, ((IType)element).getChildren(),symbols);
 			}
@@ -52,17 +58,22 @@ public class DocumentSymbolHandler {
 				continue;
 			}
 
-			SymbolInformation si = new SymbolInformation();
-			si.setName(element.getElementName());
-			si.setKind(mapKind(element));
-			if(element.getParent() != null )
-				si.setContainerName(element.getParent().getElementName());
-			si.setLocation(JDTUtils.toLocation(element));
-			symbols.add(si);
+			Location location = JDTUtils.toLocation(element);
+			if (location != null) {
+				SymbolInformation si = new SymbolInformation();
+				si.setName(element.getElementName());
+				si.setKind(mapKind(element));
+				if (element.getParent() != null)
+					si.setContainerName(element.getParent().getElementName());
+				si.setLocation(location);
+				if (!symbols.contains(si)) {
+					symbols.add(si);
+				}
+			}
 		}
 	}
 
-	CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
+	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
 		return CompletableFuture.supplyAsync(()->{
 			ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
 			if(unit == null )
