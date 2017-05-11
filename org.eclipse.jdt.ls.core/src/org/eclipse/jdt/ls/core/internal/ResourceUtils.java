@@ -12,9 +12,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,16 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -127,40 +117,4 @@ public class ResourceUtils {
 		return uriString.replaceFirst("file:/([^/])", "file:///$1");
 	}
 
-	/**
-	 * @param project
-	 * @param className
-	 * @return
-	 * @throws JavaModelException
-	 * @throws UnsupportedEncodingException
-	 */
-	public static String getURI(IProject project, String className) throws JavaModelException, UnsupportedEncodingException {
-		IJavaProject javaProject = JavaCore.create(project);
-		javaProject.open(new NullProgressMonitor());
-		String packageName = className.substring(0, className.lastIndexOf("."));
-		String cName = className.substring(packageName.length() + 1, className.length()) + ".class";
-		String classFileName = "/" + className.replaceAll("\\.", "/") + ".class";
-		IPackageFragmentRoot[] packageFragmentRoots = javaProject.getAllPackageFragmentRoots();
-		for (IPackageFragmentRoot packageFragmentRoot : packageFragmentRoots) {
-			if (packageFragmentRoot.isArchive()) {
-				IPackageFragment packageFragment = packageFragmentRoot.getPackageFragment(packageName);
-				if (packageFragment != null && packageFragment.exists()) {
-					IClassFile classFile;
-					try {
-						classFile = packageFragment.getClassFile(cName);
-					} catch (Exception e) {
-						continue;
-					}
-					if (classFile.exists()) {
-						String ret1 = String.format("jdt://contents/%s%s?=", packageFragmentRoot.getElementName(),
-								classFileName);
-						String ret2 = String.format("%s/%s<%s(%s", project.getName(), packageFragmentRoot.getPath(),
-								packageName, cName);
-						return ret1 + URLEncoder.encode(ret2, "UTF-8");
-					}
-				}
-			}
-		}
-		return null;
-	}
 }

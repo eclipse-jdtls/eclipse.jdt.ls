@@ -29,6 +29,8 @@ import org.eclipse.lsp4j.SymbolKind;
 
 public class DocumentSymbolHandler {
 
+	private static final String REGEX = "(<clinit>|^(lambda\\$|^\\$|^this\\$|^access\\$).*$)";
+
 	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
 			IJavaElement[] elements = unit.getChildren();
@@ -44,7 +46,7 @@ public class DocumentSymbolHandler {
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
-			if (element.getElementName() == null || element.getElementName().startsWith("lambda$") || element.getElementName().startsWith("$")) {
+			if (element.getElementName() == null || element.getElementName().matches(REGEX)) {
 				continue;
 			}
 			if(element.getElementType() == IJavaElement.TYPE){
@@ -64,7 +66,9 @@ public class DocumentSymbolHandler {
 				if (element.getParent() != null)
 					si.setContainerName(element.getParent().getElementName());
 				si.setLocation(location);
-				symbols.add(si);
+				if (!symbols.contains(si)) {
+					symbols.add(si);
+				}
 			}
 		}
 	}

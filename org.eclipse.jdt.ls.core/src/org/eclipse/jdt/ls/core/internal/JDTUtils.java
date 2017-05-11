@@ -269,7 +269,7 @@ public final class JDTUtils {
 		}
 		if (element instanceof ISourceReference) {
 			ISourceRange nameRange = getNameRange(element);
-			if (nameRange != null && SourceRange.isAvailable(nameRange)) {
+			if (SourceRange.isAvailable(nameRange)) {
 				if (cf == null) {
 					return toLocation(unit, nameRange.getOffset(), nameRange.getLength());
 				} else {
@@ -280,16 +280,11 @@ public final class JDTUtils {
 		return null;
 	}
 
-	/**
-	 * @param element
-	 * @return
-	 * @throws JavaModelException
-	 */
 	private static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
 		ISourceRange nameRange = null;
 		if (element instanceof IMember) {
 			nameRange = ((IMember) element).getNameRange();
-			if ( (nameRange == null || !SourceRange.isAvailable(nameRange)) && element instanceof ISourceReference) {
+			if ( (!SourceRange.isAvailable(nameRange)) && element instanceof ISourceReference) {
 				nameRange = ((ISourceReference) element).getSourceRange();
 			}
 		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
@@ -297,7 +292,7 @@ public final class JDTUtils {
 		} else if (element instanceof ISourceReference) {
 			nameRange = ((ISourceReference) element).getSourceRange();
 		}
-		if ((nameRange == null || !SourceRange.isAvailable(nameRange)) && element.getParent() != null) {
+		if (!SourceRange.isAvailable(nameRange) && element.getParent() != null) {
 			nameRange = getNameRange(element.getParent());
 		}
 		return nameRange;
