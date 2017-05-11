@@ -44,6 +44,9 @@ public class DocumentSymbolHandler {
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
+			if (element.getElementName() == null || element.getElementName().startsWith("lambda$") || element.getElementName().startsWith("$")) {
+				continue;
+			}
 			if(element.getElementType() == IJavaElement.TYPE){
 				collectChildren(unit, ((IType)element).getChildren(),symbols);
 			}
@@ -66,7 +69,7 @@ public class DocumentSymbolHandler {
 		}
 	}
 
-	CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
+	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
 		return CompletableFuture.supplyAsync(()->{
 			ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
 			if(unit == null )
