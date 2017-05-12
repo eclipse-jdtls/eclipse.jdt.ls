@@ -34,7 +34,9 @@ final public class JsonRpcHelpers {
 	 */
 	public static int toOffset(IBuffer buffer, int line, int column){
 		try {
-			return toDocument(buffer).getLineOffset(line) + column;
+			if (buffer != null) {
+				return toDocument(buffer).getLineOffset(line) + column;
+			}
 		} catch (BadLocationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -67,9 +69,12 @@ final public class JsonRpcHelpers {
 	 * The returned document may or may not be connected to the buffer.
 	 *
 	 * @param buffer a buffer
-	 * @return a document with the same contents as the buffer
+	 * @return a document with the same contents as the buffer or <code>null</code> is the buffer is <code>null</code>
 	 */
 	public static IDocument toDocument(IBuffer buffer) {
+		if (buffer == null) {
+			return null;
+		}
 		if (buffer instanceof IDocument) {
 			return (IDocument) buffer;
 		} else if (buffer instanceof org.eclipse.jdt.ls.core.internal.DocumentAdapter) {

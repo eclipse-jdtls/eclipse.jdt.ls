@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -25,18 +26,20 @@ import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 
 public class WorkspaceSymbolHandler{
 
-	List<SymbolInformation> search(String query) {
+	public List<SymbolInformation> search(String query) {
+		if (query == null || query.trim().isEmpty()) {
+			return Collections.emptyList();
+		}
 		try {
 			ArrayList<SymbolInformation> symbols = new ArrayList<>();
-
 			new SearchEngine().searchAllTypeNames(null,SearchPattern.R_PATTERN_MATCH, query.toCharArray(), SearchPattern.R_PREFIX_MATCH,IJavaSearchConstants.TYPE, createSearchScope(),new TypeNameMatchRequestor() {
 
 				@Override
@@ -44,17 +47,38 @@ public class WorkspaceSymbolHandler{
 					SymbolInformation symbolInformation = new SymbolInformation();
 					symbolInformation.setContainerName(match.getTypeContainerName());
 					symbolInformation.setName(match.getSimpleTypeName());
-					symbolInformation.setKind(DocumentSymbolHandler.mapKind(match.getType()));
-					Location location = new Location();
-					location.setUri(match.getType().getResource().getLocationURI().toString());
-					location.setRange(new Range(new Position(0,0), new Position(0, 0)));
+					symbolInformation.setKind(mapKind(match));
+					Location location;
+					try {
+						if (match.getType().isBinary()) {
+							location = JDTUtils.toLocation(match.getType().getClassFile());
+						}  else {
+							location = JDTUtils.toLocation(match.getType().getResource().getLocationURI().toString());
+						}
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException("Unable to determine location for " +  match.getSimpleTypeName(), e);
+						return;
+					}
 					symbolInformation.setLocation(location);
 					symbols.add(symbolInformation);
 				}
-			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
 
+				private SymbolKind mapKind(TypeNameMatch match) {
+					int flags= match.getModifiers();
+					if (Flags.isInterface(flags)) {
+						return SymbolKind.Interface;
+					}
+					if (Flags.isAnnotation(flags)) {
+						return SymbolKind.Property;
+					}
+					if (Flags.isEnum(flags)) {
+						return SymbolKind.Enum;
+					}
+					return SymbolKind.Class;
+				}
+			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
 			return symbols;
-		} catch (JavaModelException e) {
+		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Problem getting search for" +  query, e);
 		}
 		return Collections.emptyList();
@@ -62,7 +86,7 @@ public class WorkspaceSymbolHandler{
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
+		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 	}
 
 }
