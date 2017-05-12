@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
@@ -58,7 +59,32 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		testClass("java.util.Set");
 	}
 
+	@Test
+	public void testSynteticMember() throws Exception {
+		String className = "java.util.zip.ZipFile";
+		List<? extends SymbolInformation> symbols = getSymbols(className);
+		for (SymbolInformation symbol : symbols) {
+			Location loc = symbol.getLocation();
+			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
+					loc != null && isValid(loc.getRange()));
+			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid name",
+					symbol.getName().startsWith("access$"));
+			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name",
+					symbol.getName().equals("<clinit>"));
+		}
+	}
+
 	private void testClass(String className)
+			throws JavaModelException, UnsupportedEncodingException, InterruptedException, ExecutionException {
+		List<? extends SymbolInformation> symbols = getSymbols(className);
+		for (SymbolInformation symbol : symbols) {
+			Location loc = symbol.getLocation();
+			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
+					loc != null && isValid(loc.getRange()));
+		}
+	}
+
+	private List<? extends SymbolInformation> getSymbols(String className)
 			throws JavaModelException, UnsupportedEncodingException, InterruptedException, ExecutionException {
 		String uri = getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
@@ -67,11 +93,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		CompletableFuture<List<? extends SymbolInformation>> future = handler.documentSymbol(params);
 		List<? extends SymbolInformation> symbols = future.get();
 		assertTrue(symbols.size() > 0);
-		for (SymbolInformation symbol : symbols) {
-			Location loc = symbol.getLocation();
-			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
-					loc != null && isValid(loc.getRange()));
-		}
+		return symbols;
 	}
 
 	private boolean isValid(Range range) {

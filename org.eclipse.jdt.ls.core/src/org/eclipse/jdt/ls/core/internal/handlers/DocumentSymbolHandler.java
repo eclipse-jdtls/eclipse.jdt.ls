@@ -16,7 +16,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -28,8 +31,6 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 
 public class DocumentSymbolHandler {
-
-	private static final String REGEX = "(<clinit>|^(lambda\\$|^\\$|^this\\$|^access\\$).*$)";
 
 	private SymbolInformation[] getOutline(ITypeRoot unit) {
 		try {
@@ -46,11 +47,8 @@ public class DocumentSymbolHandler {
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
-			if (element.getElementName() == null || element.getElementName().matches(REGEX)) {
-				continue;
-			}
-			if(element.getElementType() == IJavaElement.TYPE){
-				collectChildren(unit, ((IType)element).getChildren(),symbols);
+			if(element instanceof IParent){
+				collectChildren(unit, filter(((IParent)element).getChildren()), symbols);
 			}
 			if(element.getElementType() != IJavaElement.FIELD &&
 					element.getElementType() != IJavaElement.METHOD
@@ -70,6 +68,36 @@ public class DocumentSymbolHandler {
 					symbols.add(si);
 				}
 			}
+		}
+	}
+
+	private IJavaElement[] filter(IJavaElement[] elements) {
+		List<IJavaElement> result = new ArrayList<>();
+		for (int i = 0; i < elements.length; i++) {
+			IJavaElement element = elements[i];
+			if (element.getElementType() == IJavaElement.METHOD) {
+				String name= element.getElementName();
+				if ((name != null && name.indexOf('<') >= 0)) {
+					continue;
+				}
+			}
+			if (!isSynteticElement(element)) {
+				result.add(element);
+			}
+		}
+		return result.toArray(new IJavaElement[0]);
+	}
+
+	private boolean isSynteticElement(IJavaElement element) {
+		if (!(element instanceof IMember))
+			return false;
+		IMember member= (IMember)element;
+		if (!(member.isBinary()))
+			return false;
+		try {
+			return Flags.isSynthetic(member.getFlags());
+		} catch (JavaModelException e) {
+			return false;
 		}
 	}
 
