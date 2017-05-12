@@ -41,6 +41,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
+import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
@@ -308,20 +309,29 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
-		Location result = new Location();
-		result.setUri(getFileURI(unit));
-		int[] loc = JsonRpcHelpers.toLine(unit.getBuffer(), offset);
-		int[] endLoc = JsonRpcHelpers.toLine(unit.getBuffer(), offset + length);
+		return new Location(getFileURI(unit), toRange(unit, offset, length));
+	}
 
-		Range range = new Range();
-		if (loc != null) {
-			range.setStart(new Position(loc[0],loc[1]));
-		}
-		if (endLoc != null) {
-			range.setEnd(new Position(endLoc[0],endLoc[1]));
-		}
-		result.setRange(range);
-		return result;
+	/**
+	 * Creates a default location for the class file.
+	 *
+	 * @param classFile
+	 * @return location
+	 * @throws JavaModelException
+	 */
+	public static Location toLocation(IClassFile classFile) throws JavaModelException{
+		return toLocation(classFile, 0, 0);
+	}
+
+	/**
+	 * Creates a default location for the uri.
+	 *
+	 * @param classFile
+	 * @return location
+	 * @throws JavaModelException
+	 */
+	public static Location toLocation(String uri) {
+		return new Location(uri, newRange());
 	}
 
 	/**
@@ -330,55 +340,66 @@ public final class JDTUtils {
 	 * @param unit
 	 * @param offset
 	 * @param length
-	 * @return location or null
+	 * @return location
 	 * @throws JavaModelException
 	 */
-	public static Location toLocation(IClassFile unit, int offset, int length) throws JavaModelException{
-		Location result = new Location();
-		String packageName = unit.getParent().getElementName();
-		String jarName = unit.getParent().getParent().getElementName();
+	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException{
+		String packageName = classFile.getParent().getElementName();
+		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + unit.getElementName(), unit.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
-		result.setUri(uriString);
-		IBuffer buffer = unit.getBuffer();
-		int[] loc = JsonRpcHelpers.toLine(buffer, offset);
-		int[] endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
-
-		Range range = new Range();
-		if (loc != null) {
-			range.setStart(new Position(loc[0], loc[1]));
-		}
-		if (endLoc != null) {
-			range.setEnd(new Position(endLoc[0],endLoc[1]));
-		}
-		result.setRange(range);
-		return result;
+		Range range = toRange(classFile, offset, length);
+		return new Location(uriString, range);
 	}
 
 	/**
-	 * Creates a range for the given offset and length for a compilation unit
+	 * Creates a range for the given offset and length for an {@link IOpenable}
 	 *
-	 * @param unit
+	 * @param openable
 	 * @param offset
 	 * @param length
 	 * @return
 	 * @throws JavaModelException
 	 */
-	public static Range toRange(ICompilationUnit unit, int offset, int length) throws JavaModelException {
-		Range result = new Range();
-		final IBuffer buffer = unit.getBuffer();
-		int[] loc = JsonRpcHelpers.toLine(buffer, offset);
-		int[] endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
-
-		if (loc != null && endLoc != null) {
-			result.setStart(new Position(loc[0],loc[1]));
-			result.setEnd(new Position(endLoc[0],endLoc[1]));
+	public static Range toRange(IOpenable openable, int offset, int length) throws JavaModelException{
+		Range range = newRange();
+		if (offset > 0 || length > 0) {
+			int[] loc = null;
+			int[] endLoc = null;
+			IBuffer buffer = openable.getBuffer();
+			if (buffer != null) {
+				loc = JsonRpcHelpers.toLine(buffer, offset);
+				endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
+			}
+			if (loc == null) {
+				loc = new int[2];
+			}
+			if (endLoc == null) {
+				endLoc = new int[2];
+			}
+			setPosition(range.getStart(), loc);
+			setPosition(range.getEnd(), endLoc);
 		}
-		return result;
+		return range;
+	}
+
+	/**
+	 * Creates a new {@link Range} with its start and end {@link Position}s set to line=0, character=0
+	 *
+	 * @return a new {@link Range};
+	 */
+	public static Range newRange() {
+		return new Range(new Position(), new Position());
+	}
+
+	private static void setPosition(Position position, int[] coords) {
+		assert coords.length == 2;
+		position.setLine(coords[0]);
+		position.setCharacter(coords[1]);
 	}
 
 	/**
