@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
@@ -72,23 +73,22 @@ public class DocumentSymbolHandler {
 	}
 
 	private IJavaElement[] filter(IJavaElement[] elements) {
-		List<IJavaElement> result = new ArrayList<>();
-		for (int i = 0; i < elements.length; i++) {
-			IJavaElement element = elements[i];
-			if (element.getElementType() == IJavaElement.METHOD) {
-				String name= element.getElementName();
-				if ((name != null && name.indexOf('<') >= 0)) {
-					continue;
-				}
-			}
-			if (!isSynteticElement(element)) {
-				result.add(element);
-			}
-		}
-		return result.toArray(new IJavaElement[0]);
+		return Stream.of(elements)
+				.filter(e -> (!isInitializer(e) && !isSyntheticElement(e)))
+				.toArray(IJavaElement[]::new);
 	}
 
-	private boolean isSynteticElement(IJavaElement element) {
+	private boolean isInitializer(IJavaElement element) {
+		if (element.getElementType() == IJavaElement.METHOD) {
+			String name = element.getElementName();
+			if ((name != null && name.indexOf('<') >= 0)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isSyntheticElement(IJavaElement element) {
 		if (!(element instanceof IMember))
 			return false;
 		IMember member= (IMember)element;

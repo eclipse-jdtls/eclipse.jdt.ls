@@ -60,7 +60,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	@Test
-	public void testSynteticMember() throws Exception {
+	public void testSyntheticMember() throws Exception {
 		String className = "java.util.zip.ZipFile";
 		List<? extends SymbolInformation> symbols = getSymbols(className);
 		for (SymbolInformation symbol : symbols) {
