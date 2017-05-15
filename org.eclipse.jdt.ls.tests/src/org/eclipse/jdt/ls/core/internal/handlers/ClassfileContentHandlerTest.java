@@ -32,18 +32,18 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 
 	@Before
 	public void setup() throws Exception {
-		importProjects("eclipse/hello");
-		project = WorkspaceHelper.getProject("hello");
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
 		handler = new ClassfileContentHandler();
 	}
 
 	@Test
 	public void testOpenClassFile() throws Exception {
-		String uri = ClassFileUtil.getURI(project, "java.util.Map");
+		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils");
 		String source = getSource(uri);
 		assertNotNull(source);
 		assertFalse("header should be missing from "+source, source.startsWith(ClassfileContentHandler.MISSING_SOURCES_HEADER));
-		assertTrue("unexpected body content "+source, source.contains("An object that maps keys to values"));
+		assertTrue("unexpected body content "+source, source.contains("Operations on Strings that contain words."));
 	}
 
 	@Test

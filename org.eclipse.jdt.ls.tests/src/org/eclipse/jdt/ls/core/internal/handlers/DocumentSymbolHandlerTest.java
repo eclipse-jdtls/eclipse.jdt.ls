@@ -41,26 +41,24 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Before
 	public void setup() throws Exception {
-		importProjects("eclipse/hello");
-		project = WorkspaceHelper.getProject("hello");
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
 		handler = new DocumentSymbolHandler();
 	}
 
 	@Test
 	public void testDocumentSymbolHandler() throws Exception {
-		testClass("java.util.LinkedHashMap");
-		testClass("java.util.HashMap");
-		testClass("java.util.Set");
+		testClass("org.apache.commons.lang3.text.WordUtils");
 	}
 
 	@Test
 	public void testSyntheticMember() throws Exception {
-		String className = "java.util.zip.ZipFile";
+		String className = "org.apache.commons.lang3.text.StrTokenizer";
 		List<? extends SymbolInformation> symbols = getSymbols(className);
-		boolean getEntryFound = false;
-		boolean getNameFound = false;
-		String getEntry = "getEntry(String)";
-		String getName = "getName()";
+		boolean overloadedMethod1Found = false;
+		boolean overloadedMethod2Found = false;
+		String overloadedMethod1 = "getCSVInstance(String)";
+		String overloadedMethod2 = "reset()";
 		for (SymbolInformation symbol : symbols) {
 			Location loc = symbol.getLocation();
 			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
@@ -69,15 +67,15 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 					symbol.getName().startsWith("access$"));
 			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name",
 					symbol.getName().equals("<clinit>"));
-			if (getEntry.equals(symbol.getName())) {
-				getEntryFound = true;
+			if (overloadedMethod1.equals(symbol.getName())) {
+				overloadedMethod1Found = true;
 			}
-			if (getName.equals(symbol.getName())) {
-				getNameFound = true;
+			if (overloadedMethod2.equals(symbol.getName())) {
+				overloadedMethod2Found = true;
 			}
 		}
-		assertTrue("The " + getEntry + " method hasn't been found", getEntryFound);
-		assertTrue("The " + getName + " method hasn't been found", getNameFound);
+		assertTrue("The " + overloadedMethod1 + " method hasn't been found", overloadedMethod1Found);
+		assertTrue("The " + overloadedMethod2 + " method hasn't been found", overloadedMethod2Found);
 	}
 
 	private void testClass(String className)
