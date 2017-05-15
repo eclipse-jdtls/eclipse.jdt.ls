@@ -63,6 +63,10 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testSyntheticMember() throws Exception {
 		String className = "java.util.zip.ZipFile";
 		List<? extends SymbolInformation> symbols = getSymbols(className);
+		boolean getEntryFound = false;
+		boolean getNameFound = false;
+		String getEntry = "getEntry(String)";
+		String getName = "getName()";
 		for (SymbolInformation symbol : symbols) {
 			Location loc = symbol.getLocation();
 			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
@@ -71,7 +75,15 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 					symbol.getName().startsWith("access$"));
 			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name",
 					symbol.getName().equals("<clinit>"));
+			if (getEntry.equals(symbol.getName())) {
+				getEntryFound = true;
+			}
+			if (getName.equals(symbol.getName())) {
+				getNameFound = true;
+			}
 		}
+		assertTrue("The " + getEntry + " method hasn't been found", getEntryFound);
+		assertTrue("The " + getName + " method hasn't been found", getNameFound);
 	}
 
 	private void testClass(String className)

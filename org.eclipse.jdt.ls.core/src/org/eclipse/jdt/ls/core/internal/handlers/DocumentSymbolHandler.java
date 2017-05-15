@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -60,7 +61,8 @@ public class DocumentSymbolHandler {
 			Location location = JDTUtils.toLocation(element);
 			if (location != null) {
 				SymbolInformation si = new SymbolInformation();
-				si.setName(element.getElementName());
+				String name = JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
+				si.setName(name == null ? element.getElementName() : name);
 				si.setKind(mapKind(element));
 				if (element.getParent() != null)
 					si.setContainerName(element.getParent().getElementName());
