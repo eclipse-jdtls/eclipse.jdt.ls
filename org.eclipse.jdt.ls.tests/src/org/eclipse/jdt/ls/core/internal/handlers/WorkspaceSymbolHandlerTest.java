@@ -87,4 +87,17 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		assertTrue("Unexpected uri "+ location.getUri(), location.getUri().endsWith("Foo.java"));
 	}
 
+	@Test
+	public void testCamelCaseSearch() {
+		List<SymbolInformation> results = handler.search("NPE");
+		assertNotNull(results);
+		assertEquals("NoPermissionException", results.get(0).getName());
+		assertEquals("NullPointerException", results.get(results.size()-1).getName());
+
+		results = handler.search("HaMa");
+		String className = "HashMap";
+		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
+		assertTrue("Did not find "+className, foundClass);
+	}
+
 }
