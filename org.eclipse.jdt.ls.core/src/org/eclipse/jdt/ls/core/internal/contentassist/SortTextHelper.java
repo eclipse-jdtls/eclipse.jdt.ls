@@ -14,37 +14,32 @@ import org.eclipse.jdt.core.CompletionProposal;
 
 /**
  * Helper class for creating sort texts from relevance
+ *
  * @author Gorkem Ercan
  *
  */
 public final class SortTextHelper {
-	private static final char[] REVERSE_CHAR_MAP = {'j','i','h','g','f','e','d','c','b','a'};
+	private static final int CEILING = 999_999_999;
+
+	public static final int MAX_RELEVANCE_VALUE = 99_999_999;
 
 	private SortTextHelper(){
 		//No public instantiation
 	}
 
 	/**
-	 * Converts the relevance to a sort text.
-	 * Uses a reverse character map to convert
-	 * digits to text.
+	 * Converts the relevance to a 9-digit sort text, so that
+	 * higher relevance would get a lower sort text.
 	 *
-	 * @param proposal
-	 * @return
+	 * @param relevance, must be lower than 100,000,000
+	 * @return a 9-digit sort text
+	 * @throws IllegalArgumentException when relevance is greater or equal to 100,000,000")
 	 */
 	public static String convertRelevance(int relevance) {
-		StringBuilder sb = new StringBuilder();
-		if (relevance < 1) {
-			sb.append("z");
+		if (relevance > MAX_RELEVANCE_VALUE) {
+			throw new IllegalArgumentException("Relevance must be lower than 100,000,000");
 		}
-		while (relevance > 0) {
-			sb.insert(0,REVERSE_CHAR_MAP[relevance % 10]);
-			relevance = relevance / 10;
-		}
-		while (sb.length() < 10) {
-			sb.insert(0, "z");
-		}
-		return sb.toString();
+		return String.valueOf(CEILING-Math.max(relevance, 0));
 	}
 
 	/**
