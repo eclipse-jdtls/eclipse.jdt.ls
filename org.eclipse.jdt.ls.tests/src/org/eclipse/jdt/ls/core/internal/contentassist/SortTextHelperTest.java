@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +45,16 @@ public class SortTextHelperTest {
 		String zero = SortTextHelper.convertRelevance(0);
 		assertEquals(zero, min);//negative relevance is irrelevant
 
-		i = Integer.MAX_VALUE;
+		i = SortTextHelper.MAX_RELEVANCE_VALUE;
 		String max = SortTextHelper.convertRelevance(i);
-		assertTrue(max +" should come before "+ zero, max.compareTo(zero) < 0);
-		assertTrue("relevance "+i +" should be sorted before 0 : "+ max +" vs "+ zero, max.compareTo(zero) < 0);
+		assertEquals("900000000", max);
 
+		try {
+			SortTextHelper.convertRelevance(Integer.MAX_VALUE);
+			fail("Values greater than "+ SortTextHelper.MAX_RELEVANCE_VALUE+ " are not supported");
+		} catch(IllegalArgumentException e) {
+			//this is expected
+		}
 	}
 
 }

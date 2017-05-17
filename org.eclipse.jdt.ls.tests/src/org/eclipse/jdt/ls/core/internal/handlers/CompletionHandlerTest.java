@@ -168,7 +168,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertNull(item.getInsertText());
 		assertEquals("java.sql",item.getLabel());
 		assertEquals(CompletionItemKind.Module, item.getKind() );
-		assertTrue("Unexpected sortText:"+ item.getSortText() , item.getSortText().endsWith("cbf"));
+		assertEquals("999999215", item.getSortText());
 		assertNull(item.getTextEdit());
 
 
@@ -217,7 +217,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
-		assertTrue("Unexpected sortText:"+ ci.getSortText() , ci.getSortText().endsWith("abj"));
+		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
@@ -261,7 +261,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 		assertNull(ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
-		assertTrue("Unexpected sortText:"+ ci.getSortText() , ci.getSortText().endsWith("abj"));
+		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
