@@ -33,8 +33,8 @@
 <repository location="http://download.eclipse.org/releases/oxygen"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20170510-1211"/>
-<repository location="http://download.eclipse.org/technology/m2e/snapshots/1.8.0/latest"/>
+<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20170516-2043"/>
+<repository location="http://download.eclipse.org/technology/m2e/milestones/1.8/1.8.0.20170516-2043"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
