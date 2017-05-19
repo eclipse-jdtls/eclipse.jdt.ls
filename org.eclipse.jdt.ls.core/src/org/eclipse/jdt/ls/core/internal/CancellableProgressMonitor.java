@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.concurrent.CancellationException;
+
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
@@ -33,7 +35,11 @@ public class CancellableProgressMonitor extends NullProgressMonitor {
 	@Override
 	public boolean isCanceled() {
 		if(cancelChecker != null ){
-			cancelChecker.checkCanceled();
+			try {
+				cancelChecker.checkCanceled();
+			} catch (CancellationException ce) {
+				return true;
+			}
 		}
 		return false;
 	}
