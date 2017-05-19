@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.apache.commons.lang3.StringUtils.defaultString;
+
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,9 +36,7 @@ public class HoverHandler{
 						position.getPosition().getCharacter());
 			}
 			Hover $ = new Hover();
-			if (hover != null && !hover.isEmpty()) {
-				$.setContents(Arrays.asList(Either.forLeft(hover)));
-			}
+			$.setContents(Arrays.asList(Either.forLeft(defaultString(hover))));
 			return $;
 		});
 	}
