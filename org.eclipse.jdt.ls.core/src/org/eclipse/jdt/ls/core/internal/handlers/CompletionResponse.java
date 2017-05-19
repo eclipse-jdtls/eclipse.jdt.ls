@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
@@ -22,14 +23,14 @@ import org.eclipse.jdt.core.CompletionProposal;
  */
 public class CompletionResponse {
 
-	private static long idSeed;
+	private static AtomicLong idSeed = new AtomicLong(0);
 	private Long id;
 	private int offset;
 	private CompletionContext context;
 	private List<CompletionProposal> proposals;
 
 	public CompletionResponse() {
-		id = idSeed++;
+		id = idSeed.getAndIncrement();
 	}
 
 	/**
