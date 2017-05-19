@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -105,7 +104,9 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		assertNull("Shouldn't find hover for "+payload, hover.getContents());
+		assertNotNull(hover.getContents());
+		assertEquals(1, hover.getContents().size());
+		assertEquals("Should find empty hover for "+payload, "", hover.getContents().get(0).getLeft());
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
