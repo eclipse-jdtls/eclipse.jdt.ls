@@ -45,7 +45,6 @@ public class CodeActionHandlerTest extends AbstractCompletionBasedTest {
 	@Mock
 	private JavaClientConnection connection;
 
-
 	@Override
 	@Before
 	public void setup() throws Exception{

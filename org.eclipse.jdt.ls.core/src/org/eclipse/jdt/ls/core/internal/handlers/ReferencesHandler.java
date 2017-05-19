@@ -51,8 +51,9 @@ public class ReferencesHandler {
 					param.getPosition().getLine(),
 					param.getPosition().getCharacter());
 
-			if(elementToSearch == null)
+			if(elementToSearch == null) {
 				return Collections.emptyList();
+			}
 
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
 			List<Location> locations = new ArrayList<>();
@@ -77,8 +78,9 @@ public class ReferencesHandler {
 								location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
 							}
 						}
-						if (location != null )
+						if (location != null ) {
 							locations.add(location);
+						}
 
 					}
 

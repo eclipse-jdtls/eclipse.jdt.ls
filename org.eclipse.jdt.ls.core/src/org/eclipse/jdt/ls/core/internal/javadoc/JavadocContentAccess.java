@@ -76,8 +76,9 @@ public final class JavadocContentAccess {
 	 */
 	public static Reader getContentReader(IMember member, boolean allowInherited) throws JavaModelException {
 		Reader contentReader= internalGetContentReader(member);
-		if (contentReader != null || !(allowInherited && (member.getElementType() == IJavaElement.METHOD)))
+		if (contentReader != null || !(allowInherited && (member.getElementType() == IJavaElement.METHOD))) {
 			return contentReader;
+		}
 		return findDocInHierarchy((IMethod) member, false, false);
 	}
 
@@ -216,12 +217,14 @@ public final class JavadocContentAccess {
 
 		if (useAttachedJavadoc && member.getOpenable().getBuffer() == null) { // only if no source available
 			String s= member.getAttachedJavadoc(null);
-			if (s != null)
+			if (s != null) {
 				return new StringReader(s);
+			}
 		}
 
-		if (allowInherited && (member.getElementType() == IJavaElement.METHOD))
+		if (allowInherited && (member.getElementType() == IJavaElement.METHOD)) {
 			return findDocInHierarchy((IMethod) member, true, useAttachedJavadoc);
+		}
 
 		return null;
 	}
@@ -274,8 +277,9 @@ public final class JavadocContentAccess {
 		 * Catch ExternalJavaProject in which case
 		 * no hierarchy can be built.
 		 */
-		if (!method.getJavaProject().exists())
+		if (!method.getJavaProject().exists()) {
 			return null;
+		}
 
 		IType type= method.getDeclaringType();
 		ITypeHierarchy hierarchy= type.newSupertypeHierarchy(null);
@@ -288,12 +292,14 @@ public final class JavadocContentAccess {
 			IMethod overridden= tester.findOverriddenMethodInType(curr, method);
 			if (overridden != null) {
 				Reader reader;
-				if (isHTML)
+				if (isHTML) {
 					reader= getHTMLContentReader(overridden, false, useAttachedJavadoc);
-				else
+				} else {
 					reader= getContentReader(overridden, false);
-				if (reader != null)
+				}
+				if (reader != null) {
 					return reader;
+				}
 			}
 		}
 		return null;

@@ -151,8 +151,9 @@ public class JavaElementLabelComposer {
 		int type= element.getElementType();
 		IPackageFragmentRoot root= null;
 
-		if (type != IJavaElement.JAVA_MODEL && type != IJavaElement.JAVA_PROJECT && type != IJavaElement.PACKAGE_FRAGMENT_ROOT)
+		if (type != IJavaElement.JAVA_MODEL && type != IJavaElement.JAVA_PROJECT && type != IJavaElement.PACKAGE_FRAGMENT_ROOT) {
 			root= JavaModelUtil.getPackageFragmentRoot(element);
+		}
 		if (root != null && getFlag(flags, JavaElementLabels.PREPEND_ROOT_PATH)) {
 			appendPackageFragmentRootLabel(root, JavaElementLabels.ROOT_QUALIFIED);
 			fBuilder.append(JavaElementLabels.CONCAT_STRING);
@@ -436,12 +437,14 @@ public class JavaElementLabelComposer {
 		fBuilder.append('@');
 		appendTypeSignatureLabel(annotation, Signature.createTypeSignature(annotation.getElementName(), false), flags);
 		IMemberValuePair[] memberValuePairs= annotation.getMemberValuePairs();
-		if (memberValuePairs.length == 0)
+		if (memberValuePairs.length == 0) {
 			return;
+		}
 		fBuilder.append('(');
 		for (int i= 0; i < memberValuePairs.length; i++) {
-			if (i > 0)
+			if (i > 0) {
 				fBuilder.append(JavaElementLabels.COMMA_STRING);
+			}
 			IMemberValuePair memberValuePair= memberValuePairs[i];
 			fBuilder.append(getMemberName(annotation, annotation.getElementName(), memberValuePair.getMemberName()));
 			fBuilder.append('=');
@@ -456,8 +459,9 @@ public class JavaElementLabelComposer {
 			fBuilder.append('{');
 			Object[] values= (Object[]) value;
 			for (int j= 0; j < values.length; j++) {
-				if (j > 0)
+				if (j > 0) {
 					fBuilder.append(JavaElementLabels.COMMA_STRING);
+				}
 				value= values[j];
 				appendAnnotationValue(annotation, value, valueKind, flags);
 			}
@@ -1046,11 +1050,13 @@ public class JavaElementLabelComposer {
 		while (dot > 0) {
 			if (dot - start > fgPkgNameLength-1) {
 				fBuilder.append(fgPkgNamePrefix);
-				if (fgPkgNameChars > 0)
+				if (fgPkgNameChars > 0) {
 					fBuilder.append(name.substring(start, Math.min(start+ fgPkgNameChars, dot)));
+				}
 				fBuilder.append(fgPkgNamePostfix);
-			} else
+			} else {
 				fBuilder.append(name.substring(start, dot + 1));
+			}
 			start= dot + 1;
 			dot= name.indexOf('.', start);
 		}
@@ -1065,20 +1071,23 @@ public class JavaElementLabelComposer {
 	 */
 	public void appendPackageFragmentRootLabel(IPackageFragmentRoot root, long flags) {
 		// Handle variables different
-		if (getFlag(flags, JavaElementLabels.ROOT_VARIABLE) && appendVariableLabel(root, flags))
+		if (getFlag(flags, JavaElementLabels.ROOT_VARIABLE) && appendVariableLabel(root, flags)) {
 			return;
-		if (root.isArchive())
+		}
+		if (root.isArchive()) {
 			appendArchiveLabel(root, flags);
-		else
+		} else {
 			appendFolderLabel(root, flags);
+		}
 	}
 
 	private void appendArchiveLabel(IPackageFragmentRoot root, long flags) {
 		boolean external= root.isExternal();
-		if (external)
+		if (external) {
 			appendExternalArchiveLabel(root, flags);
-		else
+		} else {
 			appendInternalArchiveLabel(root, flags);
+		}
 	}
 
 	private boolean appendVariableLabel(IPackageFragmentRoot root, long flags) {
@@ -1106,10 +1115,11 @@ public class JavaElementLabelComposer {
 					fBuilder.append(path.toString());
 				}
 				fBuilder.append(JavaElementLabels.CONCAT_STRING);
-				if (root.isExternal())
+				if (root.isExternal()) {
 					fBuilder.append(root.getPath().toOSString());
-				else
+				} else {
 					fBuilder.append(root.getPath().makeRelative().toString());
+				}
 
 				return true;
 			}
@@ -1126,10 +1136,11 @@ public class JavaElementLabelComposer {
 		try {
 			classpathEntry= JavaModelUtil.getClasspathEntry(root);
 			IPath rawPath= classpathEntry.getPath();
-			if (classpathEntry.getEntryKind() != IClasspathEntry.CPE_CONTAINER && !rawPath.isAbsolute())
+			if (classpathEntry.getEntryKind() != IClasspathEntry.CPE_CONTAINER && !rawPath.isAbsolute()) {
 				path= rawPath;
-			else
+			} else {
 				path= root.getPath();
+			}
 		} catch (JavaModelException e) {
 			path= root.getPath();
 		}

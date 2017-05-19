@@ -29,5 +29,4 @@ public abstract class AbstractWorkspaceTest {
 		WorkspaceHelper.deleteAllProjects();
 	}
 
-
 }

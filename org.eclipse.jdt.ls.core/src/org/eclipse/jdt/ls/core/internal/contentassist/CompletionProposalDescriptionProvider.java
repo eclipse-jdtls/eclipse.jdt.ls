@@ -100,8 +100,9 @@ public class CompletionProposalDescriptionProvider {
 		char[][] parameterNames= methodProposal.findParameterNames(null);
 		char[][] parameterTypes= Signature.getParameterTypes(signature);
 
-		for (int i= 0; i < parameterTypes.length; i++)
+		for (int i= 0; i < parameterTypes.length; i++) {
 			parameterTypes[i]= createTypeDisplayName(SignatureUtil.getLowerBound(parameterTypes[i]));
+		}
 
 		if (Flags.isVarargs(methodProposal.getFlags())) {
 			int index= parameterTypes.length - 1;
@@ -147,16 +148,20 @@ public class CompletionProposalDescriptionProvider {
 	 * @return the converted type name
 	 */
 	private char[] convertToVararg(char[] typeName) {
-		if (typeName == null)
+		if (typeName == null) {
 			return typeName;
+		}
 		final int len= typeName.length;
-		if (len < 2)
+		if (len < 2) {
 			return typeName;
+		}
 
-		if (typeName[len - 1] != ']')
+		if (typeName[len - 1] != ']') {
 			return typeName;
-		if (typeName[len - 2] != '[')
+		}
+		if (typeName[len - 2] != '[') {
 			return typeName;
+		}
 
 		char[] vararg= new char[len + 1];
 		System.arraycopy(typeName, 0, vararg, 0, len - 2);
@@ -192,7 +197,9 @@ public class CompletionProposalDescriptionProvider {
 				} else {
 					pos= buf.indexOf("? super "); //$NON-NLS-1$
 					if (pos >= 0)
+					{
 						buf.replace(pos, pos + 8, "-"); //$NON-NLS-1$
+					}
 				}
 			} while (pos >= 0);
 			return buf.toString().toCharArray();
@@ -349,7 +356,9 @@ public class CompletionProposalDescriptionProvider {
 		// special methods may not have a declaring type: methods defined on arrays etc.
 		// TODO remove when bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=84690 gets fixed
 		if (declaringTypeSignature == null)
+		{
 			return "java.lang.Object"; //$NON-NLS-1$
+		}
 		return SignatureUtil.stripSignatureToFQN(String.valueOf(declaringTypeSignature));
 	}
 
@@ -371,10 +380,11 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	private void createTypeProposalLabel(CompletionProposal typeProposal, CompletionItem item) {
 		char[] signature;
-		if (fContext != null && fContext.isInJavadoc())
+		if (fContext != null && fContext.isInJavadoc()) {
 			signature= Signature.getTypeErasure(typeProposal.getSignature());
-		else
+		} else {
 			signature= typeProposal.getSignature();
+		}
 		char[] fullName= Signature.toCharArray(signature);
 		createTypeProposalLabel(fullName, item);
 		setDeclarationSignature(item, String.valueOf(signature));
@@ -452,15 +462,17 @@ public class CompletionProposalDescriptionProvider {
 	 * @return <code>true</code> if the given string starts with "this."
 	 */
 	private boolean isThisPrefix(char[] string) {
-		if (string == null || string.length < 5)
+		if (string == null || string.length < 5) {
 			return false;
+		}
 		return string[0] == 't' && string[1] == 'h' && string[2] == 'i' && string[3] == 's' && string[4] == '.';
 	}
 
 	private void createLabelWithTypeAndDeclaration(CompletionProposal proposal, CompletionItem item) {
 		char[] name= proposal.getCompletion();
-		if (!isThisPrefix(name))
+		if (!isThisPrefix(name)) {
 			name= proposal.getName();
+		}
 		StringBuilder buf= new StringBuilder();
 
 		buf.append(name);

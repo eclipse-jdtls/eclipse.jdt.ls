@@ -92,7 +92,9 @@ public class HoverInfoProvider {
 			member= (IMember) element;
 		} else if (element instanceof IPackageFragment) {
 			Reader r = JavadocContentAccess.getHTMLContentReader((IPackageFragment) element, true);
-			if(r == null ) return null;
+			if(r == null ) {
+				return null;
+			}
 			return getString(r);
 		} else {
 			return null;
@@ -104,9 +106,13 @@ public class HoverInfoProvider {
 		}
 
 		ISourceRange javadocRange= member.getJavadocRange();
-		if(javadocRange == null ) return null;
+		if(javadocRange == null ) {
+			return null;
+		}
 		Reader r = JavadocContentAccess.getHTMLContentReader(member,true,true);
-		if(r == null ) return null;
+		if(r == null ) {
+			return null;
+		}
 		return getString(r);
 	}
 

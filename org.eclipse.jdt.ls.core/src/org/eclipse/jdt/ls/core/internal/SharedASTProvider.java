@@ -51,8 +51,9 @@ public final class SharedASTProvider {
 
 	public CompilationUnit getAST(final ITypeRoot input,  IProgressMonitor progressMonitor) {
 
-		if (progressMonitor != null && progressMonitor.isCanceled())
+		if (progressMonitor != null && progressMonitor.isCanceled()) {
 			return null;
+		}
 
 		final String identifier = input.getHandleIdentifier();
 		CompilationUnit unit = cache.get(identifier);
@@ -78,11 +79,13 @@ public final class SharedASTProvider {
 	 * @return AST
 	 */
 	private static CompilationUnit createAST(final ITypeRoot input, final IProgressMonitor progressMonitor) {
-		if (!hasSource(input))
+		if (!hasSource(input)) {
 			return null;
+		}
 
-		if (progressMonitor != null && progressMonitor.isCanceled())
+		if (progressMonitor != null && progressMonitor.isCanceled()) {
 			return null;
+		}
 
 		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 		parser.setResolveBindings(true);
@@ -90,8 +93,9 @@ public final class SharedASTProvider {
 		parser.setBindingsRecovery(IASTSharedValues.SHARED_BINDING_RECOVERY);
 		parser.setSource(input);
 
-		if (progressMonitor != null && progressMonitor.isCanceled())
+		if (progressMonitor != null && progressMonitor.isCanceled()) {
 			return null;
+		}
 
 		final CompilationUnit root[]= new CompilationUnit[1];
 
@@ -99,8 +103,9 @@ public final class SharedASTProvider {
 			@Override
 			public void run() {
 				try {
-					if (progressMonitor != null && progressMonitor.isCanceled())
+					if (progressMonitor != null && progressMonitor.isCanceled()) {
 						return;
+					}
 					root[0]= (CompilationUnit)parser.createAST(progressMonitor);
 
 					//mark as unmodifiable
@@ -125,8 +130,9 @@ public final class SharedASTProvider {
 	 * @return <code>true</code> if the element has source
 	 */
 	private static boolean hasSource(ITypeRoot je) {
-		if (je == null || !je.exists())
+		if (je == null || !je.exists()) {
 			return false;
+		}
 
 		try {
 			return je.getBuffer() != null;

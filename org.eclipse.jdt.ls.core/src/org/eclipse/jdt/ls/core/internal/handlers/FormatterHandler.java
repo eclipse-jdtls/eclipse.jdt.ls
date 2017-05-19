@@ -40,7 +40,6 @@ import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
-
 /**
  * @author IBM Corporation (Markus Keller)
  */
@@ -60,8 +59,9 @@ public class FormatterHandler {
 	CompletableFuture<List<? extends org.eclipse.lsp4j.TextEdit>> rangeFormatting(DocumentRangeFormattingParams params){
 		return CompletableFuture.supplyAsync(()->{
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			if(cu == null )
+			if(cu == null ) {
 				return Collections.emptyList();
+			}
 			return format(cu, params.getOptions(), params.getRange());
 		});
 	}
@@ -75,7 +75,9 @@ public class FormatterHandler {
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
 			IRegion region = (range == null ? new Region(0,document.getLength()) : getRegion(range,document));
 			// could not calculate region abort.
-			if(region == null ) return null;
+			if(region == null ) {
+				return null;
+			}
 			String sourceToFormat = document.get();
 			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
 			if (format == null || format.getChildren().length == 0) {

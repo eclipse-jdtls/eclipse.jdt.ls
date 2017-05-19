@@ -23,7 +23,7 @@ import org.eclipse.m2e.core.internal.IMavenConstants;
  * @author Fred Bricon
  */
 @SuppressWarnings("restriction")
-public class ProjectUtils {
+public final class ProjectUtils {
 
 	private ProjectUtils() {
 		//No instanciation

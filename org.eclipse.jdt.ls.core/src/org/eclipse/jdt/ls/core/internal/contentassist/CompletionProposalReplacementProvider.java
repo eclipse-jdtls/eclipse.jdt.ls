@@ -189,8 +189,9 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	protected boolean hasArgumentList(CompletionProposal proposal) {
-		if (CompletionProposal.METHOD_NAME_REFERENCE == proposal.getKind())
+		if (CompletionProposal.METHOD_NAME_REFERENCE == proposal.getKind()) {
 			return false;
+		}
 		char[] completion= proposal.getCompletion();
 		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == ')';
 	}
@@ -208,8 +209,9 @@ public class CompletionProposalReplacementProvider {
 		// we're inserting a method plus the argument list - respect formatter preferences
 		appendMethodNameReplacement(buffer, proposal);
 		final boolean addParen  = client.isCompletionSnippetsSupported();
-		if(addParen)
+		if(addParen) {
 			buffer.append(LPAREN);
+		}
 
 		if (hasParameters(proposal)) {
 			appendGuessingCompletion(buffer, proposal);
@@ -218,8 +220,9 @@ public class CompletionProposalReplacementProvider {
 		if(addParen){
 			buffer.append(RPAREN);
 			// add semicolons only if there are parentheses
-			if (canAutomaticallyAppendSemicolon(proposal))
+			if (canAutomaticallyAppendSemicolon(proposal)) {
 				buffer.append(SEMICOLON);
+			}
 		}
 	}
 
@@ -237,8 +240,9 @@ public class CompletionProposalReplacementProvider {
 			buffer.append(coreCompletion);
 		}
 
-		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION)
+		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
 			buffer.append(proposal.getName());
+		}
 
 	}
 
@@ -305,8 +309,9 @@ public class CompletionProposalReplacementProvider {
 			if(typeArguments.length > 0){
 				if (canUseDiamond){
 					buffer.append("<>"); //$NON-NLS-1$
-				} else
+				} else {
 					appendParameterList(buffer,typeArguments, onlyAppendArguments);
+				}
 			}
 		}
 		Range range = toReplacementRange(typeProposal);
@@ -315,10 +320,11 @@ public class CompletionProposalReplacementProvider {
 
 	private final boolean shouldProposeGenerics(IJavaProject project) {
 		String sourceVersion;
-		if (project != null)
+		if (project != null) {
 			sourceVersion= project.getOption(JavaCore.COMPILER_SOURCE, true);
-		else
+		} else {
 			sourceVersion= JavaCore.getOption(JavaCore.COMPILER_SOURCE);
+		}
 
 		return !isVersionLessThan(sourceVersion, JavaCore.VERSION_1_5);
 	}
@@ -343,12 +349,14 @@ public class CompletionProposalReplacementProvider {
 		try {
 			IType type = (IType) resolveJavaElement(
 					compilationUnit.getJavaProject(), proposal);
-			if (type == null)
+			if (type == null) {
 				return new String[0];
+			}
 
 			ITypeParameter[] parameters = type.getTypeParameters();
-			if (parameters.length == 0)
+			if (parameters.length == 0) {
 				return new String[0];
+			}
 
 			String[] arguments = new String[parameters.length];
 
@@ -360,11 +368,12 @@ public class CompletionProposalReplacementProvider {
 				IType expectedType= (IType) expectedTypeBinding.getJavaElement();
 
 				IType[] path= TypeProposalUtils.computeInheritancePath(type, expectedType);
-				if (path == null)
+				if (path == null) {
 					// proposed type does not inherit from expected type
 					// the user might be looking for an inner type of proposed type
 					// to instantiate -> do not add any type arguments
 					return new String[0];
+				}
 
 				int[] indices= new int[parameters.length];
 				for (int paramIdx= 0; paramIdx < parameters.length; paramIdx++) {
@@ -399,10 +408,11 @@ public class CompletionProposalReplacementProvider {
 	private String computeTypeProposal(ITypeParameter parameter) throws JavaModelException {
 		String[] bounds= parameter.getBounds();
 		String elementName= parameter.getElementName();
-		if (bounds.length == 1 && !"java.lang.Object".equals(bounds[0])) //$NON-NLS-1$
+		if (bounds.length == 1 && !"java.lang.Object".equals(bounds[0])) {
 			return Signature.getSimpleName(bounds[0]);
-		else
+		} else {
 			return elementName;
+		}
 	}
 
 	private String computeTypeProposal(ITypeBinding binding, ITypeParameter parameter) throws JavaModelException {
@@ -434,14 +444,16 @@ public class CompletionProposalReplacementProvider {
 			separator.append(COMMA);
 
 			for (int i= 0; i != typeArguments.length; i++) {
-				if (i != 0)
+				if (i != 0) {
 					buffer.append(separator);
+				}
 
 				buffer.append(typeArguments[i]);
 			}
 
-			if (!onlyAppendArguments)
+			if (!onlyAppendArguments) {
 				buffer.append(GREATER);
+			}
 		}
 		return buffer;
 	}
@@ -453,16 +465,18 @@ public class CompletionProposalReplacementProvider {
 		 * No argument list if there were any special triggers (for example a
 		 * period to qualify an inner type).
 		 */
-		if (trigger != '\0' && trigger != '<' && trigger != '(')
+		if (trigger != '\0' && trigger != '<' && trigger != '(') {
 			return false;
+		}
 
 		/*
 		 * No argument list if the completion is empty (already within the
 		 * argument list).
 		 */
 		char[] completion = proposal.getCompletion();
-		if (completion.length == 0)
+		if (completion.length == 0) {
 			return false;
+		}
 
 		/*
 		 * No argument list if there already is a generic signature behind the
@@ -474,11 +488,13 @@ public class CompletionProposalReplacementProvider {
 			String line= document.get(region.getOffset(),region.getLength());
 
 			int index= proposal.getReplaceEnd() - region.getOffset();
-			while (index != line.length() && Character.isUnicodeIdentifierPart(line.charAt(index)))
+			while (index != line.length() && Character.isUnicodeIdentifierPart(line.charAt(index))) {
 				++index;
+			}
 
-			if (index == line.length())
+			if (index == line.length()) {
 				return true;
+			}
 
 			char ch= line.charAt(index);
 			return ch != '<';
@@ -533,8 +549,9 @@ public class CompletionProposalReplacementProvider {
 		if (compilationUnit != null && isImplicitImport(Signature.getQualifier(qualifiedTypeName), compilationUnit)) {
 			/* No imports for implicit imports. */
 
-			if (proposal.getKind() == CompletionProposal.TYPE_IMPORT && coreKind == CompletionProposal.FIELD_REF)
+			if (proposal.getKind() == CompletionProposal.TYPE_IMPORT && coreKind == CompletionProposal.FIELD_REF) {
 				return buffer;
+			}
 			qualifiedTypeName= String.valueOf(Signature.getSignatureSimpleName(qualifiedType));
 		}
 		buffer.append(qualifiedTypeName);
@@ -544,8 +561,9 @@ public class CompletionProposalReplacementProvider {
 
 	private ITypeBinding getExpectedTypeForGenericParameters() {
 		char[][] chKeys= context.getExpectedTypesKeys();
-		if (chKeys == null || chKeys.length == 0)
+		if (chKeys == null || chKeys.length == 0) {
 			return null;
+		}
 
 		String[] keys= new String[chKeys.length];
 		for (int i= 0; i < keys.length; i++) {
@@ -566,8 +584,9 @@ public class CompletionProposalReplacementProvider {
 		};
 		parser.createASTs(new ICompilationUnit[0], keys, requestor, null);
 
-		if (bindings.size() > 0)
+		if (bindings.size() > 0) {
 			return (ITypeBinding) bindings.get(keys[0]);
+		}
 
 		return null;
 	}
@@ -576,8 +595,9 @@ public class CompletionProposalReplacementProvider {
 		String replacement = String.valueOf(proposal.getCompletion());
 
 		/* No import rewriting ever from within the import section. */
-		if (isImportCompletion(proposal))
+		if (isImportCompletion(proposal)) {
 			return replacement;
+		}
 
 		/*
 		 * Always use the simple name for non-formal javadoc references to
@@ -585,19 +605,22 @@ public class CompletionProposalReplacementProvider {
 		 */
 		// TODO fix
 		if (proposal.getKind() == CompletionProposal.TYPE_REF
-				&& context.isInJavadocText())
+				&& context.isInJavadocText()) {
 			return SignatureUtil.getSimpleTypeName(proposal);
+		}
 
 		String qualifiedTypeName = SignatureUtil.getQualifiedTypeName(proposal);
 
 		// Type in package info must be fully qualified.
 		if (compilationUnit != null
-				&& TypeProposalUtils.isPackageInfo(compilationUnit))
+				&& TypeProposalUtils.isPackageInfo(compilationUnit)) {
 			return qualifiedTypeName;
+		}
 
-		if (qualifiedTypeName.indexOf('.') == -1 && replacement.length() > 0)
+		if (qualifiedTypeName.indexOf('.') == -1 && replacement.length() > 0) {
 			// default package - no imports needed
 			return qualifiedTypeName;
+		}
 
 		/*
 		 * If the user types in the qualification, don't force import rewriting
@@ -626,7 +649,9 @@ public class CompletionProposalReplacementProvider {
 		 */
 		if (replacement.indexOf('.') == -1) {
 			if (isInJavadoc())
+			{
 				return SignatureUtil.getSimpleTypeName(proposal); // don't use
+			}
 			// the
 			// braces
 			// added for
@@ -659,8 +684,9 @@ public class CompletionProposalReplacementProvider {
 
 	private boolean isImportCompletion(CompletionProposal proposal) {
 		char[] completion = proposal.getCompletion();
-		if (completion.length == 0)
+		if (completion.length == 0) {
 			return false;
+		}
 
 		char last = completion[completion.length - 1];
 		/*

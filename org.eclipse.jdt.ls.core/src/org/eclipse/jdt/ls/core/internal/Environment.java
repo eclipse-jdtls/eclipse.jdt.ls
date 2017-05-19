@@ -24,8 +24,9 @@ public final class Environment {
 	 * @return value or null
 	 */
 	public static String getEnvironment(final String name){
-		if(name == null || name.isEmpty())
+		if(name == null || name.isEmpty()) {
 			return null;
+		}
 		return System.getenv(name);
 	}
 
@@ -35,8 +36,9 @@ public final class Environment {
 	 * @return value or null
 	 */
 	public static String getProperty(final String name){
-		if(name == null || name.isEmpty())
+		if(name == null || name.isEmpty()) {
 			return null;
+		}
 		return System.getProperty(name);
 	}
 
@@ -48,8 +50,9 @@ public final class Environment {
 	 */
 	public static String get(final String name){
 		String value = getEnvironment(name);
-		if(value == null)
+		if(value == null) {
 			value = getProperty(name);
+		}
 		return value;
 	}
 
@@ -61,8 +64,9 @@ public final class Environment {
 	 */
 	public static String get(final String name, final String defaultValue){
 		String value = get(name);
-		if(value == null)
+		if(value == null) {
 			value = defaultValue;
+		}
 		return value;
 	}
 

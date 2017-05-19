@@ -38,6 +38,7 @@ public class WorkspaceSymbolHandler{
 		if (query == null || query.trim().isEmpty()) {
 			return Collections.emptyList();
 		}
+
 		try {
 			ArrayList<SymbolInformation> symbols = new ArrayList<>();
 			new SearchEngine().searchAllTypeNames(null,SearchPattern.R_PATTERN_MATCH, query.toCharArray(), SearchPattern.R_CAMELCASE_MATCH, IJavaSearchConstants.TYPE, createSearchScope(),new TypeNameMatchRequestor() {

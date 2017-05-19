@@ -34,7 +34,6 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 @SuppressWarnings("restriction")
 public class DocumentHighlightHandler{
 
-
 	private List<DocumentHighlight> computeOccurrences(ITypeRoot unit, int line, int column) {
 		if (unit != null) {
 			try {

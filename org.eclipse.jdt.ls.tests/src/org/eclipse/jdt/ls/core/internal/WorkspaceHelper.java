@@ -35,7 +35,6 @@ public final class WorkspaceHelper {
 		assertEquals(1, getAllProjects().size());
 	}
 
-
 	public static IProject getProject(String name) {
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(name);
 		return project.exists()?project:null;

@@ -61,7 +61,6 @@ public class CodeActionHandler {
 		return $;
 	}
 
-
 	private boolean hasCodeAssist(Diagnostic diagnostic){
 
 		final int problemId= getProblemId(diagnostic);

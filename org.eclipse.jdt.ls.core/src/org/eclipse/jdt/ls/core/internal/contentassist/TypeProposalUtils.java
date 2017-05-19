@@ -73,10 +73,11 @@ public class TypeProposalUtils {
 	}
 
 	static String[] getSuperTypeSignatures(IType subType, IType superType) throws JavaModelException {
-		if (superType.isInterface())
+		if (superType.isInterface()) {
 			return subType.getSuperInterfaceTypeSignatures();
-		else
+		} else {
 			return new String[] {subType.getSuperclassTypeSignature()};
+		}
 	}
 
 	static String findMatchingSuperTypeSignature(IType subType, IType superType) throws JavaModelException {
@@ -100,16 +101,18 @@ public class TypeProposalUtils {
 	static int findMatchingTypeArgumentIndex(String signature, String argument) {
 		String[] typeArguments= Signature.getTypeArguments(signature);
 		for (int i= 0; i < typeArguments.length; i++) {
-			if (Signature.getSignatureSimpleName(typeArguments[i]).equals(argument))
+			if (Signature.getSignatureSimpleName(typeArguments[i]).equals(argument)) {
 				return i;
+			}
 		}
 		return -1;
 	}
 
 	static int mapTypeParameterIndex(IType[] path, int pathIndex, int paramIndex) throws JavaModelException, ArrayIndexOutOfBoundsException {
-		if (pathIndex == 0)
+		if (pathIndex == 0) {
 			// break condition: we've reached the top of the hierarchy
 			return paramIndex;
+		}
 
 		IType subType= path[pathIndex];
 		IType superType= path[pathIndex - 1];
@@ -126,16 +129,20 @@ public class TypeProposalUtils {
 	}
 
 	static IType[] computeInheritancePath(IType subType, IType superType) throws JavaModelException {
-		if (superType == null)
+		if (superType == null) {
 			return null;
+		}
 
 		// optimization: avoid building the type hierarchy for the identity case
-		if (superType.equals(subType))
+		if (superType.equals(subType)) {
 			return new IType[] { subType };
+		}
 
 		ITypeHierarchy hierarchy= subType.newSupertypeHierarchy(new NullProgressMonitor());
 		if (!hierarchy.contains(superType))
+		{
 			return null; // no path
+		}
 
 		List<IType> path= new LinkedList<>();
 		path.add(superType);

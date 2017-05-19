@@ -117,10 +117,12 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 			c= nextChar();
 			while (!fReadFromBuffer && c != -1) {
 				String s= computeSubstitution(c);
-				if (s == null)
+				if (s == null) {
 					break;
-				if (s.length() > 0)
+				}
+				if (s.length() > 0) {
 					fBuilder.insert(0, s);
+				}
 				c= nextChar();
 			}
 

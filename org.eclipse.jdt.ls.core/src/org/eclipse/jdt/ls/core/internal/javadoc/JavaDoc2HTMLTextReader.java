@@ -98,17 +98,22 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 			boolean insideTag= false;
 			for (int i= 0; i < length; i++) {
 				char charAt= result.charAt(i);
-				if (charAt == '<' && result.charAt(i + 1) == 'a')
+				if (charAt == '<' && result.charAt(i + 1) == 'a') {
 					insideTag= true;
-				if (charAt == '>')
+				}
+				if (charAt == '>') {
 					insideTag= false;
+				}
 				if (charAt == '#' && !insideTag)
+				{
 					result= result.substring(0, i) + "." + result.substring(i + 1); //$NON-NLS-1$
+				}
 			}
 		}
 
-		if (result.startsWith(".")) //$NON-NLS-1$
+		if (result.startsWith(".")) {
 			result= result.substring(1);
+		}
 		return result;
 	}
 
@@ -117,9 +122,9 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		while (e.hasNext()) {
 			String s= e.next();
 			buffer.append("<li>"); //$NON-NLS-1$
-			if (!firstword)
+			if (!firstword) {
 				buffer.append(s);
-			else {
+			} else {
 				buffer.append("<b>"); //$NON-NLS-1$
 
 				int i= getParamEndOffset(s);
@@ -139,22 +144,27 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		int i= 0;
 		final int length= s.length();
 		// \s*
-		while (i < length && Character.isWhitespace(s.charAt(i)))
+		while (i < length && Character.isWhitespace(s.charAt(i))) {
 			++i;
+		}
 		if (i < length && s.charAt(i) == '<') {
 			// generic type parameter
 			// read <\s*\w*\s*>
-			while (i < length && Character.isWhitespace(s.charAt(i)))
+			while (i < length && Character.isWhitespace(s.charAt(i))) {
 				++i;
-			while (i < length && Character.isJavaIdentifierPart(s.charAt(i)))
+			}
+			while (i < length && Character.isJavaIdentifierPart(s.charAt(i))) {
 				++i;
-			while (i < length && s.charAt(i) != '>')
+			}
+			while (i < length && s.charAt(i) != '>') {
 				++i;
+			}
 			++i; // >
 		} else {
 			// simply read an identifier
-			while (i < length && Character.isJavaIdentifierPart(s.charAt(i)))
+			while (i < length && Character.isJavaIdentifierPart(s.charAt(i))) {
 				++i;
+			}
 		}
 
 		return i;
@@ -186,11 +196,13 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 			while (e.hasNext()) {
 				Pair p= e.next();
 				buffer.append("<li>"); //$NON-NLS-1$
-				if (p.fTag != null)
+				if (p.fTag != null) {
 					buffer.append(p.fTag);
+				}
 				buffer.append("<ul><li>"); //$NON-NLS-1$
-				if (p.fContent != null)
+				if (p.fContent != null) {
 					buffer.append(p.fContent);
+				}
 				buffer.append("</li></ul></li>"); //$NON-NLS-1$
 			}
 		}
@@ -215,22 +227,23 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 
 		tagContent= tagContent.trim();
 
-		if (TagElement.TAG_PARAM.equals(tag))
+		if (TagElement.TAG_PARAM.equals(tag)) {
 			fParameters.add(tagContent);
-		else if (TagElement.TAG_RETURN.equals(tag))
+		} else if (TagElement.TAG_RETURN.equals(tag)) {
 			fReturn= tagContent;
-		else if (TagElement.TAG_EXCEPTION.equals(tag))
+		} else if (TagElement.TAG_EXCEPTION.equals(tag)) {
 			fExceptions.add(tagContent);
-		else if (TagElement.TAG_THROWS.equals(tag))
+		} else if (TagElement.TAG_THROWS.equals(tag)) {
 			fExceptions.add(tagContent);
-		else if (TagElement.TAG_AUTHOR.equals(tag))
+		} else if (TagElement.TAG_AUTHOR.equals(tag)) {
 			fAuthors.add(substituteQualification(tagContent));
-		else if (TagElement.TAG_SEE.equals(tag))
+		} else if (TagElement.TAG_SEE.equals(tag)) {
 			fSees.add(substituteQualification(tagContent));
-		else if (TagElement.TAG_SINCE.equals(tag))
+		} else if (TagElement.TAG_SINCE.equals(tag)) {
 			fSince.add(substituteQualification(tagContent));
-		else if (tagContent != null)
+		} else if (tagContent != null) {
 			fRest.add(new Pair(tag, tagContent));
+		}
 	}
 
 	/*
@@ -298,10 +311,11 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 					break;
 				}
 			}
-			if (TagElement.TAG_LINK.equals(tag))
+			if (TagElement.TAG_LINK.equals(tag)) {
 				return "<code>" + substituteQualification(tagContent.substring(labelStart)) + "</code>";  //$NON-NLS-1$//$NON-NLS-2$
-			else
+			} else {
 				return substituteQualification(tagContent.substring(labelStart));
+			}
 
 		} else if (TagElement.TAG_LITERAL.equals(tag) || TagElement.TAG_CODE.equals(tag)) {
 			return printLiteral(tagContent);
@@ -365,11 +379,13 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 	 */
 	@Override
 	protected String computeSubstitution(int c) throws IOException {
-		if (c == '@' && fWasWhiteSpace)
+		if (c == '@' && fWasWhiteSpace) {
 			return processSimpleTag();
+		}
 
-		if (c == '{')
+		if (c == '{') {
 			return processBlockTag();
+		}
 
 		return null;
 	}
@@ -397,8 +413,9 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		int previous= 0;
 		int current= text.indexOf(c, previous);
 
-		if (current == -1)
+		if (current == -1) {
 			return text;
+		}
 
 		StringBuilder buffer= new StringBuilder();
 		while (current > -1) {

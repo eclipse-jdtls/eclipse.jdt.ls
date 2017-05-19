@@ -64,8 +64,9 @@ public class DocumentSymbolHandler {
 				String name = JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
 				si.setName(name == null ? element.getElementName() : name);
 				si.setKind(mapKind(element));
-				if (element.getParent() != null)
+				if (element.getParent() != null) {
 					si.setContainerName(element.getParent().getElementName());
+				}
 				si.setLocation(location);
 				if (!symbols.contains(si)) {
 					symbols.add(si);
@@ -91,11 +92,13 @@ public class DocumentSymbolHandler {
 	}
 
 	private boolean isSyntheticElement(IJavaElement element) {
-		if (!(element instanceof IMember))
+		if (!(element instanceof IMember)) {
 			return false;
+		}
 		IMember member= (IMember)element;
-		if (!(member.isBinary()))
+		if (!(member.isBinary())) {
 			return false;
+		}
 		try {
 			return Flags.isSynthetic(member.getFlags());
 		} catch (JavaModelException e) {
@@ -106,8 +109,9 @@ public class DocumentSymbolHandler {
 	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
 		return CompletableFuture.supplyAsync(()->{
 			ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
-			if(unit == null )
+			if(unit == null ) {
 				return Collections.emptyList();
+			}
 			SymbolInformation[] elements  = this.getOutline(unit);
 			return Arrays.asList(elements);
 		});
