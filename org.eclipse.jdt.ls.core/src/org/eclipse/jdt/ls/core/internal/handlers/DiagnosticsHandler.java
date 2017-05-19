@@ -80,10 +80,12 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	private DiagnosticSeverity convertSeverity(IProblem problem) {
-		if(problem.isError())
+		if(problem.isError()) {
 			return DiagnosticSeverity.Error;
-		if(problem.isWarning())
+		}
+		if(problem.isWarning()) {
 			return DiagnosticSeverity.Warning;
+		}
 		return DiagnosticSeverity.Information;
 	}
 

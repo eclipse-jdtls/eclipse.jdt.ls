@@ -10,14 +10,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-public class Util {
+public final class Util {
 
 	private Util() {
 		// private constructor - only static methods are expected
 	}
 
 	public static String convertToIndependentLineDelimiter(String source) {
-		if (source.indexOf('\n') == -1 && source.indexOf('\r') == -1) return source;
+		if (source.indexOf('\n') == -1 && source.indexOf('\r') == -1) {
+			return source;
+		}
 		StringBuilder buffer = new StringBuilder();
 		for (int i = 0, length = source.length(); i < length; i++) {
 			char car = source.charAt(i);

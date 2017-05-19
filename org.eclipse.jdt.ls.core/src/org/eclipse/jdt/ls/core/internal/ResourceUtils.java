@@ -31,7 +31,7 @@ import com.google.common.io.Files;
 /**
  * @author Fred Bricon
  */
-public class ResourceUtils {
+public final class ResourceUtils {
 
 	private ResourceUtils() {
 		// No instanciation

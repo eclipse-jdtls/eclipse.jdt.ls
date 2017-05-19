@@ -116,7 +116,9 @@ public class CodeLensHandler {
 			return Collections.emptyList();
 		}
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-		if(unit == null || !unit.getResource().exists()) return Collections.emptyList();
+		if(unit == null || !unit.getResource().exists()) {
+			return Collections.emptyList();
+		}
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);

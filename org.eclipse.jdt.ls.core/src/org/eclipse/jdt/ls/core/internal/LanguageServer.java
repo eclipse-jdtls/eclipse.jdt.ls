@@ -45,7 +45,9 @@ public class LanguageServer implements IApplication {
 	private boolean parentProcessStillRunning() {
 		// Wait until parent process id is available
 		long parentProcessId = getParentProcessId();
-		if (parentProcessId == 0) return true;
+		if (parentProcessId == 0) {
+			return true;
+		}
 
 		String command;
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {

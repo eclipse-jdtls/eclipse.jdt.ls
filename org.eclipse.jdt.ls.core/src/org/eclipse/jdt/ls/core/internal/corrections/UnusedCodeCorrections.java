@@ -29,7 +29,9 @@ public class UnusedCodeCorrections {
 
 	public static TextEdit createUnusedImportTextEdit(CompilationUnit cu, int problemStart, int problemLength){
 		ImportDeclaration node = getImportDeclaration(cu, problemStart, problemLength);
-		if(node == null )return null;
+		if(node == null ) {
+			return null;
+		}
 		ASTRewrite rewrite = ASTRewrite.create(cu.getAST());
 		rewrite.remove(node, new TextEditGroup("remove_import") );
 		try {

@@ -143,8 +143,9 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 	@Override
 	public void close() {
 		synchronized (lock) {
-			if (fIsClosed)
+			if (fIsClosed) {
 				return;
+			}
 
 			fIsClosed= true;
 			fDocument.removeDocumentListener(this);

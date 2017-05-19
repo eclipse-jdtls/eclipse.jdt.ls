@@ -29,7 +29,7 @@ import org.eclipse.lsp4j.Location;
  * @author Fred Bricon
  *
  */
-public class ClassFileUtil {
+public final class ClassFileUtil {
 
 	private ClassFileUtil() {
 	}

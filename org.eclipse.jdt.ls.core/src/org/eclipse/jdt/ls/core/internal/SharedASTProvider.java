@@ -36,7 +36,7 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
  *
  */
 @SuppressWarnings("restriction")
-public class SharedASTProvider {
+public final class SharedASTProvider {
 
 	private Map<String, CompilationUnit> cache = Collections.synchronizedMap(new HashMap<>());
 	private static SharedASTProvider instance = new SharedASTProvider();

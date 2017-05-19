@@ -33,7 +33,7 @@ import org.junit.Assert;
  *
  */
 @SuppressWarnings("restriction")
-public class JobHelpers {
+public final class JobHelpers {
 
 	private JobHelpers() {
 		//no instantiation

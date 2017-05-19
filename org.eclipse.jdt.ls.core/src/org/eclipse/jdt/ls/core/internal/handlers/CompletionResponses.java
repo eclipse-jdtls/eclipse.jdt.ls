@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Fred Bricon
  */
-public class CompletionResponses {
+public final class CompletionResponses {
 
 	private CompletionResponses(){
 		//Don't instantiate

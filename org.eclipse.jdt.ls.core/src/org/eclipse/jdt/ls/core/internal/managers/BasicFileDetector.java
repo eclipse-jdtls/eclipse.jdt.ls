@@ -147,7 +147,7 @@ public class BasicFileDetector {
 
 	private boolean isExcluded(Path dir) {
 		//TODO support regexp, maybe?
-		return exclusions.contains(dir.getFileName().toString());
+		return dir.getFileName() != null && exclusions.contains(dir.getFileName().toString());
 	}
 
 	private boolean hasTargetFile(Path dir) {

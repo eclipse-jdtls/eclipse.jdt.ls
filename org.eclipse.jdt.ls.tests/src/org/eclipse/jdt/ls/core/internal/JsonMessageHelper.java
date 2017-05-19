@@ -23,7 +23,7 @@ import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints;
  * @author Fred Bricon
  *
  */
-public class JsonMessageHelper {
+public final class JsonMessageHelper {
 
 	private static MessageJsonHandler handler;
 	static {

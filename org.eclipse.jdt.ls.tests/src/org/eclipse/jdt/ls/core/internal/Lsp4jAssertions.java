@@ -23,7 +23,7 @@ import org.eclipse.lsp4j.TextEdit;
  * @author Fred Bricon
  *
  */
-public class Lsp4jAssertions {
+public final class Lsp4jAssertions {
 
 	private Lsp4jAssertions() {
 		//no instantiation

@@ -48,7 +48,7 @@ import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
  * @noinstantiate This class is not intended to be instantiated by clients.
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class JavadocContentAccess {
+public final class JavadocContentAccess {
 	/**
 	 * The name of the package-info.java file.
 	 */

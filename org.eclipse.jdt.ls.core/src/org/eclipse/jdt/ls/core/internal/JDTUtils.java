@@ -72,6 +72,10 @@ public final class JDTUtils {
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
+	private JDTUtils() {
+		//No public instantiation
+	}
+
 	/**
 	 * Given the uri returns a {@link ICompilationUnit}.
 	 * May return null if it can not associate the uri with a Java
@@ -284,9 +288,10 @@ public final class JDTUtils {
 	private static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
 		ISourceRange nameRange = null;
 		if (element instanceof IMember) {
-			nameRange = ((IMember) element).getNameRange();
-			if ( (!SourceRange.isAvailable(nameRange)) && element instanceof ISourceReference) {
-				nameRange = ((ISourceReference) element).getSourceRange();
+			IMember member = (IMember) element;
+			nameRange = member.getNameRange();
+			if ( (!SourceRange.isAvailable(nameRange))) {
+				nameRange = member.getSourceRange();
 			}
 		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
 			nameRange = ((ISourceReference) element).getNameRange();

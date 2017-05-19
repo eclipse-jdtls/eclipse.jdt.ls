@@ -24,7 +24,9 @@ public class ClientPreferences {
 	private final boolean v3supported;
 
 	public ClientPreferences(ClientCapabilities caps) {
-		if(caps == null ) throw new IllegalArgumentException("ClientCapabilities can not be null");
+		if(caps == null ) {
+			throw new IllegalArgumentException("ClientCapabilities can not be null");
+		}
 		this.capabilities = caps;
 		this.v3supported = capabilities.getTextDocument() !=null;
 	}

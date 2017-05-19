@@ -26,7 +26,7 @@ import java.util.Map;
  * @author Fred Bricon
  *
  */
-public class MapFlattener {
+public final class MapFlattener {
 
 	private MapFlattener() {
 		//No need for public instanciation

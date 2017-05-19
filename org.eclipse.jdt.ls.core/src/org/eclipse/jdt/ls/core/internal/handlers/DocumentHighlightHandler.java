@@ -18,7 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
@@ -41,9 +40,9 @@ public class DocumentHighlightHandler{
 			try {
 				int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
 				OccurrencesFinder finder = new OccurrencesFinder();
-				ASTNode ast = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
-				if (ast instanceof CompilationUnit) {
-					String error = finder.initialize((CompilationUnit) ast, offset, 0);
+				CompilationUnit ast = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+				if (ast != null) {
+					String error = finder.initialize(ast, offset, 0);
 					if (error == null){
 						List<DocumentHighlight> result = new ArrayList<>();
 						OccurrenceLocation[] occurrences = finder.getOccurrences();

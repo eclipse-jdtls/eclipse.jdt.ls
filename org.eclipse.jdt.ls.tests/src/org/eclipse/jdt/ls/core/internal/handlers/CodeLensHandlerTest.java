@@ -184,7 +184,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(sourceUri.endsWith(source));
 
 		//CodeLens position
-		Map<String, String> map = (Map<String, String>)args.get(1);
+		Map<String, Object> map = (Map<String, Object>)args.get(1);
 		assertEquals(5.0, map.get("line"));
 		assertEquals(13.0, map.get("character"));
 

@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
  * @author Fred Bricon
  *
  */
-public class WorkspaceHelper {
+public final class WorkspaceHelper {
 
 	private WorkspaceHelper() {
 		//No instances allowed

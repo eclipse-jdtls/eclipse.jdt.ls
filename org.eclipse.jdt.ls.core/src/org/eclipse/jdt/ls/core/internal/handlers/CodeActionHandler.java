@@ -51,7 +51,9 @@ public class CodeActionHandler {
 	 */
 	public List<Command> getCodeActionCommands(CodeActionParams params) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		if(unit == null ) return Collections.emptyList();
+		if(unit == null ) {
+			return Collections.emptyList();
+		}
 		List<Command> $ = new ArrayList<>();
 		params.getContext().getDiagnostics().stream()
 		.filter(this::hasCodeAssist)
