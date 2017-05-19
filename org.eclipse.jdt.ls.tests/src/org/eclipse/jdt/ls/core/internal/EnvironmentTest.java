@@ -19,7 +19,7 @@ import org.junit.Test;
 /**
  *
  */
-public class EnvironmentTests {
+public class EnvironmentTest {
 
 	@Test
 	public void testEnvironmentVars(){
