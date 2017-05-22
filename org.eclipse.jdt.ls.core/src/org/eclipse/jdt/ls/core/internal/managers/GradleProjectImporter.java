@@ -13,8 +13,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper;
@@ -85,7 +87,26 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	protected void startSynchronization(File location, GradleDistribution distribution, NewProjectHandler newProjectHandler) {
-		FixedRequestAttributes attributes = new FixedRequestAttributes(location, null, distribution, null, Collections.emptyList(), Collections.emptyList());
+		List<String> jvmArgs = new ArrayList<>();
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_HOST);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PORT);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_USER);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PASSWORD);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_HOST);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PORT);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_USER);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PASSWORD);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_NON_PROXY_HOSTS);
+		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_NON_PROXY_HOSTS);
+		FixedRequestAttributes attributes = new FixedRequestAttributes(location, null, distribution, null, jvmArgs, Collections.emptyList());
 		CorePlugin.gradleWorkspaceManager().getGradleBuild(attributes).synchronize(newProjectHandler);
+	}
+
+	private void addArgs(List<String> jvmArgs, String name) {
+		String value = System.getProperty(name);
+		if (value != null) {
+			jvmArgs.add(String.format("-D%s=%s", name, value));
+
+		}
 	}
 }
