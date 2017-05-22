@@ -38,6 +38,7 @@ detect the projects and import it properly.
 3. If, after import, you see an error on `pom.xml` about Tycho, you can use Quick Fix
 (Ctrl+1) to install the Tycho maven integration.
 
+4. At that point, some plugins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all required dependencies, then should be able to compile all projects in the workspace. 
 
 Building from command line
 ----------------------------
