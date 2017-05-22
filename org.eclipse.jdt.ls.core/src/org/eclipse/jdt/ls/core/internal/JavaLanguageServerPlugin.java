@@ -11,9 +11,15 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.util.Hashtable;
 import java.util.stream.Stream;
 
+import org.eclipse.core.internal.net.ProxySelector;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
@@ -24,10 +30,25 @@ import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.util.tracker.ServiceTracker;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
+
+	public static final String MANUAL = "Manual";
+	public static final String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
+	public static final String HTTPS_NON_PROXY_HOSTS = "https.nonProxyHosts";
+	public static final String HTTPS_PROXY_PASSWORD = "https.proxyPassword";
+	public static final String HTTPS_PROXY_PORT = "https.proxyPort";
+	public static final String HTTPS_PROXY_HOST = "https.proxyHost";
+	public static final String HTTP_PROXY_PASSWORD = "http.proxyPassword";
+	public static final String HTTP_PROXY_PORT = "http.proxyPort";
+	public static final String HTTP_PROXY_HOST = "http.proxyHost";
+	public static final String HTTPS_PROXY_USER = "https.proxyUser";
+	public static final String HTTP_PROXY_USER = "http.proxyUser";
 
 	/**
 	 * Source string send to clients for messages such as diagnostics.
@@ -37,6 +58,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static final String PLUGIN_ID = "org.eclipse.jdt.ls.core";
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
+	private ServiceTracker<IProxyService, IProxyService> proxyServiceTracker = null;
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
@@ -60,6 +82,102 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		initializeJDTOptions();
 		projectsManager = new ProjectsManager(preferenceManager);
 		logInfo(getClass()+" is started");
+		configureProxy();
+	}
+
+	private void configureProxy() {
+		String httpHost = System.getProperty(HTTP_PROXY_HOST);
+		String httpPort = System.getProperty(HTTP_PROXY_PORT);
+		String httpUser = System.getProperty(HTTP_PROXY_USER);
+		String httpPassword = System.getProperty(HTTP_PROXY_PASSWORD);
+		String httpsHost = System.getProperty(HTTPS_PROXY_HOST);
+		String httpsPort = System.getProperty(HTTPS_PROXY_PORT);
+		String httpsUser = System.getProperty(HTTPS_PROXY_USER);
+		String httpsPassword = System.getProperty(HTTPS_PROXY_PASSWORD);
+		String httpsNonProxyHosts = System.getProperty(HTTPS_NON_PROXY_HOSTS);
+		String httpNonProxyHosts = System.getProperty(HTTP_NON_PROXY_HOSTS);
+		if (httpUser != null || httpsUser != null) {
+			try {
+				Platform.getBundle("org.eclipse.core.net").start(Bundle.START_TRANSIENT);
+			} catch (BundleException e) {
+				logException(e.getMessage(), e);
+			}
+			if (httpUser != null && httpPassword != null && !httpUser.isEmpty() && !httpPassword.isEmpty()) {
+				Authenticator.setDefault(new Authenticator() {
+					@Override
+					public PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(httpUser, httpPassword.toCharArray());
+					}
+				});
+			}
+			IProxyService proxyService = getProxyService();
+			if (proxyService != null) {
+				ProxySelector.setActiveProvider(MANUAL);
+				IProxyData[] proxies = proxyService.getProxyData();
+				for (IProxyData proxy:proxies) {
+					if ("HTTP".equals(proxy.getType())) {
+						proxy.setHost(httpHost);
+						proxy.setPort(httpPort == null ? 3128 : Integer.valueOf(httpPort));
+						proxy.setPassword(httpPassword);
+						proxy.setUserid(httpUser);
+					}
+					if ("HTTPS".equals(proxy.getType())) {
+						proxy.setHost(httpsHost);
+						proxy.setPort(httpsPort == null ? 3128 : Integer.valueOf(httpsPort));
+						proxy.setPassword(httpsPassword);
+						proxy.setUserid(httpsUser);
+					}
+				}
+				try {
+					proxyService.setProxyData(proxies);
+					if (httpHost != null) {
+						System.setProperty(HTTP_PROXY_HOST, httpHost);
+					}
+					if (httpPort != null) {
+						System.setProperty(HTTP_PROXY_PORT, httpPort);
+					}
+					if (httpUser != null) {
+						System.setProperty(HTTP_PROXY_USER, httpUser);
+					}
+					if (httpPassword != null) {
+						System.setProperty(HTTP_PROXY_PASSWORD, httpPassword);
+					}
+					if (httpsHost != null) {
+						System.setProperty(HTTPS_PROXY_HOST, httpsHost);
+					}
+					if (httpsPort != null) {
+						System.setProperty(HTTPS_PROXY_PORT, httpsPort);
+					}
+					if (httpsUser != null) {
+						System.setProperty(HTTPS_PROXY_USER, httpsUser);
+					}
+					if (httpsPassword != null) {
+						System.setProperty(HTTPS_PROXY_PASSWORD, httpsPassword);
+					}
+					if (httpsNonProxyHosts != null) {
+						System.setProperty(HTTPS_NON_PROXY_HOSTS, httpsNonProxyHosts);
+					}
+					if (httpNonProxyHosts != null) {
+						System.setProperty(HTTP_NON_PROXY_HOSTS, httpNonProxyHosts);
+					}
+				} catch (CoreException e) {
+					logException(e.getMessage(), e);
+				}
+			}
+		}
+	}
+
+	private IProxyService getProxyService() {
+		try {
+			if (proxyServiceTracker == null) {
+				proxyServiceTracker = new ServiceTracker<>(context, IProxyService.class.getName(), null);
+				proxyServiceTracker.open();
+			}
+			return proxyServiceTracker.getService();
+		} catch (Exception e) {
+			logException(e.getMessage(), e);
+		}
+		return null;
 	}
 
 	private void startConnection() throws IOException {
@@ -167,4 +285,5 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static String getVersion() {
 		return context == null? "Unknown":context.getBundle().getVersion().toString();
 	}
+
 }

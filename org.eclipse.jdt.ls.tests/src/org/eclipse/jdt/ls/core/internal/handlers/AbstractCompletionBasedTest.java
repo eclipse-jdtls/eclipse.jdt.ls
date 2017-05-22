@@ -43,6 +43,7 @@ public abstract class AbstractCompletionBasedTest extends AbstractProjectsManage
 		project = WorkspaceHelper.getProject("hello");
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
 		server= new JDTLanguageServer(projectsManager, preferenceManager);
+		JavaCore.initializeAfterLoad(null);
 	}
 
 	protected ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
