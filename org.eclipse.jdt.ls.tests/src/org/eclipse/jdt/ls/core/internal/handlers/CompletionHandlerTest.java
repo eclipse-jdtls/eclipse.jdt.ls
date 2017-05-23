@@ -91,6 +91,9 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 			//text edits are not set during calls to "completion"
 			assertNull(item.getTextEdit());
 			assertNull(item.getInsertText());
+			assertNotNull(item.getFilterText());
+			assertFalse(item.getFilterText().contains(" "));
+			assertTrue(item.getLabel().startsWith(item.getFilterText()));
 			//Check contains data used for completionItem resolution
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
