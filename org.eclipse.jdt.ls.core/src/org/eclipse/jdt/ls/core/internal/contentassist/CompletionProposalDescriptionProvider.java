@@ -317,8 +317,10 @@ public class CompletionProposalDescriptionProvider {
 	private void createOverrideMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
 
+
 		// method name
-		nameBuffer.append(methodProposal.getName());
+		String name = new String(methodProposal.getName());
+		nameBuffer.append(name);
 		// parameters
 		nameBuffer.append('(');
 		appendUnboundedParameterList(nameBuffer, methodProposal);
@@ -331,6 +333,7 @@ public class CompletionProposalDescriptionProvider {
 		char[] returnType= createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(methodProposal.getSignature()))));
 		nameBuffer.append(returnType);
 		item.setLabel(nameBuffer.toString());
+		item.setFilterText(name);
 
 		// declaring type
 		StringBuilder typeBuffer = new StringBuilder();
@@ -404,12 +407,14 @@ public class CompletionProposalDescriptionProvider {
 		// enclosing types as qualification
 		int qIndex= findSimpleNameStart(fullName);
 
+		String name = new String(fullName, qIndex, fullName.length - qIndex);
 		StringBuilder nameBuffer= new StringBuilder();
-		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
+		nameBuffer.append(name);
 		if (qIndex > 0) {
 			nameBuffer.append(PACKAGE_NAME_SEPARATOR);
 			nameBuffer.append(new String(fullName,0,qIndex-1));
 		}
+		item.setFilterText(name);
 		item.setLabel(nameBuffer.toString());
 	}
 
@@ -420,12 +425,12 @@ public class CompletionProposalDescriptionProvider {
 
 		StringBuilder nameBuffer= new StringBuilder();
 
-
+		String name = new String(fullName, qIndex, fullName.length - qIndex);
 		nameBuffer.append("{@link "); //$NON-NLS-1$
-		nameBuffer.append(new String(fullName, qIndex, fullName.length - qIndex));
+		nameBuffer.append(name);
 		nameBuffer.append('}');
 		item.setLabel(nameBuffer.toString());
-
+		item.setFilterText(name);
 		if (qIndex > 0) {
 			item.setDetail(new String(fullName, 0, qIndex - 1));
 		}
