@@ -18,10 +18,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper;
 import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper.DistributionType;
 import org.eclipse.buildship.core.workspace.NewProjectHandler;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
@@ -88,25 +91,33 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	protected void startSynchronization(File location, GradleDistribution distribution, NewProjectHandler newProjectHandler) {
 		List<String> jvmArgs = new ArrayList<>();
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_HOST);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PORT);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_USER);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PASSWORD);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_HOST);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PORT);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_USER);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PASSWORD);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_NON_PROXY_HOSTS);
-		addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_NON_PROXY_HOSTS);
+		IProxyService proxyService = JavaLanguageServerPlugin.getInstance().getProxyService();
+		IProxyData proxy = proxyService.getProxyData(IProxyData.HTTP_PROXY_TYPE);
+		if (proxy != null) {
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_HOST, proxy.getHost());
+			if (proxy.getPort() > 0) {
+				addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PORT, String.valueOf(proxy.getPort()));
+			}
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_USER, proxy.getUserId());
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTP_PROXY_PASSWORD, proxy.getPassword());
+		}
+		proxy = proxyService.getProxyData(IProxyData.HTTPS_PROXY_TYPE);
+		if (proxy != null) {
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_HOST, proxy.getHost());
+			if (proxy.getPort() > 0) {
+				addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PORT, String.valueOf(proxy.getPort()));
+			}
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_USER, proxy.getUserId());
+			addArgs(jvmArgs, JavaLanguageServerPlugin.HTTPS_PROXY_PASSWORD, proxy.getPassword());
+		}
 		FixedRequestAttributes attributes = new FixedRequestAttributes(location, null, distribution, null, jvmArgs, Collections.emptyList());
 		CorePlugin.gradleWorkspaceManager().getGradleBuild(attributes).synchronize(newProjectHandler);
 	}
 
-	private void addArgs(List<String> jvmArgs, String name) {
-		String value = System.getProperty(name);
-		if (value != null) {
+	private void addArgs(List<String> jvmArgs, String name, String value) {
+		if (StringUtils.isNotBlank(value)) {
 			jvmArgs.add(String.format("-D%s=%s", name, value));
-
 		}
 	}
+
 }
