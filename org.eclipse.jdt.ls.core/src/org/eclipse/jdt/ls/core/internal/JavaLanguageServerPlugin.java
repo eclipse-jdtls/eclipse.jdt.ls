@@ -16,6 +16,7 @@ import java.net.PasswordAuthentication;
 import java.util.Hashtable;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -86,6 +87,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	}
 
 	private void configureProxy() {
+		// It seems there is no way to set a proxy provider type (manual, native or
+		// direct) without the Eclipse UI.
+		// The org.eclipse.core.net plugin removes the http., https. system properties
+		// when setting its preferences and a proxy provider isn't manual.
+		// We save these parameters and set them after starting the
+		// org.eclipse.core.net plugin.
 		String httpHost = System.getProperty(HTTP_PROXY_HOST);
 		String httpPort = System.getProperty(HTTP_PROXY_PORT);
 		String httpUser = System.getProperty(HTTP_PROXY_USER);
@@ -96,13 +103,13 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		String httpsPassword = System.getProperty(HTTPS_PROXY_PASSWORD);
 		String httpsNonProxyHosts = System.getProperty(HTTPS_NON_PROXY_HOSTS);
 		String httpNonProxyHosts = System.getProperty(HTTP_NON_PROXY_HOSTS);
-		if (httpUser != null || httpsUser != null) {
+		if (StringUtils.isNotBlank(httpUser) || StringUtils.isNotBlank(httpsUser)) {
 			try {
 				Platform.getBundle("org.eclipse.core.net").start(Bundle.START_TRANSIENT);
 			} catch (BundleException e) {
 				logException(e.getMessage(), e);
 			}
-			if (httpUser != null && httpPassword != null && !httpUser.isEmpty() && !httpPassword.isEmpty()) {
+			if (StringUtils.isNotBlank(httpUser) && StringUtils.isNotBlank(httpPassword)) {
 				Authenticator.setDefault(new Authenticator() {
 					@Override
 					public PasswordAuthentication getPasswordAuthentication() {
@@ -117,13 +124,13 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 				for (IProxyData proxy:proxies) {
 					if ("HTTP".equals(proxy.getType())) {
 						proxy.setHost(httpHost);
-						proxy.setPort(httpPort == null ? 3128 : Integer.valueOf(httpPort));
+						proxy.setPort(httpPort == null ? -1 : Integer.valueOf(httpPort));
 						proxy.setPassword(httpPassword);
 						proxy.setUserid(httpUser);
 					}
 					if ("HTTPS".equals(proxy.getType())) {
 						proxy.setHost(httpsHost);
-						proxy.setPort(httpsPort == null ? 3128 : Integer.valueOf(httpsPort));
+						proxy.setPort(httpsPort == null ? -1 : Integer.valueOf(httpsPort));
 						proxy.setPassword(httpsPassword);
 						proxy.setUserid(httpsUser);
 					}
@@ -167,7 +174,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 	}
 
-	private IProxyService getProxyService() {
+	public IProxyService getProxyService() {
 		try {
 			if (proxyServiceTracker == null) {
 				proxyServiceTracker = new ServiceTracker<>(context, IProxyService.class.getName(), null);
