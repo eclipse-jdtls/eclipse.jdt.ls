@@ -70,32 +70,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<dependencies>
-		<dependency>
-			<groupId>com.kohlschutter.junixsocket</groupId>
-			<artifactId>junixsocket-common</artifactId>
-			<version>2.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kohlschutter.junixsocket</groupId>
-			<artifactId>junixsocket-native-common</artifactId>
-			<version>2.0.4</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.lsp4j</groupId>
-			<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
-			<version>${lsp4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.lsp4j</groupId>
-			<artifactId>org.eclipse.lsp4j</artifactId>
-			<version>${lsp4j.version}</version>
-		</dependency>
-	</dependencies>
 </project>
