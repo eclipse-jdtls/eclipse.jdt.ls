@@ -68,25 +68,6 @@ public final class JavadocContentAccess {
 	 * The content does contain only the text from the comment without the Javadoc leading star characters.
 	 * Returns <code>null</code> if the member does not contain a Javadoc comment or if no source is available.
 	 * @param member The member to get the Javadoc of.
-	 * @param allowInherited For methods with no (Javadoc) comment, the comment of the overridden class
-	 * is returned if <code>allowInherited</code> is <code>true</code>.
-	 * @return Returns a reader for the Javadoc comment content or <code>null</code> if the member
-	 * does not contain a Javadoc comment or if no source is available
-	 * @throws JavaModelException is thrown when the elements javadoc can not be accessed
-	 */
-	public static Reader getContentReader(IMember member, boolean allowInherited) throws JavaModelException {
-		Reader contentReader= internalGetContentReader(member);
-		if (contentReader != null || !(allowInherited && (member.getElementType() == IJavaElement.METHOD))) {
-			return contentReader;
-		}
-		return findDocInHierarchy((IMethod) member, false, false);
-	}
-
-	/**
-	 * Gets a reader for an IMember's Javadoc comment content from the source attachment.
-	 * The content does contain only the text from the comment without the Javadoc leading star characters.
-	 * Returns <code>null</code> if the member does not contain a Javadoc comment or if no source is available.
-	 * @param member The member to get the Javadoc of.
 	 * @return Returns a reader for the Javadoc comment content or <code>null</code> if the member
 	 * does not contain a Javadoc comment or if no source is available
 	 * @throws JavaModelException is thrown when the elements javadoc can not be accessed
@@ -191,28 +172,83 @@ public final class JavadocContentAccess {
 	}
 
 	/**
-	 * Gets a reader for an IMember's Javadoc comment content from the source attachment.
-	 * and renders the tags in HTML.
-	 * Returns <code>null</code> if the member does not contain a Javadoc comment or if no source is available.
+	 * Gets a reader for an IMember's Javadoc comment content from the source
+	 * attachment. and renders the tags in Markdown. Returns <code>null</code>
+	 * if the member does not contain a Javadoc comment or if no source is
+	 * available.
 	 *
-	 * @param member				the member to get the Javadoc of.
-	 * @param allowInherited		for methods with no (Javadoc) comment, the comment of the overridden
-	 * 									class is returned if <code>allowInherited</code> is <code>true</code>
-	 * @param useAttachedJavadoc	if <code>true</code> Javadoc will be extracted from attached Javadoc
-	 * 									if there's no source
-	 * @return a reader for the Javadoc comment content in HTML or <code>null</code> if the member
-	 * 			does not contain a Javadoc comment or if no source is available
-	 * @throws JavaModelException is thrown when the elements Javadoc can not be accessed
-	 * @since 3.2
+	 * @param member
+	 *            the member to get the Javadoc of.
+	 * @return a reader for the Javadoc comment content in Markdown or
+	 *         <code>null</code> if the member does not contain a Javadoc
+	 *         comment or if no source is available
+	 * @throws JavaModelException
+	 *             is thrown when the elements Javadoc can not be accessed
 	 */
-	public static Reader getHTMLContentReader(IMember member, boolean allowInherited, boolean useAttachedJavadoc) throws JavaModelException {
-		Reader contentReader= internalGetContentReader(member);
+	public static Reader getMarkdownContentReader(IMember member) throws JavaModelException {
+		Reader contentReader = getHTMLContentReader(member, true, true);
 		if (contentReader != null) {
 			try {
 				return new JavaDoc2MarkdownConverter(contentReader).getAsReader();
 			} catch (IOException e) {
 				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
 			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a reader for an IMember's Javadoc comment content from the source
+	 * attachment. and renders the tags in plain text. Returns <code>null</code> if
+	 * the member does not contain a Javadoc comment or if no source is available.
+	 *
+	 * @param member
+	 *            the member to get the Javadoc of.
+	 * @return a reader for the Javadoc comment content in plain text or
+	 *         <code>null</code> if the member does not contain a Javadoc comment or
+	 *         if no source is available
+	 * @throws JavaModelException
+	 *             is thrown when the elements Javadoc can not be accessed
+	 */
+	public static Reader getPlainTextContentReader(IMember member) throws JavaModelException {
+		Reader contentReader = getHTMLContentReader(member, true, true);
+		if (contentReader != null) {
+			try {
+				return new JavaDoc2PlainTextConverter(contentReader).getAsReader();
+			} catch (IOException e) {
+				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a reader for an IMember's Javadoc comment content from the source
+	 * attachment. and renders the tags in HTML. Returns <code>null</code> if
+	 * the member does not contain a Javadoc comment or if no source is
+	 * available.
+	 *
+	 * @param member
+	 *            the member to get the Javadoc of.
+	 * @param allowInherited
+	 *            for methods with no (Javadoc) comment, the comment of the
+	 *            overridden class is returned if <code>allowInherited</code> is
+	 *            <code>true</code>
+	 * @param useAttachedJavadoc
+	 *            if <code>true</code> Javadoc will be extracted from attached
+	 *            Javadoc if there's no source
+	 * @return a reader for the Javadoc comment content in HTML or
+	 *         <code>null</code> if the member does not contain a Javadoc
+	 *         comment or if no source is available
+	 * @throws JavaModelException
+	 *             is thrown when the elements Javadoc can not be accessed
+	 * @since 3.2
+	 */
+	static Reader getHTMLContentReader(IMember member, boolean allowInherited, boolean useAttachedJavadoc)
+			throws JavaModelException {
+		Reader contentReader= internalGetContentReader(member);
+		if (contentReader != null) {
+			return contentReader;
 		}
 
 		if (useAttachedJavadoc && member.getOpenable().getBuffer() == null) { // only if no source available
@@ -223,35 +259,33 @@ public final class JavadocContentAccess {
 		}
 
 		if (allowInherited && (member.getElementType() == IJavaElement.METHOD)) {
-			return findDocInHierarchy((IMethod) member, true, useAttachedJavadoc);
+			return findDocInHierarchy((IMethod) member, useAttachedJavadoc);
 		}
 
 		return null;
 	}
 
 	/**
-	 * Gets a reader for a package fragment's Javadoc comment content from the source attachment.
-	 * and renders the tags in HTML.
-	 * Returns <code>null</code> if the package fragment does not contain a Javadoc comment or if no source is available.
+	 * Gets a reader for a package fragment's Javadoc comment content from the
+	 * source attachment. and renders the tags in Markdown. Returns
+	 * <code>null</code> if the package fragment does not contain a Javadoc
+	 * comment or if no source is available.
 	 *
-	 * @param fragment				the package fragment to get the Javadoc of.
-	 * @param useAttachedJavadoc	if <code>true</code> Javadoc will be extracted from attached Javadoc
-	 * 									if there's no source
-	 * @return a reader for the Javadoc comment content in HTML or <code>null</code> if the package fragment
-	 * 			does not contain a Javadoc comment or if no source is available
-	 * @throws JavaModelException is thrown when the package fragment's Javadoc can not be accessed
-	 * @since 3.2
+	 * @param fragment
+	 *            the package fragment to get the Javadoc of.
+	 * @param useAttachedJavadoc
+	 *            if <code>true</code> Javadoc will be extracted from attached
+	 *            Javadoc if there's no source
+	 * @return a reader for the Javadoc comment content in Markdown or
+	 *         <code>null</code> if the package fragment does not contain a
+	 *         Javadoc comment or if no source is available
+	 * @throws JavaModelException
+	 *             is thrown when the package fragment's Javadoc can not be
+	 *             accessed
 	 */
-	public static Reader getHTMLContentReader(IPackageFragment fragment, boolean useAttachedJavadoc) throws JavaModelException {
+	public static Reader getMarkdownContentReader(IPackageFragment fragment, boolean useAttachedJavadoc) throws JavaModelException {
 		Reader contentReader= internalGetContentReader(fragment);
-		if (contentReader != null) {
-			try {
-				return new JavaDoc2MarkdownConverter(contentReader).getAsReader();
-			} catch (IOException e) {
-				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
-			}
-		}
-		if (useAttachedJavadoc) {
+		if (contentReader == null && useAttachedJavadoc) {
 			// only if no source available
 			// check parent
 			IPackageFragmentRoot root= (IPackageFragmentRoot) fragment.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
@@ -266,18 +300,21 @@ public final class JavadocContentAccess {
 					//ignore missing package.html files in javadoc
 				}
 				if (s != null) {
-					try {
-						return new JavaDoc2MarkdownConverter(new StringReader(s)).getAsReader();
-					} catch (IOException e) {
-						throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
-					}
+					contentReader = new StringReader(s);
 				}
+			}
+		}
+		if (contentReader != null) {
+			try {
+				return new JavaDoc2MarkdownConverter(contentReader).getAsReader();
+			} catch (IOException e) {
+				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
 			}
 		}
 		return null;
 	}
 
-	private static Reader findDocInHierarchy(IMethod method, boolean isHTML, boolean useAttachedJavadoc) throws JavaModelException {
+	private static Reader findDocInHierarchy(IMethod method, boolean useAttachedJavadoc) throws JavaModelException {
 		/*
 		 * Catch ExternalJavaProject in which case
 		 * no hierarchy can be built.
@@ -292,16 +329,10 @@ public final class JavadocContentAccess {
 		MethodOverrideTester tester= new MethodOverrideTester(type, hierarchy);
 
 		IType[] superTypes= hierarchy.getAllSupertypes(type);
-		for (int i= 0; i < superTypes.length; i++) {
-			IType curr= superTypes[i];
+		for (IType curr : superTypes) {
 			IMethod overridden= tester.findOverriddenMethodInType(curr, method);
 			if (overridden != null) {
-				Reader reader;
-				if (isHTML) {
-					reader= getHTMLContentReader(overridden, false, useAttachedJavadoc);
-				} else {
-					reader= getContentReader(overridden, false);
-				}
+				Reader reader = getHTMLContentReader(overridden, false, useAttachedJavadoc);
 				if (reader != null) {
 					return reader;
 				}
