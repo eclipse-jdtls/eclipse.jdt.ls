@@ -12,39 +12,26 @@ package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.io.Reader;
 
-import com.overzealous.remark.Options;
-import com.overzealous.remark.Options.Tables;
-import com.overzealous.remark.Remark;
+import org.jsoup.Jsoup;
 
 /**
- * Converts JavaDoc tags into Markdown equivalent.
+ * Converts JavaDoc tags into plain text equivalent.
  *
  * @author Fred Bricon
  */
-public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
+public class JavaDoc2PlainTextConverter extends AbstractJavaDocConverter {
 
-	private static Remark remark;
-
-	static {
-		Options options = new Options();
-		options.tables = Tables.CONVERT_TO_CODE_BLOCK;
-		options.hardwraps = true;
-		options.inlineLinks = true;
-		options.autoLinks = true;
-		options.reverseHtmlSmartPunctuation = true;
-		remark = new Remark(options);
-	}
-	public JavaDoc2MarkdownConverter(Reader reader) {
+	public JavaDoc2PlainTextConverter(Reader reader) {
 		super(reader);
 	}
 
-
-	public JavaDoc2MarkdownConverter(String javadoc) {
+	public JavaDoc2PlainTextConverter(String javadoc) {
 		super(javadoc);
 	}
 
 	@Override
 	String convert(String rawHtml) {
-		return remark.convert(rawHtml);
+		HtmlToPlainText formatter = new HtmlToPlainText();
+		return formatter.getPlainText(Jsoup.parse(rawHtml));
 	}
 }

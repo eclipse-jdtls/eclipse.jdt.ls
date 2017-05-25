@@ -123,7 +123,7 @@ public class CompletionResolveHandler {
 					try {
 						final IMember curMember = member;
 						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
-							Reader reader = JavadocContentAccess.getHTMLContentReader(curMember, true, true);
+							Reader reader = JavadocContentAccess.getPlainTextContentReader(curMember);
 							return reader == null? null:CharStreams.toString(reader);
 						}, 500, TimeUnit.MILLISECONDS, true);
 					} catch (UncheckedTimeoutException tooSlow) {

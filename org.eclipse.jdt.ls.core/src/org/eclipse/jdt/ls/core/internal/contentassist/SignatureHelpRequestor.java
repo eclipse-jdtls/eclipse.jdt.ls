@@ -182,7 +182,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 					String javadoc = null;
 					try {
 						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
-							Reader reader = JavadocContentAccess.getHTMLContentReader(method, true, true);
+							Reader reader = JavadocContentAccess.getPlainTextContentReader(method);
 							return reader == null? null:CharStreams.toString(reader);
 						}, 500, TimeUnit.MILLISECONDS, true);
 					} catch (UncheckedTimeoutException tooSlow) {
