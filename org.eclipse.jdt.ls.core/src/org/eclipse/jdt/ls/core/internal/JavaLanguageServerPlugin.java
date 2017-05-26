@@ -20,7 +20,8 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
-import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.stream.Stream;
 
@@ -316,10 +317,9 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		out = System.out;
 		err = System.err;
 		System.setIn(new ByteArrayInputStream(new byte[0]));
-		String debug = System.getProperty("ls.debug");
-		boolean isDebug = debug != null && "true".equals(debug);
+		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
 		if (isDebug) {
-			String id = ("ls-" + new Timestamp(System.currentTimeMillis())).replace(" ", "_");
+			String id = "jdt.ls-" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			File workspaceFile = root.getRawLocation().makeAbsolute().toFile();
 			File rootFile = new File(workspaceFile, ".metadata");
