@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.IOException;
+
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.NamedPipeStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.SocketStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StdIOStreamProvider;
@@ -43,6 +45,17 @@ public class ConnectionStreamFactoryTest {
 		checkStreamProvider(SocketStreamProvider.class);
 		System.clearProperty("STDIN_PORT");
 		System.clearProperty("STDOUT_PORT");
+	}
+
+	@Test
+	public void testStdInOut() throws IOException {
+		ConnectionStreamFactory tested = new ConnectionStreamFactory();
+		Assert.assertSame(tested.getInputStream(), JavaLanguageServerPlugin.getIn());
+		Assert.assertSame(tested.getOutputStream(), JavaLanguageServerPlugin.getOut());
+		Assert.assertNotSame(tested.getInputStream(), System.in);
+		Assert.assertNotSame(tested.getOutputStream(), System.out);
+		System.out.println("test");
+		Assert.assertTrue(tested.getInputStream().available() == 0);
 	}
 
 	private void checkStreamProvider(Class<? extends StreamProvider> providerClass){
