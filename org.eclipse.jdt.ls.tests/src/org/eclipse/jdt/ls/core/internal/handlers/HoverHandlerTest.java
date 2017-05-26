@@ -136,4 +136,20 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
 		assertEquals("Unexpected hover "+result, "String[] args - java.Foo.main(String[])", result);
 	}
+
+	@Test
+	public void testHoverInheritedJavadoc() throws Exception {
+		// given
+		// Hovers on the overriding foo()
+		String payload = createHoverRequest("src/java/Bar.java", 22, 19);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position).get();
+
+		// then
+		assertNotNull(hover);
+		String result = hover.getContents().get(0).getLeft();//
+		assertEquals("Unexpected hover ", "This method comes from Foo", result);
+	}
 }

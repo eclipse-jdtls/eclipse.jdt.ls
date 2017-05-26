@@ -19,4 +19,8 @@ public class Bar extends Foo {
     @javax.annotation.Generated("lombok")
     public void somethingElseFromLombok(){}
    
+    @Override
+    public void foo() {
+      super.foo();
+    }
 }

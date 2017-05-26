@@ -20,7 +20,6 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
@@ -45,6 +44,7 @@ public class HoverInfoProvider {
 	private static final long LOCAL_VARIABLE_FLAGS= LABEL_FLAGS & ~JavaElementLabels.F_FULLY_QUALIFIED | JavaElementLabels.F_POST_QUALIFIED;
 
 	private final ITypeRoot unit;
+
 	public HoverInfoProvider(ITypeRoot aUnit) {
 		this.unit = aUnit;
 	}
@@ -76,7 +76,7 @@ public class HoverInfoProvider {
 			}
 			return computeJavadocHover(curr);
 		} catch (CoreException e) {
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Error computing hover", e);
 		}
 		return null;
 	}
@@ -105,10 +105,6 @@ public class HoverInfoProvider {
 			return null; // no source attachment found
 		}
 
-		ISourceRange javadocRange= member.getJavadocRange();
-		if(javadocRange == null ) {
-			return null;
-		}
 		Reader r = JavadocContentAccess.getHTMLContentReader(member,true,true);
 		if(r == null ) {
 			return null;
