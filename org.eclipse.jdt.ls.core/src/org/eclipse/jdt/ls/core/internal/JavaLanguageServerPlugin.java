@@ -10,9 +10,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.sql.Timestamp;
 import java.util.Hashtable;
 import java.util.stream.Stream;
 
@@ -20,6 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -60,6 +70,9 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
 	private ServiceTracker<IProxyService, IProxyService> proxyServiceTracker = null;
+	private static InputStream in;
+	private static PrintStream out;
+	private static PrintStream err;
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
@@ -77,6 +90,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext bundleContext) {
+		try {
+			redirectStandardStreams();
+		} catch (FileNotFoundException e) {
+			logException(e.getMessage(), e);
+		}
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
 		preferenceManager = new PreferenceManager();
@@ -293,4 +311,40 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return context == null? "Unknown":context.getBundle().getVersion().toString();
 	}
 
+	private static void redirectStandardStreams() throws FileNotFoundException {
+		in = System.in;
+		out = System.out;
+		err = System.err;
+		System.setIn(new ByteArrayInputStream(new byte[0]));
+		String debug = System.getProperty("ls.debug");
+		boolean isDebug = debug != null && "true".equals(debug);
+		if (isDebug) {
+			String id = ("ls-" + new Timestamp(System.currentTimeMillis())).replace(" ", "_");
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			File workspaceFile = root.getRawLocation().makeAbsolute().toFile();
+			File rootFile = new File(workspaceFile, ".metadata");
+			rootFile.mkdirs();
+			File outFile = new File(rootFile, ".out-" + id + ".log");
+			FileOutputStream stdFileOut = new FileOutputStream(outFile);
+			System.setOut(new PrintStream(stdFileOut));
+			File errFile = new File(rootFile, ".error-" + id + ".log");
+			FileOutputStream stdFileErr = new FileOutputStream(errFile);
+			System.setErr(new PrintStream(stdFileErr));
+		} else {
+			System.setOut(new PrintStream(new ByteArrayOutputStream()));
+			System.setErr(new PrintStream(new ByteArrayOutputStream()));
+		}
+	}
+
+	public static InputStream getIn() {
+		return in;
+	}
+
+	public static PrintStream getOut() {
+		return out;
+	}
+
+	public static PrintStream getErr() {
+		return err;
+	}
 }

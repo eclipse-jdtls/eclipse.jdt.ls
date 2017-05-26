@@ -112,7 +112,7 @@ public class ConnectionStreamFactory {
 		 */
 		@Override
 		public InputStream getInputStream() throws IOException {
-			return System.in;
+			return JavaLanguageServerPlugin.getIn();
 		}
 
 		/* (non-Javadoc)
@@ -120,7 +120,7 @@ public class ConnectionStreamFactory {
 		 */
 		@Override
 		public OutputStream getOutputStream() throws IOException {
-			return System.out;
+			return JavaLanguageServerPlugin.getOut();
 		}
 
 	}
