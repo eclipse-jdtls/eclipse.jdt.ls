@@ -31,16 +31,6 @@
 							<version>1.9.2</version>
 						</artifactItem>
 						<artifactItem>
-							<groupId>org.eclipse.lsp4j</groupId>
-							<artifactId>org.eclipse.lsp4j</artifactId>
-							<version>${lsp4j.version}</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.eclipse.lsp4j</groupId>
-							<artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
-							<version>${lsp4j.version}</version>
-						</artifactItem>
-						<artifactItem>
 							<groupId>com.kohlschutter.junixsocket</groupId>
 							<artifactId>junixsocket-native-common</artifactId>
 							<version>2.0.4</version>
@@ -54,16 +44,6 @@
 							<groupId>org.scijava</groupId>
 							<artifactId>native-lib-loader</artifactId>
 							<version>2.0.2</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.eclipse.xtend</groupId>
-							<artifactId>org.eclipse.xtend.lib</artifactId>
-							<version>2.10.0</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.eclipse.xtext</groupId>
-							<artifactId>org.eclipse.xtext.xbase.lib</artifactId>
-							<version>2.10.0</version>
 						</artifactItem>
 					</artifactItems>
 				</configuration>
