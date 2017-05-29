@@ -21,4 +21,8 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.mockito.mockito-all;bundle-version="1.9.5",
  org.apache.commons.io;bundle-version="2.2.0",
  org.eclipse.buildship.core;bundle-version="1.0.18",
- org.apache.commons.lang3;bundle-version="3.1.0"
+ org.apache.commons.lang3;bundle-version="3.1.0",
+ org.eclipse.lsp4j,
+ org.eclipse.lsp4j.jsonrpc,
+ org.eclipse.xtend.lib,
+ org.eclipse.xtext.xbase.lib

@@ -8,9 +8,5 @@
 	<classpathentry exported="true" kind="lib" path="lib/junixsocket-common-2.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/junixsocket-native-common-2.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/native-lib-loader-2.0.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.lsp4j-0.2.0-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.lsp4j.jsonrpc-0.2.0-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.xtend.lib-2.10.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.xtext.xbase.lib-2.10.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
