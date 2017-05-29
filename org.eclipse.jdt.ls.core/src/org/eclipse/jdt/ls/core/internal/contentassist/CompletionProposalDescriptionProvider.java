@@ -35,6 +35,7 @@ public class CompletionProposalDescriptionProvider {
 	private static final String RETURN_TYPE_SEPARATOR = " : ";
 	private static final String PACKAGE_NAME_SEPARATOR = " - ";
 	private static final String VAR_TYPE_SEPARATOR = RETURN_TYPE_SEPARATOR;
+	private static final String OBJECT = "java.lang.Object";
 
 
 	/**
@@ -258,6 +259,7 @@ public class CompletionProposalDescriptionProvider {
 
 		// method name
 		description.append(methodProposal.getName());
+		item.setInsertText(description.toString());
 
 		// parameters
 		description.append('(');
@@ -317,9 +319,9 @@ public class CompletionProposalDescriptionProvider {
 	private void createOverrideMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
 
-
 		// method name
 		String name = new String(methodProposal.getName());
+		item.setInsertText(name);
 		nameBuffer.append(name);
 		// parameters
 		nameBuffer.append('(');
@@ -360,7 +362,7 @@ public class CompletionProposalDescriptionProvider {
 		// TODO remove when bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=84690 gets fixed
 		if (declaringTypeSignature == null)
 		{
-			return "java.lang.Object"; //$NON-NLS-1$
+			return OBJECT;
 		}
 		return SignatureUtil.stripSignatureToFQN(String.valueOf(declaringTypeSignature));
 	}
@@ -415,6 +417,7 @@ public class CompletionProposalDescriptionProvider {
 			nameBuffer.append(new String(fullName,0,qIndex-1));
 		}
 		item.setFilterText(name);
+		item.setInsertText(name);
 		item.setLabel(nameBuffer.toString());
 	}
 
@@ -452,6 +455,7 @@ public class CompletionProposalDescriptionProvider {
 	private void createSimpleLabelWithType(CompletionProposal proposal, CompletionItem item) {
 		StringBuilder nameBuffer= new StringBuilder();
 		nameBuffer.append(proposal.getCompletion());
+		item.setInsertText(nameBuffer.toString());
 		char[] typeName= Signature.getSignatureSimpleName(proposal.getSignature());
 		if (typeName.length > 0) {
 			nameBuffer.append(VAR_TYPE_SEPARATOR);
@@ -481,6 +485,7 @@ public class CompletionProposalDescriptionProvider {
 		StringBuilder buf= new StringBuilder();
 
 		buf.append(name);
+		item.setInsertText(buf.toString());
 		char[] typeName= Signature.getSignatureSimpleName(proposal.getSignature());
 		if (typeName.length > 0) {
 			buf.append(VAR_TYPE_SEPARATOR);
@@ -523,10 +528,10 @@ public class CompletionProposalDescriptionProvider {
 	private void createAnonymousTypeLabel(CompletionProposal proposal, CompletionItem item) {
 		char[] declaringTypeSignature= proposal.getDeclarationSignature();
 		declaringTypeSignature= Signature.getTypeErasure(declaringTypeSignature);
-
+		String name = new String(Signature.getSignatureSimpleName(declaringTypeSignature));
+		item.setInsertText(name);
 		StringBuilder buf= new StringBuilder();
-
-		buf.append(Signature.getSignatureSimpleName(declaringTypeSignature));
+		buf.append(name);
 		buf.append('(');
 		appendUnboundedParameterList(buf, proposal);
 		buf.append(')');

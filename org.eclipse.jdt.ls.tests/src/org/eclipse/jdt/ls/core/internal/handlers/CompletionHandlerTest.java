@@ -90,7 +90,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 			assertTrue(isNotBlank(item.getSortText()));
 			//text edits are not set during calls to "completion"
 			assertNull(item.getTextEdit());
-			assertNull(item.getInsertText());
+			assertTrue(isNotBlank(item.getInsertText()));
 			assertNotNull(item.getFilterText());
 			assertFalse(item.getFilterText().contains(" "));
 			assertTrue(item.getLabel().startsWith(item.getFilterText()));
@@ -128,8 +128,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		Collections.sort(items, comparator);
 		CompletionItem ctor = items.get(0);
 		assertEquals("Object()", ctor.getLabel());
-
-
+		assertEquals("Object", ctor.getInsertText());
 
 		CompletionItem resolvedItem = server.resolveCompletionItem(ctor).join();
 		assertNotNull(resolvedItem);
@@ -218,7 +217,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 				.findFirst().orElse(null);
 		assertNotNull(ci);
 
-		assertNull(ci.getInsertText());
+		assertEquals("put", ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
@@ -262,7 +261,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 				.findFirst().orElse(null);
 		assertNotNull(ci);
 
-		assertNull(ci.getInsertText());
+		assertEquals("put", ci.getInsertText());
 		assertEquals(CompletionItemKind.Function, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
@@ -303,7 +302,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Field, item.getKind());
-		assertNull(item.getInsertText());
+		assertEquals("myTestString", item.getInsertText());
 		assertNull(item.getAdditionalTextEdits());
 		assertNull(item.getTextEdit());
 
@@ -341,7 +340,7 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Class, item.getKind());
-		assertNull(item.getInsertText());
+		assertEquals("Map", item.getInsertText());
 		assertNull(item.getAdditionalTextEdits());
 		assertNull(item.getTextEdit());
 
