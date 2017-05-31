@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -42,7 +43,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils");
 		String source = getSource(uri);
 		assertNotNull(source);
-		assertFalse("header should be missing from "+source, source.startsWith(ClassfileContentHandler.MISSING_SOURCES_HEADER));
+		assertFalse("header should be missing from " + source, source.startsWith(JDTUtils.MISSING_SOURCES_HEADER));
 		assertTrue("unexpected body content "+source, source.contains("Operations on Strings that contain words."));
 	}
 
@@ -51,7 +52,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 		String uri = ClassFileUtil.getURI(project, "jdk.nashorn.tools.Shell");
 		String source = getSource(uri);
 		assertNotNull(source);
-		assertTrue("header is missing from "+source, source.startsWith(ClassfileContentHandler.MISSING_SOURCES_HEADER));
+		assertTrue("header is missing from " + source, source.startsWith(JDTUtils.MISSING_SOURCES_HEADER));
 		assertTrue("unexpected body content "+source, source.contains("package jdk.nashorn.tools;"));
 		assertTrue("unexpected body content "+source, source.contains("public class Shell {"));
 	}

@@ -15,19 +15,12 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.ToolFactory;
-import org.eclipse.jdt.core.util.ClassFileBytesDisassembler;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 
 public class ClassfileContentHandler {
-
-	public static final String MISSING_SOURCES_HEADER = " // Failed to get sources. Instead, stub sources have been generated.\n" +
-			" // Implementation of methods is unavailable.\n";
-
-	private static final String LF = "\n";
 
 	public CompletableFuture<String> contents(TextDocumentIdentifier param) {
 		return CompletableFutures.computeAsync(cm->{
@@ -42,7 +35,7 @@ public class ClassfileContentHandler {
 						source = buffer.getContents();
 					}
 					if (source == null) {
-						source = disassemble(cf);
+						source = JDTUtils.disassemble(cf);
 					}
 				}
 			} catch (JavaModelException e) {
@@ -53,18 +46,6 @@ public class ClassfileContentHandler {
 			}
 			return source;
 		});
-	}
-
-	public static String disassemble(IClassFile classFile) {
-		ClassFileBytesDisassembler disassembler= ToolFactory.createDefaultClassFileBytesDisassembler();
-		String disassembledByteCode = null;
-		try {
-			disassembledByteCode = disassembler.disassemble(classFile.getBytes(), LF, ClassFileBytesDisassembler.WORKING_COPY);
-			disassembledByteCode = MISSING_SOURCES_HEADER + LF + disassembledByteCode;
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logError("Unable to disassemble "+ classFile.getHandleIdentifier() );
-		}
-		return disassembledByteCode;
 	}
 
 }

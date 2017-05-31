@@ -62,8 +62,6 @@ public class NavigateToDefinitionHandler {
 			if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
 				return JDTUtils.toLocation(((IMember) element).getClassFile());
 			}
-			return null;
-
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem computing definition for" +  unit.getElementName(), e);
 		}

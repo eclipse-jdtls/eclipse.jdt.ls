@@ -40,8 +40,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	@Before
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler();
-		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		importProjects("eclipse/hello");
+		project = WorkspaceHelper.getProject("hello");
 	}
 
 	@Test
@@ -54,7 +54,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
-	public void testSSLContextImpl() throws Exception {
+	public void testDisassembledSource() throws Exception {
 		testClass("java.io.PrintStream", 89, 22);
 		testClass("sun.security.ssl.SSLContextImpl", 6, 44);
 	}
