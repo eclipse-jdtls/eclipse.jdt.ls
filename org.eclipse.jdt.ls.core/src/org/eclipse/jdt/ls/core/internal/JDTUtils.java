@@ -150,7 +150,7 @@ public final class JDTUtils {
 			return null;
 		}
 		IJavaProject javaProject = JavaCore.create(project);
-		
+
 		String packageName = getPackageName(javaProject, uri);
 		String fileName = path.getName(path.getNameCount() - 1).toString();
 		String packagePath = packageName.replace(".", "/");
@@ -469,7 +469,9 @@ public final class JDTUtils {
 						}
 						SearchPattern pattern = SearchPattern.createPattern(name, IJavaSearchConstants.TYPE,
 								IJavaSearchConstants.DECLARATIONS, SearchPattern.R_FULL_MATCH);
-						IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+
+						IJavaSearchScope scope = createSearchScope(unit.getJavaProject());
+
 						List<IJavaElement> elements = new ArrayList<>();
 						SearchRequestor requestor = new SearchRequestor() {
 							@Override
@@ -614,6 +616,14 @@ public final class JDTUtils {
 			JavaLanguageServerPlugin.logError("Unable to disassemble " + classFile.getHandleIdentifier());
 		}
 		return disassembledByteCode;
+	}
+
+	public static IJavaSearchScope createSearchScope(IJavaProject project) {
+		if (project == null) {
+			return SearchEngine.createWorkspaceScope();
+		}
+		return SearchEngine.createJavaSearchScope(new IJavaProject[] { project },
+				IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 	}
 
 }
