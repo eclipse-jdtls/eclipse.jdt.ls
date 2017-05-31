@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="78">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="79">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -39,8 +39,8 @@
 <repository location="http://download.eclipse.org/releases/oxygen"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.buildship.feature.group" version="2.0.3.v20170528-2311-s"/>
-<repository location="http://download.eclipse.org/buildship/updates/e47/snapshots/2.x/"/>
+<unit id="org.eclipse.buildship.feature.group" version="2.0.3.v20170530-2312-s"/>
+<repository location="http://download.eclipse.org/buildship/updates/e47/snapshots/2.x/2.0.3.v20170530-2312-s/"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
