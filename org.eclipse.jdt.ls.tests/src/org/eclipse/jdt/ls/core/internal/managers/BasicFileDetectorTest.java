@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
 /**
@@ -33,7 +35,7 @@ public class BasicFileDetectorTest {
 				.includeNested(false);
 		Collection<Path> dirs = detector.scan(null);
 		assertEquals("Found " + dirs, 1, dirs.size());// .metadata is ignored
-		assertEquals("projects/buildfiles", dirs.iterator().next().toString());
+		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles"), dirs.iterator().next().toString());
 	}
 
 	@Test
@@ -42,11 +44,16 @@ public class BasicFileDetectorTest {
 		Collection<Path> dirs = detector.scan(null);
 		assertEquals("Found " + dirs, 6, dirs.size());
 
-		List<String> missingDirs = list("projects/buildfiles", "projects/buildfiles/parent/1_0/0_2_0",
+		List<String> missingDirs = separatorsToSystem(list("projects/buildfiles", "projects/buildfiles/parent/1_0/0_2_0",
 				"projects/buildfiles/parent/1_0/0_2_1", "projects/buildfiles/parent/1_1",
-				"projects/buildfiles/parent/1_1/1_2_0", "projects/buildfiles/parent/1_1/1_2_1");
+				"projects/buildfiles/parent/1_1/1_2_0", "projects/buildfiles/parent/1_1/1_2_1"));
 		dirs.stream().map(Path::toString).forEach(missingDirs::remove);
 		assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+	}
+
+	private List<String> separatorsToSystem(List<String> paths) {
+		return paths.stream().map(p -> FilenameUtils.separatorsToSystem(p))
+				.collect(Collectors.toList());
 	}
 
 	@Test
@@ -55,8 +62,8 @@ public class BasicFileDetectorTest {
 				.includeNested(false).maxDepth(3);
 		Collection<Path> dirs = detector.scan(null);
 		assertEquals("Found " + dirs, 3, dirs.size());
-		List<String> missingDirs = list("projects/buildfiles/parent/1_1", "projects/buildfiles/parent/1_0/0_2_0",
-				"projects/buildfiles/parent/1_0/0_2_1");
+		List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_1",
+				"projects/buildfiles/parent/1_0/0_2_0", "projects/buildfiles/parent/1_0/0_2_1"));
 		dirs.stream().map(Path::toString).forEach(missingDirs::remove);
 		assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
 	}
@@ -67,7 +74,8 @@ public class BasicFileDetectorTest {
 				.includeNested(false).maxDepth(2);
 		Collection<Path> dirs = detector.scan(null);
 		assertEquals("Found " + dirs, 1, dirs.size());
-		assertEquals("projects/buildfiles/parent/1_1", dirs.iterator().next().toString());
+		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles/parent/1_1"),
+				dirs.iterator().next().toString());
 	}
 
 	@SafeVarargs
