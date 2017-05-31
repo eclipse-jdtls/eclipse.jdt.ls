@@ -40,8 +40,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	@Before
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler();
-		importProjects("eclipse/hello");
-		project = WorkspaceHelper.getProject("hello");
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
 	}
 
 	@Test
@@ -54,8 +54,12 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
+	public void testAttachedSource() throws Exception {
+		testClass("org.apache.commons.lang3.StringUtils", 20, 26);
+	}
+
+	@Test
 	public void testDisassembledSource() throws Exception {
-		testClass("java.io.PrintStream", 89, 22);
 		testClass("sun.security.ssl.SSLContextImpl", 6, 44);
 	}
 
