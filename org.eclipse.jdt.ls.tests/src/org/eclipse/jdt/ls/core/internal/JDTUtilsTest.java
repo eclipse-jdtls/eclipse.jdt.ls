@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -21,6 +22,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
@@ -87,6 +89,15 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertNull(JDTUtils.resolveCompilationUnit(new URI("gopher://meh")));
 		assertNull(JDTUtils.resolveCompilationUnit("foo/bar/Clazz.java"));
 		assertNull(JDTUtils.resolveCompilationUnit("file:///foo/bar/Clazz.java"));
+	}
+
+	@Test
+	public void testNonJavaCompilationUnit() throws Exception {
+		Path root = Paths.get("projects", "maven", "salut").toAbsolutePath();
+		URI uri = root.resolve("pom.xml").toUri();
+		assertNull(JDTUtils.resolveCompilationUnit(uri));
+		IProject project = WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME);
+		assertFalse(project.getFile("src/pom.xml").isLinked());
 	}
 
 	@Test

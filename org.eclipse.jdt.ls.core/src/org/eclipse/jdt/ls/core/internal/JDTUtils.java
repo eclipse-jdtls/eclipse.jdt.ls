@@ -119,55 +119,52 @@ public final class JDTUtils {
 	}
 
 	static ICompilationUnit getFakeCompilationUnit(URI uri) {
-		if (uri == null) {
+		if (uri == null || !"file".equals(uri.getScheme()) || !uri.getPath().endsWith(".java")) {
 			return null;
 		}
+		java.nio.file.Path path = Paths.get(uri);
+		//Only support existing standalone java files
+		if (!java.nio.file.Files.isReadable(path)) {
+			return null;
+		}
+
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			return null;
 		}
 		IJavaProject javaProject = JavaCore.create(project);
-		//Only support existing standalone java files
-		ICompilationUnit unit = null;
-
-		if ("file".equals(uri.getScheme())) {
-			java.nio.file.Path path = Paths.get(uri);
-			if (!java.nio.file.Files.isReadable(path)) {
-				return null;
-			}
-			String packageName = getPackageName(javaProject, uri);
-			String fileName = path.getName(path.getNameCount()-1).toString();
-			String packagePath = packageName.replace(".", "/");
-			final IFile file = project.getFile(new Path("src").append(packagePath).append(fileName));
-			if (!file.isLinked()) {
-				String errMsg = "Failed to create linked resource from "+uri+" to "+project.getName();
-				WorkspaceJob job = new WorkspaceJob("Create link") {
-					@Override
-					public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-						try{
-							if (file.isLinked()) {
-								return Status.OK_STATUS;
-							}
-							createFolders(file.getParent(), monitor);
-							file.createLink(uri, IResource.REPLACE, monitor);
-						} catch (CoreException e) {
-							JavaLanguageServerPlugin.logException(errMsg, e);
-							return StatusFactory.newErrorStatus(errMsg);
+		
+		String packageName = getPackageName(javaProject, uri);
+		String fileName = path.getName(path.getNameCount() - 1).toString();
+		String packagePath = packageName.replace(".", "/");
+		final IFile file = project.getFile(new Path("src").append(packagePath).append(fileName));
+		if (!file.isLinked()) {
+			String errMsg = "Failed to create linked resource from " + uri + " to " + project.getName();
+			WorkspaceJob job = new WorkspaceJob("Create link") {
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					try {
+						if (file.isLinked()) {
+							return Status.OK_STATUS;
 						}
-						return Status.OK_STATUS;
+						createFolders(file.getParent(), monitor);
+						file.createLink(uri, IResource.REPLACE, monitor);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(errMsg, e);
+						return StatusFactory.newErrorStatus(errMsg);
 					}
-				};
-				job.setRule(project);
-				job.schedule();
-				try {
-					job.join(1_000, new NullProgressMonitor());
-				} catch (OperationCanceledException | InterruptedException e) {
-					JavaLanguageServerPlugin.logException(errMsg, e);
+					return Status.OK_STATUS;
 				}
+			};
+			job.setRule(project);
+			job.schedule();
+			try {
+				job.join(1_000, new NullProgressMonitor());
+			} catch (OperationCanceledException | InterruptedException e) {
+				JavaLanguageServerPlugin.logException(errMsg, e);
 			}
-			unit = (ICompilationUnit)JavaCore.create(file, javaProject);
 		}
-		return unit;
+		return (ICompilationUnit) JavaCore.create(file, javaProject);
 	}
 
 	public static void createFolders(IContainer folder, IProgressMonitor monitor) throws CoreException {
