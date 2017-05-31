@@ -17,7 +17,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
-import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeNameMatch;
@@ -46,7 +45,7 @@ public final class ClassFileUtil {
 		new SearchEngine().searchAllTypeNames(packageName.toCharArray(),SearchPattern.R_EXACT_MATCH,
 				className.toCharArray(), SearchPattern.R_EXACT_MATCH,
 				IJavaSearchConstants.TYPE,
-				createSearchScope(javaProject),
+				JDTUtils.createSearchScope(javaProject),
 				extractor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
 				new NullProgressMonitor());
@@ -72,11 +71,6 @@ public final class ClassFileUtil {
 				throw new RuntimeException(e);
 			}
 		}
-	}
-
-	private static IJavaSearchScope createSearchScope(IJavaProject project) {
-		return SearchEngine.createJavaSearchScope(new IJavaProject[] {project} ,
-				IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 	}
 
 }
