@@ -55,8 +55,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testDisassembledSource() throws Exception {
-		testClass("java.io.PrintStream", 89, 22);
-		testClass("sun.security.ssl.SSLContextImpl", 6, 44);
+		testClass("java.io.PrintStream", 4, 52);
+		testClass("sun.security.ssl.SSLContextImpl", 4, 52);
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {
