@@ -14,7 +14,9 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
@@ -53,7 +55,18 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.ls.core.internal.handlers.ClassfileContentHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -441,7 +454,68 @@ public final class JDTUtils {
 		if (offset > -1) {
 			return unit.codeSelect(offset, 0);
 		}
+		if (unit instanceof IClassFile) {
+			IClassFile classFile = (IClassFile) unit;
+			String contents = ClassfileContentHandler.disassemble(classFile);
+			if (contents != null) {
+				IDocument document = new Document(contents);
+				try {
+					offset = document.getLineOffset(line) + column;
+					if (offset > -1) {
+						String name = parse(contents, offset);
+						if (name == null) {
+							return null;
+						}
+						SearchPattern pattern = SearchPattern.createPattern(name, IJavaSearchConstants.TYPE,
+								IJavaSearchConstants.DECLARATIONS, SearchPattern.R_FULL_MATCH);
+						IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+						List<IJavaElement> elements = new ArrayList<>();
+						SearchRequestor requestor = new SearchRequestor() {
+							@Override
+							public void acceptSearchMatch(SearchMatch match) {
+								if (match.getElement() instanceof IJavaElement) {
+									elements.add((IJavaElement) match.getElement());
+								}
+							}
+						};
+						SearchEngine searchEngine = new SearchEngine();
+						searchEngine.search(pattern,
+								new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope,
+								requestor, null);
+						return elements.toArray(new IJavaElement[0]);
+					}
+				} catch (BadLocationException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+
+			}
+		}
 		return null;
+	}
+
+	private static String parse(String contents, int offset) {
+		if (contents == null || offset < 0 || contents.length() < offset
+				|| !isJavaIdentifierOrPeriod(contents.charAt(offset))) {
+			return null;
+		}
+		int start = offset;
+		while (start - 1 > -1 && isJavaIdentifierOrPeriod(contents.charAt(start - 1))) {
+			start--;
+		}
+		int end = offset;
+		while (end <= contents.length() && isJavaIdentifierOrPeriod(contents.charAt(end))) {
+			end++;
+		}
+		if (end >= start) {
+			return contents.substring(start, end);
+		}
+		return null;
+	}
+
+	private static boolean isJavaIdentifierOrPeriod(char ch) {
+		return Character.isJavaIdentifierPart(ch) || ch == '.';
 	}
 
 	public static IFile findFile(String uriString) {

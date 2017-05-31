@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -57,6 +58,9 @@ public class NavigateToDefinitionHandler {
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)  ) {
 				return JDTUtils.toLocation(element);
+			}
+			if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+				return JDTUtils.toLocation(((IMember) element).getClassFile());
 			}
 			return null;
 

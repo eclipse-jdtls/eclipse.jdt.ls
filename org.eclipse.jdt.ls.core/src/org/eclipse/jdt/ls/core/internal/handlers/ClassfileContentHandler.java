@@ -55,7 +55,7 @@ public class ClassfileContentHandler {
 		});
 	}
 
-	private String disassemble(IClassFile classFile) {
+	public static String disassemble(IClassFile classFile) {
 		ClassFileBytesDisassembler disassembler= ToolFactory.createDefaultClassFileBytesDisassembler();
 		String disassembledByteCode = null;
 		try {
