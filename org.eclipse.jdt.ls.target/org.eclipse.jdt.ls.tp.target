@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="79">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="82">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
 <repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
-<unit id="com.google.gson.source" version="2.7.0.v20170129-0911"/>
-<unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
-<unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
-<unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
-<repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.m2e.feature.feature.group" version="1.8.0.20170516-2043"/>
@@ -41,6 +33,15 @@
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.buildship.feature.group" version="2.0.3.v20170530-2312-s"/>
 <repository location="http://download.eclipse.org/buildship/updates/e47/snapshots/2.x/2.0.3.v20170530-2312-s/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
+<unit id="com.google.gson.source" version="2.7.0.v20170129-0911"/>
+<unit id="com.ibm.icu.base" version="58.2.0.v20170418-1837"/>
+<unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
+<unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
+<unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
+<repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
