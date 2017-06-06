@@ -27,20 +27,20 @@ First Time Setup
 --------------
 0. Fork and clone the repository
 1. Install Eclipse [Neon Java EE](http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neonr)
-that will have most needed already installed. Alternately,
+that will have most needed already installed. Alternatively,
 you can get the [Eclipse IDE for Java developers](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/neonr)
-and just instal Eclipse PDE from marketplace.
+and just install Eclipse PDE from the Eclipse Marketplace.
 
 2. Once installed use `File > Open Projects from File System...` and
-point it `eclipse.jdt.ls` and Eclipse should automatically
+point it at `eclipse.jdt.ls` and Eclipse should automatically
 detect the projects and import it properly.
 
-3. If, after import, you see an error on `pom.xml` about Tycho, you can use Quick Fix
+3. If, after importing the projects, you see an error on `pom.xml` about Tycho, you can use Quick Fix
 (Ctrl+1) to install the Tycho maven integration.
 
-4. At that point, some plugins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all required dependencies, then should be able to compile all projects in the workspace. 
+4. At that point, some plug-ins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all the required dependencies. It should then be able to compile all the projects in the workspace. 
 
-Building from command line
+Building from the command line
 ----------------------------
 
 This command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
@@ -73,11 +73,11 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declips
 
 Managing connection types
 -------------------------
-Java Language server supports sockets, named pipes, and standard streams of the server process
+The Java Language server supports sockets, named pipes, and standard streams of the server process
 to communicate with the client. Client can communicate its preferred connection methods 
 by setting up environment variables. 
 
-* To use **name pipes**  set the following environment variables before starting
+* To use **named pipes**  set the following environment variables before starting
 the server.
 ```
 STDIN_PIPE_NAME --> where client reads from
@@ -97,8 +97,8 @@ STDOUT_HOST
 * To use standard streams(stdin, stdout) of the server process do not set any 
 of the above environment variables and the server will fall back to standard streams. 
 
-For socket and named pipes the client is expected to create the connections
-and wait for server the connect.
+For socket and named pipes, the client is expected to create the connections
+and wait for the server to connect.
 
 
 Feedback
@@ -109,7 +109,7 @@ Feedback
 
 Clients
 -------
-This repository contains only the server implementation. Here are some known clients consuming this server:
+This repository only contains the server implementation. Here are some known clients consuming this server:
 
 * [vscode-java](https://github.com/redhat-developer/vscode-java) : an extension for Visual Studio Code
 
