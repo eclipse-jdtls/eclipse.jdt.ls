@@ -105,6 +105,7 @@ Feedback
 ---------
 
 * File a bug in [GitHub Issues](https://github.com/eclipse/eclipse.jdt.ls/issues).
+* Join the discussion on our [Mattermost channel](https://mattermost.eclipse.org/eclipse/channels/eclipsejdtls)
 * [Tweet](https://twitter.com/GorkemErcan) [us](https://twitter.com/fbricon) with other feedback.
 
 Clients
