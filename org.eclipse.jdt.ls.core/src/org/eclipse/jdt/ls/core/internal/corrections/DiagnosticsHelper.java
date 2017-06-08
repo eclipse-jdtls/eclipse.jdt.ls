@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.Range;
 
 /**
  * Helper methods for {@link Diagnostic}
@@ -27,12 +28,12 @@ public class DiagnosticsHelper {
 	 * Gets the end offset for the diagnostic.
 	 *
 	 * @param unit
-	 * @param diagnostic
+	 * @param range
 	 * @return starting offset or negative value if can not be determined
 	 */
-	public static int getEndOffset(ICompilationUnit unit, Diagnostic diagnostic){
+	public static int getEndOffset(ICompilationUnit unit, Range range){
 		try {
-			return JsonRpcHelpers.toOffset(unit.getBuffer(), diagnostic.getRange().getEnd().getLine(), diagnostic.getRange().getEnd().getCharacter());
+			return JsonRpcHelpers.toOffset(unit.getBuffer(), range.getEnd().getLine(), range.getEnd().getCharacter());
 		} catch (JavaModelException e) {
 			return -1;
 		}
@@ -42,12 +43,12 @@ public class DiagnosticsHelper {
 	 * Gets the start offset for the diagnostic.
 	 *
 	 * @param unit
-	 * @param diagnostic
+	 * @param range
 	 * @return starting offset or negative value if can not be determined
 	 */
-	public static int getStartOffset(ICompilationUnit unit, Diagnostic diagnostic){
+	public static int getStartOffset(ICompilationUnit unit, Range range){
 		try {
-			return JsonRpcHelpers.toOffset(unit.getBuffer(), diagnostic.getRange().getStart().getLine(), diagnostic.getRange().getStart().getCharacter());
+			return JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 		} catch (JavaModelException e) {
 			return -1;
 		}
@@ -59,9 +60,9 @@ public class DiagnosticsHelper {
 	 * @param diagnostic
 	 * @return length of the diagnostics range.
 	 */
-	public static int getLength(ICompilationUnit unit, Diagnostic diagnostic){
-		int start = DiagnosticsHelper.getStartOffset(unit, diagnostic);
-		int end = DiagnosticsHelper.getEndOffset(unit, diagnostic);
+	public static int getLength(ICompilationUnit unit, Range range){
+		int start = DiagnosticsHelper.getStartOffset(unit, range);
+		int end = DiagnosticsHelper.getEndOffset(unit, range);
 		return end-start;
 	}
 

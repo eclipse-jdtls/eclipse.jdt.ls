@@ -15,27 +15,27 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
-import org.eclipse.jdt.ls.core.internal.corrections.UnusedCodeCorrections;
+import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.ltk.core.refactoring.TextChange;
+import org.eclipse.text.edits.TextEdit;
 
-/**
- * @author Gorkem Ercan
- *
- */
 public class CodeActionHandler {
 
 	/**
@@ -43,7 +43,7 @@ public class CodeActionHandler {
 	 */
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
-
+	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
 
 	/**
 	 * @param params
@@ -51,101 +51,76 @@ public class CodeActionHandler {
 	 */
 	public List<Command> getCodeActionCommands(CodeActionParams params) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		if(unit == null ) {
+		if (unit == null) {
 			return Collections.emptyList();
 		}
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(getASTRoot(unit));
+		IProblemLocation[] locations = this.getProblemLocations(unit, params.getContext().getDiagnostics());
+
 		List<Command> $ = new ArrayList<>();
-		params.getContext().getDiagnostics().stream()
-		.filter(this::hasCodeAssist)
-		.forEach(diagnostic-> {$.addAll(getCommandForDiagnostic(unit, params.getTextDocument().getUri(), diagnostic));});
+		try {
+			CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
+			for (CUCorrectionProposal proposal : corrections) {
+				Command command = this.getCommandFromProposal(proposal);
+				$.add(command);
+			}
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return $;
 	}
 
-	private boolean hasCodeAssist(Diagnostic diagnostic){
-
-		final int problemId= getProblemId(diagnostic);
-		switch(problemId){
-		case IProblem.UnterminatedString:
-		case IProblem.UnusedImport:
-		case IProblem.DuplicateImport:
-		case IProblem.CannotImportPackage:
-		case IProblem.ConflictingImport:
-		case IProblem.ImportNotFound:
-		case IProblem.SuperfluousSemicolon:
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	private List<Command> getCommandForDiagnostic(ICompilationUnit unit, String uri,Diagnostic diagnostic){
+	private boolean hasCodeAssist(Diagnostic diagnostic) {
 		final int problemId = getProblemId(diagnostic);
-		switch(problemId){
-		case IProblem.UnterminatedString:
-			String label = "Insert missing quote";
-			WorkspaceEdit edit = new WorkspaceEdit();
-			try {
-				int offset = DiagnosticsHelper.getEndOffset(unit, diagnostic);
-				int start = DiagnosticsHelper.getStartOffset(unit, diagnostic);
-				int pos = moveBack(offset, start, "\n\r", unit.getBuffer());
-				TextEdit te = new TextEdit(JDTUtils.toRange(unit, pos, 0), "\"");
-				edit.getChanges().put(uri, Arrays.asList(te));
-				return Arrays.asList(new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList(edit)));
-			} catch (JavaModelException e) {
-				return Collections.emptyList();
-			}
-		case IProblem.UnusedImport:
-		case IProblem.DuplicateImport:
-		case IProblem.CannotImportPackage:
-		case IProblem.ConflictingImport:
-		case IProblem.ImportNotFound:
-			//TODO: Add Organize imports command when/if we support it
-			return Arrays.asList(textEditToCommand(unit, uri, "Remove unused import", UnusedCodeCorrections.createUnusedImportTextEdit(getASTRoot(unit),
-					DiagnosticsHelper.getStartOffset(unit, diagnostic),
-					DiagnosticsHelper.getLength(unit, diagnostic))));
-		case IProblem.SuperfluousSemicolon:
-			return Arrays.asList(textEditToCommand(unit, uri, "Remove semicolon", UnusedCodeCorrections.createSuperfluousSemicolonTextEdit(getASTRoot(unit),
-					DiagnosticsHelper.getStartOffset(unit, diagnostic),
-					DiagnosticsHelper.getLength(unit, diagnostic))));
-
-		default:
-			return Collections.emptyList();
-		}
+		return quickFixProcessor.hasCorrections(problemId);
 	}
 
-	private int getProblemId(Diagnostic diagnostic){
-		int $=0;
-		try{
+	private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
+		String name = proposal.getName();
+		TextChange textChange = proposal.getTextChange();
+		TextEdit edit = textChange.getEdit();
+		ICompilationUnit unit = proposal.getCompilationUnit();
+
+		return textEditToCommand(unit, name, edit);
+	}
+
+	private IProblemLocation[] getProblemLocations(ICompilationUnit unit, List<Diagnostic> diagnostics) {
+		IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
+		for (int i = 0; i < diagnostics.size(); i++) {
+			Diagnostic diagnostic = diagnostics.get(i);
+			int problemId = getProblemId(diagnostic);
+			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
+			int end = DiagnosticsHelper.getEndOffset(unit, diagnostic.getRange());
+			boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
+			locations[i] = new ProblemLocation(start, end - start, problemId, isError);
+		}
+		return locations;
+	}
+
+	private int getProblemId(Diagnostic diagnostic) {
+		int $ = 0;
+		try {
 			$ = Integer.parseInt(diagnostic.getCode());
-		}catch(NumberFormatException e){
+		} catch (NumberFormatException e) {
 			// return 0
 		}
 		return $;
 	}
 
-
-
-	private static Command textEditToCommand(ICompilationUnit unit, String uri, String label, org.eclipse.text.edits.TextEdit textEdit){
+	private static Command textEditToCommand(ICompilationUnit unit, String label, TextEdit textEdit) {
 		TextEditConverter converter = new TextEditConverter(unit, textEdit);
-		List<TextEdit> edits = converter.convert();
+		String uri = JDTUtils.getFileURI(unit);
 		WorkspaceEdit $ = new WorkspaceEdit();
-		$.getChanges().put(uri, edits);
+		$.getChanges().put(uri, converter.convert());
 		return new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList($));
 	}
 
-	private static CompilationUnit getASTRoot(ICompilationUnit unit){
+	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
 		return SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
 	}
-
-	private static int moveBack(int offset, int start, String ignoredCharacters, IBuffer buffer) {
-		while (offset >= start) {
-			if (ignoredCharacters.indexOf(buffer.getChar(offset - 1)) == -1) {
-				return offset;
-			}
-			offset--;
-		}
-		return start;
-	}
-
 
 }
