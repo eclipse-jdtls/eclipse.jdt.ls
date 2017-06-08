@@ -138,7 +138,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		Diagnostic d = new Diagnostic();
 		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 		d.setMessage(marker.getAttribute(IMarker.MESSAGE, ""));
-		d.setCode(marker.getAttribute(IJavaModelMarker.ID, "0"));
+		d.setCode(String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0)));
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
 		d.setRange(convertRange(document, marker));
 		return d;
