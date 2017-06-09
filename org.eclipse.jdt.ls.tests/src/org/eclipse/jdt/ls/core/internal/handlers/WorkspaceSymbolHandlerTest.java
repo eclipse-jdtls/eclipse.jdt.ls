@@ -40,15 +40,15 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testSearchWithEmptyResults() {
-		List<SymbolInformation> results = handler.search(null);
+		List<SymbolInformation> results = handler.search(null, monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 
-		results = handler.search("  ");
+		results = handler.search("  ", monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 
-		results = handler.search("Abracadabra");
+		results = handler.search("Abracadabra", monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 	}
@@ -57,7 +57,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testWorkspaceSearch() {
 		String query = "Abstract";
-		List<SymbolInformation> results = handler.search(query);
+		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
 		assertTrue("Found "+ results.size() + " results", results.size() > 100);
 		Range defaultRange = JDTUtils.newRange();
@@ -75,7 +75,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testProjectSearch() {
 		String query = "IFoo";
-		List<SymbolInformation> results = handler.search(query);
+		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
 		assertEquals("Found "+ results.size() + " results", 1, results.size());
 		SymbolInformation symbol = results.get(0);
@@ -89,12 +89,12 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testCamelCaseSearch() {
-		List<SymbolInformation> results = handler.search("NPE");
+		List<SymbolInformation> results = handler.search("NPE", monitor);
 		assertNotNull(results);
 		assertEquals("NoPermissionException", results.get(0).getName());
 		assertEquals("NullPointerException", results.get(results.size()-1).getName());
 
-		results = handler.search("HaMa");
+		results = handler.search("HaMa", monitor);
 		String className = "HashMap";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
 		assertTrue("Did not find "+className, foundClass);

@@ -107,7 +107,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = codeLensParams.getTextDocument().getUri();
 		assertFalse(uri.isEmpty());
 		//when
-		List<CodeLens> result = handler.getCodeLensSymbols(uri);
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
 		assertEquals("Found " + result, 3, result.size());
@@ -130,14 +130,14 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testGetCodeLenseBoundaries() {
-		List<CodeLens> result = handler.getCodeLensSymbols(null);
+		List<CodeLens> result = handler.getCodeLensSymbols(null, monitor);
 		assertNotNull(result);
 		assertEquals(0, result.size());
 
 		String payload = createCodeLensSymbolsRequest("src/java/Missing.java");
 		CodeLensParams codeLensParams = getParams(payload);
 		String uri = codeLensParams.getTextDocument().getUri();
-		result = handler.getCodeLensSymbols(uri);
+		result = handler.getCodeLensSymbols(uri, monitor);
 		assertEquals(0, result.size());
 	}
 
@@ -154,7 +154,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertFalse(uri.isEmpty());
 
 		//when
-		List<CodeLens> result = handler.getCodeLensSymbols(uri);
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
 		assertEquals(0, result.size());
@@ -171,7 +171,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		Range range = lens.getRange();
 		assertRange(5, 13, 16, range);
 
-		CodeLens result = handler.resolve(lens);
+		CodeLens result = handler.resolve(lens, monitor);
 		assertNotNull(result);
 
 		//Check if command found
@@ -203,12 +203,12 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testResolveCodeLenseBoundaries() {
-		CodeLens result = handler.resolve(null);
+		CodeLens result = handler.resolve(null, monitor);
 		assertNull(result);
 
 		String payload = createCodeLensRequest("src/java/Missing.java", 5, 13, 16);
 		CodeLens lens = getParams(payload);
-		result = handler.resolve(lens);
+		result = handler.resolve(lens, monitor);
 		assertSame(lens, result);
 		assertNull(result.getCommand());
 	}
@@ -220,7 +220,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = codeLensParams.getTextDocument().getUri();
 		assertFalse(uri.isEmpty());
 		//when
-		List<CodeLens> result = handler.getCodeLensSymbols(uri);
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
 		assertEquals("Found " + result, 4, result.size());

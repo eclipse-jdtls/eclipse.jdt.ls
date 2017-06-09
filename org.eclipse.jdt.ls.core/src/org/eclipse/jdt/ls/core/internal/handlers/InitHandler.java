@@ -66,9 +66,9 @@ final public class InitHandler {
 		}else{
 			preferenceManager.updateClientPrefences(param.getCapabilities());
 		}
-		String rootPath = param.getRootPath();
-		if (param.getRootUri() != null) {
-			URI uri = URI.create(param.getRootUri());
+		String rootPath = param.getRootUri();
+		if (rootPath != null) {
+			URI uri = URI.create(rootPath);
 			if ("file".equals(uri.getScheme())){
 				rootPath = Paths.get(uri).toString();
 			}

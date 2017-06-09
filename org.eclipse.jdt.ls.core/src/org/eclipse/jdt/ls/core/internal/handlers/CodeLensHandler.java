@@ -18,7 +18,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -51,7 +51,7 @@ public class CodeLensHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public CodeLens resolve(CodeLens lens){
+	public CodeLens resolve(CodeLens lens, IProgressMonitor monitor) {
 		if (lens == null) {
 			return null;
 		}
@@ -67,7 +67,7 @@ public class CodeLensHandler {
 			}
 			Map<String, Object> position = (Map<String, Object>) data.get(1);
 			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
-			List<Location> locations = findReferences(element);
+			List<Location> locations = findReferences(element, monitor);
 			int nReferences = locations.size();
 			Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references",
 					"java.show.references",
@@ -79,7 +79,8 @@ public class CodeLensHandler {
 		return lens;
 	}
 
-	private List<Location> findReferences(IJavaElement element) throws JavaModelException, CoreException {
+	private List<Location> findReferences(IJavaElement element, IProgressMonitor monitor)
+			throws JavaModelException, CoreException {
 		if (element == null) {
 			return Collections.emptyList();
 		}
@@ -106,12 +107,12 @@ public class CodeLensHandler {
 				}
 
 			}
-		}, new NullProgressMonitor());
+		}, monitor);
 
 		return result;
 	}
 
-	public List<CodeLens> getCodeLensSymbols(String uri) {
+	public List<CodeLens> getCodeLensSymbols(String uri, IProgressMonitor monitor) {
 		if (!preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
 			return Collections.emptyList();
 		}
@@ -122,7 +123,10 @@ public class CodeLensHandler {
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
-			collectChildren(unit, elements, lenses);
+			collectChildren(unit, elements, lenses, monitor);
+			if (monitor.isCanceled()) {
+				lenses.clear();
+			}
 			return lenses;
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem getting code lenses for" + unit.getElementName(), e);
@@ -130,11 +134,15 @@ public class CodeLensHandler {
 		return Collections.emptyList();
 	}
 
-	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<CodeLens> lenses)
+	private void collectChildren(ICompilationUnit unit, IJavaElement[] elements, ArrayList<CodeLens> lenses,
+			IProgressMonitor monitor)
 			throws JavaModelException {
 		for (IJavaElement element : elements) {
+			if (monitor.isCanceled()) {
+				return;
+			}
 			if (element.getElementType() == IJavaElement.TYPE) {
-				collectChildren(unit, ((IType) element).getChildren(), lenses);
+				collectChildren(unit, ((IType) element).getChildren(), lenses, monitor);
 			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}

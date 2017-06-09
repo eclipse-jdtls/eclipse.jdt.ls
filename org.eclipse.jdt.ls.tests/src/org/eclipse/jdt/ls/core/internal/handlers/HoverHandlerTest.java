@@ -66,7 +66,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
-		Hover hover = handler.hover(position).get();
+		Hover hover = handler.hover(position, monitor);
 
 		//then
 		assertNotNull(hover);
@@ -83,7 +83,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
-		Hover hover = handler.hover(position).get();
+		Hover hover = handler.hover(position, monitor);
 
 		//then
 		assertNotNull(hover);
@@ -100,7 +100,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
-		Hover hover = handler.hover(position).get();
+		Hover hover = handler.hover(position, monitor);
 
 		//then
 		assertNotNull(hover);
@@ -129,7 +129,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(argParam);
 
 		//when
-		Hover hover = handler.hover(position).get();
+		Hover hover = handler.hover(position, monitor);
 
 		//then
 		assertNotNull(hover);
@@ -145,7 +145,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(payload);
 
 		// when
-		Hover hover = handler.hover(position).get();
+		Hover hover = handler.hover(position, monitor);
 
 		// then
 		assertNotNull(hover);

@@ -13,41 +13,37 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class CompletionHandler{
 
-	CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position){
-		return CompletableFutures.computeAsync(cancelChecker->{
-			List<CompletionItem> completionItems;
-			try {
-				ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
-				completionItems = this.computeContentAssist(unit,
-						position.getPosition().getLine(),
-						position.getPosition().getCharacter(), new CancellableProgressMonitor(cancelChecker));
-			} catch (Exception e) {
-				JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
-				completionItems = Collections.emptyList();
-			}
-			CompletionList $ = new CompletionList();
-			$.setItems(completionItems);
-			JavaLanguageServerPlugin.logInfo("Completion request completed");
-			return Either.forRight($);
-		});
+	Either<List<CompletionItem>, CompletionList> completion(TextDocumentPositionParams position,
+			IProgressMonitor monitor) {
+		List<CompletionItem> completionItems;
+		try {
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
+			completionItems = this.computeContentAssist(unit,
+					position.getPosition().getLine(),
+					position.getPosition().getCharacter(), monitor);
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
+			completionItems = Collections.emptyList();
+		}
+		CompletionList $ = new CompletionList();
+		$.setItems(completionItems);
+		JavaLanguageServerPlugin.logInfo("Completion request completed");
+		return Either.forRight($);
 	}
 
 	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) throws JavaModelException {

@@ -10,42 +10,42 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.concurrent.CompletableFuture;
-
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 
 public class ClassfileContentHandler {
 
-	public CompletableFuture<String> contents(TextDocumentIdentifier param) {
-		return CompletableFutures.computeAsync(cm->{
-			String source = null;
-			try {
-				IClassFile cf  = JDTUtils.resolveClassFile(param.getUri());
-				if (cf != null) {
-					IBuffer buffer = cf.getBuffer();
-					if (buffer != null){
-						cm.checkCanceled();
-						JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
-						source = buffer.getContents();
+	private static final String EMPTY_CONTENT = "";
+
+	public String contents(TextDocumentIdentifier param, IProgressMonitor monitor) {
+		String source = null;
+		try {
+			IClassFile cf = JDTUtils.resolveClassFile(param.getUri());
+			if (cf != null) {
+				IBuffer buffer = cf.getBuffer();
+				if (buffer != null) {
+					if (monitor.isCanceled()) {
+						return EMPTY_CONTENT;
 					}
-					if (source == null) {
-						source = JDTUtils.disassemble(cf);
-					}
+					source = buffer.getContents();
+					JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
 				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException("Exception getting java element ", e);
+				if (source == null) {
+					source = JDTUtils.disassemble(cf);
+				}
 			}
-			if (source == null) {
-				source = "";//need to return non null value
-			}
-			return source;
-		});
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
+		}
+		if (source == null) {
+			source = EMPTY_CONTENT;// need to return non null value
+		}
+		return source;
 	}
 
 }
