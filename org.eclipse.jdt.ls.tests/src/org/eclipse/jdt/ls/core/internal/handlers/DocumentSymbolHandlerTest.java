@@ -15,7 +15,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.core.resources.IProject;
@@ -94,8 +93,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		DocumentSymbolParams params = new DocumentSymbolParams();
 		params.setTextDocument(identifier);
-		CompletableFuture<List<? extends SymbolInformation>> future = handler.documentSymbol(params);
-		List<? extends SymbolInformation> symbols = future.get();
+		List<? extends SymbolInformation> symbols = handler.documentSymbol(params, monitor);
 		assertTrue(symbols.size() > 0);
 		return symbols;
 	}

@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMember;
@@ -61,7 +62,7 @@ public class CompletionResolveHandler {
 	public static final String DATA_FIELD_REQUEST_ID = "rid";
 	public static final String DATA_FIELD_PROPOSAL_ID = "pid";
 
-	public CompletionItem resolve(CompletionItem param) {
+	public CompletionItem resolve(CompletionItem param, IProgressMonitor monitor) {
 
 		@SuppressWarnings("unchecked")
 		Map<String, String> data = (Map<String, String>) param.getData();
@@ -117,7 +118,7 @@ public class CompletionResolveHandler {
 					member = type;
 				}
 
-				if (member!=null && member.exists()) {
+				if (member != null && member.exists() && !monitor.isCanceled()) {
 					String javadoc = null;
 					try {
 						final IMember curMember = member;

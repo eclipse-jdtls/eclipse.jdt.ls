@@ -13,32 +13,28 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.ls.core.internal.HoverInfoProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class HoverHandler{
 
-	public CompletableFuture<Hover> hover(TextDocumentPositionParams position){
-		return CompletableFutures.computeAsync(cancelToken->{
-			ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+	public Hover hover(TextDocumentPositionParams position, IProgressMonitor monitor) {
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 
-			String hover = null;
-			if(unit !=null){
-				cancelToken.checkCanceled();
-				hover = computeHover(unit ,position.getPosition().getLine(),
-						position.getPosition().getCharacter());
-			}
-			Hover $ = new Hover();
-			$.setContents(Arrays.asList(Either.forLeft(defaultString(hover))));
-			return $;
-		});
+		String hover = null;
+		if (unit != null && !monitor.isCanceled()) {
+			hover = computeHover(unit ,position.getPosition().getLine(),
+					position.getPosition().getCharacter());
+		}
+		Hover $ = new Hover();
+		$.setContents(Arrays.asList(Either.forLeft(defaultString(hover))));
+		return $;
 	}
 
 	private String computeHover(ITypeRoot unit, int line, int column) {

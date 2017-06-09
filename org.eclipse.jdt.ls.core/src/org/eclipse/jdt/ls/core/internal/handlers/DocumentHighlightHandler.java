@@ -13,9 +13,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -34,12 +33,12 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 @SuppressWarnings("restriction")
 public class DocumentHighlightHandler{
 
-	private List<DocumentHighlight> computeOccurrences(ITypeRoot unit, int line, int column) {
+	private List<DocumentHighlight> computeOccurrences(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		if (unit != null) {
 			try {
 				int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
 				OccurrencesFinder finder = new OccurrencesFinder();
-				CompilationUnit ast = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+				CompilationUnit ast = SharedASTProvider.getInstance().getAST(unit, monitor);
 				if (ast != null) {
 					String error = finder.initialize(ast, offset, 0);
 					if (error == null){
@@ -47,6 +46,9 @@ public class DocumentHighlightHandler{
 						OccurrenceLocation[] occurrences = finder.getOccurrences();
 						if (occurrences != null) {
 							for (OccurrenceLocation loc : occurrences) {
+								if (monitor.isCanceled()) {
+									return Collections.emptyList();
+								}
 								result.add(convertToHighlight(unit, loc));
 							}
 						}
@@ -79,12 +81,10 @@ public class DocumentHighlightHandler{
 		return h;
 	}
 
-	CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position){
-		return CompletableFuture.supplyAsync(()->{
-			ITypeRoot type = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
-			return computeOccurrences(type, position.getPosition().getLine(),
-					position.getPosition().getCharacter());
-		});
+	List<? extends DocumentHighlight> documentHighlight(TextDocumentPositionParams position, IProgressMonitor monitor) {
+		ITypeRoot type = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
+		return computeOccurrences(type, position.getPosition().getLine(),
+				position.getPosition().getCharacter(), monitor);
 	}
 
 }

@@ -12,8 +12,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -28,16 +28,10 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class NavigateToDefinitionHandler {
 
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position){
-		return CompletableFuture.supplyAsync(()->{
-			return getDefinition(position);
-		});
-	}
-
-	public List<? extends Location> getDefinition(TextDocumentPositionParams position){
+	public List<? extends Location> definition(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		Location location = null;
-		if(unit != null){
+		if (unit != null && !monitor.isCanceled()) {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
 					position.getPosition().getCharacter());
 		}

@@ -68,7 +68,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 
 	private String getSource(String uri) throws Exception {
 		TextDocumentIdentifier param = new TextDocumentIdentifier(uri);
-		return handler.contents(param).get();
+		return handler.contents(param, monitor);
 	}
 
 }

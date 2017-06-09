@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -43,7 +43,7 @@ public class ReferencesHandler {
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
 	}
 
-	List<Location> findReferences(ReferenceParams param) {
+	List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
 		SearchEngine engine = new SearchEngine();
 
 		try {
@@ -85,7 +85,7 @@ public class ReferencesHandler {
 					}
 
 				}
-			}, new NullProgressMonitor());
+					}, monitor);
 
 			return locations;
 		} catch (CoreException e) {
