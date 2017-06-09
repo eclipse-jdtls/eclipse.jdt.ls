@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
+import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -58,6 +61,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
+import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -154,7 +158,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		logInfo(">> workspace/symbol");
 		WorkspaceSymbolHandler handler = new WorkspaceSymbolHandler();
-		return CompletableFuture.supplyAsync(()->{return handler.search(params.getQuery());});
+		return computeAsync((cc) -> {
+			return handler.search(params.getQuery(), toMonitor(cc));
+		});
 	}
 
 	/* (non-Javadoc)
@@ -190,7 +196,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position) {
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler();
-		return handler.completion(position);
+		return computeAsync((cc) -> handler.completion(position, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -200,7 +206,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
 		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		return CompletableFuture.supplyAsync(()->handler.resolve(unresolved));
+		return computeAsync((cc) -> handler.resolve(unresolved, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -210,7 +216,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
 		logInfo(">> document/hover");
 		HoverHandler handler = new HoverHandler();
-		return handler.hover(position);
+		return computeAsync((cc) -> handler.hover(position, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -230,7 +236,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler();
-		return handler.definition(position);
+		return computeAsync((cc) -> handler.definition(position, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -240,7 +246,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
 		logInfo(">> document/references");
 		ReferencesHandler handler = new ReferencesHandler();
-		return CompletableFuture.supplyAsync(()->handler.findReferences(params));
+		return computeAsync((cc) -> handler.findReferences(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -250,7 +256,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
 		logInfo(">> document/documentHighlight");
 		DocumentHighlightHandler handler = new DocumentHighlightHandler();
-		return handler.documentHighlight(position);
+		return computeAsync((cc) -> handler.documentHighlight(position, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -260,7 +266,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
 		DocumentSymbolHandler handler = new DocumentSymbolHandler();
-		return handler.documentSymbol(params);
+		return computeAsync((cc) -> handler.documentSymbol(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -280,7 +286,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		logInfo(">> document/codeLens");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return CompletableFuture.supplyAsync(()->handler.getCodeLensSymbols(params.getTextDocument().getUri()));
+		return computeAsync((cc) -> handler.getCodeLensSymbols(params.getTextDocument().getUri(), toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -290,7 +296,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
 		logInfo(">> codeLens/resolve");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return CompletableFuture.supplyAsync(()->handler.resolve(unresolved));
+		return computeAsync((cc) -> handler.resolve(unresolved, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -300,7 +306,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
 		logInfo(">> document/formatting");
 		FormatterHandler handler = new FormatterHandler();
-		return handler.formatting(params);
+		return computeAsync((cc) -> handler.formatting(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -310,7 +316,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends TextEdit>> rangeFormatting(DocumentRangeFormattingParams params) {
 		logInfo(">> document/rangeFormatting");
 		FormatterHandler handler = new FormatterHandler();
-		return handler.rangeFormatting(params);
+		return computeAsync((cc) -> handler.rangeFormatting(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -380,7 +386,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<String> classFileContents(TextDocumentIdentifier param) {
 		logInfo(">> java/classFileContents");
 		ClassfileContentHandler handler = new ClassfileContentHandler();
-		return  handler.contents(param);
+		return computeAsync((cc) -> handler.contents(param, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
@@ -397,6 +403,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (client != null) {
 			client.sendStatus(serverStatus, status);
 		}
+	}
+
+	private IProgressMonitor toMonitor(CancelChecker checker) {
+		return new CancellableProgressMonitor(checker);
 	}
 
 }

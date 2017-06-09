@@ -46,8 +46,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testGetEmptyDefinition() throws Exception {
-		List<? extends Location> definitions = handler.getDefinition(
-				new TextDocumentPositionParams(new TextDocumentIdentifier("/foo/bar"), "/foo/bar", new Position(1, 1)));
+		List<? extends Location> definitions = handler.definition(
+				new TextDocumentPositionParams(new TextDocumentIdentifier("/foo/bar"), new Position(1, 1)), monitor);
 		assertNotNull(definitions);
 		assertEquals(1, definitions.size());
 		assertNotNull("Location has no Range", definitions.get(0).getRange());
@@ -67,7 +67,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler
-				.getDefinition(new TextDocumentPositionParams(identifier, new Position(line, column)));
+				.definition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
 		assertNotNull(definitions);
 		assertEquals(1, definitions.size());
 		assertNotNull(definitions.get(0).getUri());

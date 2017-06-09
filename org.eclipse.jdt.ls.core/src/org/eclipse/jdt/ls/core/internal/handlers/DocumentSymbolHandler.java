@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
@@ -34,11 +34,21 @@ import org.eclipse.lsp4j.SymbolKind;
 
 public class DocumentSymbolHandler {
 
-	private SymbolInformation[] getOutline(ITypeRoot unit) {
+	public List<? extends SymbolInformation> documentSymbol(DocumentSymbolParams params,
+			IProgressMonitor monitor) {
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
+		if (unit == null) {
+			return Collections.emptyList();
+		}
+		SymbolInformation[] elements = this.getOutline(unit, monitor);
+		return Arrays.asList(elements);
+	}
+
+	private SymbolInformation[] getOutline(ITypeRoot unit, IProgressMonitor monitor) {
 		try {
 			IJavaElement[] elements = unit.getChildren();
 			ArrayList<SymbolInformation> symbols = new ArrayList<>(elements.length);
-			collectChildren(unit, elements, symbols);
+			collectChildren(unit, elements, symbols, monitor);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem getting outline for" +  unit.getElementName(), e);
@@ -46,11 +56,15 @@ public class DocumentSymbolHandler {
 		return new SymbolInformation[0];
 	}
 
-	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols)
+	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols,
+			IProgressMonitor monitor)
 			throws JavaModelException {
 		for(IJavaElement element : elements ){
+			if (monitor.isCanceled()) {
+				return;
+			}
 			if(element instanceof IParent){
-				collectChildren(unit, filter(((IParent)element).getChildren()), symbols);
+				collectChildren(unit, filter(((IParent) element).getChildren()), symbols, monitor);
 			}
 			if(element.getElementType() != IJavaElement.FIELD &&
 					element.getElementType() != IJavaElement.METHOD
@@ -104,17 +118,6 @@ public class DocumentSymbolHandler {
 		} catch (JavaModelException e) {
 			return false;
 		}
-	}
-
-	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params){
-		return CompletableFuture.supplyAsync(()->{
-			ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
-			if(unit == null ) {
-				return Collections.emptyList();
-			}
-			SymbolInformation[] elements  = this.getOutline(unit);
-			return Arrays.asList(elements);
-		});
 	}
 
 	public static SymbolKind mapKind(IJavaElement element) {

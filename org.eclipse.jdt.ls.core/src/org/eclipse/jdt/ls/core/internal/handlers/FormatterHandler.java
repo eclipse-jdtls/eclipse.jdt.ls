@@ -14,9 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -45,28 +45,21 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class FormatterHandler {
 
-	CompletableFuture<List<? extends org.eclipse.lsp4j.TextEdit>> formatting(DocumentFormattingParams params){
-		return CompletableFuture.supplyAsync( ()->{
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			if(cu == null ) {
-				return Collections.emptyList();
-			}
-			return format(cu,params.getOptions(), null);
-		});
-
+	List<? extends org.eclipse.lsp4j.TextEdit> formatting(DocumentFormattingParams params, IProgressMonitor monitor) {
+		return format(params.getTextDocument().getUri(), params.getOptions(), null, monitor);
 	}
 
-	CompletableFuture<List<? extends org.eclipse.lsp4j.TextEdit>> rangeFormatting(DocumentRangeFormattingParams params){
-		return CompletableFuture.supplyAsync(()->{
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			if(cu == null ) {
-				return Collections.emptyList();
-			}
-			return format(cu, params.getOptions(), params.getRange());
-		});
+	List<? extends org.eclipse.lsp4j.TextEdit> rangeFormatting(DocumentRangeFormattingParams params,
+			IProgressMonitor monitor) {
+		return format(params.getTextDocument().getUri(), params.getOptions(), params.getRange(), monitor);
 	}
 
-	private List<org.eclipse.lsp4j.TextEdit> format(ICompilationUnit cu, FormattingOptions options, Range range) {
+	private List<org.eclipse.lsp4j.TextEdit> format(String uri, FormattingOptions options, Range range,
+			IProgressMonitor monitor) {
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		if(cu == null ) {
+			return Collections.emptyList();
+		}
 
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
 
@@ -75,12 +68,12 @@ public class FormatterHandler {
 			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
 			IRegion region = (range == null ? new Region(0,document.getLength()) : getRegion(range,document));
 			// could not calculate region abort.
-			if(region == null ) {
-				return null;
+			if (region == null || monitor.isCanceled()) {
+				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 			}
 			String sourceToFormat = document.get();
 			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
-			if (format == null || format.getChildren().length == 0) {
+			if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
 				// nothing to return
 				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 			}

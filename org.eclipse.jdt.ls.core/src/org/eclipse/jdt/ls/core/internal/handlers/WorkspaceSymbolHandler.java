@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -34,7 +34,7 @@ import org.eclipse.lsp4j.SymbolKind;
 
 public class WorkspaceSymbolHandler{
 
-	public List<SymbolInformation> search(String query) {
+	public List<SymbolInformation> search(String query, IProgressMonitor monitor) {
 		if (query == null || query.trim().isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -77,7 +77,7 @@ public class WorkspaceSymbolHandler{
 					}
 					return SymbolKind.Class;
 				}
-			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
+			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 			return symbols;
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Problem getting search for" +  query, e);
