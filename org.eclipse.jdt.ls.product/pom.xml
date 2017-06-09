@@ -117,51 +117,6 @@
 	</build>
 	<profiles>
 		<profile>
-			<id>vscode-build</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<properties>
-				<vscode.location>${env.PWD}</vscode.location>
-			</properties>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-clean-plugin</artifactId>
-						<configuration>
-							<filesets>
-								<fileset>
-									<directory>${vscode.location}/server</directory>
-								</fileset>
-							</filesets>
-						</configuration>
-					</plugin>
-					<plugin>
-						<artifactId>maven-resources-plugin</artifactId>
-						<version>3.0.1</version>
-						<executions>
-							<execution>
-								<id>copy-server-files</id>
-								<phase>package</phase>
-								<goals>
-									<goal>copy-resources</goal>
-								</goals>
-								<configuration>
-									<resources>
-										<resource>
-											<directory>${basedir}/target/repository</directory>
-										</resource>
-									</resources>
-									<outputDirectory>${vscode.location}/server</outputDirectory>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
 			<id>server-distro</id>
 			<activation>
 				<activeByDefault>false</activeByDefault>
