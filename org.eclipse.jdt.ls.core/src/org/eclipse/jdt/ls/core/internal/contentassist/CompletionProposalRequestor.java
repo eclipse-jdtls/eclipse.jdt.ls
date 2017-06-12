@@ -42,6 +42,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	@Override
 	public void accept(CompletionProposal proposal) {
 		if(!isIgnored(proposal.getKind())) {
+			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null
+					&& String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
+				// Hacky way to boost relevance of current package, for package completions, until
+				// https://bugs.eclipse.org/518140 is fixed
+				proposal.setRelevance(proposal.getRelevance() + 1);
+			}
 			proposals.add(proposal);
 		}
 	}
