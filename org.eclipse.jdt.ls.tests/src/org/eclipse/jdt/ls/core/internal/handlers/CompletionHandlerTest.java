@@ -364,7 +364,42 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 		assertEquals("NoPackage", list.getItems().get(0).getLabel());
 	}
 
+	@Test
+	public void testCompletion_package() throws JavaModelException{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Baz.java",
+				"package o"+
+				"public class Baz {\n"+
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "package o");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> i1.getSortText().compareTo(i2.getSortText()));
+
+		CompletionItem item = items.get(0);
+		// current package should appear 1st
+		assertEquals("org.sample",item.getLabel());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(item).join();
+		assertNotNull(resolvedItem);
+		TextEdit te = item.getTextEdit();
+		assertNotNull(te);
+		assertEquals("org.sample", te.getNewText());
+		assertNotNull(te.getRange());
+		Range range = te.getRange();
+		assertEquals(0, range.getStart().getLine());
+		assertEquals(8, range.getStart().getCharacter());
+		assertEquals(0, range.getEnd().getLine());
+		assertEquals(15, range.getEnd().getCharacter());
+	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
