@@ -256,6 +256,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 	}
 
+	public static void log(CoreException e) {
+		log(e.getStatus());
+	}
+
 	public static void logError(String message) {
 		if (context != null) {
 			log(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), message));
@@ -347,4 +351,5 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static PrintStream getErr() {
 		return err;
 	}
+
 }

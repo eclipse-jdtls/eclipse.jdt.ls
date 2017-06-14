@@ -23,6 +23,8 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -38,6 +40,8 @@ import org.mockito.Mock;
  */
 public abstract class AbstractProjectsManagerBasedTest {
 
+	public static final String DEFAULT_PROJECT_NAME = "TestSetupProject";
+
 	protected IProgressMonitor monitor = new NullProgressMonitor();
 	protected ProjectsManager projectsManager;
 	@Mock
@@ -46,6 +50,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 	@Before
 	public void initProjectManager() {
 		projectsManager = new ProjectsManager(preferenceManager);
+	}
+
+	protected IJavaProject newEmptyProject() throws Exception {
+		projectsManager.initializeProjects(null, monitor);
+		waitForBackgroundJobs();
+		return JavaCore.create(projectsManager.getDefaultProject());
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {

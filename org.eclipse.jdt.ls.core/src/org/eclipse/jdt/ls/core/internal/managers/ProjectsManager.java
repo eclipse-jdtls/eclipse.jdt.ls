@@ -68,12 +68,14 @@ public class ProjectsManager {
 		try {
 			createJavaProject(subMonitor.split(10));
 
-			File userProjectRoot = (projectPath == null)?null:new File(projectPath);
-
-			IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
-			if (importer != null) {
-				importer.importToWorkspace(subMonitor.split(70));
+			if (projectPath != null) {
+				File userProjectRoot = new File(projectPath);
+				IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
+				if (importer != null) {
+					importer.importToWorkspace(subMonitor.split(70));
+				}
 			}
+
 			return Status.OK_STATUS;
 		} catch (InterruptedException e) {
 			JavaLanguageServerPlugin.logInfo("Import cancelled");

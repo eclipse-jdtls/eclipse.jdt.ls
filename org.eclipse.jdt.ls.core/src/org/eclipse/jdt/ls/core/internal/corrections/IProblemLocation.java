@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Copied from /org.eclipse.jdt.ui/src/org/eclipse/jdt/ui/text/java/IProblemLocation.java
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -18,8 +20,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
  * <p>
  * Note: this interface is not intended to be implemented.
  * </p>
- *
- * @since 3.0
  *
  * @noimplement This interface is not intended to be implemented by clients.
  * @noextend This interface is not intended to be extended by clients.
