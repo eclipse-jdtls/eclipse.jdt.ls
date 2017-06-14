@@ -47,6 +47,14 @@ import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.IMemberValuePairBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
+/**
+ * Utilities for code generation based on AST rewrite.
+ *
+ * Code copied from
+ * org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2
+ *
+ * @see StubUtility
+ */
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
@@ -72,10 +80,13 @@ import org.eclipse.text.edits.TextEditGroup;
 
 /**
  * Utilities for code generation based on AST rewrite.
+<<<<<<< HEAD
  *
  * @see StubUtility
  * @see JDTUIHelperClasses
  * @since 3.1
+=======
+>>>>>>> Reorg quick fix proposals (import, packages and types)
  */
 public final class StubUtility2 {
 
@@ -1045,8 +1056,8 @@ public final class StubUtility2 {
 
 	public static ITypeBinding replaceWildcardsAndCaptures(ITypeBinding type) {
 		while (type.isWildcardType() || type.isCapture() || (type.isArray() && type.getElementType().isCapture())) {
-			ITypeBinding bound= type.getBound();
-			type= (bound != null) ? bound : type.getErasure();
+			ITypeBinding bound = type.getBound();
+			type = (bound != null) ? bound : type.getErasure();
 		}
 		return type;
 	}

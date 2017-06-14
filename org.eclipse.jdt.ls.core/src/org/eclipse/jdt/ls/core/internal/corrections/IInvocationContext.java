@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Copied from /org.eclipse.jdt.ui/src/org/eclipse/jdt/ui/text/java/IInvocationContext.java
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/

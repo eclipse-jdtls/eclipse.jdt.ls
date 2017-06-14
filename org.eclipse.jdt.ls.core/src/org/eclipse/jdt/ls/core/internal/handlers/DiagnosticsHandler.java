@@ -61,11 +61,17 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(JDTUtils.getFileURI(this.resource), toDiagnosticsArray());
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(JDTUtils.getFileURI(this.resource),
+				toDiagnosticsArray(problems));
 		this.connection.publishDiagnostics($);
 	}
 
-	protected List<Diagnostic> toDiagnosticsArray() {
+	@Override
+	public boolean isActive() {
+		return true;
+	}
+
+	public static List<Diagnostic> toDiagnosticsArray(List<IProblem> problems) {
 		List<Diagnostic> array = new ArrayList<>(problems.size());
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
@@ -79,7 +85,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		return array;
 	}
 
-	private DiagnosticSeverity convertSeverity(IProblem problem) {
+	private static DiagnosticSeverity convertSeverity(IProblem problem) {
 		if(problem.isError()) {
 			return DiagnosticSeverity.Error;
 		}
@@ -90,7 +96,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	@SuppressWarnings("restriction")
-	private Range convertRange(IProblem problem) {
+	private static Range convertRange(IProblem problem) {
 		Position start = new Position();
 		Position end = new Position();
 
@@ -106,10 +112,5 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
 		}
 		return new Range(start, end);
-	}
-
-	@Override
-	public boolean isActive() {
-		return true;
 	}
 }
