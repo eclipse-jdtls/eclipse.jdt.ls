@@ -20,7 +20,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.ElementChangedEvent;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IElementChangedListener;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaElementDelta;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -39,18 +45,67 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 public final class SharedASTProvider {
 
 	private Map<String, CompilationUnit> cache = Collections.synchronizedMap(new HashMap<>());
+	private IElementChangedListener fJavaListener;
 	private static SharedASTProvider instance = new SharedASTProvider();
 
 	private SharedASTProvider(){
+		fJavaListener= new IElementChangedListener() {
 
+			@Override
+			public void elementChanged(ElementChangedEvent event) {
+				hasCUChange(event.getDelta());
+			}
+
+			private boolean hasCUChange(IJavaElementDelta delta) {
+				IJavaElement elem= delta.getElement();
+				boolean isAddedOrRemoved= (delta.getKind() != IJavaElementDelta.CHANGED);
+				switch (elem.getElementType()) {
+
+				case IJavaElement.JAVA_MODEL: case IJavaElement.JAVA_PROJECT:
+				case IJavaElement.PACKAGE_FRAGMENT_ROOT: case IJavaElement.PACKAGE_FRAGMENT:
+					if (isAddedOrRemoved) {
+						return true;
+					}
+					return processChildrenDelta(delta.getAffectedChildren());
+
+				case IJavaElement.COMPILATION_UNIT:
+					ICompilationUnit cu= (ICompilationUnit) elem;
+					if (!cu.getPrimary().equals(cu)) {
+						return false;
+					}
+					invalidate(cu);
+					return false;
+
+				default:
+					return false;
+				}
+			}
+
+			private boolean processChildrenDelta(IJavaElementDelta[] children) {
+				for (int i= 0; i < children.length; i++) {
+					if (hasCUChange(children[i])) {
+						return true;
+					}
+				}
+				return false;
+			}
+		};
+		JavaCore.addElementChangedListener(fJavaListener);
 	}
+
+	public void dispose() {
+		if (fJavaListener != null) {
+			JavaCore.removeElementChangedListener(fJavaListener);
+			fJavaListener = null;
+		}
+	}
+
 
 	public static SharedASTProvider getInstance(){
 		return instance;
 	}
 
 	public CompilationUnit getAST(final ITypeRoot input,  IProgressMonitor progressMonitor) {
-
 		if (progressMonitor != null && progressMonitor.isCanceled()) {
 			return null;
 		}
@@ -59,9 +114,19 @@ public final class SharedASTProvider {
 		CompilationUnit unit = cache.get(identifier);
 		if(unit == null){
 			unit = createAST(input, progressMonitor);
-			cache.put(identifier, unit);
+			if (shouldCache(input)) {
+				cache.put(identifier, unit);
+			}
 		}
 		return unit;
+	}
+
+	private boolean shouldCache(ITypeRoot input) {
+		if (input.getElementType() != IJavaElement.COMPILATION_UNIT) {
+			return false;
+		}
+		ICompilationUnit cu = (ICompilationUnit) input;
+		return cu.getOwner() == null && cu.isWorkingCopy();
 	}
 
 	public void invalidate(ITypeRoot root){
@@ -142,5 +207,6 @@ public final class SharedASTProvider {
 		}
 		return false;
 	}
+
 
 }

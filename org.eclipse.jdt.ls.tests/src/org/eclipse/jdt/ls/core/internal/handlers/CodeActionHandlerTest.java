@@ -30,6 +30,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -99,6 +100,7 @@ public class CodeActionHandlerTest extends AbstractCompletionBasedTest {
 	}
 
 	@Test
+	@Ignore
 	public void testCodeAction_superfluousSemicolon() throws Exception{
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
