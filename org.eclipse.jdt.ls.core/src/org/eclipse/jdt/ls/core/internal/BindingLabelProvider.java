@@ -322,23 +322,4 @@ public class BindingLabelProvider {
 
 
 	public static final long DEFAULT_TEXTFLAGS= JavaElementLabels.ALL_DEFAULT;
-
-
-	final private long fTextFlags;
-
-	/**
-	 * Creates a new binding label provider with default text and image flags
-	 */
-	public BindingLabelProvider() {
-		this(DEFAULT_TEXTFLAGS);
-	}
-
-	/**
-	 * @param textFlags Flags defined in {@link JavaElementLabels}.
-	 * @param imageFlags Flags defined in {@link JavaElementImageProvider}.
-	 */
-	public BindingLabelProvider(final long textFlags) {
-		fTextFlags= textFlags;
-	}
-
 }
