@@ -50,9 +50,9 @@ public abstract class AbstractCompletionBasedTest extends AbstractProjectsManage
 
 	protected ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
 		ICompilationUnit workingCopy = getCompilationUnit(path);
-		workingCopy.getWorkingCopy(wcOwner,null/*no progress monitor*/);
+		workingCopy.getWorkingCopy(wcOwner, monitor);
 		workingCopy.getBuffer().setContents(source);
-		workingCopy.makeConsistent(null/*no progress monitor*/);
+		workingCopy.makeConsistent(monitor);
 		return workingCopy;
 	}
 

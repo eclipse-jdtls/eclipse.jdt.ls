@@ -524,6 +524,80 @@ public class CompletionHandlerTest extends AbstractCompletionBasedTest {
 
 	}
 
+	@Test
+	public void testCompletion_methodOverrideWithParams() throws Exception {
+		mockLSPv3ClientPreferences();
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n\n"+
+				"public class Test extends Baz {\n"+
+				"    getP" +
+				"}\n");
+		int[] loc = findCompletionLocation(unit, " getP");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
+			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
+		}).collect(Collectors.toList());
+		assertEquals("No override proposals", filtered.size(), 1);
+		CompletionItem oride = filtered.get(0);
+		assertEquals("getParent", oride.getInsertText());
+		assertNull(oride.getTextEdit());
+		oride = server.resolveCompletionItem(oride).join();
+		assertNotNull(oride.getTextEdit());
+		String text = oride.getTextEdit().getNewText();
+
+		String expectedText = "@Override\n"+
+				"protected File getParent(File file, int depth) {\n" +
+				"\t${0:return super.getParent(file, depth);}\n"+
+				"}";
+
+		assertEquals(expectedText, text);
+		assertEquals("Missing required imports", 4, oride.getAdditionalTextEdits().size());
+
+		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(0));
+		assertTextEdit(0, 19, 19, "import java.io.File;", oride.getAdditionalTextEdits().get(1));
+		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(2));
+	}
+
+	@Test
+	public void testCompletion_methodOverrideWithException() throws Exception {
+		mockLSPv3ClientPreferences();
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n\n"+
+				"public class Test extends Baz {\n"+
+				"    dele"+
+				"}\n");
+		int[] loc = findCompletionLocation(unit, " dele");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
+			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
+		}).collect(Collectors.toList());
+		assertEquals("No override proposals", filtered.size(), 1);
+		CompletionItem oride = filtered.get(0);
+		assertEquals("deleteSomething", oride.getInsertText());
+		assertNull(oride.getTextEdit());
+		oride = server.resolveCompletionItem(oride).join();
+		assertNotNull(oride.getTextEdit());
+		String text = oride.getTextEdit().getNewText();
+
+		String expectedText = "@Override\n"+
+				"protected void deleteSomething() throws IOException {\n" +
+				"\t${0:super.deleteSomething();}\n"+
+				"}";
+
+		assertEquals(expectedText, text);
+		assertEquals("Missing required imports", 4, oride.getAdditionalTextEdits().size());
+
+		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(0));
+		assertTextEdit(0, 19, 19, "import java.io.IOException;", oride.getAdditionalTextEdits().get(1));
+		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(2));
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))
