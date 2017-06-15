@@ -44,6 +44,7 @@ import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 public class PreferenceManager {
 
 	private Preferences preferences ;
+	private static final String M2E_APT_ID = "org.jboss.tools.maven.apt";
 	private ClientPreferences clientPreferences;
 	private IMavenConfiguration mavenConfig;
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
@@ -73,6 +74,11 @@ public class PreferenceManager {
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, String.join(";", Preferences.JAVA_IMPORT_ORDER_DEFAULT));
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_ONDEMANDTHRESHOLD, "99");
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, "99");
+
+		IEclipsePreferences m2eAptPrefs = DefaultScope.INSTANCE.getNode(M2E_APT_ID);
+		if (m2eAptPrefs != null) {
+			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
+		}
 	}
 
 	public void update(Preferences preferences) {
