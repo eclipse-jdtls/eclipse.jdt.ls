@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.correction;
 import java.util.Hashtable;
 
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 public class TestOptions {
 	public static Hashtable<String, String> getDefaultOptions() {
@@ -24,6 +25,13 @@ public class TestOptions {
 		result.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.IGNORE);
 		result.put(JavaCore.COMPILER_PB_UNUSED_WARNING_TOKEN, JavaCore.IGNORE);
 		result.put(JavaCore.COMPILER_PB_DEAD_CODE, JavaCore.IGNORE);
+		result.put(JavaCore.COMPILER_PB_UNUSED_IMPORT, JavaCore.ERROR);
+
+		result.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
+		result.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
+
+		JavaCore.setComplianceOptions("1.8", result);
+
 		return result;
 	}
 
