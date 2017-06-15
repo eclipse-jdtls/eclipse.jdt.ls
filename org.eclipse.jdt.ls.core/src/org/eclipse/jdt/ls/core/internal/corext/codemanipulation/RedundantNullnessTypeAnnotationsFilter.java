@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.RedundantNullnessTypeAnnotationsFilter
+ *
  * Contributors:
  *     Till Brychcy - initial API and implementation
  *******************************************************************************/
@@ -34,10 +36,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 
-/**
- * Code copied from
- * org.eclipse.jdt.internal.corext.codemanipulation.RedundantNullnessTypeAnnotationsFilter
- */
 /* @NonNullByDefault */
 public class RedundantNullnessTypeAnnotationsFilter {
 

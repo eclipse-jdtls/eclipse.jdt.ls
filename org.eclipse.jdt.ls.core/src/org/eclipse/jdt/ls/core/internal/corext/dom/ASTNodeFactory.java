@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.dom.ASTNodeFactory
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -52,8 +54,6 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
 /**
  * JDT-UI-internal helper methods to create new {@link ASTNode}s. Complements
  * <code>AST#new*(..)</code> and <code>ImportRewrite#add*(..)</code>.
- *
- * Code copied from org.eclipse.jdt.internal.corext.dom.ASTNodeFactory
  *
  * @see JDTUIHelperClasses
  */

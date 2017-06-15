@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -43,9 +45,6 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
  * <p>
  * <b>Note:</b> This context only works if the AST was created with bindings!
  * </p>
- *
- * Code copied from
- * org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext
  */
 public class ContextSensitiveImportRewriteContext extends ImportRewriteContext {
 

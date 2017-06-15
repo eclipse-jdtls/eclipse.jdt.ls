@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.ImportReferencesCollector
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -60,10 +62,6 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jface.text.Region;
 
-/**
- * Code copied from
- * org.eclipse.jdt.internal.corext.codemanipulation.ImportReferencesCollector
- */
 public class ImportReferencesCollector extends GenericVisitor {
 
 	public static void collect(ASTNode node, IJavaProject project, Region rangeLimit, Collection<SimpleName> resultingTypeImports, Collection<SimpleName> resultingStaticImports) {

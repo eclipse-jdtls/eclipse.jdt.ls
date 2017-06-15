@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.StubUtility
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     John Kaplan, johnkaplantech@gmail.com - 108071 [code templates] template for body of newly created class
@@ -54,8 +56,6 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 /**
  * Implementations for {@link CodeGeneration} APIs, and other helper methods to
  * create source code stubs based on {@link IJavaElement}s.
- *
- * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.StubUtility
  *
  * @see StubUtility2
  * @see JDTUIHelperClasses

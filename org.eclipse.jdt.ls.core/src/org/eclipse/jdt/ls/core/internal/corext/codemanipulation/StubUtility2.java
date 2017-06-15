@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Stephan Herrmann - Contribution for Bug 463360 - [override method][null] generating method override should not create redundant null annotations
@@ -70,9 +72,6 @@ import org.eclipse.text.edits.TextEditGroup;
 
 /**
  * Utilities for code generation based on AST rewrite.
- *
- * Code copied from
- * org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2
  *
  * @see StubUtility
  * @see JDTUIHelperClasses

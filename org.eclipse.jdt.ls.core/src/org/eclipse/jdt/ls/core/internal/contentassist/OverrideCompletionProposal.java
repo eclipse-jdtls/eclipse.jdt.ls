@@ -5,6 +5,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
+ * Code copied from org.eclipse.jdt.internal.ui.text.java.OverrideCompletionProposal
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Stephan Herrmann - Contribution for Bug 463360 - [override method][null] generating method override should not create redundant null annotations
@@ -52,9 +54,6 @@ import org.eclipse.text.edits.MalformedTreeException;
 
 /**
  * Generates Override completion proposals.
- *
- * Code copied from
- * org.eclipse.jdt.internal.ui.text.java.OverrideCompletionProposal
  */
 public class OverrideCompletionProposal {
 
