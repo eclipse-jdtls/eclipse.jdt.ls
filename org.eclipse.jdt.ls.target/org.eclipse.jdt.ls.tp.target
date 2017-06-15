@@ -40,6 +40,10 @@
             <unit id="org.eclipse.xtext.sdk.feature.group" version="2.13.0.v20171020-0920"/>
             <repository location="http://download.eclipse.org/releases/photon/"/>
         </location>
+        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.jboss.tools.maven.apt.feature.feature.group" version="1.5.0.201804060341"/>
+			<repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.0-2018-04-06_03-47-50-H10"/>
+		</location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 </target>

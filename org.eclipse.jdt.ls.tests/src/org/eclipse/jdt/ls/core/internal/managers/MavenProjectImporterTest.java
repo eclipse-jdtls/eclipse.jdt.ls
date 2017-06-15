@@ -153,6 +153,15 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertNoErrors(project);
 	}
 
+	@Test
+	public void testAnnotationProcessing() throws Exception {
+		IProject project = importMavenProject("autovalued");
+		assertIsJavaProject(project);
+		IFile autovalueFoo = project.getFile("target/generated-sources/annotations/foo/bar/AutoValue_Foo.java");
+		assertTrue(autovalueFoo.getRawLocation() + " was not generated", autovalueFoo.exists());
+		assertNoErrors(project);
+	}
+
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
 
 		int updateProjectJobCalled;

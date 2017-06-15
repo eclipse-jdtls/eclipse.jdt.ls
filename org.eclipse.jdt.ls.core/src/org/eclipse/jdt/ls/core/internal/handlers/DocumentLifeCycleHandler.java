@@ -229,7 +229,7 @@ public class DocumentLifeCycleHandler {
 	public void handleOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-		if (unit == null || unit.getResource() == null) {
+		if (unit == null || unit.getResource() == null || unit.getResource().isDerived()) {
 			return;
 		}
 		try {
@@ -291,7 +291,7 @@ public class DocumentLifeCycleHandler {
 	public void handleChanged(DidChangeTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 
-		if (unit == null || !unit.isWorkingCopy() || params.getContentChanges().isEmpty()) {
+		if (unit == null || !unit.isWorkingCopy() || params.getContentChanges().isEmpty() || unit.getResource().isDerived()) {
 			return;
 		}
 
@@ -340,7 +340,7 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 		try {
-			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit)) {
+			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit) || unit.getResource().isDerived()) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
 			}
 			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
