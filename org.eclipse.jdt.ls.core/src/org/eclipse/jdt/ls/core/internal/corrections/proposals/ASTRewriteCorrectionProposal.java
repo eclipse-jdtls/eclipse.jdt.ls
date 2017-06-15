@@ -19,7 +19,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
-import org.eclipse.jdt.ls.core.internal.StatusUtils;
+import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.TextEdit;
 
@@ -89,7 +89,7 @@ public class ASTRewriteCorrectionProposal extends CUCorrectionProposal {
 				TextEdit edit= rewrite.rewriteAST();
 				editRoot.addChild(edit);
 			} catch (IllegalArgumentException e) {
-				throw new CoreException(StatusUtils.createError(IStatus.ERROR, e));
+				throw new CoreException(StatusFactory.newErrorStatus("Can not create rewrite", e));
 			}
 		}
 		if (fImportRewrite != null) {
@@ -106,7 +106,7 @@ public class ASTRewriteCorrectionProposal extends CUCorrectionProposal {
 	 */
 	protected ASTRewrite getRewrite() throws CoreException {
 		if (fRewrite == null) {
-			IStatus status = StatusUtils.createError(IStatus.ERROR, "Rewrite not initialized", null); //$NON-NLS-1$
+			IStatus status = StatusFactory.newErrorStatus("Rewrite not initialized", null); //$NON-NLS-1$
 			throw new CoreException(status);
 		}
 		return fRewrite;
