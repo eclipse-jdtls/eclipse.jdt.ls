@@ -4,22 +4,19 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http:www.eclipse.orglegalepl-v10.html
- * 
+ *
  * Copied from /org.eclipse.jdt.ui.tests/ui/org/eclipse/jdt/ui/tests/quickfix/ReorgQuickFixTest.java
  *
  * Contributors:
  * IBM Corporation - initial API and implementation
+ * Microsoft Corporation - adoptions for jdt.ls
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
-
-import java.util.Hashtable;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,13 +27,8 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 
 	@Before
 	public void setup() throws Exception {
-		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
-		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
-		options.put(JavaCore.COMPILER_PB_UNUSED_IMPORT, JavaCore.ERROR);
-		JavaCore.setOptions(options);
-
 		fJProject1 = newEmptyProject();
+		fJProject1.setOptions(TestOptions.getDefaultOptions());
 
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 	}
@@ -308,6 +300,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
 	public void testWrongTypeNameWithConstructor() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf = new StringBuffer();
@@ -338,6 +331,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
 	public void testWrongTypeNameInEnum() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf = new StringBuffer();
@@ -369,6 +363,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
 	public void testWrongTypeNameInAnnot() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuffer buf = new StringBuffer();
