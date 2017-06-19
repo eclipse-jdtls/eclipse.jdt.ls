@@ -40,7 +40,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CodeActionHandlerTest extends AbstractCompletionBasedTest {
+public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Mock
 	private JavaClientConnection connection;

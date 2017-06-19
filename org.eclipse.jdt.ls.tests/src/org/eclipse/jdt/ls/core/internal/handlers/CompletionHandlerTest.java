@@ -48,7 +48,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  *
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CompletionHandlerTest extends AbstractCompletionBasedTest {
+public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
