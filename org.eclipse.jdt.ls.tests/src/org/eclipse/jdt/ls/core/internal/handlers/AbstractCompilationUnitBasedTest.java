@@ -31,7 +31,7 @@ import org.mockito.Mock;
  * @author Gorkem Ercan
  *
  */
-public abstract class AbstractCompletionBasedTest extends AbstractProjectsManagerBasedTest{
+public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsManagerBasedTest{
 	@Mock
 	protected JavaClientConnection connection;
 

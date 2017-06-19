@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -35,6 +36,7 @@ public class PreferenceManager {
 
 	public PreferenceManager() {
 		preferences = new Preferences();
+		initialize();
 	}
 
 	/**
@@ -45,6 +47,7 @@ public class PreferenceManager {
 		// Update JavaCore options
 		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
+		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
 		JavaCore.setOptions(javaCoreOptions);
 	}
 
