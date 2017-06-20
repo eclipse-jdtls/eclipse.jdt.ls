@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,26 +44,69 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	@Override
 	public void acceptProblem(IProblem problem) {
-		if (reportAllErrors || isSyntaxError(problem)) {
+		if (reportAllErrors || isSyntaxLikeError(problem)) {
 			problems.add(problem);
 		}
 	}
 
-	public boolean isSyntaxError(IProblem problem) {
-		return (problem.getID() & IProblem.Syntax) != 0;
+	public boolean isSyntaxLikeError(IProblem problem) {
+		//Syntax issues are always reported
+		if ((problem.getID() & IProblem.Syntax) != 0) {
+			return true;
+		}
+		//Type and Import issues are never reported
+		if ((problem.getID() & IProblem.TypeRelated) != 0 || //
+				(problem.getID() & IProblem.ImportRelated) != 0) {
+			return false;
+		}
+		//For the rest, we need to cherry pick what is ignored or not
+		switch (problem.getID()) {
+			case IProblem.AbstractMethodMustBeImplemented:
+			case IProblem.AmbiguousMethod:
+			case IProblem.DanglingReference:
+			case IProblem.MethodMustOverrideOrImplement:
+			case IProblem.MissingReturnType:
+			case IProblem.MissingTypeInConstructor:
+			case IProblem.MissingTypeInLambda:
+			case IProblem.MissingTypeInMethod:
+			case IProblem.UndefinedConstructor:
+			case IProblem.UndefinedField:
+			case IProblem.UndefinedMethod:
+			case IProblem.UndefinedName:
+			case IProblem.UnresolvedVariable:
+				return false;
+			default:
+				//We log problems for troubleshooting purposes
+				String error = getError(problem);
+				JavaLanguageServerPlugin.logInfo(problem.getMessage() + " is of type " + error);
+		}
+		return true;
+	}
+
+	private String getError(IProblem problem) {
+		try {
+			for (Field field : IProblem.class.getDeclaredFields()) {
+				if (int.class.equals(field.getType())
+						&& Integer.valueOf(problem.getID()).equals(field.get(null))) {
+					return field.getName();
+				}
+			}
+		} catch (Exception e) {
+		}
+		return "unknown";
 	}
 
 	@Override
 	public void beginReporting() {
-		JavaLanguageServerPlugin.logInfo("begin problem for "+ this.resource.getName());
+		JavaLanguageServerPlugin.logInfo("begin problem for " + this.resource.getName());
 		problems.clear();
 	}
 
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(JDTUtils.getFileURI(this.resource),
-				toDiagnosticsArray(problems));
+		String uri = JDTUtils.getFileURI(this.resource);
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(uri, toDiagnosticsArray(problems));
 		this.connection.publishDiagnostics($);
 	}
 
