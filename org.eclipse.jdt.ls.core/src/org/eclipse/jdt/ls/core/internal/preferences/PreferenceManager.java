@@ -13,10 +13,14 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import java.util.Hashtable;
 import java.util.Objects;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
@@ -70,7 +74,12 @@ public class PreferenceManager {
 		// TODO serialize preferences
 	}
 
+	@Deprecated
 	public Preferences getPreferences() {
+		return preferences;
+	}
+
+	public Preferences getPreferences(IResource resource) {
 		return preferences;
 	}
 
@@ -97,5 +106,20 @@ public class PreferenceManager {
 	 */
 	public void setMavenConfiguration(IMavenConfiguration mavenConfig) {
 		this.mavenConfig = mavenConfig;
+	}
+
+	public static Preferences getPrefs(IResource resource) {
+		return JavaLanguageServerPlugin.getPreferencesManager().getPreferences(resource);
+	}
+
+	public static CodeGenerationSettings getCodeGenerationSettings(IResource resource) {
+		IJavaProject project = JavaCore.create(resource.getProject());
+
+		CodeGenerationSettings res = new CodeGenerationSettings();
+		// TODO indentation settings should be retrieved from client/external
+		// settings?
+		res.tabWidth = CodeFormatterUtil.getTabWidth(project);
+		res.indentWidth = CodeFormatterUtil.getIndentWidth(project);
+		return res;
 	}
 }

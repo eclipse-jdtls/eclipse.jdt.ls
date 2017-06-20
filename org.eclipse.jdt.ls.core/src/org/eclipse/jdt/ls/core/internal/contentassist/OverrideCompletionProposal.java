@@ -39,12 +39,12 @@ import org.eclipse.jdt.core.formatter.IndentManipulation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -131,7 +131,7 @@ public class OverrideCompletionProposal {
 				methodToOverride= Bindings.findMethodInType(node.getAST().resolveWellKnownType("java.lang.Object"), fMethodName, fParamTypes); //$NON-NLS-1$
 			}
 			if (methodToOverride != null) {
-				CodeGenerationSettings settings = getCodeGenerationSettings(fJavaProject);
+				CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fJavaProject.getProject());
 				MethodDeclaration stub = StubUtility2.createImplementationStub(fCompilationUnit, rewrite, importRewrite,
 						context, methodToOverride, declaringType, settings, declaringType.isInterface(), declaringType,
 						snippetStringSupport);
@@ -173,14 +173,6 @@ public class OverrideCompletionProposal {
 		} catch (BadLocationException e) {
 			return ""; //$NON-NLS-1$
 		}
-	}
-
-	private static CodeGenerationSettings getCodeGenerationSettings(IJavaProject project) {
-		CodeGenerationSettings res = new CodeGenerationSettings();
-		// TODO indentation settings should be retrieved from client/external settings?
-		res.tabWidth = CodeFormatterUtil.getTabWidth(project);
-		res.indentWidth = CodeFormatterUtil.getIndentWidth(project);
-		return res;
 	}
 
 }

@@ -352,4 +352,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return err;
 	}
 
+	public static PreferenceManager getPreferencesManager() {
+		if (JavaLanguageServerPlugin.pluginInstance != null) {
+			return JavaLanguageServerPlugin.pluginInstance.preferenceManager;
+		}
+		return null;
+	}
 }
