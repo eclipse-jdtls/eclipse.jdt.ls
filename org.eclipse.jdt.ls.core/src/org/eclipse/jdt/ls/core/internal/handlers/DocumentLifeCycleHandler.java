@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -22,6 +23,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -52,9 +54,10 @@ public class DocumentLifeCycleHandler {
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
+	private WorkingCopyOwner wcOwner;
 
 
-	void didClose(DidCloseTextDocumentParams params){
+	public void didClose(DidCloseTextDocumentParams params) {
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
@@ -67,7 +70,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	void didOpen(DidOpenTextDocumentParams params){
+	public void didOpen(DidOpenTextDocumentParams params) {
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
@@ -80,7 +83,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	void didChange(DidChangeTextDocumentParams params){
+	public void didChange(DidChangeTextDocumentParams params) {
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
@@ -93,7 +96,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	void didSave(DidSaveTextDocumentParams params){
+	public void didSave(DidSaveTextDocumentParams params) {
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
@@ -106,13 +109,14 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager) {
+	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, WorkingCopyOwner wcOwner) {
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.projectsManager = projectsManager;
+		this.wcOwner = wcOwner;
 	}
 
-	private void handleOpen(DidOpenTextDocumentParams params) {
+	public void handleOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null || unit.getResource() == null) {
@@ -129,9 +133,10 @@ public class DocumentLifeCycleHandler {
 				}
 			}
 			//Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
-			boolean reportOnlySyntaxErrors = unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+			IProject project = unit.getResource().getProject();
+			boolean reportOnlySyntaxErrors = project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
 			if (reportOnlySyntaxErrors) {
-				Severity severity = preferenceManager.getPreferences().getIncompleteClasspathSeverity();
+				Severity severity = preferenceManager.getPreferences(project).getIncompleteClasspathSeverity();
 				String msg = "Classpath is incomplete. Only syntax errors will be reported";
 				JavaLanguageServerPlugin.logInfo(msg +" for "+uri);
 				if (severity.compareTo(Preferences.Severity.ignore) > 0){
@@ -154,13 +159,13 @@ public class DocumentLifeCycleHandler {
 			}
 
 			// TODO: wire up cancellation.
-			unit.reconcile(ICompilationUnit.NO_AST, true/*don't force problem detection*/, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null/*no progress monitor*/);
+			unit.reconcile(ICompilationUnit.NO_AST, true/*don't force problem detection*/, false, wcOwner, null/*no progress monitor*/);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Creating working copy ",e);
 		}
 	}
 
-	private void handleChanged(DidChangeTextDocumentParams params) {
+	public void handleChanged(DidChangeTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 
 		if (unit == null || !unit.isWorkingCopy()) {
@@ -188,13 +193,13 @@ public class DocumentLifeCycleHandler {
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 			}
-			unit.reconcile(ICompilationUnit.NO_AST, true, false, JavaLanguageServerPlugin.getInstance().getWorkingCopyOwner(), null);
+			unit.reconcile(ICompilationUnit.NO_AST, true, false, wcOwner, null);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
 			JavaLanguageServerPlugin.logException("Failed to apply changes",e);
 		}
 	}
 
-	private void handleClosed(DidCloseTextDocumentParams params) {
+	public void handleClosed(DidCloseTextDocumentParams params) {
 		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleClosed");
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
@@ -208,7 +213,7 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	private void handleSaved(DidSaveTextDocumentParams params) {
+	public void handleSaved(DidSaveTextDocumentParams params) {
 		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleSaved");
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
