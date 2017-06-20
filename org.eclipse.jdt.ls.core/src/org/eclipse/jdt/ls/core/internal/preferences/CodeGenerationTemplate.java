@@ -1,0 +1,143 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Microsoft Corporation. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Microsoft Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.jdt.ls.core.internal.preferences;
+
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContextType;
+import org.eclipse.jface.text.templates.Template;
+
+public enum CodeGenerationTemplate {
+	/**
+	 * Field comment template
+	 */
+	FIELDCOMMENT(CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT, CodeTemplateContextType.FIELDCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT_DEFAULT),
+	/**
+	 * Method comment template
+	 */
+	METHODCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT,
+			CodeTemplateContextType.METHODCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT_DEFAULT),
+	/**
+	 * Constructor comment template
+	 */
+	CONSTRUCTORCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT,
+			CodeTemplateContextType.CONSTRUCTORCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT),
+	/**
+	 * Delegate comment template
+	 */
+	DELEGATECOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT,
+			CodeTemplateContextType.DELEGATECOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT_DEFAULT),
+	/**
+	 * Override comment template
+	 */
+	OVERRIDECOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT,
+			CodeTemplateContextType.OVERRIDECOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT_DEFAULT),
+	/**
+	 * Type comment template
+	 */
+	TYPECOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, 
+			CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE, 
+			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_DEFAULT);
+
+	private final String preferenceId;
+	private final String contextType;
+	private final String defaultContent;
+
+	private CodeGenerationTemplate(String preferenceId, String contextType, String defaultContent) {
+		this.preferenceId = preferenceId;
+		this.contextType = contextType;
+		this.defaultContent = defaultContent;
+
+	}
+
+	public Template createTemplate(IJavaProject project) {
+		return new Template(this.name(), this.preferenceId, this.contextType, this.defaultContent, false);
+	}
+}
+
+/**
+ * Preference key names, internal for now.
+ */
+class CodeTemplatePreferences {
+	private static final String CODETEMPLATES_PREFIX = "java.codetemplates."; //$NON-NLS-1$
+	public static final String COMMENT_SUFFIX = ".comment"; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for field comments
+	 */
+	public static final String CODETEMPLATE_FIELDCOMMENT = CODETEMPLATES_PREFIX + "field" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for constructor comments
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT = CODETEMPLATES_PREFIX + "constructor" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for delegate method comments
+	 */
+	public static final String CODETEMPLATE_DELEGATECOMMENT = CODETEMPLATES_PREFIX + "delegate" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for overridden method comments
+	 */
+	public static final String CODETEMPLATE_OVERRIDECOMMENT = CODETEMPLATES_PREFIX + "overriddenMethod" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for method comments
+	 */
+	public static final String CODETEMPLATE_METHODCOMMENT = CODETEMPLATES_PREFIX + "method" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for type comments
+	 */
+	public static final String CODETEMPLATE_TYPECOMMENT = CODETEMPLATES_PREFIX + "type" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * Default value for field comments
+	 */
+	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */\n";
+
+	/**
+	 * Default value for constructor comments
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+
+	/**
+	 * Default value for delegate comments
+	 */
+	public static final String CODETEMPLATE_DELEGATECOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " * ${see_to_target}\n" + " */\n";
+
+	/**
+	 * Default value for override comments
+	 */
+	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "/* (non-Javadoc)\n" + " * ${see_to_overridden}\n"
+			+ " */\n";
+
+	/**
+	 * Default value for method comments
+	 */
+	public static final String CODETEMPLATE_METHODCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+
+	/**
+	 * Default value for type comments
+	 */
+	public static final String CODETEMPLATE_TYPECOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+
+}

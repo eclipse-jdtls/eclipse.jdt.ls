@@ -47,14 +47,6 @@ import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.IMemberValuePairBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
-/**
- * Utilities for code generation based on AST rewrite.
- *
- * Code copied from
- * org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2
- *
- * @see StubUtility
- */
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
@@ -81,12 +73,20 @@ import org.eclipse.text.edits.TextEditGroup;
 /**
  * Utilities for code generation based on AST rewrite.
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
  * @see StubUtility
  * @see JDTUIHelperClasses
  * @since 3.1
 =======
 >>>>>>> Reorg quick fix proposals (import, packages and types)
+=======
+ *
+ * Code copied from
+ * org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2
+ *
+ * @see StubUtility
+>>>>>>> add code template for member comments
  */
 public final class StubUtility2 {
 

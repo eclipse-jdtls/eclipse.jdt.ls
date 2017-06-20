@@ -16,11 +16,14 @@ package org.eclipse.jdt.ls.core.internal.corext.codemanipulation;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -28,9 +31,14 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.NamingConventions;
+import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -42,19 +50,36 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.ls.core.internal.StatusFactory;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContext;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContextType;
+import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.templates.Template;
+import org.eclipse.jface.text.templates.TemplateBuffer;
+import org.eclipse.jface.text.templates.TemplateException;
+import org.eclipse.jface.text.templates.TemplateVariable;
 
 /**
  * Implementations for {@link CodeGeneration} APIs, and other helper methods to
@@ -211,111 +236,125 @@ public class StubUtility {
 	//		return evaluateTemplate(context, template);
 	//	}
 	//
-	//	/*
-	//	 * Don't use this method directly, use CodeGeneration.
-	//	 * @see org.eclipse.jdt.ui.CodeGeneration#getTypeComment(ICompilationUnit, String, String[], String)
-	//	 */
-	//	public static String getTypeComment(ICompilationUnit cu, String typeQualifiedName, String[] typeParameterNames, String lineDelim) throws CoreException {
-	//		Template template= getCodeTemplate(CodeTemplateContextType.TYPECOMMENT_ID, cu.getJavaProject());
-	//		if (template == null) {
-	//			return null;
-	//		}
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelim);
-	//		context.setCompilationUnitVariables(cu);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, Signature.getQualifier(typeQualifiedName));
-	//		context.setVariable(CodeTemplateContextType.TYPENAME, Signature.getSimpleName(typeQualifiedName));
-	//
-	//		TemplateBuffer buffer;
-	//		try {
-	//			buffer= context.evaluate(template);
-	//		} catch (BadLocationException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		} catch (TemplateException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		}
-	//		String str= buffer.getString();
-	//		if (Strings.containsOnlyWhitespaces(str)) {
-	//			return null;
-	//		}
-	//
-	//		TemplateVariable position= findVariable(buffer, CodeTemplateContextType.TAGS); // look if Javadoc tags have to be added
-	//		if (position == null) {
-	//			return str;
-	//		}
-	//
-	//		IDocument document= new Document(str);
-	//		int[] tagOffsets= position.getOffsets();
-	//		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
-	//			try {
-	//				insertTag(document, tagOffsets[i], position.getLength(), EMPTY, EMPTY, null, typeParameterNames, false, lineDelim);
-	//			} catch (BadLocationException e) {
-	//				throw new CoreException(JavaUIStatus.createError(IStatus.ERROR, e));
-	//			}
-	//		}
-	//		return document.get();
-	//	}
-	//
-	//	/*
-	//	 * Returns the parameters type names used in see tags. Currently, these are always fully qualified.
-	//	 */
-	//	public static String[] getParameterTypeNamesForSeeTag(IMethodBinding binding) {
-	//		ITypeBinding[] typeBindings= binding.getParameterTypes();
-	//		String[] result= new String[typeBindings.length];
-	//		for (int i= 0; i < result.length; i++) {
-	//			ITypeBinding curr= typeBindings[i];
-	//			curr= curr.getErasure(); // Javadoc references use erased type
-	//			result[i]= curr.getQualifiedName();
-	//		}
-	//		return result;
-	//	}
-	//
-	//	/*
-	//	 * Returns the parameters type names used in see tags. Currently, these are always fully qualified.
-	//	 */
-	//	private static String[] getParameterTypeNamesForSeeTag(IMethod overridden) {
-	//		try {
-	//			ASTParser parser= ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
-	//			parser.setProject(overridden.getJavaProject());
-	//			IBinding[] bindings= parser.createBindings(new IJavaElement[] { overridden }, null);
-	//			if (bindings.length == 1 && bindings[0] instanceof IMethodBinding) {
-	//				return getParameterTypeNamesForSeeTag((IMethodBinding)bindings[0]);
-	//			}
-	//		} catch (IllegalStateException e) {
-	//			// method does not exist
-	//		}
-	//		// fall back code. Not good for generic methods!
-	//		String[] paramTypes= overridden.getParameterTypes();
-	//		String[] paramTypeNames= new String[paramTypes.length];
-	//		for (int i= 0; i < paramTypes.length; i++) {
-	//			paramTypeNames[i]= Signature.toString(Signature.getTypeErasure(paramTypes[i]));
-	//		}
-	//		return paramTypeNames;
-	//	}
-	//
-	//	private static String getSeeTag(String declaringClassQualifiedName, String methodName, String[] parameterTypesQualifiedNames) {
-	//		StringBuffer buf= new StringBuffer();
-	//		buf.append("@see "); //$NON-NLS-1$
-	//		buf.append(declaringClassQualifiedName);
-	//		buf.append('#');
-	//		buf.append(methodName);
-	//		buf.append('(');
-	//		for (int i= 0; i < parameterTypesQualifiedNames.length; i++) {
-	//			if (i > 0) {
-	//				buf.append(", "); //$NON-NLS-1$
-	//			}
-	//			buf.append(parameterTypesQualifiedNames[i]);
-	//		}
-	//		buf.append(')');
-	//		return buf.toString();
-	//	}
-	//
-	//	public static String[] getTypeParameterNames(ITypeParameter[] typeParameters) {
-	//		String[] typeParametersNames= new String[typeParameters.length];
-	//		for (int i= 0; i < typeParameters.length; i++) {
-	//			typeParametersNames[i]= typeParameters[i].getElementName();
-	//		}
-	//		return typeParametersNames;
-	//	}
+	/*
+	 * Don't use this method directly, use CodeGeneration.
+	 *
+	 * @see org.eclipse.jdt.ui.CodeGeneration#getTypeComment(ICompilationUnit,
+	 * String, String[], String)
+	 */
+	public static String getTypeComment(ICompilationUnit cu, String typeQualifiedName, String[] typeParameterNames,
+			String lineDelim) throws CoreException {
+		Template template = CodeGenerationTemplate.TYPECOMMENT.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(),
+				lineDelim);
+		context.setCompilationUnitVariables(cu);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, Signature.getQualifier(typeQualifiedName));
+		context.setVariable(CodeTemplateContextType.TYPENAME, Signature.getSimpleName(typeQualifiedName));
+
+		TemplateBuffer buffer;
+		try {
+			buffer = context.evaluate(template);
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+		String str = buffer.getString();
+		if (Strings.containsOnlyWhitespaces(str)) {
+			return null;
+		}
+
+		TemplateVariable position = findVariable(buffer, CodeTemplateContextType.TAGS); // look
+		// if
+		// Javadoc
+		// tags
+		// have
+		// to
+		// be
+		// added
+		if (position == null) {
+			return str;
+		}
+
+		IDocument document = new Document(str);
+		int[] tagOffsets = position.getOffsets();
+		for (int i = tagOffsets.length - 1; i >= 0; i--) { // from last to first
+			try {
+				insertTag(document, tagOffsets[i], position.getLength(), EMPTY, EMPTY, null, typeParameterNames, false,
+						lineDelim);
+			} catch (BadLocationException e) {
+				throw new CoreException(StatusFactory.newErrorStatus("Problem insert tag", e));
+			}
+		}
+		return document.get();
+	}
+
+	/*
+	 * Returns the parameters type names used in see tags. Currently, these are always fully qualified.
+	 */
+	public static String[] getParameterTypeNamesForSeeTag(IMethodBinding binding) {
+		ITypeBinding[] typeBindings= binding.getParameterTypes();
+		String[] result= new String[typeBindings.length];
+		for (int i= 0; i < result.length; i++) {
+			ITypeBinding curr= typeBindings[i];
+			curr= curr.getErasure(); // Javadoc references use erased type
+			result[i]= curr.getQualifiedName();
+		}
+		return result;
+	}
+
+	/*
+	 * Returns the parameters type names used in see tags. Currently, these are
+	 * always fully qualified.
+	 */
+	private static String[] getParameterTypeNamesForSeeTag(IMethod overridden) {
+		try {
+			ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+			parser.setProject(overridden.getJavaProject());
+			IBinding[] bindings = parser.createBindings(new IJavaElement[] { overridden }, null);
+			if (bindings.length == 1 && bindings[0] instanceof IMethodBinding) {
+				return getParameterTypeNamesForSeeTag((IMethodBinding) bindings[0]);
+			}
+		} catch (IllegalStateException e) {
+			// method does not exist
+		}
+		// fall back code. Not good for generic methods!
+		String[] paramTypes = overridden.getParameterTypes();
+		String[] paramTypeNames = new String[paramTypes.length];
+		for (int i = 0; i < paramTypes.length; i++) {
+			paramTypeNames[i] = Signature.toString(Signature.getTypeErasure(paramTypes[i]));
+		}
+		return paramTypeNames;
+	}
+
+	private static String getSeeTag(String declaringClassQualifiedName, String methodName,
+			String[] parameterTypesQualifiedNames) {
+		StringBuffer buf = new StringBuffer();
+		buf.append("@see "); //$NON-NLS-1$
+		buf.append(declaringClassQualifiedName);
+		buf.append('#');
+		buf.append(methodName);
+		buf.append('(');
+		for (int i = 0; i < parameterTypesQualifiedNames.length; i++) {
+			if (i > 0) {
+				buf.append(", "); //$NON-NLS-1$
+			}
+			buf.append(parameterTypesQualifiedNames[i]);
+		}
+		buf.append(')');
+		return buf.toString();
+	}
+
+	public static String[] getTypeParameterNames(ITypeParameter[] typeParameters) {
+		String[] typeParametersNames = new String[typeParameters.length];
+		for (int i = 0; i < typeParameters.length; i++) {
+			typeParametersNames[i] = typeParameters[i].getElementName();
+		}
+		return typeParametersNames;
+	}
 	//
 	//	/**
 	//	 * Don't use this method directly, use CodeGeneration.
@@ -348,80 +387,87 @@ public class StubUtility {
 	//		return evaluateTemplate(context, template);
 	//	}
 	//
-	//	/*
-	//	 * Don't use this method directly, use CodeGeneration.
-	//	 * @see org.eclipse.jdt.ui.CodeGeneration#getMethodComment(ICompilationUnit, String, String, String[], String[], String, String[], IMethod, String)
-	//	 */
-	//	public static String getMethodComment(ICompilationUnit cu, String typeName, String methodName, String[] paramNames, String[] excTypeSig, String retTypeSig, String[] typeParameterNames,
-	//			IMethod target, boolean delegate, String lineDelimiter) throws CoreException {
-	//		String templateName= CodeTemplateContextType.METHODCOMMENT_ID;
-	//		if (retTypeSig == null) {
-	//			templateName= CodeTemplateContextType.CONSTRUCTORCOMMENT_ID;
-	//		} else if (target != null) {
-	//			if (delegate) {
-	//				templateName= CodeTemplateContextType.DELEGATECOMMENT_ID;
-	//			} else {
-	//				templateName= CodeTemplateContextType.OVERRIDECOMMENT_ID;
-	//			}
-	//		}
-	//		Template template= getCodeTemplate(templateName, cu.getJavaProject());
-	//		if (template == null) {
-	//			return null;
-	//		}
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
-	//		context.setCompilationUnitVariables(cu);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, typeName);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, methodName);
-	//
-	//		if (retTypeSig != null) {
-	//			context.setVariable(CodeTemplateContextType.RETURN_TYPE, Signature.toString(retTypeSig));
-	//		}
-	//		if (target != null) {
-	//			String targetTypeName= target.getDeclaringType().getFullyQualifiedName('.');
-	//			String[] targetParamTypeNames= getParameterTypeNamesForSeeTag(target);
-	//			if (delegate) {
-	//				context.setVariable(CodeTemplateContextType.SEE_TO_TARGET_TAG, getSeeTag(targetTypeName, methodName, targetParamTypeNames));
-	//			} else {
-	//				context.setVariable(CodeTemplateContextType.SEE_TO_OVERRIDDEN_TAG, getSeeTag(targetTypeName, methodName, targetParamTypeNames));
-	//			}
-	//		}
-	//		TemplateBuffer buffer;
-	//		try {
-	//			buffer= context.evaluate(template);
-	//		} catch (BadLocationException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		} catch (TemplateException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		}
-	//		if (buffer == null) {
-	//			return null;
-	//		}
-	//
-	//		String str= buffer.getString();
-	//		if (Strings.containsOnlyWhitespaces(str)) {
-	//			return null;
-	//		}
-	//		TemplateVariable position= findVariable(buffer, CodeTemplateContextType.TAGS); // look if Javadoc tags have to be added
-	//		if (position == null) {
-	//			return str;
-	//		}
-	//
-	//		IDocument document= new Document(str);
-	//		String[] exceptionNames= new String[excTypeSig.length];
-	//		for (int i= 0; i < excTypeSig.length; i++) {
-	//			exceptionNames[i]= Signature.toString(excTypeSig[i]);
-	//		}
-	//		String returnType= retTypeSig != null ? Signature.toString(retTypeSig) : null;
-	//		int[] tagOffsets= position.getOffsets();
-	//		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
-	//			try {
-	//				insertTag(document, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType, typeParameterNames, false, lineDelimiter);
-	//			} catch (BadLocationException e) {
-	//				throw new CoreException(JavaUIStatus.createError(IStatus.ERROR, e));
-	//			}
-	//		}
-	//		return document.get();
-	//	}
+	/*
+	 * Don't use this method directly, use CodeGeneration.
+	 *
+	 * @see org.eclipse.jdt.ui.CodeGeneration#getMethodComment(ICompilationUnit,
+	 * String, String, String[], String[], String, String[], IMethod, String)
+	 */
+	public static String getMethodComment(ICompilationUnit cu, String typeName, String methodName, String[] paramNames,
+			String[] excTypeSig, String retTypeSig, String[] typeParameterNames, IMethod target, boolean delegate,
+			String lineDelimiter) throws CoreException {
+		CodeGenerationTemplate codeTemplate = CodeGenerationTemplate.METHODCOMMENT;
+		if (retTypeSig == null) {
+			codeTemplate = CodeGenerationTemplate.CONSTRUCTORCOMMENT;
+		} else if (target != null) {
+			if (delegate) {
+				codeTemplate = CodeGenerationTemplate.DELEGATECOMMENT;
+			} else {
+				codeTemplate = CodeGenerationTemplate.OVERRIDECOMMENT;
+			}
+		}
+		Template template = codeTemplate.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(),
+				lineDelimiter);
+		context.setCompilationUnitVariables(cu);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, typeName);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, methodName);
+
+		if (retTypeSig != null) {
+			context.setVariable(CodeTemplateContextType.RETURN_TYPE, Signature.toString(retTypeSig));
+		}
+		if (target != null) {
+			String targetTypeName = target.getDeclaringType().getFullyQualifiedName('.');
+			String[] targetParamTypeNames = getParameterTypeNamesForSeeTag(target);
+			if (delegate) {
+				context.setVariable(CodeTemplateContextType.SEE_TO_TARGET_TAG,
+						getSeeTag(targetTypeName, methodName, targetParamTypeNames));
+			} else {
+				context.setVariable(CodeTemplateContextType.SEE_TO_OVERRIDDEN_TAG,
+						getSeeTag(targetTypeName, methodName, targetParamTypeNames));
+			}
+		}
+		TemplateBuffer buffer;
+		try {
+			buffer = context.evaluate(template);
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+		if (buffer == null) {
+			return null;
+		}
+
+		String str = buffer.getString();
+		if (Strings.containsOnlyWhitespaces(str)) {
+			return null;
+		}
+		TemplateVariable position = findVariable(buffer, CodeTemplateContextType.TAGS);
+		if (position == null) {
+			return str;
+		}
+
+		IDocument document = new Document(str);
+		String[] exceptionNames = new String[excTypeSig.length];
+		for (int i = 0; i < excTypeSig.length; i++) {
+			exceptionNames[i] = Signature.toString(excTypeSig[i]);
+		}
+		String returnType = retTypeSig != null ? Signature.toString(retTypeSig) : null;
+		int[] tagOffsets = position.getOffsets();
+		for (int i = tagOffsets.length - 1; i >= 0; i--) { // from last to first
+			try {
+				insertTag(document, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType,
+						typeParameterNames, false, lineDelimiter);
+			} catch (BadLocationException e) {
+				throw new CoreException(StatusFactory.newErrorStatus("Problem insert tag", e));
+			}
+		}
+		return document.get();
+	}
 	//
 	//	// remove lines for empty variables
 	//	private static String fixEmptyVariables(TemplateBuffer buffer, String[] variables) throws MalformedTreeException, BadLocationException {
@@ -450,21 +496,23 @@ public class StubUtility {
 	//		return doc.get();
 	//	}
 	//
-	//	/*
-	//	 * Don't use this method directly, use CodeGeneration.
-	//	 */
-	//	public static String getFieldComment(ICompilationUnit cu, String typeName, String fieldName, String lineDelimiter) throws CoreException {
-	//		Template template= getCodeTemplate(CodeTemplateContextType.FIELDCOMMENT_ID, cu.getJavaProject());
-	//		if (template == null) {
-	//			return null;
-	//		}
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
-	//		context.setCompilationUnitVariables(cu);
-	//		context.setVariable(CodeTemplateContextType.FIELD_TYPE, typeName);
-	//		context.setVariable(CodeTemplateContextType.FIELD, fieldName);
-	//
-	//		return evaluateTemplate(context, template);
-	//	}
+	/*
+	 * Don't use this method directly, use CodeGeneration.
+	 */
+	public static String getFieldComment(ICompilationUnit cu, String typeName, String fieldName, String lineDelimiter)
+			throws CoreException {
+		Template template = CodeGenerationTemplate.FIELDCOMMENT.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(),
+				lineDelimiter);
+		context.setCompilationUnitVariables(cu);
+		context.setVariable(CodeTemplateContextType.FIELD_TYPE, typeName);
+		context.setVariable(CodeTemplateContextType.FIELD, fieldName);
+
+		return evaluateTemplate(context, template);
+	}
 	//
 	//
 	//	/*
@@ -512,24 +560,24 @@ public class StubUtility {
 	//		return evaluateTemplate(context, template);
 	//	}
 	//
-	//	private static String evaluateTemplate(CodeTemplateContext context, Template template) throws CoreException {
-	//		TemplateBuffer buffer;
-	//		try {
-	//			buffer= context.evaluate(template);
-	//		} catch (BadLocationException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		} catch (TemplateException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		}
-	//		if (buffer == null) {
-	//			return null;
-	//		}
-	//		String str= buffer.getString();
-	//		if (Strings.containsOnlyWhitespaces(str)) {
-	//			return null;
-	//		}
-	//		return str;
-	//	}
+	private static String evaluateTemplate(CodeTemplateContext context, Template template) throws CoreException {
+		TemplateBuffer buffer;
+		try {
+			buffer = context.evaluate(template);
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+		if (buffer == null) {
+			return null;
+		}
+		String str = buffer.getString();
+		if (Strings.containsOnlyWhitespaces(str)) {
+			return null;
+		}
+		return str;
+	}
 	//
 	//	private static String evaluateTemplate(CodeTemplateContext context, Template template, String[] fullLineVariables) throws CoreException {
 	//		TemplateBuffer buffer;
@@ -550,208 +598,209 @@ public class StubUtility {
 	//		}
 	//	}
 	//
-	//
-	//	/*
-	//	 * Don't use this method directly, use CodeGeneration.
-	//	 * This method should work with all AST levels.
-	//	 * @see org.eclipse.jdt.ui.CodeGeneration#getMethodComment(ICompilationUnit, String, MethodDeclaration, boolean, String, String[], String)
-	//	 */
-	//	public static String getMethodComment(ICompilationUnit cu, String typeName, MethodDeclaration decl, boolean isDeprecated, String targetName, String targetMethodDeclaringTypeName,
-	//			String[] targetMethodParameterTypeNames, boolean delegate, String lineDelimiter) throws CoreException {
-	//		boolean needsTarget= targetMethodDeclaringTypeName != null && targetMethodParameterTypeNames != null;
-	//		String templateName= CodeTemplateContextType.METHODCOMMENT_ID;
-	//		if (decl.isConstructor()) {
-	//			templateName= CodeTemplateContextType.CONSTRUCTORCOMMENT_ID;
-	//		} else if (needsTarget) {
-	//			if (delegate) {
-	//				templateName= CodeTemplateContextType.DELEGATECOMMENT_ID;
-	//			} else {
-	//				templateName= CodeTemplateContextType.OVERRIDECOMMENT_ID;
-	//			}
-	//		}
-	//		Template template= getCodeTemplate(templateName, cu.getJavaProject());
-	//		if (template == null) {
-	//			return null;
-	//		}
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
-	//		context.setCompilationUnitVariables(cu);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, typeName);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, decl.getName().getIdentifier());
-	//		if (!decl.isConstructor()) {
-	//			context.setVariable(CodeTemplateContextType.RETURN_TYPE, ASTNodes.asString(getReturnType(decl)));
-	//		}
-	//		if (needsTarget) {
-	//			if (delegate) {
-	//				context.setVariable(CodeTemplateContextType.SEE_TO_TARGET_TAG, getSeeTag(targetMethodDeclaringTypeName, targetName, targetMethodParameterTypeNames));
-	//			} else {
-	//				context.setVariable(CodeTemplateContextType.SEE_TO_OVERRIDDEN_TAG, getSeeTag(targetMethodDeclaringTypeName, targetName, targetMethodParameterTypeNames));
-	//			}
-	//		}
-	//
-	//		TemplateBuffer buffer;
-	//		try {
-	//			buffer= context.evaluate(template);
-	//		} catch (BadLocationException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		} catch (TemplateException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		}
-	//		if (buffer == null) {
-	//			return null;
-	//		}
-	//		String str= buffer.getString();
-	//		if (Strings.containsOnlyWhitespaces(str)) {
-	//			return null;
-	//		}
-	//		TemplateVariable position= findVariable(buffer, CodeTemplateContextType.TAGS); // look if Javadoc tags have to be added
-	//		if (position == null) {
-	//			return str;
-	//		}
-	//
-	//		IDocument textBuffer= new Document(str);
-	//		List<TypeParameter> typeParams= shouldGenerateMethodTypeParameterTags(cu.getJavaProject()) ? decl.typeParameters() : Collections.emptyList();
-	//		String[] typeParamNames= new String[typeParams.size()];
-	//		for (int i= 0; i < typeParamNames.length; i++) {
-	//			TypeParameter elem= typeParams.get(i);
-	//			typeParamNames[i]= elem.getName().getIdentifier();
-	//		}
-	//		List<SingleVariableDeclaration> params= decl.parameters();
-	//		String[] paramNames= new String[params.size()];
-	//		for (int i= 0; i < paramNames.length; i++) {
-	//			SingleVariableDeclaration elem= params.get(i);
-	//			paramNames[i]= elem.getName().getIdentifier();
-	//		}
-	//		String[] exceptionNames= getExceptionNames(decl);
-	//
-	//		String returnType= null;
-	//		if (!decl.isConstructor()) {
-	//			returnType= ASTNodes.asString(getReturnType(decl));
-	//		}
-	//		int[] tagOffsets= position.getOffsets();
-	//		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
-	//			try {
-	//				insertTag(textBuffer, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType, typeParamNames, isDeprecated, lineDelimiter);
-	//			} catch (BadLocationException e) {
-	//				throw new CoreException(JavaUIStatus.createError(IStatus.ERROR, e));
-	//			}
-	//		}
-	//		return textBuffer.get();
-	//	}
-	//
-	//	/**
-	//	 * @param decl the method declaration
-	//	 * @return the exception names
-	//	 * @deprecated to avoid deprecation warnings
-	//	 */
-	//	@Deprecated
-	//	private static String[] getExceptionNames(MethodDeclaration decl) {
-	//		String[] exceptionNames;
-	//		if (decl.getAST().apiLevel() >= AST.JLS8) {
-	//			List<Type> exceptions= decl.thrownExceptionTypes();
-	//			exceptionNames= new String[exceptions.size()];
-	//			for (int i= 0; i < exceptionNames.length; i++) {
-	//				exceptionNames[i]= ASTNodes.getTypeName(exceptions.get(i));
-	//			}
-	//		} else {
-	//			List<Name> exceptions= decl.thrownExceptions();
-	//			exceptionNames= new String[exceptions.size()];
-	//			for (int i= 0; i < exceptionNames.length; i++) {
-	//				exceptionNames[i]= ASTNodes.getSimpleNameIdentifier(exceptions.get(i));
-	//			}
-	//		}
-	//		return exceptionNames;
-	//	}
-	//
-	//	public static boolean shouldGenerateMethodTypeParameterTags(IJavaProject project) {
-	//		return JavaCore.ENABLED.equals(project.getOption(JavaCore.COMPILER_PB_MISSING_JAVADOC_TAGS_METHOD_TYPE_PARAMETERS, true));
-	//	}
-	//
-	//	/**
-	//	 * @param decl the method declaration
-	//	 * @return the return type
-	//	 * @deprecated Deprecated to avoid deprecated warnings
-	//	 */
-	//	@Deprecated
-	//	private static ASTNode getReturnType(MethodDeclaration decl) {
-	//		// used from API, can't eliminate
-	//		return decl.getAST().apiLevel() == AST.JLS2 ? decl.getReturnType() : decl.getReturnType2();
-	//	}
-	//
-	//
-	//	private static TemplateVariable findVariable(TemplateBuffer buffer, String variable) {
-	//		TemplateVariable[] positions= buffer.getVariables();
-	//		for (int i= 0; i < positions.length; i++) {
-	//			TemplateVariable curr= positions[i];
-	//			if (variable.equals(curr.getType())) {
-	//				return curr;
-	//			}
-	//		}
-	//		return null;
-	//	}
-	//
-	//	private static void insertTag(IDocument textBuffer, int offset, int length, String[] paramNames, String[] exceptionNames, String returnType, String[] typeParameterNames, boolean isDeprecated,
-	//			String lineDelimiter) throws BadLocationException {
-	//		IRegion region= textBuffer.getLineInformationOfOffset(offset);
-	//		if (region == null) {
-	//			return;
-	//		}
-	//		String lineStart= textBuffer.get(region.getOffset(), offset - region.getOffset());
-	//
-	//		StringBuffer buf= new StringBuffer();
-	//		for (int i= 0; i < typeParameterNames.length; i++) {
-	//			if (buf.length() > 0) {
-	//				buf.append(lineDelimiter).append(lineStart);
-	//			}
-	//			buf.append("@param <").append(typeParameterNames[i]).append('>'); //$NON-NLS-1$
-	//		}
-	//		for (int i= 0; i < paramNames.length; i++) {
-	//			if (buf.length() > 0) {
-	//				buf.append(lineDelimiter).append(lineStart);
-	//			}
-	//			buf.append("@param ").append(paramNames[i]); //$NON-NLS-1$
-	//		}
-	//		if (returnType != null && !returnType.equals("void")) { //$NON-NLS-1$
-	//			if (buf.length() > 0) {
-	//				buf.append(lineDelimiter).append(lineStart);
-	//			}
-	//			buf.append("@return"); //$NON-NLS-1$
-	//		}
-	//		if (exceptionNames != null) {
-	//			for (int i= 0; i < exceptionNames.length; i++) {
-	//				if (buf.length() > 0) {
-	//					buf.append(lineDelimiter).append(lineStart);
-	//				}
-	//				buf.append("@throws ").append(exceptionNames[i]); //$NON-NLS-1$
-	//			}
-	//		}
-	//		if (isDeprecated) {
-	//			if (buf.length() > 0) {
-	//				buf.append(lineDelimiter).append(lineStart);
-	//			}
-	//			buf.append("@deprecated"); //$NON-NLS-1$
-	//		}
-	//		if (buf.length() == 0 && isAllCommentWhitespace(lineStart)) {
-	//			int prevLine= textBuffer.getLineOfOffset(offset) - 1;
-	//			if (prevLine > 0) {
-	//				IRegion prevRegion= textBuffer.getLineInformation(prevLine);
-	//				int prevLineEnd= prevRegion.getOffset() + prevRegion.getLength();
-	//				// clear full line
-	//				textBuffer.replace(prevLineEnd, offset + length - prevLineEnd, ""); //$NON-NLS-1$
-	//				return;
-	//			}
-	//		}
-	//		textBuffer.replace(offset, length, buf.toString());
-	//	}
-	//
-	//	private static boolean isAllCommentWhitespace(String lineStart) {
-	//		for (int i= 0; i < lineStart.length(); i++) {
-	//			char ch= lineStart.charAt(i);
-	//			if (!Character.isWhitespace(ch) && ch != '*') {
-	//				return false;
-	//			}
-	//		}
-	//		return true;
-	//	}
+
+	/*
+	 * Don't use this method directly, use CodeGeneration.
+	 * This method should work with all AST levels.
+	 * @see org.eclipse.jdt.ui.CodeGeneration#getMethodComment(ICompilationUnit, String, MethodDeclaration, boolean, String, String[], String)
+	 */
+	public static String getMethodComment(ICompilationUnit cu, String typeName, MethodDeclaration decl, boolean isDeprecated, String targetName, String targetMethodDeclaringTypeName,
+			String[] targetMethodParameterTypeNames, boolean delegate, String lineDelimiter) throws CoreException {
+		boolean needsTarget= targetMethodDeclaringTypeName != null && targetMethodParameterTypeNames != null;
+		CodeGenerationTemplate templateSetting = CodeGenerationTemplate.METHODCOMMENT;
+		if (decl.isConstructor()) {
+			templateSetting = CodeGenerationTemplate.CONSTRUCTORCOMMENT;
+		} else if (needsTarget) {
+			if (delegate) {
+				templateSetting = CodeGenerationTemplate.DELEGATECOMMENT;
+			} else {
+				templateSetting = CodeGenerationTemplate.OVERRIDECOMMENT;
+			}
+		}
+		Template template = templateSetting.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
+		context.setCompilationUnitVariables(cu);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, typeName);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, decl.getName().getIdentifier());
+		if (!decl.isConstructor()) {
+			context.setVariable(CodeTemplateContextType.RETURN_TYPE, ASTNodes.asString(getReturnType(decl)));
+		}
+		if (needsTarget) {
+			if (delegate) {
+				context.setVariable(CodeTemplateContextType.SEE_TO_TARGET_TAG, getSeeTag(targetMethodDeclaringTypeName, targetName, targetMethodParameterTypeNames));
+			} else {
+				context.setVariable(CodeTemplateContextType.SEE_TO_OVERRIDDEN_TAG, getSeeTag(targetMethodDeclaringTypeName, targetName, targetMethodParameterTypeNames));
+			}
+		}
+
+		TemplateBuffer buffer;
+		try {
+			buffer= context.evaluate(template);
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+		if (buffer == null) {
+			return null;
+		}
+		String str= buffer.getString();
+		if (Strings.containsOnlyWhitespaces(str)) {
+			return null;
+		}
+		TemplateVariable position= findVariable(buffer, CodeTemplateContextType.TAGS); // look if Javadoc tags have to be added
+		if (position == null) {
+			return str;
+		}
+
+		IDocument textBuffer= new Document(str);
+		List<TypeParameter> typeParams= shouldGenerateMethodTypeParameterTags(cu.getJavaProject()) ? decl.typeParameters() : Collections.emptyList();
+		String[] typeParamNames= new String[typeParams.size()];
+		for (int i= 0; i < typeParamNames.length; i++) {
+			TypeParameter elem= typeParams.get(i);
+			typeParamNames[i]= elem.getName().getIdentifier();
+		}
+		List<SingleVariableDeclaration> params= decl.parameters();
+		String[] paramNames= new String[params.size()];
+		for (int i= 0; i < paramNames.length; i++) {
+			SingleVariableDeclaration elem= params.get(i);
+			paramNames[i]= elem.getName().getIdentifier();
+		}
+		String[] exceptionNames= getExceptionNames(decl);
+
+		String returnType= null;
+		if (!decl.isConstructor()) {
+			returnType= ASTNodes.asString(getReturnType(decl));
+		}
+		int[] tagOffsets= position.getOffsets();
+		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
+			try {
+				insertTag(textBuffer, tagOffsets[i], position.getLength(), paramNames, exceptionNames, returnType, typeParamNames, isDeprecated, lineDelimiter);
+			} catch (BadLocationException e) {
+				throw new CoreException(StatusFactory.newErrorStatus("Invalid edit", e));
+			}
+		}
+		return textBuffer.get();
+	}
+
+	/**
+	 * @param decl
+	 *            the method declaration
+	 * @return the exception names
+	 * @deprecated to avoid deprecation warnings
+	 */
+	@Deprecated
+	private static String[] getExceptionNames(MethodDeclaration decl) {
+		String[] exceptionNames;
+		if (decl.getAST().apiLevel() >= AST.JLS8) {
+			List<Type> exceptions = decl.thrownExceptionTypes();
+			exceptionNames = new String[exceptions.size()];
+			for (int i = 0; i < exceptionNames.length; i++) {
+				exceptionNames[i] = ASTNodes.getTypeName(exceptions.get(i));
+			}
+		} else {
+			List<Name> exceptions = decl.thrownExceptions();
+			exceptionNames = new String[exceptions.size()];
+			for (int i = 0; i < exceptionNames.length; i++) {
+				exceptionNames[i] = ASTNodes.getSimpleNameIdentifier(exceptions.get(i));
+			}
+		}
+		return exceptionNames;
+	}
+
+	public static boolean shouldGenerateMethodTypeParameterTags(IJavaProject project) {
+		return JavaCore.ENABLED.equals(project.getOption(JavaCore.COMPILER_PB_MISSING_JAVADOC_TAGS_METHOD_TYPE_PARAMETERS, true));
+	}
+
+	/**
+	 * @param decl
+	 *            the method declaration
+	 * @return the return type
+	 * @deprecated Deprecated to avoid deprecated warnings
+	 */
+	@Deprecated
+	private static ASTNode getReturnType(MethodDeclaration decl) {
+		// used from API, can't eliminate
+		return decl.getAST().apiLevel() == AST.JLS2 ? decl.getReturnType() : decl.getReturnType2();
+	}
+
+	private static TemplateVariable findVariable(TemplateBuffer buffer, String variable) {
+		TemplateVariable[] positions = buffer.getVariables();
+		for (int i = 0; i < positions.length; i++) {
+			TemplateVariable curr = positions[i];
+			if (variable.equals(curr.getType())) {
+				return curr;
+			}
+		}
+		return null;
+	}
+	private static void insertTag(IDocument textBuffer, int offset, int length, String[] paramNames,
+			String[] exceptionNames, String returnType, String[] typeParameterNames, boolean isDeprecated,
+			String lineDelimiter) throws BadLocationException {
+		IRegion region = textBuffer.getLineInformationOfOffset(offset);
+		if (region == null) {
+			return;
+		}
+		String lineStart = textBuffer.get(region.getOffset(), offset - region.getOffset());
+
+		StringBuffer buf = new StringBuffer();
+		for (int i = 0; i < typeParameterNames.length; i++) {
+			if (buf.length() > 0) {
+				buf.append(lineDelimiter).append(lineStart);
+			}
+			buf.append("@param <").append(typeParameterNames[i]).append('>'); //$NON-NLS-1$
+		}
+		for (int i = 0; i < paramNames.length; i++) {
+			if (buf.length() > 0) {
+				buf.append(lineDelimiter).append(lineStart);
+			}
+			buf.append("@param ").append(paramNames[i]); //$NON-NLS-1$
+		}
+		if (returnType != null && !returnType.equals("void")) { //$NON-NLS-1$
+			if (buf.length() > 0) {
+				buf.append(lineDelimiter).append(lineStart);
+			}
+			buf.append("@return"); //$NON-NLS-1$
+		}
+		if (exceptionNames != null) {
+			for (int i = 0; i < exceptionNames.length; i++) {
+				if (buf.length() > 0) {
+					buf.append(lineDelimiter).append(lineStart);
+				}
+				buf.append("@throws ").append(exceptionNames[i]); //$NON-NLS-1$
+			}
+		}
+		if (isDeprecated) {
+			if (buf.length() > 0) {
+				buf.append(lineDelimiter).append(lineStart);
+			}
+			buf.append("@deprecated"); //$NON-NLS-1$
+		}
+		if (buf.length() == 0 && isAllCommentWhitespace(lineStart)) {
+			int prevLine = textBuffer.getLineOfOffset(offset) - 1;
+			if (prevLine > 0) {
+				IRegion prevRegion = textBuffer.getLineInformation(prevLine);
+				int prevLineEnd = prevRegion.getOffset() + prevRegion.getLength();
+				// clear full line
+				textBuffer.replace(prevLineEnd, offset + length - prevLineEnd, ""); //$NON-NLS-1$
+				return;
+			}
+		}
+		textBuffer.replace(offset, length, buf.toString());
+	}
+
+	private static boolean isAllCommentWhitespace(String lineStart) {
+		for (int i = 0; i < lineStart.length(); i++) {
+			char ch = lineStart.charAt(i);
+			if (!Character.isWhitespace(ch) && ch != '*') {
+				return false;
+			}
+		}
+		return true;
+	}
 	//
 	//	/**
 	//	 * Returns the line delimiter which is used in the specified project.
@@ -1443,20 +1492,7 @@ public class StubUtility {
 	//		data.setTemplate(copy);
 	//	}
 	//
-	//	public static Template getCodeTemplate(String id, IJavaProject project) {
-	//		if (project == null) {
-	//			return JavaPlugin.getDefault().getCodeTemplateStore().findTemplateById(id);
-	//		}
-	//		ProjectTemplateStore projectStore= new ProjectTemplateStore(project.getProject());
-	//		try {
-	//			projectStore.load();
-	//		} catch (IOException e) {
-	//			JavaPlugin.log(e);
-	//		}
-	//		return projectStore.findTemplateById(id);
-	//	}
-	//
-	//
+
 	public static ImportRewrite createImportRewrite(ICompilationUnit cu, boolean restoreExistingImports) throws JavaModelException {
 		return ImportRewrite.create(cu, restoreExistingImports);
 	}
