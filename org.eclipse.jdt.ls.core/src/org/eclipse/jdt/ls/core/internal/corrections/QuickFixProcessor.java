@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 
@@ -38,276 +39,32 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionP
  */
 public class QuickFixProcessor {
 
-
-	public boolean hasCorrections(int problemId) {
-		switch (problemId) {
-		case IProblem.UnterminatedString:
-			/*case IProblem.UnusedImport:
-		case IProblem.DuplicateImport:
-		case IProblem.CannotImportPackage:
-		case IProblem.ConflictingImport:
-		case IProblem.ImportNotFound:
-		case IProblem.UndefinedMethod:
-		case IProblem.UndefinedConstructor:
-		case IProblem.ParameterMismatch:
-		case IProblem.MethodButWithConstructorName:
-		case IProblem.UndefinedField:
-		case IProblem.UndefinedName:
-		case IProblem.UnresolvedVariable:
-		case IProblem.PublicClassMustMatchFileName:
-		case IProblem.PackageIsNotExpectedPackage:
-		case IProblem.UndefinedType:
-		case IProblem.TypeMismatch:
-		case IProblem.ReturnTypeMismatch:
-		case IProblem.UnhandledException:
-		case IProblem.UnhandledExceptionOnAutoClose:
-		case IProblem.UnreachableCatch:
-		case IProblem.InvalidCatchBlockSequence:
-		case IProblem.InvalidUnionTypeReferenceSequence:
-		case IProblem.VoidMethodReturnsValue:
-		case IProblem.ShouldReturnValue:
-		case IProblem.ShouldReturnValueHintMissingDefault:
-		case IProblem.MissingReturnType:
-		case IProblem.NonExternalizedStringLiteral:
-		case IProblem.NonStaticAccessToStaticField:
-		case IProblem.NonStaticAccessToStaticMethod:
-		case IProblem.NonStaticOrAlienTypeReceiver:
-		case IProblem.StaticMethodRequested:
-		case IProblem.NonStaticFieldFromStaticInvocation:
-		case IProblem.InstanceMethodDuringConstructorInvocation:
-		case IProblem.InstanceFieldDuringConstructorInvocation:
-		case IProblem.NotVisibleMethod:
-		case IProblem.NotVisibleConstructor:
-		case IProblem.NotVisibleType:
-		case IProblem.NotVisibleField:
-		case IProblem.BodyForAbstractMethod:
-		case IProblem.AbstractMethodInAbstractClass:
-		case IProblem.AbstractMethodMustBeImplemented:
-		case IProblem.EnumAbstractMethodMustBeImplemented:
-		case IProblem.AbstractMethodsInConcreteClass:
-		case IProblem.AbstractMethodInEnum:
-		case IProblem.EnumConstantMustImplementAbstractMethod:
-		case IProblem.ShouldImplementHashcode:
-		case IProblem.BodyForNativeMethod:
-		case IProblem.OuterLocalMustBeFinal:
-		case IProblem.UninitializedLocalVariable:
-		case IProblem.UninitializedLocalVariableHintMissingDefault:
-		case IProblem.UndefinedConstructorInDefaultConstructor:
-		case IProblem.UnhandledExceptionInDefaultConstructor:
-		case IProblem.NotVisibleConstructorInDefaultConstructor:
-		case IProblem.AmbiguousType:
-		case IProblem.UnusedPrivateMethod:
-		case IProblem.UnusedPrivateConstructor:
-		case IProblem.UnusedPrivateField:
-		case IProblem.UnusedPrivateType:
-		case IProblem.LocalVariableIsNeverUsed:
-		case IProblem.ArgumentIsNeverUsed:
-		case IProblem.MethodRequiresBody:
-		case IProblem.NeedToEmulateFieldReadAccess:
-		case IProblem.NeedToEmulateFieldWriteAccess:
-		case IProblem.NeedToEmulateMethodAccess:
-		case IProblem.NeedToEmulateConstructorAccess:
-		case IProblem.SuperfluousSemicolon:
-		case IProblem.UnnecessaryCast:
-		case IProblem.UnnecessaryInstanceof:
-		case IProblem.IndirectAccessToStaticField:
-		case IProblem.IndirectAccessToStaticMethod:
-		case IProblem.Task:
-		case IProblem.UnusedMethodDeclaredThrownException:
-		case IProblem.UnusedConstructorDeclaredThrownException:
-		case IProblem.UnqualifiedFieldAccess:
-		case IProblem.JavadocMissing:
-		case IProblem.JavadocMissingParamTag:
-		case IProblem.JavadocMissingReturnTag:
-		case IProblem.JavadocMissingThrowsTag:
-		case IProblem.JavadocUndefinedType:
-		case IProblem.JavadocAmbiguousType:
-		case IProblem.JavadocNotVisibleType:
-		case IProblem.JavadocInvalidThrowsClassName:
-		case IProblem.JavadocDuplicateThrowsClassName:
-		case IProblem.JavadocDuplicateReturnTag:
-		case IProblem.JavadocDuplicateParamName:
-		case IProblem.JavadocInvalidParamName:
-		case IProblem.JavadocUnexpectedTag:
-		case IProblem.JavadocInvalidTag:
-		case IProblem.NonBlankFinalLocalAssignment:
-		case IProblem.DuplicateFinalLocalInitialization:
-		case IProblem.FinalFieldAssignment:
-		case IProblem.DuplicateBlankFinalFieldInitialization:
-		case IProblem.AnonymousClassCannotExtendFinalClass:
-		case IProblem.ClassExtendFinalClass:
-		case IProblem.FinalMethodCannotBeOverridden:
-		case IProblem.InheritedMethodReducesVisibility:
-		case IProblem.MethodReducesVisibility:
-		case IProblem.OverridingNonVisibleMethod:
-		case IProblem.CannotOverrideAStaticMethodWithAnInstanceMethod:
-		case IProblem.CannotHideAnInstanceMethodWithAStaticMethod:
-		case IProblem.UnexpectedStaticModifierForMethod:
-		case IProblem.LocalVariableHidingLocalVariable:
-		case IProblem.LocalVariableHidingField:
-		case IProblem.FieldHidingLocalVariable:
-		case IProblem.FieldHidingField:
-		case IProblem.ArgumentHidingLocalVariable:
-		case IProblem.ArgumentHidingField:
-		case IProblem.DuplicateField:
-		case IProblem.DuplicateMethod:
-		case IProblem.DuplicateTypeVariable:
-		case IProblem.DuplicateNestedType:
-		case IProblem.IllegalQualifiedEnumConstantLabel:
-		case IProblem.IllegalModifierForInterfaceMethod:
-		case IProblem.IllegalModifierForInterfaceMethod18:
-		case IProblem.IllegalModifierForInterface:
-		case IProblem.IllegalModifierForClass:
-		case IProblem.IllegalModifierForInterfaceField:
-		case IProblem.IllegalModifierForMemberInterface:
-		case IProblem.IllegalModifierForMemberClass:
-		case IProblem.IllegalModifierForLocalClass:
-		case IProblem.IllegalModifierForArgument:
-		case IProblem.IllegalModifierForField:
-		case IProblem.IllegalModifierForMethod:
-		case IProblem.IllegalModifierForConstructor:
-		case IProblem.IllegalModifierForVariable:
-		case IProblem.IllegalModifierForEnum:
-		case IProblem.IllegalModifierForEnumConstant:
-		case IProblem.IllegalModifierForEnumConstructor:
-		case IProblem.IllegalModifierForMemberEnum:
-		case IProblem.UnexpectedStaticModifierForField:
-		case IProblem.IllegalModifierCombinationFinalVolatileForField:
-		case IProblem.IllegalVisibilityModifierForInterfaceMemberType:
-		case IProblem.IncompatibleReturnType:
-		case IProblem.IncompatibleExceptionInThrowsClause:
-		case IProblem.NoMessageSendOnArrayType:
-		case IProblem.InvalidOperator:
-		case IProblem.MissingSerialVersion:
-		case IProblem.UnnecessaryElse:
-		case IProblem.SuperclassMustBeAClass:
-		case IProblem.UseAssertAsAnIdentifier:
-		case IProblem.UseEnumAsAnIdentifier:
-		case IProblem.RedefinedLocal:
-		case IProblem.RedefinedArgument:
-		case IProblem.CodeCannotBeReached:
-		case IProblem.DeadCode:
-		case IProblem.InvalidUsageOfTypeParameters:
-		case IProblem.InvalidUsageOfStaticImports:
-		case IProblem.InvalidUsageOfForeachStatements:
-		case IProblem.InvalidUsageOfTypeArguments:
-		case IProblem.InvalidUsageOfEnumDeclarations:
-		case IProblem.InvalidUsageOfVarargs:
-		case IProblem.InvalidUsageOfAnnotations:
-		case IProblem.InvalidUsageOfAnnotationDeclarations:
-		case IProblem.FieldMissingDeprecatedAnnotation:
-		case IProblem.OverridingDeprecatedMethod:
-		case IProblem.MethodMissingDeprecatedAnnotation:
-		case IProblem.TypeMissingDeprecatedAnnotation:
-		case IProblem.MissingOverrideAnnotation:
-		case IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
-		case IProblem.MethodMustOverride:
-		case IProblem.MethodMustOverrideOrImplement:
-		case IProblem.IsClassPathCorrect:
-		case IProblem.MethodReturnsVoid:
-		case IProblem.ForbiddenReference:
-		case IProblem.DiscouragedReference:
-		case IProblem.UnnecessaryNLSTag:
-		case IProblem.AssignmentHasNoEffect:
-		case IProblem.UnsafeTypeConversion:
-		case IProblem.UnsafeElementTypeConversion:
-		case IProblem.RawTypeReference:
-		case IProblem.UnsafeRawMethodInvocation:
-		case IProblem.RedundantSpecificationOfTypeArguments:
-		case IProblem.UndefinedAnnotationMember:
-		case IProblem.MissingValueForAnnotationMember:
-		case IProblem.FallthroughCase:
-		case IProblem.NonGenericType:
-		case IProblem.UnhandledWarningToken:
-		case IProblem.ProblemNotAnalysed:
-		case IProblem.UnusedWarningToken:
-		case IProblem.RedundantSuperinterface:
-		case IProblem.JavadocInvalidMemberTypeQualification:
-		case IProblem.IncompatibleTypesInForeach:
-		case IProblem.MissingEnumConstantCase:
-		case IProblem.MissingEnumDefaultCase:
-		case IProblem.MissingDefaultCase:
-		case IProblem.MissingEnumConstantCaseDespiteDefault:
-		case IProblem.MissingSynchronizedModifierInInheritedMethod:
-		case IProblem.UnusedObjectAllocation:
-		case IProblem.MethodCanBeStatic:
-		case IProblem.MethodCanBePotentiallyStatic:
-		case IProblem.AutoManagedResourceNotBelow17:
-		case IProblem.MultiCatchNotBelow17:
-		case IProblem.PolymorphicMethodNotBelow17:
-		case IProblem.BinaryLiteralNotBelow17:
-		case IProblem.UnderscoresInLiteralsNotBelow17:
-		case IProblem.SwitchOnStringsNotBelow17:
-		case IProblem.DiamondNotBelow17:
-		case IProblem.PotentialHeapPollutionFromVararg :
-		case IProblem.UnsafeGenericArrayForVarargs:
-		case IProblem.SafeVarargsOnFixedArityMethod :
-		case IProblem.SafeVarargsOnNonFinalInstanceMethod:
-		case IProblem.RequiredNonNullButProvidedNull:
-		case IProblem.RequiredNonNullButProvidedPotentialNull:
-		case IProblem.RequiredNonNullButProvidedSpecdNullable:
-		case IProblem.RequiredNonNullButProvidedUnknown:
-		case IProblem.IllegalReturnNullityRedefinition:
-		case IProblem.IllegalRedefinitionToNonNullParameter:
-		case IProblem.IllegalDefinitionToNonNullParameter:
-		case IProblem.ParameterLackingNonNullAnnotation:
-		case IProblem.ParameterLackingNullableAnnotation:
-		case IProblem.SpecdNonNullLocalVariableComparisonYieldsFalse:
-		case IProblem.RedundantNullCheckAgainstNonNullType:
-		case IProblem.RedundantNullCheckOnSpecdNonNullLocalVariable:
-		case IProblem.RedundantNullAnnotation:
-		case IProblem.UnusedTypeParameter:
-		case IProblem.NullableFieldReference:
-		case IProblem.ConflictingNullAnnotations:
-		case IProblem.ConflictingInheritedNullAnnotations:
-		case IProblem.ExplicitThisParameterNotBelow18:
-		case IProblem.DefaultMethodNotBelow18:
-		case IProblem.StaticInterfaceMethodNotBelow18:
-		case IProblem.LambdaExpressionNotBelow18:
-		case IProblem.MethodReferenceNotBelow18:
-		case IProblem.ConstructorReferenceNotBelow18:
-		case IProblem.IntersectionCastNotBelow18:
-		case IProblem.InvalidUsageOfTypeAnnotations:
-		case IProblem.DuplicateInheritedDefaultMethods:
-		case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
-		case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
-		case IProblem.TypeAnnotationAtQualifiedName:
-		case IProblem.NullAnnotationAtQualifyingType:
-		case IProblem.IllegalAnnotationForBaseType:*/
-			return true;
-		default:
-			//return SuppressWarningsSubProcessor.hasSuppressWarningsProposal(cu.getJavaProject(), problemId)
-			//		|| ConfigureProblemSeveritySubProcessor.hasConfigureProblemSeverityProposal(problemId);
-		}
-		return false;
-	}
-
 	private static int moveBack(int offset, int start, String ignoreCharacters, ICompilationUnit cu) {
 		try {
-			IBuffer buf= cu.getBuffer();
+			IBuffer buf = cu.getBuffer();
 			while (offset >= start) {
 				if (ignoreCharacters.indexOf(buf.getChar(offset - 1)) == -1) {
 					return offset;
 				}
 				offset--;
 			}
-		} catch(JavaModelException e) {
+		} catch (JavaModelException e) {
 			// use start
 		}
 		return start;
 	}
 
-
-	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocation[] locations) throws CoreException {
+	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocation[] locations)
+			throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return null;
 		}
 
-		HashSet<Integer> handledProblems= new HashSet<>(locations.length);
+		HashSet<Integer> handledProblems = new HashSet<>(locations.length);
 		ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
-		for (int i= 0; i < locations.length; i++) {
-			IProblemLocation curr= locations[i];
-			Integer id= new Integer(curr.getProblemId());
+		for (int i = 0; i < locations.length; i++) {
+			IProblemLocation curr = locations[i];
+			Integer id = new Integer(curr.getProblemId());
 			if (handledProblems.add(id)) {
 				process(context, curr, resultingCollections);
 			}
@@ -317,15 +74,17 @@ public class QuickFixProcessor {
 
 	private void process(IInvocationContext context, IProblemLocation problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
-		int id= problem.getProblemId();
+		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
 		}
 		switch (id) {
 		case IProblem.UnterminatedString:
-			String quoteLabel= CorrectionMessages.JavaCorrectionProcessor_addquote_description;
-			int pos= moveBack(problem.getOffset() + problem.getLength(), problem.getOffset(), "\n\r", context.getCompilationUnit()); //$NON-NLS-1$
-			proposals.add(new ReplaceCorrectionProposal(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", IProposalRelevance.ADD_QUOTE)); //$NON-NLS-1$
+			String quoteLabel = CorrectionMessages.JavaCorrectionProcessor_addquote_description;
+			int pos = moveBack(problem.getOffset() + problem.getLength(), problem.getOffset(), "\n\r", //$NON-NLS-1$
+					context.getCompilationUnit());
+			proposals.add(new ReplaceCorrectionProposal(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", //$NON-NLS-1$
+					IProposalRelevance.ADD_QUOTE));
 			break;
 		case IProblem.UnusedImport:
 		case IProblem.DuplicateImport:
@@ -610,30 +369,26 @@ public class QuickFixProcessor {
 			// proposals.add(new TaskMarkerProposal(context.getCompilationUnit(),
 			// problem, 10));
 			// break;
-			// case IProblem.JavadocMissing:
-			// JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.JavadocMissingParamTag:
-			// case IProblem.JavadocMissingReturnTag:
-			// case IProblem.JavadocMissingThrowsTag:
-			// JavadocTagsSubProcessor.getMissingJavadocTagProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.JavadocInvalidThrowsClassName:
-			// case IProblem.JavadocDuplicateThrowsClassName:
-			// case IProblem.JavadocDuplicateReturnTag:
-			// case IProblem.JavadocDuplicateParamName:
-			// case IProblem.JavadocInvalidParamName:
-			// case IProblem.JavadocUnexpectedTag:
-			// case IProblem.JavadocInvalidTag:
-			// JavadocTagsSubProcessor.getRemoveJavadocTagProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.JavadocInvalidMemberTypeQualification:
-			// JavadocTagsSubProcessor.getInvalidQualificationProposals(context,
-			// problem, proposals);
-			// break;
+		case IProblem.JavadocMissing:
+			JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
+			break;
+		case IProblem.JavadocMissingParamTag:
+		case IProblem.JavadocMissingReturnTag:
+		case IProblem.JavadocMissingThrowsTag:
+			JavadocTagsSubProcessor.getMissingJavadocTagProposals(context, problem, proposals);
+			break;
+		case IProblem.JavadocInvalidThrowsClassName:
+		case IProblem.JavadocDuplicateThrowsClassName:
+		case IProblem.JavadocDuplicateReturnTag:
+		case IProblem.JavadocDuplicateParamName:
+		case IProblem.JavadocInvalidParamName:
+		case IProblem.JavadocUnexpectedTag:
+		case IProblem.JavadocInvalidTag:
+			JavadocTagsSubProcessor.getRemoveJavadocTagProposals(context, problem, proposals);
+			break;
+		case IProblem.JavadocInvalidMemberTypeQualification:
+			JavadocTagsSubProcessor.getInvalidQualificationProposals(context, problem, proposals);
+			break;
 			//
 			// case IProblem.LocalVariableHidingLocalVariable:
 			// case IProblem.LocalVariableHidingField:
@@ -913,9 +668,13 @@ public class QuickFixProcessor {
 
 		default:
 		}
-		//if (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {
-		//	SuppressWarningsSubProcessor.addSuppressWarningsProposals(context, problem, proposals);
-		//}
-		//ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context, problem, proposals);
+		// if
+		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))
+		// {
+		// SuppressWarningsSubProcessor.addSuppressWarningsProposals(context,
+		// problem, proposals);
+		// }
+		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
+		// problem, proposals);
 	}
 }

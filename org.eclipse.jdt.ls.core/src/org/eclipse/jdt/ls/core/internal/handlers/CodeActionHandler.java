@@ -74,11 +74,6 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private boolean hasCodeAssist(Diagnostic diagnostic) {
-		final int problemId = getProblemId(diagnostic);
-		return quickFixProcessor.hasCorrections(problemId);
-	}
-
 	private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
 		String name = proposal.getName();
 		TextChange textChange = proposal.getTextChange();
