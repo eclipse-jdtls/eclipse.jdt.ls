@@ -42,12 +42,44 @@ public class Preferences {
 	 */
 	public static final String MAVEN_USER_SETTINGS_KEY = "java.configuration.maven.userSettings";
 
+	/**
+	 * A named preference that holds the favorite static members.
+	 * <p>
+	 * Value is of type <code>String</code>: semicolon separated list of
+	 * favorites.
+	 * </p>
+	 */
+	public static final String FAVORITE_STATIC_MEMBERS = "java.favoriteStaticMembers";
+
+	/**
+	 * A named preference that defines how member elements are ordered by code
+	 * actions.
+	 * <p>
+	 * Value is of type <code>String</code>: A comma separated list of the
+	 * following entries. Each entry must be in the list, no duplication. List
+	 * order defines the sort order.
+	 * <ul>
+	 * <li><b>T</b>: Types</li>
+	 * <li><b>C</b>: Constructors</li>
+	 * <li><b>I</b>: Initializers</li>
+	 * <li><b>M</b>: Methods</li>
+	 * <li><b>F</b>: Fields</li>
+	 * <li><b>SI</b>: Static Initializers</li>
+	 * <li><b>SM</b>: Static Methods</li>
+	 * <li><b>SF</b>: Static Fields</li>
+	 * </ul>
+	 * </p>
+	 */
+	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+	private MemberSortOrder memberOrders;
 
 	private String mavenUserSettings;
+
+	private String favoriteStaticMembers;
 
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -95,6 +127,32 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
+		memberOrders = new MemberSortOrder(null);
+
+	}
+
+	private static String getStringValue(Map<String, Object> configuration, String key, String def) {
+		Object val = configuration.get(key);
+		if (val instanceof String) {
+			return (String) val;
+		}
+		return def;
+	}
+
+	private static boolean getBooleanValue(Map<String, Object> configuration, String key, boolean def) {
+		Object val = configuration.get(key);
+		if (val instanceof Boolean) {
+			return ((Boolean) val).booleanValue();
+		}
+		return def;
+	}
+
+	private static int getNumberValue(Map<String, Object> configuration, String key, int def) {
+		Object val = configuration.get(key);
+		if (val instanceof Integer) {
+			return ((Integer) val).intValue();
+		}
+		return def;
 	}
 
 	/**
@@ -105,27 +163,32 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
-		Object incompleteClasspathSeverity = configuration.get(ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY);
-		if (incompleteClasspathSeverity != null) {
-			prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity.toString(), Severity.warning));
-		}
+		String incompleteClasspathSeverity = getStringValue(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
+		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
 
-		Object updateBuildConfiguration = configuration.get(CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY);
-		if (updateBuildConfiguration != null) {
-			prefs.setUpdateBuildConfigurationStatus(FeatureStatus.fromString(updateBuildConfiguration.toString(), FeatureStatus.interactive));
-		}
+		String updateBuildConfiguration = getStringValue(configuration, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, null);
+		prefs.setUpdateBuildConfigurationStatus(
+				FeatureStatus.fromString(updateBuildConfiguration, FeatureStatus.interactive));
 
-		Object referenceCodelensEnabled = configuration.get(REFERENCES_CODE_LENS_ENABLED_KEY);
-		if (referenceCodelensEnabled != null) {
-			prefs.setReferencesCodelensEnabled(Boolean.valueOf(referenceCodelensEnabled.toString()));
-		}
+		boolean referenceCodelensEnabled = getBooleanValue(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
+		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 
-		Object mavenUserSettings = configuration.get(MAVEN_USER_SETTINGS_KEY);
-		if (mavenUserSettings != null) {
-			prefs.setMavenUserSettings(mavenUserSettings.toString());
-		}
+		String mavenUserSettings = getStringValue(configuration, MAVEN_USER_SETTINGS_KEY, null);
+		prefs.setMavenUserSettings(mavenUserSettings);
+
+		String sortOrder = getStringValue(configuration, MEMBER_SORT_ORDER, null);
+		prefs.setMembersSortOrder(sortOrder);
+
+		String favoriteStaticMembers = getStringValue(configuration, FAVORITE_STATIC_MEMBERS, null);
+		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
 		return prefs;
+	}
+
+
+	private Preferences setMembersSortOrder(String sortOrder) {
+		this.memberOrders = new MemberSortOrder(sortOrder);
+		return this;
 	}
 
 	private Preferences setReferencesCodelensEnabled(boolean enabled) {
@@ -143,12 +206,21 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setFavoriteStaticMembers(String favoriteStaticMembers) {
+		this.favoriteStaticMembers = favoriteStaticMembers;
+		return this;
+	}
+
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
 	}
 
 	public FeatureStatus getUpdateBuildConfigurationStatus() {
 		return updateBuildConfigurationStatus;
+	}
+
+	public MemberSortOrder getMemberSortOrder() {
+		return this.memberOrders;
 	}
 
 	public boolean isReferencesCodeLensEnabled() {
@@ -162,5 +234,9 @@ public class Preferences {
 
 	public String getMavenUserSettings() {
 		return mavenUserSettings;
+	}
+
+	public String getFavoriteStaticMembers() {
+		return this.favoriteStaticMembers;
 	}
 }
