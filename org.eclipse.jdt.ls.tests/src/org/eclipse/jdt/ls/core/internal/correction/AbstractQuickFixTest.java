@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -39,38 +41,31 @@ import org.junit.Assert;
 
 public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
+	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
+		List<Command> codeActionCommands = evaluateCodeActions(cu);
+		for (Command c : codeActionCommands) {
+			String actual = evaluateCodeActionCommand(cu, c);
+			if (expected.content.equals(actual)) {
+				assertEquals(expected.name, c.getTitle());
+				return;
+			}
+		}
+		fail("Not found: " + expected.name);
+	}
+
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expected) throws Exception {
-		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
-		IProblem[] problems = astRoot.getProblems();
-
-		IProblem problem = problems[0];
-		Range range = JDTUtils.toRange(cu, problem.getSourceStart(), 0);
-
-		CodeActionParams parms = new CodeActionParams();
-
-		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
-		parms.setTextDocument(textDocument);
-		parms.setRange(range);
-		CodeActionContext context = new CodeActionContext();
-		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
-		parms.setContext(context);
-
-		List<Command> codeActionCommands = new CodeActionHandler().getCodeActionCommands(parms);
-		assertEquals("Number of code actions", expected.length, codeActionCommands.size());
+		List<Command> codeActionCommands = evaluateCodeActions(cu);
+		if (codeActionCommands.size() != expected.length) {
+			String res = "";
+			for (Command command : codeActionCommands) {
+				res += " '" + command.getTitle() + "'";
+			}
+			assertEquals("Number of code actions: " + res, expected.length, codeActionCommands.size());
+		}
 
 		int k = 0;
 		for (Command c : codeActionCommands) {
-			Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			Assert.assertNotNull(c.getArguments());
-			Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-			List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.getFileURI(cu));
-
-			Document doc = new Document();
-			doc.set(cu.getSource());
-
-			String actual = applyEdits(doc, edits);
+			String actual = evaluateCodeActionCommand(cu, c);
 			Expected e = expected[k++];
 			assertEquals(e.name, c.getTitle());
 			assertEquals("Unexpected content for '" + e.name + "'", e.content, actual);
@@ -87,6 +82,40 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	private List<Command> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
+		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
+		IProblem[] problems = astRoot.getProblems();
+
+		IProblem problem = problems[0];
+		Range range = JDTUtils.toRange(cu, problem.getSourceStart(), 0);
+
+		CodeActionParams parms = new CodeActionParams();
+
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+		textDocument.setUri(JDTUtils.getFileURI(cu));
+		parms.setTextDocument(textDocument);
+		parms.setRange(range);
+		CodeActionContext context = new CodeActionContext();
+		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
+		parms.setContext(context);
+
+		return new CodeActionHandler().getCodeActionCommands(parms);
+	}
+
+	private String evaluateCodeActionCommand(ICompilationUnit cu, Command c)
+			throws BadLocationException, JavaModelException {
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		Assert.assertNotNull(c.getArguments());
+		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
+		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.getFileURI(cu));
+
+		Document doc = new Document();
+		doc.set(cu.getSource());
+
+		return applyEdits(doc, edits);
+	}
+
 	private String applyEdits(Document doc, List<TextEdit> edits) throws BadLocationException {
 		Collections.sort(edits, new Comparator<TextEdit>() {
 			@Override
@@ -98,8 +127,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 				return startDiff;
 			}
 		});
+
 		String text = doc.get();
-		for (TextEdit e : edits) {
+		for (int i = edits.size() - 1; i >= 0; i--) {
+			TextEdit e = edits.get(i);
 			int startOffset = offsetAt(doc, e.getRange().getStart());
 			int endOffset = offsetAt(doc, e.getRange().getEnd());
 			text = text.substring(0, startOffset) + e.getNewText() + text.substring(endOffset, text.length());
@@ -112,9 +143,9 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	private int comparePositions(Position p1, Position p2) {
-		int diff = p2.getLine() - p1.getLine();
+		int diff = p1.getLine() - p2.getLine();
 		if (diff == 0) {
-			return p2.getCharacter() - p1.getCharacter();
+			return p1.getCharacter() - p2.getCharacter();
 		}
 		return diff;
 	}
