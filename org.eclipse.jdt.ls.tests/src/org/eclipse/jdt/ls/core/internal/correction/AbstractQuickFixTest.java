@@ -11,12 +11,15 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
@@ -44,13 +47,17 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Command> codeActionCommands = evaluateCodeActions(cu);
 		for (Command c : codeActionCommands) {
-			String actual = evaluateCodeActionCommand(cu, c);
+			String actual = evaluateCodeActionCommand(c);
 			if (expected.content.equals(actual)) {
 				assertEquals(expected.name, c.getTitle());
 				return;
 			}
 		}
-		fail("Not found: " + expected.name);
+		String res = "";
+		for (Command command : codeActionCommands) {
+			res += " '" + command.getTitle() + "'";
+		}
+		fail("Not found: " + expected.name + ", has: " + res);
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expected) throws Exception {
@@ -64,12 +71,16 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 
 		int k = 0;
+		String aStr = "", eStr = "";
 		for (Command c : codeActionCommands) {
-			String actual = evaluateCodeActionCommand(cu, c);
+			String actual = evaluateCodeActionCommand(c);
 			Expected e = expected[k++];
-			assertEquals(e.name, c.getTitle());
-			assertEquals("Unexpected content for '" + e.name + "'", e.content, actual);
+			if (!e.name.equals(c.getTitle()) || !e.content.equals(actual)) {
+				aStr += '\n' + c.getTitle() + '\n' + actual;
+				eStr += '\n' + e.name + '\n' + e.content;
+			}
 		}
+		assertEquals(eStr, aStr);
 	}
 
 	protected class Expected {
@@ -102,18 +113,24 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return new CodeActionHandler().getCodeActionCommands(parms);
 	}
 
-	private String evaluateCodeActionCommand(ICompilationUnit cu, Command c)
+	private String evaluateCodeActionCommand(Command c)
 			throws BadLocationException, JavaModelException {
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 		Assert.assertNotNull(c.getArguments());
 		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.getFileURI(cu));
+		Iterator<Entry<String, List<TextEdit>>> editEntries = we.getChanges().entrySet().iterator();
+		Entry<String, List<TextEdit>> entry = editEntries.next();
+		assertNotNull("No edits generated", entry);
+		assertEquals("More than one resource modified", false, editEntries.hasNext());
+
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(entry.getKey());
+		assertNotNull("CU not found: " + entry.getKey(), cu);
 
 		Document doc = new Document();
 		doc.set(cu.getSource());
 
-		return applyEdits(doc, edits);
+		return applyEdits(doc, entry.getValue());
 	}
 
 	private String applyEdits(Document doc, List<TextEdit> edits) throws BadLocationException {

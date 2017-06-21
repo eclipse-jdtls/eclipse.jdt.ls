@@ -34,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 
 /**
  */
@@ -139,23 +140,19 @@ public class QuickFixProcessor {
 			// UnresolvedElementsSubProcessor.getTypeProposals(context, problem,
 			// proposals);
 			// break;
-			// case IProblem.TypeMismatch:
-			// case IProblem.ReturnTypeMismatch:
-			// TypeMismatchSubProcessor.addTypeMismatchProposals(context, problem,
-			// proposals);
-			// break;
-			// case IProblem.IncompatibleTypesInForeach:
-			// TypeMismatchSubProcessor.addTypeMismatchInForEachProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.IncompatibleReturnType:
-			// TypeMismatchSubProcessor.addIncompatibleReturnTypeProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.IncompatibleExceptionInThrowsClause:
-			// TypeMismatchSubProcessor.addIncompatibleThrowsProposals(context,
-			// problem, proposals);
-			// break;
+		case IProblem.TypeMismatch:
+		case IProblem.ReturnTypeMismatch:
+			TypeMismatchSubProcessor.addTypeMismatchProposals(context, problem, proposals);
+			break;
+		case IProblem.IncompatibleTypesInForeach:
+			TypeMismatchSubProcessor.addTypeMismatchInForEachProposals(context, problem, proposals);
+			break;
+		case IProblem.IncompatibleReturnType:
+			TypeMismatchSubProcessor.addIncompatibleReturnTypeProposals(context, problem, proposals);
+			break;
+		case IProblem.IncompatibleExceptionInThrowsClause:
+			TypeMismatchSubProcessor.addIncompatibleThrowsProposals(context, problem, proposals);
+			break;
 			// case IProblem.UnhandledException:
 			// case IProblem.UnhandledExceptionOnAutoClose:
 			// LocalCorrectionsSubProcessor.addUncaughtExceptionProposals(context,
@@ -667,6 +664,8 @@ public class QuickFixProcessor {
 			// break;
 
 		default:
+			// String str = problem.toString();
+			// System.out.println(str);
 		}
 		// if
 		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))

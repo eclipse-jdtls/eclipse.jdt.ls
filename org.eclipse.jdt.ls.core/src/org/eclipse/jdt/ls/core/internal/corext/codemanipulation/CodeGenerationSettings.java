@@ -16,5 +16,6 @@ public class CodeGenerationSettings {
 	public boolean overrideAnnotation = true;
 	public int tabWidth;
 	public int indentWidth;
+	public boolean createComments;
 }
 

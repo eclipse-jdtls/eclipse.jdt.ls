@@ -13,10 +13,16 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.text.edits.CopyTargetEdit;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.MalformedTreeException;
+import org.eclipse.text.edits.MoveTargetEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditVisitor;
@@ -95,5 +101,51 @@ public class TextEditConverter extends TextEditVisitor{
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
 		return super.visit(edit);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.
+	 * CopyTargetEdit)
+	 */
+	@Override
+	public boolean visit(CopyTargetEdit edit) {
+		try {
+			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+
+			Document doc = new Document(compilationUnit.getSource());
+			edit.apply(doc, TextEdit.UPDATE_REGIONS);
+			String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
+			te.setNewText(content);
+			converted.add(te);
+		} catch (MalformedTreeException | BadLocationException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return false; // do not visit children
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.
+	 * MoveTargetEdit)
+	 */
+	@Override
+	public boolean visit(MoveTargetEdit edit) {
+		try {
+			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+
+			Document doc = new Document(compilationUnit.getSource());
+			edit.apply(doc, TextEdit.UPDATE_REGIONS);
+			String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
+			te.setNewText(content);
+			converted.add(te);
+		} catch (MalformedTreeException | BadLocationException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return false; // do not visit children
 	}
 }

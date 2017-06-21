@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.corrections;
 
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.NodeFinder;
@@ -89,6 +90,46 @@ public class ProblemLocation implements IProblemLocation {
 	public ASTNode getCoveredNode(CompilationUnit astRoot) {
 		NodeFinder finder = new NodeFinder(astRoot, this.offset, this.length);
 		return finder.getCoveredNode();
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+		buf.append("Id: ").append(getErrorCode(problemId)).append('\n'); //$NON-NLS-1$
+		buf.append('[').append(offset).append(", ").append(length).append(']').append('\n'); //$NON-NLS-1$
+		return buf.toString();
+	}
+
+	private String getErrorCode(int code) {
+		StringBuffer buf = new StringBuffer();
+
+		if ((code & IProblem.TypeRelated) != 0) {
+			buf.append("TypeRelated + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.FieldRelated) != 0) {
+			buf.append("FieldRelated + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.ConstructorRelated) != 0) {
+			buf.append("ConstructorRelated + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.MethodRelated) != 0) {
+			buf.append("MethodRelated + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.ImportRelated) != 0) {
+			buf.append("ImportRelated + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.Internal) != 0) {
+			buf.append("Internal + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.Syntax) != 0) {
+			buf.append("Syntax + "); //$NON-NLS-1$
+		}
+		if ((code & IProblem.Javadoc) != 0) {
+			buf.append("Javadoc + "); //$NON-NLS-1$
+		}
+		buf.append(code & IProblem.IgnoreCategoriesMask);
+
+		return buf.toString();
 	}
 
 }
