@@ -23,12 +23,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.WorkspaceJob;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.junit.Test;
+
+import com.google.common.base.Throwables;
 
 /**
  * @author Fred Bricon
@@ -58,7 +66,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 	}
 
 	@Test
-	public void testResolveStandaloneCompilationUnit() throws Exception {
+	public void testResolveStandaloneCompilationUnit() throws CoreException {
 		Path helloSrcRoot = Paths.get("projects", "eclipse", "hello", "src").toAbsolutePath();
 		URI uri = helloSrcRoot.resolve(Paths.get("java", "Foo.java")).toUri();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
@@ -69,9 +77,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(IPackageDeclaration.class.isAssignableFrom(elements[0].getClass()));
 		assertTrue(IType.class.isAssignableFrom(elements[1].getClass()));
 
-		// Fails on MacOS disabled for now
-		//		IResource[] resources = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(uri);
-		//		assertEquals(1, resources.length);
+		assertTrue(cu.getResource().isLinked());
 
 		uri = helloSrcRoot.resolve("NoPackage.java").toUri();
 		cu = JDTUtils.resolveCompilationUnit(uri.toString());
@@ -81,6 +87,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertEquals(1, elements.length);
 		assertTrue(IType.class.isAssignableFrom(elements[0].getClass()));
 	}
+
 
 	@Test
 	public void testUnresolvableCompilationUnits() throws Exception {
@@ -116,4 +123,31 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		}
 	}
 
+	@Test
+	public void testResolveStandaloneCompilationUnitWithinJob() throws Exception {
+		WorkspaceJob job = new WorkspaceJob("Create link") {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				try {
+					testResolveStandaloneCompilationUnit();
+				} catch (Exception e) {
+					return StatusFactory.newErrorStatus("Failed to resolve CU", e);
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.setRule(WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME));
+		job.schedule();
+		job.join(2_000, new NullProgressMonitor());
+		assertNotNull(job.getResult());
+		assertNull(getStackTrace(job.getResult()), job.getResult().getException());
+		assertTrue(job.getResult().getMessage(), job.getResult().isOK());
+	}
+
+	private String getStackTrace(IStatus status) {
+		if (status != null && status.getException() != null) {
+			return Throwables.getStackTraceAsString(status.getException());
+		}
+		return null;
+	}
 }
