@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -22,6 +23,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,8 +72,12 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
-		assertEquals("Unexpected hover "+result, "This is foo", result);
+		assertNotNull(hover.getContents());
+		MarkedString signature = hover.getContents().get(0).getRight();
+		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
+		assertEquals("Unexpected hover " + signature, "Foo", signature.getValue());
+		String doc = hover.getContents().get(1).getLeft();
+		assertEquals("Unexpected hover " + doc, "This is foo", doc);
 	}
 
 	@Test
@@ -87,8 +93,12 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
-		assertEquals("Unexpected hover "+result, "This is foo", result);
+		assertNotNull(hover.getContents());
+		MarkedString signature = hover.getContents().get(0).getRight();
+		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
+		assertEquals("Unexpected hover " + signature, "Foo", signature.getValue());
+		String doc = hover.getContents().get(1).getLeft();
+		assertEquals("Unexpected hover "+doc, "This is foo", doc);
 	}
 
 	@Test
@@ -106,7 +116,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		assertEquals(1, hover.getContents().size());
-		assertEquals("Should find empty hover for "+payload, "", hover.getContents().get(0).getLeft());
+		assertEquals("Should find empty hover for " + payload, "", hover.getContents().get(0).getLeft());
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
@@ -133,8 +143,26 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//then
 		assertNotNull(hover);
-		String result = hover.getContents().get(0).getLeft();//wow this is so elegant!
-		assertEquals("Unexpected hover "+result, "String[] args - java.Foo.main(String[])", result);
+		assertNotNull(hover.getContents());
+		MarkedString signature = hover.getContents().get(0).getRight();
+		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
+		assertEquals("Unexpected hover " + signature, "String[] args - java.Foo.main(String[])", signature.getValue());
+	}
+
+	@Test
+	public void testHoverMethod() throws Exception {
+		// given
+		// Hovers on the overriding print()
+		String payload = createHoverRequest("src/java/Foo.java", 8, 15);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+
+		// then
+		assertNotNull(hover);
+		MarkedString result = hover.getContents().get(0).getRight();
+		assertTrue("Unexpected hover ", result.getValue().matches("void java.io.PrintStream.print\\(String \\w+\\)"));
 	}
 
 	@Test
@@ -149,7 +177,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// then
 		assertNotNull(hover);
-		String result = hover.getContents().get(0).getLeft();//
+		String result = hover.getContents().get(1).getLeft();//
 		assertEquals("Unexpected hover ", "This method comes from Foo", result);
 	}
 }
