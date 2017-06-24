@@ -41,6 +41,10 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		importProjects("eclipse/"+name);
 		IProject project = getProject(name );
 		assertIsJavaProject(project);
+		// a test for https://github.com/redhat-developer/vscode-java/issues/244
+		importProjects("eclipse/" + name);
+		project = getProject(name);
+		assertIsJavaProject(project);
 	}
 
 	@Test
