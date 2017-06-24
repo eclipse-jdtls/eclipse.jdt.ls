@@ -74,6 +74,8 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 			IProject project = workspace.getRoot().getProject(name);
 			if (project.exists()) {
 				IPath existingProjectPath = project.getLocation();
+				existingProjectPath = fixDevice(existingProjectPath);
+				dotProjectPath = fixDevice(dotProjectPath);
 				if (existingProjectPath.equals(dotProjectPath.removeLastSegments(1))) {
 					project.open(IResource.NONE, monitor);
 					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
@@ -87,8 +89,16 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 			project.open(IResource.NONE, monitor);
 			monitor.done();
 		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e.getStatus());
 			throw new RuntimeException(e);
 		}
+	}
+
+	private IPath fixDevice(IPath path) {
+		if (path != null && path.getDevice() != null) {
+			return path.setDevice(path.getDevice().toUpperCase());
+		}
+		return path;
 	}
 
 	//XXX should be package protected. Temporary fix (ahaha!) until test fragment can work in tycho builds
