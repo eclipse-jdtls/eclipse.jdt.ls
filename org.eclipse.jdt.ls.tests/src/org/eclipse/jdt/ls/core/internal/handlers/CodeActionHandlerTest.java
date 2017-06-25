@@ -72,7 +72,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<? extends Command> commands = server.codeAction(params).join();
 		Assert.assertNotNull(commands);
-		Assert.assertEquals(1, commands.size());
+		Assert.assertEquals(2, commands.size());
 		Command c = commands.get(0);
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}

@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,9 +54,12 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 		String res = "";
 		for (Command command : codeActionCommands) {
-			res += " '" + command.getTitle() + "'";
+			if (res.length() > 0) {
+				res += '\n';
+			}
+			res += command.getTitle();
 		}
-		fail("Not found: " + expected.name + ", has: " + res);
+		assertEquals("Not found.", expected.name, res);
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expected) throws Exception {
@@ -71,7 +73,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 
 		int k = 0;
-		String aStr = "", eStr = "";
+		String aStr = "", eStr = "", testContent = "";
 		for (Command c : codeActionCommands) {
 			String actual = evaluateCodeActionCommand(c);
 			Expected e = expected[k++];
@@ -79,8 +81,50 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 				aStr += '\n' + c.getTitle() + '\n' + actual;
 				eStr += '\n' + e.name + '\n' + e.content;
 			}
+			testContent += generateTest(actual, c.getTitle(), k);
+		}
+		if (aStr.length() > 0) {
+			aStr += '\n' + testContent;
 		}
 		assertEquals(eStr, aStr);
+	}
+
+	private String generateTest(String actual, String name, int k) {
+		StringBuilder builder = new StringBuilder();
+		String[] lines = actual.split("\n");
+		builder.append("		buf = new StringBuffer();\n");
+		for (String line : lines) {
+			wrapInBufAppend(line, builder);
+		}
+		builder.append("		Expected e" + k + " = new Expected(\"" + name + "\", buf.toString());\n");
+		builder.append("\n");
+		return builder.toString();
+	}
+
+	private static void wrapInBufAppend(String curr, StringBuilder buf) {
+		buf.append("		buf.append(\"");
+
+		int last = curr.length() - 1;
+		for (int k = 0; k <= last; k++) {
+			char ch = curr.charAt(k);
+			if (ch == '\n') {
+				buf.append("\\n\");\n");
+				if (k < last) {
+					buf.append("buf.append(\"");
+				}
+			} else if (ch == '\r') {
+				// ignore
+			} else if (ch == '\t') {
+				buf.append("    "); // 4 spaces
+			} else if (ch == '"' || ch == '\\') {
+				buf.append('\\').append(ch);
+			} else {
+				buf.append(ch);
+			}
+		}
+		if (buf.length() > 0 && buf.charAt(buf.length() - 1) != '\n') {
+			buf.append("\\n\");\n");
+		}
 	}
 
 	protected class Expected {
