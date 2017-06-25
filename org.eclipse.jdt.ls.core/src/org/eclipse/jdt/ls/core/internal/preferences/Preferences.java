@@ -128,7 +128,7 @@ public class Preferences {
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
 		memberOrders = new MemberSortOrder(null);
-
+		favoriteStaticMembers = "";
 	}
 
 	private static String getStringValue(Map<String, Object> configuration, String key, String def) {
@@ -143,6 +143,9 @@ public class Preferences {
 		Object val = configuration.get(key);
 		if (val instanceof Boolean) {
 			return ((Boolean) val).booleanValue();
+		}
+		if (val instanceof String) {
+			return Boolean.parseBoolean((String) val);
 		}
 		return def;
 	}
@@ -179,7 +182,7 @@ public class Preferences {
 		String sortOrder = getStringValue(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
 
-		String favoriteStaticMembers = getStringValue(configuration, FAVORITE_STATIC_MEMBERS, null);
+		String favoriteStaticMembers = getStringValue(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
 		return prefs;

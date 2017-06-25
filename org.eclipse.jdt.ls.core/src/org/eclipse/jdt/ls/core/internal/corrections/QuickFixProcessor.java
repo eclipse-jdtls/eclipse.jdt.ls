@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProc
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
 
 /**
  */
@@ -103,43 +104,35 @@ public class QuickFixProcessor {
 			ReorgCorrectionsSubProcessor.getWrongPackageDeclNameProposals(context, problem, proposals);
 			break;
 
-			// case IProblem.UndefinedMethod:
-			// UnresolvedElementsSubProcessor.getMethodProposals(context, problem,
-			// false, proposals);
-			// break;
-			// case IProblem.UndefinedConstructor:
-			// UnresolvedElementsSubProcessor.getConstructorProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UndefinedAnnotationMember:
-			// UnresolvedElementsSubProcessor.getAnnotationMemberProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.ParameterMismatch:
-			// UnresolvedElementsSubProcessor.getMethodProposals(context, problem,
-			// true, proposals);
-			// break;
+		case IProblem.UndefinedMethod:
+			UnresolvedElementsSubProcessor.getMethodProposals(context, problem, false, proposals);
+			break;
+		case IProblem.UndefinedConstructor:
+			UnresolvedElementsSubProcessor.getConstructorProposals(context, problem, proposals);
+			break;
+		case IProblem.UndefinedAnnotationMember:
+			UnresolvedElementsSubProcessor.getAnnotationMemberProposals(context, problem, proposals);
+			break;
+		case IProblem.ParameterMismatch:
+			UnresolvedElementsSubProcessor.getMethodProposals(context, problem, true, proposals);
+			break;
 			// case IProblem.MethodButWithConstructorName:
 			// ReturnTypeSubProcessor.addMethodWithConstrNameProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UndefinedField:
-			// case IProblem.UndefinedName:
-			// case IProblem.UnresolvedVariable:
-			// UnresolvedElementsSubProcessor.getVariableProposals(context, problem,
-			// null, proposals);
-			// break;
-			// case IProblem.AmbiguousType:
-			// case IProblem.JavadocAmbiguousType:
-			// UnresolvedElementsSubProcessor.getAmbiguosTypeReferenceProposals(context,
-			// problem, proposals);
-			// break;
-
-			// case IProblem.UndefinedType:
-			// case IProblem.JavadocUndefinedType:
-			// UnresolvedElementsSubProcessor.getTypeProposals(context, problem,
-			// proposals);
-			// break;
+		case IProblem.UndefinedField:
+		case IProblem.UndefinedName:
+		case IProblem.UnresolvedVariable:
+			UnresolvedElementsSubProcessor.getVariableProposals(context, problem, null, proposals);
+			break;
+		case IProblem.AmbiguousType:
+		case IProblem.JavadocAmbiguousType:
+			UnresolvedElementsSubProcessor.getAmbiguosTypeReferenceProposals(context, problem, proposals);
+			break;
+		case IProblem.UndefinedType:
+		case IProblem.JavadocUndefinedType:
+			UnresolvedElementsSubProcessor.getTypeProposals(context, problem, proposals);
+			break;
 		case IProblem.TypeMismatch:
 		case IProblem.ReturnTypeMismatch:
 			TypeMismatchSubProcessor.addTypeMismatchProposals(context, problem, proposals);
@@ -404,10 +397,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.NoMessageSendOnArrayType:
-			// UnresolvedElementsSubProcessor.getArrayAccessProposals(context,
-			// problem, proposals);
-			// break;
+		case IProblem.NoMessageSendOnArrayType:
+			UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
+			break;
 			// case IProblem.InvalidOperator:
 			// LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context,
 			// problem, proposals);
@@ -664,8 +656,8 @@ public class QuickFixProcessor {
 			// break;
 
 		default:
-			// String str = problem.toString();
-			// System.out.println(str);
+			String str = problem.toString();
+			System.out.println(str);
 		}
 		// if
 		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))
