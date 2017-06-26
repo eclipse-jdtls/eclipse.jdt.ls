@@ -19,12 +19,18 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -50,6 +56,17 @@ public abstract class AbstractProjectsManagerBasedTest {
 	@Before
 	public void initProjectManager() {
 		projectsManager = new ProjectsManager(preferenceManager);
+		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
+			@Override
+			public IBuffer createBuffer(ICompilationUnit workingCopy) {
+				ICompilationUnit original= workingCopy.getPrimary();
+				IResource resource= original.getResource();
+				if (resource instanceof IFile) {
+					return new DocumentAdapter(workingCopy, (IFile)resource);
+				}
+				return DocumentAdapter.Null;
+			}
+		});
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {
