@@ -49,7 +49,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInVarDecl() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Object o) {\n");
@@ -58,7 +58,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Object o) {\n");
@@ -67,7 +67,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'Thread'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Object o) {\n");
@@ -76,7 +76,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'th' to 'Object'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Thread o) {\n");
@@ -91,7 +91,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInVarDecl2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("public class Container {\n");
@@ -101,7 +101,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -111,7 +111,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -121,7 +121,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'ArrayList[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -132,7 +132,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'lists' to 'List[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -149,7 +149,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInVarDecl3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
@@ -158,7 +158,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public Thread foo() {\n");
@@ -173,7 +173,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInVarDecl4() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("public class Container {\n");
@@ -183,7 +183,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E extends Container {\n");
@@ -193,7 +193,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E extends Container {\n");
@@ -203,7 +203,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'ArrayList[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -214,7 +214,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'lists' to 'List[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -232,14 +232,14 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchForInterface1() throws Exception {
 
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public interface PrimaryContainer {\n");
 		buf.append("}\n");
 		pack0.createCompilationUnit("PrimaryContainer.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Container {\n");
 		buf.append("    public static Container getContainer() {\n");
@@ -248,7 +248,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -258,7 +258,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -268,7 +268,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'PrimaryContainer'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -278,7 +278,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'list' to 'Container'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -290,7 +290,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Change return type of 'getContainer(..)' to 'PrimaryContainer'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -309,7 +309,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Ignore("Requires LocalCorrectionsSubProcessor")
 	public void testTypeMismatchForInterface2() throws Exception {
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public interface PrimaryContainer {\n");
 		buf.append("    PrimaryContainer duplicate(PrimaryContainer container);\n");
@@ -317,7 +317,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		pack0.createCompilationUnit("PrimaryContainer.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Container {\n");
 		buf.append("    public static Container getContainer() {\n");
@@ -326,7 +326,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -336,7 +336,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -346,7 +346,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove unused import", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -358,7 +358,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Remove unused import", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -370,7 +370,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Remove unused import", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("\n");
 		buf.append("import test1.Container;\n");
@@ -380,7 +380,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Remove unused import", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("\n");
 		buf.append("import test1.Container;\n");
@@ -399,14 +399,14 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchForInterfaceInGeneric() throws Exception {
 
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public interface PrimaryContainer<A> {\n");
 		buf.append("}\n");
 		pack0.createCompilationUnit("PrimaryContainer.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Container<A> {\n");
 		buf.append("    public Container<A> getContainer() {\n");
@@ -415,7 +415,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -425,7 +425,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -435,7 +435,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'PrimaryContainer<String>'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.PrimaryContainer;\n");
 		buf.append("public class E {\n");
@@ -445,7 +445,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'list' to 'Container<String>'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -458,7 +458,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		Expected e3 = new Expected("Change return type of 'getContainer(..)' to 'PrimaryContainer<String>'",
 				buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -477,14 +477,14 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchForInterfaceInGeneric2() throws Exception {
 
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public interface PrimaryContainer<A> {\n");
 		buf.append("}\n");
 		pack0.createCompilationUnit("PrimaryContainer.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Container<A> {\n");
 		buf.append("    public Container<A> getContainer() {\n");
@@ -493,7 +493,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -504,7 +504,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -515,7 +515,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'PrimaryContainer<?>'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -526,7 +526,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'list' to 'Container<List<?>>'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import test0.PrimaryContainer;\n");
@@ -550,7 +550,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		fJProject1.setOptions(tempOptions);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.*;\n");
 		buf.append("public class E {\n");
@@ -560,7 +560,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.*;\n");
 		buf.append("public class E {\n");
@@ -577,7 +577,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchForParameterizedType2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.*;\n");
 		buf.append("public class E {\n");
@@ -587,7 +587,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.*;\n");
 		buf.append("public class E {\n");
@@ -603,21 +603,21 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInFieldDecl() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int time= System.currentTimeMillis();\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int time= (int) System.currentTimeMillis();\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'int'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    long time= System.currentTimeMillis();\n");
@@ -630,27 +630,27 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInFieldDeclNoImport() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    private class StringBuffer { }\n");
-		buf.append("    private final StringBuffer sb;\n");
+		buf.append("    private class StringBuilder { }\n");
+		buf.append("    private final StringBuilder sb;\n");
 		buf.append("    public E() {\n");
-		buf.append("        sb= new java.lang.StringBuffer();\n");
+		buf.append("        sb= new java.lang.StringBuilder();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    private class StringBuffer { }\n");
-		buf.append("    private final java.lang.StringBuffer sb;\n");
+		buf.append("    private class StringBuilder { }\n");
+		buf.append("    private final java.lang.StringBuilder sb;\n");
 		buf.append("    public E() {\n");
-		buf.append("        sb= new java.lang.StringBuffer();\n");
+		buf.append("        sb= new java.lang.StringBuilder();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'sb' to 'StringBuffer'", buf.toString());
+		Expected e1 = new Expected("Change type of 'sb' to 'StringBuilder'", buf.toString());
 
 		assertCodeActions(cu, e1);
 	}
@@ -658,7 +658,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInAssignment() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -669,7 +669,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -680,7 +680,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'String'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -698,7 +698,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInAssignment2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -709,7 +709,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -720,7 +720,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'String'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public class E {\n");
@@ -739,7 +739,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInAssignment3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public enum E {\n");
@@ -751,7 +751,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public enum E {\n");
@@ -763,7 +763,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'String'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("public enum E {\n");
@@ -783,7 +783,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchInExpression() throws Exception {
 
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public class Other {\n");
 		buf.append("    public Object[] toArray() {\n");
@@ -793,7 +793,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		pack0.createCompilationUnit("Other.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.Other;\n");
 		buf.append("public class E {\n");
@@ -803,7 +803,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.Other;\n");
 		buf.append("public class E {\n");
@@ -813,7 +813,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'String[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test0.Other;\n");
 		buf.append("public class E {\n");
@@ -823,7 +823,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change method return type to 'Object[]'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test0;\n");
 		buf.append("public class Other {\n");
 		buf.append("    public String[] toArray() {\n");
@@ -838,7 +838,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testCastOnCastExpression() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -849,7 +849,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -860,7 +860,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change cast to 'ArrayList'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("import java.util.List;\n");
@@ -877,7 +877,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnType1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    public String getName() {\n");
@@ -886,7 +886,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends Base {\n");
 		buf.append("    public char[] getName() {\n");
@@ -895,7 +895,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends Base {\n");
 		buf.append("    public String getName() {\n");
@@ -904,7 +904,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change return type of 'getName(..)' to 'String'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    public char[] getName() {\n");
@@ -919,7 +919,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnType2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("public interface IBase {\n");
@@ -927,7 +927,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("IBase.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E implements IBase {\n");
 		buf.append("    public String[] getCollection() {\n");
@@ -936,7 +936,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -948,7 +948,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change return type of 'getCollection(..)' to 'List'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.List;\n");
 		buf.append("public interface IBase {\n");
@@ -962,7 +962,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnTypeOnGeneric() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base<T extends Number> {\n");
 		buf.append("    public String getName(T... t) {\n");
@@ -971,7 +971,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends Base<Integer> {\n");
 		buf.append("    public char[] getName(Integer... i) {\n");
@@ -980,7 +980,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends Base<Integer> {\n");
 		buf.append("    public String getName(Integer... i) {\n");
@@ -989,7 +989,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change return type of 'getName(..)' to 'String'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base<T extends Number> {\n");
 		buf.append("    public char[] getName(T... t) {\n");
@@ -1004,7 +1004,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnTypeOnGeneric2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    public Number getVal() {\n");
@@ -1013,7 +1013,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E<T> extends Base {\n");
 		buf.append("    public T getVal() {\n");
@@ -1022,7 +1022,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E<T> extends Base {\n");
 		buf.append("    public Number getVal() {\n");
@@ -1038,7 +1038,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testMismatchingReturnTypeOnGenericMethod() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.annotation.Annotation;\n");
 		buf.append("import java.lang.reflect.AccessibleObject;\n");
@@ -1052,7 +1052,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.annotation.Annotation;\n");
 		buf.append("import java.lang.reflect.AccessibleObject;\n");
@@ -1076,7 +1076,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		fJProject1.setOptions(options14);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.reflect.AccessibleObject;\n");
 		buf.append("public class E {\n");
@@ -1089,7 +1089,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.lang.annotation.Annotation;\n");
 		buf.append("import java.lang.reflect.AccessibleObject;\n");
@@ -1110,7 +1110,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testMismatchingReturnTypeParameterized() throws Exception {
 		// test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=165913
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    public Number getVal() {\n");
@@ -1119,7 +1119,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E<T> extends Base {\n");
 		buf.append("    public E<T> getVal() {\n");
@@ -1128,7 +1128,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E<T> extends Base {\n");
 		buf.append("    public Number getVal() {\n");
@@ -1143,7 +1143,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnTypeOnWildcardExtends() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1153,7 +1153,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1163,7 +1163,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'Integer'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1179,7 +1179,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingReturnTypeOnWildcardSuper() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1189,7 +1189,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1199,7 +1199,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'Integer'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E {\n");
@@ -1215,14 +1215,14 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingExceptions1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface IBase {\n");
 		buf.append("    String[] getValues();\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("IBase.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E implements IBase {\n");
@@ -1232,7 +1232,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E implements IBase {\n");
@@ -1242,7 +1242,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove exceptions from 'getValues(..)'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.IOException;\n");
@@ -1258,7 +1258,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingExceptions2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class Base {\n");
@@ -1268,7 +1268,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1279,7 +1279,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1290,7 +1290,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove exceptions from 'getValues(..)'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1307,7 +1307,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingExceptions3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class Base {\n");
@@ -1324,7 +1324,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1342,7 +1342,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1359,7 +1359,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove exceptions from 'getValues(..)'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1384,14 +1384,14 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingExceptionsOnGeneric() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public interface IBase<T> {\n");
 		buf.append("    T[] getValues();\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("IBase.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E implements IBase<String> {\n");
@@ -1401,7 +1401,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E implements IBase<String> {\n");
@@ -1411,7 +1411,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove exceptions from 'getValues(..)'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.io.IOException;\n");
@@ -1427,7 +1427,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testMismatchingExceptionsOnBinaryParent() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E implements Runnable {\n");
 		buf.append("    public void run() throws ClassNotFoundException {\n");
@@ -1435,7 +1435,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E implements Runnable {\n");
 		buf.append("    public void run() {\n");
@@ -1449,7 +1449,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInAnnotationValues1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1461,7 +1461,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1479,7 +1479,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInAnnotationValues2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class Other<T> {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1488,7 +1488,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack1.createCompilationUnit("Other.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    @Other.Annot(newAttrib= 1)\n");
@@ -1497,7 +1497,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class Other<T> {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1512,7 +1512,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInSingleMemberAnnotation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1524,7 +1524,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1541,7 +1541,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchWithEnumConstant() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public enum E {\n");
 		buf.append("    ONE;\n");
@@ -1551,7 +1551,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public enum E {\n");
 		buf.append("    ONE;\n");
@@ -1567,7 +1567,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchWithArrayLength() throws Exception {
 		// test for bug 126488
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class TestShort {\n");
 		buf.append("        public static void main(String[] args) {\n");
@@ -1576,7 +1576,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("TestShort.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class TestShort {\n");
 		buf.append("        public static void main(String[] args) {\n");
@@ -1585,7 +1585,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'short'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class TestShort {\n");
 		buf.append("        public static void main(String[] args) {\n");
@@ -1600,18 +1600,18 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	public void testTypeMismatchWithTypeInSamePackage() throws Exception {
 		// test for bug 198586
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {}\n");
 		pack2.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {}\n");
 		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Test {\n");
 		buf.append("    test2.E e2= new Object();\n");
@@ -1619,7 +1619,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Test {\n");
 		buf.append("    test2.E e2= (test2.E) new Object();\n");
@@ -1627,7 +1627,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'E'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Test {\n");
 		buf.append("    Object e2= new Object();\n");
@@ -1640,7 +1640,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInForEachProposalsList() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1654,7 +1654,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1673,7 +1673,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInForEachProposalsListExtends() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1687,7 +1687,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1706,7 +1706,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInForEachProposalsListSuper() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1720,7 +1720,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1739,7 +1739,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInForEachProposalsArrays() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1753,7 +1753,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("import java.util.List;\n");
@@ -1772,7 +1772,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchInForEachMissingType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -1783,7 +1783,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -1799,7 +1799,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testNullCheck() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -1811,7 +1811,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -1823,7 +1823,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("\n");
 		Expected e1 = new Expected("Change type of 'arg' to 'boolean'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -1840,7 +1840,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchObjectAndPrimitiveType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1852,7 +1852,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1864,7 +1864,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'int'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1876,7 +1876,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'i' to 'Object'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1894,7 +1894,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 	@Test
 	public void testTypeMismatchPrimitiveTypes() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1905,7 +1905,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1916,7 +1916,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Add cast to 'int'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");
@@ -1927,7 +1927,7 @@ public class TypeMismatchQuickFixTests extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'i' to 'long'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("\n");
 		buf.append("\n");

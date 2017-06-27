@@ -165,7 +165,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverMethod() throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -181,7 +181,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverTypeParameters() throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E<T> {\n");

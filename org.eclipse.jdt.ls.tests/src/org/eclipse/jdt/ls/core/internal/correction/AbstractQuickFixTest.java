@@ -96,7 +96,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	private String generateTest(String actual, String name, int k) {
 		StringBuilder builder = new StringBuilder();
 		String[] lines = actual.split("\n");
-		builder.append("		buf = new StringBuffer();\n");
+		builder.append("		buf = new StringBuilder();\n");
 		for (String line : lines) {
 			wrapInBufAppend(line, builder);
 		}

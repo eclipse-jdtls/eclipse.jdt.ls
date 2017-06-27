@@ -45,7 +45,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAssignment() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -55,7 +55,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -68,7 +68,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -79,7 +79,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -90,7 +90,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -105,7 +105,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssingmentInIfBody() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -116,7 +116,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -130,7 +130,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -142,7 +142,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -155,7 +155,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -172,7 +172,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssingmentInThenBody() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -184,7 +184,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -199,7 +199,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -212,7 +212,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -226,7 +226,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -244,7 +244,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAssignmentWithGenerics() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -254,7 +254,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -267,7 +267,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -278,7 +278,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -289,7 +289,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -304,7 +304,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedByWildcard1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -314,7 +314,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -330,7 +330,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedByWildcard2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -340,7 +340,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -356,7 +356,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedByWildcard3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -366,7 +366,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -382,7 +382,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedToWildcard1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -392,7 +392,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -408,7 +408,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedToWildcard2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -418,7 +418,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -434,7 +434,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssignedToWildcard3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -444,7 +444,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -460,7 +460,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssingmentInIfBodyWithGenerics() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -471,7 +471,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -485,7 +485,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -497,7 +497,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -510,7 +510,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -527,7 +527,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAssingmentInThenBodyWithGenerics() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -539,7 +539,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -554,7 +554,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -567,7 +567,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
@@ -581,7 +581,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -599,7 +599,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInVarArgs1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
@@ -609,7 +609,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
@@ -621,7 +621,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
@@ -633,7 +633,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
@@ -643,7 +643,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
@@ -660,7 +660,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInVarArgs2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("import java.util.Arrays;\n");
@@ -671,7 +671,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("import java.util.Arrays;\n");
@@ -682,7 +682,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'File' (java.io)", buf.toString());
 
-		// buf = new StringBuffer();
+		// buf = new StringBuilder();
 		// buf.append("package pack;\n");
 		// buf.append("\n");
 		// buf.append("import java.io.File;\n");
@@ -698,7 +698,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInForInitializer() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -708,7 +708,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int i;\n");
@@ -720,7 +720,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'i'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(int i) {\n");
@@ -730,7 +730,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'i'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -746,7 +746,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInForInitializer2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    /**\n");
@@ -760,7 +760,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int[] i;\n");
@@ -776,7 +776,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'i'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    /**\n");
@@ -791,7 +791,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create parameter 'i'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    /**\n");
@@ -811,14 +811,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInInitializer() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int i= k;\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
@@ -827,7 +827,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'k'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final int k = 0;\n");
@@ -841,9 +841,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInOtherType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    void foo(E e) {\n");
@@ -852,14 +852,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int var1;\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    void foo(E e) {\n");
@@ -868,7 +868,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'var1'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int var1;\n");
@@ -883,9 +883,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInSuperFieldAccess() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F extends E {\n");
 		buf.append("    void foo() {\n");
@@ -894,14 +894,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int var1;\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F extends E {\n");
 		buf.append("    void foo() {\n");
@@ -910,7 +910,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'var1'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int var1;\n");
@@ -923,10 +923,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testVarInSuper() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test3.E;\n");
 		buf.append("public class F extends E {\n");
@@ -937,14 +937,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("public class E {\n");
 		buf.append("}\n");
 		pack2.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		IPackageFragment pack3 = fSourceFolder.createPackageFragment("test3", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected Object olor;\n");
@@ -954,7 +954,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		pack3.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test3.E;\n");
 		buf.append("public class F extends E {\n");
@@ -964,7 +964,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'olor'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import test3.E;\n");
 		buf.append("public class F extends E {\n");
@@ -982,9 +982,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAnonymous() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -997,7 +997,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -1010,7 +1010,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'fcount'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -1025,7 +1025,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create field 'fCount'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int fCount;\n");
@@ -1040,7 +1040,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create field 'fCount' in type 'E'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -1053,7 +1053,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create parameter 'fCount'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -1066,7 +1066,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e5 = new Expected("Create local variable 'fCount'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
@@ -1084,7 +1084,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAnnotation1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1097,7 +1097,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1118,7 +1118,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAnnotation2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1131,7 +1131,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1152,7 +1152,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInAnnotation3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1165,7 +1165,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package pack;\n");
 		buf.append("public class E {\n");
 		buf.append("    public @interface Annot {\n");
@@ -1188,7 +1188,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		PreferenceManager.getPrefs(null).setFavoriteStaticMembers("java.lang.Math.*");
 		try {
 			IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			buf.append("package pack;\n");
 			buf.append("\n");
 			buf.append("public class E {\n");
@@ -1198,7 +1198,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 			buf.append("}\n");
 			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-			buf = new StringBuffer();
+			buf = new StringBuilder();
 			buf.append("package pack;\n");
 			buf.append("\n");
 			buf.append("import static java.lang.Math.PI;\n");
@@ -1219,9 +1219,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testLongVarRef() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public int mash;\n");
@@ -1231,14 +1231,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public F var;\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public int mash;\n");
@@ -1248,7 +1248,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'mash'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public int mash;\n");
@@ -1265,9 +1265,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarAndTypeRef() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1277,7 +1277,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import com.sun.java.util.jar.pack.Fixups;\n");
 		buf.append("import java.io.File;\n");
@@ -1288,7 +1288,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'Fixups' (com.sun.java.util.jar.pack)", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import com.sun.java.util.jar.pack.Fixup;\n");
 		buf.append("import java.io.File;\n");
@@ -1299,7 +1299,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change to 'Fixup' (com.sun.java.util.jar.pack)", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1309,7 +1309,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Change to 'File' (java.io)", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1321,7 +1321,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create field 'Fixe'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1333,7 +1333,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e5 = new Expected("Create constant 'Fixe'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1343,7 +1343,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e6 = new Expected("Create parameter 'Fixe'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
@@ -1354,7 +1354,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e7 = new Expected("Create local variable 'Fixe'", buf.toString());
 
-		// buf = new StringBuffer();
+		// buf = new StringBuilder();
 		// buf.append("package test1;\n");
 		// buf.append("\n");
 		// buf.append("public class Fixe {\n");
@@ -1362,7 +1362,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		// buf.append("}\n");
 		// Expected e5 = new Expected("Add all missing tags", buf.toString());
 		//
-		// buf = new StringBuffer();
+		// buf = new StringBuilder();
 		// buf.append("package test1;\n");
 		// buf.append("\n");
 		// buf.append("public interface Fixe {\n");
@@ -1370,7 +1370,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		// buf.append("}\n");
 		// Expected e6 = new Expected("Add all missing tags", buf.toString());
 		//
-		// buf = new StringBuffer();
+		// buf = new StringBuilder();
 		// buf.append("package test1;\n");
 		// buf.append("\n");
 		// buf.append("public enum Fixe {\n");
@@ -1384,9 +1384,9 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarWithGenericType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class F {\n");
@@ -1396,14 +1396,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    protected int var1;\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class F {\n");
@@ -1413,7 +1413,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'var1'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.ArrayList;\n");
@@ -1430,10 +1430,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testSimilarVariableNames1() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test3", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1447,7 +1447,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1460,7 +1460,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'CON1'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1473,7 +1473,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change to 'cout'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1487,7 +1487,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create field 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1501,7 +1501,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create constant 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1514,7 +1514,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e5 = new Expected("Create parameter 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1533,10 +1533,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testSimilarVariableNames2() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test3", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1551,7 +1551,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1566,7 +1566,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'cout'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1581,7 +1581,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change to 'var2'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1597,7 +1597,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create field 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1612,7 +1612,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create parameter 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1627,7 +1627,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e5 = new Expected("Create local variable 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final short CON1= 1;\n");
@@ -1646,10 +1646,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testSimilarVariableNamesMultipleOcc() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test3", false, null);
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1663,7 +1663,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1677,7 +1677,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'cout'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1692,7 +1692,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create field 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1706,7 +1706,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1720,7 +1720,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create local variable 'count'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
@@ -1739,7 +1739,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarMultipleOccurances1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1749,7 +1749,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1765,7 +1765,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarMultipleOccurances2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1776,7 +1776,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1793,7 +1793,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarMultipleOccurances3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1804,7 +1804,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
@@ -1822,7 +1822,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInArray() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(Object[] arr) {\n");
@@ -1832,7 +1832,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(Object[] arr) {\n");
@@ -1848,14 +1848,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInEnumSwitch() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public enum Colors {\n");
 		buf.append("    RED\n");
 		buf.append("}\n");
 		pack1.createCompilationUnit("Colors.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(Colors c) {\n");
@@ -1866,7 +1866,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(Colors c) {\n");
@@ -1877,7 +1877,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'RED'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public enum Colors {\n");
 		buf.append("    RED, BLUE\n");
@@ -1890,7 +1890,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInMethodInvocation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void goo(String s) {\n");
@@ -1901,7 +1901,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private String x;\n");
@@ -1913,7 +1913,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final String x = null;\n");
@@ -1925,7 +1925,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void goo(String s) {\n");
@@ -1936,7 +1936,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void goo(String s) {\n");
@@ -1954,7 +1954,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInConstructurInvocation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public E(String s) {\n");
@@ -1965,7 +1965,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static String x;\n");
@@ -1977,7 +1977,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final String x = null;\n");
@@ -1989,7 +1989,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public E(String s) {\n");
@@ -2006,7 +2006,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInSuperConstructurInvocation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public F(String s) {\n");
@@ -2014,7 +2014,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends F {\n");
 		buf.append("    public E() {\n");
@@ -2023,7 +2023,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends F {\n");
 		buf.append("    private static String x;\n");
@@ -2034,7 +2034,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends F {\n");
 		buf.append("    private static final String x = null;\n");
@@ -2045,7 +2045,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends F {\n");
 		buf.append("    public E(String x) {\n");
@@ -2060,7 +2060,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarInClassInstanceCreation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public F(String s) {\n");
@@ -2068,7 +2068,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public E() {\n");
@@ -2077,7 +2077,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private String x;\n");
@@ -2088,7 +2088,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static final String x = null;\n");
@@ -2099,7 +2099,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public E(String x) {\n");
@@ -2108,7 +2108,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'x'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public E() {\n");
@@ -2125,7 +2125,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	public void testVarInArrayAccess() throws Exception {
 		// bug 194913
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2135,7 +2135,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2147,7 +2147,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'bar'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2159,7 +2159,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'bar'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2169,7 +2169,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'bar'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2186,7 +2186,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarWithMethodName1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int foo(String str) {\n");
@@ -2196,7 +2196,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int foo(String str) {\n");
@@ -2212,7 +2212,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarWithMethodName2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int foo(String str) {\n");
@@ -2224,7 +2224,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    int foo(String str) {\n");
@@ -2242,7 +2242,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testSimilarVarsAndVisibility() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2255,7 +2255,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2268,7 +2268,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change to 'var3'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2281,7 +2281,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Change to 'var2'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2295,7 +2295,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create field 'var'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2309,7 +2309,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e4 = new Expected("Create constant 'var'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2322,7 +2322,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e5 = new Expected("Create parameter 'var'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2342,7 +2342,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testVarOfShadowedType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2353,7 +2353,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2365,7 +2365,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'myRunnable'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2377,7 +2377,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e2 = new Expected("Create constant 'myRunnable'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2388,7 +2388,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create parameter 'myRunnable'", buf.toString());
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
@@ -2409,14 +2409,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    protected int myField;\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("import test1.Base;\n");
 		buf.append("public class Child extends Base {\n");
@@ -2426,7 +2426,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		cu = pack2.createCompilationUnit("Child.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Base {\n");
 		buf.append("    public int myField;\n");
