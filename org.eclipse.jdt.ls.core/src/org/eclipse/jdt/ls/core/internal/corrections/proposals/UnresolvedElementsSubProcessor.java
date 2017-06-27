@@ -102,8 +102,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public class UnresolvedElementsSubProcessor {
 
-	private static final String ADD_IMPORT_ID= "org.eclipse.jdt.ui.correction.addImport"; //$NON-NLS-1$
-
 	public static void getVariableProposals(IInvocationContext context, IProblemLocation problem,
 			IVariableBinding resolvedField, Collection<CUCorrectionProposal> proposals) throws CoreException {
 
@@ -1691,7 +1689,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
-	public static void getAmbiguosTypeReferenceProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getAmbiguousTypeReferenceProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		final ICompilationUnit cu= context.getCompilationUnit();
 		int offset= problem.getOffset();

@@ -54,7 +54,8 @@ public class TextEditUtil {
 		List<TextEdit> sortedEdits = new ArrayList<>(edits);
 		sortByLastEdit(sortedEdits);
 		String text = doc.get();
-		for (TextEdit te : sortedEdits) {
+		for (int i = sortedEdits.size() - 1; i >= 0; i--) {
+			TextEdit te = sortedEdits.get(i);
 			Range r = te.getRange();
 			if (r != null && r.getStart() != null && r.getEnd() != null) {
 				int start = getOffset(doc, r.getStart());
@@ -85,7 +86,7 @@ public class TextEditUtil {
 				if (t2 == null) {
 					return -1;
 				}
-				return compare(t2.getRange(), t1.getRange());
+				return compare(t1.getRange(), t2.getRange());
 			}
 
 			public int compare(Range r1, Range r2) {
