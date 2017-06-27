@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -59,6 +60,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			res += command.getTitle();
 		}
 		assertEquals("Not found.", expected.name, res);
+	}
+
+	protected void assertCodeActions(ICompilationUnit cu, Collection<Expected> expected) throws Exception {
+		assertCodeActions(cu, expected.toArray(new Expected[expected.size()]));
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expected) throws Exception {
