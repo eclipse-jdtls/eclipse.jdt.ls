@@ -94,13 +94,16 @@ public class HoverInfoProvider {
 				res.add(Either.forLeft(javadoc));
 			}
 
-		} catch (CoreException e) {
+		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Error computing hover", e);
 		}
 		return res;
 	}
 
 	private MarkedString computeSignature(IJavaElement element)  {
+		if (element == null) {
+			return null;
+		}
 		String elementLabel = null;
 		if (element instanceof ILocalVariable) {
 			elementLabel = JavaElementLabels.getElementLabel(element,LOCAL_VARIABLE_FLAGS);
