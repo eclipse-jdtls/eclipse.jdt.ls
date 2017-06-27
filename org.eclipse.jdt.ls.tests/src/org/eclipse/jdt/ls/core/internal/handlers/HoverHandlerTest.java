@@ -211,22 +211,37 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Unexpected hover ", "This method comes from Foo", result);
 	}
 
+	@Test
+	public void testHoverOverNullElement() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import javax.xml.bind.Binder;\n");
+		buf.append("public class E {}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 1, 8);
+		assertNotNull(hover);
+		assertEquals(0, hover.getContents().size());
+	}
+
 	/**
 	 * @param cu
 	 * @return
 	 */
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
-		// given
-		// Hovers on the overriding print()
-		String payload = createHoverRequest(cu, line, character);
-		TextDocumentPositionParams position = getParams(payload);
-
 		// when
-		Hover hover = handler.hover(position, monitor);
+		Hover hover = getHover(cu, line, character);
 
 		// then
 		assertNotNull(hover);
 		MarkedString result = hover.getContents().get(0).getRight();
 		return result.getValue();
+	}
+
+	private Hover getHover(ICompilationUnit cu, int line, int character) {
+		// Hovers on the overriding print()
+		String payload = createHoverRequest(cu, line, character);
+		TextDocumentPositionParams position = getParams(payload);
+		return handler.hover(position, monitor);
 	}
 }
