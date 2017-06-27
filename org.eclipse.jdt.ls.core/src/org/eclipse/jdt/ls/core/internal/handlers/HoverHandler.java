@@ -10,36 +10,34 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.apache.commons.lang3.StringUtils.defaultString;
-
-import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.ls.core.internal.HoverInfoProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-public class HoverHandler{
+public class HoverHandler {
 
 	public Hover hover(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 
-		String hover = null;
+		List<Either<String, MarkedString>> content = null;
 		if (unit != null && !monitor.isCanceled()) {
-			hover = computeHover(unit ,position.getPosition().getLine(),
-					position.getPosition().getCharacter());
+			content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter());
 		}
 		Hover $ = new Hover();
-		$.setContents(Arrays.asList(Either.forLeft(defaultString(hover))));
+		$.setContents(content);
 		return $;
 	}
 
-	private String computeHover(ITypeRoot unit, int line, int column) {
+	private List<Either<String, MarkedString>> computeHover(ITypeRoot unit, int line, int column) {
 		HoverInfoProvider provider = new HoverInfoProvider(unit);
-		return provider.computeHover(line,column);
+		return provider.computeHover(line, column);
 	}
 
 }
