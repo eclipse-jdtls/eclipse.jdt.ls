@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) Microsoft Corporation and others.
+ * Copyright (c) 2017 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,18 +14,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
+import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -34,7 +34,6 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
-import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -154,7 +153,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
 		parms.setContext(context);
 
-		return new CodeActionHandler().getCodeActionCommands(parms);
+		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
 	}
 
 	private String evaluateCodeActionCommand(Command c)
@@ -174,40 +173,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		Document doc = new Document();
 		doc.set(cu.getSource());
 
-		return applyEdits(doc, entry.getValue());
+		return TextEditUtil.apply(doc, entry.getValue());
 	}
 
-	private String applyEdits(Document doc, List<TextEdit> edits) throws BadLocationException {
-		Collections.sort(edits, new Comparator<TextEdit>() {
-			@Override
-			public int compare(TextEdit a, TextEdit b) {
-				int startDiff = comparePositions(a.getRange().getStart(), b.getRange().getStart());
-				if (startDiff == 0) {
-					return comparePositions(a.getRange().getEnd(), b.getRange().getEnd());
-				}
-				return startDiff;
-			}
-		});
-
-		String text = doc.get();
-		for (int i = edits.size() - 1; i >= 0; i--) {
-			TextEdit e = edits.get(i);
-			int startOffset = offsetAt(doc, e.getRange().getStart());
-			int endOffset = offsetAt(doc, e.getRange().getEnd());
-			text = text.substring(0, startOffset) + e.getNewText() + text.substring(endOffset, text.length());
-		}
-		return text;
-	}
-
-	private static int offsetAt(Document doc, Position pos) throws BadLocationException {
-		return doc.getLineOffset(pos.getLine()) + pos.getCharacter();
-	}
-
-	private int comparePositions(Position p1, Position p2) {
-		int diff = p1.getLine() - p2.getLine();
-		if (diff == 0) {
-			return p1.getCharacter() - p2.getCharacter();
-		}
-		return diff;
-	}
 }

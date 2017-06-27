@@ -16,10 +16,12 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -49,7 +51,7 @@ public class CodeActionHandler {
 	 * @param params
 	 * @return
 	 */
-	public List<Command> getCodeActionCommands(CodeActionParams params) {
+	public List<Command> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return Collections.emptyList();
@@ -68,8 +70,7 @@ public class CodeActionHandler {
 				$.add(command);
 			}
 		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
 		}
 		return $;
 	}

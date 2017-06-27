@@ -276,7 +276,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
 		CodeActionHandler handler = new CodeActionHandler();
-		return CompletableFuture.supplyAsync(()->handler.getCodeActionCommands(params));
+		return computeAsync((cc) -> handler.getCodeActionCommands(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)

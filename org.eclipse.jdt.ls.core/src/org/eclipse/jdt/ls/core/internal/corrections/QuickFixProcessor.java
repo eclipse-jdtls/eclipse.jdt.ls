@@ -59,7 +59,7 @@ public class QuickFixProcessor {
 	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocation[] locations)
 			throws CoreException {
 		if (locations == null || locations.length == 0) {
-			return null;
+			return new CUCorrectionProposal[0];
 		}
 
 		HashSet<Integer> handledProblems = new HashSet<>(locations.length);
@@ -92,8 +92,6 @@ public class QuickFixProcessor {
 		case IProblem.DuplicateImport:
 		case IProblem.CannotImportPackage:
 		case IProblem.ConflictingImport:
-			ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
-			break;
 		case IProblem.ImportNotFound:
 			ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
 			break;
@@ -127,7 +125,7 @@ public class QuickFixProcessor {
 			break;
 		case IProblem.AmbiguousType:
 		case IProblem.JavadocAmbiguousType:
-			UnresolvedElementsSubProcessor.getAmbiguosTypeReferenceProposals(context, problem, proposals);
+			UnresolvedElementsSubProcessor.getAmbiguousTypeReferenceProposals(context, problem, proposals);
 			break;
 		case IProblem.UndefinedType:
 		case IProblem.JavadocUndefinedType:
