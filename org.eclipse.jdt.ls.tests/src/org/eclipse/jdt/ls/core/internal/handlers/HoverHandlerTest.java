@@ -13,12 +13,16 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.nio.file.Paths;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -53,10 +57,14 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IProject project;
 
+	private IPackageFragmentRoot sourceFolder;
+
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
+		IJavaProject javaProject = JavaCore.create(project);
+		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		handler = new HoverHandler();
 	}
 
@@ -75,7 +83,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().get(0).getRight();
 		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "Foo", signature.getValue());
+		assertEquals("Unexpected hover " + signature, "java.Foo", signature.getValue());
 		String doc = hover.getContents().get(1).getLeft();
 		assertEquals("Unexpected hover " + doc, "This is foo", doc);
 	}
@@ -85,7 +93,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//given
 		//Hovers on the System.out
 		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
-		String payload = createHoverRequest(standalone, 10, 70);
+		String payload = createHoverRequest(standalone, 10, 71);
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
@@ -96,7 +104,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().get(0).getRight();
 		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "Foo", signature.getValue());
+		assertEquals("Unexpected hover " + signature, "java.Foo", signature.getValue());
 		String doc = hover.getContents().get(1).getLeft();
 		assertEquals("Unexpected hover "+doc, "This is foo", doc);
 	}
@@ -121,6 +129,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	String createHoverRequest(String file, int line, int kar) {
 		URI uri = project.getFile(file).getRawLocationURI();
+		return createHoverRequest(uri, line, kar);
+	}
+
+	String createHoverRequest(ICompilationUnit cu, int line, int kar) {
+		URI uri = cu.getResource().getRawLocationURI();
 		return createHoverRequest(uri, line, kar);
 	}
 
@@ -151,18 +164,35 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testHoverMethod() throws Exception {
-		// given
-		// Hovers on the overriding print()
-		String payload = createHoverRequest("src/java/Foo.java", 8, 15);
-		TextDocumentPositionParams position = getParams(payload);
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf = new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("   public int foo(String s) { }\n");
+		buf.append("   public static void foo2(String s, String s2) { }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		// when
-		Hover hover = handler.hover(position, monitor);
+		assertEquals("int test1.E.foo(String s)", getTitleHover(cu, 3, 15));
+		assertEquals("void test1.E.foo2(String s, String s2)", getTitleHover(cu, 4, 24));
+	}
 
-		// then
-		assertNotNull(hover);
-		MarkedString result = hover.getContents().get(0).getRight();
-		assertTrue("Unexpected hover ", result.getValue().matches("void java.io.PrintStream.print\\(String \\w+\\)"));
+	@Test
+	public void testHoverTypeParameters() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuffer buf = new StringBuffer();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E<T> {\n");
+		buf.append("   public T foo(T s) { }\n");
+		buf.append("   public <U> U bar(U s) { }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		assertEquals("T", getTitleHover(cu, 3, 10));
+		assertEquals("T test1.E.foo(T s)", getTitleHover(cu, 3, 13));
+		assertEquals("<U> U test1.E.bar(U s)", getTitleHover(cu, 4, 17));
 	}
 
 	@Test
@@ -179,5 +209,24 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		String result = hover.getContents().get(1).getLeft();//
 		assertEquals("Unexpected hover ", "This method comes from Foo", result);
+	}
+
+	/**
+	 * @param cu
+	 * @return
+	 */
+	private String getTitleHover(ICompilationUnit cu, int line, int character) {
+		// given
+		// Hovers on the overriding print()
+		String payload = createHoverRequest(cu, line, character);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+
+		// then
+		assertNotNull(hover);
+		MarkedString result = hover.getContents().get(0).getRight();
+		return result.getValue();
 	}
 }
