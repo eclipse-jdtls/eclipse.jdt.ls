@@ -10,9 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ISafeRunnable;
@@ -20,13 +19,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.ElementChangedEvent;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IElementChangedListener;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaElementDelta;
 import org.eclipse.jdt.core.ITypeRoot;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -44,83 +39,40 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 @SuppressWarnings("restriction")
 public final class SharedASTProvider {
 
-	private Map<String, CompilationUnit> cache = Collections.synchronizedMap(new HashMap<>());
-	private IElementChangedListener fJavaListener;
+	private ConcurrentMap<String, CompilationUnit> cache = new ConcurrentHashMap<>();
 	private static SharedASTProvider instance = new SharedASTProvider();
 
 	private SharedASTProvider(){
-		fJavaListener= new IElementChangedListener() {
-
-			@Override
-			public void elementChanged(ElementChangedEvent event) {
-				hasCUChange(event.getDelta());
-			}
-
-			private boolean hasCUChange(IJavaElementDelta delta) {
-				IJavaElement elem= delta.getElement();
-				boolean isAddedOrRemoved= (delta.getKind() != IJavaElementDelta.CHANGED);
-				switch (elem.getElementType()) {
-
-				case IJavaElement.JAVA_MODEL: case IJavaElement.JAVA_PROJECT:
-				case IJavaElement.PACKAGE_FRAGMENT_ROOT: case IJavaElement.PACKAGE_FRAGMENT:
-					if (isAddedOrRemoved) {
-						return true;
-					}
-					return processChildrenDelta(delta.getAffectedChildren());
-
-				case IJavaElement.COMPILATION_UNIT:
-					ICompilationUnit cu= (ICompilationUnit) elem;
-					if (!cu.getPrimary().equals(cu)) {
-						return false;
-					}
-					invalidate(cu);
-					return false;
-
-				default:
-					return false;
-				}
-			}
-
-			private boolean processChildrenDelta(IJavaElementDelta[] children) {
-				for (int i= 0; i < children.length; i++) {
-					if (hasCUChange(children[i])) {
-						return true;
-					}
-				}
-				return false;
-			}
-		};
-		JavaCore.addElementChangedListener(fJavaListener);
 	}
 
 	public void dispose() {
-		if (fJavaListener != null) {
-			JavaCore.removeElementChangedListener(fJavaListener);
-			fJavaListener = null;
-		}
+		invalidateAll();
 	}
-
 
 	public static SharedASTProvider getInstance(){
 		return instance;
 	}
 
-	public CompilationUnit getAST(final ITypeRoot input,  IProgressMonitor progressMonitor) {
+	public CompilationUnit getAST(final ITypeRoot input, IProgressMonitor progressMonitor) {
 		if (progressMonitor != null && progressMonitor.isCanceled()) {
 			return null;
 		}
+		if (!shouldCache(input)) {
+			JavaLanguageServerPlugin.logInfo("Creating uncached AST for " + input.getPath().toString());
+			return createAST(input, progressMonitor);
+		}
 
 		final String identifier = input.getHandleIdentifier();
-		CompilationUnit unit = cache.get(identifier);
-		if(unit == null){
-			unit = createAST(input, progressMonitor);
-			if (shouldCache(input)) {
-				cache.put(identifier, unit);
-			}
-		}
-		return unit;
+		return cache.computeIfAbsent(identifier, k -> {
+			JavaLanguageServerPlugin.logInfo("Caching AST for " + input.getPath().toString());
+			return createAST(input, progressMonitor);
+		});
 	}
 
+	/**
+	 * Only cache ASTs for compilation units in working copy mode (open in a
+	 * buffer)
+	 */
 	private boolean shouldCache(ITypeRoot input) {
 		if (input.getElementType() != IJavaElement.COMPILATION_UNIT) {
 			return false;
@@ -131,12 +83,16 @@ public final class SharedASTProvider {
 
 	public void invalidate(ITypeRoot root){
 		if(root != null){
-			cache.remove(root.getHandleIdentifier());
+			CompilationUnit removed = cache.remove(root.getHandleIdentifier());
+			if (removed != null) {
+				JavaLanguageServerPlugin.logInfo("Releasing AST for " + root.getPath().toString());
+			}
 		}
 	}
 
 	public void invalidateAll() {
 		cache.clear();
+		JavaLanguageServerPlugin.logInfo("Releasing all ASTs");
 	}
 
 	/**
