@@ -45,15 +45,9 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
  * <p>
  * <b>Note:</b> This context only works if the AST was created with bindings!
  * </p>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
  *
  * Code copied from
  * org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext
-=======
->>>>>>> Reorg quick fix proposals (import, packages and types)
->>>>>>> Reorg quick fix proposals (import, packages and types)
  */
 public class ContextSensitiveImportRewriteContext extends ImportRewriteContext {
 
