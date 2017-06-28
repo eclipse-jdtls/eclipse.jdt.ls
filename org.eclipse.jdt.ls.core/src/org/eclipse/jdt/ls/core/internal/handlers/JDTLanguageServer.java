@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -53,12 +54,16 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
+import org.eclipse.lsp4j.Registration;
+import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.Unregistration;
+import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
@@ -175,6 +180,36 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			Map<String, Object> javaConfig = MapFlattener.flatten((Map<String, Object>)settings);
 			Preferences prefs = Preferences.createFrom(javaConfig);
 			preferenceManager.update(prefs);
+		}
+		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
+			if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
+				Unregistration unregistration = new Unregistration(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
+				List<Unregistration> unregistrations = new ArrayList<>();
+				unregistrations.add(unregistration);
+				UnregistrationParams unregistrationParams = new UnregistrationParams(unregistrations);
+				client.unregisterCapability(unregistrationParams);
+			} else {
+				Registration registration = new Registration(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
+				List<Registration> registrations = new ArrayList<>();
+				registrations.add(registration);
+				RegistrationParams registrationParams = new RegistrationParams(registrations);
+				client.registerCapability(registrationParams);
+			}
+		}
+		if (preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
+			if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
+				List<Unregistration> unregistrations = new ArrayList<>();
+				Unregistration unregistration = new Unregistration(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
+				unregistrations.add(unregistration);
+				UnregistrationParams unregistrationParams = new UnregistrationParams(unregistrations);
+				client.unregisterCapability(unregistrationParams);
+			} else {
+				List<Registration> registrations = new ArrayList<>();
+				Registration registration = new Registration(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
+				registrations.add(registration);
+				RegistrationParams registrationParams = new RegistrationParams(registrations);
+				client.registerCapability(registrationParams);
+			}
 		}
 		logInfo(">>New configuration: "+settings);
 	}
@@ -305,7 +340,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
 		logInfo(">> document/formatting");
-		FormatterHandler handler = new FormatterHandler();
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
 		return computeAsync((cc) -> handler.formatting(params, toMonitor(cc)));
 	}
 
@@ -315,7 +350,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends TextEdit>> rangeFormatting(DocumentRangeFormattingParams params) {
 		logInfo(">> document/rangeFormatting");
-		FormatterHandler handler = new FormatterHandler();
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
 		return computeAsync((cc) -> handler.rangeFormatting(params, toMonitor(cc)));
 	}
 

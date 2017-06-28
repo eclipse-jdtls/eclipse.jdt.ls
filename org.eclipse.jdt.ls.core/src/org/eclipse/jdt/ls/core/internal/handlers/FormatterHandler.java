@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -45,6 +46,12 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class FormatterHandler {
 
+	private PreferenceManager preferenceManager;
+
+	public FormatterHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
+
 	List<? extends org.eclipse.lsp4j.TextEdit> formatting(DocumentFormattingParams params, IProgressMonitor monitor) {
 		return format(params.getTextDocument().getUri(), params.getOptions(), null, monitor);
 	}
@@ -56,6 +63,9 @@ public class FormatterHandler {
 
 	private List<org.eclipse.lsp4j.TextEdit> format(String uri, FormattingOptions options, Range range,
 			IProgressMonitor monitor) {
+		if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
+			return Collections.emptyList();
+		}
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 		if(cu == null ) {
 			return Collections.emptyList();

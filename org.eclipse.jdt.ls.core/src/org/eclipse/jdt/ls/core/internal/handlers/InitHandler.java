@@ -90,8 +90,12 @@ final public class InitHandler {
 		capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
 		capabilities.setReferencesProvider(Boolean.TRUE);
 		capabilities.setDocumentHighlightProvider(Boolean.TRUE);
-		capabilities.setDocumentFormattingProvider(Boolean.TRUE);
-		capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
+		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
+			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
+			capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
+		}
 		capabilities.setCodeLensProvider(new CodeLensOptions(Boolean.TRUE));
 		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);
