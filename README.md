@@ -81,21 +81,21 @@ by setting up environment variables.
 
 * To use **named pipes**  set the following environment variables before starting
 the server.
-```
-STDIN_PIPE_NAME --> where client reads from
-STDOUT_PIPE_NAME --> where client writes to
-```
-* To use **plain sockets** set the following environment variables before starting the
-server.
-```
-STDIN_PORT --> client reads
-STDOUT_PORT --> client writes to
-```
-optionally you can set host values for socket connections
-```
-STDIN_HOST
-STDOUT_HOST
-```
+
+    * Single named pipe, used for both in and output:
+        * `INOUT_PIPE_NAME`: client reads from and writes to. Example: `INOUT_PIPE_NAME=myNamedPipe`
+
+    * Two named pipes, one each for in and output:
+        * `STDIN_PIPE_NAME`: where client reads from
+        * `STDOUT_PIPE_NAME`: where client writes to
+
+* To use **plain sockets** set the following environment variables before starting the server.
+   * `STDIN_PORT`: client reads
+   * `STDOUT_PORT`: client writes to
+   
+   optionally you can set host values for socket connections
+   * `STDIN_HOST`
+   * `STDOUT_HOST`
 * To use standard streams(stdin, stdout) of the server process do not set any 
 of the above environment variables and the server will fall back to standard streams. 
 
