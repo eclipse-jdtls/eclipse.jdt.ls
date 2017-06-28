@@ -37,52 +37,14 @@ public class ConnectionStreamFactory {
 		OutputStream getOutputStream() throws IOException;
 	}
 
-	protected final class DualPipeStreamProvider implements StreamProvider {
-
-		private final String readFileName;
-		private final String writeFileName;
-
-		public DualPipeStreamProvider(String readFileName, String writeFileName) {
-			this.readFileName = readFileName;
-			this.writeFileName = writeFileName;
-		}
-
-		@Override
-		public InputStream getInputStream() throws IOException {
-			final File rFile = new File(readFileName);
-			if (isWindows()) {
-				RandomAccessFile readFile = new RandomAccessFile(rFile, "rwd");
-				return Channels.newInputStream(readFile.getChannel());
-			} else {
-				AFUNIXSocket readSocket = AFUNIXSocket.newInstance();
-				readSocket.connect(new AFUNIXSocketAddress(rFile));
-				return readSocket.getInputStream();
-			}
-		}
-
-		@Override
-		public OutputStream getOutputStream() throws IOException {
-			final File wFile = new File(writeFileName);
-
-			if (isWindows()) {
-				RandomAccessFile writeFile = new RandomAccessFile(wFile, "rwd");
-				return Channels.newOutputStream(writeFile.getChannel());
-			} else {
-				AFUNIXSocket writeSocket = AFUNIXSocket.newInstance();
-				writeSocket.connect(new AFUNIXSocketAddress(wFile));
-				return writeSocket.getOutputStream();
-			}
-		}
-
-	}
-
-	protected final class DuplexPipeStreamProvider implements StreamProvider {
+	
+	protected final class PipeStreamProvider implements StreamProvider {
 
 		private final String pipeName;
 		private InputStream fInputStream;
 		private OutputStream fOutputStream;
 
-		public DuplexPipeStreamProvider(String pipeName) {
+		public PipeStreamProvider(String pipeName) {
 			this.pipeName = pipeName;
 		}
 
@@ -177,12 +139,7 @@ public class ConnectionStreamFactory {
 		if (provider == null) {
 			final String pipeName = Environment.get("INOUT_PIPE_NAME");
 			if (pipeName != null) {
-				provider = new DuplexPipeStreamProvider(pipeName);
-			}
-			final String stdInName = Environment.get("STDIN_PIPE_NAME");
-			final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
-			if (stdInName != null && stdOutName != null) {
-				provider = new DualPipeStreamProvider(stdOutName, stdInName);
+				provider = new PipeStreamProvider(pipeName);
 			}
 			final String wHost = Environment.get("STDIN_HOST", "localhost");
 			final String rHost = Environment.get("STDOUT_HOST", "localhost");

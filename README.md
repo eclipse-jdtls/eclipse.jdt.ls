@@ -82,12 +82,7 @@ by setting up environment variables.
 * To use **named pipes**  set the following environment variables before starting
 the server.
 
-    * Single named pipe, used for both in and output:
-        * `INOUT_PIPE_NAME`: client reads from and writes to. Example: `INOUT_PIPE_NAME=myNamedPipe`
-
-    * Two named pipes, one each for in and output:
-        * `STDIN_PIPE_NAME`: where client reads from
-        * `STDOUT_PIPE_NAME`: where client writes to
+   * `INOUT_PIPE_NAME`: used for for in and output. Example: `INOUT_PIPE_NAME=myNamedPipe` will use `/tmp/myNamedPipe.sock` on Linux/MacOS and `\\.\pipe\myNamedPipe` on Windows.
 
 * To use **plain sockets** set the following environment variables before starting the server.
    * `STDIN_PORT`: client reads
