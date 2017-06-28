@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
+import org.eclipse.core.runtime.Platform;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
@@ -116,10 +117,6 @@ public class ConnectionStreamFactory {
 			}
 			return fOutputStream;
 		}
-
-		private boolean isWindows() {
-			return OS.indexOf("win") > -1;
-		}
 	}
 
 	protected final class SocketStreamProvider implements StreamProvider {
@@ -209,8 +206,8 @@ public class ConnectionStreamFactory {
 		return getSelectedStream().getOutputStream();
 	}
 
-	private boolean isWindows() {
-		return OS.indexOf("win") > -1;
+	protected static boolean isWindows() {
+		return Platform.OS_WIN32.equals(Platform.getOS());
 	}
 
 }
