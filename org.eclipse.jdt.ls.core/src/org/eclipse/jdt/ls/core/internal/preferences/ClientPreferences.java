@@ -39,4 +39,16 @@ public class ClientPreferences {
 		return v3supported && capabilities.getTextDocument().getCompletion().getCompletionItem().getSnippetSupport().booleanValue();
 	}
 
+	public boolean isV3Supported() {
+		return v3supported;
+	}
+
+	public boolean isFormattingDynamicRegistrationSupported() {
+		return v3supported && capabilities.getTextDocument().getFormatting().getDynamicRegistration().booleanValue();
+	}
+
+	public boolean isRangeFormattingDynamicRegistrationSupported() {
+		return v3supported && capabilities.getTextDocument().getRangeFormatting().getDynamicRegistration().booleanValue();
+	}
+
 }

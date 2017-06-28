@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.eclipse.lsp4j.MessageType;
 
@@ -26,6 +27,11 @@ public class Preferences {
 	 * Preference key to enable/disable reference code lenses.
 	 */
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
+
+	/**
+	 * Preference key to enable/disable formatter.
+	 */
+	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
 
 	/**
 	 * Preference key for project build/configuration update settings.
@@ -72,9 +78,15 @@ public class Preferences {
 	 */
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
+	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
+	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
+	public static final String FORMATTING_ID = UUID.randomUUID().toString();
+	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
+
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+	private boolean javaFormatEnabled;
 	private MemberSortOrder memberOrders;
 
 	private String mavenUserSettings;
@@ -127,6 +139,7 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
+		javaFormatEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		favoriteStaticMembers = "";
 	}
@@ -176,6 +189,9 @@ public class Preferences {
 		boolean referenceCodelensEnabled = getBooleanValue(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 
+		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
+		prefs.setJavaFormatEnabled(javaFormatEnabled);
+
 		String mavenUserSettings = getStringValue(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
@@ -196,6 +212,11 @@ public class Preferences {
 
 	private Preferences setReferencesCodelensEnabled(boolean enabled) {
 		this.referencesCodeLensEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setJavaFormatEnabled(boolean enabled) {
+		this.javaFormatEnabled = enabled;
 		return this;
 	}
 
@@ -228,6 +249,10 @@ public class Preferences {
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public boolean isJavaFormatEnabled() {
+		return javaFormatEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

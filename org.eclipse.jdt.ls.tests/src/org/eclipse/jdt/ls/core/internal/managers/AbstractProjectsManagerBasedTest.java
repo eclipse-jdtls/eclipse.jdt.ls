@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -54,6 +56,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected ProjectsManager projectsManager;
 	@Mock
 	protected PreferenceManager preferenceManager;
+	protected Preferences preferences = new Preferences();
 
 	protected SimpleLogListener logListener;
 
@@ -61,7 +64,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 	public void initProjectManager() {
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
-
+		if (preferenceManager != null) {
+			when(preferenceManager.getPreferences()).thenReturn(preferences);
+		}
 		projectsManager = new ProjectsManager(preferenceManager);
 
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
