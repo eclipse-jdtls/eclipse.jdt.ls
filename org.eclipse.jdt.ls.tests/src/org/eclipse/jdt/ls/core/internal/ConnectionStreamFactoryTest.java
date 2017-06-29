@@ -31,18 +31,16 @@ public class ConnectionStreamFactoryTest {
 
 	@Test
 	public void testDuplexPipeSelection() {
-		System.setProperty("INOUT_PIPE_NAME", "test_pipe");
+		System.setProperty("CLIENT_PIPE", "test_pipe");
 		checkStreamProvider(PipeStreamProvider.class);
-		System.clearProperty("INOUT_PIPE_NAME");
+		System.clearProperty("CLIENT_PIPE");
 	}
 
 	@Test
 	public void testSocketSelection(){
-		System.setProperty("STDIN_PORT", "10001");
-		System.setProperty("STDOUT_PORT", "10002");
+		System.setProperty("CLIENT_PORT", "10001");
 		checkStreamProvider(SocketStreamProvider.class);
-		System.clearProperty("STDIN_PORT");
-		System.clearProperty("STDOUT_PORT");
+		System.clearProperty("CLIENT_PORT");
 	}
 
 	@Test
