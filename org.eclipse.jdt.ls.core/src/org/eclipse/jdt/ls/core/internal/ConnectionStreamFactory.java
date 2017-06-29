@@ -17,7 +17,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 
 import org.eclipse.core.runtime.Platform;
 import org.newsclub.net.unix.AFUNIXSocket;
@@ -38,46 +37,40 @@ public class ConnectionStreamFactory {
 	}
 
 
-	protected final class PipeStreamProvider implements StreamProvider {
+	protected final class NamedPipeStreamProvider implements StreamProvider {
 
-		private final String pipeName;
-		private InputStream fInputStream;
-		private OutputStream fOutputStream;
+		private final String readFileName;
+		private final String writeFileName;
 
-		public PipeStreamProvider(String pipeName) {
-			this.pipeName = pipeName;
-		}
-
-		private void initializeConnection() throws IOException {
-			if (isWindows()) {
-				String pipePath = "\\\\.\\pipe\\" + pipeName;
-				RandomAccessFile readFile = new RandomAccessFile(pipePath, "rwd");
-				FileChannel channel = readFile.getChannel();
-				fInputStream = Channels.newInputStream(channel);
-				fOutputStream = Channels.newOutputStream(channel);
-			} else {
-				String pipePath = "/tmp/" + pipeName + ".sock";
-				AFUNIXSocket readSocket = AFUNIXSocket.newInstance();
-				readSocket.connect(new AFUNIXSocketAddress(new File(pipePath)));
-				fInputStream = readSocket.getInputStream();
-				fOutputStream = readSocket.getOutputStream();
-			}
+		public NamedPipeStreamProvider(String readFileName, String writeFileName) {
+			this.readFileName = readFileName;
+			this.writeFileName = writeFileName;
 		}
 
 		@Override
 		public InputStream getInputStream() throws IOException {
-			if (fInputStream == null) {
-				initializeConnection();
+			final File rFile = new File(readFileName);
+			if (isWindows()) {
+				RandomAccessFile readFile = new RandomAccessFile(rFile, "rwd");
+				return Channels.newInputStream(readFile.getChannel());
+			} else {
+				AFUNIXSocket readSocket = AFUNIXSocket.newInstance();
+				readSocket.connect(new AFUNIXSocketAddress(rFile));
+				return readSocket.getInputStream();
 			}
-			return fInputStream;
 		}
-
 		@Override
 		public OutputStream getOutputStream() throws IOException {
-			if (fOutputStream == null) {
-				initializeConnection();
+			final File wFile = new File(writeFileName);
+
+			if (isWindows()) {
+				RandomAccessFile writeFile = new RandomAccessFile(wFile, "rwd");
+				return Channels.newOutputStream(writeFile.getChannel());
+			} else {
+				AFUNIXSocket writeSocket = AFUNIXSocket.newInstance();
+				writeSocket.connect(new AFUNIXSocketAddress(wFile));
+				return writeSocket.getOutputStream();
 			}
-			return fOutputStream;
 		}
 	}
 
@@ -143,9 +136,10 @@ public class ConnectionStreamFactory {
 	 */
 	public StreamProvider getSelectedStream() {
 		if (provider == null) {
-			final String pipeName = Environment.get("CLIENT_PIPE");
-			if (pipeName != null) {
-				provider = new PipeStreamProvider(pipeName);
+			final String stdInName = Environment.get("STDIN_PIPE_NAME");
+			final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
+			if (stdInName != null && stdOutName != null) {
+				provider = new NamedPipeStreamProvider(stdOutName, stdInName);
 			}
 			final String host = Environment.get("CLIENT_HOST", "localhost");
 			final String port = Environment.get("CLIENT_PORT");

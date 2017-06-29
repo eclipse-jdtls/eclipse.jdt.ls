@@ -79,14 +79,15 @@ The Java Language server supports sockets, named pipes, and standard streams of 
 to communicate with the client. Client can communicate its preferred connection methods 
 by setting up environment variables. 
 
-* To use a **named pipe**  set the following environment variable before starting
+* To use **named pipes**, set the following environment variables before starting
 the server:
 
-   * `CLIENT_PIPE`: the named pipe to connect to. The connection will be used for in and output.
+   * `STDIN_PIPE_NAME`: the named pipe used for input.
+   * `STDOUT_PIPE_NAME`: the named pipe used for output.
    
-  Example: `CLIENT_PIPE=myNamedPipe`. This will use `/tmp/myNamedPipe.sock` on Linux/MacOS and `\\.\pipe\myNamedPipe` on Windows.
+  Example: `STDIN_PIPE_NAME=/tmp/myInPipe.sock` on Linux/MacOS and `STDIN_PIPE_NAME=\\.\pipe\myInPipe` on Windows.
 
-* To use a **plain socket** set the following environment variables before starting the server:
+* To use a **plain socket**, set the following environment variables before starting the server:
    * `CLIENT_PORT`: the port of the socket to connect to
    * `CLIENT_HOST`: the host name to connect to. If not set, defaults to `localhost`.
    
@@ -95,7 +96,7 @@ the server:
 * To use standard streams(stdin, stdout) of the server process do not set any 
 of the above environment variables and the server will fall back to standard streams. 
 
-For socket and named pipes, the client is expected to create the connection
+For socket and named pipes, the client is expected to create the connections
 and wait for the server to connect.
 
 

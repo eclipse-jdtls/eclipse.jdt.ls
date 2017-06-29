@@ -12,7 +12,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.IOException;
 
-import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.PipeStreamProvider;
+import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.NamedPipeStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.SocketStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StdIOStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StreamProvider;
@@ -30,10 +30,12 @@ public class ConnectionStreamFactoryTest {
 	}
 
 	@Test
-	public void testDuplexPipeSelection() {
-		System.setProperty("CLIENT_PIPE", "test_pipe");
-		checkStreamProvider(PipeStreamProvider.class);
-		System.clearProperty("CLIENT_PIPE");
+	public void testNamedPipeSelection() {
+		System.setProperty("STDIN_PIPE_NAME", "test_pipe_in");
+		System.setProperty("STDOUT_PIPE_NAME", "test_pipe_out");
+		checkStreamProvider(NamedPipeStreamProvider.class);
+		System.clearProperty("STDIN_PIPE_NAME");
+		System.clearProperty("STDOUT_PIPE_NAME");
 	}
 
 	@Test
