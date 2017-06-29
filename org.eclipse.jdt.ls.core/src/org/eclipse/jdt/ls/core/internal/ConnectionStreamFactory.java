@@ -37,7 +37,7 @@ public class ConnectionStreamFactory {
 		OutputStream getOutputStream() throws IOException;
 	}
 
-	
+
 	protected final class PipeStreamProvider implements StreamProvider {
 
 		private final String pipeName;
@@ -82,30 +82,37 @@ public class ConnectionStreamFactory {
 	}
 
 	protected final class SocketStreamProvider implements StreamProvider {
-		private final String readHost;
-		private final String writeHost;
-		private final int readPort;
-		private final int writePort;
+		private final String host;
+		private final int port;
+		private InputStream fInputStream;
+		private OutputStream fOutputStream;
 
-		public SocketStreamProvider(String readHost, int readPort, String writeHost, int writePort) {
-			this.readHost = readHost;
-			this.readPort = readPort;
-			this.writeHost = writeHost;
-			this.writePort = writePort;
+		public SocketStreamProvider(String host, int port) {
+			this.host = host;
+			this.port = port;
+		}
+
+		private void initializeConnection() throws IOException {
+			Socket socket = new Socket(host, port);
+			fInputStream = socket.getInputStream();
+			fOutputStream = socket.getOutputStream();
 		}
 
 		@Override
 		public InputStream getInputStream() throws IOException {
-			Socket readSocket = new Socket(readHost, readPort);
-			return readSocket.getInputStream();
+			if (fInputStream == null) {
+				initializeConnection();
+			}
+			return fInputStream;
 		}
 
 		@Override
 		public OutputStream getOutputStream() throws IOException {
-			Socket writeSocket = new Socket(writeHost, writePort);
-			return writeSocket.getOutputStream();
+			if (fOutputStream == null) {
+				initializeConnection();
+			}
+			return fOutputStream;
 		}
-
 	}
 
 	protected final class StdIOStreamProvider implements StreamProvider {
@@ -128,7 +135,6 @@ public class ConnectionStreamFactory {
 
 	}
 
-	private static String OS = System.getProperty("os.name").toLowerCase();
 	private StreamProvider provider;
 
 	/**
@@ -137,16 +143,14 @@ public class ConnectionStreamFactory {
 	 */
 	public StreamProvider getSelectedStream() {
 		if (provider == null) {
-			final String pipeName = Environment.get("INOUT_PIPE_NAME");
+			final String pipeName = Environment.get("CLIENT_PIPE");
 			if (pipeName != null) {
 				provider = new PipeStreamProvider(pipeName);
 			}
-			final String wHost = Environment.get("STDIN_HOST", "localhost");
-			final String rHost = Environment.get("STDOUT_HOST", "localhost");
-			final String wPort = Environment.get("STDIN_PORT");
-			final String rPort = Environment.get("STDOUT_PORT");
-			if (rPort != null && wPort != null) {
-				provider = new SocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
+			final String host = Environment.get("CLIENT_HOST", "localhost");
+			final String port = Environment.get("CLIENT_PORT");
+			if (port != null) {
+				provider = new SocketStreamProvider(host, Integer.parseInt(port));
 			}
 			if (provider == null) {//Fall back to std io
 				provider = new StdIOStreamProvider();
