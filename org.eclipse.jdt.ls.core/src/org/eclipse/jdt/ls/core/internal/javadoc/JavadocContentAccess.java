@@ -259,7 +259,12 @@ public final class JavadocContentAccess {
 			//1==> Handle the case when the documentation is present in package-info.java or package-info.class file
 			boolean isBinary= root.getKind() == IPackageFragmentRoot.K_BINARY;
 			if (isBinary) {
-				String s= fragment.getAttachedJavadoc(null);
+				String s = null;
+				try {
+					s = fragment.getAttachedJavadoc(null);
+				} catch (JavaModelException e) {
+					//ignore missing package.html files in javadoc
+				}
 				if (s != null) {
 					try {
 						return new JavaDoc2MarkdownConverter(new StringReader(s)).getAsReader();

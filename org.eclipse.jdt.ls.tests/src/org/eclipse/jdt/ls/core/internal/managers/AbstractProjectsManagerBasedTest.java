@@ -25,6 +25,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -34,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.After;
@@ -53,9 +55,15 @@ public abstract class AbstractProjectsManagerBasedTest {
 	@Mock
 	protected PreferenceManager preferenceManager;
 
+	protected SimpleLogListener logListener;
+
 	@Before
 	public void initProjectManager() {
+		logListener = new SimpleLogListener();
+		Platform.addLogListener(logListener);
+
 		projectsManager = new ProjectsManager(preferenceManager);
+
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
 			@Override
 			public IBuffer createBuffer(ICompilationUnit workingCopy) {
@@ -104,6 +112,8 @@ public abstract class AbstractProjectsManagerBasedTest {
 	@After
 	public void cleanUp() throws Exception {
 		projectsManager = null;
+		Platform.removeLogListener(logListener);
+		logListener = null;
 		WorkspaceHelper.deleteAllProjects();
 		FileUtils.forceDelete(getWorkingProjectDirectory());
 	}
