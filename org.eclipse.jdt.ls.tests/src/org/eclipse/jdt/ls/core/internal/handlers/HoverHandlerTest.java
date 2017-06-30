@@ -221,9 +221,28 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 1, 8);
 		assertNotNull(hover);
-		assertEquals(0, hover.getContents().size());
+		assertEquals(1, hover.getContents().size());
+		assertEquals("Unexpected hover ", "javax", hover.getContents().get(0).getRight().getValue());
 	}
 
+	@Test
+	public void testHoverOnPackageWithJavadoc() throws Exception {
+		importProjects("maven/salut2");
+		project = WorkspaceHelper.getProject("salut2");
+		handler = new HoverHandler();
+		//given
+		//Hovers on the org.apache.commons import
+		String payload = createHoverRequest("src/main/java/foo/Bar.java", 2, 22);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		String result = hover.getContents().get(0).getRight().getValue();//
+		assertEquals("Unexpected hover ", "org.apache.commons", result);
+
+		assertEquals(logListener.getErrors().toString(), 0, logListener.getErrors().size());
+	}
 	/**
 	 * @param cu
 	 * @return
@@ -239,7 +258,6 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	private Hover getHover(ICompilationUnit cu, int line, int character) {
-		// Hovers on the overriding print()
 		String payload = createHoverRequest(cu, line, character);
 		TextDocumentPositionParams position = getParams(payload);
 		return handler.hover(position, monitor);

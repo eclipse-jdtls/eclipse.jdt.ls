@@ -80,8 +80,9 @@ public class HoverInfoProvider {
 				if (found == null) {
 					// this would be a binary package fragment
 					curr = elements[0];
+				} else {
+					curr = found;
 				}
-				curr = found;
 			} else {
 				curr = elements[0];
 			}
