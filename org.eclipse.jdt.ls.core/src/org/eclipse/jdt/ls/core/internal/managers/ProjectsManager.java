@@ -66,7 +66,7 @@ public class ProjectsManager {
 	public IStatus initializeProjects(final String projectPath, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
-			createJavaProject(subMonitor.split(10));
+			createJavaProject(getDefaultProject(), subMonitor.split(10));
 
 			if (projectPath != null) {
 				File userProjectRoot = new File(projectPath);
@@ -158,8 +158,7 @@ public class ProjectsManager {
 		return Arrays.asList(new GradleProjectImporter(), new MavenProjectImporter(), new EclipseProjectImporter());
 	}
 
-	private IProject createJavaProject(IProgressMonitor monitor) throws CoreException, OperationCanceledException, InterruptedException {
-		IProject project = getDefaultProject();
+	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException, InterruptedException {
 		if (project.exists()) {
 			return project;
 		}

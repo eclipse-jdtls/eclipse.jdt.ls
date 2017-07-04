@@ -81,11 +81,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
+	private DocumentLifeCycleHandler documentLifeCycleHandler;
 
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
 	}
-
+	
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
@@ -96,6 +97,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
+		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
 	}
 
 	/* (non-Javadoc)
@@ -345,8 +347,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didOpen(DidOpenTextDocumentParams params) {
 		logInfo(">> document/didOpen");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm, workingCopyOwner);
-		handler.didOpen(params);
+		documentLifeCycleHandler.didOpen(params);
 	}
 
 	/* (non-Javadoc)
@@ -355,8 +356,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		logInfo(">> document/didChange");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm, workingCopyOwner);
-		handler.didChange(params);
+		documentLifeCycleHandler.didChange(params);
 	}
 
 	/* (non-Javadoc)
@@ -365,8 +365,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didClose(DidCloseTextDocumentParams params) {
 		logInfo(">> document/didClose");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm, workingCopyOwner);
-		handler.didClose(params);
+		documentLifeCycleHandler.didClose(params);
 	}
 
 	/* (non-Javadoc)
@@ -375,8 +374,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
 		logInfo(">> document/didSave");
-		DocumentLifeCycleHandler handler = new DocumentLifeCycleHandler(client, preferenceManager, pm, workingCopyOwner);
-		handler.didSave(params);
+		documentLifeCycleHandler.didSave(params);
 	}
 
 	/* (non-Javadoc)

@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,28 +25,31 @@ import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 
 /**
- * AST provider that caches the AST generated for
- * files that are known to be open.
- *
- * @author Gorkem Ercan
- *
+ * AST provider that caches the AST generated for files that are known to be
+ * open.
  */
 @SuppressWarnings("restriction")
 public final class SharedASTProvider {
 
-	private ConcurrentMap<String, CompilationUnit> cache = new ConcurrentHashMap<>();
 	private static SharedASTProvider instance = new SharedASTProvider();
 
-	private SharedASTProvider(){
+	private ConcurrentMap<String, CompilationUnit> cache = new ConcurrentHashMap<>();
+	private int astCreationCount; // to testing purposes
+
+
+	private SharedASTProvider() {
+		astCreationCount = 0;
 	}
 
 	public void dispose() {
@@ -65,8 +72,59 @@ public final class SharedASTProvider {
 		final String identifier = input.getHandleIdentifier();
 		return cache.computeIfAbsent(identifier, k -> {
 			JavaLanguageServerPlugin.logInfo("Caching AST for " + input.getPath().toString());
-			return createAST(input, progressMonitor);
+			CompilationUnit astRoot = createAST(input, progressMonitor);
+			astCreationCount++;
+			return astRoot;
 		});
+	}
+
+	public List<CompilationUnit> getASTs(List<ICompilationUnit> inputs, IProgressMonitor progressMonitor) {
+		if (progressMonitor != null && progressMonitor.isCanceled() || inputs.isEmpty()) {
+			return Collections.emptyList();
+		}
+		HashMap<IJavaProject, List<ICompilationUnit>> cuByProject = new HashMap<>();
+		List<CompilationUnit> result = new ArrayList<>();
+
+		for (ICompilationUnit input : inputs) {
+			final String identifier = input.getHandleIdentifier();
+			CompilationUnit cu = cache.get(identifier);
+			if (cu != null) {
+				result.add(cu);
+			} else {
+				IJavaProject project = input.getJavaProject();
+				List<ICompilationUnit> list = cuByProject.get(project);
+				if (list == null) {
+					list = new ArrayList<>();
+					cuByProject.put(project, list);
+				}
+				list.add(input);
+			}
+		}
+
+		for (IJavaProject project: cuByProject.keySet()) {
+			final ASTParser parser = newASTParser();
+			parser.setProject(project);
+
+			List<ICompilationUnit> cus = cuByProject.get(project);
+
+			ASTRequestor requestor = new ASTRequestor() {
+				@Override
+				public void acceptAST(ICompilationUnit cu, CompilationUnit astRoot) {
+					result.add(astRoot);
+					setAST(astRoot);
+				}
+			};
+			parser.createASTs(cus.toArray(new ICompilationUnit[cus.size()]), new String[0], requestor, progressMonitor);
+			astCreationCount += cus.size();
+		}
+		return result;
+	}
+
+	public void setAST(CompilationUnit astRoot) {
+		ITypeRoot typeRoot = astRoot.getTypeRoot();
+		if (shouldCache(typeRoot)) {
+			cache.put(typeRoot.getHandleIdentifier(), astRoot);
+		}
 	}
 
 	/**
@@ -111,15 +169,8 @@ public final class SharedASTProvider {
 			return null;
 		}
 
-		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
-		parser.setResolveBindings(true);
-		parser.setStatementsRecovery(IASTSharedValues.SHARED_AST_STATEMENT_RECOVERY);
-		parser.setBindingsRecovery(IASTSharedValues.SHARED_BINDING_RECOVERY);
+		final ASTParser parser = newASTParser();
 		parser.setSource(input);
-
-		if (progressMonitor != null && progressMonitor.isCanceled()) {
-			return null;
-		}
 
 		final CompilationUnit root[]= new CompilationUnit[1];
 
@@ -130,7 +181,7 @@ public final class SharedASTProvider {
 					if (progressMonitor != null && progressMonitor.isCanceled()) {
 						return;
 					}
-					root[0]= (CompilationUnit)parser.createAST(progressMonitor);
+					root[0] = (CompilationUnit) parser.createAST(progressMonitor);
 
 					//mark as unmodifiable
 					ASTNodes.setFlagsToAST(root[0], ASTNode.PROTECT);
@@ -145,6 +196,14 @@ public final class SharedASTProvider {
 			}
 		});
 		return root[0];
+	}
+
+	public static ASTParser newASTParser() {
+		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		parser.setResolveBindings(true);
+		parser.setStatementsRecovery(IASTSharedValues.SHARED_AST_STATEMENT_RECOVERY);
+		parser.setBindingsRecovery(IASTSharedValues.SHARED_BINDING_RECOVERY);
+		return parser;
 	}
 
 	/**
@@ -167,5 +226,31 @@ public final class SharedASTProvider {
 		return false;
 	}
 
+	/**
+	 * For testing purposes
+	 *
+	 * @return the number of elements currently in the cache
+	 */
+	public int getCacheSize() {
+		return cache.size();
+	}
+
+	/**
+	 * For testing purposes
+	 *
+	 * @return the number of ASTs created
+	 */
+	public int getASTCreationCount() {
+		return astCreationCount;
+	}
+
+	/**
+	 * For testing purposes
+	 *
+	 * Sets the counter for ASTs created to 0
+	 */
+	public void clearASTCreationCount() {
+		astCreationCount = 0;
+	}
 
 }

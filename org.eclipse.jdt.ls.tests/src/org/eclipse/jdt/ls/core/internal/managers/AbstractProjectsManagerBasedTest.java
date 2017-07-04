@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -48,7 +49,7 @@ import org.mockito.Mock;
  */
 public abstract class AbstractProjectsManagerBasedTest {
 
-	public static final String DEFAULT_PROJECT_NAME = "TestSetupProject";
+	public static final String TEST_PROJECT_NAME = "TestProject";
 
 	protected IProgressMonitor monitor = new NullProgressMonitor();
 	protected ProjectsManager projectsManager;
@@ -78,9 +79,18 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {
-		projectsManager.initializeProjects(null, monitor);
+		IProject testProject = ResourcesPlugin.getWorkspace().getRoot().getProject(TEST_PROJECT_NAME);
+		assertEquals(false, testProject.exists());
+		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
 		waitForBackgroundJobs();
-		return JavaCore.create(projectsManager.getDefaultProject());
+		return JavaCore.create(testProject);
+	}
+
+	protected IJavaProject newDefaultProject() throws Exception {
+		IProject testProject = projectsManager.getDefaultProject();
+		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
+		waitForBackgroundJobs();
+		return JavaCore.create(testProject);
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {

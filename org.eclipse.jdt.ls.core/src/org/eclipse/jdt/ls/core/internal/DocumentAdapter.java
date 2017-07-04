@@ -274,7 +274,9 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 				((ISynchronizable)fDocument).setLockObject(lock);
 			}
 		}
-		fDocument.set(contents);
+		if (!contents.equals(fDocument.get())) {
+			fDocument.set(contents);
+		}
 	}
 
 	@Override
