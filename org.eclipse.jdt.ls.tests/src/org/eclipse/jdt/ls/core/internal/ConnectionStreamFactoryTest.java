@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.IOException;
 
+import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.DualSocketStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.NamedPipeStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.SocketStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StdIOStreamProvider;
@@ -30,7 +31,7 @@ public class ConnectionStreamFactoryTest {
 	}
 
 	@Test
-	public void testNamedPipeSelection(){
+	public void testNamedPipeSelection() {
 		System.setProperty("STDIN_PIPE_NAME", "test_pipe_in");
 		System.setProperty("STDOUT_PIPE_NAME", "test_pipe_out");
 		checkStreamProvider(NamedPipeStreamProvider.class);
@@ -40,9 +41,16 @@ public class ConnectionStreamFactoryTest {
 
 	@Test
 	public void testSocketSelection(){
+		System.setProperty("CLIENT_PORT", "10001");
+		checkStreamProvider(SocketStreamProvider.class);
+		System.clearProperty("CLIENT_PORT");
+	}
+
+	@Test
+	public void testDualSocketSelection() {
 		System.setProperty("STDIN_PORT", "10001");
 		System.setProperty("STDOUT_PORT", "10002");
-		checkStreamProvider(SocketStreamProvider.class);
+		checkStreamProvider(DualSocketStreamProvider.class);
 		System.clearProperty("STDIN_PORT");
 		System.clearProperty("STDOUT_PORT");
 	}
