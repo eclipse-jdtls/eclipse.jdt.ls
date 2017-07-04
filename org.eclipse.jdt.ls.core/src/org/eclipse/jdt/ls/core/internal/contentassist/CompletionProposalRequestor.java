@@ -25,12 +25,12 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 
-public class CompletionProposalRequestor extends CompletionRequestor {
+public final class CompletionProposalRequestor extends CompletionRequestor {
 
-	protected List<CompletionProposal> proposals = new ArrayList<>();
-	protected final ICompilationUnit unit;
+	private List<CompletionProposal> proposals = new ArrayList<>();
+	private final ICompilationUnit unit;
 	private CompletionProposalDescriptionProvider descriptionProvider;
-	protected CompletionResponse response;
+	private CompletionResponse response;
 
 	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset) {
 		this.unit = aUnit;

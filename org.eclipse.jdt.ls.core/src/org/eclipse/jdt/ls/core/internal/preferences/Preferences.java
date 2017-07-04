@@ -42,6 +42,12 @@ public class Preferences {
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
 
 	/**
+	 * Preference key to enable/disable signature help.
+	 */
+	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
+
+
+	/**
 	 * Preference key to exclude directories when importing projects.
 	 */
 	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
@@ -104,6 +110,7 @@ public class Preferences {
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
 	private boolean javaFormatEnabled;
+	private boolean signatureHelpEnabled;
 	private MemberSortOrder memberOrders;
 
 	private String mavenUserSettings;
@@ -164,6 +171,7 @@ public class Preferences {
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
 		javaFormatEnabled = true;
+		signatureHelpEnabled = false;
 		memberOrders = new MemberSortOrder(null);
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
@@ -234,6 +242,9 @@ public class Preferences {
 		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
 
+		boolean signatureHelpEnabled = getBooleanValue(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
+		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
+
 		List<String> javaImportExclusions = getListValue(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
 
@@ -261,6 +272,11 @@ public class Preferences {
 
 	private Preferences setReferencesCodelensEnabled(boolean enabled) {
 		this.referencesCodeLensEnabled = enabled;
+		return this;
+	}
+
+	private Preferences setSignatureHelpEnabled(boolean enabled) {
+		this.signatureHelpEnabled = enabled;
 		return this;
 	}
 
@@ -306,6 +322,10 @@ public class Preferences {
 
 	public boolean isJavaFormatEnabled() {
 		return javaFormatEnabled;
+	}
+
+	public boolean isSignatureHelpEnabled() {
+		return signatureHelpEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

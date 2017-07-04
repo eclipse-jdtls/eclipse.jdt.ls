@@ -11,35 +11,61 @@
 
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLowerBound;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
-import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
 
-public final class SignatureHelpRequestor extends CompletionProposalRequestor {
+import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
+
+public final class SignatureHelpRequestor extends CompletionRequestor {
+
+	private List<CompletionProposal> proposals = new ArrayList<>();
+	private final ICompilationUnit unit;
+	private CompletionProposalDescriptionProvider descriptionProvider;
+	private CompletionResponse response;
 
 	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset) {
-		super(aUnit, offset);
+		this.unit = aUnit;
+		response = new CompletionResponse();
+		response.setOffset(offset);
 		setRequireExtendedContext(true);
 	}
 
-	public SignatureHelp getSignatureHelp() {
+	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
 		SignatureHelp signatureHelp = new SignatureHelp();
 		response.setProposals(proposals);
 		CompletionResponses.store(response);
 
 		for (int i = 0; i < proposals.size(); i++) {
-			CompletionItem item = this.toCompletionItem(proposals.get(i), i);
-			signatureHelp.getSignatures().add(this.toSignatureInformation(item, proposals.get(i)));
+			if (!monitor.isCanceled()) {
+				signatureHelp.getSignatures().add(this.toSignatureInformation(proposals.get(i)));
+			}
 		}
 
 		signatureHelp.getSignatures().sort((SignatureInformation a, SignatureInformation b) -> a.getParameters().size() - b.getParameters().size());
@@ -47,17 +73,45 @@ public final class SignatureHelpRequestor extends CompletionProposalRequestor {
 		return signatureHelp;
 	}
 
-	public SignatureInformation toSignatureInformation(CompletionItem item, CompletionProposal methodProposal) {
+	@Override
+	public boolean isIgnored(int completionProposalKind) {
+		return completionProposalKind != CompletionProposal.METHOD_REF;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.core.CompletionRequestor#accept(org.eclipse.jdt.core.CompletionProposal)
+	 */
+	@Override
+	public void accept(CompletionProposal proposal) {
+		if (!isIgnored(proposal.getKind())) {
+			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
+				// Hacky way to boost relevance of current package, for package completions, until
+				// https://bugs.eclipse.org/518140 is fixed
+				proposal.setRelevance(proposal.getRelevance() + 1);
+			}
+			proposals.add(proposal);
+		}
+	}
+
+	@Override
+	public void acceptContext(CompletionContext context) {
+		super.acceptContext(context);
+		response.setContext(context);
+		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
+	}
+
+	public SignatureInformation toSignatureInformation(CompletionProposal methodProposal) {
 		SignatureInformation $ = new SignatureInformation();
-		$.setLabel(item.getLabel());
-		$.setDocumentation(item.getDocumentation());
+		StringBuilder desription = descriptionProvider.createMethodProposalDescription(methodProposal);
+		$.setLabel(desription.toString());
+		$.setDocumentation(this.computeJavaDoc(methodProposal));
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
 		char[][] parameterNames = methodProposal.findParameterNames(null);
 		char[][] parameterTypes = Signature.getParameterTypes(signature);
 
 		for (int i = 0; i < parameterTypes.length; i++) {
-			parameterTypes[i] = createTypeDisplayName(SignatureUtil.getLowerBound(parameterTypes[i]));
+			parameterTypes[i] = Signature.getSimpleName(Signature.toCharArray(SignatureUtil.getLowerBound(parameterTypes[i])));
 		}
 
 		if (Flags.isVarargs(methodProposal.getFlags())) {
@@ -99,33 +153,51 @@ public final class SignatureHelpRequestor extends CompletionProposalRequestor {
 		return vararg;
 	}
 
-	private char[] createTypeDisplayName(char[] typeSignature) throws IllegalArgumentException {
-		char[] displayName = Signature.getSimpleName(Signature.toCharArray(typeSignature));
-
-		// XXX see https://bugs.eclipse.org/bugs/show_bug.cgi?id=84675
-		boolean useShortGenerics = false;
-		if (useShortGenerics) {
-			StringBuilder buf = new StringBuilder();
-			buf.append(displayName);
-			int pos;
-			do {
-				pos = buf.indexOf("? extends "); //$NON-NLS-1$
-				if (pos >= 0) {
-					buf.replace(pos, pos + 10, "+"); //$NON-NLS-1$
-				} else {
-					pos = buf.indexOf("? super "); //$NON-NLS-1$
-					if (pos >= 0) {
-						buf.replace(pos, pos + 8, "-"); //$NON-NLS-1$
-					}
+	public String computeJavaDoc(CompletionProposal proposal) {
+		try {
+			IType type = unit.getJavaProject().findType(SignatureUtil.stripSignatureToFQN(String.valueOf(proposal.getDeclarationSignature())));
+			if (type != null) {
+				String[] parameters= Signature.getParameterTypes(String.valueOf(SignatureUtil.fix83600(proposal.getSignature())));
+				for (int i= 0; i < parameters.length; i++) {
+					parameters[i]= getLowerBound(parameters[i]);
 				}
-			} while (pos >= 0);
-			return buf.toString().toCharArray();
+
+				IMethod method = type.getMethod(String.valueOf(proposal.getName()), parameters);
+
+				if (method != null && method.exists()) {
+					String javadoc = null;
+					try {
+						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
+							Reader reader = JavadocContentAccess.getHTMLContentReader(method, true, true);
+							return reader == null? null:CharStreams.toString(reader);
+						}, 500, TimeUnit.MILLISECONDS, true);
+					} catch (UncheckedTimeoutException tooSlow) {
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
+					}
+					return javadoc;
+				}
+			}
+
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Unable to resolve signaturehelp javadoc", e);
 		}
-		return displayName;
+		return null;
 	}
 
-	@Override
-	public boolean isIgnored(int completionProposalKind) {
-		return completionProposalKind != CompletionProposal.METHOD_REF;
+	/**
+	 * Gets the reader content as a String
+	 *
+	 * @param reader
+	 *            the reader
+	 * @return the reader content as string
+	 */
+	private static String getString(Reader reader) {
+		try {
+			return CharStreams.toString(reader);
+		} catch (IOException ignored) {
+			//meh
+		}
+		return null;
 	}
 }

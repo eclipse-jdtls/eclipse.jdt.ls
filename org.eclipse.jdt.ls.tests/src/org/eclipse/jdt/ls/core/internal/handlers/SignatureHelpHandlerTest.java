@@ -14,10 +14,11 @@ import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -26,12 +27,16 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
+
+	private PreferenceManager preferenceManager;
 
 	private static String HOVER_TEMPLATE =
 			"{\n" +
@@ -51,8 +56,6 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private SignatureHelpHandler handler;
 
-	private IProject project;
-
 	private IPackageFragmentRoot sourceFolder;
 
 	@Override
@@ -62,7 +65,11 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		project = WorkspaceHelper.getProject("hello");
 		IJavaProject javaProject = JavaCore.create(project);
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
-		handler = new SignatureHelpHandler();
+		preferenceManager = mock(PreferenceManager.class);
+		Preferences p = mock(Preferences.class);
+		when(preferenceManager.getPreferences(null)).thenReturn(p);
+		when(p.isSignatureHelpEnabled()).thenReturn(true);
+		handler = new SignatureHelpHandler(preferenceManager);
 	}
 
 	@Test

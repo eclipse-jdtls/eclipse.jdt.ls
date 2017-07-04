@@ -258,7 +258,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
 		logInfo(">> document/signatureHelp");
-		SignatureHelpHandler handler = new SignatureHelpHandler();
+		SignatureHelpHandler handler = new SignatureHelpHandler(preferenceManager);
 		return computeAsync((cc) -> handler.signatureHelp(position, toMonitor(cc)));
 	}
 

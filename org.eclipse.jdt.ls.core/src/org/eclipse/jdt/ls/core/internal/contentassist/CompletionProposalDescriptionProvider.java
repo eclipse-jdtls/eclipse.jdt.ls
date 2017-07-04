@@ -53,6 +53,44 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	/**
+	 * Creates and returns the method signature suitable for display.
+	 *
+	 * @param proposal
+	 *            the proposal to create the description for
+	 * @return the string of method signature suitable for display
+	 */
+	public StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
+		int kind = proposal.getKind();
+		switch (kind) {
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+				StringBuilder description = new StringBuilder();
+
+				// method name
+				description.append(proposal.getName());
+
+				// parameters
+				description.append('(');
+				appendUnboundedParameterList(description, proposal);
+				description.append(')');
+
+				// return type
+				if (!proposal.isConstructor()) {
+					// TODO remove SignatureUtil.fix83600 call when bugs are fixed
+					char[] returnType = createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(proposal.getSignature()))));
+					description.append(RETURN_TYPE_SEPARATOR);
+					description.append(returnType);
+				}
+				return description;
+			default:
+				return null; // dummy
+		}
+	}
+
+	/**
 	 * Creates and returns a parameter list of the given method or type proposal suitable for
 	 * display. The list does not include parentheses. The lower bound of parameter types is
 	 * returned.
@@ -255,26 +293,10 @@ public class CompletionProposalDescriptionProvider {
 	 * @param item to update
 	 */
 	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
-		StringBuilder description = new StringBuilder();
-
-		// method name
-		description.append(methodProposal.getName());
-		item.setInsertText(description.toString());
-
-		// parameters
-		description.append('(');
-		appendUnboundedParameterList(description, methodProposal);
-		description.append(')');
-
-		// return type
-		if (!methodProposal.isConstructor()) {
-			// TODO remove SignatureUtil.fix83600 call when bugs are fixed
-			char[] returnType= createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(methodProposal.getSignature()))));
-			description.append(RETURN_TYPE_SEPARATOR);
-			description.append(returnType);
-		}
-
+		StringBuilder description = this.createMethodProposalDescription(methodProposal);
 		item.setLabel(description.toString());
+		item.setInsertText(String.valueOf(methodProposal.getName()));
+
 		// declaring type
 		StringBuilder typeInfo = new StringBuilder();
 		String declaringType= extractDeclaringTypeFQN(methodProposal);

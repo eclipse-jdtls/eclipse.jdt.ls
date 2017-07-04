@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.SignatureHelpRequestor;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -28,9 +29,19 @@ public class SignatureHelpHandler {
 
 	private static final int SEARCH_BOUND = 2000;
 
+	private PreferenceManager preferenceManager;
+
+	public SignatureHelpHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
+
 	public SignatureHelp signatureHelp(TextDocumentPositionParams position, IProgressMonitor monitor) {
 
 		SignatureHelp help = new SignatureHelp();
+
+		if (!preferenceManager.getPreferences(null).isSignatureHelpEnabled()) {
+			return help;
+		}
 
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
@@ -43,7 +54,7 @@ public class SignatureHelpHandler {
 
 			if (offset > -1 && !monitor.isCanceled()) {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
-				help = collector.getSignatureHelp();
+				help = collector.getSignatureHelp(monitor);
 
 				int currentParameter = contextInfomation[1];
 				List<SignatureInformation> infos = help.getSignatures();
