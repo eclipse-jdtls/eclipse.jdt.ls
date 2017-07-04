@@ -163,29 +163,31 @@ public class ConnectionStreamFactory {
 	 */
 	public StreamProvider getSelectedStream() {
 		if (provider == null) {
-			final String stdInName = Environment.get("STDIN_PIPE_NAME");
-			final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
-			if (stdInName != null && stdOutName != null) {
-				provider = new NamedPipeStreamProvider(stdOutName, stdInName);
-			}
-			final String host = Environment.get("CLIENT_HOST", "localhost");
-			final String port = Environment.get("CLIENT_PORT");
-			if (port != null) {
-				provider = new SocketStreamProvider(host, Integer.parseInt(port));
-			}
-			final String wHost = Environment.get("STDIN_HOST", "localhost");
-			final String rHost = Environment.get("STDOUT_HOST", "localhost");
-			final String wPort = Environment.get("STDIN_PORT");
-			final String rPort = Environment.get("STDOUT_PORT");
-			if (rPort != null && wPort != null) {
-				JavaLanguageServerPlugin.logError("STDIN_PORT and STDOUT_PORT will be removed in the next release. Please use CLIENT_PORT instead (single connection for both in and output)");
-				provider = new DualSocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
-			}
-			if (provider == null) {//Fall back to std io
-				provider = new StdIOStreamProvider();
-			}
+			provider = createProvider();
 		}
 		return provider;
+	}
+
+	private StreamProvider createProvider() {
+		final String stdInName = Environment.get("STDIN_PIPE_NAME");
+		final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
+		if (stdInName != null && stdOutName != null) {
+			return new NamedPipeStreamProvider(stdOutName, stdInName);
+		}
+		final String host = Environment.get("CLIENT_HOST", "localhost");
+		final String port = Environment.get("CLIENT_PORT");
+		if (port != null) {
+			return new SocketStreamProvider(host, Integer.parseInt(port));
+		}
+		final String wHost = Environment.get("STDIN_HOST", "localhost");
+		final String rHost = Environment.get("STDOUT_HOST", "localhost");
+		final String wPort = Environment.get("STDIN_PORT");
+		final String rPort = Environment.get("STDOUT_PORT");
+		if (rPort != null && wPort != null) {
+			JavaLanguageServerPlugin.logError("STDIN_PORT and STDOUT_PORT will be removed in the next release. Please use CLIENT_PORT instead (single connection for both in and output)");
+			return new DualSocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
+		}
+		return new StdIOStreamProvider();
 	}
 
 	public InputStream getInputStream() throws IOException {
