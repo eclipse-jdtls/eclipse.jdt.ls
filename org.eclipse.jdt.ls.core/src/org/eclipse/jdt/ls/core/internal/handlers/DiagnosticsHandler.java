@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
@@ -31,15 +31,15 @@ import org.eclipse.lsp4j.Range;
 public class DiagnosticsHandler implements IProblemRequestor {
 
 	private final List<IProblem> problems;
-	private final IResource resource;
+	private final String uri;
 	private final JavaClientConnection connection;
 	private boolean reportAllErrors = true;
 
-	public DiagnosticsHandler(JavaClientConnection conn, IResource resource, boolean reportOnlySyntaxErrors) {
+	public DiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
-		this.resource = resource;
+		this.uri = JDTUtils.getFileURI(cu);
 		this.connection = conn;
-		this.reportAllErrors = !reportOnlySyntaxErrors;
+		this.reportAllErrors = !cu.getJavaProject().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
 	}
 
 	@Override
@@ -98,14 +98,13 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	@Override
 	public void beginReporting() {
-		JavaLanguageServerPlugin.logInfo("begin problem for " + this.resource.getName());
+		JavaLanguageServerPlugin.logInfo("begin problem for " + this.uri.substring(this.uri.lastIndexOf('/')));
 		problems.clear();
 	}
 
 	@Override
 	public void endReporting() {
-		JavaLanguageServerPlugin.logInfo("end reporting for "+ this.resource.getName());
-		String uri = JDTUtils.getFileURI(this.resource);
+		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
 		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(uri, toDiagnosticsArray(problems));
 		this.connection.publishDiagnostics($);
 	}
