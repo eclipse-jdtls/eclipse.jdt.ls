@@ -24,6 +24,7 @@
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
+		<module>org.eclipse.jdt.ls.debug</module>
 		<module>org.eclipse.jdt.ls.core</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.product</module>
