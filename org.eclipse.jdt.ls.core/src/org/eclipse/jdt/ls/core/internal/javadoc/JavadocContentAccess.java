@@ -29,11 +29,11 @@ import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 
 /**
@@ -139,7 +139,7 @@ public final class JavadocContentAccess {
 	}
 
 	private static CompilationUnit createAST(IJavaElement element, String cuSource) {
-		ASTParser parser= ASTParser.newParser(AST.JLS8);
+		ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 
 		IJavaProject javaProject= element.getJavaProject();
 		parser.setProject(javaProject);

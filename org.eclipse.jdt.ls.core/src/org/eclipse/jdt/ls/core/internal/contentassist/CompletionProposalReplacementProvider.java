@@ -33,12 +33,12 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -755,7 +755,7 @@ public class CompletionProposalReplacementProvider {
 			keys[i]= String.valueOf(chKeys[0]);
 		}
 
-		final ASTParser parser= ASTParser.newParser(AST.JLS8);
+		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 		parser.setProject(compilationUnit.getJavaProject());
 		parser.setResolveBindings(true);
 		parser.setStatementsRecovery(true);

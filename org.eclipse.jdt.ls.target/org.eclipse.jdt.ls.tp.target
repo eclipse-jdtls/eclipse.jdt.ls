@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="93">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="103">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
 <repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.0.v20170518-1049"/>
-<unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.0.v20170516-1513"/>
-<unit id="org.eclipse.equinox.executable.feature.group" version="3.7.0.v20170531-1133"/>
-<unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.4.0.v20170524-1345"/>
-<unit id="org.eclipse.equinox.p2.discovery.feature.feature.group" version="1.1.0.v20170418-0708"/>
-<unit id="org.eclipse.equinox.p2.rcp.feature.feature.group" version="1.3.0.v20170524-1345"/>
-<unit id="org.eclipse.equinox.sdk.feature.group" version="3.13.0.v20170531-1133"/>
-<unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20170612-0950"/>
-<unit id="org.eclipse.sdk.feature.group" version="4.7.0.v20170612-1255"/>
-<repository location="http://download.eclipse.org/eclipse/updates/4.7/"/>
+<unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.1.v20170928-1321"/>
+<unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.1.v20170928-1321"/>
+<unit id="org.eclipse.equinox.executable.feature.group" version="3.7.1.v20170928-1359"/>
+<unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.4.1.v20170928-1405"/>
+<unit id="org.eclipse.equinox.p2.discovery.feature.feature.group" version="1.1.1.v20170906-1259"/>
+<unit id="org.eclipse.equinox.p2.rcp.feature.feature.group" version="1.3.1.v20170928-1405"/>
+<unit id="org.eclipse.equinox.sdk.feature.group" version="3.13.1.v20170928-1405"/>
+<unit id="org.eclipse.jdt.source.feature.group" version="3.13.1.v20170928-1310"/>
+<unit id="org.eclipse.sdk.feature.group" version="4.7.1.v20170928-1405"/>
+<repository location="http://download.eclipse.org/eclipse/updates/4.7-M-builds/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.xtend.sdk.feature.group" version="2.12.0.v20170519-1412"/>
@@ -32,16 +32,16 @@
 <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.1.20170728-1531"/>
-<repository location="http://download.eclipse.org/technology/m2e/releases/1.8/1.8.1.20170728-1531"/>
+<unit id="org.eclipse.buildship.feature.group" version="2.1.2.v20170807-1324"/>
+<repository location="http://download.eclipse.org/releases/oxygen/201709271000/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.buildship.feature.group" version="2.1.2.v20170807-1255-m"/>
-<repository location="http://download.eclipse.org/buildship/updates/e47/milestones/2.x/"/>
+<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.2.20171005-1923"/>
+<repository location="http://download.eclipse.org/technology/m2e/milestones/1.8/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170905-1233"/>
-<repository location="http://download.eclipse.org/lsp4j/updates/milestones/"/>
+<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170913-0640"/>
+<repository location="http://download.eclipse.org/lsp4j/updates/releases/0.3.0/"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
