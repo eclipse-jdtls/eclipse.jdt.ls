@@ -13,9 +13,11 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
@@ -88,10 +91,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 
+	private Set<String> registeredCapabilities = new HashSet<>(3);
+
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
 	}
-	
+
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
@@ -111,7 +116,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
-		InitHandler handler= new InitHandler(pm, preferenceManager, client);
+		InitHandler handler = new InitHandler(pm, preferenceManager, client);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -154,7 +159,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@JsonDelegate
-	public JavaProtocolExtensions getJavaExtensions(){
+	public JavaProtocolExtensions getJavaExtensions() {
 		return this;
 	}
 
@@ -179,41 +184,32 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		Object settings = params.getSettings();
 		if (settings instanceof Map) {
 			@SuppressWarnings("unchecked")
-			Map<String, Object> javaConfig = MapFlattener.flatten((Map<String, Object>)settings);
+			Map<String, Object> javaConfig = MapFlattener.flatten((Map<String, Object>) settings);
 			Preferences prefs = Preferences.createFrom(javaConfig);
 			preferenceManager.update(prefs);
 		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
-			if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
-				Unregistration unregistration = new Unregistration(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
-				List<Unregistration> unregistrations = new ArrayList<>();
-				unregistrations.add(unregistration);
-				UnregistrationParams unregistrationParams = new UnregistrationParams(unregistrations);
-				client.unregisterCapability(unregistrationParams);
+			if (preferenceManager.getPreferences().isJavaFormatEnabled()) {
+				registerCapability(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
 			} else {
-				Registration registration = new Registration(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
-				List<Registration> registrations = new ArrayList<>();
-				registrations.add(registration);
-				RegistrationParams registrationParams = new RegistrationParams(registrations);
-				client.registerCapability(registrationParams);
+				unregisterCapability(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
 			}
 		}
 		if (preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
-			if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
-				List<Unregistration> unregistrations = new ArrayList<>();
-				Unregistration unregistration = new Unregistration(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
-				unregistrations.add(unregistration);
-				UnregistrationParams unregistrationParams = new UnregistrationParams(unregistrations);
-				client.unregisterCapability(unregistrationParams);
+			if (preferenceManager.getPreferences().isJavaFormatEnabled()) {
+				registerCapability(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
 			} else {
-				List<Registration> registrations = new ArrayList<>();
-				Registration registration = new Registration(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
-				registrations.add(registration);
-				RegistrationParams registrationParams = new RegistrationParams(registrations);
-				client.registerCapability(registrationParams);
+				unregisterCapability(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
 			}
 		}
-		logInfo(">>New configuration: "+settings);
+		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
+			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+				registerCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
+			} else {
+				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
+			}
+		}
+		logInfo(">>New configuration: " + settings);
 	}
 
 	/* (non-Javadoc)
@@ -222,7 +218,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
 		logInfo(">> workspace/didChangeWatchedFiles");
-		WorkspaceEventsHandler handler= new WorkspaceEventsHandler(pm, client);
+		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client);
 		handler.didChangeWatchedFiles(params);
 	}
 
@@ -442,4 +438,23 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return new CancellableProgressMonitor(checker);
 	}
 
+	private void unregisterCapability(String id, String method) {
+		if (registeredCapabilities.remove(id)) {
+			Unregistration unregistration = new Unregistration(id, method);
+			UnregistrationParams unregistrationParams = new UnregistrationParams(Collections.singletonList(unregistration));
+			client.unregisterCapability(unregistrationParams);
+		}
+	}
+
+	private void registerCapability(String id, String method) {
+		registerCapability(id, method, null);
+	}
+
+	private void registerCapability(String id, String method, Object options) {
+		if (registeredCapabilities.add(id)) {
+			Registration registration = new Registration(id, method, options);
+			RegistrationParams registrationParams = new RegistrationParams(Collections.singletonList(registration));
+			client.registerCapability(registrationParams);
+		}
+	}
 }

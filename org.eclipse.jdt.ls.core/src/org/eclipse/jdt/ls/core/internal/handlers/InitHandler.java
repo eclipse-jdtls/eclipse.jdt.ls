@@ -96,7 +96,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
 		}
-		capabilities.setCodeLensProvider(new CodeLensOptions(Boolean.TRUE));
+		if (!preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
+			capabilities.setCodeLensProvider(new CodeLensOptions(true));
+		}
 		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);
 		return result;

@@ -80,8 +80,11 @@ public class Preferences {
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
+	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
+
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
+	public static final String CODE_LENS_ID = UUID.randomUUID().toString();
 
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
