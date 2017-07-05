@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -39,6 +40,8 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
  */
 @SuppressWarnings("restriction")
 public final class SharedASTProvider {
+
+	public static final int SHARED_AST_LEVEL = AST.JLS9;//use IASTSharedValues.SHARED_AST_LEVEL with its value is fixed upstream. 
 
 	private static SharedASTProvider instance = new SharedASTProvider();
 
@@ -168,7 +171,7 @@ public final class SharedASTProvider {
 	}
 
 	public static ASTParser newASTParser() {
-		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		final ASTParser parser = ASTParser.newParser(SHARED_AST_LEVEL);
 		parser.setResolveBindings(true);
 		parser.setStatementsRecovery(IASTSharedValues.SHARED_AST_STATEMENT_RECOVERY);
 		parser.setBindingsRecovery(IASTSharedValues.SHARED_BINDING_RECOVERY);
