@@ -19,7 +19,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<configuration>
-					<artifactItems>						
+					<artifactItems>
+						<artifactItem>
+							 <groupId>com.google.code.gson</groupId>
+  							 <artifactId>gson</artifactId>
+						     <version>2.7</version>
+						</artifactItem>
 					</artifactItems>
 				</configuration>
 			</plugin>
