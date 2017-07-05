@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
@@ -20,6 +21,7 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.lsp4j.CompletionItem;
 
@@ -534,7 +536,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	private void createPackageProposalLabel(CompletionProposal proposal, CompletionItem item) {
-		Assert.isTrue(proposal.getKind() == CompletionProposal.PACKAGE_REF);
+		Assert.isTrue(proposal.getKind() == CompletionProposal.PACKAGE_REF || proposal.getKind() == CompletionProposal.MODULE_REF || proposal.getKind() == CompletionProposal.MODULE_DECLARATION);
 		item.setLabel(String.valueOf(proposal.getDeclarationSignature()));
 	}
 
@@ -604,58 +606,73 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	public void updateDescription(CompletionProposal proposal, CompletionItem item) {
 		switch (proposal.getKind()) {
-		case CompletionProposal.METHOD_NAME_REFERENCE:
-		case CompletionProposal.METHOD_REF:
-		case CompletionProposal.CONSTRUCTOR_INVOCATION:
-		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
-		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-			if (fContext != null && fContext.isInJavadoc()){
+			case CompletionProposal.METHOD_NAME_REFERENCE:
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				if (fContext != null && fContext.isInJavadoc()) {
+					createJavadocMethodProposalLabel(proposal, item);
+					break;
+				}
+				createMethodProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.METHOD_DECLARATION:
+				createOverrideMethodProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+				createAnonymousTypeLabel(proposal, item);
+				break;
+			case CompletionProposal.TYPE_REF:
+				createTypeProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.JAVADOC_TYPE_REF:
+				createJavadocTypeProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.JAVADOC_FIELD_REF:
+			case CompletionProposal.JAVADOC_VALUE_REF:
+			case CompletionProposal.JAVADOC_BLOCK_TAG:
+			case CompletionProposal.JAVADOC_INLINE_TAG:
+			case CompletionProposal.JAVADOC_PARAM_REF:
+				createJavadocSimpleProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.JAVADOC_METHOD_REF:
 				createJavadocMethodProposalLabel(proposal, item);
 				break;
-			}
-			createMethodProposalLabel(proposal,item);
-			break;
-		case CompletionProposal.METHOD_DECLARATION:
-			createOverrideMethodProposalLabel(proposal,item);
-			break;
-		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-			createAnonymousTypeLabel(proposal, item);
-			break;
-		case CompletionProposal.TYPE_REF:
-			createTypeProposalLabel(proposal, item);
-			break;
-		case CompletionProposal.JAVADOC_TYPE_REF:
-			createJavadocTypeProposalLabel(proposal, item);
-			break;
-		case CompletionProposal.JAVADOC_FIELD_REF:
-		case CompletionProposal.JAVADOC_VALUE_REF:
-		case CompletionProposal.JAVADOC_BLOCK_TAG:
-		case CompletionProposal.JAVADOC_INLINE_TAG:
-		case CompletionProposal.JAVADOC_PARAM_REF:
-			createJavadocSimpleProposalLabel(proposal, item);
-			break;
-		case CompletionProposal.JAVADOC_METHOD_REF:
-			createJavadocMethodProposalLabel(proposal, item);
-			break;
-		case CompletionProposal.PACKAGE_REF:
-			createPackageProposalLabel(proposal, item);
-			break;
-		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
-		case CompletionProposal.FIELD_REF:
-		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-			createLabelWithTypeAndDeclaration(proposal, item);
-			break;
-		case CompletionProposal.LOCAL_VARIABLE_REF:
-		case CompletionProposal.VARIABLE_DECLARATION:
-			createSimpleLabelWithType(proposal, item);
-			break;
-		case CompletionProposal.KEYWORD:
-		case CompletionProposal.LABEL_REF:
-			item.setLabel(createSimpleLabel(proposal).toString());
-			break;
-		default:
-			Assert.isTrue(false);
+			case CompletionProposal.PACKAGE_REF:
+			case CompletionProposal.MODULE_DECLARATION:
+			case CompletionProposal.MODULE_REF:
+				createPackageProposalLabel(proposal, item);
+				break;
+			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+			case CompletionProposal.FIELD_REF:
+			case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
+				createLabelWithTypeAndDeclaration(proposal, item);
+				break;
+			case CompletionProposal.LOCAL_VARIABLE_REF:
+			case CompletionProposal.VARIABLE_DECLARATION:
+				createSimpleLabelWithType(proposal, item);
+				break;
+			case CompletionProposal.KEYWORD:
+			case CompletionProposal.LABEL_REF:
+				item.setLabel(createSimpleLabel(proposal).toString());
+				break;
+			default:
+				JavaLanguageServerPlugin.logInfo(new String(proposal.getName()) + " is of type " + getProposal(proposal));
+				Assert.isTrue(false);
 		}
+	}
+
+	private String getProposal(CompletionProposal proposal) {
+		try {
+			for (Field field : CompletionProposal.class.getDeclaredFields()) {
+				if (int.class.equals(field.getType()) && Integer.valueOf(proposal.getKind()).equals(field.get(null))) {
+					return field.getName();
+				}
+			}
+		} catch (Exception e) {
+		}
+		return "unknown";
 	}
 }

@@ -116,6 +116,9 @@ public class HoverInfoProvider {
 	}
 
 	private boolean isResolved(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+		if (element == null) {
+			return false;
+		}
 		if (element.getElementType() != IJavaElement.TYPE) {
 			return true;
 		}
