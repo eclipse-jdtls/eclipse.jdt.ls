@@ -163,7 +163,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 					lineOffset = document.getLineOffset(line);
 				} catch (BadLocationException unlikelyException) {
 					JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
-					return new Range();
+					return new Range(new Position(line, 0), new Position(line, 0));
 				}
 				cEnd = marker.getAttribute(IMarker.CHAR_END, -1) - lineOffset;
 				cStart = marker.getAttribute(IMarker.CHAR_START, -1) - lineOffset;
