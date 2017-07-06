@@ -209,6 +209,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
 			}
 		}
+		if (preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
+			if (preferenceManager.getPreferences().isSignatureHelpEnabled()) {
+				registerCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, new CodeLensOptions(true));
+			} else {
+				unregisterCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP);
+			}
+		}
 		logInfo(">>New configuration: " + settings);
 	}
 

@@ -37,7 +37,6 @@ import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
-import org.eclipse.lsp4j.SignatureHelpOptions;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 
 /**
@@ -86,7 +85,6 @@ final public class InitHandler {
 		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
 		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".","@","#")));
 		capabilities.setHoverProvider(Boolean.TRUE);
-		capabilities.setSignatureHelpProvider(new SignatureHelpOptions(Arrays.asList("(")));
 		capabilities.setDefinitionProvider(Boolean.TRUE);
 		capabilities.setDocumentSymbolProvider(Boolean.TRUE);
 		capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
@@ -100,6 +98,9 @@ final public class InitHandler {
 		}
 		if (!preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
 			capabilities.setCodeLensProvider(new CodeLensOptions(true));
+		}
+		if (!preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
+			capabilities.setSignatureHelpProvider(SignatureHelpHandler.createOptions());
 		}
 		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);

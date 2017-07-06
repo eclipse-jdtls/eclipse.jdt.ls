@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -22,10 +23,15 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.SignatureHelpRequestor;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.SignatureHelp;
+import org.eclipse.lsp4j.SignatureHelpOptions;
 import org.eclipse.lsp4j.SignatureInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class SignatureHelpHandler {
+
+	public static SignatureHelpOptions createOptions() {
+		return new SignatureHelpOptions(Arrays.asList("("));
+	}
 
 	private static final int SEARCH_BOUND = 2000;
 
