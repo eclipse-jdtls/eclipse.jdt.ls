@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
@@ -65,6 +66,8 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		for (int i = 0; i < proposals.size(); i++) {
 			if (!monitor.isCanceled()) {
 				signatureHelp.getSignatures().add(this.toSignatureInformation(proposals.get(i)));
+			} else {
+				return null;
 			}
 		}
 
@@ -121,7 +124,12 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 		List<ParameterInformation> parameterInfos = new LinkedList<>();
 		for (int i = 0; i < parameterTypes.length; i++) {
-			parameterInfos.add(new ParameterInformation(new String(parameterNames[i]), new String(parameterTypes[i])));
+			StringBuffer buff = new StringBuffer();
+			buff.append(parameterTypes[i]);
+			buff.append(' ');
+			buff.append(parameterNames[i]);
+
+			parameterInfos.add(new ParameterInformation(buff.toString(), null));
 		}
 
 		$.setParameters(parameterInfos);
@@ -162,7 +170,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 					parameters[i]= getLowerBound(parameters[i]);
 				}
 
-				IMethod method = type.getMethod(String.valueOf(proposal.getName()), parameters);
+				IMethod method = JavaModelUtil.findMethod(String.valueOf(proposal.getName()), parameters, proposal.isConstructor(), type);
 
 				if (method != null && method.exists()) {
 					String javadoc = null;

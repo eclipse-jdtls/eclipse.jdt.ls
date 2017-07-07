@@ -62,13 +62,15 @@ public class SignatureHelpHandler {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
 				help = collector.getSignatureHelp(monitor);
 
-				int currentParameter = contextInfomation[1];
-				List<SignatureInformation> infos = help.getSignatures();
-				for (int i = 0; i < infos.size(); i++) {
-					if (infos.get(i).getParameters().size() >= currentParameter) {
-						help.setActiveSignature(i);
-						help.setActiveParameter(currentParameter);
-						break;
+				if (help != null) {
+					int currentParameter = contextInfomation[1];
+					List<SignatureInformation> infos = help.getSignatures();
+					for (int i = 0; i < infos.size(); i++) {
+						if (infos.get(i).getParameters().size() >= currentParameter + 1) {
+							help.setActiveSignature(i);
+							help.setActiveParameter(currentParameter);
+							break;
+						}
 					}
 				}
 			}
@@ -79,11 +81,14 @@ public class SignatureHelpHandler {
 	}
 
 	/*
-	 * @return Array of integer. The first will be the starting '(' of the methods if found. The second will be the current parameter position.
+	 * Calculate the heuristic information about the start offset of method and current parameter position. The parameter position is 0-based.
+	 * If cannot find the methods start offset after max search bound, -1 will be return.
+	 *
+	 * @return array of 2 integer2: the first one is starting offset of method and the second one is the current parameter position.
 	 */
 	private int[] getContextInfomation(IBuffer buffer, int offset) {
 		int[] result = new int[2];
-		result[0] = -1;
+		result[0] = result[1] = -1;
 		int depth = 1;
 
 		for (int i = offset - 1; i >= 0 && ((offset - i) < SEARCH_BOUND); i--) {

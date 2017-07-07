@@ -78,15 +78,17 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("   /** This is a method */\n");
 		buf.append("   public int foo(String s) { }\n");
 		buf.append("   public int bar(String s) { this.foo() }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		SignatureHelp help = getSignatureHelp(cu, 3, 39);
+		SignatureHelp help = getSignatureHelp(cu, 4, 39);
 		assertNotNull(help);
 		assertEquals(help.getSignatures().size(), 1);
 		assertEquals(help.getSignatures().get(0).getLabel(), "foo(String s) : int");
+		assertTrue(help.getSignatures().get(0).getDocumentation().length() > 0);
 	}
 
 	@Test
@@ -105,8 +107,8 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelp help = getSignatureHelp(cu, 5, 42);
 		assertNotNull(help);
 		assertEquals(help.getSignatures().size(), 3);
+		assertEquals(help.getActiveParameter(), (Integer) 1);
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(int s, String s) : int");
-
 	}
 
 	@Test
