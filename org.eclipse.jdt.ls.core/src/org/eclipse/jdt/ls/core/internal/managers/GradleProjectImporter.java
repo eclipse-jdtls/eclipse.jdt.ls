@@ -56,7 +56,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (directories == null) {
 			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR)
 					.includeNested(false)
-					.addExclusions("build");//default gradle build dir
+					.addExclusions("**/build");//default gradle build dir
 			directories = gradleDetector.scan(monitor);
 		}
 		return !directories.isEmpty();

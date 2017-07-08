@@ -10,10 +10,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.MessageType;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Preferences model
@@ -32,6 +40,12 @@ public class Preferences {
 	 * Preference key to enable/disable formatter.
 	 */
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
+
+	/**
+	 * Preference key to exclude directories when importing projects.
+	 */
+	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
+	public static final List<String> JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 
 	/**
 	 * Preference key for project build/configuration update settings.
@@ -96,6 +110,13 @@ public class Preferences {
 
 	private String favoriteStaticMembers;
 
+	private List<String> javaImportExclusions = new ArrayList<>();
+
+	static {
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata");
+	}
 	public static enum Severity {
 		ignore, log, info, warning, error;
 
@@ -145,12 +166,30 @@ public class Preferences {
 		javaFormatEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		favoriteStaticMembers = "";
+		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
 
 	private static String getStringValue(Map<String, Object> configuration, String key, String def) {
 		Object val = configuration.get(key);
 		if (val instanceof String) {
 			return (String) val;
+		}
+		return def;
+	}
+
+	private static List<String> getListValue(Map<String, Object> configuration, String key, List<String> def) {
+		Object val = configuration.get(key);
+		if (val instanceof String) {
+			try {
+				Gson gson = new Gson();
+				Type type = new TypeToken<List<String>>() {
+				}.getType();
+				List<String> list = gson.fromJson((String) val, type);
+				return list;
+			} catch (JsonSyntaxException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return def;
+			}
 		}
 		return def;
 	}
@@ -195,6 +234,9 @@ public class Preferences {
 		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
 
+		List<String> javaImportExclusions = getListValue(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
+		prefs.setJavaImportExclusions(javaImportExclusions);
+
 		String mavenUserSettings = getStringValue(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
@@ -207,6 +249,10 @@ public class Preferences {
 		return prefs;
 	}
 
+	public Preferences setJavaImportExclusions(List<String> javaImportExclusions) {
+		this.javaImportExclusions = javaImportExclusions;
+		return this;
+	}
 
 	private Preferences setMembersSortOrder(String sortOrder) {
 		this.memberOrders = new MemberSortOrder(sortOrder);
@@ -244,6 +290,10 @@ public class Preferences {
 
 	public FeatureStatus getUpdateBuildConfigurationStatus() {
 		return updateBuildConfigurationStatus;
+	}
+
+	public List<String> getJavaImportExclusions() {
+		return javaImportExclusions;
 	}
 
 	public MemberSortOrder getMemberSortOrder() {

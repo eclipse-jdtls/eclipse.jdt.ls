@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,7 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +30,7 @@ import org.junit.Test;
 
 public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
 
+	private static final String BAR_PATTERN = "**/bar";
 	private EclipseProjectImporter importer;
 
 	@Before
@@ -59,7 +62,22 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertIsJavaProject(foo);
 	}
 
+	@Test
+	public void testJavaImportExclusions() throws Exception {
+		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		try {
+			javaImportExclusions.add(BAR_PATTERN);
+			List<IProject> projects = importProjects("eclipse/multi");
+			assertEquals(2, projects.size());
+			IProject bar = getProject("bar");
+			assertNull(bar);
+			IProject foo = getProject("foo");
+			assertIsJavaProject(foo);
+		} finally {
+			javaImportExclusions.remove(BAR_PATTERN);
+		}
 
+	}
 
 	@Test
 	public void testFindUniqueProject() throws Exception {
