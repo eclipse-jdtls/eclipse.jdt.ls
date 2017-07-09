@@ -249,8 +249,17 @@ public class DocumentLifeCycleHandler {
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
 				Range range = changeEvent.getRange();
+				int length;
+
+				if (range != null) {
+					length = changeEvent.getRangeLength().intValue();
+				} else {
+					// range is optional and if not given, the whole file content is replaced
+					length = unit.getSource().length();
+					range = JDTUtils.toRange(unit, 0, length);
+				}
+
 				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
-				int length = changeEvent.getRangeLength().intValue();
 
 				TextEdit edit = null;
 				String text = changeEvent.getText();
