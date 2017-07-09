@@ -136,7 +136,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		buf.append("  X x;\n");
 		buf.append("}\n");
 
-		changeDocument(cu1, buf.toString(), 2);
+		changeDocumentFull(cu1, buf.toString(), 2);
 
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
@@ -194,7 +194,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		buf.append(TO_BE_CHANGED_PART);
 		buf.append("  X x;\n");
 
-		changeDocument(cu1, buf.toString(), 2, BEGIN_PART.length(), TO_BE_CHANGED_PART.length());
+		changeDocumentIncrementally(cu1, buf.toString(), 2, BEGIN_PART.length(), TO_BE_CHANGED_PART.length());
 
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
@@ -272,7 +272,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		buf.append("  public static void foo() {}\n");
 		buf.append("}\n");
 
-		changeDocument(cu1, buf.toString(), 2);
+		changeDocumentFull(cu1, buf.toString(), 2);
 
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
@@ -426,30 +426,26 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		lifeCycleHandler.didOpen(openParms);
 	}
 
-	private void changeDocument(ICompilationUnit cu, String content, int version, int offset, int length) throws JavaModelException {
-		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
-		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
-		textDocument.setVersion(version);
-		changeParms.setTextDocument(textDocument);
-		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
+	private void changeDocumentIncrementally(ICompilationUnit cu, String content, int version, int offset, int length) throws JavaModelException {
 		Range range = JDTUtils.toRange(cu, offset, length);
-		event.setRange(range);
-		event.setRangeLength(length);
-		event.setText(content);
-		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
-		contentChanges.add(event);
-		changeParms.setContentChanges(contentChanges);
-		lifeCycleHandler.didChange(changeParms);
+		changeDocument(cu, content, version, range, length);
 	}
 
-	private void changeDocument(ICompilationUnit cu, String content, int version) throws JavaModelException {
+	private void changeDocumentFull(ICompilationUnit cu, String content, int version) throws JavaModelException {
+		changeDocument(cu, content, version, null, 0);
+	}
+
+	private void changeDocument(ICompilationUnit cu, String content, int version, Range range, int length) throws JavaModelException {
 		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
 		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
 		textDocument.setUri(JDTUtils.getFileURI(cu));
 		textDocument.setVersion(version);
 		changeParms.setTextDocument(textDocument);
 		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
+		if (range != null) {
+			event.setRange(range);
+			event.setRangeLength(length);
+		}
 		event.setText(content);
 		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
 		contentChanges.add(event);
