@@ -162,6 +162,64 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	@Test
+	public void testIncrementalChangeDocument() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		String BEGIN_PART = "package test1;\n";
+		String TO_BE_CHANGED_PART = "public class E123 {\n";
+		String END_PART = "}\n";
+		buf.append(BEGIN_PART);
+		buf.append(TO_BE_CHANGED_PART);
+		buf.append(END_PART);
+		ICompilationUnit cu1 = pack1.createCompilationUnit("E123.java", buf.toString(), false, null);
+
+		assertEquals(false, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported();
+		assertEquals(0, sharedASTProvider.getCacheSize());
+		assertNewASTsCreated(0);
+
+		openDocument(cu1, cu1.getSource(), 1);
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
+		assertEquals(1, sharedASTProvider.getCacheSize());
+		assertNewASTsCreated(1);
+
+		buf = new StringBuilder();
+		buf.append(TO_BE_CHANGED_PART);
+		buf.append("  X x;\n");
+
+		changeDocument(cu1, buf.toString(), 2, BEGIN_PART.length(), TO_BE_CHANGED_PART.length());
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(true, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
+		assertEquals(1, sharedASTProvider.getCacheSize());
+		assertNewASTsCreated(1);
+
+		saveDocument(cu1);
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported();
+		assertEquals(1, sharedASTProvider.getCacheSize());
+		assertNewASTsCreated(0);
+
+		closeDocument(cu1);
+
+		assertEquals(false, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported();
+		assertEquals(0, sharedASTProvider.getCacheSize());
+		assertNewASTsCreated(0);
+	}
+
+	@Test
 	public void testFixInDependencyScenario() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
@@ -368,6 +426,23 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		lifeCycleHandler.didOpen(openParms);
 	}
 
+	private void changeDocument(ICompilationUnit cu, String content, int version, int offset, int length) throws JavaModelException {
+		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
+		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
+		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setVersion(version);
+		changeParms.setTextDocument(textDocument);
+		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
+		Range range = JDTUtils.toRange(cu, offset, length);
+		event.setRange(range);
+		event.setRangeLength(length);
+		event.setText(content);
+		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
+		contentChanges.add(event);
+		changeParms.setContentChanges(contentChanges);
+		lifeCycleHandler.didChange(changeParms);
+	}
+
 	private void changeDocument(ICompilationUnit cu, String content, int version) throws JavaModelException {
 		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
 		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
@@ -375,9 +450,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		textDocument.setVersion(version);
 		changeParms.setTextDocument(textDocument);
 		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
-		Range range = JDTUtils.toRange(cu, 0, cu.getSource().length());
-		event.setRange(range);
-		event.setRangeLength(cu.getSource().length());
 		event.setText(content);
 		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
 		contentChanges.add(event);
