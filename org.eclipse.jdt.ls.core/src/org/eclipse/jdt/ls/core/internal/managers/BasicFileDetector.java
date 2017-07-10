@@ -15,10 +15,12 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.FileVisitResult.TERMINATE;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 
 /**
@@ -43,7 +46,7 @@ import org.eclipse.jdt.ls.core.internal.StatusFactory;
  */
 public class BasicFileDetector {
 
-	private static final String METADATA_FOLDER = ".metadata";
+	private static final String METADATA_FOLDER = "**/.metadata";
 	private List<Path> directories;
 	private Path rootDir;
 	private String fileName;
@@ -63,6 +66,12 @@ public class BasicFileDetector {
 		this.fileName = fileName;
 		directories = new ArrayList<>();
 		addExclusions(METADATA_FOLDER);
+		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		if (javaImportExclusions != null) {
+			for (String pattern : javaImportExclusions) {
+				addExclusions(pattern);
+			}
+		}
 	}
 
 	/**
@@ -146,8 +155,16 @@ public class BasicFileDetector {
 	}
 
 	private boolean isExcluded(Path dir) {
-		//TODO support regexp, maybe?
-		return dir.getFileName() != null && exclusions.contains(dir.getFileName().toString());
+		if (dir.getFileName() == null) {
+			return true;
+		}
+		for (String pattern : exclusions) {
+			PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+			if (matcher.matches(dir)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean hasTargetFile(Path dir) {
