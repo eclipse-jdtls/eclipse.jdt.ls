@@ -63,15 +63,16 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		response.setProposals(proposals);
 		CompletionResponses.store(response);
 
+		List<SignatureInformation> infos = new ArrayList<>();
 		for (int i = 0; i < proposals.size(); i++) {
 			if (!monitor.isCanceled()) {
-				signatureHelp.getSignatures().add(this.toSignatureInformation(proposals.get(i)));
+				infos.add(this.toSignatureInformation(proposals.get(i)));
 			} else {
-				return null;
+				return signatureHelp;
 			}
 		}
-
-		signatureHelp.getSignatures().sort((SignatureInformation a, SignatureInformation b) -> a.getParameters().size() - b.getParameters().size());
+		infos.sort((SignatureInformation a, SignatureInformation b) -> a.getParameters().size() - b.getParameters().size());
+		signatureHelp.getSignatures().addAll(infos);
 
 		return signatureHelp;
 	}
@@ -124,12 +125,12 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 		List<ParameterInformation> parameterInfos = new LinkedList<>();
 		for (int i = 0; i < parameterTypes.length; i++) {
-			StringBuffer buff = new StringBuffer();
-			buff.append(parameterTypes[i]);
-			buff.append(' ');
-			buff.append(parameterNames[i]);
+			StringBuilder builder = new StringBuilder();
+			builder.append(parameterTypes[i]);
+			builder.append(' ');
+			builder.append(parameterNames[i]);
 
-			parameterInfos.add(new ParameterInformation(buff.toString(), null));
+			parameterInfos.add(new ParameterInformation(builder.toString(), null));
 		}
 
 		$.setParameters(parameterInfos);
