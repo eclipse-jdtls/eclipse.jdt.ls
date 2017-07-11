@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Java
 Bundle-SymbolicName: org.eclipse.jdt.ls.debug;singleton:=true
-Bundle-Version: 0.1.0.qualifier
+Bundle-Version: 0.2.0.qualifier
 Bundle-Activator: org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.osgi.framework;version="1.3.0"
