@@ -59,7 +59,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	private static final String CODELENS_TEMPLATE = "{\n" +
+	private static final String CODELENS_IMPLEMENTATIONS_TEMPLATE = "{\n" +
 			"    \"id\": \"1\",\n" +
 			"    \"method\": \"codeLens/resolve\",\n" +
 			"    \"params\": {\n" +
@@ -78,7 +78,34 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 			"	        {\n" +
 			"	            \"line\": ${line},\n" +
 			"	            \"character\": ${start}\n" +
+			"	        },\n" +
+			"	        \"implementations\"\n" +
+			"	    ]"+
+			"    },\n" +
+			"    \"jsonrpc\": \"2.0\"\n" +
+			"}";
+
+	private static final String CODELENS_REFERENCES_TEMPLATE = "{\n" +
+			"    \"id\": \"1\",\n" +
+			"    \"method\": \"codeLens/resolve\",\n" +
+			"    \"params\": {\n" +
+			"		\"range\": {\n" +
+			"	        \"start\": {\n" +
+			"	            \"line\": ${line},\n" +
+			"	            \"character\": ${start}\n" +
+			"	        },\n" +
+			"	        \"end\": {\n" +
+			"	            \"line\": ${line},\n" +
+			"	            \"character\": ${end}\n" +
 			"	        }\n" +
+			"	    },\n" +
+			"	    \"data\": [\n" +
+			"	        \"${file}\",\n" +
+			"	        {\n" +
+			"	            \"line\": ${line},\n" +
+			"	            \"character\": ${start}\n" +
+			"	        },\n" +
+			"	        \"references\"\n" +
 			"	    ]"+
 			"    },\n" +
 			"    \"jsonrpc\": \"2.0\"\n" +
@@ -148,7 +175,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getPreferences()).thenReturn(noCodeLenses);
 		handler = new CodeLensHandler(preferenceManager);
 
-		String payload = createCodeLensSymbolsRequest("src/java/Foo.java");
+		String payload = createCodeLensSymbolsRequest("src/java/IFoo.java");
 		CodeLensParams codeLensParams = getParams(payload);
 		String uri = codeLensParams.getTextDocument().getUri();
 		assertFalse(uri.isEmpty());
@@ -160,6 +187,91 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(0, result.size());
 	}
 
+	@Test
+	public void testEnableImplementationsCodeLensSymbols() throws Exception {
+		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "true"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(implementationsCodeLenses);
+		handler = new CodeLensHandler(preferenceManager);
+
+		String payload = createCodeLensSymbolsRequest("src/java/IFoo.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
+
+		//then
+		assertEquals(2, result.size());
+		CodeLens lens = result.get(1);
+		@SuppressWarnings("unchecked")
+		List<Object> data = (List<Object>) lens.getData();
+		String type = (String) data.get(2);
+		assertEquals(type, "implementations");
+	}
+
+	@Test
+	public void testDisableImplementationsCodeLensSymbols() throws Exception {
+		Preferences noImplementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "false"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(noImplementationsCodeLenses);
+		Preferences noReferencesCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, "false"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(noReferencesCodeLenses);
+		handler = new CodeLensHandler(preferenceManager);
+
+		String payload = createCodeLensSymbolsRequest("src/java/IFoo.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
+
+		//then
+		assertEquals(0, result.size());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testResolveImplementationsCodeLense() {
+		String source = "src/java/IFoo.java";
+		String payload = createCodeLensImplementationsRequest(source, 5, 17, 21);
+
+		CodeLens lens = getParams(payload);
+		Range range = lens.getRange();
+		assertRange(5, 17, 21, range);
+
+		CodeLens result = handler.resolve(lens, monitor);
+		assertNotNull(result);
+
+		//Check if command found
+		Command command = result.getCommand();
+		assertNotNull(command);
+		assertEquals("2 implementations", command.getTitle());
+		assertEquals("java.show.implementations", command.getCommand());
+
+		//Check codelens args
+		List<Object> args = command.getArguments();
+		assertEquals(3, args.size());
+
+		//Check we point to the Bar class
+		String sourceUri = args.get(0).toString();
+		assertTrue(sourceUri.endsWith("IFoo.java"));
+
+		//CodeLens position
+		Map<String, Object> map = (Map<String, Object>) args.get(1);
+		assertEquals(5.0, map.get("line"));
+		assertEquals(17.0, map.get("character"));
+
+		//Reference location
+		List<Location> locations = (List<Location>) args.get(2);
+		assertEquals(2, locations.size());
+		Location loc = locations.get(0);
+		assertTrue(loc.getUri().endsWith("src/java/Foo2.java"));
+		assertRange(5, 13, 17, loc.getRange());
+	}
 
 	@SuppressWarnings("unchecked")
 	@Test
@@ -257,9 +369,22 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		return createCodeLensRequest(uri, line, start, end);
 	}
 
+	String createCodeLensImplementationsRequest(String file, int line, int start, int end) {
+		URI uri = project.getFile(file).getRawLocationURI();
+		return createCodeLensImplementationsRequest(uri, line, start, end);
+	}
+
 	String createCodeLensRequest(URI file, int line, int start, int end) {
 		String fileURI = ResourceUtils.fixURI(file);
-		return CODELENS_TEMPLATE.replace("${file}", fileURI)
+		return CODELENS_REFERENCES_TEMPLATE.replace("${file}", fileURI)
+				.replace("${line}", String.valueOf(line))
+				.replace("${start}", String.valueOf(start))
+				.replace("${end}", String.valueOf(end));
+	}
+
+	String createCodeLensImplementationsRequest(URI file, int line, int start, int end) {
+		String fileURI = ResourceUtils.fixURI(file);
+		return CODELENS_IMPLEMENTATIONS_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))
 				.replace("${start}", String.valueOf(start))
 				.replace("${end}", String.valueOf(end));

@@ -203,7 +203,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			}
 		}
 		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+			if (preferenceManager.getPreferences().isCodeLensEnabled()) {
+				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
 				registerCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
 			} else {
 				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);

@@ -19,6 +19,7 @@ import java.util.Map;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -44,6 +45,10 @@ import org.eclipse.lsp4j.Range;
 
 public class CodeLensHandler {
 
+	private static final String JAVA_SHOW_REFERENCES_COMMAND = "java.show.references";
+	private static final String JAVA_SHOW_IMPLEMENTATIONS_COMMAND = "java.show.implementations";
+	private static final String IMPLEMENTATION_TYPE = "implementations";
+	private static final String REFERENCES_TYPE = "references";
 	private PreferenceManager preferenceManager;
 
 	public CodeLensHandler(PreferenceManager preferenceManager) {
@@ -60,6 +65,7 @@ public class CodeLensHandler {
 		//(i.e. having no commands) would be returned.
 		try {
 			List<Object> data = (List<Object>) lens.getData();
+			String type = (String) data.get(2);
 			String uri = (String) data.get(0);
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 			if (unit == null) {
@@ -67,16 +73,35 @@ public class CodeLensHandler {
 			}
 			Map<String, Object> position = (Map<String, Object>) data.get(1);
 			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
-			List<Location> locations = findReferences(element, monitor);
-			int nReferences = locations.size();
-			Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references",
-					"java.show.references",
-					Arrays.asList(uri, position, locations));
-			lens.setCommand(command);
+			if (REFERENCES_TYPE.equals(type)) {
+				List<Location> locations = findReferences(element, monitor);
+				int nReferences = locations.size();
+				Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references", JAVA_SHOW_REFERENCES_COMMAND, Arrays.asList(uri, position, locations));
+				lens.setCommand(command);
+			} else if (IMPLEMENTATION_TYPE.equals(type) && element instanceof IType) {
+				List<Location> locations = findImplementations((IType) element, monitor);
+				int nImplementations = locations.size();
+				Command command = new Command(nImplementations == 1 ? "1 implementation" : nImplementations + " implementations", JAVA_SHOW_IMPLEMENTATIONS_COMMAND, Arrays.asList(uri, position, locations));
+				lens.setCommand(command);
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
 		}
 		return lens;
+	}
+
+	private List<Location> findImplementations(IType type, IProgressMonitor monitor) throws JavaModelException {
+		IType[] results = type.newTypeHierarchy(monitor).getAllSubtypes(type);
+		final List<Location> result = new ArrayList<>();
+		for (IType t : results) {
+			ICompilationUnit compilationUnit = (ICompilationUnit) t.getAncestor(IJavaElement.COMPILATION_UNIT);
+			if (compilationUnit == null) {
+				continue;
+			}
+			Location location = JDTUtils.toLocation(t);
+			result.add(location);
+		}
+		return result;
 	}
 
 	private List<Location> findReferences(IJavaElement element, IProgressMonitor monitor)
@@ -84,7 +109,6 @@ public class CodeLensHandler {
 		if (element == null) {
 			return Collections.emptyList();
 		}
-
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
 		final List<Location> result = new ArrayList<>();
 		SearchEngine engine = new SearchEngine();
@@ -103,9 +127,7 @@ public class CodeLensHandler {
 					}
 					Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
 					result.add(location);
-
 				}
-
 			}
 		}, monitor);
 
@@ -113,7 +135,7 @@ public class CodeLensHandler {
 	}
 
 	public List<CodeLens> getCodeLensSymbols(String uri, IProgressMonitor monitor) {
-		if (!preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+		if (!preferenceManager.getPreferences().isCodeLensEnabled()) {
 			return Collections.emptyList();
 		}
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
@@ -147,14 +169,27 @@ public class CodeLensHandler {
 				continue;
 			}
 
-			CodeLens lens = new CodeLens();
-
-			ISourceRange r = ((ISourceReference) element).getNameRange();
-			final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
-			lens.setRange(range);
-			lens.setData(Arrays.asList(JDTUtils.getFileURI(unit), range.getStart()));
-			lenses.add(lens);
+			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+				CodeLens lens = getCodeLens(REFERENCES_TYPE, element, unit);
+				lenses.add(lens);
+			}
+			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
+				IType type = (IType) element;
+				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
+					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, unit);
+					lenses.add(lens);
+				}
+			}
 		}
+	}
+
+	private CodeLens getCodeLens(String type, IJavaElement element, ICompilationUnit unit) throws JavaModelException {
+		CodeLens lens = new CodeLens();
+		ISourceRange r = ((ISourceReference) element).getNameRange();
+		final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
+		lens.setRange(range);
+		lens.setData(Arrays.asList(JDTUtils.getFileURI(unit), range.getStart(), type));
+		return lens;
 	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
