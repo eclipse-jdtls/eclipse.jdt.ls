@@ -75,10 +75,10 @@ public class JDTLanguageServerTest {
 		server.didChangeConfiguration(params);
 		verify(client, times(4)).registerCapability(any());
 
-		//On 2nd call, no registration calls should be emitted
+		//On 2nd call, 1 registration call should be emitted
 		reset(client);
 		server.didChangeConfiguration(params);
-		verify(client, never()).registerCapability(any());
+		verify(client, times(1)).registerCapability(any());
 
 		// unregister capabilities
 		reset(client);

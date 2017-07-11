@@ -37,6 +37,11 @@ public class Preferences {
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
 
 	/**
+	 * Preference key to enable/disable implementation code lenses.
+	 */
+	public static final String IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY = "java.implementationsCodeLens.enabled";
+
+	/**
 	 * Preference key to enable/disable formatter.
 	 */
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
@@ -111,6 +116,7 @@ public class Preferences {
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean signatureHelpEnabled;
 	private MemberSortOrder memberOrders;
@@ -172,6 +178,7 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
+		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
 		signatureHelpEnabled = false;
 		memberOrders = new MemberSortOrder(null);
@@ -240,6 +247,8 @@ public class Preferences {
 
 		boolean referenceCodelensEnabled = getBooleanValue(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
+		boolean implementationCodeLensEnabled = getBooleanValue(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
+		prefs.setImplementationCodelensEnabled(implementationCodeLensEnabled);
 
 		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
@@ -282,6 +291,11 @@ public class Preferences {
 		return this;
 	}
 
+	private Preferences setImplementationCodelensEnabled(boolean enabled) {
+		this.implementationsCodeLensEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setJavaFormatEnabled(boolean enabled) {
 		this.javaFormatEnabled = enabled;
 		return this;
@@ -320,6 +334,14 @@ public class Preferences {
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public boolean isImplementationsCodeLensEnabled() {
+		return implementationsCodeLensEnabled;
+	}
+
+	public boolean isCodeLensEnabled() {
+		return referencesCodeLensEnabled || implementationsCodeLensEnabled;
 	}
 
 	public boolean isJavaFormatEnabled() {
