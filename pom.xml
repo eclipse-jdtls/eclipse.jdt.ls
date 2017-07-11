@@ -5,7 +5,7 @@
 	<groupId>org.eclipse.jdt.ls</groupId>
 	<artifactId>parent</artifactId>
 	<name>${base.name} :: Parent</name>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<base.name>JDT Language Server</base.name>

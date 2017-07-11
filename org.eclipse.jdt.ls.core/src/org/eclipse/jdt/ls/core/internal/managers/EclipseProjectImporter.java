@@ -35,7 +35,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 	public boolean applies(IProgressMonitor monitor) throws CoreException {
 		if (directories == null) {
 			BasicFileDetector eclipseDetector = new BasicFileDetector(rootFolder.toPath(), DESCRIPTION_FILE_NAME)
-					.addExclusions("bin");//default Eclipse build dir
+					.addExclusions("**/bin");//default Eclipse build dir
 			directories = eclipseDetector.scan(monitor);
 		}
 		return !directories.isEmpty();

@@ -48,10 +48,7 @@ public final class LanguageServerWorkingCopyOwner extends WorkingCopyOwner {
 	 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
 	 */
 	@Override
-	public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
-		final IResource resource = workingCopy.getPrimary().getResource();
-		return new DiagnosticsHandler(connection,
-				resource,
-				resource.getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject()));
+	public IProblemRequestor getProblemRequestor(ICompilationUnit cu) {
+		return new DiagnosticsHandler(connection, cu);
 	}
 }

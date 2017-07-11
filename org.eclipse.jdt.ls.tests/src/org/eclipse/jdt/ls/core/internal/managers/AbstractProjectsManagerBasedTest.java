@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -38,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -48,12 +51,13 @@ import org.mockito.Mock;
  */
 public abstract class AbstractProjectsManagerBasedTest {
 
-	public static final String DEFAULT_PROJECT_NAME = "TestSetupProject";
+	public static final String TEST_PROJECT_NAME = "TestProject";
 
 	protected IProgressMonitor monitor = new NullProgressMonitor();
 	protected ProjectsManager projectsManager;
 	@Mock
 	protected PreferenceManager preferenceManager;
+	protected Preferences preferences = new Preferences();
 
 	protected SimpleLogListener logListener;
 
@@ -61,7 +65,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 	public void initProjectManager() {
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
-
+		if (preferenceManager != null) {
+			when(preferenceManager.getPreferences()).thenReturn(preferences);
+		}
 		projectsManager = new ProjectsManager(preferenceManager);
 
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
@@ -78,9 +84,18 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {
-		projectsManager.initializeProjects(null, monitor);
+		IProject testProject = ResourcesPlugin.getWorkspace().getRoot().getProject(TEST_PROJECT_NAME);
+		assertEquals(false, testProject.exists());
+		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
 		waitForBackgroundJobs();
-		return JavaCore.create(projectsManager.getDefaultProject());
+		return JavaCore.create(testProject);
+	}
+
+	protected IJavaProject newDefaultProject() throws Exception {
+		IProject testProject = projectsManager.getDefaultProject();
+		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
+		waitForBackgroundJobs();
+		return JavaCore.create(testProject);
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {

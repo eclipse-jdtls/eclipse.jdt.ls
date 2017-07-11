@@ -66,6 +66,25 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testJavaFormatEnable() throws Exception {
+		String text =
+		//@formatter:off
+				"package org.sample   ;\n\n" +
+				"      public class Baz {  String name;}\n";
+			//@formatter:on"
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
+		preferenceManager.getPreferences().setJavaFormatEnabled(false);
+		String uri = JDTUtils.getFileURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true, Collections.emptyMap());// ident == 4 spaces
+		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		List<? extends TextEdit> edits = server.formatting(params).get();
+		assertNotNull(edits);
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(text, newText);
+	}
+
+	@Test
 	public void testDocumentFormattingWithTabs() throws Exception {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
 		//@formatter:off

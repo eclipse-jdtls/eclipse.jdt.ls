@@ -10,20 +10,32 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.filebuffers.IFileBuffer;
+import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -54,8 +66,75 @@ public class DocumentLifeCycleHandler {
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
-	private WorkingCopyOwner wcOwner;
 
+	private SharedASTProvider sharedASTProvider;
+	private WorkspaceJob validationTimer;
+
+	private Set<ICompilationUnit> toReconcile = new HashSet<>();
+
+	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, boolean delayValidation) {
+		this.connection = connection;
+		this.preferenceManager = preferenceManager;
+		this.projectsManager = projectsManager;
+		this.sharedASTProvider = SharedASTProvider.getInstance();
+		if (delayValidation) {
+			this.validationTimer = new WorkspaceJob("Validate documents") {
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					return performValidation(monitor);
+				}
+			};
+			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
+		}
+	}
+
+	private void triggerValidation(ICompilationUnit cu) throws JavaModelException {
+		synchronized (toReconcile) {
+			toReconcile.add(cu);
+		}
+		if (validationTimer != null) {
+			validationTimer.cancel();
+			validationTimer.schedule(400);
+		} else {
+			performValidation(new NullProgressMonitor());
+		}
+
+	}
+
+	private IStatus performValidation(IProgressMonitor monitor) throws JavaModelException {
+		long start = System.currentTimeMillis();
+
+		List<ICompilationUnit> cusToReconcile = new ArrayList<>();
+		synchronized (toReconcile) {
+			cusToReconcile.addAll(toReconcile);
+			toReconcile.clear();
+		}
+		if (cusToReconcile.isEmpty()) {
+			return Status.OK_STATUS;
+		}
+
+		// first reconcile all units with content changes
+		SubMonitor progress = SubMonitor.convert(monitor, cusToReconcile.size() + 1);
+		for (ICompilationUnit cu : cusToReconcile) {
+			cu.reconcile(ICompilationUnit.NO_AST, true, null, progress.newChild(1));
+		}
+		this.sharedASTProvider.invalidateAll();
+
+		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
+		List<CompilationUnit> astRoots = this.sharedASTProvider.getASTs(toValidate, monitor);
+		for (CompilationUnit astRoot : astRoots) {
+			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
+			DiagnosticsHandler handler = new DiagnosticsHandler(connection, (ICompilationUnit) astRoot.getTypeRoot());
+			handler.beginReporting();
+
+			for (IProblem problem : astRoot.getProblems()) {
+				handler.acceptProblem(problem);
+			}
+			handler.endReporting();
+		}
+		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ", validated: " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
+		return Status.OK_STATUS;
+	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		try {
@@ -109,13 +188,6 @@ public class DocumentLifeCycleHandler {
 		}
 	}
 
-	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, WorkingCopyOwner wcOwner) {
-		this.connection = connection;
-		this.preferenceManager = preferenceManager;
-		this.projectsManager = projectsManager;
-		this.wcOwner = wcOwner;
-	}
-
 	public void handleOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
@@ -154,32 +226,40 @@ public class DocumentLifeCycleHandler {
 			//			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
 			unit.becomeWorkingCopy(new NullProgressMonitor());
 			IBuffer buffer = unit.getBuffer();
-			if(buffer != null) {
-				buffer.setContents(params.getTextDocument().getText());
+			String newContent = params.getTextDocument().getText();
+			if (buffer != null && !buffer.getContents().equals(newContent)) {
+				buffer.setContents(newContent);
 			}
-
-			// TODO: wire up cancellation.
-			unit.reconcile(ICompilationUnit.NO_AST, true/*don't force problem detection*/, false, wcOwner, null/*no progress monitor*/);
+			triggerValidation(unit);
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Creating working copy ",e);
+			JavaLanguageServerPlugin.logException("Error while opening document", e);
 		}
 	}
 
 	public void handleChanged(DidChangeTextDocumentParams params) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 
-		if (unit == null || !unit.isWorkingCopy()) {
+		if (unit == null || !unit.isWorkingCopy() || params.getContentChanges().isEmpty()) {
 			return;
 		}
 
 		try {
-			SharedASTProvider.getInstance().invalidate(unit);
+			sharedASTProvider.invalidate(unit);
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
 				Range range = changeEvent.getRange();
+				int length;
+
+				if (range != null) {
+					length = changeEvent.getRangeLength().intValue();
+				} else {
+					// range is optional and if not given, the whole file content is replaced
+					length = unit.getSource().length();
+					range = JDTUtils.toRange(unit, 0, length);
+				}
+
 				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
-				int length = changeEvent.getRangeLength().intValue();
 
 				TextEdit edit = null;
 				String text = changeEvent.getText();
@@ -193,30 +273,33 @@ public class DocumentLifeCycleHandler {
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 			}
-			unit.reconcile(ICompilationUnit.NO_AST, true, false, wcOwner, null);
+			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
-			JavaLanguageServerPlugin.logException("Failed to apply changes",e);
+			JavaLanguageServerPlugin.logException("Error while handling document change", e);
 		}
 	}
 
 	public void handleClosed(DidCloseTextDocumentParams params) {
-		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleClosed");
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null) {
 			return;
 		}
 		try {
-			SharedASTProvider.getInstance().invalidate(unit);
+			sharedASTProvider.invalidate(unit);
 			unit.discardWorkingCopy();
 		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Error while handling document close", e);
 		}
 	}
 
 	public void handleSaved(DidSaveTextDocumentParams params) {
-		JavaLanguageServerPlugin.logInfo("DocumentLifeCycleHandler.handleSaved");
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		IFileBuffer fileBuffer = FileBuffers.getTextFileBufferManager().getFileBuffer(unit.getPath(), LocationKind.IFILE);
+		if (fileBuffer != null) {
+			fileBuffer.setDirty(false);
+		}
 		if (unit != null && unit.isWorkingCopy()) {
 			projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
 		}

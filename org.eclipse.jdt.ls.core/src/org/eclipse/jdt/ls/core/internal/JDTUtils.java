@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -186,7 +187,7 @@ public final class JDTUtils {
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
 			return getPackageName(javaProject, content);
-		} catch (Exception e) {
+		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException("Failed to read package name from "+uri, e);
 		}
 		return "";

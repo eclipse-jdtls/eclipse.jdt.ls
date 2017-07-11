@@ -20,7 +20,9 @@ import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
+import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -43,6 +45,7 @@ public class JavaClientConnection {
 		 */
 		@JsonNotification("language/actionableNotification")
 		void sendActionableNotification(ActionableNotification notification);
+
 	}
 
 	private final LogHandler logHandler;
@@ -138,6 +141,20 @@ public class JavaClientConnection {
 		$.setEdit(edit);
 		ApplyWorkspaceEditResponse response = client.applyEdit($).join();
 		return response.getApplied().booleanValue();
+	}
+
+	/**
+	 * @see {@link org.eclipse.lsp4j.services.LanguageClient#unregisterCapability(RegistrationParams)}
+	 */
+	public void unregisterCapability(UnregistrationParams params) {
+		client.unregisterCapability(params);
+	}
+
+	/**
+	 * @see {@link org.eclipse.lsp4j.services.LanguageClient#registerCapability(RegistrationParams)}
+	 */
+	public void registerCapability(RegistrationParams params) {
+		client.registerCapability(params);
 	}
 
 	public void disconnect() {

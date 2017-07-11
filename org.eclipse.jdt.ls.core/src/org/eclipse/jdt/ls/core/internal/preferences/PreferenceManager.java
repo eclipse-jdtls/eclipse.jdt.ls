@@ -74,11 +74,16 @@ public class PreferenceManager {
 		// TODO serialize preferences
 	}
 
-	@Deprecated
+	/**
+	 * Workspace wide preferences
+	 */
 	public Preferences getPreferences() {
 		return preferences;
 	}
 
+	/**
+	 * Resource specific preferences
+	 */
 	public Preferences getPreferences(IResource resource) {
 		return preferences;
 	}

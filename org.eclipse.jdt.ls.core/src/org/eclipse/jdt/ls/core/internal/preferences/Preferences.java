@@ -10,9 +10,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.MessageType;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Preferences model
@@ -26,6 +35,17 @@ public class Preferences {
 	 * Preference key to enable/disable reference code lenses.
 	 */
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
+
+	/**
+	 * Preference key to enable/disable formatter.
+	 */
+	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
+
+	/**
+	 * Preference key to exclude directories when importing projects.
+	 */
+	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
+	public static final List<String> JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 
 	/**
 	 * Preference key for project build/configuration update settings.
@@ -72,15 +92,31 @@ public class Preferences {
 	 */
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
+	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
+	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
+	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
+
+	public static final String FORMATTING_ID = UUID.randomUUID().toString();
+	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
+	public static final String CODE_LENS_ID = UUID.randomUUID().toString();
+
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+	private boolean javaFormatEnabled;
 	private MemberSortOrder memberOrders;
 
 	private String mavenUserSettings;
 
 	private String favoriteStaticMembers;
 
+	private List<String> javaImportExclusions = new ArrayList<>();
+
+	static {
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata");
+	}
 	public static enum Severity {
 		ignore, log, info, warning, error;
 
@@ -127,14 +163,33 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
+		javaFormatEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		favoriteStaticMembers = "";
+		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
 
 	private static String getStringValue(Map<String, Object> configuration, String key, String def) {
 		Object val = configuration.get(key);
 		if (val instanceof String) {
 			return (String) val;
+		}
+		return def;
+	}
+
+	private static List<String> getListValue(Map<String, Object> configuration, String key, List<String> def) {
+		Object val = configuration.get(key);
+		if (val instanceof String) {
+			try {
+				Gson gson = new Gson();
+				Type type = new TypeToken<List<String>>() {
+				}.getType();
+				List<String> list = gson.fromJson((String) val, type);
+				return list;
+			} catch (JsonSyntaxException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return def;
+			}
 		}
 		return def;
 	}
@@ -176,6 +231,12 @@ public class Preferences {
 		boolean referenceCodelensEnabled = getBooleanValue(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 
+		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
+		prefs.setJavaFormatEnabled(javaFormatEnabled);
+
+		List<String> javaImportExclusions = getListValue(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
+		prefs.setJavaImportExclusions(javaImportExclusions);
+
 		String mavenUserSettings = getStringValue(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
@@ -188,6 +249,10 @@ public class Preferences {
 		return prefs;
 	}
 
+	public Preferences setJavaImportExclusions(List<String> javaImportExclusions) {
+		this.javaImportExclusions = javaImportExclusions;
+		return this;
+	}
 
 	private Preferences setMembersSortOrder(String sortOrder) {
 		this.memberOrders = new MemberSortOrder(sortOrder);
@@ -196,6 +261,11 @@ public class Preferences {
 
 	private Preferences setReferencesCodelensEnabled(boolean enabled) {
 		this.referencesCodeLensEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setJavaFormatEnabled(boolean enabled) {
+		this.javaFormatEnabled = enabled;
 		return this;
 	}
 
@@ -222,12 +292,20 @@ public class Preferences {
 		return updateBuildConfigurationStatus;
 	}
 
+	public List<String> getJavaImportExclusions() {
+		return javaImportExclusions;
+	}
+
 	public MemberSortOrder getMemberSortOrder() {
 		return this.memberOrders;
 	}
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public boolean isJavaFormatEnabled() {
+		return javaFormatEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

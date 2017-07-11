@@ -11,8 +11,11 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +61,30 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException {
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
+		if (files != null) {
+			Iterator<MavenProjectInfo> iter = files.iterator();
+			while (iter.hasNext()) {
+				MavenProjectInfo projectInfo = iter.next();
+				File dir = projectInfo.getPomFile() == null ? null : projectInfo.getPomFile().getParentFile();
+				if (dir != null && exclude(dir.toPath())) {
+					iter.remove();
+				}
+			}
+		}
 		return files != null && !files.isEmpty();
+	}
+
+	private boolean exclude(java.nio.file.Path path) {
+		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		if (javaImportExclusions != null) {
+			for (String pattern : javaImportExclusions) {
+				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+				if (matcher.matches(path)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
