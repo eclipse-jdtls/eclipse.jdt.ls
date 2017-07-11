@@ -174,6 +174,11 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 				IMethod method = JavaModelUtil.findMethod(String.valueOf(proposal.getName()), parameters, proposal.isConstructor(), type);
 
 				if (method != null && method.exists()) {
+					ICompilationUnit unit = type.getCompilationUnit();
+					if (unit != null) {
+						unit.reconcile(ICompilationUnit.NO_AST, false, null, null);
+					}
+
 					String javadoc = null;
 					try {
 						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
