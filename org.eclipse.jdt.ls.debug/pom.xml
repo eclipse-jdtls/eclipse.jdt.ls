@@ -1,33 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.eclipse.jdt.ls</groupId>
-		<artifactId>parent</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
-	</parent>
-	<artifactId>org.eclipse.jdt.ls.debug</artifactId>
-	<packaging>eclipse-plugin</packaging>
-	<name>${base.name} :: Debug</name>
-	<properties>
-	<lsp4j.version>0.2.0-SNAPSHOT</lsp4j.version>
-	</properties>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<configuration>
-					<artifactItems>
-						<artifactItem>
-							 <groupId>com.google.code.gson</groupId>
-  							 <artifactId>gson</artifactId>
-						     <version>2.7</version>
-						</artifactItem>
-					</artifactItems>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.eclipse.jdt.ls</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.2.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>org.eclipse.jdt.ls.debug</artifactId>
+    <packaging>eclipse-plugin</packaging>
+    <name>${base.name} :: Debug</name>
+    <properties>
+        <lsp4j.version>0.2.0-SNAPSHOT</lsp4j.version>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>com.google.code.gson</groupId>
+                            <artifactId>gson</artifactId>
+                            <version>2.7</version>
+                        </artifactItem>
+                    </artifactItems>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.github.sevntu-checkstyle</groupId>
+                        <artifactId>sevntu-checkstyle-maven-plugin</artifactId>
+                        <version>1.24.1</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>${project.parent.basedir}/google_checks.xml</configLocation>
+                    <failOnViolation>true</failOnViolation>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
