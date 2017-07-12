@@ -43,8 +43,7 @@ public class TestVMType extends AbstractVMInstallType {
 		// update all environments compatible to to use the test JRE
 		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
 		IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
-		for (int i = 0; i < environments.length; i++) {
-			IExecutionEnvironment environment = environments[i];
+		for (IExecutionEnvironment environment : environments) {
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
 			for (IVMInstall compatibleVM : compatibleVMs) {
 				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId())) {
