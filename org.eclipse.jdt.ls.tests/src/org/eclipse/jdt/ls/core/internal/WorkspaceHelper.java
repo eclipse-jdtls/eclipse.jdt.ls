@@ -26,8 +26,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
  */
 public final class WorkspaceHelper {
 
-	public static boolean IS_RUNNING_OPENJDK = System.getProperty("java.vm.name").toLowerCase().contains("openjdk");
-
 	private WorkspaceHelper() {
 		//No instances allowed
 	}

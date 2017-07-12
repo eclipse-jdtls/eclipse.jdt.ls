@@ -22,7 +22,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -428,20 +427,6 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		// buf.append("}\n");
 		// Expected e4 = new Expected("Add all missing tags", buf.toString());
 
-		//when running the test on OpenJDK, the default project doesn't have access to com.sun.javafx.collections.ArrayListenerHelper
-		if (!WorkspaceHelper.IS_RUNNING_OPENJDK) {
-			buf = new StringBuilder();
-			buf.append("package test1;\n");
-			buf.append("import com.sun.javafx.collections.ArrayListenerHelper;\n");
-			buf.append("import java.io.*;\n");
-			buf.append("public class E {\n");
-			buf.append("    void foo() {\n");
-			buf.append("        Serializable[] v= new ArrayListenerHelper[10];\n");
-			buf.append("    }\n");
-			buf.append("}\n");
-			expected.add(new Expected("Change to 'ArrayListenerHelper' (com.sun.javafx.collections)", buf.toString()));
-		}
-
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.*;\n");
@@ -697,43 +682,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import com.sun.org.apache.bcel.internal.generic.FLOAD;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    FLOAD vec= 1.0;\n");
-		buf.append("}\n");
-		expected.add(new Expected("Change to 'FLOAD' (com.sun.org.apache.bcel.internal.generic)", buf.toString()));
-
-		//when running the test on OpenJDK, the default project doesn't have access to com.sun.scenario.effect.Flood
-		if (!WorkspaceHelper.IS_RUNNING_OPENJDK) {
-			buf = new StringBuilder();
-			buf.append("package test1;\n");
-			buf.append("\n");
-			buf.append("import com.sun.scenario.effect.Flood;\n");
-			buf.append("\n");
-			buf.append("public class E {\n");
-			buf.append("    Flood vec= 1.0;\n");
-			buf.append("}\n");
-			expected.add(new Expected("Change to 'Flood' (com.sun.scenario.effect)", buf.toString()));
-		}
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    float vec= 1.0;\n");
 		buf.append("}\n");
 		expected.add(new Expected("Change to 'float'", buf.toString()));
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import com.sun.org.apache.xalan.internal.xsltc.compiler.FlowList;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    FlowList vec= 1.0;\n");
-		buf.append("}\n");
-		expected.add(new Expected("Change to 'FlowList' (com.sun.org.apache.xalan.internal.xsltc.compiler)", buf.toString()));
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");

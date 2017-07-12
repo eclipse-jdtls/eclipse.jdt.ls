@@ -59,7 +59,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "Abstract";
 		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
-		assertTrue("Found "+ results.size() + " results", results.size() > 100);
+		assertEquals("Found " + results.size() + " results", 33, results.size());
 		Range defaultRange = JDTUtils.newRange();
 		for (SymbolInformation symbol : results) {
 			assertNotNull("Kind is missing", symbol.getKind());
@@ -91,8 +91,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	public void testCamelCaseSearch() {
 		List<SymbolInformation> results = handler.search("NPE", monitor);
 		assertNotNull(results);
-		assertEquals("NoPermissionException", results.get(0).getName());
-		assertEquals("NullPointerException", results.get(results.size()-1).getName());
+		assertEquals("NullPointerException", results.get(0).getName());
 
 		results = handler.search("HaMa", monitor);
 		String className = "HashMap";
