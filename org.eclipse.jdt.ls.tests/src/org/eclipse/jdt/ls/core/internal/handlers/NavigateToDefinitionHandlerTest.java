@@ -60,7 +60,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testDisassembledSource() throws Exception {
-		testClass("sun.security.ssl.SSLContextImpl", 6, 44);
+		testClass("javax.tools.Tool", 6, 44);
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {

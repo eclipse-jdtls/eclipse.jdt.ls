@@ -1279,35 +1279,13 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("import com.sun.java.util.jar.pack.Fixups;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("public class F {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        char ch= Fixups.pathSeparatorChar;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'Fixups' (com.sun.java.util.jar.pack)", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import com.sun.java.util.jar.pack.Fixup;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("public class F {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        char ch= Fixup.pathSeparatorChar;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change to 'Fixup' (com.sun.java.util.jar.pack)", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
 		buf.append("    void foo() {\n");
 		buf.append("        char ch= File.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Change to 'File' (java.io)", buf.toString());
+		Expected e1 = new Expected("Change to 'File' (java.io)", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1319,7 +1297,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create field 'Fixe'", buf.toString());
+		Expected e2 = new Expected("Create field 'Fixe'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1331,7 +1309,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e5 = new Expected("Create constant 'Fixe'", buf.toString());
+		Expected e3 = new Expected("Create constant 'Fixe'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1341,7 +1319,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Create parameter 'Fixe'", buf.toString());
+		Expected e4 = new Expected("Create parameter 'Fixe'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1352,7 +1330,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e7 = new Expected("Create local variable 'Fixe'", buf.toString());
+		Expected e5 = new Expected("Create local variable 'Fixe'", buf.toString());
 
 		// buf = new StringBuilder();
 		// buf.append("package test1;\n");
@@ -1378,7 +1356,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		// buf.append("}\n");
 		// Expected e7 = new Expected("Add all missing tags", buf.toString());
 
-		assertCodeActions(cu, e1, e2, e3, e4, e5, e6, e7);
+		assertCodeActions(cu, e1, e2, e3, e4, e5);
 	}
 
 	@Test

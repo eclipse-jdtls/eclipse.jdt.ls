@@ -25,6 +25,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -38,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -62,7 +64,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected SimpleLogListener logListener;
 
 	@Before
-	public void initProjectManager() {
+	public void initProjectManager() throws CoreException {
+		TestVMType.setTestJREAsDefault();
+
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
 		if (preferenceManager != null) {
