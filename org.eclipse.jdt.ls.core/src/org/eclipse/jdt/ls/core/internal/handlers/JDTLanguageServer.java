@@ -209,6 +209,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
 			}
 		}
+		if (preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
+			if (preferenceManager.getPreferences().isSignatureHelpEnabled()) {
+				registerCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
+			} else {
+				unregisterCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP);
+			}
+		}
 		logInfo(">>New configuration: " + settings);
 	}
 
@@ -258,8 +265,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
 		logInfo(">> document/signatureHelp");
-		// Not yet implemented
-		return null;
+		SignatureHelpHandler handler = new SignatureHelpHandler(preferenceManager);
+		return computeAsync((cc) -> handler.signatureHelp(position, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
