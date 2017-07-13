@@ -219,6 +219,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				unregisterCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP);
 			}
 		}
+		if (preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
+			if (preferenceManager.getPreferences().isRenameEnabled()) {
+				registerCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
+			} else {
+				unregisterCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
+			}
+		}
 		logInfo(">>New configuration: " + settings);
 	}
 
@@ -386,8 +393,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
 		logInfo(">> document/rename");
-		// Not yet implemented
-		return null;
+		RenameHandler handler = new RenameHandler(preferenceManager);
+		return computeAsync((cc) -> handler.rename(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)

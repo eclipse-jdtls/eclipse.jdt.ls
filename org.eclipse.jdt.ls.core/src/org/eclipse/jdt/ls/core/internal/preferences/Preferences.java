@@ -51,6 +51,10 @@ public class Preferences {
 	 */
 	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
 
+	/**
+	 * Preference key to enable/disable rename.
+	 */
+	public static final String RENAME_ENABLED_KEY = "java.rename.enabled";
 
 	/**
 	 * Preference key to exclude directories when importing projects.
@@ -107,11 +111,13 @@ public class Preferences {
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
 	public static final String TEXT_DOCUMENT_SIGNATURE_HELP = "textDocument/signatureHelp";
+	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
 	public static final String CODE_LENS_ID = UUID.randomUUID().toString();
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
+	public static final String RENAME_ID = UUID.randomUUID().toString();
 
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
@@ -119,6 +125,7 @@ public class Preferences {
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean signatureHelpEnabled;
+	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
 
 	private String mavenUserSettings;
@@ -181,6 +188,7 @@ public class Preferences {
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
 		signatureHelpEnabled = false;
+		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
@@ -256,6 +264,9 @@ public class Preferences {
 		boolean signatureHelpEnabled = getBooleanValue(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
 
+		boolean renameEnabled = getBooleanValue(configuration, RENAME_ENABLED_KEY, true);
+		prefs.setRenameEnabled(renameEnabled);
+
 		List<String> javaImportExclusions = getListValue(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
 
@@ -293,6 +304,11 @@ public class Preferences {
 
 	private Preferences setImplementationCodelensEnabled(boolean enabled) {
 		this.implementationsCodeLensEnabled = enabled;
+		return this;
+	}
+
+	private Preferences setRenameEnabled(boolean enabled) {
+		this.renameEnabled = enabled;
 		return this;
 	}
 
@@ -350,6 +366,10 @@ public class Preferences {
 
 	public boolean isSignatureHelpEnabled() {
 		return signatureHelpEnabled;
+	}
+
+	public boolean isRenameEnabled() {
+		return renameEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

@@ -102,6 +102,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
 			capabilities.setSignatureHelpProvider(SignatureHelpHandler.createOptions());
 		}
+		if (!preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
+			capabilities.setRenameProvider(Boolean.TRUE);
+		}
 		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);
 		return result;

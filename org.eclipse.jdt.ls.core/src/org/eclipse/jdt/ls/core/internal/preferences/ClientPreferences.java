@@ -58,4 +58,8 @@ public class ClientPreferences {
 	public boolean isSignatureHelpDynamicRegistrationSupported() {
 		return v3supported && capabilities.getTextDocument().getSignatureHelp().getDynamicRegistration();
 	}
+
+	public boolean isRenameDynamicRegistrationSupported() {
+		return v3supported && capabilities.getTextDocument().getRename().getDynamicRegistration();
+	}
 }
