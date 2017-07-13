@@ -262,7 +262,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertTextEdit(5, 4, 6, "put(${1:key}, ${2:value})", resolvedItem.getTextEdit());
 		} catch (ComparisonFailure e) {
 			//In case the JDK has no sources
-			assertTextEdit(5, 4, 6, "put(${1:arg1}, ${2:arg2})", resolvedItem.getTextEdit());
+			assertTextEdit(5, 4, 6, "put(${1:arg0}, ${2:arg1})", resolvedItem.getTextEdit());
 		}
 		assertNotNull(resolvedItem.getAdditionalTextEdits());
 		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();

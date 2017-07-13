@@ -49,12 +49,12 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 
 	@Test
 	public void testOpenSourceLessClassFile() throws Exception {
-		String uri = ClassFileUtil.getURI(project, "jdk.nashorn.tools.Shell");
+		String uri = ClassFileUtil.getURI(project, "java.math.BigDecimal");
 		String source = getSource(uri);
 		assertNotNull(source);
 		assertTrue("header is missing from " + source, source.startsWith(JDTUtils.MISSING_SOURCES_HEADER));
-		assertTrue("unexpected body content "+source, source.contains("package jdk.nashorn.tools;"));
-		assertTrue("unexpected body content "+source, source.contains("public class Shell {"));
+		assertTrue("unexpected body content " + source, source.contains("package java.math;"));
+		assertTrue("unexpected body content " + source, source.contains("public class BigDecimal extends java.lang.Number implements java.lang.Comparable {"));
 	}
 
 

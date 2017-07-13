@@ -99,6 +99,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
 			capabilities.setCodeLensProvider(new CodeLensOptions(true));
 		}
+		if (!preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
+			capabilities.setSignatureHelpProvider(SignatureHelpHandler.createOptions());
+		}
 		capabilities.setCodeActionProvider(Boolean.TRUE);
 		result.setCapabilities(capabilities);
 		return result;

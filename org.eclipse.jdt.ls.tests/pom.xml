@@ -20,17 +20,9 @@
 					<version>${tycho-version}</version>
 					<configuration>
 						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
-					<dependencies>
-						<!-- This feature is required for correct Installed JRE initialization on Mac OS X -->
-						<dependency>
-							<type>eclipse-feature</type>
-							<artifactId>org.eclipse.jdt</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-					</dependencies>
-					<providerProperties>
-						<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
-					</providerProperties>
+						<providerProperties>
+							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
+						</providerProperties>
 					</configuration>
 					
 				</plugin>

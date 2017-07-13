@@ -69,10 +69,11 @@ public class JDTLanguageServerTest {
 		Map<String, Object> map = new HashMap<>();
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, true);
+		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(3)).registerCapability(any());
+		verify(client, times(4)).registerCapability(any());
 
 		//On 2nd call, no registration calls should be emitted
 		reset(client);
@@ -83,10 +84,11 @@ public class JDTLanguageServerTest {
 		reset(client);
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, false);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, false);
+		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, false);
 		params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(3)).unregisterCapability(any());
+		verify(client, times(4)).unregisterCapability(any());
 
 		//On 2nd call, no unregistration calls should be emitted
 		reset(client);
@@ -101,6 +103,7 @@ public class JDTLanguageServerTest {
 		Map<String, Object> map = new HashMap<>();
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, true);
+		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
@@ -109,6 +112,7 @@ public class JDTLanguageServerTest {
 		// unregister capabilities
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, false);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, false);
+		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, false);
 		params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
@@ -119,6 +123,7 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isCodeLensDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isFormattingDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isRangeFormattingDynamicRegistrationSupported()).thenReturn(enable);
+		when(clientPreferences.isSignatureHelpDynamicRegistrationSupported()).thenReturn(enable);
 	}
 
 }

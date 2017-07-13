@@ -54,4 +54,8 @@ public class ClientPreferences {
 	public boolean isCodeLensDynamicRegistrationSupported() {
 		return v3supported && capabilities.getTextDocument().getCodeLens().getDynamicRegistration();
 	}
+
+	public boolean isSignatureHelpDynamicRegistrationSupported() {
+		return v3supported && capabilities.getTextDocument().getSignatureHelp().getDynamicRegistration();
+	}
 }

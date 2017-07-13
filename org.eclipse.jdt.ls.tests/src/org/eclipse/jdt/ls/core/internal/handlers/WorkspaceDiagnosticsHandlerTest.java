@@ -151,7 +151,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		};
 		Collections.sort(diags, comparator );
 		assertEquals(diags.toString(), 2, diags.size());
-		assertEquals("The import org.apache cannot be resolved", diags.get(0).getMessage());
+		assertEquals("The import org cannot be resolved", diags.get(0).getMessage());
 		assertEquals("StringUtils cannot be resolved", diags.get(1).getMessage());
 
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();

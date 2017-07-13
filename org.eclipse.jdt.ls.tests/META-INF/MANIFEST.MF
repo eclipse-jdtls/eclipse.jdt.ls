@@ -26,4 +26,5 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.lsp4j,
  org.eclipse.lsp4j.jsonrpc,
  org.eclipse.xtend.lib,
- org.eclipse.xtext.xbase.lib
+ org.eclipse.xtext.xbase.lib,
+ org.eclipse.jdt.launching
