@@ -4,4 +4,12 @@
    <extension
          point="org.eclipse.m2e.core.lifecycleMappingMetadataSource">
    </extension>
+   <extension
+         id="org.eclipse.jdt.ls.debug.javadebugger"
+         point="org.eclipse.jdt.ls.core.debugserver">
+      <implementor
+            class="org.eclipse.jdt.ls.debug.internal.JavaDebugServer"
+            type="java">
+      </implementor>
+   </extension>
 </plugin>

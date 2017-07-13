@@ -1,0 +1,952 @@
+Start socket on 4711
+
+[request:]
+{"command":"initialize","arguments":{"clientID":"vscode","adapterID":"java","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true},"type":"request","seq":1}
+Dispatch command:initialize
+
+[response:]
+Content-Length: 343
+
+{"seq":1,"type":"response","success":true,"message":null,"request_seq":1,"command":"initialize","body":{"supportsConfigurationDoneRequest":false,"supportsFunctionBreakpoints":false,"supportsSetVariable":false,"supportsEvaluateForHovers":false,"supportsConditionalBreakpoints":false,"exceptionBreakpointFilters":[]},"running":false,"refs":null}
+
+[response:]
+Content-Length: 76
+
+{"seq":2,"type":"event","event":"initialized","body":{"type":"initialized"}}
+
+[request:]
+{"command":"launch","arguments":{"type":"java","name":"JdtJavaDebug","request":"launch","stopOnEntry":true,"cwd":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld","startupClass":"HelloWorld.java","options":["-classpath","d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld;."],"debugServer":4711},"type":"request","seq":2}
+Dispatch command:launch
+Launch JVM with main class "HelloWorld", classPath "d:/Work/CodeJava/workspace_codejavadebug/HelloWorld;."
+JDI Event Set: {
+VMStartEvent: 0}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":3,"type":"response","success":true,"message":null,"request_seq":2,"command":"launch","body":null,"running":false,"refs":null}
+
+[request:]
+{"command":"setBreakpoints","arguments":{"source":{"path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","name":"HelloWorld.java"},"lines":[9,13,19,10],"breakpoints":[{"line":9},{"line":13},{"line":19},{"line":10}],"sourceModified":false},"type":"request","seq":3}
+Dispatch command:setBreakpoints
+
+[response:]
+Content-Length: 404
+
+{"seq":4,"type":"response","success":true,"message":null,"request_seq":3,"command":"setBreakpoints","body":{"breakpoints":[{"id":1,"verified":true,"line":9,"message":"Line breakpoint"},{"id":2,"verified":true,"line":13,"message":"Line breakpoint"},{"id":3,"verified":true,"line":19,"message":"Line breakpoint"},{"id":4,"verified":true,"line":10,"message":"Line breakpoint"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":4}
+Dispatch command:threads
+
+[response:]
+Content-Length: 299
+
+{"seq":5,"type":"response","success":true,"message":null,"request_seq":4,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+JDI Event Set: {
+ThreadStartEvent: 3}
+
+
+[response:]
+Content-Length: 98
+
+{"seq":6,"type":"event","event":"thread","body":{"type":"thread","reason":"started","threadId":1}}
+
+[request:]
+{"command":"threads","type":"request","seq":5}
+Dispatch command:threads
+
+[response:]
+Content-Length: 299
+
+{"seq":7,"type":"response","success":true,"message":null,"request_seq":5,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+JDI Event Set: {
+ClassPrepareEvent: 15, ClassPrepareEvent: 13, ClassPrepareEvent: 11, ClassPrepareEvent: 9, ClassPrepareEvent: 7, ClassPrepareEvent: 5}
+
+JDI Event Set: {
+BreakpointEvent: 21, BreakpointEvent: 19}
+
+
+[response:]
+Content-Length: 296
+
+{"seq":8,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"breakpoint","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":9,"column":0,"text":"","allThreadsStopped":false}}
+
+[response:]
+Content-Length: 296
+
+{"seq":9,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"breakpoint","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":9,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":6}
+Dispatch command:threads
+
+[response:]
+Content-Length: 300
+
+{"seq":10,"type":"response","success":true,"message":null,"request_seq":6,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":7}
+Dispatch command:threads
+
+[response:]
+Content-Length: 300
+
+{"seq":11,"type":"response","success":true,"message":null,"request_seq":7,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":8}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 347
+
+{"seq":12,"type":"response","success":true,"message":null,"request_seq":8,"command":"stackTrace","body":{"stackFrames":[{"id":0,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":9,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":9}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 347
+
+{"seq":13,"type":"response","success":true,"message":null,"request_seq":9,"command":"stackTrace","body":{"stackFrames":[{"id":1,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":9,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":0},"type":"request","seq":10}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":14,"type":"response","success":true,"message":null,"request_seq":10,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000000,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000000},"type":"request","seq":11}
+Dispatch command:variables
+
+[response:]
+Content-Length: 396
+
+{"seq":15,"type":"response","success":true,"message":null,"request_seq":11,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":12}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":16,"type":"response","success":true,"message":null,"request_seq":12,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":13}
+Dispatch command:next
+
+[response:]
+Content-Length: 132
+
+{"seq":17,"type":"response","success":true,"message":null,"request_seq":13,"command":"next","body":null,"running":false,"refs":null}
+JDI Event Set: {
+MethodEntryEvent: 26, MethodEntryEvent: 26}
+
+JDI Event Set: {
+StepEvent: 27}
+
+
+[response:]
+Content-Length: 291
+
+{"seq":18,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":9,"column":0,"text":"","allThreadsStopped":false}}
+JDI Event Set: {
+MethodEntryEvent: 34, MethodEntryEvent: 34, MethodEntryEvent: 34, MethodEntryEvent: 34, MethodEntryEvent: 34}
+
+JDI Event Set: {
+StepEvent: 35}
+
+
+[request:]
+{"command":"threads","type":"request","seq":14}
+
+[response:]
+Content-Length: 305
+
+{"seq":19,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"PrintStream.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/java\\io\\PrintStream.java","sourceReference":0},"line":805,"column":0,"text":"","allThreadsStopped":false}}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":20,"type":"response","success":true,"message":null,"request_seq":14,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+
+[request:]
+{"command":"threads","type":"request","seq":15}
+Dispatch command:threads
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+
+[response:]
+Content-Length: 301
+
+{"seq":21,"type":"response","success":true,"message":null,"request_seq":15,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":16}
+Dispatch command:stackTrace
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+JDI Event Set: {
+MethodExitEvent: 39}
+
+
+[response:]
+Content-Length: 168
+
+{"seq":22,"type":"response","success":true,"message":null,"request_seq":16,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":17}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":23,"type":"response","success":true,"message":null,"request_seq":17,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+JDI Event Set: {
+StepEvent: 38}
+
+
+[response:]
+Content-Length: 292
+
+{"seq":24,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":11,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":18}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":25,"type":"response","success":true,"message":null,"request_seq":18,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":19}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":26,"type":"response","success":true,"message":null,"request_seq":19,"command":"stackTrace","body":{"stackFrames":[{"id":2,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":11,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":2},"type":"request","seq":20}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":27,"type":"response","success":true,"message":null,"request_seq":20,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000002,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000002},"type":"request","seq":21}
+Dispatch command:variables
+
+[response:]
+Content-Length: 396
+
+{"seq":28,"type":"response","success":true,"message":null,"request_seq":21,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":22}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":29,"type":"response","success":true,"message":null,"request_seq":22,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":23}
+Dispatch command:next
+JDI Event Set: {
+StepEvent: 41}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":30,"type":"response","success":true,"message":null,"request_seq":23,"command":"next","body":null,"running":false,"refs":null}
+
+[response:]
+Content-Length: 292
+
+{"seq":31,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":12,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":24}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":32,"type":"response","success":true,"message":null,"request_seq":24,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":25}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":33,"type":"response","success":true,"message":null,"request_seq":25,"command":"stackTrace","body":{"stackFrames":[{"id":3,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":12,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":3},"type":"request","seq":26}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":34,"type":"response","success":true,"message":null,"request_seq":26,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000003,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000003},"type":"request","seq":27}
+Dispatch command:variables
+
+[response:]
+Content-Length: 498
+
+{"seq":35,"type":"response","success":true,"message":null,"request_seq":27,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null},{"name":"b","value":"1","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":28}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":36,"type":"response","success":true,"message":null,"request_seq":28,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":29}
+Dispatch command:next
+JDI Event Set: {
+StepEvent: 46, BreakpointEvent: 20, BreakpointEvent: 18}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":37,"type":"response","success":true,"message":null,"request_seq":29,"command":"next","body":null,"running":false,"refs":null}
+
+[response:]
+Content-Length: 292
+
+{"seq":38,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":13,"column":0,"text":"","allThreadsStopped":false}}
+
+[response:]
+Content-Length: 298
+
+{"seq":39,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"breakpoint","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":13,"column":0,"text":"","allThreadsStopped":false}}
+
+[response:]
+Content-Length: 298
+
+{"seq":40,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"breakpoint","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":13,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":30}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":41,"type":"response","success":true,"message":null,"request_seq":30,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":31}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":42,"type":"response","success":true,"message":null,"request_seq":31,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":32}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":43,"type":"response","success":true,"message":null,"request_seq":32,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":33}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":44,"type":"response","success":true,"message":null,"request_seq":33,"command":"stackTrace","body":{"stackFrames":[{"id":4,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":13,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":34}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":45,"type":"response","success":true,"message":null,"request_seq":34,"command":"stackTrace","body":{"stackFrames":[{"id":5,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":13,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":35}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":46,"type":"response","success":true,"message":null,"request_seq":35,"command":"stackTrace","body":{"stackFrames":[{"id":6,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":13,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":4},"type":"request","seq":36}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":47,"type":"response","success":true,"message":null,"request_seq":36,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000004,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000004},"type":"request","seq":37}
+Dispatch command:variables
+
+[response:]
+Content-Length: 498
+
+{"seq":48,"type":"response","success":true,"message":null,"request_seq":37,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null},{"name":"b","value":"0","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":38}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":49,"type":"response","success":true,"message":null,"request_seq":38,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":39}
+Dispatch command:next
+JDI Event Set: {
+MethodEntryEvent: 55}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":50,"type":"response","success":true,"message":null,"request_seq":39,"command":"next","body":null,"running":false,"refs":null}
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+MethodExitEvent: 57}
+
+JDI Event Set: {
+StepEvent: 56}
+
+
+[response:]
+Content-Length: 292
+
+{"seq":51,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":15,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":40}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":52,"type":"response","success":true,"message":null,"request_seq":40,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":41}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 349
+
+{"seq":53,"type":"response","success":true,"message":null,"request_seq":41,"command":"stackTrace","body":{"stackFrames":[{"id":7,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":15,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":7},"type":"request","seq":42}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":54,"type":"response","success":true,"message":null,"request_seq":42,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000007,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000007},"type":"request","seq":43}
+Dispatch command:variables
+
+[response:]
+Content-Length: 498
+
+{"seq":55,"type":"response","success":true,"message":null,"request_seq":43,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null},{"name":"b","value":"0","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":44}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":56,"type":"response","success":true,"message":null,"request_seq":44,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"stepIn","arguments":{"threadId":1},"type":"request","seq":45}
+Dispatch command:stepIn
+JDI Event Set: {
+StepEvent: 59, BreakpointEvent: 17}
+
+
+[response:]
+Content-Length: 134
+
+{"seq":57,"type":"response","success":true,"message":null,"request_seq":45,"command":"stepIn","body":null,"running":false,"refs":null}
+
+[response:]
+Content-Length: 292
+
+{"seq":58,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":19,"column":0,"text":"","allThreadsStopped":false}}
+
+[response:]
+Content-Length: 298
+
+{"seq":59,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"breakpoint","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":19,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":46}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":60,"type":"response","success":true,"message":null,"request_seq":46,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":47}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":61,"type":"response","success":true,"message":null,"request_seq":47,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":48}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 353
+
+{"seq":62,"type":"response","success":true,"message":null,"request_seq":48,"command":"stackTrace","body":{"stackFrames":[{"id":8,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":19,"column":0,"name":"onChange"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":49}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 353
+
+{"seq":63,"type":"response","success":true,"message":null,"request_seq":49,"command":"stackTrace","body":{"stackFrames":[{"id":9,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":19,"column":0,"name":"onChange"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":8},"type":"request","seq":50}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":64,"type":"response","success":true,"message":null,"request_seq":50,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000008,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000008},"type":"request","seq":51}
+Dispatch command:variables
+
+[response:]
+Content-Length: 149
+
+{"seq":65,"type":"response","success":true,"message":null,"request_seq":51,"command":"variables","body":{"variables":[]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":52}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 350
+
+{"seq":66,"type":"response","success":true,"message":null,"request_seq":52,"command":"stackTrace","body":{"stackFrames":[{"id":10,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":15,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":53}
+Dispatch command:next
+JDI Event Set: {
+StepEvent: 62}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":67,"type":"response","success":true,"message":null,"request_seq":53,"command":"next","body":null,"running":false,"refs":null}
+
+[response:]
+Content-Length: 292
+
+{"seq":68,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":20,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":54}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":69,"type":"response","success":true,"message":null,"request_seq":54,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":55}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 354
+
+{"seq":70,"type":"response","success":true,"message":null,"request_seq":55,"command":"stackTrace","body":{"stackFrames":[{"id":11,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":20,"column":0,"name":"onChange"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":11},"type":"request","seq":56}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":71,"type":"response","success":true,"message":null,"request_seq":56,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000011,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000011},"type":"request","seq":57}
+Dispatch command:variables
+
+[response:]
+Content-Length: 149
+
+{"seq":72,"type":"response","success":true,"message":null,"request_seq":57,"command":"variables","body":{"variables":[]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":58}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 350
+
+{"seq":73,"type":"response","success":true,"message":null,"request_seq":58,"command":"stackTrace","body":{"stackFrames":[{"id":12,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":15,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":59}
+Dispatch command:next
+JDI Event Set: {
+MethodEntryEvent: 71}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":74,"type":"response","success":true,"message":null,"request_seq":59,"command":"next","body":null,"running":false,"refs":null}
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+MethodExitEvent: 73}
+
+JDI Event Set: {
+StepEvent: 72}
+
+
+[response:]
+Content-Length: 292
+
+{"seq":75,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":21,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":60}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":76,"type":"response","success":true,"message":null,"request_seq":60,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":61}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 354
+
+{"seq":77,"type":"response","success":true,"message":null,"request_seq":61,"command":"stackTrace","body":{"stackFrames":[{"id":13,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":21,"column":0,"name":"onChange"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":13},"type":"request","seq":62}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":78,"type":"response","success":true,"message":null,"request_seq":62,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000013,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000013},"type":"request","seq":63}
+Dispatch command:variables
+
+[response:]
+Content-Length: 149
+
+{"seq":79,"type":"response","success":true,"message":null,"request_seq":63,"command":"variables","body":{"variables":[]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":64}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 350
+
+{"seq":80,"type":"response","success":true,"message":null,"request_seq":64,"command":"stackTrace","body":{"stackFrames":[{"id":14,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":15,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":65}
+Dispatch command:next
+JDI Event Set: {
+MethodExitEvent: 76}
+
+JDI Event Set: {
+StepEvent: 75}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":81,"type":"response","success":true,"message":null,"request_seq":65,"command":"next","body":null,"running":false,"refs":null}
+
+[response:]
+Content-Length: 292
+
+{"seq":82,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/HelloWorld.java","sourceReference":0},"line":16,"column":0,"text":"","allThreadsStopped":false}}
+
+[request:]
+{"command":"threads","type":"request","seq":66}
+Dispatch command:threads
+
+[response:]
+Content-Length: 301
+
+{"seq":83,"type":"response","success":true,"message":null,"request_seq":66,"command":"threads","body":{"threads":[{"id":2,"name":"Attach Listener"},{"id":3,"name":"Signal Dispatcher"},{"id":4,"name":"Finalizer"},{"id":5,"name":"Reference Handler"},{"id":1,"name":"main"}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":0,"levels":1},"type":"request","seq":67}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 350
+
+{"seq":84,"type":"response","success":true,"message":null,"request_seq":67,"command":"stackTrace","body":{"stackFrames":[{"id":15,"source":{"name":"HelloWorld.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld\\HelloWorld.java","sourceReference":0},"line":16,"column":0,"name":"main"}],"totalFrames":1},"running":false,"refs":null}
+
+[request:]
+{"command":"scopes","arguments":{"frameId":15},"type":"request","seq":68}
+Dispatch command:scopes
+
+[response:]
+Content-Length: 206
+
+{"seq":85,"type":"response","success":true,"message":null,"request_seq":68,"command":"scopes","body":{"scopes":[{"name":"Local","variablesReference":1000015,"expensive":false}]},"running":false,"refs":null}
+
+[request:]
+{"command":"stackTrace","arguments":{"threadId":1,"startFrame":1,"levels":20},"type":"request","seq":69}
+Dispatch command:stackTrace
+
+[response:]
+Content-Length: 168
+
+{"seq":86,"type":"response","success":true,"message":null,"request_seq":69,"command":"stackTrace","body":{"stackFrames":[],"totalFrames":0},"running":false,"refs":null}
+
+[request:]
+{"command":"variables","arguments":{"variablesReference":1000015},"type":"request","seq":70}
+Dispatch command:variables
+
+[response:]
+Content-Length: 498
+
+{"seq":87,"type":"response","success":true,"message":null,"request_seq":70,"command":"variables","body":{"variables":[{"name":"args","value":"java.lang.String[]:(id=14)","type":"java.lang.String[]","variablesReference":14,"indexedVariables":0,"evaluateName":null},{"name":"a","value":"2","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null},{"name":"b","value":"0","type":"int","variablesReference":0,"indexedVariables":0,"evaluateName":null}]},"running":false,"refs":null}
+
+[request:]
+{"command":"next","arguments":{"threadId":1},"type":"request","seq":71}
+Dispatch command:next
+JDI Event Set: {
+MethodExitEvent: 81}
+
+
+[response:]
+Content-Length: 132
+
+{"seq":88,"type":"response","success":true,"message":null,"request_seq":71,"command":"next","body":null,"running":false,"refs":null}
+JDI Event Set: {
+MethodEntryEvent: 84, StepEvent: 80}
+
+
+[response:]
+Content-Length: 297
+
+{"seq":89,"type":"event","event":"stopped","body":{"type":"stopped","threadId":1,"reason":"step","source":{"name":"Thread.java","path":"d:\\Work\\CodeJava\\workspace_codejavadebug\\HelloWorld/java\\lang\\Thread.java","sourceReference":0},"line":757,"column":0,"text":"","allThreadsStopped":false}}
+JDI Event Set: {
+MethodExitEvent: 86}
+
+JDI Event Set: {
+ThreadDeathEvent: 4}
+
+JDI Event Set: {
+ThreadStartEvent: 3}
+
+JDI Event Set: {
+ThreadDeathEvent: 4}
+
+JDI Event Set: {
+VMDeathEvent: 0}
+
+
+[response:]
+Content-Length: 98
+
+{"seq":90,"type":"event","event":"thread","body":{"type":"thread","reason":"exited","threadId":1}}
+
+[response:]
+Content-Length: 99
+
+{"seq":91,"type":"event","event":"thread","body":{"type":"thread","reason":"exited","threadId":23}}
+
+[response:]
+Content-Length: 100
+
+{"seq":92,"type":"event","event":"thread","body":{"type":"thread","reason":"started","threadId":23}}
+
+[response:]
+Content-Length: 80
+
+{"seq":93,"type":"event","event":"exited","body":{"type":"exited","exitCode":0}}
+
+[response:]
+Content-Length: 75
+
+{"seq":94,"type":"event","event":"terminated","body":{"type":"terminated"}}
+
+[request:]
+{"command":"threads","type":"request","seq":72}
+JDI Event Set: {
+VMDisconnectEvent: 0}
+
+
+[response:]
+Content-Length: 135
+
+{"seq":95,"type":"response","success":true,"message":null,"request_seq":72,"command":"threads","body":null,"running":false,"refs":null}
+
+[request:]
+{"command":"threads","type":"request","seq":73}
+
+[response:]
+Content-Length: 135
+
+{"seq":96,"type":"response","success":true,"message":null,"request_seq":73,"command":"threads","body":null,"running":false,"refs":null}
+
+[request:]
+{"command":"disconnect","arguments":{"restart":false},"type":"request","seq":74}
+
+[response:]
+Content-Length: 138
+
+{"seq":97,"type":"response","success":true,"message":null,"request_seq":74,"command":"disconnect","body":null,"running":false,"refs":null}
+Socket exited.

@@ -435,6 +435,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		handler.updateConfiguration(param);
 	}
 
+	@Override
+	public CompletableFuture<String> startDebugSession(String type) {
+		logInfo(">> java/startDebugSession");
+		StartDebugSessionHandler handler = new StartDebugSessionHandler();
+		return handler.startDebugServer(type);
+	}
+
 	public void sendStatus(ServiceStatus serverStatus, String status) {
 		if (client != null) {
 			client.sendStatus(serverStatus, status);
