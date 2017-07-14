@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JDT LS PDE importer
+Bundle-SymbolicName: org.eclipse.jdt.ls.importer.pde;singleton:=true
+Bundle-Version: 0.2.0.qualifier
+Bundle-Activator: org.eclipse.jdt.ls.importer.pde.internal.PDEImporterActivator
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.pde.core,
+ org.eclipse.jdt.ls.core,
+ org.eclipse.jdt.core,
+ org.eclipse.core.resources,
+ com.google.gson,
+ org.eclipse.equinox.p2.core,
+ org.eclipse.equinox.p2.director,
+ org.eclipse.equinox.p2.artifact.repository,
+ org.eclipse.equinox.p2.garbagecollector,
+ org.eclipse.equinox.p2.metadata.repository,
+ org.eclipse.equinox.ds,
+ org.eclipse.equinox.p2.transport.ecf,
+ org.eclipse.equinox.p2.touchpoint.eclipse,
+ org.eclipse.equinox.p2.touchpoint.natives
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy

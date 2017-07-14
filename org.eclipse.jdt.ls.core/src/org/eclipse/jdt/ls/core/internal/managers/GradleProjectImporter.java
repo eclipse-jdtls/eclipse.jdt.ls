@@ -28,6 +28,7 @@ import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.ls.core.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 import com.gradleware.tooling.toolingclient.GradleDistribution;
@@ -49,9 +50,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	 * @see org.eclipse.jdt.ls.core.internal.managers.IProjectImporter#applies(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public boolean applies(IProgressMonitor monitor) throws CoreException {
+	public int applies(IProgressMonitor monitor) throws CoreException {
 		if (rootFolder == null) {
-			return false;
+			return 0;
 		}
 		if (directories == null) {
 			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR)
@@ -59,7 +60,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/build");//default gradle build dir
 			directories = gradleDetector.scan(monitor);
 		}
-		return !directories.isEmpty();
+		return directories.size();
 	}
 
 	/* (non-Javadoc)
@@ -67,7 +68,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	 */
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException {
-		if (!applies(monitor)) {
+		if (applies(monitor) == 0) {
 			return;
 		}
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
@@ -118,6 +119,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (StringUtils.isNotBlank(value)) {
 			jvmArgs.add(String.format("-D%s=%s", name, value));
 		}
+	}
+
+	@Override
+	public void reset() {
 	}
 
 }
