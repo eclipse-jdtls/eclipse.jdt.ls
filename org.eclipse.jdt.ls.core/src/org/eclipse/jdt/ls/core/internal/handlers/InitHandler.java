@@ -117,6 +117,7 @@ final public class InitHandler {
 				try {
 					projectsManager.initializeProjects(root, subMonitor.split(60));
 					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, subMonitor.split(40));
+					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
 				} catch (CoreException e) {
