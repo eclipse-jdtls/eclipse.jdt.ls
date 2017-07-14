@@ -7,13 +7,14 @@
  *
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
+ *     Microsoft Corporation
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static java.util.Arrays.asList;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -23,13 +24,17 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -37,6 +42,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -63,27 +69,23 @@ public class ProjectsManager {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public IStatus initializeProjects(final String projectPath, IProgressMonitor monitor) {
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-		try {
-			createJavaProject(getDefaultProject(), subMonitor.split(10));
-
-			if (projectPath != null) {
-				File userProjectRoot = new File(projectPath);
-				IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
-				if (importer != null) {
-					importer.importToWorkspace(subMonitor.split(70));
+	public void initializeProjects(final String projectPath, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+		// Run as a Java runnable to trigger any build while importing
+		JavaCore.run(new IWorkspaceRunnable() {
+			@Override
+			public void run(IProgressMonitor monitor) throws CoreException {
+				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+				createJavaProject(getDefaultProject(), subMonitor.split(10));
+				if (projectPath != null) {
+					File userProjectRoot = new File(projectPath);
+					IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
+					if (importer != null) {
+						importer.importToWorkspace(subMonitor.split(70));
+					}
 				}
+				subMonitor.done();
 			}
-
-			return Status.OK_STATUS;
-		} catch (InterruptedException e) {
-			JavaLanguageServerPlugin.logInfo("Import cancelled");
-			return Status.CANCEL_STATUS;
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
-			return StatusFactory.newErrorStatus("Import failed: " + e.getMessage(), e);
-		}
+		}, monitor);
 	}
 
 	private static IWorkspaceRoot getWorkspaceRoot() {
@@ -138,16 +140,20 @@ public class ProjectsManager {
 		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
 
-	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws InterruptedException, CoreException {
+	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		Collection<IProjectImporter> importers = importers();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());
+		IProjectImporter preferred = null;
+		int preferredRelevance = -1;
 		for (IProjectImporter importer : importers) {
 			importer.initialize(rootFolder);
-			if (importer.applies(subMonitor.split(1))) {
-				return importer;
+			int relevance = importer.applies(subMonitor.split(1));
+			if (relevance > preferredRelevance) {
+				preferred = importer;
+				preferredRelevance = relevance;
 			}
 		}
-		return null;
+		return preferred;
 	}
 
 	public IProject getDefaultProject() {
@@ -155,10 +161,20 @@ public class ProjectsManager {
 	}
 
 	private Collection<IProjectImporter> importers() {
-		return Arrays.asList(new GradleProjectImporter(), new MavenProjectImporter(), new EclipseProjectImporter());
+		Collection<IProjectImporter> importers = new ArrayList<>();
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
+		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
+		for (int i = 0; i < configs.length; i++) {
+			try {
+				importers.add((IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e.getStatus());
+			}
+		}
+		return importers;
 	}
 
-	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException, InterruptedException {
+	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		if (project.exists()) {
 			return project;
 		}

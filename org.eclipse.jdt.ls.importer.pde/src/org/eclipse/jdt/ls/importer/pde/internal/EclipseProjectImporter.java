@@ -8,11 +8,9 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core.internal.managers;
+package org.eclipse.jdt.ls.importer.pde.internal;
 
 import static org.eclipse.core.resources.IProjectDescription.DESCRIPTION_FILE_NAME;
-
-import java.util.Collection;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -25,45 +23,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.AbstractProjectImporter;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
-public class EclipseProjectImporter extends AbstractProjectImporter {
+public class EclipseProjectImporter {
 
-	private Collection<java.nio.file.Path> directories;
-
-	@Override
-	public int applies(IProgressMonitor monitor) throws CoreException {
-		if (directories == null) {
-			BasicFileDetector eclipseDetector = new BasicFileDetector(rootFolder.toPath(), DESCRIPTION_FILE_NAME)
-					.addExclusions("**/bin");//default Eclipse build dir
-			directories = eclipseDetector.scan(monitor);
-		}
-		return 1;
-	}
-
-	@Override
-	public void reset() {
-		directories = null;
-	}
-
-	public void setDirectories(Collection<java.nio.file.Path> paths) {
-		directories = paths;
-	}
-
-
-	@Override
-	public void importToWorkspace(IProgressMonitor monitor) throws CoreException {
-		if (applies(monitor) == 0) {
-			return;
-		}
-		SubMonitor subMonitor = SubMonitor.convert(monitor, directories.size());
-		JavaLanguageServerPlugin.logInfo("Importing Eclipse project(s)");
-		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
-		subMonitor.done();
-	}
-
-	private void importDir(java.nio.file.Path dir, IProgressMonitor m) {
+	public void importDir(java.nio.file.Path dir, IProgressMonitor m) throws CoreException {
 		SubMonitor monitor = SubMonitor.convert(m, 4);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IPath dotProjectPath = new Path(dir.resolve(DESCRIPTION_FILE_NAME).toAbsolutePath().toString());
@@ -80,19 +43,16 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 				existingProjectPath = fixDevice(existingProjectPath);
 				dotProjectPath = fixDevice(dotProjectPath);
 				if (existingProjectPath.equals(dotProjectPath.removeLastSegments(1))) {
-					project.open(IResource.NONE, monitor.newChild(1));
-					project.refreshLocal(IResource.DEPTH_INFINITE, monitor.newChild(1));
+					project.open(IResource.NONE, monitor.split(1));
+					project.refreshLocal(IResource.DEPTH_INFINITE, monitor.split(1));
 					return;
 				} else {
 					project = findUniqueProject(workspace, name);
 					descriptor.setName(project.getName());
 				}
 			}
-			project.create(descriptor, monitor.newChild(1));
-			project.open(IResource.NONE, monitor.newChild(1));
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.log(e.getStatus());
-			throw new RuntimeException(e);
+			project.create(descriptor, monitor.split(1));
+			project.open(IResource.NONE, monitor.split(1));
 		} finally {
 			monitor.done();
 		}
@@ -105,12 +65,11 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		return path;
 	}
 
-	//XXX should be package protected. Temporary fix (ahaha!) until test fragment can work in tycho builds
-	public IProject findUniqueProject(IWorkspace workspace, String basename) {
+	private IProject findUniqueProject(IWorkspace workspace, String basename) {
 		IProject project = null;
 		String name;
 		for (int i = 1; project == null || project.exists(); i++) {
-			name = (i < 2)? basename:basename + " ("+ i +")";
+			name = (i < 2) ? basename : basename + " (" + i + ")";
 			project = workspace.getRoot().getProject(name);
 		}
 		return project;
