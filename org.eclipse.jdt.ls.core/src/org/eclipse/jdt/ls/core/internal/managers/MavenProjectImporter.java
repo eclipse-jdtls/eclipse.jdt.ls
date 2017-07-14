@@ -29,9 +29,11 @@ import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.ls.core.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -62,7 +64,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 
 	@Override
-	public boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException {
+	public int applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
 		if (files != null) {
 			Iterator<MavenProjectInfo> iter = files.iterator();
@@ -74,7 +76,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				}
 			}
 		}
-		return files != null && !files.isEmpty();
+		return files != null ? files.size() : 0;
 	}
 
 	private boolean exclude(java.nio.file.Path path) {
@@ -90,14 +92,14 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		return false;
 	}
 
-	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
+	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws OperationCanceledException {
 		if (projectInfos == null) {
 			projectInfos = collectMavenProjectInfo(monitor);
 		}
 		return projectInfos;
 	}
 
-	Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor) throws InterruptedException {
+	Set<MavenProjectInfo> collectMavenProjectInfo(IProgressMonitor monitor) throws OperationCanceledException {
 		MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
 		return getMavenProjects(getProjectDirectory(), modelManager, monitor);
 	}
@@ -109,7 +111,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	@SuppressWarnings("restriction")
-	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, InterruptedException {
+	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		JavaLanguageServerPlugin.logInfo("Importing Maven project(s)");
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
@@ -184,13 +186,17 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		return true;
 	}
 
-	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws InterruptedException {
+	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws OperationCanceledException {
 		if (directory == null) {
 			return Collections.emptySet();
 		}
-		LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false, modelManager);
-		scanner.run(monitor);
-		return collectProjects(scanner.getProjects());
+		try {
+			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false, modelManager);
+			scanner.run(monitor);
+			return collectProjects(scanner.getProjects());
+		} catch (InterruptedException e) {
+			throw new OperationCanceledException();
+		}
 	}
 
 	public boolean isMavenProject() {

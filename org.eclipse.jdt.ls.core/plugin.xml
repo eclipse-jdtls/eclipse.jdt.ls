@@ -3,6 +3,7 @@
 <plugin>
    <extension-point id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler" schema="schema/org.eclipse.jdt.ls.core.delegateCommandHandler.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.contentProvider" name="contentProvider" schema="schema/org.eclipse.jdt.ls.core.contentProvider.exsd"/>
+   <extension-point id="importers" name="JDT LS Project Importer" schema="schema/importers.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">
@@ -54,5 +55,18 @@
       <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.JDTDelegateCommandHandler">
             <command id="java.edit.organizeImports"/>
       </delegateCommandHandler>
+   </extension>
+   <extension
+         id="importers"
+         point="org.eclipse.jdt.ls.core.importers">
+         <importer
+         	id = "mavenProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
+         <importer
+         	id = "gradleProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+         <importer
+         	id = "eclipseProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>       	
    </extension>
 </plugin>
