@@ -16,7 +16,6 @@ import static java.util.Arrays.asList;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -63,7 +62,6 @@ public class ProjectsManager {
 	public static final String DEFAULT_PROJECT_NAME= "jdt.ls-java-project";
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
-	private List<IProjectImporter> importers;
 
 	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
 
@@ -163,16 +161,14 @@ public class ProjectsManager {
 	}
 
 	private Collection<IProjectImporter> importers() {
-		if (importers == null) {
-			importers = new ArrayList<>();
-			IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
-			IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
-			for (int i = 0; i < configs.length; i++) {
-				try {
-					importers.add((IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.log(e.getStatus());
-				}
+		Collection<IProjectImporter> importers = new ArrayList<>();
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
+		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
+		for (int i = 0; i < configs.length; i++) {
+			try {
+				importers.add((IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e.getStatus());
 			}
 		}
 		return importers;
