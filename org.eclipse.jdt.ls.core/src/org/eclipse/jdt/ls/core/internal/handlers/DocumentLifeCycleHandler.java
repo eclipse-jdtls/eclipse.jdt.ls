@@ -63,13 +63,13 @@ import org.eclipse.text.edits.TextEdit;
 
 public class DocumentLifeCycleHandler {
 
+	public static String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
 
 	private SharedASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
-
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 
 	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, boolean delayValidation) {
@@ -82,6 +82,14 @@ public class DocumentLifeCycleHandler {
 				@Override
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 					return performValidation(monitor);
+				}
+
+				/* (non-Javadoc)
+				 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+				 */
+				@Override
+				public boolean belongsTo(Object family) {
+					return DOCUMENT_LIFE_CYCLE_JOBS.equals(family);
 				}
 			};
 			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
@@ -112,14 +120,12 @@ public class DocumentLifeCycleHandler {
 		if (cusToReconcile.isEmpty()) {
 			return Status.OK_STATUS;
 		}
-
 		// first reconcile all units with content changes
 		SubMonitor progress = SubMonitor.convert(monitor, cusToReconcile.size() + 1);
 		for (ICompilationUnit cu : cusToReconcile) {
 			cu.reconcile(ICompilationUnit.NO_AST, true, null, progress.newChild(1));
 		}
 		this.sharedASTProvider.invalidateAll();
-
 		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
 		List<CompilationUnit> astRoots = this.sharedASTProvider.getASTs(toValidate, monitor);
 		for (CompilationUnit astRoot : astRoots) {
