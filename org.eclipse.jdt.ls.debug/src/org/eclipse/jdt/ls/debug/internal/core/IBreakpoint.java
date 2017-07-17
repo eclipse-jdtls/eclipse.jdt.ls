@@ -19,4 +19,6 @@ public interface IBreakpoint {
     public void addToVMTarget(IVMTarget vmTarget);
 
     public void removeFromVMTarget(IVMTarget vmTarget);
+
+    public String getKey();
 }

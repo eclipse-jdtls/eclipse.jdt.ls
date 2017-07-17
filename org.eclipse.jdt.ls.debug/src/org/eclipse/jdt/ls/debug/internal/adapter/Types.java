@@ -218,9 +218,12 @@ public class Types {
     public static class Capabilities {
         public boolean supportsConfigurationDoneRequest;
         public boolean supportsFunctionBreakpoints;
-        public boolean supportsSetVariable;
-        public boolean supportsEvaluateForHovers;
         public boolean supportsConditionalBreakpoints;
+        public boolean supportsHitConditionalBreakpoints;
+        public boolean supportsEvaluateForHovers;
+        public boolean supportsStepBack;
+        public boolean supportsSetVariable;
+        public boolean supportsDelayedStackTraceLoading;
         public List<ExceptionBreakpointFilter> exceptionBreakpointFilters;
     }
 }

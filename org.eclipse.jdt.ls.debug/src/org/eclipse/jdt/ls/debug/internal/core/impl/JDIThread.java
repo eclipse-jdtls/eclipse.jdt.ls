@@ -55,8 +55,7 @@ public class JDIThread extends DebugElement implements IThread {
 
     @Override
     public void resume() {
-        // TODO Auto-generated method stub
-
+        thread.resume();
     }
 
 }

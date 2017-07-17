@@ -12,8 +12,9 @@
 package org.eclipse.jdt.ls.debug.internal.core.impl;
 
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.ls.debug.internal.core.IJDIEventHub;
 import org.eclipse.jdt.ls.debug.internal.core.IJDIEventListener;
@@ -34,6 +35,7 @@ public class JDIEventHub implements IJDIEventHub {
     private JDIVMTarget target;
     private HashMap<EventRequest, IJDIEventListener> eventHandlers;
     private boolean shutdown = false;
+    private ThreadPoolExecutor executor = null;
 
     public JDIEventHub(JDIVMTarget target) {
         this.target = target;
@@ -54,8 +56,14 @@ public class JDIEventHub implements IJDIEventHub {
         return this.shutdown;
     }
 
+    /**
+     * Shutdown the JDI Event Hub.
+     */
     public void shutdown() {
         this.shutdown = true;
+        if (this.executor != null) {
+            this.executor.shutdown();
+        }
     }
 
     @Override
@@ -64,7 +72,7 @@ public class JDIEventHub implements IJDIEventHub {
         if (jvm != null) {
             EventQueue eventQueue = jvm.eventQueue();
             EventSet eventSet = null;
-            ExecutorService executor = Executors.newFixedThreadPool(10);
+            executor = new ThreadPoolExecutor(0, 5, 30L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
             while (!isShutdown()) {
                 try {
                     eventSet = eventQueue.remove(1000);
