@@ -14,12 +14,18 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.RenameProcessor;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameProcessor;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameTypeProcessor;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -60,12 +66,23 @@ public class RenameHandler {
 				curr = elements[0];
 			}
 
-			RenameProcessor processor = new RenameProcessor();
-			processor.renameOccurrences(edit, curr, params.getNewName(), monitor);
-		} catch (Exception ex) {
-
+			RenameProcessor processor = createRenameProcessor(curr);
+			processor.renameOccurrences(edit, params.getNewName(), monitor);
+		} catch (CoreException ex) {
+			JavaLanguageServerPlugin.logException("Problem with rename for " + params.getTextDocument().getUri(), ex);
 		}
 
 		return edit;
+	}
+
+	private RenameProcessor createRenameProcessor(IJavaElement selectedElement) throws JavaModelException {
+		if (selectedElement instanceof IType) {
+			return new RenameTypeProcessor(selectedElement);
+		} else if (selectedElement instanceof IMethod) {
+			if (((IMethod) selectedElement).isConstructor()) {
+				return new RenameTypeProcessor(((IMethod) selectedElement).getDeclaringType());
+			}
+		}
+		return new RenameProcessor(selectedElement);
 	}
 }

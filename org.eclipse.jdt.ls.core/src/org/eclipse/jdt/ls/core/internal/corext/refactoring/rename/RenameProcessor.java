@@ -9,10 +9,14 @@
 *     Microsoft Corporation - initial API and implementation
 *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.corext.refactoring.code;
+package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -20,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -38,14 +43,31 @@ import org.eclipse.text.edits.TextEdit;
 
 public class RenameProcessor {
 
-	public void renameOccurrences(WorkspaceEdit edit, IJavaElement element, String newName, IProgressMonitor monitor) throws JavaModelException, CoreException {
-		if (element == null || !canRename(element)) {
+	protected IJavaElement fElement;
+
+	public RenameProcessor(IJavaElement selectedElement) {
+		fElement = selectedElement;
+	}
+
+	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws JavaModelException, CoreException {
+		if (fElement == null || !canRename(fElement)) {
 			return;
 		}
 
-		int oldNameLen = element.getElementName().length();
+		int oldNameLen = fElement.getElementName().length();
 
-		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.ALL_OCCURRENCES);
+		IJavaElement[] elementsToSearch = null;
+
+		if (fElement instanceof IMethod) {
+			elementsToSearch = RippleMethodFinder.getRelatedMethods((IMethod) fElement, monitor, null);
+		} else {
+			elementsToSearch = new IJavaElement[] { fElement };
+		}
+
+		SearchPattern pattern = createOccurrenceSearchPattern(elementsToSearch);
+		if (pattern == null) {
+			return;
+		}
 		SearchEngine engine = new SearchEngine();
 		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
 
@@ -58,33 +80,53 @@ public class RenameProcessor {
 					if (compilationUnit == null) {
 						return;
 					}
-					TextEdit repalceEdit = new ReplaceEdit(match.getOffset(), oldNameLen, newName);
-					convert(edit, compilationUnit, repalceEdit);
-					// Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
-					// result.add(match);
+					TextEdit replaceEdit = new ReplaceEdit(match.getOffset(), oldNameLen, newName);
+					convert(edit, compilationUnit, replaceEdit);
 				}
 			}
 		}, monitor);
 
 	}
 
-	private void convert(WorkspaceEdit root, ICompilationUnit unit, TextEdit edits) {
+	protected SearchPattern createOccurrenceSearchPattern(IJavaElement[] elements) {
+		if (elements == null || elements.length == 0) {
+			return null;
+		}
+		Set<IJavaElement> set = new HashSet<>(Arrays.asList(elements));
+		Iterator<IJavaElement> iter = set.iterator();
+		IJavaElement first = iter.next();
+		SearchPattern pattern = SearchPattern.createPattern(first, IJavaSearchConstants.ALL_OCCURRENCES);
+		if (pattern == null) {
+			throw new IllegalArgumentException("Invalid java element: " + first.getHandleIdentifier() + "\n" + first.toString());
+		}
+		while (iter.hasNext()) {
+			IJavaElement each = iter.next();
+			SearchPattern nextPattern = SearchPattern.createPattern(each, IJavaSearchConstants.ALL_OCCURRENCES);
+			if (nextPattern == null) {
+				throw new IllegalArgumentException("Invalid java element: " + each.getHandleIdentifier() + "\n" + each.toString());
+			}
+			pattern = SearchPattern.createOrPattern(pattern, nextPattern);
+		}
+		return pattern;
+	}
+
+	protected void convert(WorkspaceEdit root, ICompilationUnit unit, TextEdit edits) {
 		TextEditConverter converter = new TextEditConverter(unit, edits);
 		String uri = JDTUtils.getFileURI(unit);
 		Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
 		if (changes.containsKey(uri)) {
 			changes.get(uri).addAll(converter.convert());
 		} else {
-			root.getChanges().put(uri, converter.convert());
+			changes.put(uri, converter.convert());
 		}
 	}
 
-	private IJavaSearchScope createSearchScope() throws JavaModelException {
+	protected IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
 	}
 
-	private boolean canRename(IJavaElement element) {
+	protected boolean canRename(IJavaElement element) {
 		if (element instanceof IPackageFragment) {
 			return false;
 		}
