@@ -17,6 +17,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.adapter.DispatcherProtocol.IResponder;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.DebugResult;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.SetBreakpointsResponseBody;
@@ -225,20 +227,36 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
     public DebugResult launch(Requests.LaunchArguments arguments) {
         this.cwd = arguments.cwd;
         String mainClass = arguments.startupClass;
-        String[] classPathArray = arguments.classPath;
-        String classpath = String.join(System.getProperty("path.separator"), classPathArray);
-        classpath = classpath.replaceAll("\\\\", "/");
+        if (mainClass.endsWith(".java")) {
+            mainClass = mainClass.substring(0, mainClass.length() - 5);
+        }
+        
+        String classpath;       
+        try
+        {
+        	JavaLanguageServerPlugin ls = JavaLanguageServerPlugin.getInstance();
+        	String projectName = ls.getProjectName(mainClass);
+        	classpath = ls.computeClassPath(projectName);
+        	if (classpath == null)
+        	{
+        		return new DebugResult(3001, "Cannot launch jvm.", null);
+        	}
+        }
+        catch (CoreException e)
+        {
+        	Logger.logException("Failed to resolve classpath.", e);
+            return new DebugResult(3001, "Cannot launch jvm.", null);
+        }
+        
         if (arguments.sourcePath == null || arguments.sourcePath.length == 0) {
             this.sourcePath = new String[] { cwd };
         } else {
             this.sourcePath = new String[arguments.sourcePath.length];
             System.arraycopy(arguments.sourcePath, 0, this.sourcePath, 0, arguments.sourcePath.length);
         }
-        
-        if (mainClass.endsWith(".java")) {
-            mainClass = mainClass.substring(0, mainClass.length() - 5);
-        }
+
         Logger.logInfo("Launch JVM with main class \"" + mainClass + "\", -classpath \"" + classpath + "\"");
+        
         try {
             Launcher launcher = new Launcher();
             VirtualMachine vm = launcher.launchJVM(mainClass, classpath);
