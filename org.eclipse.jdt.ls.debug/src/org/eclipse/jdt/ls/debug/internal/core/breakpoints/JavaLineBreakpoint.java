@@ -13,7 +13,9 @@ package org.eclipse.jdt.ls.debug.internal.core.breakpoints;
 
 import java.util.List;
 
+import org.eclipse.jdt.ls.debug.internal.core.EventType;
 import org.eclipse.jdt.ls.debug.internal.core.IVMTarget;
+import org.eclipse.jdt.ls.debug.internal.core.impl.DebugEvent;
 import org.eclipse.jdt.ls.debug.internal.core.log.Logger;
 
 import com.sun.jdi.AbsentInformationException;
@@ -53,6 +55,8 @@ public class JavaLineBreakpoint extends JavaBreakpoint {
             registerRequest(requests[i], target); 
             i++;
         }
+        this.setVerified(true);
+        target.fireEvent(new DebugEvent(this, EventType.VALID_BREAKPOINT_EVENT));
         return true;
     }
 
@@ -70,5 +74,4 @@ public class JavaLineBreakpoint extends JavaBreakpoint {
     public String getKey() {
         return String.valueOf(this.lineNumber);
     }
-
 }

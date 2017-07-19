@@ -48,8 +48,6 @@ public class Messages {
         public int request_seq;
         public String command;
         public Object body;
-        public boolean running;
-        public JsonObject refs;
 
         public DispatcherResponse() {
             super("response");
@@ -84,8 +82,6 @@ public class Messages {
             this.request_seq = m.request_seq;
             this.command = m.command;
             this.body = m.body;
-            this.running = m.running;
-            this.refs = m.refs;
         }
 
         /**

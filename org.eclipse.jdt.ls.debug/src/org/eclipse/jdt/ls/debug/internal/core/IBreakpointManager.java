@@ -12,13 +12,13 @@
 package org.eclipse.jdt.ls.debug.internal.core;
 
 public interface IBreakpointManager {
-    public void addBreakpoint(String source, IBreakpoint breakpoint);
+    public IBreakpoint addBreakpoint(String source, IBreakpoint breakpoint);
 
-    public void addBreakpoint(String source, IBreakpoint breakpoint, boolean sourceModified);
+    public IBreakpoint addBreakpoint(String source, IBreakpoint breakpoint, boolean sourceModified);
 
-    public void addBreakpoints(String source, IBreakpoint[] breakpoints);
+    public IBreakpoint[] addBreakpoints(String source, IBreakpoint[] breakpoints);
 
-    public void addBreakpoints(String source, IBreakpoint[] breakpoints, boolean sourceModified);
+    public IBreakpoint[] addBreakpoints(String source, IBreakpoint[] breakpoints, boolean sourceModified);
 
     public void removeBreakpoint(String source, IBreakpoint breakpoint);
 

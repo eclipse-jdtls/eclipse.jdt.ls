@@ -22,7 +22,6 @@ import org.eclipse.jdt.ls.debug.internal.adapter.Results.DebugResult;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.SetBreakpointsResponseBody;
 import org.eclipse.jdt.ls.debug.internal.adapter.Types.Capabilities;
 import org.eclipse.jdt.ls.debug.internal.core.EventType;
-import org.eclipse.jdt.ls.debug.internal.core.IBreakpoint;
 import org.eclipse.jdt.ls.debug.internal.core.IBreakpointManager;
 import org.eclipse.jdt.ls.debug.internal.core.IDebugContext;
 import org.eclipse.jdt.ls.debug.internal.core.IDebugEvent;
@@ -284,15 +283,7 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
     @Override
     public SetBreakpointsResponseBody setBreakpoints(Requests.SetBreakpointArguments arguments) {
         IBreakpointManager bpManager = this.vmTarget.getDebugContext().getBreakpointManager();
-        DebugUtils.addBreakpoint(arguments.source, arguments.breakpoints, bpManager);
-        List<Types.Breakpoint> res = new ArrayList<>();
-        int i = 1;
-        for (IBreakpoint bp : bpManager.getBreakpoints()) {
-            JavaLineBreakpoint lbp = (JavaLineBreakpoint) bp;
-            res.add(new Types.Breakpoint(i, true, lbp.getLineNumber(), "Line breakpoint"));
-            i++;
-        }
-
+        List<Types.Breakpoint> res = DebugUtils.addBreakpoint(arguments.source, arguments.breakpoints, arguments.sourceModified, bpManager);
         return new SetBreakpointsResponseBody(res);
     }
 
@@ -557,6 +548,22 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
                     this.responder.addEvent(stopevent.type, stopevent);
                 } catch (AbsentInformationException e) {
                     Logger.logException("Get breakpoint info exception", e);
+                }
+                break;
+            case VALID_BREAKPOINT_EVENT:
+                if (source instanceof JavaLineBreakpoint) {
+                    JavaLineBreakpoint bp = (JavaLineBreakpoint) source;
+                    Events.BreakpointEvent uiBpEvent = 
+                            new Events.BreakpointEvent("new", new Types.Breakpoint(bp.getId(), bp.isVerified(), bp.getLineNumber(), ""));
+                    this.responder.addEvent(uiBpEvent.type, uiBpEvent);
+                }
+                break;
+            case INVALID_BREAKPOINT_EVENT:
+                if (source instanceof JavaLineBreakpoint) {
+                    JavaLineBreakpoint bp = (JavaLineBreakpoint) source;
+                    Events.BreakpointEvent uiBpEvent = 
+                            new Events.BreakpointEvent("new", new Types.Breakpoint(bp.getId(), bp.isVerified(), bp.getLineNumber(), ""));
+                    this.responder.addEvent(uiBpEvent.type, uiBpEvent);
                 }
                 break;
             case STEP_EVENT:

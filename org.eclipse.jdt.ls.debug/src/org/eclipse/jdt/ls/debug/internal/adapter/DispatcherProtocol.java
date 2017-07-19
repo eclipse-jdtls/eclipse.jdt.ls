@@ -76,6 +76,8 @@ public class DispatcherProtocol {
                 }
 
                 if (read > 0) {
+                    // Logger.logInfo("\n[RAW_REQUEST]");
+                    // Logger.logInfo(new String(String.valueOf(buffer, 0, read)));
                     this.rawData.append(buffer, read);
                     this.processData();
                 }
@@ -128,6 +130,7 @@ public class DispatcherProtocol {
                     char[] buf = this.rawData.removeFirst(this.bodyLength);
                     this.bodyLength = -1;
                     dispatch(new String(buf));
+                    continue;
                 }
             } else {
                 String body = this.rawData.getString();

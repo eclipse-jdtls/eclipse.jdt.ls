@@ -12,6 +12,8 @@
 package org.eclipse.jdt.ls.debug.internal.core;
 
 public interface IBreakpoint {
+    public String getTypeName();
+
     public int getHitCount();
 
     public void setHitCount(int hitCount);
@@ -21,4 +23,8 @@ public interface IBreakpoint {
     public void removeFromVMTarget(IVMTarget vmTarget);
 
     public String getKey();
+    
+    public int getId();
+    
+    public boolean isVerified();
 }

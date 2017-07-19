@@ -33,6 +33,8 @@ import com.sun.jdi.request.EventRequestManager;
 public abstract class JavaBreakpoint implements IBreakpoint, IJDIEventListener {
     private String typeName;
     private int hitCount;
+    private int id = -1;
+    private boolean verified = false;
     protected HashMap<IVMTarget, List<EventRequest>> requestsByTarget;
 
     /**
@@ -48,6 +50,10 @@ public abstract class JavaBreakpoint implements IBreakpoint, IJDIEventListener {
         this.requestsByTarget = new HashMap<>(1);
     }
 
+    public String getTypeName() {
+        return this.typeName;
+    }
+
     @Override
     public int getHitCount() {
         return this.hitCount;
@@ -58,6 +64,22 @@ public abstract class JavaBreakpoint implements IBreakpoint, IJDIEventListener {
         this.hitCount = hitCount;
     }
 
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public boolean isVerified() {
+        return this.verified;
+    }
+
     @Override
     public boolean handleEvent(Event event, IVMTarget target, boolean suspendVote, EventSet eventSet) {
         if (event instanceof ClassPrepareEvent) {
@@ -66,12 +88,12 @@ public abstract class JavaBreakpoint implements IBreakpoint, IJDIEventListener {
         return handleBreakpointEvent(event, target, suspendVote);
     }
 
-    public boolean handleClassPrepareEvent(ClassPrepareEvent event, IVMTarget target, boolean suspendVote) {
+    protected boolean handleClassPrepareEvent(ClassPrepareEvent event, IVMTarget target, boolean suspendVote) {
         createRequest(target, event.referenceType());
         return true;
     }
 
-    public boolean handleBreakpointEvent(Event event, IVMTarget target, boolean suspendVote) {
+    protected boolean handleBreakpointEvent(Event event, IVMTarget target, boolean suspendVote) {
         target.fireEvent(new DebugEvent(event, EventType.BREAKPOINT_EVENT));
         return false;
     }
@@ -95,6 +117,7 @@ public abstract class JavaBreakpoint implements IBreakpoint, IJDIEventListener {
             return;
         }
 
+        // create ClassPrepareRequest to intercept class loading event.
         if (referenceTypeName.indexOf("$") == -1) {
             createClassPrepareRequest(referenceTypeName, null, target);
             // intercept local and anonymous inner classes

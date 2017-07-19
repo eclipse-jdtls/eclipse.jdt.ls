@@ -21,45 +21,62 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.internal.core.SourceField;
+import org.eclipse.jdt.internal.core.SourceMethod;
+import org.eclipse.jdt.internal.core.SourceType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.debug.internal.core.IBreakpoint;
 import org.eclipse.jdt.ls.debug.internal.core.IBreakpointManager;
+import org.eclipse.jdt.ls.debug.internal.core.breakpoints.FakeJavaLineBreakpoint;
 import org.eclipse.jdt.ls.debug.internal.core.breakpoints.JavaLineBreakpoint;
 import org.eclipse.jdt.ls.debug.internal.core.log.Logger;
 
 public class DebugUtils {
 
     /**
-     * Converts VSCode source breakpoint to java breakpoint.
+     * According to source breakpoint, set breakpoint info to debugee VM.
      */
-    public static void addBreakpoint(Types.Source source, Types.SourceBreakpoint[] lines, IBreakpointManager manager) {
+    public static List<Types.Breakpoint> addBreakpoint(Types.Source source, Types.SourceBreakpoint[] lines,
+            boolean sourceModified, IBreakpointManager manager) {
+        List<Types.Breakpoint> resBreakpoints = new ArrayList<>();
+        List<IBreakpoint> javaBreakpoints = new ArrayList<>();
         Path sourcePath = Paths.get(source.path);
         ICompilationUnit element = JDTUtils.resolveCompilationUnit(sourcePath.toUri());
-        List<IBreakpoint> javaBreakpoints = new ArrayList<>();
-        try {
-            for (Types.SourceBreakpoint bp : lines) {
+        
+        for (Types.SourceBreakpoint bp : lines) {
+            boolean valid = false;
+            try {
                 String fqn = null;
                 int offset = JsonRpcHelpers.toOffset(element.getBuffer(), bp.line, 0);
                 IJavaElement javaElement = element.getElementAt(offset);
-                if (javaElement instanceof IMember) {
+                if (javaElement instanceof SourceField || javaElement instanceof SourceMethod) {
                     IType type = ((IMember) javaElement).getDeclaringType();
                     fqn = type.getFullyQualifiedName();
-                } 
-                if (fqn != null) {
-                    IBreakpoint linebp = new JavaLineBreakpoint(fqn, bp.line, -1);
-                    javaBreakpoints.add(linebp);
+                } else if (javaElement instanceof SourceType) {
+                    fqn = ((SourceType) javaElement).getFullyQualifiedName();
                 }
+
+                if (fqn != null) {
+                    javaBreakpoints.add(new JavaLineBreakpoint(fqn, bp.line, -1));
+                    valid = true;
+                }
+            } catch (Exception e) {
+                Logger.logException("Add breakpoint exception", e);
             }
-        } catch (Exception e) {
-            Logger.logException("Add breakpoint exception", e);
+            if (!valid) {
+                javaBreakpoints.add(new FakeJavaLineBreakpoint(null, bp.line, -1));
+            }
+        }
+
+        IBreakpoint[] added = manager.addBreakpoints(sourcePath.normalize().toString(), javaBreakpoints.toArray(new IBreakpoint[0]), sourceModified);
+        for (IBreakpoint add : added) {
+            resBreakpoints.add(new Types.Breakpoint(add.getId(), add.isVerified(), ((JavaLineBreakpoint) add).getLineNumber(), ""));
         }
         
-        // TODO Need some logic here to check the delta breakpoints
-        // in BreakpointManager
-        manager.addBreakpoints(sourcePath.normalize().toString(), javaBreakpoints.toArray(new IBreakpoint[0]), false);
+        return resBreakpoints;
     }
-
+    
     /**
      * Search the absolute path of the java file under the specified source path directory.
      * @param sourcePath
