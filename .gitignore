@@ -4,3 +4,6 @@
 target/
 bin/
 **/lib/
+.classpath
+.project
+.settings
