@@ -232,18 +232,14 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
         }
         
         String classpath;       
-        try
-        {
+        try {
         	JavaLanguageServerPlugin ls = JavaLanguageServerPlugin.getInstance();
         	String projectName = ls.getProjectName(mainClass);
         	classpath = ls.computeClassPath(projectName);
-        	if (classpath == null)
-        	{
+        	if (classpath == null) {       	
         		return new DebugResult(3001, "Cannot launch jvm.", null);
         	}
-        }
-        catch (CoreException e)
-        {
+        } catch (CoreException e) {
         	Logger.logException("Failed to resolve classpath.", e);
             return new DebugResult(3001, "Cannot launch jvm.", null);
         }
