@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -28,7 +27,7 @@ public class RenameTypeProcessor extends RenameProcessor {
 	}
 
 	@Override
-	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws JavaModelException, CoreException {
+	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws CoreException {
 		super.renameOccurrences(edit, newName, monitor);
 
 		IType t = (IType) fElement;
@@ -36,7 +35,7 @@ public class RenameTypeProcessor extends RenameProcessor {
 
 		for (IMethod method : methods) {
 			if (method.isConstructor()) {
-				TextEdit replaceEdit = new ReplaceEdit(method.getNameRange().getOffset(), method.getElementName().length(), newName);
+				TextEdit replaceEdit = new ReplaceEdit(method.getNameRange().getOffset(), method.getNameRange().getLength(), newName);
 				convert(edit, t.getCompilationUnit(), replaceEdit);
 			}
 		}

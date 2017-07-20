@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -28,8 +28,14 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.ToolFactory;
+import org.eclipse.jdt.core.compiler.IScanner;
+import org.eclipse.jdt.core.compiler.ITerminalSymbols;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.MethodDeclarationMatch;
+import org.eclipse.jdt.core.search.MethodReferenceMatch;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
@@ -45,16 +51,17 @@ public class RenameProcessor {
 
 	protected IJavaElement fElement;
 
+	private IJavaProject fProjectCache;
+	private IScanner fScannerCache;
+
 	public RenameProcessor(IJavaElement selectedElement) {
 		fElement = selectedElement;
 	}
 
-	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws JavaModelException, CoreException {
-		if (fElement == null || !canRename(fElement)) {
+	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws CoreException {
+		if (fElement == null || !canRename()) {
 			return;
 		}
-
-		int oldNameLen = fElement.getElementName().length();
 
 		IJavaElement[] elementsToSearch = null;
 
@@ -80,15 +87,17 @@ public class RenameProcessor {
 					if (compilationUnit == null) {
 						return;
 					}
-					TextEdit replaceEdit = new ReplaceEdit(match.getOffset(), oldNameLen, newName);
-					convert(edit, compilationUnit, replaceEdit);
+					TextEdit replaceEdit = collectMatch(match, element, compilationUnit, newName);
+					if (replaceEdit != null) {
+						convert(edit, compilationUnit, replaceEdit);
+					}
 				}
 			}
 		}, monitor);
 
 	}
 
-	protected SearchPattern createOccurrenceSearchPattern(IJavaElement[] elements) {
+	protected SearchPattern createOccurrenceSearchPattern(IJavaElement[] elements) throws CoreException {
 		if (elements == null || elements.length == 0) {
 			return null;
 		}
@@ -97,13 +106,13 @@ public class RenameProcessor {
 		IJavaElement first = iter.next();
 		SearchPattern pattern = SearchPattern.createPattern(first, IJavaSearchConstants.ALL_OCCURRENCES);
 		if (pattern == null) {
-			throw new IllegalArgumentException("Invalid java element: " + first.getHandleIdentifier() + "\n" + first.toString());
+			throw new CoreException(Status.CANCEL_STATUS);
 		}
 		while (iter.hasNext()) {
 			IJavaElement each = iter.next();
 			SearchPattern nextPattern = SearchPattern.createPattern(each, IJavaSearchConstants.ALL_OCCURRENCES);
 			if (nextPattern == null) {
-				throw new IllegalArgumentException("Invalid java element: " + each.getHandleIdentifier() + "\n" + each.toString());
+				throw new CoreException(Status.CANCEL_STATUS);
 			}
 			pattern = SearchPattern.createOrPattern(pattern, nextPattern);
 		}
@@ -122,15 +131,75 @@ public class RenameProcessor {
 	}
 
 	protected IJavaSearchScope createSearchScope() throws JavaModelException {
-		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES);
+		return SearchEngine.createWorkspaceScope();
 	}
 
-	protected boolean canRename(IJavaElement element) {
-		if (element instanceof IPackageFragment) {
+	protected boolean canRename() throws CoreException {
+		if (fElement instanceof IPackageFragment) {
 			return false;
 		}
-		ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+		ICompilationUnit compilationUnit = (ICompilationUnit) fElement.getAncestor(IJavaElement.COMPILATION_UNIT);
 		return compilationUnit != null;
+	}
+
+	private TextEdit collectMatch(SearchMatch match, IJavaElement element, ICompilationUnit unit, String newName) throws IndexOutOfBoundsException, JavaModelException {
+		if (match instanceof MethodReferenceMatch && ((MethodReferenceMatch) match).isSuperInvocation() && match.getAccuracy() == SearchMatch.A_INACCURATE) {
+			return null;
+		}
+
+		if (!(element instanceof IMethod) || match.isImplicit()) {
+			return new ReplaceEdit(match.getOffset(), match.getLength(), newName);
+		}
+
+		int start = match.getOffset();
+		int length = match.getLength();
+		String matchText = unit.getBuffer().getText(start, length);
+
+		//direct match:
+		if (newName.equals(matchText)) {
+			return new ReplaceEdit(match.getOffset(), match.getLength(), newName);
+		}
+
+		// lambda expression
+		if (match instanceof MethodDeclarationMatch && match.getElement() instanceof IMethod && ((IMethod) match.getElement()).isLambdaMethod()) {
+			// don't touch the lambda
+			return null;
+		}
+
+		//Not a standard reference -- use scanner to find last identifier token before left parenthesis:
+		IScanner scanner = getScanner(unit);
+		scanner.setSource(matchText.toCharArray());
+		int simpleNameStart = -1;
+		int simpleNameEnd = -1;
+		try {
+			int token = scanner.getNextToken();
+			while (token != ITerminalSymbols.TokenNameEOF && token != ITerminalSymbols.TokenNameLPAREN) { // reference in code includes arguments in parentheses
+				if (token == ITerminalSymbols.TokenNameIdentifier) {
+					simpleNameStart = scanner.getCurrentTokenStartPosition();
+					simpleNameEnd = scanner.getCurrentTokenEndPosition();
+				}
+				token = scanner.getNextToken();
+			}
+		} catch (InvalidInputException e) {
+			//ignore
+		}
+		if (simpleNameStart != -1) {
+			match.setOffset(start + simpleNameStart);
+			match.setLength(simpleNameEnd + 1 - simpleNameStart);
+		}
+		return new ReplaceEdit(match.getOffset(), match.getLength(), newName);
+	}
+
+	protected IScanner getScanner(ICompilationUnit unit) {
+		IJavaProject project = unit.getJavaProject();
+		if (project.equals(fProjectCache)) {
+			return fScannerCache;
+		}
+
+		fProjectCache = project;
+		String sourceLevel = project.getOption(JavaCore.COMPILER_SOURCE, true);
+		String complianceLevel = project.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+		fScannerCache = ToolFactory.createScanner(false, false, false, sourceLevel, complianceLevel);
+		return fScannerCache;
 	}
 }
