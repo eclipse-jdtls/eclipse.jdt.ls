@@ -31,6 +31,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
@@ -183,7 +185,7 @@ public final class JDTUtils {
 
 	public static String getPackageName(IJavaProject javaProject, URI uri) {
 		try {
-			File file = new File(uri);
+			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
 			return getPackageName(javaProject, content);
@@ -336,7 +338,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(String uri) {
-		return new Location(uri, newRange());
+		return new Location(ResourceUtils.fixUri(uri), newRange());
 	}
 
 	/**
@@ -513,6 +515,20 @@ public final class JDTUtils {
 			return null;
 		}
 		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+		if (resources.length == 0 && Platform.OS_WIN32.equals(Platform.getOS()) && uri.toString().startsWith(ResourceUtils.FILE_UNC_PREFIX)) {
+			String uriString = uri.toString();
+			int index = uriString.indexOf("/", ResourceUtils.FILE_UNC_PREFIX.length());
+			if (index > 0) {
+				String server = uriString.substring(ResourceUtils.FILE_UNC_PREFIX.length(), index);
+				uriString = uriString.replace(server, server.toUpperCase());
+				try {
+					uri = new URI(uriString);
+				} catch (URISyntaxException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+				resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+			}
+		}
 		switch(resources.length) {
 		case 0:
 			return null;
@@ -526,7 +542,7 @@ public final class JDTUtils {
 					try {
 						f.delete(true, null);
 					} catch (CoreException e) {
-						e.printStackTrace();
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
 				}
 				//find closest project containing that file, in case of nested projects
@@ -543,7 +559,11 @@ public final class JDTUtils {
 			return null;
 		}
 		try {
-			return new URI(uriString);
+			URI uri = new URI(uriString);
+			if (Platform.OS_WIN32.equals(Platform.getOS()) && URIUtil.isFileURI(uri)) {
+				uri = URIUtil.toFile(uri).toURI();
+			}
+			return uri;
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Failed to resolve "+uriString, e);
 			return null;

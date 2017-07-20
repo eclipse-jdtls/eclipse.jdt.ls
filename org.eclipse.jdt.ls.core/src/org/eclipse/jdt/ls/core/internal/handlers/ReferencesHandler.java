@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
 
@@ -79,6 +80,7 @@ public class ReferencesHandler {
 							}
 						}
 						if (location != null ) {
+									location.setUri(ResourceUtils.fixUri(location.getUri()));
 							locations.add(location);
 						}
 

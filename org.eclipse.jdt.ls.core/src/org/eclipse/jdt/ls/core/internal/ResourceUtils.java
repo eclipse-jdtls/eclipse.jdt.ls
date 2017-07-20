@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.URIUtil;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -32,6 +34,8 @@ import com.google.common.io.Files;
  * @author Fred Bricon
  */
 public final class ResourceUtils {
+
+	public static final String FILE_UNC_PREFIX = "file:////";
 
 	private ResourceUtils() {
 		// No instanciation
@@ -87,7 +91,7 @@ public final class ResourceUtils {
 		}
 		String content;
 		try {
-			content = Files.toString(new File(fileURI), Charsets.UTF_8);
+			content = Files.toString(toFile(fileURI), Charsets.UTF_8);
 		} catch (IOException e) {
 			throw new CoreException(StatusFactory.newErrorStatus("Can not get " + fileURI + " content", e));
 		}
@@ -103,7 +107,7 @@ public final class ResourceUtils {
 			content = "";
 		}
 		try {
-			Files.write(content, new File(fileURI), Charsets.UTF_8);
+			Files.write(content, toFile(fileURI), Charsets.UTF_8);
 		} catch (IOException e) {
 			throw new CoreException(StatusFactory.newErrorStatus("Can not write to " + fileURI, e));
 		}
@@ -113,8 +117,25 @@ public final class ResourceUtils {
 	 * Fix uris by adding missing // to single file:/ prefix
 	 */
 	public static String fixURI(URI uri) {
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			uri = URIUtil.toFile(uri).toURI();
+		}
 		String uriString = uri.toString();
 		return uriString.replaceFirst("file:/([^/])", "file:///$1");
+	}
+
+	public static File toFile(URI uri) {
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			return URIUtil.toFile(uri);
+		}
+		return new File(uri);
+	}
+
+	public static String fixUri(String uriString) {
+		if (uriString != null && Platform.OS_WIN32.equals(Platform.getOS()) && uriString.startsWith(FILE_UNC_PREFIX)) {
+			uriString = uriString.replace(FILE_UNC_PREFIX, "file://");
+		}
+		return uriString;
 	}
 
 }

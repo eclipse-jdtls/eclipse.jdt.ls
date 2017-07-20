@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Command;
@@ -75,19 +76,29 @@ public class CodeLensHandler {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
 			if (REFERENCES_TYPE.equals(type)) {
 				List<Location> locations = findReferences(element, monitor);
+				fixLocationUri(locations);
 				int nReferences = locations.size();
-				Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references", JAVA_SHOW_REFERENCES_COMMAND, Arrays.asList(uri, position, locations));
+				Command command = new Command(nReferences == 1 ? "1 reference" : nReferences + " references", JAVA_SHOW_REFERENCES_COMMAND, Arrays.asList(ResourceUtils.fixUri(uri), position, locations));
 				lens.setCommand(command);
 			} else if (IMPLEMENTATION_TYPE.equals(type) && element instanceof IType) {
 				List<Location> locations = findImplementations((IType) element, monitor);
+				fixLocationUri(locations);
 				int nImplementations = locations.size();
-				Command command = new Command(nImplementations == 1 ? "1 implementation" : nImplementations + " implementations", JAVA_SHOW_IMPLEMENTATIONS_COMMAND, Arrays.asList(uri, position, locations));
+				Command command = new Command(nImplementations == 1 ? "1 implementation" : nImplementations + " implementations", JAVA_SHOW_IMPLEMENTATIONS_COMMAND, Arrays.asList(ResourceUtils.fixUri(uri), position, locations));
 				lens.setCommand(command);
 			}
+			data.set(0, ResourceUtils.fixUri(uri));
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
 		}
 		return lens;
+	}
+
+	private void fixLocationUri(List<Location> locations) {
+		for (Location location : locations) {
+			String u = location.getUri();
+			location.setUri(ResourceUtils.fixUri(u));
+		}
 	}
 
 	private List<Location> findImplementations(IType type, IProgressMonitor monitor) throws JavaModelException {
