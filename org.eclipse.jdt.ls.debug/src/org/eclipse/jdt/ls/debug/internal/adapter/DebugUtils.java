@@ -17,13 +17,27 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.SourceField;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.internal.core.SourceType;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.debug.internal.core.IBreakpoint;
@@ -95,4 +109,75 @@ public class DebugUtils {
         return null;
     }
     
+    /**
+     * Use search engine to get project name from type.
+     * 
+     * @param typeFullyQualifiedName
+     *            fully qualified name of type
+     * @return project name
+     * @throws CoreException
+     *             CoreException
+     */
+    public static String getProjectName(String typeFullyQualifiedName) throws CoreException {
+        SearchPattern pattern = SearchPattern.createPattern(typeFullyQualifiedName, IJavaSearchConstants.TYPE,
+                IJavaSearchConstants.DECLARATIONS, SearchPattern.R_EXACT_MATCH);
+        IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+        ArrayList<String> projectNames = new ArrayList<>();
+        SearchRequestor requestor = new SearchRequestor() {
+            @Override
+            public void acceptSearchMatch(SearchMatch match) {
+                projectNames.add(((IJavaElement) match.getElement()).getJavaProject().getElementName());
+            }
+        };
+        SearchEngine searchEngine = new SearchEngine();
+        searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope,
+                requestor, null /* progress monitor */);
+
+        if (projectNames.isEmpty()) {
+            throw new IllegalArgumentException("Main class " + typeFullyQualifiedName + "not found.");
+        }
+        return projectNames.get(0);
+    }
+
+    /**
+     * Get java project from type.
+     * 
+     * @param typeFullyQualifiedName
+     *            fully qualified name of type
+     * @return java project
+     * @throws CoreException
+     *             CoreException
+     */
+    public static IJavaProject getJavaProject(String typeFullyQualifiedName) throws CoreException {
+        String projectName = getProjectName(typeFullyQualifiedName);
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        IProject project = root.getProject(projectName);
+        if (!project.exists()) {
+            throw new IllegalArgumentException("Not an existed project.");
+        }
+        if (!project.isNatureEnabled("org.eclipse.jdt.core.javanature")) {
+            throw new IllegalArgumentException("Not a project with java nature.");
+        }
+        IJavaProject javaProject = JavaCore.create(project);
+        return javaProject;
+    }
+
+    /**
+     * Compute runtime classpath.
+     * 
+     * @param javaProject
+     *            java project
+     * @return class path
+     * @throws CoreException
+     *             CoreException
+     */
+    public static String computeClassPath(IJavaProject javaProject) throws CoreException {
+        if (javaProject == null) {
+            throw new IllegalArgumentException("javaProject is null");
+        }
+        String[] classPathArray = JavaRuntime.computeDefaultRuntimeClassPath(javaProject);
+        String classPath = String.join(System.getProperty("path.separator"), classPathArray);
+        classPath = classPath.replaceAll("\\\\", "/");
+        return classPath;
+    }
 }

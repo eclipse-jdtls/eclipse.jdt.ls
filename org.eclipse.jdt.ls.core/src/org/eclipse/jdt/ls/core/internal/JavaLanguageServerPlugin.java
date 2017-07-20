@@ -21,7 +21,6 @@ import java.io.PrintStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.stream.Stream;
@@ -30,25 +29,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
-import org.eclipse.jdt.core.search.IJavaSearchConstants;
-import org.eclipse.jdt.core.search.IJavaSearchScope;
-import org.eclipse.jdt.core.search.SearchEngine;
-import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
-import org.eclipse.jdt.core.search.SearchPattern;
-import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -216,38 +204,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 			logException(e.getMessage(), e);
 		}
 		return null;
-	}
-
-	public String getProjectName(String typeFullyQualifiedName) throws CoreException {
-		SearchPattern pattern = SearchPattern.createPattern(typeFullyQualifiedName, IJavaSearchConstants.TYPE, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_EXACT_MATCH);
-
-		IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
-		ArrayList<String> projectNames = new ArrayList<>();
-
-		SearchRequestor requestor = new SearchRequestor() {
-			@Override
-			public void acceptSearchMatch(SearchMatch match) {
-				projectNames.add(((IJavaElement) match.getElement()).getJavaProject().getElementName());
-			}
-		};
-
-		SearchEngine searchEngine = new SearchEngine();
-		searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope, requestor, null /*progress monitor*/);
-		return projectNames.get(0);
-	}
-
-	public String computeClassPath(String projectName) throws CoreException {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IProject project = root.getProject(projectName);
-		if (!project.isNatureEnabled("org.eclipse.jdt.core.javanature")) {
-			logError("Not a project with java nature.");
-			return null;
-		}
-		IJavaProject javaProject = JavaCore.create(project);
-		String[] classPathArray = JavaRuntime.computeDefaultRuntimeClassPath(javaProject);
-		String classPath = String.join(System.getProperty("path.separator"), classPathArray);
-		classPath = classPath.replaceAll("\\\\", "/");
-		return classPath;
 	}
 
 	private void startConnection() throws IOException {

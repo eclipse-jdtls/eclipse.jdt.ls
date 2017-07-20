@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.adapter.DispatcherProtocol.IResponder;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.DebugResult;
@@ -230,20 +231,16 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
         if (mainClass.endsWith(".java")) {
             mainClass = mainClass.substring(0, mainClass.length() - 5);
         }
-        
-        String classpath;       
+
+        String classpath;
         try {
-        	JavaLanguageServerPlugin ls = JavaLanguageServerPlugin.getInstance();
-        	String projectName = ls.getProjectName(mainClass);
-        	classpath = ls.computeClassPath(projectName);
-        	if (classpath == null) {       	
-        		return new DebugResult(3001, "Cannot launch jvm.", null);
-        	}
-        } catch (CoreException e) {
-        	Logger.logException("Failed to resolve classpath.", e);
+            IJavaProject project = DebugUtils.getJavaProject(mainClass);
+            classpath = DebugUtils.computeClassPath(project);
+        } catch (IllegalArgumentException | CoreException e) {
+            Logger.logException("Failed to resolve classpath.", e);
             return new DebugResult(3001, "Cannot launch jvm.", null);
         }
-        
+
         if (arguments.sourcePath == null || arguments.sourcePath.length == 0) {
             this.sourcePath = new String[] { cwd };
         } else {
