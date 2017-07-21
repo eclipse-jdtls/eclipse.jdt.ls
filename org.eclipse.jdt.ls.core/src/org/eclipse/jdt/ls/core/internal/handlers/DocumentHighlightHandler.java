@@ -81,7 +81,7 @@ public class DocumentHighlightHandler{
 		return h;
 	}
 
-	List<? extends DocumentHighlight> documentHighlight(TextDocumentPositionParams position, IProgressMonitor monitor) {
+	public List<? extends DocumentHighlight> documentHighlight(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot type = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		return computeOccurrences(type, position.getPosition().getLine(),
 				position.getPosition().getCharacter(), monitor);
