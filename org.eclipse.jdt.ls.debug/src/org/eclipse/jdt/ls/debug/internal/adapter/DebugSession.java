@@ -18,8 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.adapter.DispatcherProtocol.IResponder;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.DebugResult;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.SetBreakpointsResponseBody;
@@ -234,9 +237,9 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
 
         String classpath;
         try {
-            IJavaProject project = DebugUtils.getJavaProject(mainClass);
+            IJavaProject project = getJavaProject(arguments.projectName, mainClass);
             classpath = DebugUtils.computeClassPath(project);
-        } catch (IllegalArgumentException | CoreException e) {
+        } catch (CoreException e) {
             Logger.logException("Failed to resolve classpath.", e);
             return new DebugResult(3001, "Cannot launch jvm.", null);
         }
@@ -260,6 +263,19 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
             return new DebugResult(3001, "Cannot launch jvm.", null);
         }
         return new DebugResult();
+    }
+    
+    private IJavaProject getJavaProject(String projectName, String mainClass) throws CoreException {
+        // if type exists in multiple projects, debug configuration need provide project name.
+        if (projectName != null) {
+            return DebugUtils.getJavaProjectFromName(projectName);
+        } else {
+            List<IJavaProject> projects = DebugUtils.getJavaProjectFromType(mainClass);
+            if (projects.size() == 0 || projects.size() > 1) {
+                throw new CoreException(new Status(IStatus.ERROR, JavaDebuggerServerPlugin.PLUGIN_ID, "project count is zero or more than one."));
+            }
+            return projects.get(0);
+        }
     }
 
     @Override
