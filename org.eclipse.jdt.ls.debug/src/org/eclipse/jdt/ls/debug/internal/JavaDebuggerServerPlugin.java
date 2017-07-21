@@ -19,6 +19,9 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 public class JavaDebuggerServerPlugin implements BundleActivator {
+
+    public static final String PLUGIN_ID = "org.eclipse.jdt.ls.debug";
+    
     private static BundleContext context;
     
     @Override

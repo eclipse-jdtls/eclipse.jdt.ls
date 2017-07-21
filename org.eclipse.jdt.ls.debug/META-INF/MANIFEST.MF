@@ -6,6 +6,7 @@ Bundle-Version: 0.2.0.qualifier
 Bundle-Activator: org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.eclipse.jdt.core,
+ org.eclipse.jdt.launching,
  org.eclipse.jdt.ls.core.debug,
  org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
