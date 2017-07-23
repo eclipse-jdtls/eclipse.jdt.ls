@@ -2414,4 +2414,33 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActionExists(cu, e1);
 	}
 
+	@Test
+	public void testBug300() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class Message {\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("Message.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class DevoxxApplication {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        new Message().z\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("DevoxxApplication.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class Message {\n");
+		buf.append("    public Object z;\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create field 'z' in type 'Message'", buf.toString());
+
+		assertCodeActionExists(cu, e1);
+	}
+
 }
