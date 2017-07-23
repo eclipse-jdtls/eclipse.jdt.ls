@@ -76,6 +76,7 @@
       <plugin id="org.eclipse.jdt.core" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.launching" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.ls.core" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.update.configurator" autoStart="false" startLevel="0" />
    </configurations>
 
    <preferencesInfo>
