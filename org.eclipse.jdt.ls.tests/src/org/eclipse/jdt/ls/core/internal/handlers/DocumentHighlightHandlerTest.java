@@ -32,27 +32,30 @@ public class DocumentHighlightHandlerTest extends AbstractProjectsManagerBasedTe
 	private IProject project;
 	private DocumentHighlightHandler handler;
 
+	private void assertHighlight(DocumentHighlight highlight, int expectedLine, int expectedStart, int expectedEnd, DocumentHighlightKind expectedKind) {
+		Lsp4jAssertions.assertRange(expectedLine, expectedStart, expectedEnd, highlight.getRange());
+		assertEquals(expectedKind, highlight.getKind());
+	}
+
 	@Before
 	public void setup() throws Exception {
-		importProjects("gradle/simple-gradle");
-		project = WorkspaceHelper.getProject("simple-gradle");
+		importProjects("eclipse/hello");
+		project = WorkspaceHelper.getProject("hello");
 		handler = new DocumentHighlightHandler();
 	}
 
 	@Test
 	public void testDocumentHighlightHandler() throws Exception {
-		String uri = ClassFileUtil.getURI(project, "LibraryTest");
+		String uri = ClassFileUtil.getURI(project, "java.Highlight");
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
-		TextDocumentPositionParams params = new TextDocumentPositionParams(identifier, new Position(11, 17));
-		List<? extends DocumentHighlight> highlights = handler.documentHighlight(params, monitor);
-		assertEquals(2, highlights.size());
+		TextDocumentPositionParams params = new TextDocumentPositionParams(identifier, new Position(5, 10));
 
-		DocumentHighlight write = highlights.get(0);
-		assertEquals(DocumentHighlightKind.Write, write.getKind());
-		Lsp4jAssertions.assertRange(11, 16, 30, write.getRange());
-		DocumentHighlight read = highlights.get(1);
-		assertEquals(DocumentHighlightKind.Read, read.getKind());
-		Lsp4jAssertions.assertRange(12, 61, 75, read.getRange());
+		List<? extends DocumentHighlight> highlights = handler.documentHighlight(params, monitor);
+		assertEquals(4, highlights.size());
+		assertHighlight(highlights.get(0), 5, 9, 15, DocumentHighlightKind.Write);
+		assertHighlight(highlights.get(1), 6, 2, 8, DocumentHighlightKind.Read);
+		assertHighlight(highlights.get(2), 7, 2, 8, DocumentHighlightKind.Write);
+		assertHighlight(highlights.get(3), 8, 2, 8, DocumentHighlightKind.Read);
 	}
 
 }
