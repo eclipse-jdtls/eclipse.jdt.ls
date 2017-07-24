@@ -15,10 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
@@ -41,7 +44,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	@Override
 	public void accept(CompletionProposal proposal) {
-		if(!isIgnored(proposal.getKind())) {
+		if (!isIgnored(proposal.getKind())) {
+			if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
+				acceptPotentialMethodDeclaration(proposal);
+			}
 			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null
 					&& String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
 				// Hacky way to boost relevance of current package, for package completions, until
@@ -132,6 +138,31 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		super.setIgnored(completionProposalKind, ignore);
 		if (completionProposalKind == CompletionProposal.METHOD_DECLARATION && !ignore) {
 			setRequireExtendedContext(true);
+		}
+	}
+
+	private void acceptPotentialMethodDeclaration(CompletionProposal proposal) {
+		try {
+			IJavaElement enclosingElement = null;
+			if (response.getContext().isExtended()) {
+				enclosingElement = response.getContext().getEnclosingElement();
+			} else if (unit != null) {
+				// kept for backward compatibility: CU is not reconciled at this moment, information is missing (bug 70005)
+				enclosingElement = unit.getElementAt(proposal.getCompletionLocation() + 1);
+			}
+			if (enclosingElement == null) {
+				return;
+			}
+			IType type = (IType) enclosingElement.getAncestor(IJavaElement.TYPE);
+			if (type != null) {
+				String prefix = String.valueOf(proposal.getName());
+				int completionStart = proposal.getReplaceStart();
+				int completionEnd = proposal.getReplaceEnd();
+				int relevance = proposal.getRelevance() + 4;
+
+				GetterSetterCompletionProposal.evaluateProposals(type, prefix, completionStart, completionEnd - completionStart, relevance + 2, proposals);
+			}
+		} catch (CoreException e) {
 		}
 	}
 }

@@ -52,9 +52,41 @@ public enum CodeGenerationTemplate {
 	 * Type comment template
 	 */
 	TYPECOMMENT(
-			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, 
-			CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE, 
-			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT,
+			CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_DEFAULT),
+	/**
+	 * Getter comment template
+	 */
+	GETTERCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT,
+			CodeTemplateContextType.GETTERCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT_DEFAULT),
+
+	/**
+	 * Getter comment template
+	 */
+	SETTERCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT,
+			CodeTemplateContextType.SETTERCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT_DEFAULT),
+
+	/**
+	 * Getter method body content
+	 */
+	GETTERBODY(
+			CodeTemplatePreferences.CODETEMPLATE_GETTERBODY,
+			CodeTemplateContextType.GETTERBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_GETTERBODY_DEFAULT),
+
+	/**
+	 * Setter method body content
+	 */
+	SETTERBOY(
+			CodeTemplatePreferences.CODETEMPLATE_SETTERBODY,
+			CodeTemplateContextType.SETTERBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_SETTERBODY_DEFAULT);
+
 
 	private final String preferenceId;
 	private final String contextType;
@@ -78,6 +110,7 @@ public enum CodeGenerationTemplate {
 class CodeTemplatePreferences {
 	private static final String CODETEMPLATES_PREFIX = "java.codetemplates."; //$NON-NLS-1$
 	public static final String COMMENT_SUFFIX = ".comment"; //$NON-NLS-1$
+	public static final String BODY_SUFFIX = ".body"; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for field comments
@@ -110,6 +143,26 @@ class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_TYPECOMMENT = CODETEMPLATES_PREFIX + "type" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for getter comments
+	 */
+	public static final String CODETEMPLATE_GETTERCOMMENT = CODETEMPLATES_PREFIX + "getter" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for setter comments
+	 */
+	public static final String CODETEMPLATE_SETTERCOMMENT = CODETEMPLATES_PREFIX + "setter" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for getter method body content
+	 */
+	public static final String CODETEMPLATE_GETTERBODY = CODETEMPLATES_PREFIX + "getter" + BODY_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for setter method body content
+	 */
+	public static final String CODETEMPLATE_SETTERBODY = CODETEMPLATES_PREFIX + "setter" + BODY_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * Default value for field comments
 	 */
 	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */\n";
@@ -139,5 +192,26 @@ class CodeTemplatePreferences {
 	 * Default value for type comments
 	 */
 	public static final String CODETEMPLATE_TYPECOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+
+	/**
+	 * Default value for getter comments
+	 */
+	public static final String CODETEMPLATE_GETTERCOMMENT_DEFAULT = "/**\n" + " * @return the ${bare_field_name}\n" + " */\n";
+
+	/**
+	 * Default value for setter comments
+	 */
+	public static final String CODETEMPLATE_SETTERCOMMENT_DEFAULT = "/**\n" + " * @param ${param} the ${bare_field_name} to set\n" + " */\n";
+
+	/**
+	 * Default value for getter method body content
+	 */
+	public static final String CODETEMPLATE_GETTERBODY_DEFAULT = "return ${field};\n";
+
+	/**
+	 * Default value for setter method body content
+	 */
+	public static final String CODETEMPLATE_SETTERBODY_DEFAULT = "${field} = ${param};\n";
+
 
 }
