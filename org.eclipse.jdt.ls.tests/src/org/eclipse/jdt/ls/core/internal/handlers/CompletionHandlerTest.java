@@ -18,6 +18,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +40,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
+import org.junit.Before;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,6 +69,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 					"    },\n" +
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
+
+	@Before
+	public void setUp() {
+		mockLSP3Client();
+	}
 
 	//FIXME Something very fishy here: when run from command line as part of the whole test suite,
 	//no completions are returned maybe 80% of the time if this method runs first in this class,
@@ -109,8 +118,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_constructor() throws Exception{
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -141,15 +148,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(17, range.getStart().getCharacter());
 		assertEquals(2, range.getEnd().getLine());
 		assertEquals(18, range.getEnd().getCharacter());
-
-
 	}
 
 
 	@Test
 	public void testCompletion_import_package() throws JavaModelException{
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -188,8 +191,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_method_withLSPV2() throws JavaModelException{
-
-		mockClientPreferences(false, false);
+		mockLSP2Client();
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -203,7 +205,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 
 		int[] loc = findCompletionLocation(unit, "map.pu");
-
 
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
@@ -227,9 +228,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_method_withLSPV3() throws JavaModelException{
-
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -242,7 +240,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 
 		int[] loc = findCompletionLocation(unit, "map.pu");
-
 
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
@@ -269,14 +266,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(3, edits.size());
 	}
 
-
-	/**
-	 * Mocks the preference manager to use LSP v3 support.
-	 */
-	private ClientPreferences mockLSPv3ClientPreferences() {
-		return mockClientPreferences(true, true);
-	}
-
 	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp) {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
@@ -287,8 +276,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_field() throws JavaModelException{
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -319,8 +306,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_import_type() throws JavaModelException{
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -526,14 +511,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_methodOverrideWithParams() throws Exception {
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
+				//@formatter:off
 				"src/org/sample/Test.java",
 				"package org.sample;\n\n"+
 				"public class Test extends Baz {\n"+
 				"    getP" +
 				"}\n");
+				//@formatter:on
 		int[] loc = findCompletionLocation(unit, " getP");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
@@ -563,14 +548,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_methodOverrideWithException() throws Exception {
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
+				//@formatter:off
 				"src/org/sample/Test.java",
 				"package org.sample;\n\n"+
 				"public class Test extends Baz {\n"+
 				"    dele"+
 				"}\n");
+				//@formatter:on
 		int[] loc = findCompletionLocation(unit, " dele");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
@@ -598,9 +583,52 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(2));
 	}
 
+	public void testCompletion_plainTextDoc() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				//@formatter:off
+				"src/java/Foo.java",
+				"import java.sq \n" +
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"      zz\n"+
+				"	}\n\"	}\\n\"+"+
+				"\n"+
+				"/** This should be <bold>plain</bold>.*/\n" +
+				"	void zzz() {}\n"+
+				"}\n");
+				//@formatter:off
+		int[] loc = findCompletionLocation(unit, "   zz");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found", list.getItems().isEmpty());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals("zzz() : void", item.getLabel());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(item).join();
+		assertEquals("This should be plain.", resolvedItem.getDocumentation());
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
+	}
+
+	private void mockLSP3Client() {
+		mockLSPClient(true, true);
+	}
+
+	private void mockLSP2Client() {
+		mockLSPClient(false, false);
+	}
+
+	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
+		reset(preferenceManager);
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		// Mock the preference manager to use LSP v3 support.
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
+		when(mockCapabilies.isSignatureHelpSupported()).thenReturn(isSignatureHelpSuported);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 	}
 }

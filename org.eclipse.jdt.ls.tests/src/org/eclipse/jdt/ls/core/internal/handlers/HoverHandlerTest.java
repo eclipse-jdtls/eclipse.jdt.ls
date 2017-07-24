@@ -110,6 +110,24 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testHoverPackage() throws Exception {
+		// given
+		// Hovers on the java.internal package
+		String payload = createHoverRequest("src/java/Baz.java", 2, 16);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+
+		// then
+		assertNotNull(hover);
+		String signature = hover.getContents().get(0).getRight().getValue();//
+		assertEquals("Unexpected signature ", "java.internal", signature);
+		String result = hover.getContents().get(1).getLeft();//
+		assertEquals("Unexpected hover ", "this is a **bold** package!", result);
+	}
+
+	@Test
 	public void testEmptyHover() throws Exception {
 		//given
 		//Hovers on the System.out
