@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -23,14 +22,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
@@ -82,40 +80,11 @@ public final class SharedASTProvider {
 		if (progressMonitor != null && progressMonitor.isCanceled() || inputs.isEmpty()) {
 			return Collections.emptyList();
 		}
-		HashMap<IJavaProject, List<ICompilationUnit>> cuByProject = new HashMap<>();
 		List<CompilationUnit> result = new ArrayList<>();
+		SubMonitor subMonitor = SubMonitor.convert(progressMonitor, inputs.size());
 
 		for (ICompilationUnit input : inputs) {
-			final String identifier = input.getHandleIdentifier();
-			CompilationUnit cu = cache.get(identifier);
-			if (cu != null) {
-				result.add(cu);
-			} else {
-				IJavaProject project = input.getJavaProject();
-				List<ICompilationUnit> list = cuByProject.get(project);
-				if (list == null) {
-					list = new ArrayList<>();
-					cuByProject.put(project, list);
-				}
-				list.add(input);
-			}
-		}
-
-		for (IJavaProject project: cuByProject.keySet()) {
-			final ASTParser parser = newASTParser();
-			parser.setProject(project);
-
-			List<ICompilationUnit> cus = cuByProject.get(project);
-
-			ASTRequestor requestor = new ASTRequestor() {
-				@Override
-				public void acceptAST(ICompilationUnit cu, CompilationUnit astRoot) {
-					result.add(astRoot);
-					setAST(astRoot);
-				}
-			};
-			parser.createASTs(cus.toArray(new ICompilationUnit[cus.size()]), new String[0], requestor, progressMonitor);
-			astCreationCount += cus.size();
+			result.add(getAST(input, subMonitor.split(1)));
 		}
 		return result;
 	}
