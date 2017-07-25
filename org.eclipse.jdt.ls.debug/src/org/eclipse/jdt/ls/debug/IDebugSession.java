@@ -11,16 +11,12 @@
 
 package org.eclipse.jdt.ls.debug;
 
+import java.util.List;
+
 import com.sun.jdi.ThreadReference;
 
 public interface IDebugSession {
-    static IDebugSession launch(/* TODO: arguments? */) {
-        throw new UnsupportedOperationException();
-    }
-
-    static IDebugSession attach(/* TODO: arguments? */) {
-        throw new UnsupportedOperationException();
-    }
+    void start();
 
     void suspend();
 
@@ -35,10 +31,12 @@ public interface IDebugSession {
 
     IBreakpoint createBreakpoint(String className, int lineNumber, int hitCount);
 
-    // createExeptionBreakpoint
-    // createFunctionBreakpoint
+    // TODO: createExeptionBreakpoint
+    // TODO: createFunctionBreakpoint
 
-    ThreadReference[] allThreads();
+    Process process();
+
+    List<ThreadReference> allThreads();
 
     IEventHub eventHub();
 }

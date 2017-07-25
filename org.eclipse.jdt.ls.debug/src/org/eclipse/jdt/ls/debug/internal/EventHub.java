@@ -92,6 +92,7 @@ public class EventHub implements IEventHub {
 
         workingThread.interrupt();
         workingThread = null;
+        isClosed = true;
     }
 
     /**
