@@ -51,7 +51,7 @@ public class GetterSetterUtil {
 	}
 
 	public static String getGetterName(IField field, String[] excludedNames) throws JavaModelException {
-		return getGetterName(field, excludedNames, false);
+		return getGetterName(field, excludedNames, true);
 	}
 
 	private static String getGetterName(IField field, String[] excludedNames, boolean useIsForBoolGetters) throws JavaModelException {

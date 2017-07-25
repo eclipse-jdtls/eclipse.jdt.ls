@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
@@ -47,14 +48,14 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if (!isIgnored(proposal.getKind())) {
 			if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
 				acceptPotentialMethodDeclaration(proposal);
+			} else {
+				if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
+					// Hacky way to boost relevance of current package, for package completions, until
+					// https://bugs.eclipse.org/518140 is fixed
+					proposal.setRelevance(proposal.getRelevance() + 1);
+				}
+				proposals.add(proposal);
 			}
-			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null
-					&& String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
-				// Hacky way to boost relevance of current package, for package completions, until
-				// https://bugs.eclipse.org/518140 is fixed
-				proposal.setRelevance(proposal.getRelevance() + 1);
-			}
-			proposals.add(proposal);
 		}
 	}
 
@@ -158,11 +159,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				String prefix = String.valueOf(proposal.getName());
 				int completionStart = proposal.getReplaceStart();
 				int completionEnd = proposal.getReplaceEnd();
-				int relevance = proposal.getRelevance() + 4;
+				int relevance = proposal.getRelevance() + 6;
 
-				GetterSetterCompletionProposal.evaluateProposals(type, prefix, completionStart, completionEnd - completionStart, relevance + 2, proposals);
+				GetterSetterCompletionProposal.evaluateProposals(type, prefix, completionStart, completionEnd - completionStart, relevance, proposals);
 			}
 		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Accept potential method declaration failed for completion ", e);
 		}
 	}
 }

@@ -611,8 +611,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testCompletion_getter() throws Exception {
 
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -646,10 +644,42 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_booleangetter() throws Exception {
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private boolean boolField;\n" +
+						"    is\n" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "is");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("isBoolField() : boolean"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("isBoolField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 4, 6, "/**\n" +
+				 " * @return the boolField\n" +
+				 " */\n" +
+				"public boolean isBoolField() {\n" +
+				"	return boolField;\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
 	public void testCompletion_setter() throws Exception {
-
-		mockLSPv3ClientPreferences();
-
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+

@@ -50,8 +50,7 @@ public class GetterSetterCompletionProposal extends InternalCompletionProposal {
 
 		IField[] fields= type.getFields();
 		IMethod[] methods= type.getMethods();
-		for (int i= 0; i < fields.length; i++) {
-			IField curr= fields[i];
+		for (IField curr : fields) {
 			if (!JdtFlags.isEnum(curr)) {
 				String getterName = GetterSetterUtil.getGetterName(curr, null);
 				if (Strings.startsWithIgnoreCase(getterName, prefix) && !hasMethod(methods, getterName)) {
