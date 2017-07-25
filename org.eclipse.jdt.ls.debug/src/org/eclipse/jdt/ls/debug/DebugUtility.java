@@ -15,15 +15,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.debug.internal.DebugSession;
 
+import com.sun.jdi.Location;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachineManager;
 import com.sun.jdi.connect.Connector.Argument;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
+import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.request.StepRequest;
 
 public class DebugUtility {
     public static IDebugSession launch(VirtualMachineManager vmManager, String mainClass, List<String> classPaths)
@@ -66,16 +70,64 @@ public class DebugUtility {
         throw new UnsupportedOperationException();
     }
 
-    public static void stepOver(ThreadReference thread) {
-        throw new UnsupportedOperationException();
+    /**
+     * Steps over newly pushed frames.
+     *
+     * @param thread
+     *            the target thread.
+     * @param eventHub
+     *            the {@link IEventHub} instance.
+     * @return the new {@link Location} of the execution flow of the specified
+     *         thread.
+     */
+    public static CompletableFuture<Location> stepOver(ThreadReference thread, IEventHub eventHub) {
+        return DebugUtility.step(thread, eventHub, StepRequest.STEP_LINE, StepRequest.STEP_OVER);
     }
 
-    public static void stepInto(ThreadReference thread) {
-        throw new UnsupportedOperationException();
+    /**
+     * Steps into newly pushed frames.
+     *
+     * @param thread
+     *            the target thread.
+     * @param eventHub
+     *            the {@link IEventHub} instance.
+     * @return the new {@link Location} of the execution flow of the specified
+     *         thread.
+     */
+    public static CompletableFuture<Location> stepInto(ThreadReference thread, IEventHub eventHub) {
+        return DebugUtility.step(thread, eventHub, StepRequest.STEP_LINE, StepRequest.STEP_INTO);
     }
 
-    public static void stepOut(ThreadReference thread) {
-        throw new UnsupportedOperationException();
+    /**
+     * Steps out of the current frame.
+     *
+     * @param thread
+     *            the target thread.
+     * @param eventHub
+     *            the {@link IEventHub} instance.
+     * @return the new {@link Location} of the execution flow of the specified
+     *         thread.
+     */
+    public static CompletableFuture<Location> stepOut(ThreadReference thread, IEventHub eventHub) {
+        return DebugUtility.step(thread, eventHub, StepRequest.STEP_LINE, StepRequest.STEP_OUT);
+    }
+
+    private static CompletableFuture<Location> step(ThreadReference thread, IEventHub eventHub, int stepSize,
+            int stepDepth) {
+        CompletableFuture<Location> future = new CompletableFuture<Location>();
+
+        StepRequest request = thread.virtualMachine().eventRequestManager().createStepRequest(thread, stepSize,
+                stepDepth);
+
+        eventHub.stepEvents().filter(debugEvent -> debugEvent.event.request().equals(request)).take(1)
+                .subscribe(debugEvent -> {
+                    StepEvent event = (StepEvent) debugEvent.event;
+                    future.complete(event.location());
+                    thread.virtualMachine().eventRequestManager().deleteEventRequest(request);
+                });
+
+        request.enable();
+
+        return future;
     }
 }
-
