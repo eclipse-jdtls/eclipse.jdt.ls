@@ -17,6 +17,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.adapter.DispatcherProtocol.IResponder;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.DebugResult;
 import org.eclipse.jdt.ls.debug.internal.adapter.Results.SetBreakpointsResponseBody;
@@ -225,20 +231,28 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
     public DebugResult launch(Requests.LaunchArguments arguments) {
         this.cwd = arguments.cwd;
         String mainClass = arguments.startupClass;
-        String[] classPathArray = arguments.classPath;
-        String classpath = String.join(System.getProperty("path.separator"), classPathArray);
-        classpath = classpath.replaceAll("\\\\", "/");
+        if (mainClass.endsWith(".java")) {
+            mainClass = mainClass.substring(0, mainClass.length() - 5);
+        }
+
+        String classpath;
+        try {
+            IJavaProject project = getJavaProject(arguments.projectName, mainClass);
+            classpath = DebugUtils.computeClassPath(project);
+        } catch (CoreException e) {
+            Logger.logException("Failed to resolve classpath.", e);
+            return new DebugResult(3001, "Cannot launch jvm.", null);
+        }
+
         if (arguments.sourcePath == null || arguments.sourcePath.length == 0) {
             this.sourcePath = new String[] { cwd };
         } else {
             this.sourcePath = new String[arguments.sourcePath.length];
             System.arraycopy(arguments.sourcePath, 0, this.sourcePath, 0, arguments.sourcePath.length);
         }
-        
-        if (mainClass.endsWith(".java")) {
-            mainClass = mainClass.substring(0, mainClass.length() - 5);
-        }
+
         Logger.logInfo("Launch JVM with main class \"" + mainClass + "\", -classpath \"" + classpath + "\"");
+        
         try {
             Launcher launcher = new Launcher();
             VirtualMachine vm = launcher.launchJVM(mainClass, classpath);
@@ -249,6 +263,19 @@ public class DebugSession implements IDebugSession, IDebugEventSetListener {
             return new DebugResult(3001, "Cannot launch jvm.", null);
         }
         return new DebugResult();
+    }
+    
+    private IJavaProject getJavaProject(String projectName, String mainClass) throws CoreException {
+        // if type exists in multiple projects, debug configuration need provide project name.
+        if (projectName != null) {
+            return DebugUtils.getJavaProjectFromName(projectName);
+        } else {
+            List<IJavaProject> projects = DebugUtils.getJavaProjectFromType(mainClass);
+            if (projects.size() == 0 || projects.size() > 1) {
+                throw new CoreException(new Status(IStatus.ERROR, JavaDebuggerServerPlugin.PLUGIN_ID, "project count is zero or more than one."));
+            }
+            return projects.get(0);
+        }
     }
 
     @Override
