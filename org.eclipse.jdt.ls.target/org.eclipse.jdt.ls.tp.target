@@ -18,7 +18,7 @@
 <repository location="http://download.eclipse.org/eclipse/updates/4.7/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170711-1305"/>
+<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170725-1300"/>
 <repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastSuccessfulBuild/artifact/build/p2-repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
