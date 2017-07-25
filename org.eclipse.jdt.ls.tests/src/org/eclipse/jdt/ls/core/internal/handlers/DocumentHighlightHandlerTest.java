@@ -46,7 +46,7 @@ public class DocumentHighlightHandlerTest extends AbstractProjectsManagerBasedTe
 
 	@Test
 	public void testDocumentHighlightHandler() throws Exception {
-		String uri = ClassFileUtil.getURI(project, "java.Highlight");
+		String uri = ClassFileUtil.getURI(project, "org.sample.Highlight");
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		TextDocumentPositionParams params = new TextDocumentPositionParams(identifier, new Position(5, 10));
 
