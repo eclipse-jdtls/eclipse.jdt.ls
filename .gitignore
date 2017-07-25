@@ -7,3 +7,4 @@ bin/
 .classpath
 .project
 .settings
+javaConfig.json

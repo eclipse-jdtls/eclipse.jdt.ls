@@ -11,6 +11,8 @@
 
 package org.eclipse.jdt.ls.debug;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface IBreakpoint extends IDebugResource {
     String className();
 
@@ -20,5 +22,5 @@ public interface IBreakpoint extends IDebugResource {
 
     void setHitCount(int hitCount);
 
-    void install();
+    CompletableFuture<IBreakpoint> install();
 }
