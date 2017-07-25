@@ -23,6 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -327,7 +329,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		logInfo(">> document/codeLens");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return computeAsync((cc) -> handler.getCodeLensSymbols(params.getTextDocument().getUri(), toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException | InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.getCodeLensSymbols(params.getTextDocument().getUri(), monitor);
+		});
 	}
 
 	/* (non-Javadoc)
