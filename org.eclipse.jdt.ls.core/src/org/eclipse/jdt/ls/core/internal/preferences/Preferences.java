@@ -208,6 +208,15 @@ public class Preferences {
 				return def;
 			}
 		}
+		if (val instanceof List) {
+			List<String> ret;
+			try {
+				ret = (List<String>) val;
+				return ret;
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
 		return def;
 	}
 
