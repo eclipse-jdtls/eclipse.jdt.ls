@@ -11,11 +11,16 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Test;
@@ -25,6 +30,8 @@ import org.junit.Test;
  */
 public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
+	private static final String INVALID = "invalid";
+	private static final String MAVEN_INVALID = "maven/invalid";
 	private static final String PROJECT1_PATTERN = "**/project1";
 
 	@Test
@@ -46,6 +53,25 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			javaImportExclusions.remove(PROJECT1_PATTERN);
 		}
+	}
+
+	@Test
+	public void testInvalidProject() throws Exception {
+		List<IProject> projects = importProjects(MAVEN_INVALID);
+		assertEquals(2, projects.size());
+		IProject invalid = WorkspaceHelper.getProject(INVALID);
+		assertIsMavenProject(invalid);
+		IFile projectFile = invalid.getFile("/.project");
+		assertTrue(projectFile.exists());
+		File file = projectFile.getRawLocation().makeAbsolute().toFile();
+		invalid.close(new NullProgressMonitor());
+		assertTrue(file.exists());
+		file.delete();
+		assertFalse(file.exists());
+		projects = importProjects(MAVEN_INVALID);
+		assertEquals(2, projects.size());
+		invalid = WorkspaceHelper.getProject(INVALID);
+		assertIsMavenProject(invalid);
 	}
 
 }

@@ -66,8 +66,8 @@ public class ProjectsManager {
 	public IStatus initializeProjects(final String projectPath, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		try {
+			deleteInvalidProjects(subMonitor.split(5));
 			createJavaProject(getDefaultProject(), subMonitor.split(10));
-
 			if (projectPath != null) {
 				File userProjectRoot = new File(projectPath);
 				IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
@@ -83,6 +83,24 @@ public class ProjectsManager {
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Problem importing to workspace", e);
 			return StatusFactory.newErrorStatus("Import failed: " + e.getMessage(), e);
+		}
+	}
+
+	private void deleteInvalidProjects(IProgressMonitor monitor) {
+		IProject[] projects = getWorkspaceRoot().getProjects();
+		for (IProject project : projects) {
+			if (project.exists()) {
+				try {
+					project.getDescription();
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logInfo("The '" + project.getName() + "' is invalid.");
+					try {
+						project.delete(true, monitor);
+					} catch (CoreException e1) {
+						JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
+					}
+				}
+			}
 		}
 	}
 
