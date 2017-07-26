@@ -18,4 +18,5 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0",
 Export-Package: org.eclipse.jdt.ls.debug.internal;x-friends:="org.eclipse.jdt.ls.tests"
 Bundle-ClassPath: lib/gson-2.7.jar,
  .,
- lib/rxjava-2.1.1.jar
+ lib/rxjava-2.1.1.jar,
+ lib/reactive-streams-1.0.0.jar

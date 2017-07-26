@@ -119,7 +119,7 @@ public class DebugUtility {
         StepRequest request = thread.virtualMachine().eventRequestManager().createStepRequest(thread, stepSize,
                 stepDepth);
 
-        eventHub.stepEvents().filter(debugEvent -> debugEvent.event.request().equals(request)).take(1)
+        eventHub.stepEvents().filter(debugEvent -> request.equals(debugEvent.event.request())).take(1)
                 .subscribe(debugEvent -> {
                     StepEvent event = (StepEvent) debugEvent.event;
                     future.complete(event.location());

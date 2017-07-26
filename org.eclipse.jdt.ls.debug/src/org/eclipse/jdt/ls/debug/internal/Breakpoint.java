@@ -127,8 +127,8 @@ public class Breakpoint implements IBreakpoint {
         CompletableFuture<IBreakpoint> future = new CompletableFuture<IBreakpoint>();
 
         Disposable subscription = eventHub.events()
-                .filter(debugEvent -> debugEvent.event.request().equals(classPrepareRequest)
-                        || debugEvent.event.request().equals(localClassPrepareRequest))
+                .filter(debugEvent -> classPrepareRequest.equals(debugEvent.event.request())
+                        || localClassPrepareRequest.equals(debugEvent.event.request()))
                 .subscribe(debugEvent -> {
                     ClassPrepareEvent event = (ClassPrepareEvent) debugEvent.event;
                     List<BreakpointRequest> newRequests = createBreakpointRequests(event.referenceType(),
