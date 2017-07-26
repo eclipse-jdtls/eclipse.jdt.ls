@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="importers" name="JDT LS Project Importer" schema="schema/importers.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">
@@ -27,5 +28,18 @@
    </extension>
    <extension
          point="org.eclipse.m2e.core.lifecycleMappingMetadataSource">
+   </extension>
+   <extension
+         id="importers"
+         point="org.eclipse.jdt.ls.core.importers">
+         <importer
+         	id = "mavenProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
+         <importer
+         	id = "gradleProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+         <importer
+         	id = "eclipseProjectImporter"
+         	class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>       	
    </extension>
 </plugin>

@@ -20,7 +20,7 @@ import org.junit.BeforeClass;
 public abstract class AbstractWorkspaceTest {
 
 	@BeforeClass
-	public static void initWorkspace() {
+	public static void initWorkspace() throws Exception {
 		WorkspaceHelper.initWorkspace();
 	}
 
