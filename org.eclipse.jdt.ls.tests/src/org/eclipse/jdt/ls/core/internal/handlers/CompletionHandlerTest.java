@@ -608,6 +608,110 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("This should be plain.", resolvedItem.getDocumentation());
 	}
 
+	@Test
+	public void testCompletion_getter() throws Exception {
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private String strField;\n" +
+						"    get" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "get");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("getStrField() : String"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("getStrField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 4, 7, "/**\n" +
+				 " * @return the strField\n" +
+				 " */\n" +
+				"public String getStrField() {\n" +
+				"	return strField;\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_booleangetter() throws Exception {
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private boolean boolField;\n" +
+						"    is\n" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "is");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("isBoolField() : boolean"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("isBoolField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 4, 6, "/**\n" +
+				 " * @return the boolField\n" +
+				 " */\n" +
+				"public boolean isBoolField() {\n" +
+				"	return boolField;\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_setter() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private String strField;\n" +
+						"    set" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "set");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("setStrField(String strField) : void"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("setStrField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 4, 7, "/**\n" +
+				" * @param strField the strField to set\n" +
+				 " */\n" +
+				"public void setStrField(String strField) {\n" +
+				"	this.strField = strField;\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))

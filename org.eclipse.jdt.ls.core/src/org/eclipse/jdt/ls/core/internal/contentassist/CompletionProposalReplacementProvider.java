@@ -136,8 +136,9 @@ public class CompletionProposalReplacementProvider {
 
 		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
 			appendMethodOverrideReplacement(completionBuffer, proposal);
-		}
-		else{
+		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
+			appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
+		} else {
 			appendReplacementString(completionBuffer, proposal);
 		}
 		//select insertTextFormat.
@@ -183,6 +184,23 @@ public class CompletionProposalReplacementProvider {
 			completionBuffer.append(replacement);
 		} catch (BadLocationException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to compute override replacement", e);
+		}
+	}
+
+	/**
+	 * @param completionBuffer
+	 * @param proposal
+	 */
+	private void appendMethodPotentialReplacement(StringBuilder completionBuffer, GetterSetterCompletionProposal proposal) {
+		IDocument document;
+		try {
+			document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
+			int offset = proposal.getReplaceStart();
+			String replacement = proposal.updateReplacementString(document, offset, importRewrite,
+					client.isCompletionSnippetsSupported());
+			completionBuffer.append(replacement);
+		} catch (BadLocationException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Failed to compute potential replacement", e);
 		}
 	}
 

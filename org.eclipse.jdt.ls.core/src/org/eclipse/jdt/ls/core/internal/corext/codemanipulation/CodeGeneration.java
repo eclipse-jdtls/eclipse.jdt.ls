@@ -217,6 +217,90 @@ public class CodeGeneration {
 	public static String getMethodComment(ICompilationUnit cu, String declaringTypeName, MethodDeclaration decl, boolean isDeprecated, String overriddenMethodName, String overriddenMethodDeclaringTypeName, String[] overriddenMethodParameterTypeNames, String lineDelimiter) throws CoreException {
 		return StubUtility.getMethodComment(cu, declaringTypeName, decl, isDeprecated, overriddenMethodName, overriddenMethodDeclaringTypeName, overriddenMethodParameterTypeNames, false, lineDelimiter);
 	}
+	
+	/**
+	 * Returns the content of body for a getter method using the getter method body template.
+	 * <code>null</code> is returned if the template is empty.
+	 * <p>The returned string is unformatted and not indented.
+	 *
+	 * @param cu The compilation unit to which the method belongs. The compilation unit does not need to exist.
+	 * @param declaringTypeName Name of the type to which the method belongs. For inner types the name must be qualified and include the outer
+	 * types names (dot separated). See {@link org.eclipse.jdt.core.IType#getTypeQualifiedName(char)}.
+	 * @param methodName The name of the getter method.
+	 * @param fieldName The name of the field to get in the getter method, corresponding to the template variable for ${field}.
+	 * @param lineDelimiter The line delimiter to be used.
+	 * @return Returns the constructed body content or <code>null</code> if
+	 * the comment code template is empty. The returned string is unformatted and and has no indent (formatting required).
+	 * @throws CoreException Thrown when the evaluation of the code template fails.
+	 * @since 3.0
+	 */
+	public static String getGetterMethodBodyContent(ICompilationUnit cu, String declaringTypeName, String methodName, String fieldName, String lineDelimiter) throws CoreException {
+		return StubUtility.getGetterMethodBodyContent(cu.getJavaProject(), declaringTypeName, methodName, fieldName, lineDelimiter);
+	}
 
+	/**
+	 * Returns the content of body for a setter method using the setter method body template.
+	 * <code>null</code> is returned if the template is empty.
+	 * <p>The returned string is unformatted and not indented.
+	 *
+	 * @param cu The compilation unit to which the method belongs. The compilation unit does not need to exist.
+	 * @param declaringTypeName Name of the type to which the method belongs. For inner types the name must be qualified and include the outer
+	 * types names (dot separated). See {@link org.eclipse.jdt.core.IType#getTypeQualifiedName(char)}.
+	 * @param methodName The name of the setter method.
+	 * @param fieldName The name of the field to be set in the setter method, corresponding to the template variable for ${field}.
+	 * @param paramName The name of the parameter passed to the setter method, corresponding to the template variable for $(param).
+	 * @param lineDelimiter The line delimiter to be used.
+	 * @return Returns the constructed body content or <code>null</code> if
+	 * the comment code template is empty. The returned string is unformatted and and has no indent (formatting required).
+	 * @throws CoreException Thrown when the evaluation of the code template fails.
+	 * @since 3.0
+	 */
+	public static String getSetterMethodBodyContent(ICompilationUnit cu, String declaringTypeName, String methodName, String fieldName, String paramName, String lineDelimiter) throws CoreException {
+		return StubUtility.getSetterMethodBodyContent(cu.getJavaProject(), declaringTypeName, methodName, fieldName, paramName, lineDelimiter);
+	}
 
+	/**
+	 * Returns the comment for a getter method using the getter comment template.
+	 * <code>null</code> is returned if the template is empty.
+	 * <p>The returned string is unformatted and not indented.
+	 *
+	 * @param cu The compilation unit to which the method belongs. The compilation unit does not need to exist.
+	 * @param declaringTypeName Name of the type to which the method belongs. For inner types the name must be qualified and include the outer
+	 * types names (dot separated). See {@link org.eclipse.jdt.core.IType#getTypeQualifiedName(char)}.
+	 * @param methodName Name of the method.
+	 * @param fieldName Name of the field to get.
+	 * @param fieldType The type of the field to get.
+	 * @param bareFieldName The field name without prefix or suffix.
+	 * @param lineDelimiter The line delimiter to be used.
+	 * @return Returns the generated getter comment or <code>null</code> if the
+	 * code template is empty. The returned content is not indented.
+	 * @throws CoreException Thrown when the evaluation of the code template fails.
+	 * @since 3.0
+	 */
+	public static String getGetterComment(ICompilationUnit cu, String declaringTypeName, String methodName, String fieldName, String fieldType, String bareFieldName, String lineDelimiter) throws CoreException {
+		return StubUtility.getGetterComment(cu, declaringTypeName, methodName, fieldName, fieldType, bareFieldName, lineDelimiter);
+	}
+
+	/**
+	 * Returns the comment for a setter method using the setter method body template.
+	 * <code>null</code> is returned if the template is empty.
+	 * <p>The returned string is unformatted and not indented.
+	 *
+	 * @param cu The compilation unit to which the method belongs. The compilation unit does not need to exist.
+	 * @param declaringTypeName Name of the type to which the method belongs. For inner types the name must be qualified and include the outer
+	 * types names (dot separated). See {@link org.eclipse.jdt.core.IType#getTypeQualifiedName(char)}.
+	 * @param methodName Name of the method.
+	 * @param fieldName Name of the field that is set.
+	 * @param fieldType The type of the field that is to set.
+	 * @param paramName The name of the parameter that used to set.
+	 * @param bareFieldName The field name without prefix or suffix.
+	 * @param lineDelimiter The line delimiter to be used.
+	 * @return Returns the generated setter comment or <code>null</code> if the
+	 * code template is empty. The returned comment is not indented.
+	 * @throws CoreException Thrown when the evaluation of the code template fails.
+	 * @since 3.0
+	 */
+	public static String getSetterComment(ICompilationUnit cu, String declaringTypeName, String methodName, String fieldName, String fieldType, String paramName, String bareFieldName, String lineDelimiter) throws CoreException {
+		return StubUtility.getSetterComment(cu, declaringTypeName, methodName, fieldName, fieldType, paramName, bareFieldName, lineDelimiter);
+	}	
 }
