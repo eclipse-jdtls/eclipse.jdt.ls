@@ -124,7 +124,6 @@ public class JavaClientConnection {
 	}
 
 	public void publishDiagnostics(PublishDiagnosticsParams diagnostics){
-		diagnostics.setUri(ResourceUtils.fixUri(diagnostics.getUri()));
 		client.publishDiagnostics(diagnostics);
 	}
 

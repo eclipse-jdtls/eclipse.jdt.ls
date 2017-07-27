@@ -316,7 +316,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
-		return new Location(getFileURI(unit), toRange(unit, offset, length));
+		return new Location(ResourceUtils.toClientUri(getFileURI(unit)), toRange(unit, offset, length));
 	}
 
 	/**
@@ -338,7 +338,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(String uri) {
-		return new Location(ResourceUtils.fixUri(uri), newRange());
+		return new Location(ResourceUtils.toClientUri(uri), newRange());
 	}
 
 	/**

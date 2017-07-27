@@ -22,7 +22,6 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -40,7 +39,6 @@ public class NavigateToDefinitionHandler {
 			location = new Location();
 			location.setRange(new Range());
 		}
-		location.setUri(ResourceUtils.fixUri(location.getUri()));
 		return Arrays.asList(location);
 	}
 
