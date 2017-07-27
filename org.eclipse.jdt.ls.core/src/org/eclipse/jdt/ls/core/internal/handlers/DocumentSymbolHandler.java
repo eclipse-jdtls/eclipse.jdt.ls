@@ -82,7 +82,7 @@ public class DocumentSymbolHandler {
 				if (element.getParent() != null) {
 					si.setContainerName(element.getParent().getElementName());
 				}
-				location.setUri(ResourceUtils.fixUri(location.getUri()));
+				location.setUri(ResourceUtils.toClientUri(location.getUri()));
 				si.setLocation(location);
 				if (!symbols.contains(si)) {
 					symbols.add(si);

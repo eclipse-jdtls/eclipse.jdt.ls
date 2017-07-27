@@ -131,11 +131,20 @@ public final class ResourceUtils {
 		return new File(uri);
 	}
 
-	public static String fixUri(String uriString) {
-		if (uriString != null && Platform.OS_WIN32.equals(Platform.getOS()) && uriString.startsWith(FILE_UNC_PREFIX)) {
-			uriString = uriString.replace(FILE_UNC_PREFIX, "file://");
+	/**
+	 * Format URIs to be consumed by clients. On Windows platforms, UNC (Universal
+	 * Naming Convention) URIs are transformed to follow the <code>file://</code>
+	 * pattern.
+	 *
+	 * @param uri
+	 *            the String URI to transform.
+	 * @return a String URI compatible with clients.
+	 */
+	public static String toClientUri(String uri) {
+		if (uri != null && Platform.OS_WIN32.equals(Platform.getOS()) && uri.startsWith(FILE_UNC_PREFIX)) {
+			uri = uri.replace(FILE_UNC_PREFIX, "file://");
 		}
-		return uriString;
+		return uri;
 	}
 
 }
