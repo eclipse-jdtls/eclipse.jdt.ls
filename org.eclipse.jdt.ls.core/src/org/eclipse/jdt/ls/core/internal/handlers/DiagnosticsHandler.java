@@ -22,6 +22,7 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
@@ -105,7 +106,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(uri, toDiagnosticsArray(problems));
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(problems));
 		this.connection.publishDiagnostics($);
 	}
 

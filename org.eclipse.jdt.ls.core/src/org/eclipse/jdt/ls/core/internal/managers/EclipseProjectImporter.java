@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -97,6 +98,11 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 	private IPath fixDevice(IPath path) {
 		if (path != null && path.getDevice() != null) {
 			return path.setDevice(path.getDevice().toUpperCase());
+		}
+		if (Platform.OS_WIN32.equals(Platform.getOS()) && path != null && path.toString().startsWith("//")) {
+			String server = path.segment(0);
+			String pathStr = path.toString().replace(server, server.toUpperCase());
+			return new Path(pathStr);
 		}
 		return path;
 	}

@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -66,7 +67,7 @@ public class WorkspaceEventsHandler {
 	}
 
 	private void cleanUpDiagnostics(String uri){
-		this.connection.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.emptyList()));
+		this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 	}
 
 }
