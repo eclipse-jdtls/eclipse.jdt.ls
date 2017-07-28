@@ -29,7 +29,6 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 public class JavaClientConnection {
 
-
 	public interface JavaLanguageClient extends LanguageClient{
 		/**
 		 * The show message notification is sent from a server to a client to ask
