@@ -60,6 +60,16 @@ public class EventHub implements IEventHub {
                     }
 
                     EventSet set = queue.remove();
+
+                    // Print JDI Events
+                    StringBuffer buf = new StringBuffer("\nJDI Event Set: {");
+                    for (Event event : set) {
+                        buf.append(event);
+                        buf.append(", ");
+                    }
+                    buf.append("}\n");
+                    Logger.logInfo(buf.toString());
+
                     boolean shouldResume = true;
                     for (Event event : set) {
                         DebugEvent dbgEvent = new DebugEvent();
@@ -79,7 +89,7 @@ public class EventHub implements IEventHub {
                     return;
                 }
             }
-        });
+        }, "Event Hub");
 
         workingThread.start();
     }
@@ -134,7 +144,7 @@ public class EventHub implements IEventHub {
      */
     public Observable<DebugEvent> vmEvents() {
         return this.events().filter(debugEvent -> debugEvent.event instanceof VMStartEvent
-                || debugEvent instanceof VMDisconnectEvent
-                || debugEvent instanceof VMDeathEvent);
+                || debugEvent.event instanceof VMDisconnectEvent
+                || debugEvent.event instanceof VMDeathEvent);
     }
 }

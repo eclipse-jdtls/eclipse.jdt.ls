@@ -19,6 +19,7 @@ import org.eclipse.jdt.ls.debug.IEventHub;
 
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.EventRequest;
 
 public class DebugSession implements IDebugSession {
     private VirtualMachine vm;
@@ -31,8 +32,13 @@ public class DebugSession implements IDebugSession {
     @Override
     public void start() {
         // request thread events by default
-        vm.eventRequestManager().createThreadStartRequest().enable();
-        vm.eventRequestManager().createThreadDeathRequest().enable();
+        EventRequest threadStartRequest = vm.eventRequestManager().createThreadStartRequest();
+        threadStartRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+        threadStartRequest.enable();
+
+        EventRequest threadDeathRequest = vm.eventRequestManager().createThreadDeathRequest();
+        threadDeathRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+        threadDeathRequest.enable();
 
         eventHub.start(vm);
     }

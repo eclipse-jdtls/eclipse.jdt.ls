@@ -23,4 +23,8 @@ public interface IBreakpoint extends IDebugResource {
     void setHitCount(int hitCount);
 
     CompletableFuture<IBreakpoint> install();
+
+    void putProperty(Object key, Object value);
+
+    Object getProperty(Object key);
 }

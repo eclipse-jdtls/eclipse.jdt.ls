@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.debug.internal;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,6 +36,7 @@ public class Breakpoint implements IBreakpoint {
     private String className = null;
     private int lineNumber = 0;
     private int hitCount = 0;
+    private HashMap<Object, Object> propertyMap = new HashMap<>();
 
     Breakpoint(VirtualMachine vm, IEventHub eventHub, String className, int lineNumber) {
         this(vm, eventHub, className, lineNumber, 0);
@@ -127,22 +129,26 @@ public class Breakpoint implements IBreakpoint {
         CompletableFuture<IBreakpoint> future = new CompletableFuture<IBreakpoint>();
 
         Disposable subscription = eventHub.events()
-                .filter(debugEvent -> classPrepareRequest.equals(debugEvent.event.request())
-                        || localClassPrepareRequest.equals(debugEvent.event.request()))
+                .filter(debugEvent -> debugEvent.event instanceof ClassPrepareEvent
+                        && (classPrepareRequest.equals(debugEvent.event.request())
+                            || localClassPrepareRequest.equals(debugEvent.event.request())))
                 .subscribe(debugEvent -> {
                     ClassPrepareEvent event = (ClassPrepareEvent) debugEvent.event;
                     List<BreakpointRequest> newRequests = createBreakpointRequests(event.referenceType(),
                             lineNumber, hitCount);
                     requests.addAll(newRequests);
                     if (!newRequests.isEmpty() && !future.isDone()) {
+                        this.putProperty("verified", true);
                         future.complete(this);
                     }
                 });
         subscriptions.add(subscription);
 
         List<ReferenceType> refTypes = vm.classesByName(className);
-        requests.addAll(createBreakpointRequests(refTypes, lineNumber, hitCount));
-        if (!requests.isEmpty()) {
+        List<BreakpointRequest> newRequests = createBreakpointRequests(refTypes, lineNumber, hitCount);
+        requests.addAll(newRequests);
+        if (!newRequests.isEmpty() && !future.isDone()) {
+            this.putProperty("verified", true);
             future.complete(this);
         }
 
@@ -210,5 +216,15 @@ public class Breakpoint implements IBreakpoint {
         });
 
         return newRequests;
+    }
+
+    @Override
+    public void putProperty(Object key, Object value) {
+        this.propertyMap.put(key, value);
+    }
+
+    @Override
+    public Object getProperty(Object key) {
+        return this.propertyMap.get(key);
     }
 }
