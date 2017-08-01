@@ -78,15 +78,28 @@ public class CodeLensHandler {
 			String command = null;
 			List<Location> locations = null;
 			if (REFERENCES_TYPE.equals(type)) {
-				locations = findReferences(element, monitor);
+				try {
+					locations = findReferences(element, monitor);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 				label = "reference";
 				command = JAVA_SHOW_REFERENCES_COMMAND;
-			} else if (IMPLEMENTATION_TYPE.equals(type) && element instanceof IType) {
-				locations = findImplementations((IType) element, monitor);
+			} else if (IMPLEMENTATION_TYPE.equals(type)) {
+				if (element instanceof IType) {
+					try {
+						locations = findImplementations((IType) element, monitor);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				}
 				label = "implementation";
 				command = JAVA_SHOW_IMPLEMENTATIONS_COMMAND;
 			}
-			if (label != null && command != null && locations != null) {
+			if (locations == null) {
+				locations = Collections.EMPTY_LIST;
+			}
+			if (label != null && command != null) {
 				int size = locations.size();
 				Command c = new Command(size + " " + label + ((size == 1) ? "" : "s"), command, Arrays.asList(uri, position, locations));
 				lens.setCommand(c);
