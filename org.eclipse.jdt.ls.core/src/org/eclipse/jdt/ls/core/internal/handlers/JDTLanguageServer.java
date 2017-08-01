@@ -333,7 +333,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			IProgressMonitor monitor = toMonitor(cc);
 			try {
 				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException | InterruptedException e) {
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 			return handler.getCodeLensSymbols(params.getTextDocument().getUri(), monitor);

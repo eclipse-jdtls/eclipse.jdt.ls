@@ -146,7 +146,7 @@ public class CodeLensHandler {
 			return Collections.emptyList();
 		}
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-		if(unit == null || !unit.getResource().exists()) {
+		if (unit == null || !unit.getResource().exists() || monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
 		try {

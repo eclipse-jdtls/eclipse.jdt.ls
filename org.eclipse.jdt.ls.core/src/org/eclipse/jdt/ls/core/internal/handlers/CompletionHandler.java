@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
@@ -30,18 +31,19 @@ public class CompletionHandler{
 
 	Either<List<CompletionItem>, CompletionList> completion(TextDocumentPositionParams position,
 			IProgressMonitor monitor) {
-		List<CompletionItem> completionItems;
+		List<CompletionItem> completionItems = null;
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
 			completionItems = this.computeContentAssist(unit,
 					position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
+		} catch (OperationCanceledException ignorable) {
+			// No need to pollute logs when query is cancelled
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
-			completionItems = Collections.emptyList();
 		}
 		CompletionList $ = new CompletionList();
-		$.setItems(completionItems);
+		$.setItems(completionItems == null ? Collections.emptyList() : completionItems);
 		JavaLanguageServerPlugin.logInfo("Completion request completed");
 		return Either.forRight($);
 	}
