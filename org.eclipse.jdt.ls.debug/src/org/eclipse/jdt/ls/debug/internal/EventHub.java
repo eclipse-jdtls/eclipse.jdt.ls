@@ -61,14 +61,18 @@ public class EventHub implements IEventHub {
 
                     EventSet set = queue.remove();
 
-                    // Print JDI Events
-                    StringBuffer buf = new StringBuffer("\nJDI Event Set: {");
-                    for (Event event : set) {
-                        buf.append(event);
-                        buf.append(", ");
+                    try {
+                        // Print JDI Events
+                        StringBuffer buf = new StringBuffer("\nJDI Event Set: {");
+                        for (Event event : set) {
+                            buf.append(event);
+                            buf.append(", ");
+                        }
+                        buf.append("}\n");
+                        Logger.logInfo(buf.toString());
+                    } catch (VMDisconnectedException e) {
+                        // Do nothing.
                     }
-                    buf.append("}\n");
-                    Logger.logInfo(buf.toString());
 
                     boolean shouldResume = true;
                     for (Event event : set) {
@@ -82,9 +86,11 @@ public class EventHub implements IEventHub {
                         set.resume();
                     }
                 } catch (InterruptedException e) {
+                    isClosed = true;
                     subject.onComplete();
                     return;
                 } catch (VMDisconnectedException e) {
+                    isClosed = true;
                     subject.onError(e);
                     return;
                 }

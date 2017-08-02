@@ -27,6 +27,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
 
 public class DebugUtility {
@@ -125,8 +126,11 @@ public class DebugUtility {
                     future.complete(event.location());
                     thread.virtualMachine().eventRequestManager().deleteEventRequest(request);
                 });
-
+        request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
+        request.addCountFilter(1);
         request.enable();
+
+        thread.resume();
 
         return future;
     }

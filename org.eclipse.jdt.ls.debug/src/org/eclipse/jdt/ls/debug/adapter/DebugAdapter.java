@@ -41,6 +41,8 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.event.LocatableEvent;
+import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.event.ThreadDeathEvent;
 import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.VMDeathEvent;
@@ -80,10 +82,6 @@ public class DebugAdapter implements IDebugAdapter {
 
     @Override
     public Messages.Response dispatchRequest(Messages.Request request) {
-        if (this.shutdown) {
-            return new Messages.Response(request.seq, request.command, true);
-        }
-
         Responses.ResponseBody responseBody = null;
         JsonObject arguments = request.arguments != null ? request.arguments : new JsonObject();
 
@@ -294,7 +292,17 @@ public class DebugAdapter implements IDebugAdapter {
         this.eventSubscriptions.forEach(subscription -> {
             subscription.dispose();
         });
-        
+        // If debuggee vm is still alive, then destroy debuggee vm forcibly.
+        if (this.debugSession.process().isAlive()) {
+            this.debugSession.terminate();
+        }
+        // Terminate eventHub thread.
+        try {
+            this.debugSession.eventHub().close();
+        } catch (Exception e) {
+            // do nothing.
+        }
+        // Send a TerminatedEvent to indicate that the debugging of the debuggee has terminated.
         this.sendEvent(new Events.TerminatedEvent());
         return new Responses.ResponseBody();
     }
@@ -352,14 +360,26 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private Responses.ResponseBody next(Requests.NextArguments arguments) {
+        ThreadReference thread = getThread(arguments.threadId);
+        if (thread != null) {
+            DebugUtility.stepOver(thread, this.debugSession.eventHub());
+        }
         return new Responses.ResponseBody();
     }
 
     private Responses.ResponseBody stepIn(Requests.StepInArguments arguments) {
+        ThreadReference thread = getThread(arguments.threadId);
+        if (thread != null) {
+            DebugUtility.stepInto(thread, this.debugSession.eventHub());
+        }
         return new Responses.ResponseBody();
     }
 
     private Responses.ResponseBody stepOut(Requests.StepOutArguments arguments) {
+        ThreadReference thread = getThread(arguments.threadId);
+        if (thread != null) {
+            DebugUtility.stepOut(thread, this.debugSession.eventHub());
+        }
         return new Responses.ResponseBody();
     }
 
@@ -464,18 +484,13 @@ public class DebugAdapter implements IDebugAdapter {
             for (Events.StoppedEvent stoppedEvent : this.stoppedEventsByThread.values()) {
                 this.sendEvent(stoppedEvent);
             }
-        } else if (event instanceof BreakpointEvent) {
-            BreakpointEvent bpEvent = (BreakpointEvent) event;
-            ThreadReference bpThread = bpEvent.thread();
-            Location bpLocation = bpEvent.location();
+        } else if (event instanceof BreakpointEvent || event instanceof StepEvent) {
             try {
-                Types.Source clientSource = this.convertDebuggerSourceToClient(bpLocation);
-                Events.StoppedEvent stopevent = new Events.StoppedEvent("breakpoint", clientSource,
-                        this.convertDebuggerLineToClient(bpLocation.lineNumber()), 0, "", bpThread.uniqueID());
-                this.stoppedEventsByThread.put(bpThread.uniqueID(), stopevent);
-                this.sendEvent(stopevent);
+                Events.StoppedEvent stopEvent = this.convertDebuggerStoppedEventToClient((LocatableEvent) event);
+                this.stoppedEventsByThread.put(stopEvent.threadId, stopEvent);
+                this.sendEvent(stopEvent);
             } catch (AbsentInformationException | URISyntaxException e) {
-                Logger.logException("Get breakpoint info exception", e);
+                Logger.logException("Get breakpoint/step info exception", e);
             }
             debugEvent.shouldResume &= false;
         }
@@ -599,5 +614,19 @@ public class DebugAdapter implements IDebugAdapter {
         Types.Source clientSource = this.convertDebuggerSourceToClient(location);
         return new Types.StackFrame(frameId, method.name(), clientSource,
                 this.convertDebuggerLineToClient(location.lineNumber()), 0);
+    }
+
+    private Events.StoppedEvent convertDebuggerStoppedEventToClient(LocatableEvent event) throws URISyntaxException, AbsentInformationException {
+        ThreadReference bpThread = event.thread();
+        Location bpLocation = event.location();
+        Types.Source clientSource = this.convertDebuggerSourceToClient(bpLocation);
+        String reason = "";
+        if (event instanceof BreakpointEvent) {
+            reason = "breakpoint";
+        } else if (event instanceof StepEvent) {
+            reason = "step";
+        }
+        return new Events.StoppedEvent(reason, clientSource, this.convertDebuggerLineToClient(bpLocation.lineNumber()),
+                0, "", bpThread.uniqueID());
     }
 }
