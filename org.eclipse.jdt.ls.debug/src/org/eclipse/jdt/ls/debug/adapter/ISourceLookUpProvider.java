@@ -1,6 +1,6 @@
 package org.eclipse.jdt.ls.debug.adapter;
 
-public interface ISourceLookUpProvider {
+public interface ISourceLookUpProvider extends IProvider {
 
     String[] getFullyQualifiedName(String sourceFilePath, int[] lines, int[] columns);
 
