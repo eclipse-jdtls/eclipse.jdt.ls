@@ -5,14 +5,13 @@
     <parent>
         <groupId>org.eclipse.jdt.ls</groupId>
         <artifactId>parent</artifactId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>org.eclipse.jdt.ls.debug</artifactId>
     <packaging>eclipse-plugin</packaging>
     <name>${base.name} :: Debug</name>
     <properties>
         <lsp4j.version>0.2.0-SNAPSHOT</lsp4j.version>
-        <checkstyle.config.location>${project.parent.basedir}/google_checks.xml</checkstyle.config.location>
         <checkstyle.skip>false</checkstyle.skip>
     </properties>
     <build>
@@ -67,7 +66,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>../google_checks.xml</configLocation>
+                    <configLocation>${project.parent.basedir}/google_checks.xml</configLocation>
                     <failOnViolation>true</failOnViolation>
                 </configuration>
             </plugin>
