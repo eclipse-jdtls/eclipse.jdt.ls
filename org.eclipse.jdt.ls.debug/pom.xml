@@ -12,6 +12,7 @@
     <name>${base.name} :: Debug</name>
     <properties>
         <lsp4j.version>0.2.0-SNAPSHOT</lsp4j.version>
+        <checkstyle.config.location>${project.parent.basedir}/google_checks.xml</checkstyle.config.location>
         <checkstyle.skip>false</checkstyle.skip>
     </properties>
     <build>
