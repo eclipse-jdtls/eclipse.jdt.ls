@@ -67,7 +67,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>${project.parent.basedir}/google_checks.xml</configLocation>
+                    <configLocation>../google_checks.xml</configLocation>
                     <failOnViolation>true</failOnViolation>
                 </configuration>
             </plugin>
