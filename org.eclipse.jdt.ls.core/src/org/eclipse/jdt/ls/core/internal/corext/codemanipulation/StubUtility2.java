@@ -878,59 +878,59 @@ public final class StubUtility2 {
 	//		return StubUtility.suggestArgumentName(unit.getJavaProject(), name, excluded);
 	//	}
 	//
-	//	public static IMethodBinding[] getUnimplementedMethods(ITypeBinding typeBinding) {
-	//		return getUnimplementedMethods(typeBinding, false);
-	//	}
-	//
-	//	public static IMethodBinding[] getUnimplementedMethods(ITypeBinding typeBinding, boolean implementAbstractsOfInput) {
-	//		ArrayList<IMethodBinding> allMethods= new ArrayList<>();
-	//		ArrayList<IMethodBinding> toImplement= new ArrayList<>();
-	//
-	//		IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
-	//		for (int i= 0; i < typeMethods.length; i++) {
-	//			IMethodBinding curr= typeMethods[i];
-	//			int modifiers= curr.getModifiers();
-	//			if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
-	//				allMethods.add(curr);
-	//			}
-	//		}
-	//
-	//		ITypeBinding superClass= typeBinding.getSuperclass();
-	//		while (superClass != null) {
-	//			typeMethods= superClass.getDeclaredMethods();
-	//			for (int i= 0; i < typeMethods.length; i++) {
-	//				IMethodBinding curr= typeMethods[i];
-	//				int modifiers= curr.getModifiers();
-	//				if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
-	//					if (findMethodBinding(curr, allMethods) == null) {
-	//						allMethods.add(curr);
-	//					}
-	//				}
-	//			}
-	//			superClass= superClass.getSuperclass();
-	//		}
-	//
-	//		for (int i= 0; i < allMethods.size(); i++) {
-	//			IMethodBinding curr= allMethods.get(i);
-	//			int modifiers= curr.getModifiers();
-	//			if ((Modifier.isAbstract(modifiers) || curr.getDeclaringClass().isInterface()) && (implementAbstractsOfInput || typeBinding != curr.getDeclaringClass())) {
-	//				// implement all abstract methods
-	//				toImplement.add(curr);
-	//			}
-	//		}
-	//
-	//		HashSet<ITypeBinding> visited= new HashSet<>();
-	//		ITypeBinding curr= typeBinding;
-	//		while (curr != null) {
-	//			ITypeBinding[] superInterfaces= curr.getInterfaces();
-	//			for (int i= 0; i < superInterfaces.length; i++) {
-	//				findUnimplementedInterfaceMethods(superInterfaces[i], visited, allMethods, typeBinding.getPackage(), toImplement);
-	//			}
-	//			curr= curr.getSuperclass();
-	//		}
-	//
-	//		return toImplement.toArray(new IMethodBinding[toImplement.size()]);
-	//	}
+	public static IMethodBinding[] getUnimplementedMethods(ITypeBinding typeBinding) {
+		return getUnimplementedMethods(typeBinding, false);
+	}
+
+	public static IMethodBinding[] getUnimplementedMethods(ITypeBinding typeBinding, boolean implementAbstractsOfInput) {
+		ArrayList<IMethodBinding> allMethods = new ArrayList<>();
+		ArrayList<IMethodBinding> toImplement = new ArrayList<>();
+
+		IMethodBinding[] typeMethods = typeBinding.getDeclaredMethods();
+		for (int i = 0; i < typeMethods.length; i++) {
+			IMethodBinding curr = typeMethods[i];
+			int modifiers = curr.getModifiers();
+			if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
+				allMethods.add(curr);
+			}
+		}
+
+		ITypeBinding superClass = typeBinding.getSuperclass();
+		while (superClass != null) {
+			typeMethods = superClass.getDeclaredMethods();
+			for (int i = 0; i < typeMethods.length; i++) {
+				IMethodBinding curr = typeMethods[i];
+				int modifiers = curr.getModifiers();
+				if (!curr.isConstructor() && !Modifier.isStatic(modifiers) && !Modifier.isPrivate(modifiers)) {
+					if (findMethodBinding(curr, allMethods) == null) {
+						allMethods.add(curr);
+					}
+				}
+			}
+			superClass = superClass.getSuperclass();
+		}
+
+		for (int i = 0; i < allMethods.size(); i++) {
+			IMethodBinding curr = allMethods.get(i);
+			int modifiers = curr.getModifiers();
+			if ((Modifier.isAbstract(modifiers) || curr.getDeclaringClass().isInterface()) && (implementAbstractsOfInput || typeBinding != curr.getDeclaringClass())) {
+				// implement all abstract methods
+				toImplement.add(curr);
+			}
+		}
+
+		HashSet<ITypeBinding> visited = new HashSet<>();
+		ITypeBinding curr = typeBinding;
+		while (curr != null) {
+			ITypeBinding[] superInterfaces = curr.getInterfaces();
+			for (int i = 0; i < superInterfaces.length; i++) {
+				findUnimplementedInterfaceMethods(superInterfaces[i], visited, allMethods, typeBinding.getPackage(), toImplement);
+			}
+			curr = curr.getSuperclass();
+		}
+
+		return toImplement.toArray(new IMethodBinding[toImplement.size()]);
+	}
 	//
 	//	public static IMethodBinding[] getVisibleConstructors(ITypeBinding binding, boolean accountExisting, boolean proposeDefault) {
 	//		List<IMethodBinding> constructorMethods= new ArrayList<>();
