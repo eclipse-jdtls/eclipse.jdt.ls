@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jdi.Bootstrap;
 import org.eclipse.jdt.ls.debug.DebugEvent;
 import org.eclipse.jdt.ls.debug.DebugUtility;
 import org.eclipse.jdt.ls.debug.IBreakpoint;
@@ -66,6 +65,7 @@ public class DebugAdapter implements IDebugAdapter {
     private BreakpointManager breakpointManager;
     private AtomicInteger nextBreakpointId = new AtomicInteger(1);
     private List<Disposable> eventSubscriptions;
+    private IProviderContext context;
     
     private IdCollection<StackFrame> frameCollection = new IdCollection<>();
     private IdCollection<String> sourceCollection = new IdCollection<>();
@@ -74,11 +74,14 @@ public class DebugAdapter implements IDebugAdapter {
     /**
      * Constructor.
      */
-    public DebugAdapter(Consumer<Events.DebugEvent> consumer) {
+    public DebugAdapter(Consumer<Events.DebugEvent> consumer, IProviderContext context) {
         this.eventConsumer = consumer;
         this.breakpointManager = new BreakpointManager();
         this.eventSubscriptions = new ArrayList<>();
+        this.context = context;
     }
+    
+    
 
     @Override
     public Messages.Response dispatchRequest(Messages.Request request) {
@@ -255,6 +258,7 @@ public class DebugAdapter implements IDebugAdapter {
         String mainClass = arguments.startupClass;
         String classpath;
         try {
+            // to-do: move to ls
             classpath = AdapterUtils.computeClassPath(arguments.projectName, mainClass);
             classpath = classpath.replaceAll("\\\\", "/");
         } catch (CoreException e) {
@@ -272,7 +276,7 @@ public class DebugAdapter implements IDebugAdapter {
         Logger.logInfo("Launch JVM with main class \"" + mainClass + "\", -classpath \"" + classpath + "\"");
         
         try {
-            this.debugSession = DebugUtility.launch(Bootstrap.virtualMachineManager(), mainClass, classpath);
+            this.debugSession = DebugUtility.launch(context.getVirtualMachineManagerProvider().getVirtualMachineManager(), mainClass, classpath);
         } catch (IOException | IllegalConnectorArgumentsException | VMStartException e) {
             Logger.logException("Launching debuggee vm exception", e);
             return new Responses.ErrorResponseBody(new Types.Message(3001, "Cannot launch jvm.", null));
@@ -569,7 +573,7 @@ public class DebugAdapter implements IDebugAdapter {
 
     private IBreakpoint[] convertClientBreakpointsToDebugger(String sourceFile, int[] lines) {
         int[] debuggerLines = this.convertClientLineToDebugger(lines);
-        String[] fqns = AdapterUtils.getFullyQualifiedName(sourceFile, debuggerLines);
+        String[] fqns = context.getSourceLookUpProvider().getFullyQualifiedName(sourceFile, debuggerLines, null);
         IBreakpoint[] breakpoints = new IBreakpoint[lines.length];
         for (int i = 0; i < lines.length; i++) {
             breakpoints[i] = this.debugSession.createBreakpoint(fqns[i], debuggerLines[i]);
@@ -579,7 +583,7 @@ public class DebugAdapter implements IDebugAdapter {
 
     private Types.Source convertDebuggerSourceToClient(Location location) throws URISyntaxException, AbsentInformationException {
         Types.Source source = null;
-        String uri = AdapterUtils.getURI(location.declaringType().name());
+        String uri = context.getSourceLookUpProvider().getSourceFileURI(location.declaringType().name());
         String name = location.sourceName();
 
         if (uri != null && uri.startsWith("jdt://")) {
@@ -599,7 +603,7 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private String convertDebuggerSourceToClient(String uri) {
-        return AdapterUtils.getContents(uri);
+        return context.getSourceLookUpProvider().getSourceContents(uri);
     }
 
     private Types.Thread convertDebuggerThreadToClient(ThreadReference thread) {

@@ -8,7 +8,7 @@
          id="org.eclipse.jdt.ls.debug.javadebugger"
          point="org.eclipse.jdt.ls.core.debugserver">
       <implementor
-            class="org.eclipse.jdt.ls.debug.adapter.JavaDebugServer"
+            class="org.eclipse.jdt.ls.debug.adapter.jdt.JavaDebugServer"
             type="java">
       </implementor>
    </extension>

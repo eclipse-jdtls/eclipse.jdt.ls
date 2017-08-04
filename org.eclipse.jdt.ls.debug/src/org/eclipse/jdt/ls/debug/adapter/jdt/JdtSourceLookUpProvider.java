@@ -12,7 +12,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdi.Bootstrap;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -34,22 +33,12 @@ import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.internal.core.SourceType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
-import org.eclipse.jdt.ls.debug.adapter.IProvider;
 import org.eclipse.jdt.ls.debug.adapter.ISourceLookUpProvider;
-import org.eclipse.jdt.ls.debug.adapter.IVirtualMachineManagerProvider;
 import org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.Logger;
 
-import com.sun.jdi.VirtualMachineManager;
-
-public class JDTLanguageServerInfoProvider implements ISourceLookUpProvider, IVirtualMachineManagerProvider {
-
+public class JdtSourceLookUpProvider implements ISourceLookUpProvider {
     private HashMap<String, Object> context = new HashMap<String, Object>();
-
-    @Override
-    public VirtualMachineManager getVirtualMachineManager() {
-        return Bootstrap.virtualMachineManager();
-    }
 
     @Override
     public void initialize(Map<String, Object> props) {

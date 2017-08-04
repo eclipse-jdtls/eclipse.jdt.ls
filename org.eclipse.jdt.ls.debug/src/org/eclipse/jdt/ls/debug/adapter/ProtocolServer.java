@@ -45,7 +45,7 @@ public class ProtocolServer {
      * @param writer
      *              the output writer
      */
-    public ProtocolServer(Reader reader, Writer writer) {
+    public ProtocolServer(Reader reader, Writer writer, IProviderContext context) {
         this.reader = reader;
         this.writer = writer;
         this.bodyLength = -1;
@@ -54,7 +54,7 @@ public class ProtocolServer {
         this.eventQueue = new ConcurrentLinkedQueue<>();
         this.debugAdapter = new DebugAdapter(debugEvent -> {
             this.sendEventLater(debugEvent.type, debugEvent);
-        });
+        }, context);
     }
 
     /**
