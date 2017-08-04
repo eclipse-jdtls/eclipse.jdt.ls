@@ -48,6 +48,17 @@ public class Requests {
 
     }
 
+    public static class RestartArguments extends Arguments {
+
+    }
+
+    public static class DisconnectArguments extends Arguments {
+        // If client doesn't set terminateDebuggee attribute at the DisconnectRequest,
+        // the debugger would choose to terminate debuggee by default.
+        public boolean terminateDebuggee = true;
+        public boolean restart;
+    }
+
     public static class SetBreakpointArguments extends Arguments {
         public Types.Source source;
         public int[] lines = new int[0];

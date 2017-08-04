@@ -43,15 +43,44 @@ public class Events {
         /**
          * Constructor.
          */
-        public StoppedEvent(String reason, Types.Source src, int ln, int col, String text, long id) {
+        public StoppedEvent(String reason, Types.Source src, int ln, int col, String text, long threadId) {
             super("stopped");
             this.reason = reason;
             this.source = src;
             this.line = ln;
             this.column = col;
             this.text = text;
-            this.threadId = id;
+            this.threadId = threadId;
             this.allThreadsStopped = false;
+        }
+    }
+
+    public static class ContinuedEvent extends DebugEvent {
+        public long threadId;
+        public boolean allThreadsContinued;
+
+        /**
+         * Constructor.
+         */
+        public ContinuedEvent(long threadId) {
+            super("continued");
+            this.threadId = threadId;
+        }
+
+        /**
+         * Constructor.
+         */
+        public ContinuedEvent(long threadId, boolean allThreadsContinued) {
+            this(threadId);
+            this.allThreadsContinued = allThreadsContinued;
+        }
+
+        /**
+         * Constructor.
+         */
+        public ContinuedEvent(boolean allThreadsContinued) {
+            super("continued");
+            this.allThreadsContinued = allThreadsContinued;
         }
     }
 
@@ -65,8 +94,15 @@ public class Events {
     }
 
     public static class TerminatedEvent extends DebugEvent {
+        public boolean restart;
+
         public TerminatedEvent() {
             super("terminated");
+        }
+
+        public TerminatedEvent(boolean restart) {
+            this();
+            this.restart = restart;
         }
     }
 
@@ -77,10 +113,10 @@ public class Events {
         /**
          * Constructor.
          */
-        public ThreadEvent(String reason, long id) {
+        public ThreadEvent(String reason, long threadId) {
             super("thread");
             this.reason = reason;
-            this.threadId = id;
+            this.threadId = threadId;
         }
     }
 

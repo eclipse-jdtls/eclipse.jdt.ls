@@ -61,21 +61,13 @@ public class EventHub implements IEventHub {
 
                     EventSet set = queue.remove();
 
-                    try {
-                        // Print JDI Events
-                        StringBuffer buf = new StringBuffer("\nJDI Event Set: {");
-                        for (Event event : set) {
-                            buf.append(event);
-                            buf.append(", ");
-                        }
-                        buf.append("}\n");
-                        Logger.logInfo(buf.toString());
-                    } catch (VMDisconnectedException e) {
-                        // Do nothing.
-                    }
-
                     boolean shouldResume = true;
                     for (Event event : set) {
+                        try {
+                            Logger.logInfo("\nJDI Event: " + event + "\n");
+                        } catch (VMDisconnectedException e) {
+                            // do nothing
+                        }
                         DebugEvent dbgEvent = new DebugEvent();
                         dbgEvent.event = event;
                         subject.onNext(dbgEvent);

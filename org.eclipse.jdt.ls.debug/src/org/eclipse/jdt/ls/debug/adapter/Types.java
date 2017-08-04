@@ -22,7 +22,6 @@ public class Types {
     public static class Message {
         public int id;
         public String format;
-        public JsonObject variables;
 
         /**
          * Constructs a message with the given information.
@@ -30,13 +29,10 @@ public class Types {
          *          message id
          * @param format
          *          a format string
-         * @param variables
-         *          arguments referenced by the format specifiers in the format string.
          */
-        public Message(int id, String format, JsonObject variables) {
+        public Message(int id, String format) {
             this.id = id;
             this.format = format;
-            this.variables = variables;
         }
     }
 
@@ -218,6 +214,7 @@ public class Types {
         public boolean supportsConfigurationDoneRequest;
         public boolean supportsEvaluateForHovers;
         public boolean supportsSetVariable;
+        public boolean supportsRestartRequest;
         public boolean supportTerminateDebuggee;
         public boolean supportsDelayedStackTraceLoading;
     }

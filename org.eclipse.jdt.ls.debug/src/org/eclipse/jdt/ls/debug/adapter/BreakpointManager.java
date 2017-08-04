@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.ls.debug.IBreakpoint;
 import org.eclipse.jdt.ls.debug.internal.Logger;
@@ -25,6 +26,7 @@ public class BreakpointManager {
      */
     private List<IBreakpoint> breakpoints;
     private HashMap<String, HashMap<String, IBreakpoint>> sourceToBreakpoints;
+    private AtomicInteger nextBreakpointId = new AtomicInteger(1);
 
     /**
      * Constructor.
@@ -119,6 +121,7 @@ public class BreakpointManager {
 
         if (breakpoints != null && breakpoints.length > 0) {
             for (IBreakpoint breakpoint : breakpoints) {
+                breakpoint.putProperty("id", this.nextBreakpointId.getAndIncrement());
                 this.breakpoints.add(breakpoint);
                 breakpointMap.put(String.valueOf(breakpoint.lineNumber()), breakpoint);
             }
@@ -163,4 +166,12 @@ public class BreakpointManager {
         return breakpointMap.values().toArray(new IBreakpoint[0]);
     }
 
+    /**
+     * Cleanup all breakpoints and reset the breakpoint id counter.
+     */
+    public void reset() {
+        this.sourceToBreakpoints.clear();
+        this.breakpoints.clear();
+        this.nextBreakpointId.set(1);
+    }
 }
