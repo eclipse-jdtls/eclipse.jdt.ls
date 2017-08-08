@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.ls.debug.DebugEvent;
 import org.eclipse.jdt.ls.debug.DebugException;
 import org.eclipse.jdt.ls.debug.DebugUtility;
@@ -503,16 +502,7 @@ public class DebugAdapter implements IDebugAdapter {
     private void launchDebugSession(Requests.LaunchArguments arguments) throws DebugException {
         this.cwd = arguments.cwd;
         String mainClass = arguments.startupClass;
-        String classpath;
-        try {
-            // to-do: move to ls
-            classpath = AdapterUtils.computeClassPath(arguments.projectName, mainClass);
-            classpath = classpath.replaceAll("\\\\", "/");
-        } catch (CoreException e) {
-            Logger.logException("Failed to resolve classpath.", e);
-            throw new DebugException("Failed to resolve classpath", e);
-        }
-
+        String classpath = arguments.classpath;
         if (arguments.sourcePath == null || arguments.sourcePath.length == 0) {
             this.sourcePath = new String[] { cwd };
         } else {
