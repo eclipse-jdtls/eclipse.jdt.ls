@@ -13,8 +13,6 @@ package org.eclipse.jdt.ls.debug.adapter;
 
 import java.nio.file.Paths;
 
-import com.google.gson.JsonObject;
-
 /**
  * The data types defined by VSCode Debug Protocol.
  */

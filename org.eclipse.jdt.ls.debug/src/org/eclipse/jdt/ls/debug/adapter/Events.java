@@ -34,24 +34,35 @@ public class Events {
     public static class StoppedEvent extends DebugEvent {
         public long threadId;
         public String reason;
-        public Types.Source source;
-        public int line;
-        public int column;
+        public String description;
         public String text;
         public boolean allThreadsStopped;
 
         /**
          * Constructor.
          */
-        public StoppedEvent(String reason, Types.Source src, int ln, int col, String text, long threadId) {
+        public StoppedEvent(String reason, long threadId) {
             super("stopped");
             this.reason = reason;
-            this.source = src;
-            this.line = ln;
-            this.column = col;
-            this.text = text;
             this.threadId = threadId;
             this.allThreadsStopped = false;
+        }
+
+        /**
+         * Constructor.
+         */
+        public StoppedEvent(String reason, long threadId, boolean allThreadsStopped) {
+            this(reason, threadId);
+            this.allThreadsStopped = allThreadsStopped;
+        }
+
+        /**
+         * Constructor.
+         */
+        public StoppedEvent(String reason, long threadId, boolean allThreadsStopped, String description, String text) {
+            this(reason, threadId, allThreadsStopped);
+            this.description = description;
+            this.text = text;
         }
     }
 
