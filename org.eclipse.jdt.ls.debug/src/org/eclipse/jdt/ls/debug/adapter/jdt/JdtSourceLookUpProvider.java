@@ -1,7 +1,5 @@
 package org.eclipse.jdt.ls.debug.adapter.jdt;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,11 +12,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
@@ -28,11 +26,13 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.internal.core.SourceField;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.internal.core.SourceType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.debug.DebugException;
 import org.eclipse.jdt.ls.debug.adapter.ISourceLookUpProvider;
 import org.eclipse.jdt.ls.debug.internal.JavaDebuggerServerPlugin;
 import org.eclipse.jdt.ls.debug.internal.Logger;
@@ -49,8 +49,8 @@ public class JdtSourceLookUpProvider implements ISourceLookUpProvider {
     }
 
     @Override
-    public String[] getFullyQualifiedName(String sourceFilePath, int[] lines, int[] columns) {
-        if (sourceFilePath == null) {
+    public String[] getFullyQualifiedName(String uri, int[] lines, int[] columns) throws DebugException {
+        if (uri == null) {
             throw new IllegalArgumentException("sourceFilePath is null");
         }
         if (lines == null) {
@@ -63,22 +63,30 @@ public class JdtSourceLookUpProvider implements ISourceLookUpProvider {
         }
 
         String[] fqns = new String[lines.length];
-        Path sourcePath = Paths.get(sourceFilePath);
-        ICompilationUnit cu = JDTUtils.resolveCompilationUnit(sourcePath.toUri());
-        
+        ITypeRoot typeRoot = JDTUtils.resolveCompilationUnit(uri);
+        if (typeRoot == null) {
+            typeRoot = JDTUtils.resolveClassFile(uri);
+        }
+
         for (int i = 0; i < lines.length; i++) {
             String fqn = null;
-            try {
-                int offset = JsonRpcHelpers.toOffset(cu.getBuffer(), lines[i], columns[i]);
-                IJavaElement javaElement = cu.getElementAt(offset);
-                if (javaElement instanceof SourceField || javaElement instanceof SourceMethod) {
-                    IType type = ((IMember) javaElement).getDeclaringType();
-                    fqn = type.getFullyQualifiedName();
-                } else if (javaElement instanceof SourceType) {
-                    fqn = ((SourceType) javaElement).getFullyQualifiedName();
+            if (typeRoot != null) {
+                try {
+                    int offset = JsonRpcHelpers.toOffset(typeRoot.getBuffer(), lines[i], columns[i]);
+                    IJavaElement javaElement = typeRoot.getElementAt(offset);
+                    if (javaElement instanceof SourceField || javaElement instanceof SourceMethod
+                            || javaElement instanceof BinaryMember) {
+                        IType type = ((IMember) javaElement).getDeclaringType();
+                        fqn = type.getFullyQualifiedName();
+                    } else if (javaElement instanceof SourceType) {
+                        fqn = ((SourceType) javaElement).getFullyQualifiedName();
+                    }
+                } catch (JavaModelException e) {
+                    Logger.logException("Failed to parse the java element at line " + lines[i], e);
+                    throw new DebugException(
+                            String.format("Failed to parse the java element at line %d. Reason: %s", lines[i], e.getMessage()),
+                            e);
                 }
-            } catch (JavaModelException e) {
-                Logger.logException("Add breakpoint exception", e);
             }
             fqns[i] = fqn;
         }
