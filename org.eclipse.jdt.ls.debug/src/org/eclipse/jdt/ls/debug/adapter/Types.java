@@ -161,7 +161,7 @@ public class Types {
 
     public static class SourceBreakpoint {
         public int line;
-        public int hitCondition = -1;
+        public String hitCondition;
         public String condition;
 
         public SourceBreakpoint() {
@@ -170,7 +170,7 @@ public class Types {
         /**
          * Constructor.
          */
-        public SourceBreakpoint(int line, String condition, int hitCondition) {
+        public SourceBreakpoint(int line, String condition, String hitCondition) {
             this.line = line;
             this.condition = condition;
             this.hitCondition = hitCondition;
@@ -210,6 +210,7 @@ public class Types {
 
     public static class Capabilities {
         public boolean supportsConfigurationDoneRequest;
+        public boolean supportsHitConditionalBreakpoints;
         public boolean supportsEvaluateForHovers;
         public boolean supportsSetVariable;
         public boolean supportsRestartRequest;
