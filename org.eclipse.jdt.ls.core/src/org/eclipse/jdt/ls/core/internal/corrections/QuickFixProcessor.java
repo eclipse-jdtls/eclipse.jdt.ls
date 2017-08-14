@@ -314,13 +314,13 @@ public class QuickFixProcessor {
 			// break;
 			// case IProblem.UnusedPrivateMethod:
 			// case IProblem.UnusedPrivateConstructor:
-			// case IProblem.UnusedPrivateField:
+
 			// case IProblem.UnusedPrivateType:
 			// case IProblem.LocalVariableIsNeverUsed:
 			// case IProblem.ArgumentIsNeverUsed:
-			// LocalCorrectionsSubProcessor.addUnusedMemberProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedPrivateField:
+				LocalCorrectionsSubProcessor.addUnusedMemberProposal(context, problem, proposals);
+				break;
 			// case IProblem.NeedToEmulateFieldReadAccess:
 			// case IProblem.NeedToEmulateFieldWriteAccess:
 			// case IProblem.NeedToEmulateMethodAccess:
