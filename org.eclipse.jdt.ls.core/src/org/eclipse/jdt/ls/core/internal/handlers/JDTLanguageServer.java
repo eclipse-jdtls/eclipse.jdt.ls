@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.BuildWorkspaceResult;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -514,6 +515,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> java/projectConfigurationUpdate");
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
 		handler.updateConfiguration(param);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#buildWorkspace(java.lang.String)
+	 */
+	@Override
+	public CompletableFuture<BuildWorkspaceResult> buildWorkspace(String type) {
+		logInfo(">> java/buildWorkspace");
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler();
+		return computeAsync((cc) -> handler.buildWorkspace(toMonitor(cc)));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {
