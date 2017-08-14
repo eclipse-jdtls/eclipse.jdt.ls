@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.jdt.ls.debug.DebugEvent;
@@ -53,7 +53,7 @@ import com.sun.jdi.event.VMStartEvent;
 import io.reactivex.disposables.Disposable;
 
 public class DebugAdapter implements IDebugAdapter {
-    private Consumer<Events.DebugEvent> eventConsumer;
+    private BiConsumer<Events.DebugEvent, Boolean> eventConsumer;
 
     private boolean debuggerLinesStartAt1 = true;
     private boolean debuggerPathsAreUri = true;
@@ -75,7 +75,7 @@ public class DebugAdapter implements IDebugAdapter {
     /**
      * Constructor.
      */
-    public DebugAdapter(Consumer<Events.DebugEvent> consumer, IProviderContext context) {
+    public DebugAdapter(BiConsumer<Events.DebugEvent, Boolean> consumer, IProviderContext context) {
         this.eventConsumer = consumer;
         this.breakpointManager = new BreakpointManager();
         this.eventSubscriptions = new ArrayList<>();
@@ -223,7 +223,7 @@ public class DebugAdapter implements IDebugAdapter {
             // When there are uncaught exception during dispatching, send an error response back and terminate debuggee.
             responseBody = new Responses.ErrorResponseBody(
                     this.convertDebuggerMessageToClient(e.getMessage() != null ? e.getMessage() : e.toString()));
-            this.sendEvent(new Events.TerminatedEvent());
+            this.sendEventLater(new Events.TerminatedEvent());
         }
 
         Messages.Response response = new Messages.Response();
@@ -249,7 +249,7 @@ public class DebugAdapter implements IDebugAdapter {
             }
         }
         // Send an InitializedEvent
-        this.sendEvent(new Events.InitializedEvent());
+        this.sendEventLater(new Events.InitializedEvent());
 
         Types.Capabilities caps = new Types.Capabilities();
         caps.supportsConfigurationDoneRequest = true;
@@ -287,9 +287,9 @@ public class DebugAdapter implements IDebugAdapter {
         }
         // See VSCode bug 28175 (https://github.com/Microsoft/vscode/issues/28175).
         // Need send a ContinuedEvent to clean up the old debugger's call stacks.
-        this.sendEvent(new Events.ContinuedEvent(true));
+        this.sendEventLater(new Events.ContinuedEvent(true));
         // Send an InitializedEvent to ask VSCode to restore the existing breakpoints.
-        this.sendEvent(new Events.InitializedEvent());
+        this.sendEventLater(new Events.InitializedEvent());
         return new Responses.ResponseBody();
     }
 
@@ -351,7 +351,7 @@ public class DebugAdapter implements IDebugAdapter {
                 if (toAdds[i] == added[i] && added[i].className() != null) {
                     added[i].install().thenAccept(bp -> {
                         Events.BreakpointEvent bpEvent = new Events.BreakpointEvent("new", this.convertDebuggerBreakpointToClient(bp));
-                        sendEvent(bpEvent);
+                        sendEventLater(bpEvent);
                     });
                 } else if (toAdds[i].hitCount() != added[i].hitCount() && added[i].className() != null) {
                     // Update hitCount condition.
@@ -410,10 +410,10 @@ public class DebugAdapter implements IDebugAdapter {
         ThreadReference thread = getThread(arguments.threadId);
         if (thread != null) {
             thread.suspend();
-            this.sendEvent(new Events.StoppedEvent("pause", arguments.threadId));
+            this.sendEventLater(new Events.StoppedEvent("pause", arguments.threadId));
         } else {
             this.debugSession.suspend();
-            this.sendEvent(new Events.StoppedEvent("pause", arguments.threadId, true));
+            this.sendEventLater(new Events.StoppedEvent("pause", arguments.threadId, true));
         }
         return new Responses.ResponseBody();
     }
@@ -493,9 +493,9 @@ public class DebugAdapter implements IDebugAdapter {
         if (event instanceof VMStartEvent) {
             // do nothing.
         } else if (event instanceof VMDeathEvent) {
-            this.sendEvent(new Events.ExitedEvent(0));
+            this.sendEventLater(new Events.ExitedEvent(0));
         } else if (event instanceof VMDisconnectEvent) {
-            this.sendEvent(new Events.TerminatedEvent());
+            this.sendEventLater(new Events.TerminatedEvent());
             // Terminate eventHub thread.
             try {
                 this.debugSession.eventHub().close();
@@ -505,18 +505,18 @@ public class DebugAdapter implements IDebugAdapter {
         } else if (event instanceof ThreadStartEvent) {
             ThreadReference startThread = ((ThreadStartEvent) event).thread();
             Events.ThreadEvent threadEvent = new Events.ThreadEvent("started", startThread.uniqueID());
-            this.sendEvent(threadEvent);
+            this.sendEventLater(threadEvent);
         } else if (event instanceof ThreadDeathEvent) {
             ThreadReference deathThread = ((ThreadDeathEvent) event).thread();
             Events.ThreadEvent threadDeathEvent = new Events.ThreadEvent("exited", deathThread.uniqueID());
-            this.sendEvent(threadDeathEvent);
+            this.sendEventLater(threadDeathEvent);
         } else if (event instanceof BreakpointEvent) {
             ThreadReference bpThread = ((BreakpointEvent) event).thread();
-            this.sendEvent(new Events.StoppedEvent("breakpoint", bpThread.uniqueID()));
+            this.sendEventLater(new Events.StoppedEvent("breakpoint", bpThread.uniqueID()));
             debugEvent.shouldResume = false;
         } else if (event instanceof StepEvent) {
             ThreadReference stepThread = ((StepEvent) event).thread();
-            this.sendEvent(new Events.StoppedEvent("step", stepThread.uniqueID()));
+            this.sendEventLater(new Events.StoppedEvent("step", stepThread.uniqueID()));
             debugEvent.shouldResume = false;
         }
     }
@@ -540,8 +540,20 @@ public class DebugAdapter implements IDebugAdapter {
         return response;
     }
 
+    /**
+     * Send event to DA immediately.
+     * @see ProtocolServer#sendEvent(String,Object)
+     */
     private void sendEvent(Events.DebugEvent event) {
-        this.eventConsumer.accept(event);
+        this.eventConsumer.accept(event, false);
+    }
+
+    /**
+     * Send event to DA after the current dispatching request is resolved.
+     * @see ProtocolServer#sendEventLater(String,Object)
+     */
+    private void sendEventLater(Events.DebugEvent event) {
+        this.eventConsumer.accept(event, true);
     }
 
     private void launchDebugSession(Requests.LaunchArguments arguments) throws DebugException {
@@ -559,6 +571,16 @@ public class DebugAdapter implements IDebugAdapter {
 
         try {
             this.debugSession = DebugUtility.launch(context.getVirtualMachineManagerProvider().getVirtualMachineManager(), mainClass, classpath);
+            ProcessConsole debuggeeConsole = new ProcessConsole(this.debugSession.process(), "Debuggee");
+            debuggeeConsole.onStdout((output) -> {
+                // When DA receives a new OutputEvent, it just shows that on Debug Console and doesn't affect the DA's dispatching workflow.
+                // That means the debugger can send OutputEvent to DA at any time.
+                sendEvent(Events.OutputEvent.createStdoutOutput(output));
+            });
+            debuggeeConsole.onStderr((err) -> {
+                sendEvent(Events.OutputEvent.createStderrOutput(err));
+            });
+            debuggeeConsole.start();
         } catch (IOException | IllegalConnectorArgumentsException | VMStartException e) {
             Logger.logException("Launching debuggee vm exception", e);
             throw new DebugException("Launching debuggee vm exception \"" + e.getMessage() + "\"", e);

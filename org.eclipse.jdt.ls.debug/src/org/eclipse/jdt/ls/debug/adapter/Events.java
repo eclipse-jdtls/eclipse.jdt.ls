@@ -11,8 +11,6 @@
 
 package org.eclipse.jdt.ls.debug.adapter;
 
-import java.util.HashMap;
-
 /**
  * The event types defined by VSCode Debug Protocol.
  */
@@ -138,16 +136,30 @@ public class Events {
 
         public Category category;
         public String output;
-        public HashMap<String, Object> data;
 
         /**
          * Constructor.
          */
-        public OutputEvent(Category category, String output, HashMap<String, Object> data) {
+        public OutputEvent(Category category, String output) {
             super("output");
             this.category = category;
             this.output = output;
-            this.data = data;
+        }
+
+        public static OutputEvent createConsoleOutput(String output) {
+            return new OutputEvent(Category.console, output);
+        }
+
+        public static OutputEvent createStdoutOutput(String output) {
+            return new OutputEvent(Category.stdout, output);
+        }
+
+        public static OutputEvent createStderrOutput(String output) {
+            return new OutputEvent(Category.stderr, output);
+        }
+
+        public static OutputEvent createTelemetryOutput(String output) {
+            return new OutputEvent(Category.telemetry, output);
         }
     }
 
