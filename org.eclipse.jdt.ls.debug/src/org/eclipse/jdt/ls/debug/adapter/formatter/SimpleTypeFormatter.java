@@ -40,7 +40,12 @@ public class SimpleTypeFormatter implements ITypeFormatter {
         return options;
     }
     
-    private static String trimTypeName(String type) {
+    /**
+     * An utility method for convert fully qualified class name to the simplified class name. 
+     * @param type the fully qualified class name  
+     * @return the simplified class name
+     */
+    public static String trimTypeName(String type) {
         if (type.indexOf('.') >= 0) {
             type = type.substring(type.lastIndexOf('.') + 1);
         }

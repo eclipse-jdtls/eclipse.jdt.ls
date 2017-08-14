@@ -42,6 +42,8 @@ public class EventHub implements IEventHub {
     private boolean isClosed = false;
 
     /**
+     * Starts retrieving events from the event queue of the specified virtual machine.
+     * 
      * @param vm
      *            the target virtual machine.
      */

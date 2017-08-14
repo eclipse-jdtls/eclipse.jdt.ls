@@ -35,7 +35,7 @@ public class IdCollection<T> {
     }
 
     public void reset() {
-        this.nextId.set(this.startId);;
+        this.nextId.set(this.startId);
         this.idMap.clear();
     }
 

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +32,7 @@ public class ProtocolServer {
     private CharBuffer rawData;
     private boolean terminateSession = false;
     private int bodyLength = -1;
-    private int sequenceNumber = 1;
+    private AtomicInteger sequenceNumber = new AtomicInteger(1);
 
     private boolean isDispatchingData;
     private ConcurrentLinkedQueue<Messages.Event> eventQueue;
@@ -49,13 +50,16 @@ public class ProtocolServer {
         this.reader = reader;
         this.writer = writer;
         this.bodyLength = -1;
-        this.sequenceNumber = 1;
         this.rawData = new CharBuffer();
         this.eventQueue = new ConcurrentLinkedQueue<>();
-        this.debugAdapter = new DebugAdapter(debugEvent -> {
+        this.debugAdapter = new DebugAdapter((debugEvent, willSendLater) -> {
             // If the protocolServer has been stopped, it'll no longer receive any event.
             if (!terminateSession) {
-                this.sendEventLater(debugEvent.type, debugEvent);
+                if (willSendLater) {
+                    this.sendEventLater(debugEvent.type, debugEvent);
+                } else {
+                    this.sendEvent(debugEvent.type, debugEvent);
+                }
             }
        }, context);
     }
@@ -88,6 +92,17 @@ public class ProtocolServer {
     }
 
     /**
+     * Send event to DA immediately.
+     * @param eventType
+     *                 event type
+     * @param body
+     *                 event body
+     */
+    private void sendEvent(String eventType, Object body) {
+        sendMessage(new Messages.Event(eventType, body));
+    }
+
+    /**
      * If the the dispatcher is idle, then send the event immediately.
      * Else add the new event to an eventQueue first and send them when dispatcher becomes idle again.
      * @param eventType
@@ -106,7 +121,7 @@ public class ProtocolServer {
     }
 
     private void sendMessage(Messages.ProtocolMessage message) {
-        message.seq = this.sequenceNumber++;
+        message.seq = this.sequenceNumber.getAndIncrement();
 
         String jsonMessage = JsonUtils.toJson(message);
         char[] jsonBytes = jsonMessage.toCharArray();
