@@ -1,7 +1,6 @@
 package org.eclipse.jdt.ls.debug.adapter.formatter;
 
 import static org.eclipse.jdt.ls.debug.adapter.formatter.TypeIdentifiers.BYTE;
-import static org.eclipse.jdt.ls.debug.adapter.formatter.TypeIdentifiers.CHAR;
 import static org.eclipse.jdt.ls.debug.adapter.formatter.TypeIdentifiers.DOUBLE;
 import static org.eclipse.jdt.ls.debug.adapter.formatter.TypeIdentifiers.FLOAT;
 import static org.eclipse.jdt.ls.debug.adapter.formatter.TypeIdentifiers.INT;
@@ -97,7 +96,6 @@ public class NumericFormatter implements IValueFormatter {
                 || signature0 == INT
                 || signature0 == SHORT
                 || signature0 == BYTE
-                || signature0 == CHAR
                 || signature0 == FLOAT
                 || signature0 == DOUBLE;
     }

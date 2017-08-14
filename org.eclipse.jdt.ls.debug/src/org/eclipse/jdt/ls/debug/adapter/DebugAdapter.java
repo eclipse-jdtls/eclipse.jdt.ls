@@ -1,13 +1,13 @@
 /*******************************************************************************
-* Copyright (c) 2017 Microsoft Corporation and others.
-* All rights reserved. This program and the accompanying materials
-* are made available under the terms of the Eclipse Public License v1.0
-* which accompanies this distribution, and is available at
-* http://www.eclipse.org/legal/epl-v10.html
-*
-* Contributors:
-*     Microsoft Corporation - initial API and implementation
-*******************************************************************************/
+ * Copyright (c) 2017 Microsoft Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Microsoft Corporation - initial API and implementation
+ *******************************************************************************/
 
 package org.eclipse.jdt.ls.debug.adapter;
 
@@ -67,7 +67,7 @@ public class DebugAdapter implements IDebugAdapter {
     private BreakpointManager breakpointManager;
     private List<Disposable> eventSubscriptions;
     private IProviderContext context;
-    
+
     private IdCollection<StackFrame> frameCollection = new IdCollection<>();
     private IdCollection<String> sourceCollection = new IdCollection<>();
     private AtomicInteger messageId = new AtomicInteger(1);
@@ -173,7 +173,7 @@ public class DebugAdapter implements IDebugAdapter {
                     if (sourceArguments.sourceReference == -1) {
                         responseBody = new Responses.ErrorResponseBody(
                                 this.convertDebuggerMessageToClient("SourceRequest: property 'sourceReference' is missing, null, or empty"));
-                    } else {                        
+                    } else {
                         responseBody = source(sourceArguments);
                     }
                     break;
@@ -217,7 +217,7 @@ public class DebugAdapter implements IDebugAdapter {
                 default:
                     responseBody = new Responses.ErrorResponseBody(
                             this.convertDebuggerMessageToClient(String.format("unrecognized request: { _request: %s }", request.command)));
-                }
+            }
         } catch (Exception e) {
             Logger.logException("DebugSession dispatch exception", e);
             // When there are uncaught exception during dispatching, send an error response back and terminate debuggee.
@@ -246,7 +246,7 @@ public class DebugAdapter implements IDebugAdapter {
                     break;
                 default:
                     this.clientPathsAreUri = false;
-                }
+            }
         }
         // Send an InitializedEvent
         this.sendEvent(new Events.InitializedEvent());
@@ -444,7 +444,7 @@ public class DebugAdapter implements IDebugAdapter {
                 } else {
                     arguments.levels = Math.min(stackFrames.size() - arguments.startFrame, arguments.levels);
                 }
-    
+
                 for (int i = 0; i < arguments.levels; i++) {
                     StackFrame stackFrame = stackFrames.get(arguments.startFrame + i);
                     Types.StackFrame clientStackFrame = this.convertDebuggerStackFrameToClient(stackFrame);
@@ -529,7 +529,7 @@ public class DebugAdapter implements IDebugAdapter {
             if (error.format != null) {
                 response.message = error.format;
             } else {
-                response.message = "Error response body";              
+                response.message = "Error response body";
             }
         } else {
             response.success = true;
@@ -538,7 +538,7 @@ public class DebugAdapter implements IDebugAdapter {
             }
         }
         return response;
-      }
+    }
 
     private void sendEvent(Events.DebugEvent event) {
         this.eventConsumer.accept(event);

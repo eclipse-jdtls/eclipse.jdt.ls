@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.ls.debug.IBreakpoint;
@@ -113,11 +114,7 @@ public class BreakpointManager {
     }
 
     private void addBreakpointsInternally(String source, IBreakpoint[] breakpoints) {
-        HashMap<String, IBreakpoint> breakpointMap = this.sourceToBreakpoints.get(source);
-        if (breakpointMap == null) {
-            breakpointMap = new HashMap<>();
-            this.sourceToBreakpoints.put(source, breakpointMap);
-        }
+        Map<String, IBreakpoint> breakpointMap = this.sourceToBreakpoints.computeIfAbsent(source, k -> new HashMap<>());
 
         if (breakpoints != null && breakpoints.length > 0) {
             for (IBreakpoint breakpoint : breakpoints) {
@@ -132,7 +129,7 @@ public class BreakpointManager {
      * Removes the specified breakpoints from breakpoint manager.
      */
     private void removeBreakpointsInternally(String source, IBreakpoint[] breakpoints) {
-        HashMap<String, IBreakpoint> breakpointMap = this.sourceToBreakpoints.get(source);
+        Map<String, IBreakpoint> breakpointMap = this.sourceToBreakpoints.get(source);
         if (breakpointMap == null || breakpointMap.isEmpty() || breakpoints.length == 0) {
             return ;
         }
