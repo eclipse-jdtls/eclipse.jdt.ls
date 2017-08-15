@@ -11,13 +11,12 @@
 
 package org.eclipse.jdt.ls.debug.adapter;
 
-public interface IProviderContext {
+import java.util.List;
+
+public interface IDebugRequestHandler {
+    List<String> getTargetCommands();
     
-    <T extends IProvider> T getProvider(Class<T> clazz);
+    void handle(String command, Requests.Arguments arguments, Messages.Response response,
+                IDebugAdapterContext context);
 
-    void registerProvider(Class<? extends IProvider> clazz, IProvider provider);
-
-    ISourceLookUpProvider getSourceLookUpProvider();
-
-    IVirtualMachineManagerProvider getVirtualMachineManagerProvider();
 }

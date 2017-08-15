@@ -94,7 +94,7 @@ public class JdtSourceLookUpProvider implements ISourceLookUpProvider {
     }
 
     @Override
-    public String getSourceFileURI(String fullyQualifiedName) {
+    public String getSourceFileURI(String fullyQualifiedName, String sourcePath) {
         if (fullyQualifiedName == null) {
             throw new IllegalArgumentException("fullyQualifiedName is null");
         }

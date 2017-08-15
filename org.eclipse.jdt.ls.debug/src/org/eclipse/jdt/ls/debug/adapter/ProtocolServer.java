@@ -45,6 +45,8 @@ public class ProtocolServer {
      *              the input reader
      * @param writer
      *              the output writer
+     * @param context
+     *              provider context for a series of provider implementation
      */
     public ProtocolServer(Reader reader, Writer writer, IProviderContext context) {
         this.reader = reader;

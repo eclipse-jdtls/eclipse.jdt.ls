@@ -6,7 +6,7 @@ public interface ISourceLookUpProvider extends IProvider {
 
     String[] getFullyQualifiedName(String uri, int[] lines, int[] columns) throws DebugException;
 
-    String getSourceFileURI(String fullyQualifiedName);
+    String getSourceFileURI(String fullyQualifiedName, String sourcePath);
 
     String getSourceContents(String uri);
 }
