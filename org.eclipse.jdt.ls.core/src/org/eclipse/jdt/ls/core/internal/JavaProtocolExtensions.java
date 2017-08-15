@@ -35,4 +35,10 @@ public interface JavaProtocolExtensions {
 	 */
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
+
+	@JsonRequest
+	CompletableFuture<String> startDebugSession(String type);
+
+	@JsonRequest
+	CompletableFuture<String> resolveClasspaths(ClasspathResolveRequestParams param);
 }

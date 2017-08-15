@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lifecycleMappingMetadata>
+	<pluginExecutions>
+		<pluginExecution>
+			<!-- build-helper-maven-plugin mapping mostly copied from 
+			https://github.com/mojohaus/build-helper-maven-plugin/blob/33355c039d3fc4aa4ca43a895834d5b4085baf5b/src/main/resources/META-INF/m2e/lifecycle-mapping-metadata.xml 
+			-->
+			<pluginExecutionFilter>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<versionRange>[1.0, 3.0.0)</versionRange>
+				<goals>
+					<goal>add-resource</goal>
+					<goal>add-source</goal>
+					<goal>add-test-resource</goal>
+					<goal>add-test-source</goal>
+					<goal>bsh-property</goal>
+					<goal>cpu-count</goal>
+					<goal>local-ip</goal>
+					<goal>maven-version</goal>
+					<goal>parse-version</goal>
+					<goal>regex-properties</goal>
+					<goal>regex-property</goal>
+					<goal>released-version</goal>
+					<goal>reserve-network-port</goal>
+					<goal>timestamp-property</goal>
+					<goal>uptodate-properties</goal>
+					<goal>uptodate-property</goal>
+				</goals>
+			</pluginExecutionFilter>
+			<action>
+				<execute>
+					<runOnIncremental>true</runOnIncremental>
+					<runOnConfiguration>true</runOnConfiguration>
+				</execute>
+			</action>
+		</pluginExecution>
+		<pluginExecution>
+			<pluginExecutionFilter>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<versionRange>[1.0, 3.0.0)</versionRange>
+				<goals>
+					<goal>attach-artifact</goal>
+					<goal>remove-project-artifact</goal>
+				</goals>
+			</pluginExecutionFilter>
+			<action>
+				<execute>
+					<runOnIncremental>false</runOnIncremental>
+					<runOnConfiguration>false</runOnConfiguration>
+				</execute>
+			</action>
+		</pluginExecution>
+	</pluginExecutions>
+</lifecycleMappingMetadata>

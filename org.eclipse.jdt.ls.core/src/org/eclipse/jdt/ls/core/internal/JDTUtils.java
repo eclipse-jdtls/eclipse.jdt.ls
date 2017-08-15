@@ -351,14 +351,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException{
-		String packageName = classFile.getParent().getElementName();
-		String jarName = classFile.getParent().getParent().getElementName();
-		String uriString = null;
-		try {
-			uriString = new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
-		}
+		String uriString = getFileURI(classFile);
 		Range range = toRange(classFile, offset, length);
 		return new Location(uriString, range);
 	}
@@ -425,6 +418,17 @@ public final class JDTUtils {
 	 */
 	public static String getFileURI(IResource resource) {
 		return ResourceUtils.fixURI(resource.getRawLocationURI());
+	}
+
+	public static String getFileURI(IClassFile classFile) {
+		String packageName = classFile.getParent().getElementName();
+		String jarName = classFile.getParent().getParent().getElementName();
+		try {
+			return new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
+			return null;
+		}
 	}
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {

@@ -21,9 +21,11 @@
 		<os.testArgs></os.testArgs>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
+		<checkstyle.skip>true</checkstyle.skip>
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
+		<module>org.eclipse.jdt.ls.debug</module>
 		<module>org.eclipse.jdt.ls.core</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.product</module>

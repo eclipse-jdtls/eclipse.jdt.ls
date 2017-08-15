@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="org.eclipse.jdt.ls.core.debugserver" name="lsdebugserver" schema="schema/org.eclipse.jdt.ls.core.debugserver.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">
