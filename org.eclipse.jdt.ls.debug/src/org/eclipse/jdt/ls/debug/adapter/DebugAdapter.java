@@ -732,7 +732,6 @@ public class DebugAdapter implements IDebugAdapter {
 
     private Types.Source convertDebuggerSourceToClient(Location location) throws URISyntaxException {
         String fullyQualifiedName = location.declaringType().name();
-        String uri = context.getSourceLookUpProvider().getSourceFileURI(fullyQualifiedName);
         String sourceName = "";
         String relativeSourcePath = "";
         try {
@@ -745,7 +744,7 @@ public class DebugAdapter implements IDebugAdapter {
             sourceName = enclosingType.substring(enclosingType.lastIndexOf('.') + 1) + ".java";
             relativeSourcePath = enclosingType.replace('.', '/') + ".java";
         }
-
+        String uri = context.getSourceLookUpProvider().getSourceFileURI(fullyQualifiedName, relativeSourcePath);
         // If the source lookup engine cannot find the source file, then lookup it in the source directories specified by user.
         if (uri == null) {
             String absoluteSourcepath = AdapterUtils.sourceLookup(this.sourcePath, relativeSourcePath);
