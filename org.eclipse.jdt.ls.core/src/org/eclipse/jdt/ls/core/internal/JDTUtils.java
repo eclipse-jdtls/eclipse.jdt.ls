@@ -65,6 +65,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.core.util.ClassFileBytesDisassembler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -191,7 +192,7 @@ public final class JDTUtils {
 			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
-			if (content.isEmpty()) {
+			if (content.isEmpty() && javaProject != null && ProjectsManager.DEFAULT_PROJECT_NAME.equals(javaProject.getProject().getName())) {
 				java.nio.file.Path path = Paths.get(uri);
 				java.nio.file.Path parent = path;
 				while (parent.getParent() != null) {
