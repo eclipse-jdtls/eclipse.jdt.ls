@@ -65,6 +65,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.core.util.ClassFileBytesDisassembler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -82,6 +83,9 @@ import com.google.common.io.Files;
  */
 public final class JDTUtils {
 
+	private static final String PATH_SEPARATOR = "/";
+	private static final String PERIOD = ".";
+	private static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
@@ -153,9 +157,9 @@ public final class JDTUtils {
 
 		String packageName = getPackageName(javaProject, uri);
 		String fileName = path.getName(path.getNameCount() - 1).toString();
-		String packagePath = packageName.replace(".", "/");
+		String packagePath = packageName.replace(PERIOD, PATH_SEPARATOR);
 
-		IPath filePath = new Path("src").append(packagePath).append(fileName);
+		IPath filePath = new Path(SRC).append(packagePath).append(fileName);
 		final IFile file = project.getFile(filePath);
 		if (!file.isLinked()) {
 			try {
@@ -188,7 +192,22 @@ public final class JDTUtils {
 			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
-			return getPackageName(javaProject, content);
+			if (content.isEmpty() && javaProject != null && ProjectsManager.DEFAULT_PROJECT_NAME.equals(javaProject.getProject().getName())) {
+				java.nio.file.Path path = Paths.get(uri);
+				java.nio.file.Path parent = path;
+				while (parent.getParent() != null) {
+					parent = parent.getParent();
+					String name = parent.getName(parent.getNameCount() - 1).toString();
+					if (SRC.equals(name)) {
+						String pathStr = path.getParent().toString();
+						pathStr = pathStr.substring(parent.toString().length() + 1);
+						pathStr = pathStr.replace(PATH_SEPARATOR, PERIOD);
+						return pathStr;
+					}
+				}
+			} else {
+				return getPackageName(javaProject, content);
+			}
 		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException("Failed to read package name from "+uri, e);
 		}
@@ -355,7 +374,7 @@ public final class JDTUtils {
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", "/" + jarName + "/" + packageName + "/" + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
@@ -517,7 +536,7 @@ public final class JDTUtils {
 		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
 		if (resources.length == 0 && Platform.OS_WIN32.equals(Platform.getOS()) && uri.toString().startsWith(ResourceUtils.FILE_UNC_PREFIX)) {
 			String uriString = uri.toString();
-			int index = uriString.indexOf("/", ResourceUtils.FILE_UNC_PREFIX.length());
+			int index = uriString.indexOf(PATH_SEPARATOR, ResourceUtils.FILE_UNC_PREFIX.length());
 			if (index > 0) {
 				String server = uriString.substring(ResourceUtils.FILE_UNC_PREFIX.length(), index);
 				uriString = uriString.replace(server, server.toUpperCase());
