@@ -16,6 +16,10 @@ package org.eclipse.jdt.ls.debug.adapter;
  */
 public class Requests {
 
+    public static class ValueFormat {
+        public boolean hex;
+    }
+    
     public static class Arguments {
 
     }
@@ -117,13 +121,15 @@ public class Requests {
         public int variablesReference = -1;
         public String filter;
         public int start;
-        public int count;
+        public int count;        
+        public ValueFormat format;
     }
 
     public static class SetVariableArguments extends Arguments {
         public int variablesReference;
         public String name;
         public String value;
+        public ValueFormat format;
     }
 
     public static class SourceArguments extends Arguments {
@@ -134,5 +140,6 @@ public class Requests {
         public String expression;
         public int frameId;
         public String context;
+        public ValueFormat format;
     }
 }

@@ -11,34 +11,18 @@
 
 package org.eclipse.jdt.ls.debug.adapter;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-
-import org.apache.commons.io.FilenameUtils;
-import org.eclipse.jdt.ls.debug.DebugEvent;
-import org.eclipse.jdt.ls.debug.DebugException;
-import org.eclipse.jdt.ls.debug.DebugUtility;
-import org.eclipse.jdt.ls.debug.IBreakpoint;
-import org.eclipse.jdt.ls.debug.IDebugSession;
-import org.eclipse.jdt.ls.debug.internal.Logger;
-
 import com.google.gson.JsonObject;
 import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Type;
 import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.BreakpointEvent;
@@ -49,8 +33,42 @@ import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.event.VMStartEvent;
-
 import io.reactivex.disposables.Disposable;
+import org.apache.commons.io.FilenameUtils;
+import org.eclipse.jdt.ls.debug.DebugEvent;
+import org.eclipse.jdt.ls.debug.DebugException;
+import org.eclipse.jdt.ls.debug.DebugUtility;
+import org.eclipse.jdt.ls.debug.IBreakpoint;
+import org.eclipse.jdt.ls.debug.IDebugSession;
+import org.eclipse.jdt.ls.debug.adapter.Requests.StackTraceArguments;
+import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatEnum;
+import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatter;
+import org.eclipse.jdt.ls.debug.adapter.formatter.SimpleTypeFormatter;
+import org.eclipse.jdt.ls.debug.adapter.variables.IVariableFormatter;
+import org.eclipse.jdt.ls.debug.adapter.variables.StackFrameScope;
+import org.eclipse.jdt.ls.debug.adapter.variables.ThreadObjectReference;
+import org.eclipse.jdt.ls.debug.adapter.variables.Variable;
+import org.eclipse.jdt.ls.debug.adapter.variables.VariableFormatterFactory;
+import org.eclipse.jdt.ls.debug.adapter.variables.VariableUtils;
+import org.eclipse.jdt.ls.debug.internal.Logger;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public class DebugAdapter implements IDebugAdapter {
     private BiConsumer<Events.DebugEvent, Boolean> eventConsumer;
@@ -68,8 +86,7 @@ public class DebugAdapter implements IDebugAdapter {
     private BreakpointManager breakpointManager;
     private List<Disposable> eventSubscriptions;
     private IProviderContext context;
-
-    private IdCollection<StackFrame> frameCollection = new IdCollection<>();
+    private VariableRequestHandler variableRequestHandler;
     private IdCollection<String> sourceCollection = new IdCollection<>();
     private AtomicInteger messageId = new AtomicInteger(1);
 
@@ -81,6 +98,8 @@ public class DebugAdapter implements IDebugAdapter {
         this.breakpointManager = new BreakpointManager();
         this.eventSubscriptions = new ArrayList<>();
         this.context = context;
+        this.variableRequestHandler = new VariableRequestHandler(VariableFormatterFactory.createVariableFormatter(),
+                true, false, true);
     }
 
     @Override
@@ -364,8 +383,10 @@ public class DebugAdapter implements IDebugAdapter {
         if (thread != null) {
             allThreadsContinued = false;
             thread.resume();
+            checkThreadRunningAndRecycleIds(thread);
         } else {
             this.debugSession.resume();
+            this.variableRequestHandler.recyclableAllObject();
         }
         return new Responses.ContinueResponseBody(allThreadsContinued);
     }
@@ -374,6 +395,7 @@ public class DebugAdapter implements IDebugAdapter {
         ThreadReference thread = getThread(arguments.threadId);
         if (thread != null) {
             DebugUtility.stepOver(thread, this.debugSession.eventHub());
+            checkThreadRunningAndRecycleIds(thread);
         }
         return new Responses.ResponseBody();
     }
@@ -382,6 +404,7 @@ public class DebugAdapter implements IDebugAdapter {
         ThreadReference thread = getThread(arguments.threadId);
         if (thread != null) {
             DebugUtility.stepInto(thread, this.debugSession.eventHub());
+            checkThreadRunningAndRecycleIds(thread);
         }
         return new Responses.ResponseBody();
     }
@@ -390,6 +413,7 @@ public class DebugAdapter implements IDebugAdapter {
         ThreadReference thread = getThread(arguments.threadId);
         if (thread != null) {
             DebugUtility.stepOut(thread, this.debugSession.eventHub());
+            checkThreadRunningAndRecycleIds(thread);
         }
         return new Responses.ResponseBody();
     }
@@ -416,44 +440,25 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private Responses.ResponseBody stackTrace(Requests.StackTraceArguments arguments) {
-        List<Types.StackFrame> result = new ArrayList<>();
-        if (arguments.startFrame < 0 || arguments.levels < 0) {
-            return new Responses.StackTraceResponseBody(result, 0);
+        try {
+            return this.variableRequestHandler.stackTrace(arguments);
+        } catch (IncompatibleThreadStateException | AbsentInformationException | URISyntaxException e) {
+            return new Responses.ErrorResponseBody(this.convertDebuggerMessageToClient(
+                    String.format("Failed to get stackTrace. Reason: '%s'", e.getMessage())));
         }
-        ThreadReference thread = getThread(arguments.threadId);
-        if (thread != null) {
-            try {
-                List<StackFrame> stackFrames = thread.frames();
-                if (arguments.startFrame >= stackFrames.size()) {
-                    return new Responses.StackTraceResponseBody(result, 0);
-                }
-                if (arguments.levels == 0) {
-                    arguments.levels = stackFrames.size() - arguments.startFrame;
-                } else {
-                    arguments.levels = Math.min(stackFrames.size() - arguments.startFrame, arguments.levels);
-                }
-
-                for (int i = 0; i < arguments.levels; i++) {
-                    StackFrame stackFrame = stackFrames.get(arguments.startFrame + i);
-                    Types.StackFrame clientStackFrame = this.convertDebuggerStackFrameToClient(stackFrame);
-                    result.add(clientStackFrame);
-                }
-            } catch (IncompatibleThreadStateException | AbsentInformationException | URISyntaxException e) {
-                Logger.logException("DebugSession#stackTrace exception", e);
-            }
-        }
-        return new Responses.StackTraceResponseBody(result, result.size());
     }
 
     private Responses.ResponseBody scopes(Requests.ScopesArguments arguments) {
-        List<Types.Scope> scps = new ArrayList<>();
-        scps.add(new Types.Scope("Local", 1000000 + arguments.frameId, false));
-        return new Responses.ScopesResponseBody(scps);
+        return this.variableRequestHandler.scopes(arguments);
     }
 
     private Responses.ResponseBody variables(Requests.VariablesArguments arguments) {
-        List<Types.Variable> list = new ArrayList<>();
-        return new Responses.VariablesResponseBody(list);
+        try {
+            return this.variableRequestHandler.variables(arguments);
+        } catch (AbsentInformationException e) {
+            return new Responses.ErrorResponseBody(this.convertDebuggerMessageToClient(
+                    String.format("Failed to get variables. Reason: '%s'", e.getMessage())));
+        }
     }
 
     private Responses.ResponseBody setVariable(Requests.SetVariableArguments arguments) {
@@ -596,7 +601,7 @@ public class DebugAdapter implements IDebugAdapter {
     private void shutdownDebugSession(boolean terminateDebuggee) {
         this.eventSubscriptions.clear();
         this.breakpointManager.reset();
-        this.frameCollection.reset();
+        this.variableRequestHandler.recyclableAllObject();
         this.sourceCollection.reset();
         if (this.debugSession != null) {
             if (terminateDebuggee) {
@@ -771,9 +776,8 @@ public class DebugAdapter implements IDebugAdapter {
         return new Types.Thread(thread.uniqueID(), "Thread [" + thread.name() + "]");
     }
 
-    private Types.StackFrame convertDebuggerStackFrameToClient(StackFrame stackFrame)
+    private Types.StackFrame convertDebuggerStackFrameToClient(StackFrame stackFrame, int frameId)
             throws URISyntaxException, AbsentInformationException {
-        int frameId = this.frameCollection.create(stackFrame);
         Location location = stackFrame.location();
         Method method = location.method();
         Types.Source clientSource = this.convertDebuggerSourceToClient(location);
@@ -783,5 +787,195 @@ public class DebugAdapter implements IDebugAdapter {
 
     private Types.Message convertDebuggerMessageToClient(String message) {
         return new Types.Message(this.messageId.getAndIncrement(), message);
+    }
+
+    private void checkThreadRunningAndRecycleIds(ThreadReference thread) {
+        if (allThreadRunning()) {
+            this.variableRequestHandler.recyclableAllObject();
+        } else {
+            this.variableRequestHandler.recyclableThreads(thread);
+        }
+    }
+    
+    private boolean allThreadRunning() {
+        return !safeGetAllThreads().stream().anyMatch(ThreadReference::isSuspended);
+    }
+
+    private class VariableRequestHandler {
+        private IVariableFormatter variableFormatter;
+        private RecyclableObjectPool<ThreadReference, Object> objectPool;
+        
+        public VariableRequestHandler(IVariableFormatter variableFormatter, boolean showStaticVariables,
+                               boolean hexFormat, boolean showQualified) {
+            this.objectPool = new RecyclableObjectPool<>();
+            this.variableFormatter = variableFormatter;
+        }
+        
+        public void recyclableAllObject() {
+            this.objectPool.removeAllObjects();
+        }
+
+        public void recyclableThreads(ThreadReference thread) {
+            this.objectPool.removeObjectsByOwner(thread);
+        }
+
+        Responses.ResponseBody stackTrace(StackTraceArguments arguments)
+                throws IncompatibleThreadStateException, AbsentInformationException, URISyntaxException {
+            List<Types.StackFrame> result = new ArrayList<>();
+            if (arguments.startFrame < 0 || arguments.levels < 0) {
+                return new Responses.StackTraceResponseBody(result, 0);
+            }
+            ThreadReference thread = getThread(arguments.threadId);
+            int totalFrames = 0;
+            if (thread != null) {
+                totalFrames = thread.frameCount();
+                if (totalFrames <= arguments.startFrame) {
+                    return new Responses.StackTraceResponseBody(result, totalFrames);
+                }
+                try {
+                    List<StackFrame> stackFrames = arguments.levels == 0
+                            ? thread.frames(arguments.startFrame, totalFrames - arguments.startFrame)
+                            : thread.frames(arguments.startFrame,
+                            Math.min(totalFrames - arguments.startFrame, arguments.levels));
+                    for (int i = 0; i < arguments.levels; i++) {
+                        StackFrame stackFrame = stackFrames.get(arguments.startFrame + i);
+                        int frameId = this.objectPool.addObject(stackFrame.thread(), stackFrame);
+                        Types.StackFrame clientStackFrame = convertDebuggerStackFrameToClient(stackFrame, frameId);
+                        result.add(clientStackFrame);
+                    }
+                } catch (IndexOutOfBoundsException ex) {
+                    // ignore if stack frames overflow
+                    return new Responses.StackTraceResponseBody(result, totalFrames);
+                }
+            }
+            return new Responses.StackTraceResponseBody(result, totalFrames);
+        }
+
+        Responses.ResponseBody scopes(Requests.ScopesArguments arguments) {
+            List<Types.Scope> scopes = new ArrayList<>();
+            StackFrame stackFrame = (StackFrame) this.objectPool.getObjectById(arguments.frameId);
+            if (stackFrame == null) {
+                return new Responses.ScopesResponseBody(scopes);
+            }
+            StackFrameScope localScope = new StackFrameScope(stackFrame, "Local");
+            scopes.add(new Types.Scope(
+                    localScope.getScope(), this.objectPool.addObject(stackFrame.thread(), localScope), false));
+
+            return new Responses.ScopesResponseBody(scopes);
+        }
+
+
+        Responses.ResponseBody variables(Requests.VariablesArguments arguments) throws AbsentInformationException {
+            Map<String, Object> options = new HashMap<>();
+            // TODO: when vscode protocol support customize settings of value format, showQualified should be one of the options.
+            boolean showStaticVariables = true;
+            boolean showQualified = true;
+            if (arguments.format != null && arguments.format.hex) {
+                options.put(NumericFormatter.NUMERIC_FORMAT_OPTION, NumericFormatEnum.HEX);
+            }
+            if (showQualified) {
+                options.put(SimpleTypeFormatter.QUALIFIED_CLASS_NAME_OPTION, showQualified);
+            }
+            
+            List<Types.Variable> list = new ArrayList<>();
+            List<Variable> variables;
+            Object obj = this.objectPool.getObjectById(arguments.variablesReference);
+            ThreadReference thread;
+            if (obj instanceof StackFrameScope) {
+                StackFrame frame = ((StackFrameScope) obj).getStackFrame();
+                thread = frame.thread();
+                variables = VariableUtils.listLocalVariables(frame);
+                Variable thisVariable = VariableUtils.getThisVariable(frame);
+                if (thisVariable != null) {
+                    variables.add(thisVariable);
+                }
+                if (showStaticVariables && frame.location().method().isStatic()) {
+                    variables.addAll(VariableUtils.listStaticVariables(frame));
+                }
+            } else if (obj instanceof ThreadObjectReference) {
+                ObjectReference currentObj = ((ThreadObjectReference) obj).getObject();
+                thread = ((ThreadObjectReference) obj).getThread();
+
+                if (arguments.count > 0) {
+                    variables = VariableUtils.listFieldVariables(currentObj, arguments.start, arguments.count);
+                } else {
+                    variables = VariableUtils.listFieldVariables(currentObj, showStaticVariables);
+                }
+
+            } else {
+                throw new IllegalArgumentException(String
+                        .format("VariablesRequest: Invalid variablesReference %d.", arguments.variablesReference));
+            }
+            // find variable name duplicates
+            Set<String> duplicateNames = getDuplicateNames(variables.stream().map(var -> var.name)
+                    .collect(Collectors.toList()));
+            Map<Variable, String> variableNameMap = new HashMap<>();
+            if (!duplicateNames.isEmpty()) {
+                Map<String, List<Variable>> duplicateVars =
+                        variables.stream()
+                                .filter(var -> duplicateNames.contains(var.name))
+                                .collect(Collectors.groupingBy(var -> var.name, Collectors.toList()));
+
+                duplicateVars.forEach((k, duplicateVariables) -> {
+                    Set<String> declarationTypeNames = new HashSet<>();
+                    boolean declarationTypeNameConflict = false;
+                    // try use type formatter to resolve name conflict
+                    for (Variable javaVariable : duplicateVariables) {
+                        Type declarationType = javaVariable.getDeclaringType();
+                        if (declarationType != null) {
+                            String declarationTypeName = this.variableFormatter.typeToString(declarationType, options);
+                            String compositeName = String.format("%s (%s)", javaVariable.name, declarationTypeName);
+                            if (!declarationTypeNames.add(compositeName)) {
+                                declarationTypeNameConflict = true;
+                                break;
+                            }
+                            variableNameMap.put(javaVariable, compositeName);
+                        }
+                    }
+                    // if there are duplicate names on declaration types, use fully qualified name
+                    if (declarationTypeNameConflict) {
+                        for (Variable javaVariable : duplicateVariables) {
+                            Type declarationType = javaVariable.getDeclaringType();
+                            if (declarationType != null) {
+                                variableNameMap.put(javaVariable, String.format("%s (%s)", javaVariable.name, declarationType.name()));
+                            }
+                        }
+                    }
+                });
+            }
+            for (Variable javaVariable : variables) {
+                Value value = javaVariable.value;
+                String name = javaVariable.name;
+                if (variableNameMap.containsKey(javaVariable)) {
+                    name = variableNameMap.get(javaVariable);
+                }
+                int referenceId = 0;
+                if (value instanceof ObjectReference && VariableUtils.hasChildren(value, showStaticVariables)) {
+                    ThreadObjectReference threadObjectReference = new ThreadObjectReference(thread, (ObjectReference) value);
+                    referenceId = this.objectPool.addObject(thread, threadObjectReference);
+                }
+                Types.Variable typedVariables = new Types.Variable(name, variableFormatter.valueToString(value, options),
+                        variableFormatter.typeToString(value == null ? null : value.type(), options), referenceId, null);
+                if (javaVariable.value instanceof ArrayReference) {
+                    typedVariables.indexedVariables = ((ArrayReference) javaVariable.value).length();
+                }
+                list.add(typedVariables);
+            }
+            return new Responses.VariablesResponseBody(list);
+        }
+
+        private Set<String> getDuplicateNames(Collection<String> list) {
+            Set<String> result = new HashSet<>();
+            Set<String> set = new HashSet<>();
+
+            for (String item : list) {
+                if (!set.contains(item)) {
+                    set.add(item);
+                } else {
+                    result.add(item);
+                }
+            }
+            return result;
+        }
     }
 }
