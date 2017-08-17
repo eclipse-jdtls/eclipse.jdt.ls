@@ -45,7 +45,15 @@ public class Requests {
     }
 
     public static class AttachArguments extends Arguments {
-
+        public String type;
+        public String name;
+        public String request;
+        public String cwd;
+        public String hostName;
+        public int port;
+        public int attachTimeout;
+        public String[] sourcePath = new String[0];
+        public String projectName;
     }
 
     public static class RestartArguments extends Arguments {

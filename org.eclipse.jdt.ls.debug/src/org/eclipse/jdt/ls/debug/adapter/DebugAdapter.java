@@ -60,7 +60,8 @@ public class DebugAdapter implements IDebugAdapter {
     private boolean clientLinesStartAt1 = true;
     private boolean clientPathsAreUri = false;
 
-    private Requests.LaunchArguments launchArguments;
+    private boolean isAttached = false;
+
     private String cwd;
     private String[] sourcePath;
     private IDebugSession debugSession;
@@ -99,10 +100,6 @@ public class DebugAdapter implements IDebugAdapter {
 
                 case "attach":
                     responseBody = attach(JsonUtils.fromJson(arguments, Requests.AttachArguments.class));
-                    break;
-
-                case "restart":
-                    responseBody = restart(JsonUtils.fromJson(arguments, Requests.RestartArguments.class));
                     break;
 
                 case "disconnect":
@@ -254,17 +251,17 @@ public class DebugAdapter implements IDebugAdapter {
         Types.Capabilities caps = new Types.Capabilities();
         caps.supportsConfigurationDoneRequest = true;
         caps.supportsHitConditionalBreakpoints = true;
-        caps.supportsRestartRequest = true;
         caps.supportTerminateDebuggee = true;
         return new Responses.InitializeResponseBody(caps);
     }
 
     private Responses.ResponseBody launch(Requests.LaunchArguments arguments) {
-        // Need cache the launch json because VSCode doesn't resend the launch json at the RestartRequest.
-        this.launchArguments = arguments;
         try {
+            this.isAttached = false;
             this.launchDebugSession(arguments);
         } catch (DebugException e) {
+            // When launching failed, send a TerminatedEvent to tell DA the debugger would exit.
+            this.sendEventLater(new Events.TerminatedEvent());
             return new Responses.ErrorResponseBody(
                     this.convertDebuggerMessageToClient("Cannot launch debuggee vm: " + e.getMessage()));
         }
@@ -272,24 +269,15 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private Responses.ResponseBody attach(Requests.AttachArguments arguments) {
-        return new Responses.ResponseBody();
-    }
-
-    private Responses.ResponseBody restart(Requests.RestartArguments arguments) {
-        // Shutdown the old debug session.
-        this.shutdownDebugSession(true);
-        // Launch new debug session.
         try {
-            this.launchDebugSession(this.launchArguments);
+            this.isAttached = true;
+            this.attachDebugSession(arguments);
         } catch (DebugException e) {
+            // When attaching failed, send a TerminatedEvent to tell DA the debugger would exit.
+            this.sendEventLater(new Events.TerminatedEvent());
             return new Responses.ErrorResponseBody(
-                    this.convertDebuggerMessageToClient("Cannot restart debuggee vm: " + e.getMessage()));
+                    this.convertDebuggerMessageToClient(e.getMessage()));
         }
-        // See VSCode bug 28175 (https://github.com/Microsoft/vscode/issues/28175).
-        // Need send a ContinuedEvent to clean up the old debugger's call stacks.
-        this.sendEventLater(new Events.ContinuedEvent(true));
-        // Send an InitializedEvent to ask VSCode to restore the existing breakpoints.
-        this.sendEventLater(new Events.InitializedEvent());
         return new Responses.ResponseBody();
     }
 
@@ -297,7 +285,7 @@ public class DebugAdapter implements IDebugAdapter {
      * VS Code terminates a debug session with the disconnect request.
      */
     private Responses.ResponseBody disconnect(Requests.DisconnectArguments arguments) {
-        this.shutdownDebugSession(arguments.terminateDebuggee);
+        this.shutdownDebugSession(arguments.terminateDebuggee && !this.isAttached);
         return new Responses.ResponseBody();
     }
 
@@ -587,16 +575,30 @@ public class DebugAdapter implements IDebugAdapter {
         }
     }
 
+    private void attachDebugSession(Requests.AttachArguments arguments) throws DebugException {
+        this.cwd = arguments.cwd;
+        if (arguments.sourcePath == null || arguments.sourcePath.length == 0) {
+            this.sourcePath = new String[] { cwd };
+        } else {
+            this.sourcePath = new String[arguments.sourcePath.length];
+            System.arraycopy(arguments.sourcePath, 0, this.sourcePath, 0, arguments.sourcePath.length);
+        }
+
+        try {
+            this.debugSession = DebugUtility.attach(context.getVirtualMachineManagerProvider().getVirtualMachineManager(),
+                    arguments.hostName, arguments.port, arguments.attachTimeout);
+        } catch (IOException | IllegalConnectorArgumentsException e) {
+            Logger.logException("Failed to attach to remote debuggee vm. Reason: " + e.getMessage(), e);
+            throw new DebugException("Failed to attach to remote debuggee vm. Reason: " + e.getMessage(), e);
+        }
+    }
+
     private void shutdownDebugSession(boolean terminateDebuggee) {
-        // Unsubscribe event handler.
-        this.eventSubscriptions.forEach(subscription -> {
-            subscription.dispose();
-        });
         this.eventSubscriptions.clear();
         this.breakpointManager.reset();
         this.frameCollection.reset();
         this.sourceCollection.reset();
-        if (this.debugSession.process().isAlive()) {
+        if (this.debugSession != null) {
             if (terminateDebuggee) {
                 this.debugSession.terminate();
             } else {

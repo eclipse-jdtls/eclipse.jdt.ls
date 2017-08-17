@@ -22,6 +22,7 @@ import org.eclipse.jdt.ls.debug.internal.DebugSession;
 import com.sun.jdi.Location;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachineManager;
+import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector.Argument;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
@@ -67,8 +68,31 @@ public class DebugUtility {
         return new DebugSession(connector.launch(arguments));
     }
 
-    public static IDebugSession attach(/* TODO: arguments? */) {
-        throw new UnsupportedOperationException();
+    /**
+     * Attach to an existing debuggee VM.
+     * @param vmManager
+     *               the virtual machine manager
+     * @param hostName
+     *               the machine where the debuggee VM is launched on
+     * @param port
+     *               the debug port that the debuggee VM exposed
+     * @param attachTimeout
+     *               the timeout when attaching to the debuggee VM
+     * @return an instance of IDebugSession
+     * @throws IOException
+     *               when unable to attach.
+     * @throws IllegalConnectorArgumentsException
+     *               when one of the connector arguments is invalid.
+     */
+    public static IDebugSession attach(VirtualMachineManager vmManager, String hostName, int port, int attachTimeout)
+            throws IOException, IllegalConnectorArgumentsException {
+        List<AttachingConnector> connectors = vmManager.attachingConnectors();
+        AttachingConnector connector = connectors.get(0);
+        Map<String, Argument> arguments = connector.defaultArguments();
+        arguments.get("hostname").setValue(hostName);
+        arguments.get("port").setValue(String.valueOf(port));
+        arguments.get("timeout").setValue(String.valueOf(attachTimeout));
+        return new DebugSession(connector.attach(arguments));
     }
 
     /**
