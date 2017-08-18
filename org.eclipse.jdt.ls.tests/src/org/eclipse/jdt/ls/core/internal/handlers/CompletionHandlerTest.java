@@ -190,6 +190,64 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_import_static() throws JavaModelException{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import static java.util.concurrent.TimeUnit. \n" +
+						"public class Foo {\n"+
+						"	void foo() {\n"+
+						"	}\n"+
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "java.util.concurrent.TimeUnit.");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		assertEquals(9, list.getItems().size());
+
+		//// .SECONDS - enum value
+		CompletionItem secondsFieldItem = list.getItems().get(0);
+		// Check completion item
+		assertEquals("SECONDS", secondsFieldItem.getInsertText());
+		assertEquals("SECONDS : TimeUnit", secondsFieldItem.getLabel());
+		assertEquals(CompletionItemKind.Field, secondsFieldItem.getKind());
+		assertEquals("999999210", secondsFieldItem.getSortText());
+		assertNull(secondsFieldItem.getTextEdit());
+
+		assertNotNull(server.resolveCompletionItem(secondsFieldItem).join());
+		TextEdit teSeconds = secondsFieldItem.getTextEdit();
+		assertNotNull(teSeconds);
+		assertEquals("SECONDS;", teSeconds.getNewText());
+		assertNotNull(teSeconds.getRange());
+		Range secondsRange = teSeconds.getRange();
+		assertEquals(0, secondsRange.getStart().getLine());
+		assertEquals(44, secondsRange.getStart().getCharacter());
+		assertEquals(0, secondsRange.getEnd().getLine());
+
+		//// .values() - static method
+		CompletionItem valuesMethodItem = list.getItems().get(7);
+		// Check completion item
+		assertEquals("values", valuesMethodItem.getInsertText());
+		assertEquals("values() : TimeUnit[]", valuesMethodItem.getLabel());
+		assertEquals(CompletionItemKind.Module, valuesMethodItem.getKind());
+		assertEquals("999999211", valuesMethodItem.getSortText());
+		assertNull(valuesMethodItem.getTextEdit());
+
+
+		assertNotNull(server.resolveCompletionItem(valuesMethodItem).join());
+		TextEdit teValues = valuesMethodItem.getTextEdit();
+		assertNotNull(teValues);
+		assertEquals("values;", teValues.getNewText());
+		assertNotNull(teValues.getRange());
+		Range valuesRange = teValues.getRange();
+		assertEquals(0, valuesRange.getStart().getLine());
+		assertEquals(44, valuesRange.getStart().getCharacter());
+		assertEquals(0, valuesRange.getEnd().getLine());
+
+	}
+
+	@Test
 	public void testCompletion_method_withLSPV2() throws JavaModelException{
 		mockLSP2Client();
 

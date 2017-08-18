@@ -63,6 +63,7 @@ public class CompletionProposalDescriptionProvider {
 		int kind = proposal.getKind();
 		switch (kind) {
 			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
