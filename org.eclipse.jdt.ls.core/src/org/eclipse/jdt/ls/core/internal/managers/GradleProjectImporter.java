@@ -85,6 +85,14 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		GradleDistribution distribution = DEFAULT_DISTRIBUTION;
 		if (Files.exists(rootFolder.resolve("gradlew"))) {
 			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
+		} else {
+			String gradleHome = System.getenv("GRADLE_HOME");
+			if (gradleHome != null) {
+				File gradleHomeFile = new File(gradleHome);
+				if (gradleHomeFile.isDirectory()) {
+					distribution = GradleDistribution.forLocalInstallation(gradleHomeFile);
+				}
+			}
 		}
 		startSynchronization(rootFolder.toFile(), distribution, NewProjectHandler.IMPORT_AND_MERGE);
 	}
