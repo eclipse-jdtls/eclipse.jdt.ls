@@ -61,14 +61,12 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	public StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
 		int kind = proposal.getKind();
+		StringBuilder description = new StringBuilder();
 		switch (kind) {
 			case CompletionProposal.METHOD_REF:
 			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
-			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				StringBuilder description = new StringBuilder();
 
 				// method name
 				description.append(proposal.getName());
@@ -85,10 +83,8 @@ public class CompletionProposalDescriptionProvider {
 					description.append(RETURN_TYPE_SEPARATOR);
 					description.append(returnType);
 				}
-				return description;
-			default:
-				return null; // dummy
 		}
+		return description; // dummy
 	}
 
 	/**
