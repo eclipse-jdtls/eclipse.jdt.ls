@@ -59,7 +59,7 @@ public class VariableFormatter implements IVariableFormatter {
         IFormatter formatter = getFormatter(this.typeFormatterMap, type, options);
         return formatter.toString(type, options);
     }
-    
+
     /**
      * Get the default options for all formatters registered.
      * @return The default options.
@@ -77,7 +77,7 @@ public class VariableFormatter implements IVariableFormatter {
         return defaultOptions;
     }
 
-    
+
     /**
      * Get display text of the value.
      *
@@ -90,6 +90,12 @@ public class VariableFormatter implements IVariableFormatter {
         Type type = value == null ? null : value.type();
         IFormatter formatter = getFormatter(this.valueFormatterMap, type, options);
         return formatter.toString(value, options);
+    }
+
+    @Override
+    public Value stringToValue(String stringValue, Type type, Map<String, Object> options) {
+        IValueFormatter formatter = (IValueFormatter)getFormatter(this.valueFormatterMap, type, options);
+        return formatter.valueOf(stringValue, type, options);
     }
 
     public void registerValueFormatter(IValueFormatter formatter, int priority) {

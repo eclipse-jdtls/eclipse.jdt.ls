@@ -53,6 +53,15 @@ public interface IVariableFormatter {
     String valueToString(Value value, Map<String, Object> options);
 
     /**
+     * Get the JDI value of a String.
+     *
+     * @param stringValue  the text of the value need to be converted.
+     * @param options additional information about expected format
+     * @return the jdi value
+     */
+    Value stringToValue(String stringValue, Type type, Map<String, Object> options);
+
+    /**
      * Get display name of type.
      *
      * @param type    the JDI type

@@ -60,7 +60,9 @@ public class DebugSession implements IDebugSession {
 
     @Override
     public void terminate() {
-        vm.exit(0);
+        if (vm.process().isAlive()) {
+            vm.exit(0);
+        }
     }
 
     @Override

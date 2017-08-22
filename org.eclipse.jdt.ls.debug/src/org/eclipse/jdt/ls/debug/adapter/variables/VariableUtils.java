@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.sun.jdi.InternalException;
 import org.eclipse.jdt.ls.debug.internal.Logger;
 
 import com.sun.jdi.AbsentInformationException;
@@ -142,10 +143,20 @@ public abstract class VariableUtils {
             }
         } catch (AbsentInformationException ex) {
             int argId = 0;
-            for (Value argValue : stackFrame.getArgumentValues()) {
-                Variable var = new Variable("arg" + argId, argValue);
-                var.argumentIndex = argId++;
-                res.add(var);
+            try {
+                for (Value argValue : stackFrame.getArgumentValues()) {
+                    Variable var = new Variable("arg" + argId, argValue);
+                    var.argumentIndex = argId++;
+                    res.add(var);
+                }
+            } catch (InternalException ex2) {
+                // From Oracle's forums:
+                // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was
+                // detected at the lower JPDA levels,
+                // typically a native frame.
+                if (ex2.errorCode() != 32) {
+                    throw ex;
+                }
             }
         }
         return res;
