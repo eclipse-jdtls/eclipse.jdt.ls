@@ -10,7 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
+
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
 
 /**
  * A wrapper around {@link ClientCapabilities}
@@ -36,7 +39,11 @@ public class ClientPreferences {
 	}
 
 	public boolean isCompletionSnippetsSupported() {
-		return v3supported && capabilities.getTextDocument().getCompletion().getCompletionItem().getSnippetSupport();
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getCompletion() != null
+				&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+				&& isTrue(capabilities.getTextDocument().getCompletion().getCompletionItem().getSnippetSupport());
+		//@formatter:on
 	}
 
 	public boolean isV3Supported() {
@@ -44,18 +51,22 @@ public class ClientPreferences {
 	}
 
 	public boolean isFormattingDynamicRegistrationSupported() {
-		return v3supported && capabilities.getTextDocument().getFormatting().getDynamicRegistration();
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getFormatting());
 	}
 
 	public boolean isRangeFormattingDynamicRegistrationSupported() {
-		return v3supported && capabilities.getTextDocument().getRangeFormatting().getDynamicRegistration();
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getRangeFormatting());
 	}
 
 	public boolean isCodeLensDynamicRegistrationSupported() {
-		return v3supported && capabilities.getTextDocument().getCodeLens().getDynamicRegistration();
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCodeLens());
 	}
 
 	public boolean isSignatureHelpDynamicRegistrationSupported() {
-		return v3supported && capabilities.getTextDocument().getSignatureHelp().getDynamicRegistration();
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getSignatureHelp());
+	}
+
+	private boolean isDynamicRegistrationSupported(DynamicRegistrationCapabilities capability) {
+		return capability != null && isTrue(capability.getDynamicRegistration());
 	}
 }
