@@ -191,21 +191,23 @@ public class Types {
     }
 
     public static class ExceptionBreakpointFilter {
-        public static final String Filter_All = "all";
-        public static final String Filter_UserUnhandled = "user-unhandled";
+        public static final String UNCAUGHT_EXCEPTION_FILTER_NAME = "uncaught";
+        public static final String CAUGHT_EXCEPTION_FILTER_NAME = "caught";
+        public static final String UNCAUGHT_EXCEPTION_FILTER_LABEL = "Uncaught Exceptions";
+        public static final String CAUGHT_EXCEPTION_FILTER_LABEL = "Caught Exceptions";
 
         public String label;
         public String filter;
-
-        /**
-         * Constructor.
-         */
-        public void setFilter(String value) {
-            if (!Filter_All.equals(value) && !Filter_UserUnhandled.equals(value)) {
-                return;
-            }
+        
+        public ExceptionBreakpointFilter(String value, String label) {
             this.filter = value;
+            this.label = label;
         }
+
+        public static final ExceptionBreakpointFilter UNCAUGHT_EXCEPTION_FILTER =
+                new ExceptionBreakpointFilter(UNCAUGHT_EXCEPTION_FILTER_NAME, UNCAUGHT_EXCEPTION_FILTER_LABEL);
+        public static final ExceptionBreakpointFilter CAUGHT_EXCEPTION_FILTER =
+                new ExceptionBreakpointFilter(CAUGHT_EXCEPTION_FILTER_NAME, CAUGHT_EXCEPTION_FILTER_LABEL);
     }
 
     public static class Capabilities {
@@ -216,5 +218,6 @@ public class Types {
         public boolean supportsRestartRequest;
         public boolean supportTerminateDebuggee;
         public boolean supportsDelayedStackTraceLoading;
+        public ExceptionBreakpointFilter[] exceptionBreakpointFilters = new ExceptionBreakpointFilter[0];
     }
 }

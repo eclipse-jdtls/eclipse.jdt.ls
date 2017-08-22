@@ -11,6 +11,45 @@
 
 package org.eclipse.jdt.ls.debug.adapter;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jdt.ls.debug.DebugEvent;
+import org.eclipse.jdt.ls.debug.DebugException;
+import org.eclipse.jdt.ls.debug.DebugUtility;
+import org.eclipse.jdt.ls.debug.IBreakpoint;
+import org.eclipse.jdt.ls.debug.IDebugSession;
+import org.eclipse.jdt.ls.debug.adapter.Requests.StackTraceArguments;
+import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatEnum;
+import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatter;
+import org.eclipse.jdt.ls.debug.adapter.formatter.SimpleTypeFormatter;
+import org.eclipse.jdt.ls.debug.adapter.variables.IVariableFormatter;
+import org.eclipse.jdt.ls.debug.adapter.variables.JdiObjectProxy;
+import org.eclipse.jdt.ls.debug.adapter.variables.StackFrameScope;
+import org.eclipse.jdt.ls.debug.adapter.variables.ThreadObjectReference;
+import org.eclipse.jdt.ls.debug.adapter.variables.Variable;
+import org.eclipse.jdt.ls.debug.adapter.variables.VariableFormatterFactory;
+import org.eclipse.jdt.ls.debug.adapter.variables.VariableUtils;
+import org.eclipse.jdt.ls.debug.internal.Logger;
+
 import com.google.gson.JsonObject;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ArrayReference;
@@ -35,51 +74,15 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.event.ExceptionEvent;
 import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.event.ThreadDeathEvent;
 import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.event.VMStartEvent;
-import io.reactivex.disposables.Disposable;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jdt.ls.debug.DebugEvent;
-import org.eclipse.jdt.ls.debug.DebugException;
-import org.eclipse.jdt.ls.debug.DebugUtility;
-import org.eclipse.jdt.ls.debug.IBreakpoint;
-import org.eclipse.jdt.ls.debug.IDebugSession;
-import org.eclipse.jdt.ls.debug.adapter.Requests.StackTraceArguments;
-import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatEnum;
-import org.eclipse.jdt.ls.debug.adapter.formatter.NumericFormatter;
-import org.eclipse.jdt.ls.debug.adapter.formatter.SimpleTypeFormatter;
-import org.eclipse.jdt.ls.debug.adapter.variables.IVariableFormatter;
-import org.eclipse.jdt.ls.debug.adapter.variables.JdiObjectProxy;
-import org.eclipse.jdt.ls.debug.adapter.variables.StackFrameScope;
-import org.eclipse.jdt.ls.debug.adapter.variables.ThreadObjectReference;
-import org.eclipse.jdt.ls.debug.adapter.variables.Variable;
-import org.eclipse.jdt.ls.debug.adapter.variables.VariableFormatterFactory;
-import org.eclipse.jdt.ls.debug.adapter.variables.VariableUtils;
-import org.eclipse.jdt.ls.debug.internal.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
+import io.reactivex.disposables.Disposable;
 
 public class DebugAdapter implements IDebugAdapter {
     private BiConsumer<Events.DebugEvent, Boolean> eventConsumer;
@@ -281,6 +284,11 @@ public class DebugAdapter implements IDebugAdapter {
         caps.supportsConfigurationDoneRequest = true;
         caps.supportsHitConditionalBreakpoints = true;
         caps.supportTerminateDebuggee = true;
+        Types.ExceptionBreakpointFilter[] exceptionFilters = {
+                Types.ExceptionBreakpointFilter.UNCAUGHT_EXCEPTION_FILTER,
+                Types.ExceptionBreakpointFilter.CAUGHT_EXCEPTION_FILTER,
+        };
+        caps.exceptionBreakpointFilters = exceptionFilters;
         return new Responses.InitializeResponseBody(caps);
     }
 
@@ -384,6 +392,17 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private Responses.ResponseBody setExceptionBreakpoints(Requests.SetExceptionBreakpointsArguments arguments) {
+        String[] filters = arguments.filters;
+        try {
+            boolean notifyCaught = ArrayUtils.contains(filters, Types.ExceptionBreakpointFilter.CAUGHT_EXCEPTION_FILTER_NAME);
+            boolean notifyUncaught = ArrayUtils.contains(filters, Types.ExceptionBreakpointFilter.UNCAUGHT_EXCEPTION_FILTER_NAME);
+
+            this.debugSession.setExceptionBreakpoints(notifyCaught, notifyUncaught);
+        } catch (Exception ex) {
+            return new Responses.ErrorResponseBody(this.convertDebuggerMessageToClient(
+                    String.format("Failed to setExceptionBreakpoints. Reason: '%s'", ex.getMessage())));
+        }
+        
         return new Responses.ResponseBody();
     }
 
@@ -520,6 +539,10 @@ public class DebugAdapter implements IDebugAdapter {
         } else if (event instanceof StepEvent) {
             ThreadReference stepThread = ((StepEvent) event).thread();
             this.sendEventLater(new Events.StoppedEvent("step", stepThread.uniqueID()));
+            debugEvent.shouldResume = false;
+        } else if (event instanceof ExceptionEvent) {
+            ThreadReference thread = ((ExceptionEvent) event).thread();
+            this.sendEventLater(new Events.StoppedEvent("exception", thread.uniqueID()));
             debugEvent.shouldResume = false;
         }
     }
