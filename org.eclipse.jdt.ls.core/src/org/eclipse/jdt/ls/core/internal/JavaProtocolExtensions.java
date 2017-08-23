@@ -35,4 +35,14 @@ public interface JavaProtocolExtensions {
 	 */
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
+
+	/**
+	 * Request to load/unload a 3rd-party bundles.
+	 *
+	 * @param param
+	 *            the parameters passed to operation.
+	 * @return the result of bundle operation
+	 */
+	@JsonRequest
+	CompletableFuture<Object> bundle(BundleRequestParams param);
 }

@@ -85,6 +85,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null? null: pluginInstance.languageServer;
 	}
+
+	public static BundleContext getBundleContext() {
+		return JavaLanguageServerPlugin.context;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
