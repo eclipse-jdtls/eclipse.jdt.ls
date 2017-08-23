@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +34,10 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -128,13 +132,20 @@ public abstract class AbstractProjectsManagerBasedTest {
 		return JavaCore.create(testProject);
 	}
 
+	protected IFile linkFilesToDefaultProject(String path) throws Exception {
+		IProject testProject = projectsManager.getDefaultProject();
+		String fullpath = copyFiles(path).getAbsolutePath();
+		String fileName = fullpath.substring(fullpath.lastIndexOf("\\") + 1);
+		IPath filePath = new Path("src").append(fileName);
+		final IFile file = testProject.getFile(filePath);
+		URI uri = Paths.get(fullpath).toUri();
+		file.createLink(uri, IResource.REPLACE, new NullProgressMonitor());
+		waitForBackgroundJobs();
+		return file;
+	}
+
 	protected List<IProject> importProjects(String path) throws Exception {
-		File from = new File(getSourceProjectDirectory(), path);
-		File to = new File(getWorkingProjectDirectory(), path);
-		if (to.exists()) {
-			FileUtils.forceDelete(to);
-		}
-		FileUtils.copyDirectory(from, to);
+		File to = copyFiles(path);
 		projectsManager.initializeProjects(to.getAbsolutePath(), monitor);
 		waitForBackgroundJobs();
 		return WorkspaceHelper.getAllProjects();
@@ -183,6 +194,22 @@ public abstract class AbstractProjectsManagerBasedTest {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private File copyFiles(String path) throws IOException {
+		File from = new File(getSourceProjectDirectory(), path);
+		File to = new File(getWorkingProjectDirectory(), path);
+		if (to.exists()) {
+			FileUtils.forceDelete(to);
+		}
+
+		if (from.isDirectory()) {
+			FileUtils.copyDirectory(from, to);
+		} else {
+			FileUtils.copyFile(from, to);
+		}
+
+		return to;
 	}
 
 }

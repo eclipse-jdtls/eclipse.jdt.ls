@@ -13,37 +13,29 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceResult;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 
 /**
  * @author xuzho
  *
  */
 public class BuildWorkspaceHandler {
-	private SharedASTProvider sharedASTProvider;
-
-	public BuildWorkspaceHandler() {
-		this.sharedASTProvider = SharedASTProvider.getInstance();
-	}
 
 	public BuildWorkspaceResult buildWorkspace(IProgressMonitor monitor) {
 		try {
 			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
-			List<IProblem> errors = getBuildErrors(monitor);
+			List<IMarker> errors = getBuildErrors(monitor);
 			if (errors.isEmpty()) {
 				return new BuildWorkspaceResult(BuildWorkspaceStatus.SUCCEED);
 			} else {
@@ -57,17 +49,11 @@ public class BuildWorkspaceHandler {
 		}
 	}
 
-	private List<IProblem> getBuildErrors(IProgressMonitor monitor) {
-		this.sharedASTProvider.invalidateAll();
-		List<IProblem> errors = new ArrayList<>();
-		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
-		List<CompilationUnit> astRoots = this.sharedASTProvider.getASTs(toValidate, monitor);
-		for (CompilationUnit astRoot : astRoots) {
-			for (IProblem problem : astRoot.getProblems()) {
-				if (problem.isError()) {
-					errors.add(problem);
-				}
-			}
+	private List<IMarker> getBuildErrors(IProgressMonitor monitor) throws CoreException {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		List<IMarker> errors = new ArrayList<>();
+		for (IProject project : projects) {
+			errors.addAll(ResourceUtils.getErrorMarkers(project));
 		}
 		return errors;
 	}
