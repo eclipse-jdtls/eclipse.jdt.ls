@@ -142,9 +142,20 @@ public abstract class VariableUtils {
                 res.add(var);
             }
         } catch (AbsentInformationException ex) {
+            // 1. in oracle implementations, when there is no debug information, the AbsentInformationException will be
+            // thrown, then we need to retrieve arguments from stackFrame#getArgumentValues.
+            // 2. in eclipse jdt implementations, when there is no debug information, stackFrame#visibleVariables will
+            // return some generated variables like arg0, arg1, and the stackFrame#getArgumentValues will return null
+
+            // for both scenarios, we need to handle the possible null returned by stackFrame#getArgumentValues and
+            // we need to call stackFrame.getArgumentValues get the arguments if AbsentInformationException is thrown
             int argId = 0;
             try {
-                for (Value argValue : stackFrame.getArgumentValues()) {
+                List<Value> arguments = stackFrame.getArgumentValues();
+                if (arguments == null) {
+                    return res;
+                }
+                for (Value argValue : arguments) {
                     Variable var = new Variable("arg" + argId, argValue);
                     var.argumentIndex = argId++;
                     res.add(var);
