@@ -11,24 +11,39 @@
 
 package org.eclipse.jdt.ls.debug.adapter;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
-
+import com.google.gson.JsonObject;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.LocalVariable;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.StackFrame;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.TypeComponent;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
+import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import com.sun.jdi.connect.VMStartException;
+import com.sun.jdi.event.BreakpointEvent;
+import com.sun.jdi.event.Event;
+import com.sun.jdi.event.ExceptionEvent;
+import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.event.ThreadDeathEvent;
+import com.sun.jdi.event.ThreadStartEvent;
+import com.sun.jdi.event.VMDeathEvent;
+import com.sun.jdi.event.VMDisconnectEvent;
+import com.sun.jdi.event.VMStartEvent;
+import io.reactivex.disposables.Disposable;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,39 +65,24 @@ import org.eclipse.jdt.ls.debug.adapter.variables.VariableFormatterFactory;
 import org.eclipse.jdt.ls.debug.adapter.variables.VariableUtils;
 import org.eclipse.jdt.ls.debug.internal.Logger;
 
-import com.google.gson.JsonObject;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ArrayType;
-import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Field;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.InvalidTypeException;
-import com.sun.jdi.LocalVariable;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.StackFrame;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Type;
-import com.sun.jdi.TypeComponent;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.Value;
-import com.sun.jdi.connect.IllegalConnectorArgumentsException;
-import com.sun.jdi.connect.VMStartException;
-import com.sun.jdi.event.BreakpointEvent;
-import com.sun.jdi.event.Event;
-import com.sun.jdi.event.ExceptionEvent;
-import com.sun.jdi.event.StepEvent;
-import com.sun.jdi.event.ThreadDeathEvent;
-import com.sun.jdi.event.ThreadStartEvent;
-import com.sun.jdi.event.VMDeathEvent;
-import com.sun.jdi.event.VMDisconnectEvent;
-import com.sun.jdi.event.VMStartEvent;
-
-import io.reactivex.disposables.Disposable;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DebugAdapter implements IDebugAdapter {
     private BiConsumer<Events.DebugEvent, Boolean> eventConsumer;
@@ -402,7 +402,7 @@ public class DebugAdapter implements IDebugAdapter {
             return new Responses.ErrorResponseBody(this.convertDebuggerMessageToClient(
                     String.format("Failed to setExceptionBreakpoints. Reason: '%s'", ex.getMessage())));
         }
-        
+
         return new Responses.ResponseBody();
     }
 
@@ -502,7 +502,13 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private Responses.ResponseBody evaluate(Requests.EvaluateArguments arguments) {
-        return new Responses.ResponseBody();
+        try {
+            return this.variableRequestHandler.evaluate(arguments);
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            return new Responses.ErrorResponseBody(this.convertDebuggerMessageToClient(
+                    String.format("Failed to evaluate expression %s . Reason: '%s'",
+                            arguments.expression, ex.getMessage())));
+        }
     }
 
     /* ======================================================*/
@@ -838,6 +844,7 @@ public class DebugAdapter implements IDebugAdapter {
 
     private class VariableRequestHandler {
         private static final String PATTERN = "([a-zA-Z_0-9$]+)\\s*\\(([^)]+)\\)";
+        private final Pattern simpleExprPattern = Pattern.compile("[A-Za-z0-9_.\\s]+");
         private IVariableFormatter variableFormatter;
         private RecyclableObjectPool<Long, Object> objectPool;
 
@@ -904,8 +911,10 @@ public class DebugAdapter implements IDebugAdapter {
 
         Responses.ResponseBody variables(Requests.VariablesArguments arguments) throws AbsentInformationException {
             Map<String, Object> options = variableFormatter.getDefaultOptions();
-            // TODO: when vscode protocol support customize settings of value format, showFullyQualifiedNames should be one of the options.
+            // This should be false by default(currently true for test).
+            // User will need to explicitly turn it on by configuring launch.json
             boolean showStaticVariables = true;
+            // TODO: when vscode protocol support customize settings of value format, showFullyQualifiedNames should be one of the options.
             boolean showFullyQualifiedNames = true;
             if (arguments.format != null && arguments.format.hex) {
                 options.put(NumericFormatter.NUMERIC_FORMAT_OPTION, NumericFormatEnum.HEX);
@@ -1003,8 +1012,10 @@ public class DebugAdapter implements IDebugAdapter {
 
         Responses.ResponseBody setVariable(Requests.SetVariableArguments arguments) {
             Map<String, Object> options = variableFormatter.getDefaultOptions();
-            // TODO: when vscode protocol support customize settings of value format, showFullyQualifiedNames should be one of the options.
+            // This should be false by default(currently true for test).
+            // User will need to explicitly turn it on by configuring launch.json
             boolean showStaticVariables = true;
+            // TODO: when vscode protocol support customize settings of value format, showFullyQualifiedNames should be one of the options.
             boolean showFullyQualifiedNames = true;
             if (arguments.format != null && arguments.format.hex) {
                 options.put(NumericFormatter.NUMERIC_FORMAT_OPTION, NumericFormatEnum.HEX);
@@ -1116,6 +1127,115 @@ public class DebugAdapter implements IDebugAdapter {
                 }
             }
             return newValue;
+        }
+
+        private Responses.ResponseBody evaluate(Requests.EvaluateArguments arguments) {
+            // This should be false by default(currently true for test).
+            // User will need to explicitly turn it on by configuring launch.json
+            final boolean showStaticVariables = true;
+            // TODO: when vscode protocol support customize settings of value format, showFullyQualifiedNames should be one of the options.
+            boolean showFullyQualifiedNames = true;
+            Map<String, Object> options = variableFormatter.getDefaultOptions();
+            if (arguments.format != null && arguments.format.hex) {
+                options.put(NumericFormatter.NUMERIC_FORMAT_OPTION, NumericFormatEnum.HEX);
+            }
+            if (showFullyQualifiedNames) {
+                options.put(SimpleTypeFormatter.QUALIFIED_CLASS_NAME_OPTION, showFullyQualifiedNames);
+            }
+            String expression = arguments.expression;
+
+            if (StringUtils.isBlank(expression)) {
+                throw new IllegalArgumentException("Empty expression cannot be evaluated.");
+            }
+
+            if (!simpleExprPattern.matcher(expression).matches()) {
+                throw new IllegalArgumentException("Complicate expression is not supported currently.");
+            }
+
+            JdiObjectProxy<StackFrame> stackFrameProxy = (JdiObjectProxy<StackFrame>)this.objectPool.getObjectById(arguments.frameId);
+            if (stackFrameProxy == null) {
+                throw new IllegalArgumentException("Invalid stackframe.");
+            }
+
+
+            // split a.b.c => ["a", "b", "c"]
+            List<String> referenceExpressions = Arrays.stream(StringUtils.split(expression, '.'))
+                    .filter(StringUtils::isNotBlank).map(StringUtils::trim).collect(Collectors.toList());
+
+            // get first level of value from stack frame
+            Variable firstLevelValue = null;
+            boolean inStaticMethod = !stackFrameProxy.getProxiedObject().location().method().isStatic();
+            String firstExpression = referenceExpressions.get(0);
+            // handle special case of 'this'
+            if (firstExpression.equals("this") && !inStaticMethod) {
+                firstLevelValue = VariableUtils.getThisVariable(stackFrameProxy.getProxiedObject());
+            }
+            if (firstLevelValue == null) {
+                try {
+                    // local variables first, that means
+                    // if both local variable and static variable are found, use local variable
+                    List<Variable> localVariables = VariableUtils.listLocalVariables(stackFrameProxy.getProxiedObject());
+                    List<Variable> matchedLocal = localVariables.stream()
+                            .filter(localVariable -> localVariable.name.equals(firstExpression)).collect(Collectors.toList());
+                    if (!matchedLocal.isEmpty()) {
+                        firstLevelValue = matchedLocal.get(0);
+                    } else {
+                        List<Variable> staticVariables = VariableUtils.listStaticVariables(stackFrameProxy.getProxiedObject());
+                        List<Variable> matchedStatic = staticVariables.stream()
+                                .filter(staticVariable -> staticVariable.name.equals(firstExpression)).collect(Collectors.toList());
+                        if (matchedStatic.isEmpty()) {
+                            throw new IllegalArgumentException(String.format("Cannot find the variable: %s.", referenceExpressions.get(0)));
+                        }
+                        firstLevelValue = matchedStatic.get(0);
+                    }
+
+                } catch (AbsentInformationException e) {
+                    // ignore
+                }
+            }
+
+            if (firstLevelValue == null) {
+                throw new IllegalArgumentException(String.format("Cannot find variable with name '%s'.", referenceExpressions.get(0)));
+            }
+            ThreadReference thread = stackFrameProxy.getProxiedObject().thread();
+            Value currentValue = firstLevelValue.value;
+
+            for (int i = 1; i < referenceExpressions.size(); i++) {
+                String fieldName = referenceExpressions.get(i);
+                if (currentValue == null) {
+                    throw new NullPointerException("Evaluation encounters NPE error.");
+                }
+                if (currentValue instanceof PrimitiveValue) {
+                    throw new IllegalArgumentException(String.format("Cannot find the field: %s.", fieldName));
+                }
+                if (currentValue instanceof ArrayReference) {
+                    throw new IllegalArgumentException(String.format("Evaluating array elements is not supported currently.", fieldName));
+                }
+                ObjectReference obj = (ObjectReference) currentValue;
+                Field field = obj.referenceType().fieldByName(fieldName);
+                if (field == null) {
+                    throw new IllegalArgumentException(String.format("Cannot find the field: %s.", fieldName));
+                }
+                if (field.isStatic()) {
+                    throw new IllegalArgumentException(String.format("Cannot find the field: %s.", fieldName));
+                }
+                currentValue = obj.getValue(field);
+            }
+
+            int referenceId = 0;
+            if (currentValue instanceof ObjectReference && VariableUtils.hasChildren(currentValue, showStaticVariables)) {
+                // save the evaluated value in object pool, because like java.lang.String, the evaluated object will have sub structures
+                // we need to set up the id map.
+                ThreadObjectReference threadObjectReference = new ThreadObjectReference(thread, (ObjectReference) currentValue);
+                referenceId = this.objectPool.addObject(thread.uniqueID(), threadObjectReference);
+            }
+            int indexedVariables = 0;
+            if (currentValue instanceof ArrayReference) {
+                indexedVariables = ((ArrayReference) currentValue).length();
+            }
+            return new Responses.EvaluateResponseBody(variableFormatter.valueToString(currentValue, options),
+                    referenceId, variableFormatter.typeToString(currentValue == null ? null : currentValue.type(), options),
+                    indexedVariables);
         }
 
         private Value setValueProxy(Type type, String value, SetValueFunction setValueFunc, Map<String, Object> options)

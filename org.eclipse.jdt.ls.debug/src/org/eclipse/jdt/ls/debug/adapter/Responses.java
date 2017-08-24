@@ -145,14 +145,16 @@ public class Responses {
         public String result;
         public int variablesReference;
         public String type;
+        public int indexedVariables;
 
         /**
          * Constructor.
          */
-        public EvaluateResponseBody(String value, int ref, String type) {
+        public EvaluateResponseBody(String value, int ref, String type, int indexedVariables) {
             this.result = value;
             this.variablesReference = ref;
             this.type = type;
+            this.indexedVariables = indexedVariables;
         }
     }
 
