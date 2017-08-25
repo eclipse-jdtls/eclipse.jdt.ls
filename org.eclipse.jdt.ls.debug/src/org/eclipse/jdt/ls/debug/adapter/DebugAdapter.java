@@ -831,10 +831,14 @@ public class DebugAdapter implements IDebugAdapter {
     }
 
     private void checkThreadRunningAndRecycleIds(ThreadReference thread) {
-        if (allThreadRunning()) {
-            this.variableRequestHandler.recyclableAllObject();
-        } else {
-            this.variableRequestHandler.recyclableThreads(thread);
+        try {
+            if (allThreadRunning()) {
+                this.variableRequestHandler.recyclableAllObject();
+            } else {
+                this.variableRequestHandler.recyclableThreads(thread);
+            }
+        } catch (VMDisconnectedException ex) {
+        	this.variableRequestHandler.recyclableAllObject();
         }
     }
 
