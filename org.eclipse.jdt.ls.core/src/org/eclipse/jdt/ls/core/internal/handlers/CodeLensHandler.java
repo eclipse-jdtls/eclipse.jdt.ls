@@ -64,48 +64,50 @@ public class CodeLensHandler {
 		//Note that codelens resolution is honored if the request was emitted
 		//before disabling codelenses in the preferences, else invalid codeLenses
 		//(i.e. having no commands) would be returned.
+		List<Object> data = (List<Object>) lens.getData();
+		String type = (String) data.get(2);
+		Map<String, Object> position = (Map<String, Object>) data.get(1);
+		String uri = (String) data.get(0);
+		String label = null;
+		String command = null;
+		List<Location> locations = null;
+		if (REFERENCES_TYPE.equals(type)) {
+			label = "reference";
+			command = JAVA_SHOW_REFERENCES_COMMAND;
+		} else if (IMPLEMENTATION_TYPE.equals(type)) {
+			label = "implementation";
+			command = JAVA_SHOW_IMPLEMENTATIONS_COMMAND;
+		}
 		try {
-			List<Object> data = (List<Object>) lens.getData();
-			String type = (String) data.get(2);
-			String uri = (String) data.get(0);
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-			if (unit == null) {
-				return lens;
-			}
-			Map<String, Object> position = (Map<String, Object>) data.get(1);
-			IJavaElement element = JDTUtils.findElementAtSelection(unit,  ((Double)position.get("line")).intValue(), ((Double)position.get("character")).intValue());
-			String label = null;
-			String command = null;
-			List<Location> locations = null;
-			if (REFERENCES_TYPE.equals(type)) {
-				try {
-					locations = findReferences(element, monitor);
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
-				label = "reference";
-				command = JAVA_SHOW_REFERENCES_COMMAND;
-			} else if (IMPLEMENTATION_TYPE.equals(type)) {
-				if (element instanceof IType) {
+			if (unit != null) {
+				IJavaElement element = JDTUtils.findElementAtSelection(unit, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue());
+				if (REFERENCES_TYPE.equals(type)) {
 					try {
-						locations = findImplementations((IType) element, monitor);
+						locations = findReferences(element, monitor);
 					} catch (CoreException e) {
 						JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
+				} else if (IMPLEMENTATION_TYPE.equals(type)) {
+					if (element instanceof IType) {
+						try {
+							locations = findImplementations((IType) element, monitor);
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
+					}
 				}
-				label = "implementation";
-				command = JAVA_SHOW_IMPLEMENTATIONS_COMMAND;
-			}
-			if (locations == null) {
-				locations = Collections.emptyList();
-			}
-			if (label != null && command != null) {
-				int size = locations.size();
-				Command c = new Command(size + " " + label + ((size == 1) ? "" : "s"), command, Arrays.asList(uri, position, locations));
-				lens.setCommand(c);
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code lens", e);
+		}
+		if (locations == null) {
+			locations = Collections.emptyList();
+		}
+		if (label != null && command != null) {
+			int size = locations.size();
+			Command c = new Command(size + " " + label + ((size == 1) ? "" : "s"), command, Arrays.asList(uri, position, locations));
+			lens.setCommand(c);
 		}
 		return lens;
 	}
