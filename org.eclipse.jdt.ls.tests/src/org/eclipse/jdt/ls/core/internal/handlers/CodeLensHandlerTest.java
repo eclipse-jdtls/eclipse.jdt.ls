@@ -322,7 +322,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		CodeLens lens = getParams(payload);
 		result = handler.resolve(lens, monitor);
 		assertSame(lens, result);
-		assertNull(result.getCommand());
+		assertNotNull(result.getCommand());
 	}
 
 	@Test
