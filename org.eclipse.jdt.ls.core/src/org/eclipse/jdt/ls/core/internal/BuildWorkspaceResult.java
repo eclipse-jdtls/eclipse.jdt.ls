@@ -23,8 +23,30 @@ public class BuildWorkspaceResult {
 	@NonNull
 	private BuildWorkspaceStatus status;
 
+	private String details;
+
+	public BuildWorkspaceResult(BuildWorkspaceStatus status, String details) {
+		this.status = status;
+		this.details = details;
+	}
+
 	public BuildWorkspaceResult(BuildWorkspaceStatus status) {
 		this.status = status;
+	}
+
+	/**
+	 * @return the details
+	 */
+	public String getDetails() {
+		return details;
+	}
+
+	/**
+	 * @param details
+	 *            the details to set
+	 */
+	public void setDetails(String details) {
+		this.details = details;
 	}
 
 	/**

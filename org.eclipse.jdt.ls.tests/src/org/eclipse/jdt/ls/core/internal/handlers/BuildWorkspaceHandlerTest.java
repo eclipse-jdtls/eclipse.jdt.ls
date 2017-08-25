@@ -46,7 +46,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testSucceedCase() throws Exception {
 		BuildWorkspaceResult result = handler.buildWorkspace(monitor);
 		waitForBackgroundJobs();
-		assertTrue("BuildWorkspaceStatus is: " + result.getStatus(), result != null && result.getStatus() == BuildWorkspaceStatus.SUCCEED);
+		assertTrue(String.format("BuildWorkspaceStatus is: %s. Details: %s.", result.getStatus(), result.getDetails()), result != null && result.getStatus() == BuildWorkspaceStatus.SUCCEED);
 	}
 
 	@Test

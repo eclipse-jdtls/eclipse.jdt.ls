@@ -14,6 +14,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logExcep
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -39,11 +40,11 @@ public class BuildWorkspaceHandler {
 			if (errors.isEmpty()) {
 				return new BuildWorkspaceResult(BuildWorkspaceStatus.SUCCEED);
 			} else {
-				return new BuildWorkspaceResult(BuildWorkspaceStatus.FAILED);
+				return new BuildWorkspaceResult(BuildWorkspaceStatus.FAILED, errors.stream().map(e -> e.toString()).collect(Collectors.joining(";")));
 			}
 		} catch (CoreException e) {
 			logException("Failed to build workspace.", e);
-			return new BuildWorkspaceResult(BuildWorkspaceStatus.FAILED);
+			return new BuildWorkspaceResult(BuildWorkspaceStatus.FAILED, String.format("Exception: %s.", e.getMessage()));
 		} catch (OperationCanceledException e) {
 			return new BuildWorkspaceResult(BuildWorkspaceStatus.CANCELLED);
 		}
