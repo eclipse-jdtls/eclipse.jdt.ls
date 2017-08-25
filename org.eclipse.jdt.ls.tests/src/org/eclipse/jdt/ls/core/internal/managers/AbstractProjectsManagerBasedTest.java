@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -139,7 +141,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 		IPath filePath = new Path("src").append(fileName);
 		final IFile file = testProject.getFile(filePath);
 		URI uri = Paths.get(fullpath).toUri();
-		file.createLink(uri, IResource.REPLACE, new NullProgressMonitor());
+		createFolders(file.getParent(), monitor);
+		waitForBackgroundJobs();
+		file.createLink(uri, IResource.REPLACE, monitor);
 		waitForBackgroundJobs();
 		return file;
 	}
@@ -210,6 +214,17 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 
 		return to;
+	}
+
+	private static void createFolders(IContainer folder, IProgressMonitor monitor) throws CoreException {
+		if (!folder.exists() && folder instanceof IFolder) {
+			IContainer parent = folder.getParent();
+			createFolders(parent, monitor);
+			folder.refreshLocal(IResource.DEPTH_ZERO, monitor);
+			if (!folder.exists()) {
+				((IFolder) folder).create(true, true, monitor);
+			}
+		}
 	}
 
 }

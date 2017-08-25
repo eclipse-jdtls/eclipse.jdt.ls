@@ -38,7 +38,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Before
 	public void setUp() throws Exception {
 		handler = new BuildWorkspaceHandler();
-		importProjects("eclipse/java4");
+		importProjects("maven/salut2");
 		file = linkFilesToDefaultProject("singlefile/s1.java");
 	}
 
@@ -46,7 +46,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testSucceedCase() throws Exception {
 		BuildWorkspaceResult result = handler.buildWorkspace(monitor);
 		waitForBackgroundJobs();
-		assertTrue(result != null && result.getStatus() == BuildWorkspaceStatus.SUCCEED);
+		assertTrue("BuildWorkspaceStatus is: " + result.getStatus(), result != null && result.getStatus() == BuildWorkspaceStatus.SUCCEED);
 	}
 
 	@Test
