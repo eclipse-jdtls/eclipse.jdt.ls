@@ -136,8 +136,8 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected IFile linkFilesToDefaultProject(String path) throws Exception {
 		IProject testProject = projectsManager.getDefaultProject();
-		String fullpath = copyFiles(path).getAbsolutePath();
-		String fileName = fullpath.substring(fullpath.lastIndexOf("\\") + 1);
+		String fullpath = copyFiles(path).getAbsolutePath().replace('\\', '/');
+		String fileName = fullpath.substring(fullpath.lastIndexOf("/") + 1);
 		IPath filePath = new Path("src").append(fileName);
 		final IFile file = testProject.getFile(filePath);
 		URI uri = Paths.get(fullpath).toUri();
