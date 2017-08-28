@@ -71,6 +71,6 @@ public class ClientPreferences {
 	}
 
 	public boolean isRenameDynamicRegistrationSupported() {
-		return v3supported && capabilities.getTextDocument().getRename().getDynamicRegistration();
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getRename());
 	}
 }

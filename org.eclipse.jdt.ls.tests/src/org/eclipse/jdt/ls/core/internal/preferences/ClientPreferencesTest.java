@@ -20,6 +20,7 @@ import org.eclipse.lsp4j.CompletionCapabilities;
 import org.eclipse.lsp4j.CompletionItemCapabilities;
 import org.eclipse.lsp4j.FormattingCapabilities;
 import org.eclipse.lsp4j.RangeFormattingCapabilities;
+import org.eclipse.lsp4j.RenameCapabilities;
 import org.eclipse.lsp4j.SignatureHelpCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.junit.Before;
@@ -109,7 +110,14 @@ public class ClientPreferencesTest {
 		assertFalse(prefs.isSignatureHelpDynamicRegistrationSupported());
 		when(text.getSignatureHelp()).thenReturn(new SignatureHelpCapabilities(true));
 		assertTrue(prefs.isSignatureHelpDynamicRegistrationSupported());
-
 	}
 
+	@Test
+	public void testIsRenameDynamicRegistrationSupported() throws Exception {
+		assertFalse(prefs.isRenameDynamicRegistrationSupported());
+		when(text.getRename()).thenReturn(new RenameCapabilities());
+		assertFalse(prefs.isRenameDynamicRegistrationSupported());
+		when(text.getRename()).thenReturn(new RenameCapabilities(true));
+		assertTrue(prefs.isRenameDynamicRegistrationSupported());
+	}
 }
