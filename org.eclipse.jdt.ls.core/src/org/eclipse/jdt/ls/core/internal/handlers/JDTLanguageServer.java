@@ -356,7 +356,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
 		logInfo(">> codeLens/resolve");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return computeAsync((cc) -> handler.resolve(unresolved, toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.resolve(unresolved, monitor);
+		});
 	}
 
 	/* (non-Javadoc)
