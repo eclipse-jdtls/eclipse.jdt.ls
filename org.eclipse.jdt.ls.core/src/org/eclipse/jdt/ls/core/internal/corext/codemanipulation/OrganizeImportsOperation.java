@@ -135,7 +135,7 @@ public class OrganizeImportsOperation {
 
 		private static ImportDeclaration getProblematicImport(IProblem problem, CompilationUnit astRoot) {
 			ASTNode coveringNode = new NodeFinder(astRoot, problem.getSourceStart(),
-					problem.getSourceEnd() - problem.getSourceEnd()).getCoveringNode();
+					problem.getSourceEnd() - problem.getSourceStart()).getCoveringNode();
 			if (coveringNode != null) {
 				ASTNode importNode= ASTNodes.getParent(coveringNode, ASTNode.IMPORT_DECLARATION);
 				if (importNode instanceof ImportDeclaration) {
