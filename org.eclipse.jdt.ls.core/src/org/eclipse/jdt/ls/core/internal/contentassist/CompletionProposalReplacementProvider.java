@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -94,7 +95,6 @@ public class CompletionProposalReplacementProvider {
 	 * @param trigger
 	 */
 	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger) {
-
 		// reset importRewrite
 		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 
@@ -114,7 +114,8 @@ public class CompletionProposalReplacementProvider {
 						break;
 					case CompletionProposal.TYPE_REF:
 						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context));
-						if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION) {
+							if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
+									|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
 							completionBuffer.append(edit.getNewText());
 							range = edit.getRange();
 						} else {
@@ -132,12 +133,16 @@ public class CompletionProposalReplacementProvider {
 			}
 		}
 
-
+		if (range == null) {
+			range = toReplacementRange(proposal);
+		}
 
 		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
 			appendMethodOverrideReplacement(completionBuffer, proposal);
 		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
 			appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
+		} else if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
+			appendAnonymousClass(completionBuffer, proposal, range);
 		} else {
 			appendReplacementString(completionBuffer, proposal);
 		}
@@ -146,9 +151,6 @@ public class CompletionProposalReplacementProvider {
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		}else{
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
-		}
-		if (range == null) {
-			range = toReplacementRange(proposal);
 		}
 		String text = completionBuffer.toString();
 		if(range != null){
@@ -161,6 +163,108 @@ public class CompletionProposalReplacementProvider {
 		if(!additionalTextEdits.isEmpty()){
 			item.setAdditionalTextEdits(additionalTextEdits);
 		}
+	}
+
+	private void appendAnonymousClass(StringBuilder completionBuffer, CompletionProposal proposal, Range range) {
+		IDocument document;
+		try {
+			IBuffer buffer = this.compilationUnit.getBuffer();
+			document = JsonRpcHelpers.toDocument(buffer);
+			char[] declarationKey = proposal.getDeclarationKey();
+			if (declarationKey == null) {
+				return;
+			}
+			IJavaProject javaProject = this.compilationUnit.getJavaProject();
+			IJavaElement element = javaProject.findElement(new String(declarationKey), null);
+			if (!(element instanceof IType)) {
+				return;
+			}
+			IType type = (IType) element;
+			int offset = proposal.getReplaceStart();
+			AnonymousTypeCompletionProposal overrider = new AnonymousTypeCompletionProposal(compilationUnit, offset, type, String.valueOf(proposal.getDeclarationSignature()), client.isCompletionSnippetsSupported());
+			String replacement = overrider.updateReplacementString(document, offset, importRewrite);
+			if (document.getLength() > offset && range != null) {
+				if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
+					// update replacement range
+					int length = 0;
+					IRegion lineInfo = document.getLineInformationOfOffset(offset);
+					int lineEnd = lineInfo.getOffset() + lineInfo.getLength();
+					int pos = offset;
+					char ch = document.getChar(pos);
+					while (pos < lineEnd && pos < document.getLength() - 1 && !(ch == SEMICOLON || ch == COMMA)) {
+						length++;
+						pos++;
+						ch = document.getChar(pos);
+					}
+					range.getEnd().setCharacter(range.getEnd().getCharacter() + length);
+					length = 1;
+					pos = offset - 1;
+					if (pos < document.getLength()) {
+						int lineStart = lineInfo.getOffset();
+						ch = document.getChar(pos);
+						while (pos > lineStart && !(ch == LPAREN || ch == SEMICOLON || ch == COMMA)) {
+							length++;
+							pos--;
+							ch = document.getChar(pos);
+						}
+					}
+					range.getStart().setCharacter(range.getStart().getCharacter() - length);
+					replacement = checkReplacementEnd(document, replacement, offset);
+				} else if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION) {
+					// update replacement range
+					int pos = -1;
+					if (document.getChar(offset) == LPAREN) {
+						pos = offset;
+					} else if (offset + 1 < document.getLength() && document.getChar(offset + 1) == LPAREN) {
+						pos = offset + 1;
+					}
+					if (pos > 0 && pos < document.getLength() - 1) {
+						IRegion lineInfo = document.getLineInformationOfOffset(offset);
+						int length = 1;
+						int lineEnd = lineInfo.getOffset() + lineInfo.getLength();
+						char ch = document.getChar(pos);
+						boolean hasClosed = false;
+						while (pos < lineEnd && !(ch == RPAREN || ch == SEMICOLON || ch == COMMA)) {
+							length++;
+							pos++;
+							ch = document.getChar(pos);
+							if (ch == RPAREN) {
+								hasClosed = true;
+								break;
+							}
+						}
+						if (!hasClosed) {
+							length = 0;
+							pos--;
+						}
+						if (length > 0) {
+							range.getEnd().setCharacter(range.getEnd().getCharacter() + length);
+						}
+					}
+					int next = (pos > 0) ? pos + 1 : offset;
+					replacement = checkReplacementEnd(document, replacement, next);
+				}
+			}
+			completionBuffer.append(replacement);
+		} catch (BadLocationException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Failed to compute anonymous class replacement", e);
+		}
+	}
+
+	private String checkReplacementEnd(IDocument document, String replacement, int pos) throws BadLocationException {
+		if (pos > 0 && pos < document.getLength()) {
+			int nextChar = document.getChar(pos);
+			while (pos > 0 && pos < document.getLength() - 1 && !(nextChar == LPAREN || nextChar == RPAREN || nextChar == SEMICOLON || nextChar == COMMA || Character.isJavaIdentifierStart(nextChar))) {
+				pos++;
+				nextChar = document.getChar(pos);
+			}
+			if (nextChar == COMMA || nextChar == SEMICOLON || nextChar == LPAREN) {
+				if (replacement.endsWith(";")) {
+					replacement = replacement.substring(0, replacement.length() - 1);
+				}
+			}
+		}
+		return replacement;
 	}
 
 	/**
@@ -243,8 +347,8 @@ public class CompletionProposalReplacementProvider {
 				&& (proposal.getKind() == CompletionProposal.METHOD_REF
 				|| proposal.getKind() == CompletionProposal.FIELD_REF
 				|| proposal.getKind() == CompletionProposal.TYPE_REF
-				|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal
-				.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION);
+						|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
+						|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION);
 	}
 
 	protected boolean hasArgumentList(CompletionProposal proposal) {
@@ -252,7 +356,7 @@ public class CompletionProposalReplacementProvider {
 			return false;
 		}
 		char[] completion= proposal.getCompletion();
-		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == ')';
+		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == RPAREN;
 	}
 
 	private boolean isInJavadoc() {
@@ -352,7 +456,7 @@ public class CompletionProposalReplacementProvider {
 
 		char[] completion= typeProposal.getCompletion();
 		// don't add parameters for import-completions nor for proposals with an empty completion (e.g. inside the type argument list)
-		if (completion.length > 0 && (completion[completion.length - 1] == ';' || completion[completion.length - 1] == '.')){
+		if (completion.length > 0 && (completion[completion.length - 1] == SEMICOLON || completion[completion.length - 1] == '.')) {
 			Range range = toReplacementRange(typeProposal);
 			return new org.eclipse.lsp4j.TextEdit(range, buffer.toString());
 		}
@@ -527,7 +631,7 @@ public class CompletionProposalReplacementProvider {
 		 * No argument list if there were any special triggers (for example a
 		 * period to qualify an inner type).
 		 */
-		if (trigger != '\0' && trigger != '<' && trigger != '(') {
+		if (trigger != '\0' && trigger != '<' && trigger != LPAREN) {
 			return false;
 		}
 
@@ -591,7 +695,7 @@ public class CompletionProposalReplacementProvider {
 				String simpleType= importRewrite.addImport(qualifiedTypeName, null);
 				if (coreKind == CompletionProposal.METHOD_REF) {
 					buffer.append(simpleType);
-					buffer.append(',');
+					buffer.append(COMMA);
 					return buffer;
 				}
 			} else {
@@ -756,7 +860,7 @@ public class CompletionProposalReplacementProvider {
 		 * or when completing static members, in a period when completing types
 		 * in static imports.
 		 */
-		return last == ';' || last == '.';
+		return last == SEMICOLON || last == '.';
 	}
 
 }

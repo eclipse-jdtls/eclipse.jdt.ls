@@ -770,6 +770,257 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}", resolvedItem.getTextEdit());
 	}
 
+	@Test
+	public void testCompletion_AnonymousType() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        IFoo foo = new \n" +
+						"    } \n" +
+						"    interface IFoo {\n"+
+						"        String getName();\n"+
+						"    }\n"+
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "new ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Foo.IFoo()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Foo.IFoo", ci.getInsertText());
+		assertEquals(CompletionItemKind.Constructor, ci.getKind());
+		assertEquals("999998684", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 23, 23, "IFoo(){\n" +
+				"\n" +
+				"		@Override\n" +
+				"		public String getName() {\n" +
+				"			${0:return null;}\n" +
+				"		}\n" +
+				"};", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousTypeMoreMethods() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        IFoo foo = new \n" +
+						"    } \n" +
+						"    interface IFoo {\n"+
+						"        String getName();\n"+
+						"        void setName(String name);\n"+
+						"    }\n"+
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "new ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Foo.IFoo()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Foo.IFoo", ci.getInsertText());
+		assertEquals(CompletionItemKind.Constructor, ci.getKind());
+		assertEquals("999998684", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 23, 23, "IFoo(){\n" +
+				"\n		@Override\n" +
+				"		public void setName(String name) {\n" +
+				"			${0}\n" +
+				"		}\n" +
+				"\n		@Override\n" +
+				"		public String getName() {\n" +
+				"			return null;\n" +
+				"		}\n" +
+				"};", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousDeclarationType() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        new Runnable()\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable(");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 20, 22, "(){\n" +
+				"\n" +
+				"	@Override\n" +
+				"	public void run() {\n" +
+				"		${0}\n" +
+				"	}\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousDeclarationType2() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        new Runnable(  )\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable( ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 20, 24, "(){\n" +
+				"\n" +
+				"	@Override\n" +
+				"	public void run() {\n" +
+				"		${0}\n" +
+				"	}\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousDeclarationType3() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        run(\"name\", new Runnable(, 1);\n" +
+						"    }\n" +
+						"    void run(String name, Runnable runnable, int i) {\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable(");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 32, 33, "(){\n" +
+				"\n" +
+				"	@Override\n" +
+				"	public void run() {\n" +
+				"		${0}\n" +
+				"	}\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousDeclarationType4() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        run(\"name\", new Runnable(\n" +
+						"        , 1);\n" +
+						"    }\n" +
+						"    void run(String name, Runnable runnable, int i) {\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable(");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 32, 33, "(){\n" +
+				"\n" +
+				"	@Override\n" +
+				"	public void run() {\n" +
+				"		${0}\n" +
+				"	}\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_AnonymousDeclarationType5() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        run(\"name\", new Runnable(");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable(");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 33, 33, "(){\n" +
+				"\n" +
+				"	@Override\n" +
+				"	public void run() {\n" +
+				"		${0}\n" +
+				"	}\n" +
+				"}", resolvedItem.getTextEdit());
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))
