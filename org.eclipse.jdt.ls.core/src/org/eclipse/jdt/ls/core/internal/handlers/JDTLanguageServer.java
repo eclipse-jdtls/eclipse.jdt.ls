@@ -246,7 +246,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position) {
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler();
-		return computeAsync((cc) -> handler.completion(position, toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.completion(position, monitor);
+		});
 	}
 
 	/* (non-Javadoc)
@@ -256,7 +266,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
 		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		return computeAsync((cc) -> handler.resolve(unresolved, toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.resolve(unresolved, monitor);
+		});
 	}
 
 	/* (non-Javadoc)
