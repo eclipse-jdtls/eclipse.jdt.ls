@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="89">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="90">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -18,7 +18,7 @@
 <repository location="http://download.eclipse.org/eclipse/updates/4.7/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170830-0917"/>
+<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170905-1253"/>
 <repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastSuccessfulBuild/artifact/build/p2-repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
