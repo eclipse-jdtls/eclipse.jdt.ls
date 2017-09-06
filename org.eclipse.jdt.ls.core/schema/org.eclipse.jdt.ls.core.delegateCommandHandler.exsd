@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler"/>
+      </appinfo>
+      <documentation>
+         This extension point allows to add a delegate command handler to extend the Java Language server
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="delegateCommandHandler" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="delegateCommandHandler">
+      <complexType>
+         <sequence>
+            <element ref="command" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="command">
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of a language server delegate command handler:
+
+&lt;pre&gt;
+ &lt;extension point=&quot;org.eclipse.jdt.ls.delegateCommandHandler&quot;&gt;
+  &lt;delegateCommandHandler
+   id=&quot;MyLanguageServerDelegateCommandHandler&quot;
+   name=&quot;My Language Server Delegate Command Handler&quot;
+   class=&quot;com.example.MyDelegateCommandHandler&quot;&gt;
+   &lt;command id=&quot;command1&quot;/&gt;
+   &lt;command id=&quot;command2&quot;/&gt;
+  &lt;/delegateCommandHandler&gt;
+ &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+
+
+</schema>

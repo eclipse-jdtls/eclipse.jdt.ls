@@ -54,6 +54,7 @@ import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -237,6 +238,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> workspace/didChangeWatchedFiles");
 		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client);
 		handler.didChangeWatchedFiles(params);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.WorkspaceService#executeCommand(org.eclipse.lsp4j.ExecuteCommandParams)
+	 */
+	@Override
+	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
+		logInfo(">> workspace/executeCommand");
+		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		return computeAsync((cc) -> {
+			return handler.executeCommand(params, toMonitor(cc));
+		});
 	}
 
 	/* (non-Javadoc)
