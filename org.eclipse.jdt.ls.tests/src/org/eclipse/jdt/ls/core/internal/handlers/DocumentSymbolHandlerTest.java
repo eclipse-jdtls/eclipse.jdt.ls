@@ -11,10 +11,13 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.core.resources.IProject;
@@ -27,6 +30,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +79,31 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		}
 		assertTrue("The " + overloadedMethod1 + " method hasn't been found", overloadedMethod1Found);
 		assertTrue("The " + overloadedMethod2 + " method hasn't been found", overloadedMethod2Found);
+	}
+
+	@Test
+	public void testTypes() throws Exception {
+		String className = "org.sample.Bar";
+		List<? extends SymbolInformation> symbols = getSymbols(className);
+		assertHasSymbol("Bar", "Bar.java", SymbolKind.Class, symbols);
+		assertHasSymbol("main(String[])", "Bar", SymbolKind.Function, symbols);
+		assertHasSymbol("MyInterface", "Bar", SymbolKind.Interface, symbols);
+		assertHasSymbol("foo()", "MyInterface", SymbolKind.Function, symbols);
+		assertHasSymbol("MyClass", "Bar", SymbolKind.Class, symbols);
+		assertHasSymbol("bar()", "MyClass", SymbolKind.Function, symbols);
+
+	}
+
+	private void assertHasSymbol(String expectedType, String expectedParent, SymbolKind expectedKind, Collection<? extends SymbolInformation> symbols) {
+		Optional<? extends SymbolInformation> symbol = symbols.stream()
+															 .filter(s -> expectedType.equals(s.getName()) && expectedParent.equals(s.getContainerName()))
+															 .findFirst();
+		assertTrue(expectedType + "(" + expectedParent + ")" + " is missing from " + symbols, symbol.isPresent());
+		assertKind(expectedKind, symbol.get());
+	}
+
+	private void assertKind(SymbolKind expectedKind, SymbolInformation symbol) {
+		assertSame("Unexpected SymbolKind in " + symbol.getName(), expectedKind, symbol.getKind());
 	}
 
 	private void testClass(String className)

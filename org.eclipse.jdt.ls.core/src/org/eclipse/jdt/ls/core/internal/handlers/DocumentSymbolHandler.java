@@ -67,9 +67,8 @@ public class DocumentSymbolHandler {
 			if(element instanceof IParent){
 				collectChildren(unit, filter(((IParent) element).getChildren()), symbols, monitor);
 			}
-			if(element.getElementType() != IJavaElement.FIELD &&
-					element.getElementType() != IJavaElement.METHOD
-					){
+			int type = element.getElementType();
+			if (type != IJavaElement.TYPE && type != IJavaElement.FIELD && type != IJavaElement.METHOD) {
 				continue;
 			}
 
