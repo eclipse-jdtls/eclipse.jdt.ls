@@ -13,10 +13,13 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -29,77 +32,54 @@ public class BundleUtils {
 
 	private static final String REFERENCE_PREFIX = "reference:";
 
-	private static final String BUNDLES_KEY = "bundles";
-
 	/**
-	 * Load bundles from the initialization request
+	 * Load a collection of bundle based on the provided file path locations.
 	 *
-	 * @param initializationOptions
-	 *            initialization options from language client.
+	 * @param bundleLocations
+	 *            The collection of the bundle file path location
+	 * @throws CoreException
+	 *             throw the <code>CoreException</code> if failed to load any
+	 *             bundles.
 	 */
-
-	public static void loadBundles(Object initializationOptions) {
-		Map<String, Object> optionsMap = null;
-		if (initializationOptions instanceof Map<?, ?>) {
-			optionsMap = (Map<String, Object>) initializationOptions;
-		}
-		if (optionsMap == null) {
+	public static void loadBundles(Collection<String> bundleLocations) throws CoreException {
+		if (bundleLocations == null || bundleLocations.isEmpty()) {
 			return;
 		}
 
-		Object bundleObject = optionsMap.get(BUNDLES_KEY);
-		if (bundleObject instanceof ArrayList<?>) {
-			BundleContext context = JavaLanguageServerPlugin.getBundleContext();
-			@SuppressWarnings("unchecked")
-			ArrayList<String> bundleList = (ArrayList<String>) bundleObject;
-			if (bundleList == null || bundleList.size() == 0) {
-				return;
-			}
-			for (String bundlePath : bundleList) {
-				try {
-					String bundleLocation = getBundleLocation(bundlePath, true);
-					if (StringUtils.isEmpty(bundleLocation)) {
-						JavaLanguageServerPlugin.logError("Empty bundle location");
-						continue;
-					}
-
-					Bundle bundle = context.getBundle(bundleLocation);
-					if (bundle != null) {
-						bundle.update();
-					} else {
-						bundle = context.installBundle(bundleLocation);
-						startBundle(bundle);
-					}
-				} catch (BundleException e) {
-					JavaLanguageServerPlugin.logException("Install bundle failure ", e);
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
+		for (String bundleLocation : bundleLocations) {
+			try {
+				if (StringUtils.isEmpty(bundleLocation)) {
+					JavaLanguageServerPlugin.logError("Empty bundle location");
+					continue;
 				}
+
+				String location = getBundleLocation(bundleLocation, true);
+
+				Bundle bundle = context.getBundle(location);
+				if (bundle != null) {
+					bundle.update();
+				} else {
+					bundle = context.installBundle(location);
+				}
+			} catch (BundleException e) {
+				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Install bundle failure " + bundleLocation, e));
+			} catch (MalformedURLException ex) {
+				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Bundle location format is not correct " + bundleLocation, ex));
 			}
 		}
-
+		if (status.getChildren().length > 0) {
+			throw new CoreException(status);
+		}
 	}
 
-	private static String getBundleLocation(String location, boolean useReference) {
+	private static String getBundleLocation(String location, boolean useReference) throws MalformedURLException {
 		File f = new File(location);
-		String bundleLocation = null;
-		try {
-			bundleLocation = f.toURI().toURL().toString();
-			if (useReference) {
-				bundleLocation = REFERENCE_PREFIX + bundleLocation;
-			}
-		} catch (MalformedURLException e) {
-			JavaLanguageServerPlugin.logException("Get bundle location failure ", e);
+		String bundleLocation = f.toURI().toString();
+		if (useReference) {
+			bundleLocation = REFERENCE_PREFIX + bundleLocation;
 		}
 		return bundleLocation;
-	}
-
-	private static void startBundle(Bundle bundle) {
-		if (bundle.getState() == Bundle.UNINSTALLED || bundle.getState() == Bundle.STARTING || bundle.getBundleId() == 0) {
-			return;
-		}
-		try {
-			bundle.start();
-		} catch (BundleException e) {
-			JavaLanguageServerPlugin.logException("Start bundle failure ", e);
-		}
 	}
 }

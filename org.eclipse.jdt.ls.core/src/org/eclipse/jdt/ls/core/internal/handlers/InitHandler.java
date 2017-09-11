@@ -14,7 +14,10 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
@@ -48,6 +51,8 @@ import org.eclipse.lsp4j.TextDocumentSyncKind;
  */
 final public class InitHandler {
 
+	private static final String BUNDLES_KEY = "bundles";
+
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
@@ -80,7 +85,13 @@ final public class InitHandler {
 		triggerInitialization(rootPath);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
 		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
-		BundleUtils.loadBundles(param.getInitializationOptions());
+		try {
+			Collection<String> bundleList = getBundleList(param.getInitializationOptions());
+			BundleUtils.loadBundles(bundleList);
+		} catch (CoreException e) {
+			// The additional plug-ins should not affect the main language server loading.
+			JavaLanguageServerPlugin.logException("Failed to load extension bundles ", e);
+		}
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
 		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
@@ -150,7 +161,20 @@ final public class InitHandler {
 
 	}
 
-	private class ServerStatusMonitor extends NullProgressMonitor{
+	private Collection<String> getBundleList(Object initializationOptions) {
+		if (!(initializationOptions instanceof Map<?, ?>)) {
+			return null;
+		}
+		Map<String, Object> optionsMap = (Map<String, Object>) initializationOptions;
+
+		Object bundleObject = optionsMap.get(BUNDLES_KEY);
+		if (bundleObject instanceof ArrayList<?>) {
+			return (ArrayList<String>) bundleObject;
+		}
+		return null;
+	}
+
+	private class ServerStatusMonitor extends NullProgressMonitor {
 		private double totalWork;
 		private double progress;
 		@Override
