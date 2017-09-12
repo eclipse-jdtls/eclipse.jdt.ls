@@ -12,19 +12,22 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.eclipse.core.runtime.ILogListener;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.ExecuteCommandParams;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerBasedTest {
+
+	@Rule
+	public ExpectedException expectedEx = ExpectedException.none();
 
 	@Test
 	public void testExecuteCommand() {
@@ -42,16 +45,41 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 
 	@Test
 	public void testExecuteCommandNonexistingCommand() {
+		expectedEx.expect(ResponseErrorException.class);
+		expectedEx.expectMessage("No delegateCommandHandler for testcommand.not.existing");
+
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("testcommand.not.existing");
 		params.setArguments(Arrays.asList("hello", "world"));
 		Object result = handler.executeCommand(params, monitor);
-		assertEquals("No delegateCommandHandler for testcommand.not.existing", result);
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void testExecuteCommandMorethanOneCommand() {
+		expectedEx.expect(ResponseErrorException.class);
+		expectedEx.expectMessage(new Matcher<String>() {
+
+			@Override
+			public void describeTo(Description description) {
+			}
+
+			@Override
+			public boolean matches(Object item) {
+				return ((String) item).startsWith("Found multiple delegateCommandHandlers");
+			}
+
+			@Override
+			public void describeMismatch(Object item, Description mismatchDescription) {
+
+			}
+
+			@Override
+			public void _dont_implement_Matcher___instead_extend_BaseMatcher_() {
+			}
+
+		});
+
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("dup");
@@ -60,34 +88,22 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 
 	@Test
 	public void testExecuteCommandThrowsExceptionCommand() {
+		expectedEx.expect(ResponseErrorException.class);
+		expectedEx.expectMessage("Unsupported");
+
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("testcommand.throwexception");
-
-		ILogListener testListener = new ILogListener() {
-			@Override
-			public void logging(IStatus status, String plugin) {
-				assertTrue(status.getException() instanceof UnsupportedOperationException);
-			}
-		};
-
-		Platform.addLogListener(testListener);
-
-		Object result = handler.executeCommand(params, monitor);
-		assertNull(result);
-
-		Platform.removeLogListener(testListener);
+		handler.executeCommand(params, monitor);
 	}
 
 	@Test
 	public void testExecuteCommandInvalidParameters() {
+		expectedEx.expect(ResponseErrorException.class);
+		expectedEx.expectMessage("The workspace/executeCommand has empty params or command");
+
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		ExecuteCommandParams params = null;
-		Object result = handler.executeCommand(params, monitor);
-		assertEquals(result, "The workspace/executeCommand has empty params or command");
-
-		params = new ExecuteCommandParams();
-		result = handler.executeCommand(params, monitor);
-		assertEquals(result, "The workspace/executeCommand has empty params or command");
+		handler.executeCommand(params, monitor);
 	}
 }

@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IExecutableExtensionFactory;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 public class TestDelegateCommandHandlerFactory implements IExecutableExtensionFactory {
 
@@ -27,9 +28,9 @@ public class TestDelegateCommandHandlerFactory implements IExecutableExtensionFa
 		private int state = 0;
 
 		@Override
-		public Object executeCommand(String commandId, List<Object> arguments) {
+		public Object executeCommand(String commandId, List<Object> arguments, IProgressMonitor monitor) {
 			if ("testcommand.throwexception".equals(commandId)) {
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("Unsupported");
 			}
 			return commandId + ": " + arguments.stream().map(arg -> arg.toString()).reduce("", String::concat) + state++;
 		}

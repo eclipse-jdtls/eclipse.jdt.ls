@@ -27,6 +27,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ExecuteCommandParams;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
 public class WorkspaceExecuteCommandHandler {
 
@@ -104,7 +107,7 @@ public class WorkspaceExecuteCommandHandler {
 		if (params == null || params.getCommand() == null) {
 			String errorMessage = "The workspace/executeCommand has empty params or command";
 			JavaLanguageServerPlugin.logError(errorMessage);
-			return errorMessage;
+			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidParams, errorMessage, null));
 		}
 
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
@@ -112,13 +115,14 @@ public class WorkspaceExecuteCommandHandler {
 		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
 
 		if (candidates.size() > 1) {
-			throw new IllegalStateException(String.format("Found multiple delegateCommandHandlers (%s) matching command %s", candidates, params.getCommand()));
+			Exception ex = new IllegalStateException(String.format("Found multiple delegateCommandHandlers (%s) matching command %s", candidates, params.getCommand()));
+			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InternalError, ex.getMessage(), ex));
 		}
 		if (monitor.isCanceled()) {
 			return "";
 		}
 		if (candidates.isEmpty()) {
-			return String.format("No delegateCommandHandler for %s", params.getCommand());
+			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.MethodNotFound, String.format("No delegateCommandHandler for %s", params.getCommand()), null));
 		}
 		final Object[] resultValues = new Object[1];
 		SafeRunner.run(new ISafeRunnable() {
@@ -126,14 +130,18 @@ public class WorkspaceExecuteCommandHandler {
 			public void run() throws Exception {
 				final IDelegateCommandHandler delegateCommandHandler = candidates.iterator().next().getDelegateCommandHandler();
 				if (delegateCommandHandler != null) {
-					resultValues[0] = delegateCommandHandler.executeCommand(params.getCommand(), params.getArguments());
+					resultValues[0] = delegateCommandHandler.executeCommand(params.getCommand(), params.getArguments(), monitor);
 				}
 			}
 
 			@Override
 			public void handleException(Throwable ex) {
-				IStatus status = new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.OK, "Error in calling delegate command handler ", ex);
+				IStatus status = new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.OK, "Error in calling delegate command handler", ex);
 				JavaLanguageServerPlugin.log(status);
+				if (ex instanceof ResponseErrorException) {
+					throw (ResponseErrorException) ex;
+				}
+				throw new ResponseErrorException(new ResponseError(ResponseErrorCode.UnknownErrorCode, ex.getMessage(), ex));
 			}
 		});
 		return resultValues[0];
