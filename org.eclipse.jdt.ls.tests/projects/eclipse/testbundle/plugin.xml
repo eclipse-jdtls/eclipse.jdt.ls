@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="testbundle.ext" name="ext" schema="schema/testbundle.ext.exsd"/>
+   <extension 
+   		id="testbundle.ext.implementation"
+        point="testbundle.ext">
+      	<implementor
+            class="testbundle.ExtFactory"
+            type="java">
+      	</implementor>
+   </extension>
+</plugin>

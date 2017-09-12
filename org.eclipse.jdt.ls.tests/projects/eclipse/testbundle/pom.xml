@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.eclipse.jdt.ls</groupId>
+		<artifactId>parent</artifactId>
+		<version>0.3.0-SNAPSHOT</version>
+	</parent>
+	<name>${base.name} :: Bundle</name>
+	<packaging>eclipse-test-plugin</packaging>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-surefire-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<configuration>
+						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<providerProperties>
+							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
+						</providerProperties>
+					</configuration>
+					
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<profiles>
+		<profile>
+			<id>macosx-jvm-flags</id>
+			<activation>
+				<os><family>mac</family></os>
+			</activation>
+			<properties>
+				<os.testArgs>-XstartOnFirstThread -noverify</os.testArgs>
+			</properties>
+		</profile>
+	</profiles>
+
+	<artifactId>testbundle</artifactId>
+</project>
