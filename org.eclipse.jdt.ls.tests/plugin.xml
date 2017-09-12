@@ -8,4 +8,15 @@
             class="org.eclipse.jdt.ls.core.internal.TestVMType"
             id="org.eclipse.jdt.ls.core.internal.TestVMType"/>
       </extension>
+   <extension point="org.eclipse.jdt.ls.core.delegateCommandHandler">
+      <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.TestDelegateCommandHandlerFactory">
+            <command id="testcommand1"/>
+            <command id="testcommand2"/>
+            <command id="testcommand.throwexception"/>
+            <command id="dup"/>
+       </delegateCommandHandler>
+       <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.PlaceHolder">
+            <command id="dup"/>
+       </delegateCommandHandler>
+   </extension>
 </fragment>
