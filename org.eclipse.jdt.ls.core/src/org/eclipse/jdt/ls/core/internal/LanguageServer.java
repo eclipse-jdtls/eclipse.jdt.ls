@@ -40,7 +40,7 @@ public class LanguageServer implements IApplication {
 	 * Checks whether the parent process is still running.
 	 * If not, then we assume it has crashed, and we have to terminate the Java Language Server.
 	 *
-	 * @return true iff the parent process is still running
+	 * @return true if the parent process is still running
 	 */
 	private boolean parentProcessStillRunning() {
 		// Wait until parent process id is available
@@ -60,7 +60,6 @@ public class LanguageServer implements IApplication {
 			int processResult = process.waitFor();
 			return processResult == 0;
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return true;
 		}
@@ -68,11 +67,9 @@ public class LanguageServer implements IApplication {
 
 	@Override
 	public void stop() {
-		System.out.println("Stopping language server");
 	}
 
 	public void shutdown() {
-		System.out.println("Shutting down language server");
 		shutdown = true;
 	}
 
