@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <bundle id="org.eclipse.jdt.ls.core" version="0.0.0">
+   	<category name="jdt.ls" />
+   </bundle>
+   <bundle id="org.eclipse.jdt.ls.tests" version="0.0.0">
+   	<category name="jdt.ls.sdk" />
+   </bundle>
+   <bundle id="org.eclipse.jdt.ls.core.source" version="0.0.0">
+   	<category name="jdt.ls.sdk" />
+   </bundle>
+   <bundle id="org.eclipse.jdt.ls.tests.source" version="0.0.0">
+   	<category name="jdt.ls.sdk" />
+   </bundle>
+   <category-def name="jdt.ls" label="JDT Language Server"/>
+   <category-def name="jdt.ls.sdk" label="JDT Language Server (Developer Resources)"/>
+</site>

@@ -87,7 +87,7 @@
 					<version>${tycho-version}</version>
 					<configuration>
 						<sourceReferences>
-							<generate>false</generate>
+							<generate>true</generate>
 						</sourceReferences>
 					</configuration>
 					<dependencies>
@@ -97,32 +97,6 @@
 							<version>${tycho-extras-version}</version>
 						</dependency>
 					</dependencies>
-				</plugin>
-				<plugin>
-					<groupId>org.eclipse.tycho</groupId>
-					<artifactId>tycho-source-plugin</artifactId>
-					<version>${tycho-version}</version>
-					<executions>
-						<execution>
-							<id>plugin-source</id>
-							<goals>
-								<goal>plugin-source</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.eclipse.tycho.extras</groupId>
-					<artifactId>tycho-source-feature-plugin</artifactId>
-					<version>${tycho-version}</version>
-					<executions>
-						<execution>
-							<id>source-feature</id>
-							<goals>
-								<goal>source-feature</goal>
-							</goals>
-						</execution>
-					</executions>
 				</plugin>
 				<!-- Those 4 mojos are for signing and packing -->
 				<plugin>
@@ -252,7 +226,7 @@
 	</repositories>
 	<profiles>
 		<profile>
-			<id>code-coverage</id>
+			<id>plugin</id>
 			<activation>
 				<!-- Enable jacoco only on plugin projects -->
 				<file>
@@ -264,6 +238,19 @@
 			</properties>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-source-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<executions>
+							<execution>
+								<id>plugin-source</id>
+								<goals>
+									<goal>plugin-source</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
@@ -285,6 +272,12 @@
 					</plugin>
 				</plugins>
 			</build>
+		</profile>
+		<profile>
+			<id>update-site</id>
+			<modules>
+				<module>org.eclipse.jdt.ls.repository</module>
+			</modules>
 		</profile>
 	</profiles>
 	<pluginRepositories>
