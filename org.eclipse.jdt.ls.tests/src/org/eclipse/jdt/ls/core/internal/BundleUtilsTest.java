@@ -46,9 +46,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
-		assertEquals(installedBundle.getState(), Bundle.INSTALLED);
+		assertEquals(installedBundle.getState(), Bundle.STARTING);
 
-		installedBundle.start();
 		String extResult = getBundleExtensionResult();
 		assertEquals("EXT_TOSTRING", extResult);
 		// Uninstall the bundle to clean up the testing bundle context.
@@ -63,9 +62,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
-		assertEquals(installedBundle.getState(), Bundle.INSTALLED);
+		assertEquals(installedBundle.getState(), Bundle.STARTING);
 
-		installedBundle.start();
 		String extResult = getBundleExtensionResult();
 		assertEquals("EXT_TOSTRING", extResult);
 		// Uninstall the bundle to clean up the testing bundle context.

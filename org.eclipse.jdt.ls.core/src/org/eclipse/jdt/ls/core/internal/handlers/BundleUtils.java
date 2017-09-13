@@ -62,6 +62,7 @@ public class BundleUtils {
 					bundle.update();
 				} else {
 					bundle = context.installBundle(location);
+					bundle.start(Bundle.START_ACTIVATION_POLICY);
 				}
 			} catch (BundleException e) {
 				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Install bundle failure " + bundleLocation, e));
