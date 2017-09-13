@@ -17,13 +17,24 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.lsp4j.MarkedString;
@@ -58,7 +69,7 @@ public class HoverInfoProvider {
 		this.unit = aUnit;
 	}
 
-	public List<Either<String, MarkedString>> computeHover(int line, int column) {
+	public List<Either<String, MarkedString>> computeHover(int line, int column, IProgressMonitor monitor) {
 		List<Either<String, MarkedString>> res = new LinkedList<>();
 		try {
 			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column);
@@ -86,19 +97,56 @@ public class HoverInfoProvider {
 			} else {
 				curr = elements[0];
 			}
-			MarkedString signature = this.computeSignature(curr);
-			if (signature != null) {
-				res.add(Either.forRight(signature));
+			boolean resolved = isResolved(curr, monitor);
+			if (resolved) {
+				MarkedString signature = this.computeSignature(curr);
+				if (signature != null) {
+					res.add(Either.forRight(signature));
+				}
+				String javadoc = computeJavadocHover(curr);
+				if (javadoc != null) {
+					res.add(Either.forLeft(javadoc));
+				}
 			}
-			String javadoc = computeJavadocHover(curr);
-			if (javadoc != null) {
-				res.add(Either.forLeft(javadoc));
-			}
-
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Error computing hover", e);
 		}
 		return res;
+	}
+
+	private boolean isResolved(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+		if (element.getElementType() != IJavaElement.TYPE) {
+			return true;
+		}
+		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.ALL_OCCURRENCES);
+		final boolean[] res = new boolean[1];
+		res[0] = false;
+		SearchEngine engine = new SearchEngine();
+		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] { unit }, IJavaSearchScope.SOURCES);
+		try {
+			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope, new SearchRequestor() {
+
+				@Override
+				public void acceptSearchMatch(SearchMatch match) throws CoreException {
+					if (match.getAccuracy() == SearchMatch.A_INACCURATE) {
+						return;
+					}
+					Object o = match.getElement();
+					if (o instanceof IJavaElement) {
+						IJavaElement element = (IJavaElement) o;
+						ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+						if (compilationUnit == null) {
+							return;
+						}
+						res[0] = true;
+						throw new HoverException();
+					}
+				}
+			}, monitor);
+		} catch (HoverException e) {
+			// ignore
+		}
+		return res[0];
 	}
 
 	private MarkedString computeSignature(IJavaElement element)  {
@@ -157,5 +205,20 @@ public class HoverInfoProvider {
 			//meh
 		}
 		return null;
+	}
+
+	private class HoverException extends CoreException {
+
+		private static final long serialVersionUID = 1L;
+
+		public HoverException() {
+			super(new Status(IStatus.OK, JavaLanguageServerPlugin.PLUGIN_ID, ""));
+		}
+
+		@Override
+		public synchronized Throwable fillInStackTrace() {
+			return this;
+		}
+
 	}
 }

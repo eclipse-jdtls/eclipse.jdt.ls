@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -260,6 +261,22 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Unexpected hover ", "org.apache.commons", result);
 
 		assertEquals(logListener.getErrors().toString(), 0, logListener.getErrors().size());
+	}
+
+	@Test
+	public void testHoverUnresolvedType() throws Exception {
+		importProjects("eclipse/unresolvedtype");
+		project = WorkspaceHelper.getProject("unresolvedtype");
+		handler = new HoverHandler();
+		//given
+		//Hovers on the IFoo
+		String payload = createHoverRequest("src/pckg/Foo.java", 2, 31);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		assertTrue("Unexpected hover ", hover.getContents().isEmpty());
 	}
 	/**
 	 * @param cu

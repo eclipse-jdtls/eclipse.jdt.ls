@@ -28,16 +28,16 @@ public class HoverHandler {
 
 		List<Either<String, MarkedString>> content = null;
 		if (unit != null && !monitor.isCanceled()) {
-			content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter());
+			content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), monitor);
 		}
 		Hover $ = new Hover();
 		$.setContents(content);
 		return $;
 	}
 
-	private List<Either<String, MarkedString>> computeHover(ITypeRoot unit, int line, int column) {
+	private List<Either<String, MarkedString>> computeHover(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		HoverInfoProvider provider = new HoverInfoProvider(unit);
-		return provider.computeHover(line, column);
+		return provider.computeHover(line, column, monitor);
 	}
 
 }
