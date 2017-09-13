@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="91">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="92">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -16,10 +16,6 @@
 <unit id="org.eclipse.jdt.source.feature.group" version="3.13.0.v20170612-0950"/>
 <unit id="org.eclipse.sdk.feature.group" version="4.7.0.v20170612-1255"/>
 <repository location="http://download.eclipse.org/eclipse/updates/4.7/"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170913-0637"/>
-<repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastSuccessfulBuild/artifact/build/p2-repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.xtend.sdk.feature.group" version="2.12.0.v20170519-1412"/>
@@ -42,6 +38,10 @@
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.buildship.feature.group" version="2.1.0.v20170609-1527-m"/>
 <repository location="http://download.eclipse.org/buildship/updates/e47/milestones/2.x/2.1.0.v20170609-1527-m"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170905-1233"/>
+<repository location="http://download.eclipse.org/lsp4j/updates/milestones/"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
