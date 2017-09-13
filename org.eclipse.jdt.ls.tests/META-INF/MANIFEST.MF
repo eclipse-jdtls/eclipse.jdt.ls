@@ -1,10 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Tests
+Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.eclipse.jdt.ls.tests;singleton:=true
 Bundle-Version: 0.4.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.osgi.framework;version="1.3.0"
+Bundle-Localization: plugin
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.core.runtime;bundle-version="3.12.0",
@@ -28,3 +29,4 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.xtend.lib,
  org.eclipse.xtext.xbase.lib,
  org.eclipse.jdt.launching
+Bundle-Vendor: %Bundle-Vendor
