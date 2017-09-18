@@ -83,9 +83,9 @@ import com.google.common.io.Files;
  */
 public final class JDTUtils {
 
-	private static final String PATH_SEPARATOR = "/";
-	private static final String PERIOD = ".";
-	private static final String SRC = "src";
+	public static final String PATH_SEPARATOR = "/";
+	public static final String PERIOD = ".";
+	public static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");

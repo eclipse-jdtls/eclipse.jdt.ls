@@ -25,6 +25,7 @@ import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -237,6 +238,8 @@ public class DocumentLifeCycleHandler {
 				buffer.setContents(newContent);
 			}
 			triggerValidation(unit);
+			// see https://github.com/redhat-developer/vscode-java/issues/274
+			checkPackageDeclaration(uri, unit);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error while opening document", e);
 		}
@@ -302,6 +305,8 @@ public class DocumentLifeCycleHandler {
 	public void handleSaved(DidSaveTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		// see https://github.com/redhat-developer/vscode-java/issues/274
+		unit = checkPackageDeclaration(uri, unit);
 		IFileBuffer fileBuffer = FileBuffers.getTextFileBufferManager().getFileBuffer(unit.getPath(), LocationKind.IFILE);
 		if (fileBuffer != null) {
 			fileBuffer.setDirty(false);
@@ -309,6 +314,48 @@ public class DocumentLifeCycleHandler {
 		if (unit != null && unit.isWorkingCopy()) {
 			projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
 		}
+	}
+
+	private ICompilationUnit checkPackageDeclaration(String uri, ICompilationUnit unit) {
+		if (unit.getResource() != null && unit.getJavaProject() != null && unit.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			try {
+				CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+				IProblem[] problems = astRoot.getProblems();
+				for (IProblem problem : problems) {
+					if (problem.getID() == IProblem.PackageIsNotExpectedPackage) {
+						IResource file = unit.getResource();
+						boolean toRemove = file.isLinked();
+						if (toRemove) {
+							IPath path = file.getParent().getProjectRelativePath();
+							if (path.segmentCount() > 0 && JDTUtils.SRC.equals(path.segments()[0])) {
+								String packageNameResource = path.removeFirstSegments(1).toString().replace(JDTUtils.PATH_SEPARATOR, JDTUtils.PERIOD);
+								path = file.getLocation();
+								if (path != null && path.segmentCount() > 0) {
+									path = path.removeLastSegments(1);
+									String pathStr = path.toString().replace(JDTUtils.PATH_SEPARATOR, JDTUtils.PERIOD);
+									if (pathStr.endsWith(packageNameResource)) {
+										toRemove = false;
+									}
+								}
+							}
+						}
+						if (toRemove) {
+							file.delete(true, new NullProgressMonitor());
+							sharedASTProvider.invalidate(unit);
+							unit.discardWorkingCopy();
+							unit = JDTUtils.resolveCompilationUnit(uri);
+							unit.becomeWorkingCopy(new NullProgressMonitor());
+							triggerValidation(unit);
+						}
+						break;
+					}
+				}
+
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		return unit;
 	}
 
 }

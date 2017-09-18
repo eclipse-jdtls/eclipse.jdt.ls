@@ -13,16 +13,27 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
@@ -385,6 +396,111 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		d = diagParam.getDiagnostics().get(2);
 		assertEquals("Duplicate method method1() in type Foo", d.getMessage());
 		assertRange(7, 13, 22, d.getRange());
+	}
+
+	@Test
+	public void testNotExpectedPackage() throws Exception {
+		newDefaultProject();
+		// @formatter:off
+		String content =
+				"package org;\n"+
+				"public class Foo {"+
+				"}";
+		// @formatter:on
+		File temp = null;
+		File file = null;
+		try {
+			temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
+			temp.delete();
+			temp.mkdirs();
+			temp.deleteOnExit();
+			file = new File(temp, "Foo.java");
+			file.deleteOnExit();
+			file.createNewFile();
+			FileUtils.writeStringToFile(file, content);
+			URI uri = file.toURI();
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+			openDocument(cu, cu.getSource(), 1);
+			CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+			IProblem[] problems = astRoot.getProblems();
+			assertEquals("Unexpected number of errors", 0, problems.length);
+			String source = cu.getSource();
+			int length = source.length();
+			source = source.replace("org", "org.eclipse");
+			changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+			FileUtils.writeStringToFile(file, source);
+			saveDocument(cu);
+			cu = JDTUtils.resolveCompilationUnit(uri);
+			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+			problems = astRoot.getProblems();
+			assertEquals("Unexpected number of errors", 0, problems.length);
+		} finally {
+			if (file != null) {
+				file.delete();
+			}
+			if (temp != null) {
+				temp.delete();
+			}
+		}
+	}
+
+	@Test
+	public void testNotExpectedPackage2() throws Exception {
+		newDefaultProject();
+		// @formatter:off
+		String content =
+				"package org;\n"+
+				"public class Foo {"+
+				"}";
+		// @formatter:on
+		File temp = null;
+		File file = null;
+		try {
+			temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
+			temp.delete();
+			temp.mkdirs();
+			temp.deleteOnExit();
+			Path path = Paths.get(temp.getAbsolutePath(), "org", "eclipse");
+			File parent = path.toFile();
+			parent.mkdirs();
+			file = new File(parent, "Foo.java");
+			file.deleteOnExit();
+			file.createNewFile();
+			FileUtils.writeStringToFile(file, content);
+			URI uri = file.toURI();
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+			openDocument(cu, cu.getSource(), 1);
+			CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+			IProblem[] problems = astRoot.getProblems();
+			assertEquals("Unexpected number of errors", 0, problems.length);
+			String source = cu.getSource();
+			int length = source.length();
+			source = source.replace("org", "org.eclipse");
+			changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+			FileUtils.writeStringToFile(file, source);
+			saveDocument(cu);
+			cu = JDTUtils.resolveCompilationUnit(uri);
+			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+			problems = astRoot.getProblems();
+			assertEquals("Unexpected number of errors", 0, problems.length);
+			source = cu.getSource();
+			length = source.length();
+			source = source.replace("org.eclipse", "org.eclipse.toto");
+			changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, source.length()), length);
+			FileUtils.writeStringToFile(file, source);
+			saveDocument(cu);
+			cu = JDTUtils.resolveCompilationUnit(uri);
+			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+			problems = astRoot.getProblems();
+			assertEquals("Unexpected number of errors", 1, problems.length);
+		} finally {
+			if (file != null) {
+				file.delete();
+			}
+			if (temp != null) {
+				temp.delete();
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
