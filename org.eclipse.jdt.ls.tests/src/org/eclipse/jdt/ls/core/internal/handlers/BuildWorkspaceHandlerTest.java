@@ -17,12 +17,14 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.jdt.ls.core.internal.BuildWorkspaceResult;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
@@ -31,27 +33,28 @@ import org.mockito.runners.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest {
-
+	@Mock
+	private JavaClientConnection connection;
+	@InjectMocks
 	private BuildWorkspaceHandler handler;
 	private IFile file;
 
 	@Before
 	public void setUp() throws Exception {
-		handler = new BuildWorkspaceHandler();
 		importProjects("maven/salut2");
-		file = linkFilesToDefaultProject("singlefile/s1.java");
+		file = linkFilesToDefaultProject("singlefile/Single.java");
 	}
 
 	@Test
 	public void testSucceedCase() throws Exception {
-		BuildWorkspaceResult result = handler.buildWorkspace(monitor);
+		BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
 		waitForBackgroundJobs();
-		assertTrue(String.format("BuildWorkspaceStatus is: %s. Details: %s.", result.getStatus(), result.getDetails()), result != null && result.getStatus() == BuildWorkspaceStatus.SUCCEED);
+		assertTrue(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result == BuildWorkspaceStatus.SUCCEED);
 	}
 
 	@Test
 	public void testFailedCase() throws Exception {
-		String codeWithError = "public class s2 {\n"+
+		String codeWithError = "public class Single2 {\n" +
 				"	public static void main(String[] args){\n"+
 				"		int ss = 1;;\n"+
 				"	}\n"+
@@ -59,17 +62,17 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		try (InputStream stream = new ByteArrayInputStream(codeWithError.getBytes(StandardCharsets.UTF_8))) {
 			file.setContents(stream, true, false, monitor);
 			waitForBackgroundJobs();
-			BuildWorkspaceResult result = handler.buildWorkspace(monitor);
+			BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
 			waitForBackgroundJobs();
-			assertTrue(result != null && result.getStatus() == BuildWorkspaceStatus.FAILED);
+			assertTrue(result == BuildWorkspaceStatus.WITHERROR);
 		}
 	}
 
 	@Test
 	public void testCanceledCase() throws Exception {
 		monitor.setCanceled(true);
-		BuildWorkspaceResult result = handler.buildWorkspace(monitor);
+		BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
 		waitForBackgroundJobs();
-		assertTrue(result != null && result.getStatus() == BuildWorkspaceStatus.CANCELLED);
+		assertTrue(result == BuildWorkspaceStatus.CANCELLED);
 	}
 }

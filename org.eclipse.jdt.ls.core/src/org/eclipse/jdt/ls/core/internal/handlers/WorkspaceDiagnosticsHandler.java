@@ -124,7 +124,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param markers
 	 * @return a list of {@link Diagnostic}s
 	 */
-	public List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
+	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
 		List<Diagnostic> diagnostics = Stream.of(markers)
 				.map(m -> toDiagnostic(document, m))
 				.filter(d -> d != null)
@@ -132,7 +132,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		return diagnostics;
 	}
 
-	private Diagnostic toDiagnostic(IDocument document, IMarker marker) {
+	private static Diagnostic toDiagnostic(IDocument document, IMarker marker) {
 		if (marker == null || !marker.exists()) {
 			return null;
 		}
@@ -149,7 +149,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param marker
 	 * @return
 	 */
-	private Range convertRange(IDocument document, IMarker marker) {
+	private static Range convertRange(IDocument document, IMarker marker) {
 		int line = marker.getAttribute(IMarker.LINE_NUMBER, -1) - 1;
 		int cStart = 0;
 		int cEnd = 0;
@@ -182,7 +182,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param attribute
 	 * @return
 	 */
-	private DiagnosticSeverity convertSeverity(int severity) {
+	private static DiagnosticSeverity convertSeverity(int severity) {
 		if (severity == IMarker.SEVERITY_ERROR) {
 			return DiagnosticSeverity.Error;
 		}

@@ -37,5 +37,5 @@ public interface JavaProtocolExtensions {
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
 
 	@JsonRequest
-	CompletableFuture<BuildWorkspaceResult> buildWorkspace(String type);
+	CompletableFuture<BuildWorkspaceStatus> buildWorkspace();
 }

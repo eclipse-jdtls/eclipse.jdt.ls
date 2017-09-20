@@ -1,4 +1,4 @@
-public class s1 {
+public class Single {
 	public static void main(String[] args)
     {
         String s = "1";
