@@ -49,7 +49,7 @@ import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 
-public class ChangeMethodSignatureProposal extends ASTRewriteCorrectionProposal {
+public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 
 	public static interface ChangeDescription {
 	}

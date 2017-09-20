@@ -85,7 +85,15 @@ public enum CodeGenerationTemplate {
 	SETTERBOY(
 			CodeTemplatePreferences.CODETEMPLATE_SETTERBODY,
 			CodeTemplateContextType.SETTERBODY_CONTEXTTYPE,
-			CodeTemplatePreferences.CODETEMPLATE_SETTERBODY_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_SETTERBODY_DEFAULT),
+
+	/**
+	 * Catch body content
+	 */
+	CATCHBODY(
+			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY,
+			CodeTemplateContextType.CATCHBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT);
 
 
 	private final String preferenceId;
@@ -163,6 +171,11 @@ class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_SETTERBODY = CODETEMPLATES_PREFIX + "setter" + BODY_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for setter method body content
+	 */
+	public static final String CODETEMPLATE_CATCHBODY = CODETEMPLATES_PREFIX + "catch" + BODY_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * Default value for field comments
 	 */
 	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */\n";
@@ -213,5 +226,8 @@ class CodeTemplatePreferences {
 	 */
 	public static final String CODETEMPLATE_SETTERBODY_DEFAULT = "${field} = ${param};\n";
 
-
+	/**
+	 * Default value for catch body content
+	 */
+	public static final String CODETEMPLATE_CATCHBODY_DEFAULT = "// ${todo} Auto-generated catch block\n${exception_var}.printStackTrace();";
 }

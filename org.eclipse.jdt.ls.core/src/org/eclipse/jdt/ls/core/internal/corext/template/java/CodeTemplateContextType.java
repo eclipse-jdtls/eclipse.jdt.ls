@@ -43,6 +43,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 	public static final String DELEGATECOMMENT_CONTEXTTYPE= "delegatecomment_context"; //$NON-NLS-1$
 	public static final String GETTERCOMMENT_CONTEXTTYPE= "gettercomment_context"; //$NON-NLS-1$
 	public static final String SETTERCOMMENT_CONTEXTTYPE= "settercomment_context"; //$NON-NLS-1$
+	public static final String CATCHBODY_CONTEXTTYPE = "catchbody_context"; //$NON-NLS-1$
 
 	/* resolver types */
 	public static final String EXCEPTION_TYPE= "exception_type"; //$NON-NLS-1$
@@ -99,6 +100,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 		contextTypes.add(new CodeTemplateContextType(DELEGATECOMMENT_CONTEXTTYPE));
 		contextTypes.add(new CodeTemplateContextType(GETTERCOMMENT_CONTEXTTYPE));
 		contextTypes.add(new CodeTemplateContextType(SETTERCOMMENT_CONTEXTTYPE));
+		contextTypes.add(new CodeTemplateContextType(CATCHBODY_CONTEXTTYPE));
 		return contextTypes;
 	}
 
@@ -159,7 +161,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 
 		@Override
 		protected String resolve(TemplateContext context) {
-			return "XXX"; //$NON-NLS-1$
+			return "TODO"; //$NON-NLS-1$
 		}
 	}
 

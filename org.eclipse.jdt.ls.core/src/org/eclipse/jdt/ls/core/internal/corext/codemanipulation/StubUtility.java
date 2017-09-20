@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -71,6 +72,7 @@ import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContext;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContextType;
+import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -157,39 +159,40 @@ public class StubUtility {
 
 		return evaluateTemplate(context, template);
 	}
-	//
-	//	public static String getCatchBodyContent(ICompilationUnit cu, String exceptionType, String variableName, ASTNode locationInAST, String lineDelimiter) throws CoreException {
-	//		String enclosingType= ""; //$NON-NLS-1$
-	//		String enclosingMethod= ""; //$NON-NLS-1$
-	//
-	//		if (locationInAST != null) {
-	//			MethodDeclaration parentMethod= ASTResolving.findParentMethodDeclaration(locationInAST);
-	//			if (parentMethod != null) {
-	//				enclosingMethod= parentMethod.getName().getIdentifier();
-	//				locationInAST= parentMethod;
-	//			}
-	//			ASTNode parentType= ASTResolving.findParentType(locationInAST);
-	//			if (parentType instanceof AbstractTypeDeclaration) {
-	//				enclosingType= ((AbstractTypeDeclaration)parentType).getName().getIdentifier();
-	//			}
-	//		}
-	//		return getCatchBodyContent(cu, exceptionType, variableName, enclosingType, enclosingMethod, lineDelimiter);
-	//	}
-	//
-	//
-	//	public static String getCatchBodyContent(ICompilationUnit cu, String exceptionType, String variableName, String enclosingType, String enclosingMethod, String lineDelimiter) throws CoreException {
-	//		Template template= getCodeTemplate(CodeTemplateContextType.CATCHBLOCK_ID, cu.getJavaProject());
-	//		if (template == null) {
-	//			return null;
-	//		}
-	//
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, enclosingType);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, enclosingMethod);
-	//		context.setVariable(CodeTemplateContextType.EXCEPTION_TYPE, exceptionType);
-	//		context.setVariable(CodeTemplateContextType.EXCEPTION_VAR, variableName);
-	//		return evaluateTemplate(context, template);
-	//	}
+
+	public static String getCatchBodyContent(ICompilationUnit cu, String exceptionType, String variableName, ASTNode locationInAST, String lineDelimiter) throws CoreException {
+		String enclosingType = ""; //$NON-NLS-1$
+		String enclosingMethod = ""; //$NON-NLS-1$
+
+		if (locationInAST != null) {
+			MethodDeclaration parentMethod = ASTResolving.findParentMethodDeclaration(locationInAST);
+			if (parentMethod != null) {
+				enclosingMethod = parentMethod.getName().getIdentifier();
+				locationInAST = parentMethod;
+			}
+			ASTNode parentType = ASTResolving.findParentType(locationInAST);
+			if (parentType instanceof AbstractTypeDeclaration) {
+				enclosingType = ((AbstractTypeDeclaration) parentType).getName().getIdentifier();
+			}
+		}
+		return getCatchBodyContent(cu, exceptionType, variableName, enclosingType, enclosingMethod, lineDelimiter);
+	}
+
+	public static String getCatchBodyContent(ICompilationUnit cu, String exceptionType, String variableName, String enclosingType, String enclosingMethod, String lineDelimiter) throws CoreException {
+		// Template template = getCodeTemplate(CodeTemplateContextType.CATCHBLOCK_ID, cu.getJavaProject());
+		CodeGenerationTemplate templateSetting = CodeGenerationTemplate.CATCHBODY;
+		Template template = templateSetting.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, enclosingType);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, enclosingMethod);
+		context.setVariable(CodeTemplateContextType.EXCEPTION_TYPE, exceptionType);
+		context.setVariable(CodeTemplateContextType.EXCEPTION_VAR, variableName);
+		return evaluateTemplate(context, template);
+	}
 	//
 	//	/*
 	//	 * Don't use this method directly, use CodeGeneration.
@@ -1468,9 +1471,10 @@ public class StubUtility {
 	//		return Boolean.valueOf(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_IS_FOR_GETTERS, project)).booleanValue();
 	//	}
 	//
-	//	public static String getExceptionVariableName(IJavaProject project) {
-	//		return PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_EXCEPTION_VAR_NAME, project);
-	//	}
+	public static String getExceptionVariableName(IJavaProject project) {
+		// return PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_EXCEPTION_VAR_NAME, project);
+		return "e";
+	}
 	//
 	//	public static boolean doAddComments(IJavaProject project) {
 	//		return Boolean.valueOf(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_ADD_COMMENTS, project)).booleanValue();
