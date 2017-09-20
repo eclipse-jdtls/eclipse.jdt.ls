@@ -145,11 +145,10 @@ public class QuickFixProcessor {
 		case IProblem.IncompatibleExceptionInThrowsClause:
 			TypeMismatchSubProcessor.addIncompatibleThrowsProposals(context, problem, proposals);
 			break;
-			// case IProblem.UnhandledException:
-			// case IProblem.UnhandledExceptionOnAutoClose:
-			// LocalCorrectionsSubProcessor.addUncaughtExceptionProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnhandledException:
+			case IProblem.UnhandledExceptionOnAutoClose:
+				LocalCorrectionsSubProcessor.addUncaughtExceptionProposals(context, problem, proposals);
+				break;
 			// case IProblem.UnreachableCatch:
 			// case IProblem.InvalidCatchBlockSequence:
 			// case IProblem.InvalidUnionTypeReferenceSequence:
