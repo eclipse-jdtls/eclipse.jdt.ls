@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -143,7 +144,7 @@ public class HoverInfoProvider {
 					}
 				}
 			}, monitor);
-		} catch (HoverException e) {
+		} catch (HoverException | OperationCanceledException e) {
 			// ignore
 		}
 		return res[0];
