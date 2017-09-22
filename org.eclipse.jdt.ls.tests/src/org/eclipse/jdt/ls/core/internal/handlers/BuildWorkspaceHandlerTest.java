@@ -64,7 +64,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 			waitForBackgroundJobs();
 			BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
 			waitForBackgroundJobs();
-			assertTrue(result == BuildWorkspaceStatus.WITHERROR);
+			assertTrue(result == BuildWorkspaceStatus.WITH_ERROR);
 		}
 	}
 

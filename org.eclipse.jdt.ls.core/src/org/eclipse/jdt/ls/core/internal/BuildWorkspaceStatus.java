@@ -16,5 +16,5 @@ package org.eclipse.jdt.ls.core.internal;
  */
 public enum BuildWorkspaceStatus {
 
-	FAILED, SUCCEED, WITHERROR, CANCELLED,
+	FAILED, SUCCEED, WITH_ERROR, CANCELLED,
 }

@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +33,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.IDocument;
@@ -54,12 +56,13 @@ public class BuildWorkspaceHandler {
 	public BuildWorkspaceStatus buildWorkspace(IProgressMonitor monitor) {
 		try {
 			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
-			List<IMarker> errors = getBuildErrors(monitor);
+			List<IMarker> problemMarkers = getProblemMarkers(monitor);
+			publishDiagnostics(problemMarkers);
+			List<IMarker> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).collect(Collectors.toList());
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;
 			} else {
-				publishDiagnostics(errors);
-				return BuildWorkspaceStatus.WITHERROR;
+				return BuildWorkspaceStatus.WITH_ERROR;
 			}
 		} catch (CoreException e) {
 			logException("Failed to build workspace.", e);
@@ -69,22 +72,26 @@ public class BuildWorkspaceHandler {
 		}
 	}
 
-	private static List<IMarker> getBuildErrors(IProgressMonitor monitor) throws CoreException {
+	private static List<IMarker> getProblemMarkers(IProgressMonitor monitor) throws CoreException {
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		List<IMarker> errors = new ArrayList<>();
+		List<IMarker> markers = new ArrayList<>();
 		for (IProject project : projects) {
 			if (monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
-			errors.addAll(ResourceUtils.getErrorMarkers(project));
+			markers.addAll(Arrays.asList(project.findMarkers(IMarker.PROBLEM, true, IResource.DEPTH_INFINITE)));
 		}
-		return errors;
+		return markers;
 	}
 
 	private void publishDiagnostics(List<IMarker> markers) {
 		Map<IResource, List<IMarker>> map = markers.stream().collect(Collectors.groupingBy(IMarker::getResource));
 		for (Map.Entry<IResource, List<IMarker>> entry : map.entrySet()) {
 			IResource resource = entry.getKey();
+			// ignore problems caused by standalone files
+			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+				continue;
+			}
 			IFile file = resource.getAdapter(IFile.class);
 			if (file == null) {
 				continue;
