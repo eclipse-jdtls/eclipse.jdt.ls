@@ -16,34 +16,50 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 public class ClassfileContentHandler {
 
 	private static final String EMPTY_CONTENT = "";
 
+	private final PreferenceManager preferenceManager;
+
+	public ClassfileContentHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
+
 	public String contents(TextDocumentIdentifier param, IProgressMonitor monitor) {
 		String source = null;
-		try {
-			IClassFile cf = JDTUtils.resolveClassFile(param.getUri());
-			if (cf != null) {
-				IBuffer buffer = cf.getBuffer();
-				if (buffer != null) {
-					if (monitor.isCanceled()) {
-						return EMPTY_CONTENT;
-					}
-					source = buffer.getContents();
-					JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
-				}
-				if (source == null) {
-					source = JDTUtils.disassemble(cf);
-				}
-			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
+		IClassFile cf = JDTUtils.resolveClassFile(param.getUri());
+		if (cf != null) {
+			source = contents(cf, monitor);
 		}
 		if (source == null) {
 			source = EMPTY_CONTENT;// need to return non null value
+		}
+		return source;
+	}
+
+	public String contents(IClassFile cf, IProgressMonitor monitor) {
+		String source = null;
+		try {
+			IBuffer buffer = cf.getBuffer();
+			if (buffer != null) {
+				if (monitor.isCanceled()) {
+					return EMPTY_CONTENT;
+				}
+				source = buffer.getContents();
+				JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
+			}
+			if (source == null) {
+				source = JDTUtils.decompile(cf, preferenceManager, monitor);
+			}
+			if (source == null) {
+				source = JDTUtils.disassemble(cf);
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
 		}
 		return source;
 	}

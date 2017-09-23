@@ -32,11 +32,17 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
 
 public class ReferencesHandler {
 
+	private final PreferenceManager preferenceManager;
+
+	public ReferencesHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
@@ -49,7 +55,7 @@ public class ReferencesHandler {
 		try {
 			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
 					param.getPosition().getLine(),
-					param.getPosition().getCharacter());
+					param.getPosition().getCharacter(), this.preferenceManager, monitor);
 
 			if(elementToSearch == null) {
 				return Collections.emptyList();

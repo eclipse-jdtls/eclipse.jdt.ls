@@ -16,12 +16,19 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.ls.core.internal.HoverInfoProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class HoverHandler {
+
+	private final PreferenceManager preferenceManager;
+
+	public HoverHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	public Hover hover(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
@@ -36,7 +43,7 @@ public class HoverHandler {
 	}
 
 	private List<Either<String, MarkedString>> computeHover(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
-		HoverInfoProvider provider = new HoverInfoProvider(unit);
+		HoverInfoProvider provider = new HoverInfoProvider(unit, this.preferenceManager);
 		return provider.computeHover(line, column, monitor);
 	}
 

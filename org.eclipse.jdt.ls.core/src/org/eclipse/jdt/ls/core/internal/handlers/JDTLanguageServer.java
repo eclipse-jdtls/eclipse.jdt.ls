@@ -302,7 +302,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
 		logInfo(">> document/hover");
-		HoverHandler handler = new HoverHandler();
+		HoverHandler handler = new HoverHandler(this.preferenceManager);
 		return computeAsync((cc) -> handler.hover(position, toMonitor(cc)));
 	}
 
@@ -322,7 +322,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
-		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler();
+		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
 		return computeAsync((cc) -> handler.definition(position, toMonitor(cc)));
 	}
 
@@ -332,7 +332,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
 		logInfo(">> document/references");
-		ReferencesHandler handler = new ReferencesHandler();
+		ReferencesHandler handler = new ReferencesHandler(this.preferenceManager);
 		return computeAsync((cc) -> handler.findReferences(params, toMonitor(cc)));
 	}
 
@@ -488,7 +488,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<String> classFileContents(TextDocumentIdentifier param) {
 		logInfo(">> java/classFileContents");
-		ClassfileContentHandler handler = new ClassfileContentHandler();
+		ClassfileContentHandler handler = new ClassfileContentHandler(this.preferenceManager);
 		return computeAsync((cc) -> handler.contents(param, toMonitor(cc)));
 	}
 

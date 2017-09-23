@@ -13,6 +13,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -21,6 +23,8 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -36,10 +40,15 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	private NavigateToDefinitionHandler handler;
 	private IProject project;
+	private PreferenceManager preferenceManager;
+	private Preferences preferences;
 
 	@Before
 	public void setUp() throws Exception {
-		handler = new NavigateToDefinitionHandler();
+		preferenceManager = mock(PreferenceManager.class);
+		preferences = mock(Preferences.class);
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
 	}
@@ -64,6 +73,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {
+		when(preferences.getDecompilerId()).thenReturn("none");
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler

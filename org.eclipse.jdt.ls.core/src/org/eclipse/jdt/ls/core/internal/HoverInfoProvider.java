@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -66,14 +67,17 @@ public class HoverInfoProvider {
 
 	private final ITypeRoot unit;
 
-	public HoverInfoProvider(ITypeRoot aUnit) {
+	private final PreferenceManager preferenceManager;
+
+	public HoverInfoProvider(ITypeRoot aUnit, PreferenceManager preferenceManager) {
 		this.unit = aUnit;
+		this.preferenceManager = preferenceManager;
 	}
 
 	public List<Either<String, MarkedString>> computeHover(int line, int column, IProgressMonitor monitor) {
 		List<Either<String, MarkedString>> res = new LinkedList<>();
 		try {
-			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column);
+			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column, this.preferenceManager, monitor);
 			if(elements == null || elements.length == 0) {
 				res.add(Either.forLeft(""));
 				return res;

@@ -50,7 +50,8 @@ public class CodeLensHandler {
 	private static final String JAVA_SHOW_IMPLEMENTATIONS_COMMAND = "java.show.implementations";
 	private static final String IMPLEMENTATION_TYPE = "implementations";
 	private static final String REFERENCES_TYPE = "references";
-	private PreferenceManager preferenceManager;
+
+	private final PreferenceManager preferenceManager;
 
 	public CodeLensHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -81,7 +82,7 @@ public class CodeLensHandler {
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 			if (unit != null) {
-				IJavaElement element = JDTUtils.findElementAtSelection(unit, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue());
+				IJavaElement element = JDTUtils.findElementAtSelection(unit, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue(), this.preferenceManager, monitor);
 				if (REFERENCES_TYPE.equals(type)) {
 					try {
 						locations = findReferences(element, monitor);

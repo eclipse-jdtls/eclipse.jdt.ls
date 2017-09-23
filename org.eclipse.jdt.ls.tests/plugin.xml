@@ -19,4 +19,16 @@
             <command id="dup"/>
        </delegateCommandHandler>
    </extension>
+   <extension
+         point="org.eclipse.jdt.ls.core.decompilerCommandHandler">
+      <decompilerCommandHandler
+            class="org.eclipse.jdt.ls.core.internal.TestDecompilerCommandHandler"
+            id="testDecompiler"
+            name="Test Decompiler">
+      </decompilerCommandHandler>
+      <decompilerCommandHandler
+      		class="org.eclipse.jdt.ls.core.internal.PlaceHolder"
+      		id="placeholderDecompiler">
+       </decompilerCommandHandler>
+   </extension>
 </fragment>

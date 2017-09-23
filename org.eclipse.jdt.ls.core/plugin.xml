@@ -2,6 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler" schema="schema/org.eclipse.jdt.ls.core.delegateCommandHandler.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.decompilerCommandHandler" name="decompilerCommandHandler" schema="schema/org.eclipse.jdt.ls.core.decompilerCommandHandler.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">

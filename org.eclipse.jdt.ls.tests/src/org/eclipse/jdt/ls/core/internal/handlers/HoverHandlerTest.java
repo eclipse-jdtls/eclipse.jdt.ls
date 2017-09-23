@@ -14,6 +14,8 @@ import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -27,6 +29,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -60,13 +64,17 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IPackageFragmentRoot sourceFolder;
 
+	private PreferenceManager preferenceManager;
+
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
 		IJavaProject javaProject = JavaCore.create(project);
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
-		handler = new HoverHandler();
+		preferenceManager = mock(PreferenceManager.class);
+		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
+		handler = new HoverHandler(preferenceManager);
 	}
 
 	@Test
@@ -248,7 +256,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testHoverOnPackageWithJavadoc() throws Exception {
 		importProjects("maven/salut2");
 		project = WorkspaceHelper.getProject("salut2");
-		handler = new HoverHandler();
+		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on the org.apache.commons import
 		String payload = createHoverRequest("src/main/java/foo/Bar.java", 2, 22);
@@ -267,7 +275,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testHoverUnresolvedType() throws Exception {
 		importProjects("eclipse/unresolvedtype");
 		project = WorkspaceHelper.getProject("unresolvedtype");
-		handler = new HoverHandler();
+		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on the IFoo
 		String payload = createHoverRequest("src/pckg/Foo.java", 2, 31);

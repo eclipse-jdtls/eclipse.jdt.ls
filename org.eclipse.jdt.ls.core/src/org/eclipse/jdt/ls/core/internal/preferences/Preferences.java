@@ -105,6 +105,16 @@ public class Preferences {
 	 */
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
+	/**
+	 * Preference key for the id of the preferred decompiler.
+	 */
+	public static final String DECOMPILER_ID_KEY = "java.decompiler.id";
+
+	/**
+	 * Preference key for the preferred decompiler's configuration.
+	 */
+	public static final String DECOMPILER_CONFIGURATION_KEY = "java.decompiler.configuration";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
@@ -125,6 +135,8 @@ public class Preferences {
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
+	private String decompilerId;
+	private String decompilerConfiguration;
 
 	private String mavenUserSettings;
 
@@ -188,6 +200,8 @@ public class Preferences {
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
+		decompilerId = null;
+		decompilerConfiguration = null;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
@@ -233,6 +247,12 @@ public class Preferences {
 		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
+		String decompilerId = getStringValue(configuration, DECOMPILER_ID_KEY, null);
+		prefs.setDecompilerId(decompilerId);
+
+		String decompilerConfiguration = getStringValue(configuration, DECOMPILER_CONFIGURATION_KEY, null);
+		prefs.setDecompilerConfiguration(decompilerConfiguration);
+
 		return prefs;
 	}
 
@@ -243,6 +263,16 @@ public class Preferences {
 
 	private Preferences setMembersSortOrder(String sortOrder) {
 		this.memberOrders = new MemberSortOrder(sortOrder);
+		return this;
+	}
+
+	private Preferences setDecompilerId(String decompilerId) {
+		this.decompilerId = decompilerId;
+		return this;
+	}
+
+	private Preferences setDecompilerConfiguration(String decompilerConfiguration) {
+		this.decompilerConfiguration = decompilerConfiguration;
 		return this;
 	}
 
@@ -300,6 +330,14 @@ public class Preferences {
 
 	public MemberSortOrder getMemberSortOrder() {
 		return this.memberOrders;
+	}
+
+	public String getDecompilerId() {
+		return this.decompilerId;
+	}
+
+	public String getDecompilerConfiguration() {
+		return this.decompilerConfiguration;
 	}
 
 	public boolean isReferencesCodeLensEnabled() {
