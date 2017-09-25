@@ -3,10 +3,10 @@
 <schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.decompilerCommandHandler" name="decompilerCommandHandler"/>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.decompiler" name="decompiler"/>
       </appinfo>
       <documentation>
-         This extension point allows adding a decompiler command handler to convert bytecode into source code
+         This extension point allows adding a decompiler to convert bytecode into source code
       </documentation>
    </annotation>
 
@@ -18,7 +18,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="decompilerCommandHandler" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="decompiler" minOccurs="1" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,7 +47,7 @@
       </complexType>
    </element>
 
-   <element name="decompilerCommandHandler">
+   <element name="decompiler">
       <complexType>
          <attribute name="id" type="string" use="required">
             <annotation>
@@ -62,7 +62,7 @@
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IDecompilerCommandHandler"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IDecompiler"/>
                </appinfo>
             </annotation>
          </attribute>
@@ -82,15 +82,15 @@
          <meta.section type="examples"/>
       </appinfo>
       <documentation>
-         The following is an example of a language server decompiler command handler:
+         The following is an example of a language server decompiler extension:
 
 &lt;pre&gt;
- &lt;extension point=&quot;org.eclipse.jdt.ls.decompilerCommandHandler&quot;&gt;
-  &lt;decompilerCommandHandler
+ &lt;extension point=&quot;org.eclipse.jdt.ls.decompiler&quot;&gt;
+  &lt;decompiler
    id=&quot;mydecompiler&quot;
-   name=&quot;My Decompiler Command Handler&quot;
-   class=&quot;com.example.MyDecompilerCommandHandler&quot;&gt;
-  &lt;/decompilerCommandHandler&gt;
+   name=&quot;My Decompiler&quot;
+   class=&quot;com.example.MyDecompiler&quot;&gt;
+  &lt;/decompiler&gt;
  &lt;/extension&gt;
 &lt;/pre&gt;
       </documentation>

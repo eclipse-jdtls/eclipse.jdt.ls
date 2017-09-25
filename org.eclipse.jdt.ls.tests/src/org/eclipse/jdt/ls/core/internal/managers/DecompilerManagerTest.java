@@ -8,30 +8,38 @@
  * Contributors:
  *     David Gileadi - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core.internal.handlers;
+package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.TestDecompiler;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.managers.DecompilerManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DecompileCommandHandlerTest extends AbstractProjectsManagerBasedTest {
+public class DecompilerManagerTest extends AbstractProjectsManagerBasedTest {
 
 	private IClassFile classFile;
 	private PreferenceManager preferenceManager;
 	private Preferences preferences;
-	private DecompileCommandHandler handler;
+	private DecompilerManager handler;
 
 	@Before
-	public void createClassFile() {
-		classFile = mock(IClassFile.class);
+	public void createClassFile() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = ClassFileUtil.getURI(project, "java.math.BigDecimal");
+		classFile = JDTUtils.resolveClassFile(uri);
 	}
 
 	@Before
@@ -39,7 +47,7 @@ public class DecompileCommandHandlerTest extends AbstractProjectsManagerBasedTes
 		preferences = mock(Preferences.class);
 		preferenceManager = new PreferenceManager();
 		preferenceManager.update(preferences);
-		handler = new DecompileCommandHandler(preferenceManager);
+		handler = new DecompilerManager(preferenceManager);
 	}
 
 	@Test
@@ -47,7 +55,8 @@ public class DecompileCommandHandlerTest extends AbstractProjectsManagerBasedTes
 		when(preferences.getDecompilerId()).thenReturn("testDecompiler");
 
 		String result = handler.decompile(classFile, monitor);
-		assertEquals("This is decompiled", result);
+		assertTrue("header is missing from " + result, result.startsWith(String.format(DecompilerManager.DECOMPILED_HEADER, "Test Decompiler")));
+		assertTrue("decompiled output is missing from " + result, result.endsWith(TestDecompiler.DECOMPILED_CODE));
 	}
 
 	@Test
@@ -67,16 +76,11 @@ public class DecompileCommandHandlerTest extends AbstractProjectsManagerBasedTes
 	}
 
 	@Test
-	public void testGetTestDecompilerName() {
-		when(preferences.getDecompilerId()).thenReturn("testDecompiler");
+	public void testDisassembler() throws Exception {
+		when(preferences.getDecompilerId()).thenReturn(Preferences.DECOMPILER_ID_DEFAULT);
 
-		assertEquals("Test Decompiler", handler.getDecompilerName());
-	}
-
-	@Test
-	public void testGetPlaceholderDecompilerIdAsName() {
-		when(preferences.getDecompilerId()).thenReturn("placeholderDecompiler");
-
-		assertEquals("placeholderDecompiler", handler.getDecompilerName());
+		String result = handler.decompile(classFile, monitor);
+		assertTrue("header is missing from " + result, result.startsWith(String.format(DecompilerManager.DECOMPILED_HEADER, Preferences.DECOMPILER_ID_DEFAULT)));
+		assertTrue("disassembler header is missing from " + result, result.contains(DecompilerManager.DISASSEMBLER_HEADER_ADDITION));
 	}
 }

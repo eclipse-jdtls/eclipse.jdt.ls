@@ -18,9 +18,9 @@ import static org.mockito.Mockito.when;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.DecompilerManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -35,7 +35,6 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 	private IProject project;
 	private ClassfileContentHandler handler;
 	private PreferenceManager preferenceManager;
-	private Preferences preferences;
 
 	@Before
 	public void setup() throws Exception {
@@ -43,8 +42,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 		project = WorkspaceHelper.getProject("salut");
 		preferenceManager = mock(PreferenceManager.class);
 		preferences = mock(Preferences.class);
-		when(preferences.getDecompilerId()).thenReturn("none");
-		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
 		handler = new ClassfileContentHandler(preferenceManager);
 	}
 
@@ -53,7 +51,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils");
 		String source = getSource(uri);
 		assertNotNull(source);
-		assertFalse("header should be missing from " + source, source.startsWith(JDTUtils.DISASSEMBLED_HEADER));
+		assertFalse("header should be missing from " + source, source.startsWith(String.format(DecompilerManager.DECOMPILED_HEADER, Preferences.DECOMPILER_ID_DEFAULT)));
 		assertTrue("unexpected body content "+source, source.contains("Operations on Strings that contain words."));
 	}
 
@@ -62,7 +60,7 @@ public class ClassfileContentHandlerTest extends AbstractProjectsManagerBasedTes
 		String uri = ClassFileUtil.getURI(project, "java.math.BigDecimal");
 		String source = getSource(uri);
 		assertNotNull(source);
-		assertTrue("header is missing from " + source, source.startsWith(JDTUtils.DISASSEMBLED_HEADER));
+		assertTrue("header is missing from " + source, source.startsWith(String.format(DecompilerManager.DECOMPILED_HEADER, Preferences.DECOMPILER_ID_DEFAULT)));
 		assertTrue("unexpected body content " + source, source.contains("package java.math;"));
 		assertTrue("unexpected body content " + source, source.contains("public class BigDecimal extends java.lang.Number implements java.lang.Comparable {"));
 	}

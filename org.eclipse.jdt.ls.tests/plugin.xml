@@ -20,15 +20,15 @@
        </delegateCommandHandler>
    </extension>
    <extension
-         point="org.eclipse.jdt.ls.core.decompilerCommandHandler">
-      <decompilerCommandHandler
-            class="org.eclipse.jdt.ls.core.internal.TestDecompilerCommandHandler"
+         point="org.eclipse.jdt.ls.core.decompiler">
+      <decompiler
+            class="org.eclipse.jdt.ls.core.internal.TestDecompiler"
             id="testDecompiler"
             name="Test Decompiler">
-      </decompilerCommandHandler>
-      <decompilerCommandHandler
+      </decompiler>
+      <decompiler
       		class="org.eclipse.jdt.ls.core.internal.PlaceHolder"
       		id="placeholderDecompiler">
-       </decompilerCommandHandler>
+       </decompiler>
    </extension>
 </fragment>

@@ -10,13 +10,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.Map;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 
 /**
- * Interface for command handler to decompile bytecode
+ * Interface for classes that decompile bytecode
  */
-public interface IDecompilerCommandHandler {
+public interface IDecompiler {
 	/**
 	 * Decompile bytecode into source code.
 	 *
@@ -29,5 +32,5 @@ public interface IDecompilerCommandHandler {
 	 * @return decompiled bytecode or <code>null</code>
 	 * @throws Exception
 	 */
-	String decompile(IClassFile classFile, String configuration, IProgressMonitor monitor) throws Exception;
+	String decompile(IClassFile classFile, Map<String, Object> configuration, IProgressMonitor monitor) throws CoreException;
 }

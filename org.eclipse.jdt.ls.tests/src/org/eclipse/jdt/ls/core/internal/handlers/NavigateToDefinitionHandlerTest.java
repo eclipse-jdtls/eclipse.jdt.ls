@@ -41,13 +41,11 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	private NavigateToDefinitionHandler handler;
 	private IProject project;
 	private PreferenceManager preferenceManager;
-	private Preferences preferences;
 
 	@Before
 	public void setUp() throws Exception {
 		preferenceManager = mock(PreferenceManager.class);
-		preferences = mock(Preferences.class);
-		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
@@ -73,7 +71,6 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {
-		when(preferences.getDecompilerId()).thenReturn("none");
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler

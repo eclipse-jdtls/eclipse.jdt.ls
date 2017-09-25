@@ -16,6 +16,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.managers.DecompilerManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
@@ -53,15 +54,22 @@ public class ClassfileContentHandler {
 				JavaLanguageServerPlugin.logInfo("ClassFile contents request completed");
 			}
 			if (source == null) {
-				source = JDTUtils.decompile(cf, preferenceManager, monitor);
-			}
-			if (source == null) {
-				source = JDTUtils.disassemble(cf);
+				source = decompile(cf, monitor);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Exception getting java element ", e);
 		}
 		return source;
+	}
+
+	private String decompile(IClassFile cf, IProgressMonitor monitor) {
+		DecompilerManager decompiler = new DecompilerManager(preferenceManager);
+		try {
+			return decompiler.decompile(cf, monitor);
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logError("Unable to decompile " + cf.getHandleIdentifier());
+			return null;
+		}
 	}
 
 }

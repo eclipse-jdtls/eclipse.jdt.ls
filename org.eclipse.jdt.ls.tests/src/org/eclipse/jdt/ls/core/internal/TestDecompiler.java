@@ -10,13 +10,19 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.Map;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.ls.core.internal.IDecompiler;
 
-public class TestDecompilerCommandHandler implements IDecompilerCommandHandler {
+public class TestDecompiler implements IDecompiler {
+
+	public static final String DECOMPILED_CODE = "This is decompiled";
 
 	@Override
-	public String decompile(IClassFile classFile, String configuration, IProgressMonitor monitor) throws Exception {
-		return "This is decompiled";
+	public String decompile(IClassFile classFile, Map<String, Object> configuration, IProgressMonitor monitor) throws CoreException {
+		return DECOMPILED_CODE;
 	}
 }

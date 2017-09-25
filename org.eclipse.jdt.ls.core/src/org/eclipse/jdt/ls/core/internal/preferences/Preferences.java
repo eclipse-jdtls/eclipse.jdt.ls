@@ -109,6 +109,7 @@ public class Preferences {
 	 * Preference key for the id of the preferred decompiler.
 	 */
 	public static final String DECOMPILER_ID_KEY = "java.decompiler.id";
+	public static final String DECOMPILER_ID_DEFAULT = "disassembler";
 
 	/**
 	 * Preference key for the preferred decompiler's configuration.
@@ -136,7 +137,7 @@ public class Preferences {
 	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
 	private String decompilerId;
-	private String decompilerConfiguration;
+	private Map<String, Object> decompilerConfiguration;
 
 	private String mavenUserSettings;
 
@@ -200,7 +201,7 @@ public class Preferences {
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
-		decompilerId = null;
+		decompilerId = DECOMPILER_ID_DEFAULT;
 		decompilerConfiguration = null;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
@@ -247,10 +248,10 @@ public class Preferences {
 		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
-		String decompilerId = getStringValue(configuration, DECOMPILER_ID_KEY, null);
+		String decompilerId = getString(configuration, DECOMPILER_ID_KEY, null);
 		prefs.setDecompilerId(decompilerId);
 
-		String decompilerConfiguration = getStringValue(configuration, DECOMPILER_CONFIGURATION_KEY, null);
+		Map<String, Object> decompilerConfiguration = getMap(configuration, DECOMPILER_CONFIGURATION_KEY, null);
 		prefs.setDecompilerConfiguration(decompilerConfiguration);
 
 		return prefs;
@@ -271,8 +272,8 @@ public class Preferences {
 		return this;
 	}
 
-	private Preferences setDecompilerConfiguration(String decompilerConfiguration) {
-		this.decompilerConfiguration = decompilerConfiguration;
+	private Preferences setDecompilerConfiguration(Map<String, Object> decompilerConfiguration2) {
+		this.decompilerConfiguration = decompilerConfiguration2;
 		return this;
 	}
 
@@ -336,7 +337,7 @@ public class Preferences {
 		return this.decompilerId;
 	}
 
-	public String getDecompilerConfiguration() {
+	public Map<String, Object> getDecompilerConfiguration() {
 		return this.decompilerConfiguration;
 	}
 
