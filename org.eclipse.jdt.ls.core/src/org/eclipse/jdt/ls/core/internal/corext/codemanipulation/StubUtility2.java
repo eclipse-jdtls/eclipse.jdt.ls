@@ -67,6 +67,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.text.edits.TextEditGroup;
 
@@ -448,6 +449,7 @@ public final class StubUtility2 {
 					if (!bodyStatement.isEmpty()) {
 						placeHolder.append(":");
 					}
+					bodyStatement = CompletionUtils.sanitizeCompletion(bodyStatement);
 				}
 				placeHolder.append(bodyStatement);
 				if (snippetStringSupport) {

@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
@@ -136,7 +137,6 @@ public class CompletionProposalReplacementProvider {
 		if (range == null) {
 			range = toReplacementRange(proposal);
 		}
-
 		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
 			appendMethodOverrideReplacement(completionBuffer, proposal);
 		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
@@ -309,6 +309,10 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private void appendBody(StringBuilder completionBuffer) {
+		if (client.isCompletionSnippetsSupported()) {
+			String replace = CompletionUtils.sanitizeCompletion(completionBuffer.toString());
+			completionBuffer.replace(0, completionBuffer.toString().length(), replace);
+		}
 		completionBuffer.append(" {\n\t");
 		if (client.isCompletionSnippetsSupported())  {
 			completionBuffer.append(CURSOR_POSITION);
@@ -365,7 +369,11 @@ public class CompletionProposalReplacementProvider {
 
 	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal) {
 		if (!hasArgumentList(proposal)) {
-			buffer.append(proposal.getKind() == CompletionProposal.TYPE_REF ? computeJavaTypeReplacementString(proposal) : String.valueOf(proposal.getCompletion()));
+			String str = proposal.getKind() == CompletionProposal.TYPE_REF ? computeJavaTypeReplacementString(proposal) : String.valueOf(proposal.getCompletion());
+			if (client.isCompletionSnippetsSupported()) {
+				str = CompletionUtils.sanitizeCompletion(str);
+			}
+			buffer.append(str);
 			return;
 		}
 
@@ -399,7 +407,10 @@ public class CompletionProposalReplacementProvider {
 
 	private void appendMethodNameReplacement(StringBuilder buffer, CompletionProposal proposal) {
 		if (proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER) {
-			String coreCompletion= String.valueOf(proposal.getCompletion());
+			String coreCompletion = String.valueOf(proposal.getCompletion());
+			if (client.isCompletionSnippetsSupported()) {
+				coreCompletion = CompletionUtils.sanitizeCompletion(coreCompletion);
+			}
 			//			String lineDelimiter = TextUtilities.getDefaultLineDelimiter(getTextViewer().getDocument());
 			//			String replacement= CodeFormatterUtil.format(CodeFormatter.K_EXPRESSION, coreCompletion, 0, lineDelimiter, fInvocationContext.getProject());
 			//			buffer.append(replacement.substring(0, replacement.lastIndexOf('.') + 1));
@@ -407,7 +418,11 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
-			buffer.append(proposal.getName());
+			String str = new String(proposal.getName());
+			if (client.isCompletionSnippetsSupported()) {
+				str = CompletionUtils.sanitizeCompletion(str);
+			}
+			buffer.append(str);
 		}
 
 	}
@@ -423,8 +438,12 @@ public class CompletionProposalReplacementProvider {
 					buffer.append(COMMA);
 					buffer.append(SPACE);
 				}
-
 				char[] argument = parameterNames[i];
+				if (client.isCompletionSnippetsSupported()) {
+					String replace = new String(argument);
+					replace = CompletionUtils.sanitizeCompletion(replace);
+					argument = replace.toCharArray();
+				}
 				buffer.append("${");
 				buffer.append(Integer.toString(i+1));
 				buffer.append(":");
