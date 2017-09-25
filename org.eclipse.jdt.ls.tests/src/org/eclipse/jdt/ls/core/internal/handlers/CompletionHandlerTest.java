@@ -1021,6 +1021,64 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}", resolvedItem.getTextEdit());
 	}
 
+	@Test
+	public void testCompletion_class_name_contains_$() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Foo$Bar.java",
+				"public class Foo$Bar {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        new Foo\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "new Foo");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Foo$Bar"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Foo$Bar", ci.getInsertText());
+		assertEquals(CompletionItemKind.Constructor, ci.getKind());
+		assertEquals("999999115", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 12, 15, "Foo\\$Bar()", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_class_name_contains_$withoutSnippetSupport() throws Exception {
+		mockLSPClient(false, true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Foo$Bar.java",
+				"public class Foo$Bar {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        new Foo\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "new Foo");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Foo$Bar"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Foo$Bar", ci.getInsertText());
+		assertEquals(CompletionItemKind.Constructor, ci.getKind());
+		assertEquals("999999115", ci.getSortText());
+		assertNull(ci.getTextEdit());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		assertTextEdit(2, 12, 15, "Foo$Bar", resolvedItem.getTextEdit());
+	}
+
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
 				.replace("${line}", String.valueOf(line))
