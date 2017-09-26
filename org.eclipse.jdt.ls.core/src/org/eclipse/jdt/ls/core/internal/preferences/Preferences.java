@@ -248,7 +248,7 @@ public class Preferences {
 		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
-		String decompilerId = getString(configuration, DECOMPILER_ID_KEY, null);
+		String decompilerId = getString(configuration, DECOMPILER_ID_KEY, DECOMPILER_ID_DEFAULT);
 		prefs.setDecompilerId(decompilerId);
 
 		Map<String, Object> decompilerConfiguration = getMap(configuration, DECOMPILER_CONFIGURATION_KEY, null);
