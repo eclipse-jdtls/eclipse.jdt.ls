@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017 David Gileadi and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,6 +29,7 @@ import org.eclipse.jdt.ls.core.internal.Disassembler;
 import org.eclipse.jdt.ls.core.internal.IDecompiler;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 public class DecompilerManager {
 
@@ -42,7 +43,6 @@ public class DecompilerManager {
 
 	private final PreferenceManager preferenceManager;
 	private DecompilerDescriptor decompilerDescriptor;
-	private IDecompiler decompiler;
 
 	public DecompilerManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -51,7 +51,6 @@ public class DecompilerManager {
 	private static class DecompilerDescriptor {
 
 		private final IConfigurationElement configurationElement;
-		private IDecompiler decompiler;
 		public final String id;
 		public final String name;
 
@@ -59,26 +58,21 @@ public class DecompilerManager {
 			configurationElement = element;
 			id = configurationElement.getAttribute(ID);
 			name = configurationElement.getAttribute(NAME);
-			decompiler = null;
 		}
 
 		public synchronized IDecompiler getDecompiler() {
-			if (decompiler == null) {
-				try {
-					Object extension = configurationElement.createExecutableExtension(CLASS);
-					if (extension instanceof IDecompiler) {
-						decompiler = (IDecompiler) extension;
-					} else {
-						String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implement org.eclipse.jdt.ls.core.internal.IDecompiler";
-						JavaLanguageServerPlugin.logError(message);
-						return null;
-					}
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Unable to create decompiler ", e);
-					return null;
+			try {
+				Object extension = configurationElement.createExecutableExtension(CLASS);
+				if (extension instanceof IDecompiler) {
+					return (IDecompiler) extension;
+				} else {
+					String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implement org.eclipse.jdt.ls.core.internal.IDecompiler";
+					JavaLanguageServerPlugin.logError(message);
 				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Unable to create decompiler ", e);
 			}
-			return decompiler;
+			return null;
 		}
 	}
 
@@ -102,11 +96,7 @@ public class DecompilerManager {
 	 *         unsuccessful, or an empty string if canceled
 	 */
 	public String decompile(IClassFile classFile, IProgressMonitor monitor) {
-		IDecompiler decompiler = getDecompiler();
-		if (decompiler == null) {
-			JavaLanguageServerPlugin.logError("Unable to load decompiler class");
-			return null;
-		}
+		final IDecompiler decompiler = getDecompiler();
 
 		if (monitor.isCanceled()) {
 			return "";
@@ -126,7 +116,7 @@ public class DecompilerManager {
 				JavaLanguageServerPlugin.log(status);
 			}
 		});
-		return prependHeader(resultValues[0]);
+		return prependHeader(resultValues[0], decompiler);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -140,17 +130,25 @@ public class DecompilerManager {
 	}
 
 	private IDecompiler getDecompiler() {
-		if (this.decompiler != null) {
-			return this.decompiler;
+		IDecompiler decompiler = getDecompiler(preferenceManager.getPreferences().getDecompilerId());
+		if (decompiler == null) {
+			JavaLanguageServerPlugin.logError("Unable to load decompiler class for " + preferenceManager.getPreferences().getDecompilerId());
+			decompiler = getDecompiler(Preferences.DECOMPILER_ID_DEFAULT);
 		}
+		if (decompiler == null) {
+			JavaLanguageServerPlugin.logError("Unable to load decompiler class");
+			return null;
+		}
+		return decompiler;
+	}
 
+	private IDecompiler getDecompiler(String decompilerId) {
 		Set<DecompilerDescriptor> handlers = getDecompilerDescriptors();
 		if (handlers.isEmpty()) {
 			JavaLanguageServerPlugin.logError("No decompilers found");
 			return null;
 		}
 
-		String decompilerId = preferenceManager.getPreferences().getDecompilerId();
 		Optional<DecompilerDescriptor> handler = handlers.stream().filter(d -> decompilerId == null || decompilerId.equals(d.id)).findFirst();
 		if (!handler.isPresent()) {
 			JavaLanguageServerPlugin.logError("Unable to find decompiler " + decompilerId);
@@ -158,11 +156,10 @@ public class DecompilerManager {
 		}
 
 		this.decompilerDescriptor = handler.get();
-		this.decompiler = this.decompilerDescriptor.getDecompiler();
-		return this.decompiler;
+		return this.decompilerDescriptor.getDecompiler();
 	}
 
-	private String prependHeader(String decompiledCode) {
+	private String prependHeader(String decompiledCode, IDecompiler decompiler) {
 		if (decompiledCode != null) {
 			String header = String.format(DECOMPILED_HEADER, getDecompilerName());
 			if (decompiler instanceof Disassembler) {
@@ -173,9 +170,6 @@ public class DecompilerManager {
 		return decompiledCode;
 	}
 
-	/**
-	 * @return the name of the chosen decompiler, or its id if no name is provided
-	 */
 	private String getDecompilerName() {
 		if (this.decompilerDescriptor == null) {
 			getDecompiler();

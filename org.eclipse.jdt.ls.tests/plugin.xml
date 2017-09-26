@@ -22,9 +22,9 @@
    <extension
          point="org.eclipse.jdt.ls.core.decompiler">
       <decompiler
-            class="org.eclipse.jdt.ls.core.internal.TestDecompiler"
-            id="testDecompiler"
-            name="Test Decompiler">
+            class="org.eclipse.jdt.ls.core.internal.FakeDecompiler"
+            id="fakeDecompiler"
+            name="Fake decompiler">
       </decompiler>
       <decompiler
       		class="org.eclipse.jdt.ls.core.internal.PlaceHolder"

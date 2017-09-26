@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017 David Gileadi and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,9 +15,8 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.ls.core.internal.IDecompiler;
 
-public class TestDecompiler implements IDecompiler {
+public class FakeDecompiler implements IDecompiler {
 
 	public static final String DECOMPILED_CODE = "This is decompiled";
 
