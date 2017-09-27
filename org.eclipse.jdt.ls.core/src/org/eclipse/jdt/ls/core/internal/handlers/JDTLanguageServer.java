@@ -187,8 +187,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		Object settings = params.getSettings();
 		if (settings instanceof Map) {
 			@SuppressWarnings("unchecked")
-			Map<String, Object> javaConfig = MapFlattener.flatten((Map<String, Object>) settings);
-			Preferences prefs = Preferences.createFrom(javaConfig);
+			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			preferenceManager.update(prefs);
 		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
