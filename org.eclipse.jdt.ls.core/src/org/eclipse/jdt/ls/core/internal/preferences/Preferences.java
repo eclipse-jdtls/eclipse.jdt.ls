@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getMap;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
 import java.util.ArrayList;

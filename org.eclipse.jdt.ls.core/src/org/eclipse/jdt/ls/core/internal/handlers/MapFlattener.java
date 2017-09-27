@@ -81,6 +81,36 @@ public final class MapFlattener {
 		return def;
 	}
 
+	public static Map<String, Object> getMap(Map<String, Object> configuration, String key) {
+		return getMap(configuration, key, null);
+	}
+
+	public static Map<String, Object> getMap(Map<String, Object> configuration, String key, Map<String, Object> def) {
+		Object val = getValue(configuration, key);
+		if (val instanceof String) {
+			try {
+				Gson gson = new Gson();
+				Type type = new TypeToken<Map<String, Object>>() {
+				}.getType();
+				Map<String, Object> map = gson.fromJson((String) val, type);
+				return map;
+			} catch (JsonSyntaxException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return def;
+			}
+		}
+		if (val instanceof Map) {
+			Map<String, Object> ret;
+			try {
+				ret = (Map<String, Object>) val;
+				return ret;
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		return def;
+	}
+
 	public static boolean getBoolean(Map<String, Object> configuration, String key) {
 		return getBoolean(configuration, key, false);
 	}
