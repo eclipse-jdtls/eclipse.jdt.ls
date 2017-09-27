@@ -10,18 +10,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import java.lang.reflect.Type;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.MessageType;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * Preferences model
@@ -194,59 +192,6 @@ public class Preferences {
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
 
-	private static String getStringValue(Map<String, Object> configuration, String key, String def) {
-		Object val = configuration.get(key);
-		if (val instanceof String) {
-			return (String) val;
-		}
-		return def;
-	}
-
-	private static List<String> getListValue(Map<String, Object> configuration, String key, List<String> def) {
-		Object val = configuration.get(key);
-		if (val instanceof String) {
-			try {
-				Gson gson = new Gson();
-				Type type = new TypeToken<List<String>>() {
-				}.getType();
-				List<String> list = gson.fromJson((String) val, type);
-				return list;
-			} catch (JsonSyntaxException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				return def;
-			}
-		}
-		if (val instanceof List) {
-			List<String> ret;
-			try {
-				ret = (List<String>) val;
-				return ret;
-			} catch (Exception e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-		}
-		return def;
-	}
-
-	private static boolean getBooleanValue(Map<String, Object> configuration, String key, boolean def) {
-		Object val = configuration.get(key);
-		if (val instanceof Boolean) {
-			return ((Boolean) val).booleanValue();
-		}
-		if (val instanceof String) {
-			return Boolean.parseBoolean((String) val);
-		}
-		return def;
-	}
-
-	private static int getNumberValue(Map<String, Object> configuration, String key, int def) {
-		Object val = configuration.get(key);
-		if (val instanceof Integer) {
-			return ((Integer) val).intValue();
-		}
-		return def;
-	}
-
 	/**
 	 * Create a {@link Preferences} model from a {@link Map} configuration.
 	 */
@@ -255,37 +200,37 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
-		String incompleteClasspathSeverity = getStringValue(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
+		String incompleteClasspathSeverity = getString(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
 		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
 
-		String updateBuildConfiguration = getStringValue(configuration, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, null);
+		String updateBuildConfiguration = getString(configuration, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, null);
 		prefs.setUpdateBuildConfigurationStatus(
 				FeatureStatus.fromString(updateBuildConfiguration, FeatureStatus.interactive));
 
-		boolean referenceCodelensEnabled = getBooleanValue(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
+		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
-		boolean implementationCodeLensEnabled = getBooleanValue(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
+		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
 		prefs.setImplementationCodelensEnabled(implementationCodeLensEnabled);
 
-		boolean javaFormatEnabled = getBooleanValue(configuration, JAVA_FORMAT_ENABLED_KEY, true);
+		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
 
-		boolean signatureHelpEnabled = getBooleanValue(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
+		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
 
-		boolean renameEnabled = getBooleanValue(configuration, RENAME_ENABLED_KEY, true);
+		boolean renameEnabled = getBoolean(configuration, RENAME_ENABLED_KEY, true);
 		prefs.setRenameEnabled(renameEnabled);
 
-		List<String> javaImportExclusions = getListValue(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
+		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
 
-		String mavenUserSettings = getStringValue(configuration, MAVEN_USER_SETTINGS_KEY, null);
+		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
-		String sortOrder = getStringValue(configuration, MEMBER_SORT_ORDER, null);
+		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
 
-		String favoriteStaticMembers = getStringValue(configuration, FAVORITE_STATIC_MEMBERS, "");
+		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
 		return prefs;

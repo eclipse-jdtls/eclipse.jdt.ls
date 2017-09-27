@@ -10,10 +10,21 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -25,24 +36,106 @@ import org.junit.Test;
 public class MapFlattenerTest {
 
 	@Test
-	public void testFlatten() throws Exception {
-		assertNull(MapFlattener.flatten(null));
-
-		Map<String, Object> top = new HashMap<>();
-		top.put("foo", "bar");
+	public void testGetString() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("foo", "bar");
 
 		Map<String, Object> middle = new HashMap<>();
-		top.put("java", middle);
+		config.put("java", middle);
 		middle.put("thing", "value");
 
 		Map<String, Object> bottom = new HashMap<>();
 		middle.put("bottom", bottom);
 		bottom.put("another", "thing");
 
-		Map<String, Object> flattened = MapFlattener.flatten(top);
-		assertEquals("bar", flattened.get("foo"));
-		assertEquals("value", flattened.get("java.thing"));
-		assertEquals("thing", flattened.get("java.bottom.another"));
+		assertNull("default", getString(config, "missing"));
+		assertEquals("default", getString(config, "missing", "default"));
+		assertEquals("bar", getString(config, "foo"));
+		assertEquals("value", getString(config, "java.thing"));
+		assertEquals("thing", getString(config, "java.bottom.another"));
+	}
+
+	@Test
+	public void testGetInt() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("foo", 1);
+
+		Map<String, Object> middle = new HashMap<>();
+		config.put("java", middle);
+		middle.put("nope", "not an int");
+
+		Map<String, Object> bottom = new HashMap<>();
+		middle.put("bottom", bottom);
+		bottom.put("another", "3");
+
+		assertEquals(0, getInt(config, "missing"));
+		assertEquals(1, getInt(config, "foo"));
+		assertEquals(2, getInt(config, "java.nope", 2));
+		assertEquals(3, getInt(config, "java.bottom.another"));
+	}
+
+	@Test
+	public void testGetBoolean() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("foo", true);
+
+		Map<String, Object> middle = new HashMap<>();
+		config.put("java", middle);
+		middle.put("thing", "TRUE");
+
+		Map<String, Object> bottom = new HashMap<>();
+		middle.put("bottom", bottom);
+		bottom.put("another", true);
+
+		assertTrue(getBoolean(config, "foo"));
+		assertTrue(getBoolean(config, "java.thing"));
+		assertTrue(getBoolean(config, "java.default", true));
+		assertFalse(getBoolean(config, "java.missing"));
+		assertTrue(getBoolean(config, "java.bottom.another"));
+	}
+
+	@Test
+	public void testGetList() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("foo", "['a', 'b']");
+
+		Map<String, Object> middle = new HashMap<>();
+		config.put("java", middle);
+
+		Map<String, Object> bottom = new HashMap<>();
+		middle.put("bottom", bottom);
+		bottom.put("another", "['c', 'd']");
+
+		List<String> foo = getList(config, "foo");
+		assertNotNull(foo);
+		assertEquals("a", foo.get(0));
+		assertEquals("b", foo.get(1));
+
+		List<String> nope = getList(config, "java");
+		assertNull(nope);
+
+		List<String> def = new ArrayList<>();
+		assertSame(def, getList(config, "java", def));
+
+		List<String> bar = getList(config, "java.bottom.another");
+		assertNotNull(bar);
+		assertEquals("c", bar.get(0));
+		assertEquals("d", bar.get(1));
+	}
+
+	@Test
+	public void testGetValue() throws Exception {
+		Map<String, Object> config = new HashMap<>();
+		config.put("foo", 1);
+
+		Map<String, Object> middle = new HashMap<>();
+		config.put("java", middle);
+
+		Map<String, Object> bottom = new HashMap<>();
+		middle.put("bottom", bottom);
+		bottom.put("another", 2);
+
+		assertSame(bottom, getValue(config, "java.bottom"));
 	}
 
 }
