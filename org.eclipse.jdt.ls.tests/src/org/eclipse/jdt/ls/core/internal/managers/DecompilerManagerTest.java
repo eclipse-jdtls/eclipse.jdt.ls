@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.Disassembler;
 import org.eclipse.jdt.ls.core.internal.FakeDecompiler;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -65,7 +66,7 @@ public class DecompilerManagerTest extends AbstractProjectsManagerBasedTest {
 
 		String result = handler.decompile(classFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.contains(DecompilerManager.DISASSEMBLER_HEADER_ADDITION));
+		assertTrue("disassembler header is missing from " + result, result.contains(Disassembler.IMPLEMENTATIONS_UNAVAILABLE));
 	}
 
 	@Test
@@ -74,7 +75,7 @@ public class DecompilerManagerTest extends AbstractProjectsManagerBasedTest {
 
 		String result = handler.decompile(classFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.contains(DecompilerManager.DISASSEMBLER_HEADER_ADDITION));
+		assertTrue("disassembler header is missing from " + result, result.contains(Disassembler.IMPLEMENTATIONS_UNAVAILABLE));
 	}
 
 	@Test
@@ -84,6 +85,6 @@ public class DecompilerManagerTest extends AbstractProjectsManagerBasedTest {
 		String result = handler.decompile(classFile, monitor);
 		assertNotNull(result);
 		assertTrue("header is missing from " + result, result.startsWith(String.format(DecompilerManager.DECOMPILED_HEADER, Preferences.DECOMPILER_ID_DEFAULT)));
-		assertTrue("disassembler header is missing from " + result, result.contains(DecompilerManager.DISASSEMBLER_HEADER_ADDITION));
+		assertTrue("disassembler header is missing from " + result, result.contains(Disassembler.IMPLEMENTATIONS_UNAVAILABLE));
 	}
 }

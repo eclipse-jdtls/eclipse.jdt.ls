@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.util.ClassFormatException;
 
 public class Disassembler implements IDecompiler {
 
+	public static final String IMPLEMENTATIONS_UNAVAILABLE = " // Implementation of methods is unavailable.\n";
 	private static final String LF = "\n";
 
 	@Override
@@ -31,6 +32,9 @@ public class Disassembler implements IDecompiler {
 		String disassembledByteCode = null;
 		try {
 			disassembledByteCode = disassembler.disassemble(classFile.getBytes(), LF, ClassFileBytesDisassembler.WORKING_COPY);
+			if (disassembledByteCode != null) {
+				disassembledByteCode = IMPLEMENTATIONS_UNAVAILABLE + disassembledByteCode;
+			}
 		} catch (ClassFormatException e) {
 			throw new CoreException(new Status(Status.ERROR, "", "Error disassembling", e));
 		}
