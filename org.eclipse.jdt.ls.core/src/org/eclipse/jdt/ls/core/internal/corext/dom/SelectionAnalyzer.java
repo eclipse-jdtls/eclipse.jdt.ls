@@ -75,15 +75,15 @@ public class SelectionAnalyzer extends GenericVisitor {
 		return fSelectedNodes.get(0) instanceof Expression;
 	}
 
-	//	public IRegion getSelectedNodeRange() {
-	//		if (fSelectedNodes == null || fSelectedNodes.isEmpty()) {
-	//			return null;
-	//		}
-	//		ASTNode firstNode = fSelectedNodes.get(0);
-	//		ASTNode lastNode = fSelectedNodes.get(fSelectedNodes.size() - 1);
-	//		int start = firstNode.getStartPosition();
-	//		return new Region(start, lastNode.getStartPosition() + lastNode.getLength() - start);
-	//	}
+	public Selection getSelectedNodeRange() {
+		if (fSelectedNodes == null || fSelectedNodes.isEmpty()) {
+			return null;
+		}
+		ASTNode firstNode = fSelectedNodes.get(0);
+		ASTNode lastNode = fSelectedNodes.get(fSelectedNodes.size() - 1);
+		int start = firstNode.getStartPosition();
+		return Selection.createFromStartLength(start, lastNode.getStartPosition() + lastNode.getLength() - start);
+	}
 
 	public ASTNode getLastCoveringNode() {
 		return fLastCoveringNode;
