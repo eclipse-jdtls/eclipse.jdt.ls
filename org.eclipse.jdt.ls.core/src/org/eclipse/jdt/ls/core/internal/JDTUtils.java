@@ -200,9 +200,11 @@ public final class JDTUtils {
 					String name = parent.getName(parent.getNameCount() - 1).toString();
 					if (SRC.equals(name)) {
 						String pathStr = path.getParent().toString();
-						pathStr = pathStr.substring(parent.toString().length() + 1);
-						pathStr = pathStr.replace(PATH_SEPARATOR, PERIOD);
-						return pathStr;
+						if (pathStr.length() > parent.toString().length()) {
+							pathStr = pathStr.substring(parent.toString().length() + 1);
+							pathStr = pathStr.replace(PATH_SEPARATOR, PERIOD);
+							return pathStr;
+						}
 					}
 				}
 			} else {

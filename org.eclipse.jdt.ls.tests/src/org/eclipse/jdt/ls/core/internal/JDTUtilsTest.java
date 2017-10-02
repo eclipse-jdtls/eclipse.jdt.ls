@@ -79,6 +79,14 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 	}
 
 	@Test
+	public void testGetPackageNameSrc() throws Exception {
+		URI uri = Paths.get("projects", "eclipse", "hello", "src", "Foo.java").toUri();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
+		String packageName = JDTUtils.getPackageName(cu.getJavaProject(), uri);
+		assertEquals("", packageName);
+	}
+
+	@Test
 	public void testResolveStandaloneCompilationUnit() throws CoreException {
 		Path helloSrcRoot = Paths.get("projects", "eclipse", "hello", "src").toAbsolutePath();
 		URI uri = helloSrcRoot.resolve(Paths.get("java", "Foo.java")).toUri();
