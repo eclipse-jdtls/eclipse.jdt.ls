@@ -13,14 +13,9 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -30,7 +25,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -57,40 +51,24 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private SharedASTProvider sharedASTProvider;
-	private Map<String, List<Object>> clientRequests = new HashMap<>();
-	private JavaLanguageClient client=(JavaLanguageClient)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{JavaLanguageClient.class},new InvocationHandler(){
-
-		@Override
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			if (args.length == 1) {
-				String name = method.getName();
-				List<Object> params = clientRequests.get(name);
-				if (params == null) {
-					params = new ArrayList<>();
-					clientRequests.put(name, params);
-				}
-				params.add(args[0]);
-			}
-			return null;
-		}
-	});
 
 	private DocumentLifeCycleHandler lifeCycleHandler;
+	private JavaClientConnection javaClient;
 
 	@Before
 	public void setup() throws Exception {
 		mockPreferences();
-		clientRequests.clear();
 
 		sharedASTProvider = SharedASTProvider.getInstance();
 		sharedASTProvider.invalidateAll();
 		sharedASTProvider.clearASTCreationCount();
-
-		lifeCycleHandler = new DocumentLifeCycleHandler(new JavaClientConnection(client), preferenceManager, projectsManager, false);
+		javaClient = new JavaClientConnection(client);
+		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}

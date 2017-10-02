@@ -27,6 +27,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +61,11 @@ public class JDTLanguageServerTest {
 		when(prefManager.getClientPreferences()).thenReturn(clientPreferences);
 		server = new JDTLanguageServer(projManager, prefManager);
 		server.connectClient(client);
+	}
+
+	@After
+	public void tearDown() {
+		server.disconnectClient();
 	}
 
 	@Test

@@ -33,6 +33,15 @@ public class LogHandler {
 	private int logLevelMask;
 	private JavaClientConnection connection;
 	private Calendar calendar;
+	private ILogFilter filter;
+
+	public LogHandler() {
+		this(new DefaultLogFilter());
+	}
+
+	public LogHandler(ILogFilter filter) {
+		this.filter = filter;
+	}
 
 	public void install(JavaClientConnection rcpConnection) {
 		this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
@@ -67,6 +76,10 @@ public class LogHandler {
 	}
 
 	private void processLogMessage(IStatus status) {
+		if ((filter != null && !filter.accepts(status)) || !status.matches(this.logLevelMask)) {
+			//no op;
+			return;
+		}
 		String dateString = this.dateFormat.format(this.calendar.getTime());
 		String message = status.getMessage();
 		if (status.getException() != null) {
@@ -77,9 +90,7 @@ public class LogHandler {
 			message = message + '\n' + exceptionAsString;
 		}
 
-		if (status.matches(this.logLevelMask)) {
-			connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' '+ message);
-		}
+		connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' ' + message);
 	}
 
 	private MessageType getMessageTypeFromSeverity(int severity) {
