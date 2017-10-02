@@ -113,6 +113,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
 	}
 
+	//For testing purposes
+	public void disconnectClient() {
+		this.client.disconnect();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.LanguageServer#initialize(org.eclipse.lsp4j.InitializeParams)
 	 */

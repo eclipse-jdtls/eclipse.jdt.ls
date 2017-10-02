@@ -17,7 +17,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -35,6 +41,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -63,9 +70,28 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected SimpleLogListener logListener;
 
+	protected Map<String, List<Object>> clientRequests = new HashMap<>();
+	protected JavaLanguageClient client = (JavaLanguageClient) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { JavaLanguageClient.class }, new InvocationHandler() {
+
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			if (args.length == 1) {
+				String name = method.getName();
+				List<Object> params = clientRequests.get(name);
+				if (params == null) {
+					params = new ArrayList<>();
+					clientRequests.put(name, params);
+				}
+				params.add(args[0]);
+			}
+			return null;
+		}
+	});
+
 	@Before
 	public void initProjectManager() throws CoreException {
 		TestVMType.setTestJREAsDefault();
+		clientRequests.clear();
 
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);

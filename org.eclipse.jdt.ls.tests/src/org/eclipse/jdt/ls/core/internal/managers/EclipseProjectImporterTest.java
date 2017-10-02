@@ -14,6 +14,7 @@ import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.junit.After;
 import org.junit.Before;
@@ -48,6 +50,27 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		importProjects("eclipse/" + name);
 		project = getProject(name);
 		assertIsJavaProject(project);
+	}
+
+	@Test
+	public void ignoreMissingResourceFilters() throws Exception {
+		JavaClientConnection javaClient = new JavaClientConnection(client);
+		try {
+			String name = "ignored-filter";
+			importProjects("eclipse/" + name);
+			IProject project = getProject(name);
+			assertIsJavaProject(project);
+			assertNoErrors(project);
+			//1 message sent to the platform logger
+			assertEquals(1, logListener.getErrors().size());
+			String error = logListener.getErrors().get(0);
+			assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
+			//but no message sent to the client
+			List<Object> loggedMessages = clientRequests.get("logMessage");
+			assertNull("Unexpected logs " + loggedMessages, loggedMessages);
+		} finally {
+			javaClient.disconnect();
+		}
 	}
 
 	@Test
