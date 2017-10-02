@@ -17,6 +17,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -74,8 +75,11 @@ public class CompletionHandler{
 		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
 
 		if (offset >-1 && !monitor.isCanceled()) {
-			unit.codeComplete(offset, collector, monitor);
-			proposals.addAll(collector.getCompletionItems());
+			IBuffer buffer = unit.getBuffer();
+			if (buffer != null && buffer.getLength() >= offset) {
+				unit.codeComplete(offset, collector, monitor);
+				proposals.addAll(collector.getCompletionItems());
+			}
 		}
 
 		return proposals;
