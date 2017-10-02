@@ -195,7 +195,7 @@ public final class JDTUtils {
 			if (content.isEmpty() && javaProject != null && ProjectsManager.DEFAULT_PROJECT_NAME.equals(javaProject.getProject().getName())) {
 				java.nio.file.Path path = Paths.get(uri);
 				java.nio.file.Path parent = path;
-				while (parent.getParent() != null) {
+				while (parent.getParent() != null && parent.getParent().getNameCount() > 0) {
 					parent = parent.getParent();
 					String name = parent.getName(parent.getNameCount() - 1).toString();
 					if (SRC.equals(name)) {
