@@ -16,21 +16,23 @@ Features
 * As you type reporting of parsing and compilation errors
 * Code completion
 * Javadoc hovers
+* Code actions
 * Code outline
 * Code navigation
-* Code lens (references)
+* Code lens (references/implementations)
 * Highlights
 * Code formatting
 * Maven pom.xml project support
+* Java 9 support (experimental)
 * Limited Gradle support (Android projects are not supported)
 
 
 First Time Setup
 --------------
 0. Fork and clone the repository
-1. Install Eclipse [Neon Java EE](http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/neonr)
+1. Install Eclipse [Oxygen Java EE](http://www.eclipse.org/downloads/packages/eclipse-ide-java-ee-developers/oxygen1)
 that will have most needed already installed. Alternatively,
-you can get the [Eclipse IDE for Java developers](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/neonr)
+you can get the [Eclipse IDE for Java developers](http://www.eclipse.org/downloads/packages/eclipse-ide-java-developers/oxygen1)
 and just install Eclipse PDE from the Eclipse Marketplace.
 
 2. Once installed use `File > Open Projects from File System...` and
@@ -45,10 +47,12 @@ detect the projects and import it properly.
 Building from the command line
 ----------------------------
 
-This command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
+The following command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
 ```bash    
     $ ./mvnw clean verify
 ````
+Note: currently, the build can only run when launched with JDK 8. JDK 9 can be used to run the server though.
+
 
 Running from the command line
 ------------------------------
@@ -63,6 +67,10 @@ Running from the command line
 5. To start the server in the active terminal, run:
 ```bash
 java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.protocol=true -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data
+```
+When running with JDK9, you need to start the server with some extra parameters:
+```
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.protocol=true -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED
 ```
 
 6. Choosing a value for `-configuration`: this is the path to your platform's configuration directory. For linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
