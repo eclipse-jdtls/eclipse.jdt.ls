@@ -36,8 +36,8 @@
 <repository location="http://download.eclipse.org/releases/oxygen/201709271000/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.2.20171005-1923"/>
-<repository location="http://download.eclipse.org/technology/m2e/milestones/1.8/"/>
+<unit id="org.eclipse.m2e.feature.feature.group" version="1.8.2.20171007-0217"/>
+<repository location="http://download.eclipse.org/technology/m2e/milestones/1.8/1.8.2.20171007-0217/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170913-0640"/>
