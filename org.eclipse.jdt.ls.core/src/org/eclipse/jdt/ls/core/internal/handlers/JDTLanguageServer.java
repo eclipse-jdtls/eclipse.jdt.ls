@@ -531,4 +531,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			client.registerCapability(registrationParams);
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#implementors(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 */
+	@Override
+	public CompletableFuture<List<? extends SymbolInformation>> implementors(TextDocumentPositionParams params) {
+		logInfo(">> java/implementors");
+		ImplementorsHandler handler = new ImplementorsHandler();
+		return computeAsync((cc) -> handler.implementors(params, toMonitor(cc)));
+	}
 }
