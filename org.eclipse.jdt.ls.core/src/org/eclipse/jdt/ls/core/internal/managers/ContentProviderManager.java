@@ -45,13 +45,12 @@ public class ContentProviderManager {
 	private static final int MAX_CACHE_SIZE = 20;
 
 	private final PreferenceManager preferenceManager;
-	private final Cache<String, String> cachedContent;
 
+	private static Cache<String, String> cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
 	private static Set<ContentProviderDescriptor> descriptors;
 
 	public ContentProviderManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
-		this.cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
 	}
 
 	/**
