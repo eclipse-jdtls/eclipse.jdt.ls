@@ -27,7 +27,7 @@ public interface IContentProvider {
 	 *
 	 * @param preferences
 	 */
-	void setPreferences(Preferences preferences);
+	default void setPreferences(Preferences preferences) {};
 
 	/**
 	 * Provide text content from a resource.

@@ -18,13 +18,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 public class SourceContentProvider implements IDecompiler {
-
-	@Override
-	public void setPreferences(Preferences preferences) {
-	}
 
 	@Override
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
