@@ -41,7 +41,7 @@ public class FakeContentProvider implements IDecompiler {
 	}
 
 	@Override
-	public String decompile(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 		return getContent(null, monitor);
 	}
 }
