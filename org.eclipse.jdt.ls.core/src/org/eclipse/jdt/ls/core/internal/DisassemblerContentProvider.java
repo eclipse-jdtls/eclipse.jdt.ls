@@ -38,7 +38,7 @@ public class DisassemblerContentProvider implements IDecompiler {
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
 		IClassFile classFile = JDTUtils.resolveClassFile(uri);
 		if (classFile != null) {
-			return decompile(classFile, monitor);
+			return getSource(classFile, monitor);
 		}
 		try {
 			return getContent(Files.readAllBytes(Paths.get(uri)), monitor);
@@ -48,7 +48,7 @@ public class DisassemblerContentProvider implements IDecompiler {
 	}
 
 	@Override
-	public String decompile(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 		return getContent(classFile.getBytes(), monitor);
 	}
 

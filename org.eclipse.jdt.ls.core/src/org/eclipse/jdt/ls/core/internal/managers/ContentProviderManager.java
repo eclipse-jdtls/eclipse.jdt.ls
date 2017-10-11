@@ -121,7 +121,7 @@ public class ContentProviderManager {
 				if (uri != null) {
 					content = contentProvider.getContent(uri, monitor);
 				} else if (source instanceof IClassFile) {
-					content = ((IDecompiler) contentProvider).decompile((IClassFile) source, monitor);
+					content = ((IDecompiler) contentProvider).getSource((IClassFile) source, monitor);
 				}
 
 				if (content != null && match.cacheable) {

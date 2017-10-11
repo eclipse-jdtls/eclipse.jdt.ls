@@ -30,13 +30,13 @@ public class SourceContentProvider implements IDecompiler {
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
 		IClassFile classFile = JDTUtils.resolveClassFile(uri);
 		if (classFile != null) {
-			return decompile(classFile, monitor);
+			return getSource(classFile, monitor);
 		}
 		return null;
 	}
 
 	@Override
-	public String decompile(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 		String source = null;
 		try {
 			IBuffer buffer = classFile.getBuffer();

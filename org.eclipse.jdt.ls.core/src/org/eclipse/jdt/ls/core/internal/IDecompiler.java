@@ -28,5 +28,5 @@ public interface IDecompiler extends IContentProvider {
 	 * @return text content or <code>null</code>
 	 * @throws CoreException
 	 */
-	public String decompile(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
+	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
 }
