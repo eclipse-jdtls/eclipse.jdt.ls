@@ -42,6 +42,7 @@ public class ContentProviderManager {
 	private static final String CACHEABLE = "cacheable";
 	private static final int DEFAULT_PRIORITY = 500;
 	private static final Pattern DEFAULT_URI_PATTERN = Pattern.compile("jdt://contents/.*\\.class.*");
+	private static final int MAX_CACHE_SIZE = 20;
 
 	private final PreferenceManager preferenceManager;
 	private final Cache<String, String> cachedContent;
@@ -50,9 +51,7 @@ public class ContentProviderManager {
 
 	public ContentProviderManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
-
-		int maxCacheSize = preferenceManager.getPreferences().getContentProviderCacheMaxSize();
-		this.cachedContent = CacheBuilder.newBuilder().maximumSize(maxCacheSize).build();
+		this.cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
 	}
 
 	/**

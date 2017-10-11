@@ -11,7 +11,6 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
@@ -112,12 +111,6 @@ public class Preferences {
 	 */
 	public static final String PREFERRED_CONTENT_PROVIDER_KEY = "java.contentProvider.preferred";
 
-	/**
-	 * Preference key for the maximum size of the content cache.
-	 */
-	public static final String CONTENT_PROVIDER_CACHE_MAX_SIZE_KEY = "java.contentProvider.cache.maxSize";
-	public static final int CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT = 20;
-
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
@@ -140,7 +133,6 @@ public class Preferences {
 	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
-	private int contentProviderCacheMaxSize;
 
 	private String mavenUserSettings;
 
@@ -206,7 +198,6 @@ public class Preferences {
 		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
-		contentProviderCacheMaxSize = CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
@@ -257,9 +248,6 @@ public class Preferences {
 		List<String> preferredContentProviders = getList(configuration, PREFERRED_CONTENT_PROVIDER_KEY);
 		prefs.setPreferredContentProviderIds(preferredContentProviders);
 
-		int contentProviderCacheMaxSize = getInt(configuration, CONTENT_PROVIDER_CACHE_MAX_SIZE_KEY, CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT);
-		prefs.setContentProviderCacheMaxSize(contentProviderCacheMaxSize);
-
 		return prefs;
 	}
 
@@ -275,11 +263,6 @@ public class Preferences {
 
 	private Preferences setPreferredContentProviderIds(List<String> preferredContentProviderIds) {
 		this.preferredContentProviderIds = preferredContentProviderIds;
-		return this;
-	}
-
-	private Preferences setContentProviderCacheMaxSize(int contentProviderCacheMaxSize) {
-		this.contentProviderCacheMaxSize = contentProviderCacheMaxSize;
 		return this;
 	}
 
@@ -341,10 +324,6 @@ public class Preferences {
 
 	public List<String> getPreferredContentProviderIds() {
 		return this.preferredContentProviderIds;
-	}
-
-	public int getContentProviderCacheMaxSize() {
-		return contentProviderCacheMaxSize;
 	}
 
 	public boolean isReferencesCodeLensEnabled() {

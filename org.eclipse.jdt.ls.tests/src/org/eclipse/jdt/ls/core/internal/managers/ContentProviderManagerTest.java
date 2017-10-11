@@ -61,7 +61,6 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		preferenceManager = mock(PreferenceManager.class);
 		preferences = mock(Preferences.class);
 		when(preferences.getPreferredContentProviderIds()).thenReturn(null);
-		when(preferences.getContentProviderCacheMaxSize()).thenReturn(Preferences.CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT);
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		provider = new ContentProviderManager(preferenceManager);
 	}
