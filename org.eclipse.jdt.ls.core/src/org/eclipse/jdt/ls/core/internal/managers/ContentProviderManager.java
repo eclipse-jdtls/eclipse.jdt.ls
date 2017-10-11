@@ -64,7 +64,7 @@ public class ContentProviderManager {
 	 * @return the text content if successful, or <code>null</code> if unsuccessful,
 	 *         or an empty string if canceled
 	 */
-	public String decompile(IClassFile classFile, IProgressMonitor monitor) {
+	public String getSource(IClassFile classFile, IProgressMonitor monitor) {
 		if (classFile == null) {
 			return null;
 		}

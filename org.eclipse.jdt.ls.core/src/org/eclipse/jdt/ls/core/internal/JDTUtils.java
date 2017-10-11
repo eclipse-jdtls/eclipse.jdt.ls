@@ -51,7 +51,6 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.SourceRange;
-import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
@@ -62,6 +61,7 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -464,7 +464,7 @@ public final class JDTUtils {
 		if (unit instanceof IClassFile) {
 			IClassFile classFile = (IClassFile) unit;
 			ContentProviderManager contentProvider = new ContentProviderManager(preferenceManager);
-			String contents = contentProvider.decompile(classFile, monitor);
+			String contents = contentProvider.getSource(classFile, monitor);
 			if (contents != null) {
 				IDocument document = new Document(contents);
 				try {

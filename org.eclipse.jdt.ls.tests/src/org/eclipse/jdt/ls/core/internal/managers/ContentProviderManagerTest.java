@@ -88,7 +88,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testDecompileSourceCode() throws Exception {
-		String result = provider.decompile(sourceAvailableClassFile, monitor);
+		String result = provider.getSource(sourceAvailableClassFile, monitor);
 		assertNotNull(result);
 		assertTrue("unexpected body content " + result, result.contains("Operations on Strings that contain words."));
 	}
@@ -118,7 +118,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testDecompileNothing() throws Exception {
-		String result = provider.decompile(null, monitor);
+		String result = provider.getSource(null, monitor);
 		assertNull(result);
 	}
 
@@ -137,7 +137,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDecompileThrowsException() throws Exception {
 		FakeContentProvider.returnValue = new Exception("Something bad happened here");
 
-		String result = provider.decompile(sourcelessClassFile, monitor);
+		String result = provider.getSource(sourcelessClassFile, monitor);
 
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
@@ -154,7 +154,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testDecompileDefaultOrder() throws Exception {
-		String result = provider.decompile(sourcelessClassFile, monitor);
+		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
 		expectLoggedError("You have more than one content provider installed:");
@@ -174,7 +174,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		FakeContentProvider.returnValue = FAKE_DECOMPILED_SOURCE;
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fakeContentProvider", "placeholderContentProvider"));
 
-		assertEquals(FAKE_DECOMPILED_SOURCE, provider.decompile(sourcelessClassFile, monitor));
+		assertEquals(FAKE_DECOMPILED_SOURCE, provider.getSource(sourcelessClassFile, monitor));
 		assertTrue(logListener.getErrors().isEmpty());
 	}
 
@@ -192,7 +192,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDecompilePreferNonexistingProviderClass() {
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("placeholderContentProvider"));
 
-		String result = provider.decompile(sourcelessClassFile, monitor);
+		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
 		expectLoggedError("Unable to load IDecompiler class for placeholderContentProvider");
