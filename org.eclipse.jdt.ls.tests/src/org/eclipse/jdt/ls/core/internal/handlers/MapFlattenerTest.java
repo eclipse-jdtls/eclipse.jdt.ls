@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getMap;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 import static org.junit.Assert.assertEquals;
@@ -122,38 +121,6 @@ public class MapFlattenerTest {
 		assertNotNull(bar);
 		assertEquals("c", bar.get(0));
 		assertEquals("d", bar.get(1));
-	}
-
-	@Test
-	public void testGetMap() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-		config.put("foo", "{'a': 'b'}");
-
-		Map<String, Object> middle = new HashMap<>();
-		config.put("java", middle);
-
-		middle.put("nope", "not a map");
-
-		Map<String, Object> bottom = new HashMap<>();
-		middle.put("bottom", bottom);
-		bottom.put("another", "{'c': 'd', 'e': 'f'}");
-
-		Map<String, Object> foo = getMap(config, "foo");
-		assertNotNull(foo);
-		assertEquals("b", foo.get("a"));
-
-		assertNotNull(getMap(config, "java"));
-
-		Map<String, Object> nope = getMap(config, "java.nope");
-		assertNull(nope);
-
-		List<String> def = new ArrayList<>();
-		assertSame(def, getList(config, "java", def));
-
-		Map<String, Object> bar = getMap(config, "java.bottom.another");
-		assertNotNull(bar);
-		assertEquals("d", bar.get("c"));
-		assertEquals("f", bar.get("e"));
 	}
 
 	@Test
