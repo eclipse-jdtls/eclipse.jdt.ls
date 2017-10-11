@@ -11,11 +11,12 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getMap;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -107,15 +108,15 @@ public class Preferences {
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
 	/**
-	 * Preference key for the id of the preferred decompiler.
+	 * Preference key for the id(s) of the preferred content provider(s).
 	 */
-	public static final String DECOMPILER_ID_KEY = "java.decompiler.id";
-	public static final String DECOMPILER_ID_DEFAULT = "disassembler";
+	public static final String PREFERRED_CONTENT_PROVIDER_KEY = "java.contentProvider.preferred";
 
 	/**
-	 * Preference key for the preferred decompiler's configuration.
+	 * Preference key for the maximum size of the content cache.
 	 */
-	public static final String DECOMPILER_CONFIGURATION_KEY = "java.decompiler.configuration";
+	public static final String CONTENT_PROVIDER_CACHE_MAX_SIZE_KEY = "java.contentProvider.cache.maxSize";
+	public static final int CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT = 20;
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -129,6 +130,7 @@ public class Preferences {
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
 	public static final String RENAME_ID = UUID.randomUUID().toString();
 
+	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
@@ -137,8 +139,8 @@ public class Preferences {
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
-	private String decompilerId;
-	private Map<String, Object> decompilerConfiguration;
+	private List<String> preferredContentProviderIds;
+	private int contentProviderCacheMaxSize;
 
 	private String mavenUserSettings;
 
@@ -194,6 +196,7 @@ public class Preferences {
 	}
 
 	public Preferences() {
+		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
@@ -202,8 +205,8 @@ public class Preferences {
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
-		decompilerId = DECOMPILER_ID_DEFAULT;
-		decompilerConfiguration = null;
+		preferredContentProviderIds = null;
+		contentProviderCacheMaxSize = CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
@@ -216,6 +219,8 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
+		prefs.configuration = configuration;
+
 		String incompleteClasspathSeverity = getString(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
 		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
 
@@ -249,11 +254,11 @@ public class Preferences {
 		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
-		String decompilerId = getString(configuration, DECOMPILER_ID_KEY, DECOMPILER_ID_DEFAULT);
-		prefs.setDecompilerId(decompilerId);
+		List<String> preferredContentProviders = getList(configuration, PREFERRED_CONTENT_PROVIDER_KEY);
+		prefs.setPreferredContentProviderIds(preferredContentProviders);
 
-		Map<String, Object> decompilerConfiguration = getMap(configuration, DECOMPILER_CONFIGURATION_KEY, null);
-		prefs.setDecompilerConfiguration(decompilerConfiguration);
+		int contentProviderCacheMaxSize = getInt(configuration, CONTENT_PROVIDER_CACHE_MAX_SIZE_KEY, CONTENT_PROVIDER_CACHE_MAX_SIZE_DEFAULT);
+		prefs.setContentProviderCacheMaxSize(contentProviderCacheMaxSize);
 
 		return prefs;
 	}
@@ -268,13 +273,13 @@ public class Preferences {
 		return this;
 	}
 
-	private Preferences setDecompilerId(String decompilerId) {
-		this.decompilerId = decompilerId;
+	private Preferences setPreferredContentProviderIds(List<String> preferredContentProviderIds) {
+		this.preferredContentProviderIds = preferredContentProviderIds;
 		return this;
 	}
 
-	private Preferences setDecompilerConfiguration(Map<String, Object> decompilerConfiguration2) {
-		this.decompilerConfiguration = decompilerConfiguration2;
+	private Preferences setContentProviderCacheMaxSize(int contentProviderCacheMaxSize) {
+		this.contentProviderCacheMaxSize = contentProviderCacheMaxSize;
 		return this;
 	}
 
@@ -334,12 +339,12 @@ public class Preferences {
 		return this.memberOrders;
 	}
 
-	public String getDecompilerId() {
-		return this.decompilerId;
+	public List<String> getPreferredContentProviderIds() {
+		return this.preferredContentProviderIds;
 	}
 
-	public Map<String, Object> getDecompilerConfiguration() {
-		return this.decompilerConfiguration;
+	public int getContentProviderCacheMaxSize() {
+		return contentProviderCacheMaxSize;
 	}
 
 	public boolean isReferencesCodeLensEnabled() {
@@ -377,5 +382,12 @@ public class Preferences {
 
 	public String getFavoriteStaticMembers() {
 		return this.favoriteStaticMembers;
+	}
+
+	public Map<String, Object> asMap() {
+		if (configuration == null) {
+			return null;
+		}
+		return Collections.unmodifiableMap(configuration);
 	}
 }

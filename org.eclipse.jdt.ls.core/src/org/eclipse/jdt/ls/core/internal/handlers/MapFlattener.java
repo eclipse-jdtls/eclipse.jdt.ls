@@ -58,6 +58,9 @@ public final class MapFlattener {
 	public static List<String> getList(Map<String, Object> configuration, String key, List<String> def) {
 		Object val = getValue(configuration, key);
 		if (val instanceof String) {
+			if (!((String) val).trim().startsWith("[")) {
+				val = '[' + (String) val + ']';
+			}
 			try {
 				Gson gson = new Gson();
 				Type type = new TypeToken<List<String>>() {

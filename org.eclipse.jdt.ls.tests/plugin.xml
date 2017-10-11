@@ -20,15 +20,24 @@
        </delegateCommandHandler>
    </extension>
    <extension
-         point="org.eclipse.jdt.ls.core.decompiler">
-      <decompiler
-            class="org.eclipse.jdt.ls.core.internal.FakeDecompiler"
-            id="fakeDecompiler"
-            name="Fake decompiler">
-      </decompiler>
-      <decompiler
+         point="org.eclipse.jdt.ls.core.contentProvider">
+      <contentProvider
       		class="org.eclipse.jdt.ls.core.internal.PlaceHolder"
-      		id="placeholderDecompiler">
-       </decompiler>
+      		id="placeholderContentProvider"
+            uriPattern=".+\.class">
+       </contentProvider>
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.FakeContentProvider"
+            id="fakeContentProvider">
+      </contentProvider>
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.FakeContentProvider"
+            id="fakeContentProvider2">
+      </contentProvider>
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.FakeContentProvider"
+            id="thingyContentProvider"
+            uriPattern=".+\.thingy">
+      </contentProvider>
    </extension>
 </fragment>

@@ -62,8 +62,8 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.jdt.ls.core.internal.handlers.ClassfileContentHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
@@ -463,8 +463,8 @@ public final class JDTUtils {
 		}
 		if (unit instanceof IClassFile) {
 			IClassFile classFile = (IClassFile) unit;
-			ClassfileContentHandler handler = new ClassfileContentHandler(preferenceManager);
-			String contents = handler.contents(classFile, monitor);
+			ContentProviderManager contentProvider = new ContentProviderManager(preferenceManager);
+			String contents = contentProvider.decompile(classFile, monitor);
 			if (contents != null) {
 				IDocument document = new Document(contents);
 				try {

@@ -10,27 +10,23 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.util.Map;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 
 /**
- * Interface for classes that decompile bytecode
+ * Interface for content providers that decompile class files
  */
-public interface IDecompiler {
+public interface IDecompiler extends IContentProvider {
 	/**
-	 * Decompile bytecode into source code.
+	 * Provide decompiled source code from a resource.
 	 *
 	 * @param classFile
 	 *            the class file to decompile
-	 * @param configuration
-	 *            optional configuration to pass to the decompiler
 	 * @param monitor
 	 *            monitor of the activity progress
-	 * @return decompiled bytecode or <code>null</code>
-	 * @throws Exception
+	 * @return text content or <code>null</code>
+	 * @throws CoreException
 	 */
-	String decompile(IClassFile classFile, Map<String, Object> configuration, IProgressMonitor monitor) throws CoreException;
+	public String decompile(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
 }
