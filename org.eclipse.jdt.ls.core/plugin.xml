@@ -32,21 +32,21 @@
    </extension>
    <extension
          point="org.eclipse.jdt.ls.core.contentProvider">
-      <decompiler
+      <contentProvider
             class="org.eclipse.jdt.ls.core.internal.SourceContentProvider"
             id="sourceContentProvider"
             priority="0"
             cacheable="false">
-      </decompiler>
+      </contentProvider>
    </extension>
    <extension
          point="org.eclipse.jdt.ls.core.contentProvider">
-      <decompiler
+      <contentProvider
             class="org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider"
             id="disassemblerContentProvider"
             priority="2147483647"
             uriPattern=".+\.class.*"
             cacheable="true">
-      </decompiler>
+      </contentProvider>
    </extension>
 </plugin>
