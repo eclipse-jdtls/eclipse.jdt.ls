@@ -46,8 +46,8 @@ public class ContentProviderManager {
 
 	private final PreferenceManager preferenceManager;
 
-	private static Cache<String, String> cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
-	private static Set<ContentProviderDescriptor> descriptors;
+	private Cache<String, String> cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
+	private Set<ContentProviderDescriptor> descriptors;
 
 	public ContentProviderManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -141,7 +141,7 @@ public class ContentProviderManager {
 		return EMPTY_CONTENT;
 	}
 
-	private static synchronized Set<ContentProviderDescriptor> getDescriptors(List<String> preferredProviderIds) {
+	private synchronized Set<ContentProviderDescriptor> getDescriptors(List<String> preferredProviderIds) {
 		if (descriptors == null) {
 			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
 			descriptors = Stream.of(elements).map(e -> new ContentProviderDescriptor(e)).collect(Collectors.toSet());

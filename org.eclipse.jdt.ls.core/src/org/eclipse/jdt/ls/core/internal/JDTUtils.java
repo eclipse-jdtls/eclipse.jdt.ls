@@ -463,7 +463,7 @@ public final class JDTUtils {
 		}
 		if (unit instanceof IClassFile) {
 			IClassFile classFile = (IClassFile) unit;
-			ContentProviderManager contentProvider = new ContentProviderManager(preferenceManager);
+			ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
 			String contents = contentProvider.getSource(classFile, monitor);
 			if (contents != null) {
 				IDocument document = new Document(contents);

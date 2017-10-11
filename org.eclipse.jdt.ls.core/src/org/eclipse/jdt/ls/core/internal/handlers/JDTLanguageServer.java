@@ -491,7 +491,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<String> classFileContents(TextDocumentIdentifier param) {
 		logInfo(">> java/classFileContents");
-		ContentProviderManager handler = new ContentProviderManager(this.preferenceManager);
+		ContentProviderManager handler = JavaLanguageServerPlugin.getContentProviderManager();
 		URI uri = JDTUtils.toURI(param.getUri());
 		return computeAsync((cc) -> handler.getContent(uri, toMonitor(cc)));
 	}
