@@ -22,18 +22,25 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class NavigateToDefinitionHandler {
 
+	private final PreferenceManager preferenceManager;
+
+	public NavigateToDefinitionHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
+
 	public List<? extends Location> definition(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		Location location = null;
 		if (unit != null && !monitor.isCanceled()) {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
-					position.getPosition().getCharacter());
+					position.getPosition().getCharacter(), monitor);
 		}
 		if (location == null) {
 			location = new Location();
@@ -42,9 +49,9 @@ public class NavigateToDefinitionHandler {
 		return Arrays.asList(location);
 	}
 
-	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column) {
+	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		try {
-			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column);
+			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
 			if (element == null) {
 				return null;
 			}

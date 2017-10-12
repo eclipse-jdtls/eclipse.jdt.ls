@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.contentProvider" name="decompiler"/>
+      </appinfo>
+      <documentation>
+         This extension point allows adding a content provider to provide text content from a resource
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="contentProvider" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="contentProvider">
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A short identifier for this content provider.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Name of a class that implements IContentProvider. This class may optionaly implement IDecompiler instead.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IContentProvider"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="priority" type="string">
+            <annotation>
+               <documentation>
+                  Positive integer priority. Lowest value has the highest priority. Unless you have a good reason, don&apos;t populate this value.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="uriPattern" type="string">
+            <annotation>
+               <documentation>
+                  Regular expression that matches URIs this contentProvider can support. The default file matches .class files: &quot;jdt://contents/.*\.class.*&quot;
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="cacheable" type="boolean">
+            <annotation>
+               <documentation>
+                  Indicates that the server can safely cache content for a period of time. true by default.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of a language server content provider extension:
+
+&lt;pre&gt;
+ &lt;extension point=&quot;org.eclipse.jdt.ls.contentProvider&quot;&gt;
+  &lt;contentProvider
+   id=&quot;somedecompiler&quot;
+   class=&quot;com.example.SomeDecompiler&quot;&gt;
+  &lt;/contentProvider&gt;
+ &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+
+
+</schema>

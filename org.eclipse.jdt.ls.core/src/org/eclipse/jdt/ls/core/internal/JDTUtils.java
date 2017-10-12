@@ -51,7 +51,6 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.SourceRange;
-import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
@@ -62,10 +61,11 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.jdt.core.util.ClassFileBytesDisassembler;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -89,9 +89,6 @@ public final class JDTUtils {
 	private static final String JDT_SCHEME = "jdt";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
-	public static final String MISSING_SOURCES_HEADER = " // Failed to get sources. Instead, stub sources have been generated.\n"
-			+ " // Implementation of methods is unavailable.\n";
-	private static final String LF = "\n";
 
 	private JDTUtils() {
 		//No public instantiation
@@ -448,15 +445,15 @@ public final class JDTUtils {
 		return ResourceUtils.fixURI(resource.getRawLocationURI());
 	}
 
-	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
-		IJavaElement[] elements = findElementsAtSelection(unit, line, column);
+	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
+		IJavaElement[] elements = findElementsAtSelection(unit, line, column, preferenceManager, monitor);
 		if (elements != null && elements.length == 1) {
 			return elements[0];
 		}
 		return null;
 	}
 
-	public static IJavaElement[] findElementsAtSelection(ITypeRoot unit, int line, int column) throws JavaModelException {
+	public static IJavaElement[] findElementsAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
 		if (unit == null) {
 			return null;
 		}
@@ -466,7 +463,8 @@ public final class JDTUtils {
 		}
 		if (unit instanceof IClassFile) {
 			IClassFile classFile = (IClassFile) unit;
-			String contents = disassemble(classFile);
+			ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
+			String contents = contentProvider.getSource(classFile, monitor);
 			if (contents != null) {
 				IDocument document = new Document(contents);
 				try {
@@ -630,19 +628,6 @@ public final class JDTUtils {
 			}
 		}
 		return false;
-	}
-
-	public static String disassemble(IClassFile classFile) {
-		ClassFileBytesDisassembler disassembler = ToolFactory.createDefaultClassFileBytesDisassembler();
-		String disassembledByteCode = null;
-		try {
-			disassembledByteCode = disassembler.disassemble(classFile.getBytes(), LF,
-					ClassFileBytesDisassembler.WORKING_COPY);
-			disassembledByteCode = MISSING_SOURCES_HEADER + LF + disassembledByteCode;
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logError("Unable to disassemble " + classFile.getHandleIdentifier());
-		}
-		return disassembledByteCode;
 	}
 
 	public static IJavaSearchScope createSearchScope(IJavaProject project) {

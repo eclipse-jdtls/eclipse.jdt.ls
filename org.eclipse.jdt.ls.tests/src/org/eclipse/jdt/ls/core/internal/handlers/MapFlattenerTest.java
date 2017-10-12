@@ -104,7 +104,7 @@ public class MapFlattenerTest {
 
 		Map<String, Object> bottom = new HashMap<>();
 		middle.put("bottom", bottom);
-		bottom.put("another", "['c', 'd']");
+		bottom.put("another", "c, d");
 
 		List<String> foo = getList(config, "foo");
 		assertNotNull(foo);

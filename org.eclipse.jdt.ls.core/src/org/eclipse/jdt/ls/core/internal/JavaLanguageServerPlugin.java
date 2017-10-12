@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -77,6 +78,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
+	private ContentProviderManager contentProviderManager;
 
 	private JDTLanguageServer protocol;
 
@@ -106,6 +108,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
 		projectsManager = new ProjectsManager(preferenceManager);
+		contentProviderManager = new ContentProviderManager(preferenceManager);
 		logInfo(getClass()+" is started");
 		configureProxy();
 	}
@@ -232,6 +235,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
 		projectsManager = null;
+		contentProviderManager = null;
 		languageServer = null;
 	}
 	private String getThreadDump() {
@@ -312,6 +316,13 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
+	}
+
+	/**
+	 * @return
+	 */
+	public static ContentProviderManager getContentProviderManager() {
+		return pluginInstance.contentProviderManager;
 	}
 
 	/**

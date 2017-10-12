@@ -15,6 +15,7 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -105,6 +106,11 @@ public class Preferences {
 	 */
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
+	/**
+	 * Preference key for the id(s) of the preferred content provider(s).
+	 */
+	public static final String PREFERRED_CONTENT_PROVIDER_KEY = "java.contentProvider.preferred";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
@@ -117,6 +123,7 @@ public class Preferences {
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
 	public static final String RENAME_ID = UUID.randomUUID().toString();
 
+	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
@@ -125,6 +132,7 @@ public class Preferences {
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private MemberSortOrder memberOrders;
+	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
 
@@ -180,6 +188,7 @@ public class Preferences {
 	}
 
 	public Preferences() {
+		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		referencesCodeLensEnabled = true;
@@ -188,6 +197,7 @@ public class Preferences {
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		memberOrders = new MemberSortOrder(null);
+		preferredContentProviderIds = null;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 	}
@@ -200,6 +210,8 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
+		prefs.configuration = configuration;
+
 		String incompleteClasspathSeverity = getString(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
 		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
 
@@ -233,6 +245,9 @@ public class Preferences {
 		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
 		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
+		List<String> preferredContentProviders = getList(configuration, PREFERRED_CONTENT_PROVIDER_KEY);
+		prefs.setPreferredContentProviderIds(preferredContentProviders);
+
 		return prefs;
 	}
 
@@ -243,6 +258,11 @@ public class Preferences {
 
 	private Preferences setMembersSortOrder(String sortOrder) {
 		this.memberOrders = new MemberSortOrder(sortOrder);
+		return this;
+	}
+
+	private Preferences setPreferredContentProviderIds(List<String> preferredContentProviderIds) {
+		this.preferredContentProviderIds = preferredContentProviderIds;
 		return this;
 	}
 
@@ -302,6 +322,10 @@ public class Preferences {
 		return this.memberOrders;
 	}
 
+	public List<String> getPreferredContentProviderIds() {
+		return this.preferredContentProviderIds;
+	}
+
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
 	}
@@ -337,5 +361,12 @@ public class Preferences {
 
 	public String getFavoriteStaticMembers() {
 		return this.favoriteStaticMembers;
+	}
+
+	public Map<String, Object> asMap() {
+		if (configuration == null) {
+			return null;
+		}
+		return Collections.unmodifiableMap(configuration);
 	}
 }
