@@ -261,6 +261,7 @@
 									<goal>prepare-agent</goal>
 								</goals>
 								<configuration>
+									<sessionId>${project.artifactId}</sessionId>
 									<includes>
 										<include>${coverage.filter}</include>
 									</includes>
