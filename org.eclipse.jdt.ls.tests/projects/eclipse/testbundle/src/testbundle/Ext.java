@@ -12,6 +12,6 @@ public class Ext {
 
 	@Override
 	public String toString() {
-		return "EXT_TOSTRING";
+		return "EXT_TOSTRING_0.6.0";
 	}
 }

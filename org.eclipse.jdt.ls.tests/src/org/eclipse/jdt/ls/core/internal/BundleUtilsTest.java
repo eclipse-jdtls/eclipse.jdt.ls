@@ -55,9 +55,36 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testLoadAndUpdate() throws BundleException, CoreException {
+		BundleUtils.loadBundles(Arrays.asList(getBundle()));
+		String bundleLocation = getBundleLocation(getBundle(), true);
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		Bundle installedBundle = context.getBundle(bundleLocation);
+		assertNotNull(installedBundle);
+		assertEquals(installedBundle.getState(), Bundle.STARTING);
+
+		String extResult = getBundleExtensionResult();
+		assertEquals("EXT_TOSTRING", extResult);
+
+		BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar")));
+		bundleLocation = getBundleLocation(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar"), true);
+
+		installedBundle = context.getBundle(bundleLocation);
+		assertNotNull(installedBundle);
+		assertEquals(installedBundle.getState(), Bundle.STARTING);
+
+		extResult = getBundleExtensionResult();
+		assertEquals("EXT_TOSTRING_0.6.0", extResult);
+
+		// Uninstall the bundle to clean up the testing bundle context.
+		installedBundle.uninstall();
+	}
+
+	@Test
 	public void testLoadWithWhitespace() throws BundleException, CoreException {
-		BundleUtils.loadBundles(Arrays.asList(getBundleLocationWithWhitespaces()));
-		String bundleLocation = getBundleLocation(getBundleLocationWithWhitespaces(), true);
+		BundleUtils.loadBundles(Arrays.asList(getBundle("testresources/path with whitespace", "bundle with whitespace.jar")));
+		String bundleLocation = getBundleLocation(getBundle("testresources/path with whitespace", "bundle with whitespace.jar"), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
@@ -79,8 +106,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		return (new File("testresources", "testbundle-0.3.0-SNAPSHOT.jar")).getAbsolutePath();
 	}
 
-	private String getBundleLocationWithWhitespaces() {
-		return (new File("testresources/path with whitespace", "bundle with whitespace.jar")).getAbsolutePath();
+	private String getBundle(String folder, String bundleName) {
+		return (new File(folder, bundleName)).getAbsolutePath();
 	}
 
 	private String getBundleLocation(String location, boolean useReference) {
