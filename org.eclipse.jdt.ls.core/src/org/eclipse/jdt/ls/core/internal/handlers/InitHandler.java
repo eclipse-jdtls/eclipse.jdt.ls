@@ -84,7 +84,10 @@ final public class InitHandler {
 		}
 		triggerInitialization(rootPath);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
-		JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(param.getProcessId().longValue());
+		Integer processId = param.getProcessId();
+		if (processId != null) {
+			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
+		}
 		try {
 			Collection<String> bundleList = getBundleList(param.getInitializationOptions());
 			BundleUtils.loadBundles(bundleList);
