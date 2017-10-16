@@ -40,7 +40,7 @@ public class TestVMType extends AbstractVMInstallType {
 		// set the 1.8 test JRE as the new default JRE
 		JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
 
-		// update all environments compatible to to use the test JRE
+		// update all environments compatible to use the test JRE
 		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
 		IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
 		for (IExecutionEnvironment environment : environments) {
