@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
@@ -46,6 +47,8 @@ public class CodeActionHandler {
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
+
+	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
 
 	/**
 	 * @param params
@@ -72,6 +75,17 @@ public class CodeActionHandler {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
 		}
+
+		try {
+			CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
+			for (CUCorrectionProposal proposal : corrections) {
+				Command command = this.getCommandFromProposal(proposal);
+				$.add(command);
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
+		}
+
 		return $;
 	}
 

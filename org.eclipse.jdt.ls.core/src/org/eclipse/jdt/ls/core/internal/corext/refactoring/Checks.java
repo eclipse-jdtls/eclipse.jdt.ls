@@ -14,6 +14,14 @@ package org.eclipse.jdt.ls.core.internal.corext.refactoring;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
+import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.internal.core.refactoring.Resources;
 
@@ -84,40 +92,40 @@ public class Checks {
 	//	public static RefactoringStatus checkTypeParameterName(String name, IJavaElement context) {
 	//		return checkName(name, JavaConventionsUtil.validateTypeVariableName(name, context));
 	//	}
-	//
-	//	/**
-	//	 * Checks if the given name is a valid Java identifier.
-	//	 *
-	//	 * @param name
-	//	 *            the java identifier.
-	//	 * @param context
-	//	 *            an {@link IJavaElement} or <code>null</code>
-	//	 * @return a refactoring status containing the error message if the name is
-	//	 *         not a valid java identifier.
-	//	 */
-	//	public static RefactoringStatus checkIdentifier(String name, IJavaElement context) {
-	//		return checkName(name, JavaConventionsUtil.validateIdentifier(name, context));
-	//	}
-	//
-	//	/**
-	//	 * Checks if the given name is a valid Java method name.
-	//	 *
-	//	 * @param name
-	//	 *            the java method name.
-	//	 * @param context
-	//	 *            an {@link IJavaElement} or <code>null</code>
-	//	 * @return a refactoring status containing the error message if the name is
-	//	 *         not a valid java method name.
-	//	 */
-	//	public static RefactoringStatus checkMethodName(String name, IJavaElement context) {
-	//		RefactoringStatus status = checkName(name, JavaConventionsUtil.validateMethodName(name, context));
-	//		if (status.isOK() && !startsWithLowerCase(name)) {
-	//			return RefactoringStatus.createWarningStatus(RefactoringCoreMessages.Checks_method_names_lowercase);
-	//		} else {
-	//			return status;
-	//		}
-	//	}
-	//
+
+	/**
+	 * Checks if the given name is a valid Java identifier.
+	 *
+	 * @param name
+	 *            the java identifier.
+	 * @param context
+	 *            an {@link IJavaElement} or <code>null</code>
+	 * @return a refactoring status containing the error message if the name is
+	 *         not a valid java identifier.
+	 */
+	public static RefactoringStatus checkIdentifier(String name, IJavaElement context) {
+		return checkName(name, JavaConventionsUtil.validateIdentifier(name, context));
+	}
+
+	/**
+	 * Checks if the given name is a valid Java method name.
+	 *
+	 * @param name
+	 *            the java method name.
+	 * @param context
+	 *            an {@link IJavaElement} or <code>null</code>
+	 * @return a refactoring status containing the error message if the name is
+	 *         not a valid java method name.
+	 */
+	public static RefactoringStatus checkMethodName(String name, IJavaElement context) {
+		RefactoringStatus status = checkName(name, JavaConventionsUtil.validateMethodName(name, context));
+		if (status.isOK() && !startsWithLowerCase(name)) {
+			return RefactoringStatus.createWarningStatus(RefactoringCoreMessages.Checks_method_names_lowercase);
+		} else {
+			return status;
+		}
+	}
+
 	//	/**
 	//	 * Checks if the given name is a valid Java type name.
 	//	 *
@@ -184,17 +192,17 @@ public class Checks {
 	//			return new RefactoringStatus();
 	//		}
 	//	}
-	//
-	//	public static boolean startsWithLowerCase(String s) {
-	//		if (s == null) {
-	//			return false;
-	//		} else if ("".equals(s)) {
-	//			return false;
-	//		} else {
-	//			//workaround for JDK bug (see 26529)
-	//			return s.charAt(0) == Character.toLowerCase(s.charAt(0));
-	//		}
-	//	}
+
+	public static boolean startsWithLowerCase(String s) {
+		if (s == null) {
+			return false;
+		} else if ("".equals(s)) {
+			return false;
+		} else {
+			//workaround for JDK bug (see 26529)
+			return s.charAt(0) == Character.toLowerCase(s.charAt(0));
+		}
+	}
 	//
 	//	public static boolean resourceExists(IPath resourcePath) {
 	//		return ResourcesPlugin.getWorkspace().getRoot().findMember(resourcePath) != null;
@@ -263,75 +271,75 @@ public class Checks {
 	//		return result;
 	//	}
 	//
-	//	//---- New method name checking -------------------------------------------------------------
-	//
-	//	/**
-	//	 * Checks if the new method is already used in the given type.
-	//	 *
-	//	 * @param type
-	//	 * @param methodName
-	//	 * @param parameters
-	//	 * @return the status
-	//	 */
-	//	public static RefactoringStatus checkMethodInType(ITypeBinding type, String methodName, ITypeBinding[] parameters) {
-	//		RefactoringStatus result = new RefactoringStatus();
-	//		IMethodBinding method = org.eclipse.jdt.internal.corext.dom.Bindings.findMethodInType(type, methodName, parameters);
-	//		if (method != null) {
-	//			if (method.isConstructor()) {
-	//				result.addWarning(Messages.format(RefactoringCoreMessages.Checks_methodName_constructor, new Object[] { BasicElementLabels.getJavaElementName(type.getName()) }));
-	//			} else {
-	//				result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_exists, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(type.getName()) }),
-	//						JavaStatusContext.create(method));
-	//			}
-	//		}
-	//		return result;
-	//	}
-	//
-	//	/**
-	//	 * Checks if the new method somehow conflicts with an already existing
-	//	 * method in the hierarchy. The following checks are done:
-	//	 * <ul>
-	//	 * <li>if the new method overrides a method defined in the given type or in
-	//	 * one of its super classes.</li>
-	//	 * </ul>
-	//	 *
-	//	 * @param type
-	//	 * @param methodName
-	//	 * @param returnType
-	//	 * @param parameters
-	//	 * @return the status
-	//	 */
-	//	public static RefactoringStatus checkMethodInHierarchy(ITypeBinding type, String methodName, ITypeBinding returnType, ITypeBinding[] parameters) {
-	//		RefactoringStatus result = new RefactoringStatus();
-	//		IMethodBinding method = Bindings.findMethodInHierarchy(type, methodName, parameters);
-	//		if (method != null) {
-	//			boolean returnTypeClash = false;
-	//			ITypeBinding methodReturnType = method.getReturnType();
-	//			if (returnType != null && methodReturnType != null) {
-	//				String returnTypeKey = returnType.getKey();
-	//				String methodReturnTypeKey = methodReturnType.getKey();
-	//				if (returnTypeKey == null && methodReturnTypeKey == null) {
-	//					returnTypeClash = returnType != methodReturnType;
-	//				} else if (returnTypeKey != null && methodReturnTypeKey != null) {
-	//					returnTypeClash = !returnTypeKey.equals(methodReturnTypeKey);
-	//				}
-	//			}
-	//			ITypeBinding dc = method.getDeclaringClass();
-	//			if (returnTypeClash) {
-	//				result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_returnTypeClash, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(dc.getName()) }),
-	//						JavaStatusContext.create(method));
-	//			} else {
-	//				if (method.isConstructor()) {
-	//					result.addWarning(Messages.format(RefactoringCoreMessages.Checks_methodName_constructor, new Object[] { BasicElementLabels.getJavaElementName(dc.getName()) }));
-	//				} else {
-	//					result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_overrides, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(dc.getName()) }),
-	//							JavaStatusContext.create(method));
-	//				}
-	//			}
-	//		}
-	//		return result;
-	//	}
-	//
+	//---- New method name checking -------------------------------------------------------------
+
+	/**
+	 * Checks if the new method is already used in the given type.
+	 *
+	 * @param type
+	 * @param methodName
+	 * @param parameters
+	 * @return the status
+	 */
+	public static RefactoringStatus checkMethodInType(ITypeBinding type, String methodName, ITypeBinding[] parameters) {
+		RefactoringStatus result = new RefactoringStatus();
+		IMethodBinding method = org.eclipse.jdt.internal.corext.dom.Bindings.findMethodInType(type, methodName, parameters);
+		if (method != null) {
+			if (method.isConstructor()) {
+				result.addWarning(Messages.format(RefactoringCoreMessages.Checks_methodName_constructor, new Object[] { BasicElementLabels.getJavaElementName(type.getName()) }));
+			} else {
+				result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_exists, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(type.getName()) }),
+						JavaStatusContext.create(method));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Checks if the new method somehow conflicts with an already existing
+	 * method in the hierarchy. The following checks are done:
+	 * <ul>
+	 * <li>if the new method overrides a method defined in the given type or in
+	 * one of its super classes.</li>
+	 * </ul>
+	 *
+	 * @param type
+	 * @param methodName
+	 * @param returnType
+	 * @param parameters
+	 * @return the status
+	 */
+	public static RefactoringStatus checkMethodInHierarchy(ITypeBinding type, String methodName, ITypeBinding returnType, ITypeBinding[] parameters) {
+		RefactoringStatus result = new RefactoringStatus();
+		IMethodBinding method = Bindings.findMethodInHierarchy(type, methodName, parameters);
+		if (method != null) {
+			boolean returnTypeClash = false;
+			ITypeBinding methodReturnType = method.getReturnType();
+			if (returnType != null && methodReturnType != null) {
+				String returnTypeKey = returnType.getKey();
+				String methodReturnTypeKey = methodReturnType.getKey();
+				if (returnTypeKey == null && methodReturnTypeKey == null) {
+					returnTypeClash = returnType != methodReturnType;
+				} else if (returnTypeKey != null && methodReturnTypeKey != null) {
+					returnTypeClash = !returnTypeKey.equals(methodReturnTypeKey);
+				}
+			}
+			ITypeBinding dc = method.getDeclaringClass();
+			if (returnTypeClash) {
+				result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_returnTypeClash, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(dc.getName()) }),
+						JavaStatusContext.create(method));
+			} else {
+				if (method.isConstructor()) {
+					result.addWarning(Messages.format(RefactoringCoreMessages.Checks_methodName_constructor, new Object[] { BasicElementLabels.getJavaElementName(dc.getName()) }));
+				} else {
+					result.addError(Messages.format(RefactoringCoreMessages.Checks_methodName_overrides, new Object[] { BasicElementLabels.getJavaElementName(methodName), BasicElementLabels.getJavaElementName(dc.getName()) }),
+							JavaStatusContext.create(method));
+				}
+			}
+		}
+		return result;
+	}
+
 	//	//---- Selection checks --------------------------------------------------------------------
 	//
 	//	public static boolean isExtractableExpression(ASTNode[] selectedNodes, ASTNode coveringNode) {
@@ -381,39 +389,39 @@ public class Checks {
 	//		} while (node != null);
 	//		return false;
 	//	}
-	//
-	//	/**
-	//	 * Returns a fatal error in case the name is empty. In all other cases, an
-	//	 * error based on the given status is returned.
-	//	 *
-	//	 * @param name
-	//	 *            a name
-	//	 * @param status
-	//	 *            a status
-	//	 * @return RefactoringStatus based on the given status or the name, if
-	//	 *         empty.
-	//	 */
-	//	public static RefactoringStatus checkName(String name, IStatus status) {
-	//		RefactoringStatus result = new RefactoringStatus();
-	//		if ("".equals(name)) {
-	//			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.Checks_Choose_name);
-	//		}
-	//
-	//		if (status.isOK()) {
-	//			return result;
-	//		}
-	//
-	//		switch (status.getSeverity()) {
-	//			case IStatus.ERROR:
-	//				return RefactoringStatus.createFatalErrorStatus(status.getMessage());
-	//			case IStatus.WARNING:
-	//				return RefactoringStatus.createWarningStatus(status.getMessage());
-	//			case IStatus.INFO:
-	//				return RefactoringStatus.createInfoStatus(status.getMessage());
-	//			default: //no nothing
-	//				return new RefactoringStatus();
-	//		}
-	//	}
+
+	/**
+	 * Returns a fatal error in case the name is empty. In all other cases, an
+	 * error based on the given status is returned.
+	 *
+	 * @param name
+	 *            a name
+	 * @param status
+	 *            a status
+	 * @return RefactoringStatus based on the given status or the name, if
+	 *         empty.
+	 */
+	public static RefactoringStatus checkName(String name, IStatus status) {
+		RefactoringStatus result = new RefactoringStatus();
+		if ("".equals(name)) {
+			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.Checks_Choose_name);
+		}
+
+		if (status.isOK()) {
+			return result;
+		}
+
+		switch (status.getSeverity()) {
+			case IStatus.ERROR:
+				return RefactoringStatus.createFatalErrorStatus(status.getMessage());
+			case IStatus.WARNING:
+				return RefactoringStatus.createWarningStatus(status.getMessage());
+			case IStatus.INFO:
+				return RefactoringStatus.createInfoStatus(status.getMessage());
+			default: //no nothing
+				return new RefactoringStatus();
+		}
+	}
 	//
 	//	/**
 	//	 * Finds a method in a type This searches for a method with the same name

@@ -93,7 +93,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(eStr, aStr);
 	}
 
-	private String generateTest(String actual, String name, int k) {
+	protected String generateTest(String actual, String name, int k) {
 		StringBuilder builder = new StringBuilder();
 		String[] lines = actual.split("\n");
 		builder.append("		buf = new StringBuilder();\n");
@@ -131,22 +131,27 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	protected class Expected {
+	public class Expected {
 		String name;
 		String content;
 
-		Expected(String name, String content) {
+		public Expected(String name, String content) {
 			this.content = content;
 			this.name = name;
 		}
 	}
 
-	private List<Command> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
+	protected Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
+		IProblem problem = problems[0];
+		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
+	}
+
+	protected List<Command> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
+
 		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
 		IProblem[] problems = astRoot.getProblems();
 
-		IProblem problem = problems[0];
-		Range range = JDTUtils.toRange(cu, problem.getSourceStart(), 0);
+		Range range = getRange(cu, problems);
 
 		CodeActionParams parms = new CodeActionParams();
 

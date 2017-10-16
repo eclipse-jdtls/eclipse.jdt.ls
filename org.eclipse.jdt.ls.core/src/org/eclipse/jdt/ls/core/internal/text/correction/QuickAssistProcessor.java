@@ -22,13 +22,19 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
@@ -54,42 +60,141 @@ import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 
 /**
   */
 public class QuickAssistProcessor {
 
-	public static final String SPLIT_JOIN_VARIABLE_DECLARATION_ID = "org.eclipse.jdt.ui.correction.splitJoinVariableDeclaration.assist"; //$NON-NLS-1$
-	public static final String CONVERT_FOR_LOOP_ID = "org.eclipse.jdt.ui.correction.convertForLoop.assist"; //$NON-NLS-1$
-	public static final String ASSIGN_TO_LOCAL_ID = "org.eclipse.jdt.ui.correction.assignToLocal.assist"; //$NON-NLS-1$
-	public static final String ASSIGN_TO_FIELD_ID = "org.eclipse.jdt.ui.correction.assignToField.assist"; //$NON-NLS-1$
-	public static final String ASSIGN_PARAM_TO_FIELD_ID = "org.eclipse.jdt.ui.correction.assignParamToField.assist"; //$NON-NLS-1$
-	public static final String ASSIGN_ALL_PARAMS_TO_NEW_FIELDS_ID = "org.eclipse.jdt.ui.correction.assignAllParamsToNewFields.assist"; //$NON-NLS-1$
-	public static final String ADD_BLOCK_ID = "org.eclipse.jdt.ui.correction.addBlock.assist"; //$NON-NLS-1$
-	public static final String EXTRACT_LOCAL_ID = "org.eclipse.jdt.ui.correction.extractLocal.assist"; //$NON-NLS-1$
-	public static final String EXTRACT_LOCAL_NOT_REPLACE_ID = "org.eclipse.jdt.ui.correction.extractLocalNotReplaceOccurrences.assist"; //$NON-NLS-1$
-	public static final String EXTRACT_CONSTANT_ID = "org.eclipse.jdt.ui.correction.extractConstant.assist"; //$NON-NLS-1$
-	public static final String INLINE_LOCAL_ID = "org.eclipse.jdt.ui.correction.inlineLocal.assist"; //$NON-NLS-1$
-	public static final String CONVERT_LOCAL_TO_FIELD_ID = "org.eclipse.jdt.ui.correction.convertLocalToField.assist"; //$NON-NLS-1$
-	public static final String CONVERT_ANONYMOUS_TO_LOCAL_ID = "org.eclipse.jdt.ui.correction.convertAnonymousToLocal.assist"; //$NON-NLS-1$
-	public static final String CONVERT_TO_STRING_BUFFER_ID = "org.eclipse.jdt.ui.correction.convertToStringBuffer.assist"; //$NON-NLS-1$
-	public static final String CONVERT_TO_MESSAGE_FORMAT_ID = "org.eclipse.jdt.ui.correction.convertToMessageFormat.assist"; //$NON-NLS-1$;
-	public static final String EXTRACT_METHOD_INPLACE_ID = "org.eclipse.jdt.ui.correction.extractMethodInplace.assist"; //$NON-NLS-1$;
+	public static final String SPLIT_JOIN_VARIABLE_DECLARATION_ID = "org.eclipse.jdt.ls.correction.splitJoinVariableDeclaration.assist"; //$NON-NLS-1$
+	public static final String CONVERT_FOR_LOOP_ID = "org.eclipse.jdt.ls.correction.convertForLoop.assist"; //$NON-NLS-1$
+	public static final String ASSIGN_TO_LOCAL_ID = "org.eclipse.jdt.ls.correction.assignToLocal.assist"; //$NON-NLS-1$
+	public static final String ASSIGN_TO_FIELD_ID = "org.eclipse.jdt.ls.correction.assignToField.assist"; //$NON-NLS-1$
+	public static final String ASSIGN_PARAM_TO_FIELD_ID = "org.eclipse.jdt.ls.correction.assignParamToField.assist"; //$NON-NLS-1$
+	public static final String ASSIGN_ALL_PARAMS_TO_NEW_FIELDS_ID = "org.eclipse.jdt.ls.correction.assignAllParamsToNewFields.assist"; //$NON-NLS-1$
+	public static final String ADD_BLOCK_ID = "org.eclipse.jdt.ls.correction.addBlock.assist"; //$NON-NLS-1$
+	public static final String EXTRACT_LOCAL_ID = "org.eclipse.jdt.ls.correction.extractLocal.assist"; //$NON-NLS-1$
+	public static final String EXTRACT_LOCAL_NOT_REPLACE_ID = "org.eclipse.jdt.ls.correction.extractLocalNotReplaceOccurrences.assist"; //$NON-NLS-1$
+	public static final String EXTRACT_CONSTANT_ID = "org.eclipse.jdt.ls.correction.extractConstant.assist"; //$NON-NLS-1$
+	public static final String INLINE_LOCAL_ID = "org.eclipse.jdt.ls.correction.inlineLocal.assist"; //$NON-NLS-1$
+	public static final String CONVERT_LOCAL_TO_FIELD_ID = "org.eclipse.jdt.ls.correction.convertLocalToField.assist"; //$NON-NLS-1$
+	public static final String CONVERT_ANONYMOUS_TO_LOCAL_ID = "org.eclipse.jdt.ls.correction.convertAnonymousToLocal.assist"; //$NON-NLS-1$
+	public static final String CONVERT_TO_STRING_BUFFER_ID = "org.eclipse.jdt.ls.correction.convertToStringBuffer.assist"; //$NON-NLS-1$
+	public static final String CONVERT_TO_MESSAGE_FORMAT_ID = "org.eclipse.jdt.ls.correction.convertToMessageFormat.assist"; //$NON-NLS-1$;
+	public static final String EXTRACT_METHOD_INPLACE_ID = "org.eclipse.jdt.ls.correction.extractMethodInplace.assist"; //$NON-NLS-1$;
 
 	public QuickAssistProcessor() {
-		super();
+	}
+
+	public CUCorrectionProposal[] getAssists(IInvocationContext context, IProblemLocation[] locations) throws CoreException {
+		ASTNode coveringNode = context.getCoveringNode();
+		if (coveringNode != null) {
+			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
+			ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
+			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
+
+			// quick assists that show up also if there is an error/warning
+			//			getRenameLocalProposals(context, coveringNode, locations, resultingCollections);
+			//			getRenameRefactoringProposal(context, coveringNode, locations, resultingCollections);
+			//			getAssignToVariableProposals(context, coveringNode, locations, resultingCollections);
+			//			getAssignParamToFieldProposals(context, coveringNode, resultingCollections);
+			//			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
+			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
+			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
+
+			if (noErrorsAtLocation) {
+				boolean problemsAtLocation = locations.length != 0;
+				//				getCatchClauseToThrowsProposals(context, coveringNode, resultingCollections);
+				//				getPickoutTypeFromMulticatchProposals(context, coveringNode, coveredNodes, resultingCollections);
+				//				getConvertToMultiCatchProposals(context, coveringNode, resultingCollections);
+				//				getUnrollMultiCatchProposals(context, coveringNode, resultingCollections);
+				//				getUnWrapProposals(context, coveringNode, resultingCollections);
+				//				getJoinVariableProposals(context, coveringNode, resultingCollections);
+				//				getSplitVariableProposals(context, coveringNode, resultingCollections);
+				//				getAddFinallyProposals(context, coveringNode, resultingCollections);
+				//				getAddElseProposals(context, coveringNode, resultingCollections);
+				//				getAddBlockProposals(context, coveringNode, resultingCollections);
+				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
+				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
+				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
+				// 				getExtractVariableProposal(context, problemsAtLocation, resultingCollections);
+				getExtractMethodProposal(context, coveringNode, problemsAtLocation, resultingCollections);
+				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
+				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
+				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
+				//				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
+				//				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, resultingCollections);
+				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
+				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
+				//				getAddInferredLambdaParameterTypes(context, coveringNode, resultingCollections);
+				//				getConvertMethodReferenceToLambdaProposal(context, coveringNode, resultingCollections);
+				//				getConvertLambdaToMethodReferenceProposal(context, coveringNode, resultingCollections);
+				//				getFixParenthesesInLambdaExpression(context, coveringNode, resultingCollections);
+				//				if (!getConvertForLoopProposal(context, coveringNode, resultingCollections)) {
+				//					getConvertIterableLoopProposal(context, coveringNode, resultingCollections);
+				//				}
+				//				getConvertEnhancedForLoopProposal(context, coveringNode, resultingCollections);
+				//				getRemoveBlockProposals(context, coveringNode, resultingCollections);
+				//				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
+				//				getConvertStringConcatenationProposals(context, resultingCollections);
+				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
+			}
+			return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
+		}
+		return null;
+	}
+
+	static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
+		final ArrayList<ASTNode> coveredNodes = new ArrayList<>();
+		final int selectionBegin = context.getSelectionOffset();
+		final int selectionEnd = selectionBegin + context.getSelectionLength();
+		coveringNode.accept(new GenericVisitor() {
+			@Override
+			protected boolean visitNode(ASTNode node) {
+				int nodeStart = node.getStartPosition();
+				int nodeEnd = nodeStart + node.getLength();
+				// if node does not intersects with selection, don't visit children
+				if (nodeEnd < selectionBegin || selectionEnd < nodeStart) {
+					return false;
+				}
+				// if node is fully covered, we don't need to visit children
+				if (isCovered(node)) {
+					ASTNode parent = node.getParent();
+					if (parent == null || !isCovered(parent)) {
+						coveredNodes.add(node);
+						return false;
+					}
+				}
+				// if node only partly intersects with selection, we try to find fully covered children
+				return true;
+			}
+
+			private boolean isCovered(ASTNode node) {
+				int begin = node.getStartPosition();
+				int end = begin + node.getLength();
+				return begin >= selectionBegin && end <= selectionEnd;
+			}
+		});
+		return coveredNodes;
 	}
 
 	static boolean noErrorsAtLocation(IProblemLocation[] locations) {
@@ -121,15 +226,52 @@ public class QuickAssistProcessor {
 		return statements.size();
 	}
 
+	private static boolean getExtractMethodProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
+			return false;
+		}
+		if (coveringNode instanceof Block) {
+			List<Statement> statements = ((Block) coveringNode).statements();
+			int startIndex = getIndex(context.getSelectionOffset(), statements);
+			if (startIndex == -1) {
+				return false;
+			}
+			int endIndex = getIndex(context.getSelectionOffset() + context.getSelectionLength(), statements);
+			if (endIndex == -1 || endIndex <= startIndex) {
+				return false;
+			}
+		}
+
+		if (proposals == null) {
+			return true;
+		}
+
+		final ICompilationUnit cu = context.getCompilationUnit();
+		final ExtractMethodRefactoring extractMethodRefactoring = new ExtractMethodRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+		String uniqueMethodName = getUniqueMethodName(coveringNode, "extracted");
+		extractMethodRefactoring.setMethodName(uniqueMethodName);
+		if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
+			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
+
+			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractMethodRefactoring, relevance);
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			proposals.add(proposal);
+		}
+		return true;
+	}
+
 	/**
-	 * Returns the functional interface method being implemented by the given
-	 * method reference.
+	 * Returns the functional interface method being implemented by the given method
+	 * reference.
 	 *
 	 * @param methodReference
 	 *            the method reference to get the functional method
 	 * @return the functional interface method being implemented by
-	 *         <code>methodReference</code> or <code>null</code> if it could not
-	 *         be derived
+	 *         <code>methodReference</code> or <code>null</code> if it could not be
+	 *         derived
 	 */
 	public static IMethodBinding getFunctionalMethodForMethodReference(MethodReference methodReference) {
 		ITypeBinding targetTypeBinding = ASTNodes.getTargetType(methodReference);
@@ -145,14 +287,14 @@ public class QuickAssistProcessor {
 	}
 
 	/**
-	 * Converts and replaces the given method reference with corresponding
-	 * lambda expression in the given ASTRewrite.
+	 * Converts and replaces the given method reference with corresponding lambda
+	 * expression in the given ASTRewrite.
 	 *
 	 * @param methodReference
 	 *            the method reference to convert
 	 * @param functionalMethod
-	 *            the non-generic functional interface method to be implemented
-	 *            by the lambda expression
+	 *            the non-generic functional interface method to be implemented by
+	 *            the lambda expression
 	 * @param astRoot
 	 *            the AST root
 	 * @param rewrite
@@ -161,11 +303,10 @@ public class QuickAssistProcessor {
 	 *            to create linked proposals for lambda's parameters or
 	 *            <code>null</code> if linked proposals are not required
 	 * @param createBlockBody
-	 *            <code>true</code> if lambda expression's body should be a
-	 *            block
+	 *            <code>true</code> if lambda expression's body should be a block
 	 *
-	 * @return lambda expression used to replace the method reference in the
-	 *         given ASTRewrite
+	 * @return lambda expression used to replace the method reference in the given
+	 *         ASTRewrite
 	 * @throws JavaModelException
 	 *             if an exception occurs while accessing the Java element
 	 *             corresponding to the <code>functionalMethod</code>
@@ -370,6 +511,36 @@ public class QuickAssistProcessor {
 			}
 		}
 		return newNames;
+	}
+
+	private static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
+		while (astNode != null && !(astNode instanceof TypeDeclaration)) {
+			astNode = astNode.getParent();
+		}
+		if (astNode instanceof TypeDeclaration) {
+			ITypeBinding typeBinding = ((TypeDeclaration) astNode).resolveBinding();
+			IType type = (IType) typeBinding.getJavaElement();
+			IMethod[] methods = type.getMethods();
+
+			int suggestesPostfix = 0;
+			String resultName = suggestedName;
+			while (suggestesPostfix < 1000) {
+				if (!hasMethod(methods, resultName)) {
+					return resultName;
+				}
+				resultName = suggestedName + suggestesPostfix++;
+			}
+		}
+		return suggestedName;
+	}
+
+	private static boolean hasMethod(IMethod[] methods, String name) {
+		for (int i = 0; i < methods.length; i++) {
+			if (methods[i].getElementName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static String createName(String candidate, List<String> excludedNames) {
