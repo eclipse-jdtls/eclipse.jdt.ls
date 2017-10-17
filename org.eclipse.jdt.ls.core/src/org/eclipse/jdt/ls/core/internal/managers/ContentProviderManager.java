@@ -85,6 +85,10 @@ public class ContentProviderManager {
 		return getContent(uri, uri.toString(), IContentProvider.class, monitor);
 	}
 
+	public void clearCache() {
+		cachedContent.invalidateAll();
+	}
+
 	private String getContent(Object source, String cacheKey, Class<? extends IContentProvider> providerType, IProgressMonitor monitor) {
 		String content = cachedContent.getIfPresent(cacheKey);
 		if (content != null) {
