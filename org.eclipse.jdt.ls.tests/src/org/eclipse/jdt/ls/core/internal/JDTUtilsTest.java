@@ -97,8 +97,8 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertEquals(2, elements.length);
 		assertTrue(IPackageDeclaration.class.isAssignableFrom(elements[0].getClass()));
 		assertTrue(IType.class.isAssignableFrom(elements[1].getClass()));
-
 		assertTrue(cu.getResource().isLinked());
+		assertEquals(cu.getResource(), JDTUtils.findFile(uri));
 
 		uri = helloSrcRoot.resolve("NoPackage.java").toUri();
 		cu = JDTUtils.resolveCompilationUnit(uri.toString());

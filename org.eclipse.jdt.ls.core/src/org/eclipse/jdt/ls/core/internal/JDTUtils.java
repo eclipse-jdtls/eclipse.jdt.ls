@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -534,6 +535,15 @@ public final class JDTUtils {
 			return null;
 		}
 		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+		if (resources.length == 0) {
+			//On Mac, Linked resources are referenced via the "real" URI, i.e file://USERS/username/...
+			//instead of file://Users/username/..., so we check against that real URI.
+			URI realUri = FileUtil.realURI(uri);
+			if (!uri.equals(realUri)) {
+				uri = realUri;
+				resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+			}
+		}
 		if (resources.length == 0 && Platform.OS_WIN32.equals(Platform.getOS()) && uri.toString().startsWith(ResourceUtils.FILE_UNC_PREFIX)) {
 			String uriString = uri.toString();
 			int index = uriString.indexOf(PATH_SEPARATOR, ResourceUtils.FILE_UNC_PREFIX.length());
