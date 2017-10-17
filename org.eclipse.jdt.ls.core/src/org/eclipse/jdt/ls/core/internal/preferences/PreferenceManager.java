@@ -15,11 +15,15 @@ import java.util.Objects;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -37,9 +41,11 @@ public class PreferenceManager {
 	private Preferences preferences ;
 	private ClientPreferences clientPreferences;
 	private IMavenConfiguration mavenConfig;
+	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
+		preferencesChangeListeners = new ListenerList<>();
 		initialize();
 	}
 
@@ -59,6 +65,7 @@ public class PreferenceManager {
 		if(preferences == null){
 			throw new IllegalArgumentException("Preferences can not be null");
 		}
+		preferencesChanged(this.preferences, preferences);
 		this.preferences = preferences;
 
 		String newMavenSettings = preferences.getMavenUserSettings();
@@ -72,6 +79,23 @@ public class PreferenceManager {
 			}
 		}
 		// TODO serialize preferences
+	}
+
+	private void preferencesChanged(Preferences oldPreferences, Preferences newPreferences) {
+		for (final IPreferencesChangeListener listener : preferencesChangeListeners) {
+			ISafeRunnable job = new ISafeRunnable() {
+				@Override
+				public void handleException(Throwable e) {
+					JavaLanguageServerPlugin.log(new CoreException(StatusFactory.newErrorStatus(e.getMessage(), e)));
+				}
+
+				@Override
+				public void run() throws Exception {
+					listener.preferencesChange(oldPreferences, newPreferences);
+				}
+			};
+			SafeRunner.run(job);
+		}
 	}
 
 	/**
@@ -126,5 +150,30 @@ public class PreferenceManager {
 		res.tabWidth = CodeFormatterUtil.getTabWidth(project);
 		res.indentWidth = CodeFormatterUtil.getIndentWidth(project);
 		return res;
+	}
+
+	/**
+	 * Register the given listener for notification of preferences changes. Calling
+	 * this method multiple times with the same listener has no effect. The given
+	 * listener argument must not be <code>null</code>.
+	 *
+	 * @param listener
+	 *            the preferences change listener to register
+	 */
+	public void addPreferencesChangeListener(IPreferencesChangeListener listener) {
+		preferencesChangeListeners.add(listener);
+
+	}
+
+	/**
+	 * De-register the given listener from receiving notification of preferences
+	 * changes. Calling this method multiple times with the same listener has no
+	 * effect. The given listener argument must not be <code>null</code>.
+	 *
+	 * @param listener
+	 *            the preference change listener to remove
+	 */
+	public void removePreferencesChangeListener(IPreferencesChangeListener listener) {
+		preferencesChangeListeners.remove(listener);
 	}
 }
