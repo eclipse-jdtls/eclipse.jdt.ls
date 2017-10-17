@@ -64,6 +64,8 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private DocumentLifeCycleHandler lifeCycleHandler;
 	private JavaClientConnection javaClient;
 
+	private File temp;
+
 	@Before
 	public void setup() throws Exception {
 		mockPreferences();
@@ -81,6 +83,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}
+		FileUtils.deleteQuietly(temp);
 	}
 
 	private Preferences mockPreferences() {
@@ -405,29 +408,24 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				"public class Foo {"+
 				"}";
 		// @formatter:on
-		File temp = null;
-		try {
-			temp = createTempFolder();
-			File file = createTempFile(temp, "Foo.java", content);
-			URI uri = file.toURI();
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-			openDocument(cu, cu.getSource(), 1);
-			CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
-			IProblem[] problems = astRoot.getProblems();
-			assertEquals("Unexpected number of errors", 0, problems.length);
-			String source = cu.getSource();
-			int length = source.length();
-			source = source.replace("org", "org.eclipse");
-			changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
-			FileUtils.writeStringToFile(file, source);
-			saveDocument(cu);
-			cu = JDTUtils.resolveCompilationUnit(uri);
-			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
-			problems = astRoot.getProblems();
-			assertEquals("Unexpected number of errors", 0, problems.length);
-		} finally {
-			FileUtils.deleteQuietly(temp);
-		}
+		temp = createTempFolder();
+		File file = createTempFile(temp, "Foo.java", content);
+		URI uri = file.toURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		openDocument(cu, cu.getSource(), 1);
+		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+		IProblem[] problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 0, problems.length);
+		String source = cu.getSource();
+		int length = source.length();
+		source = source.replace("org", "org.eclipse");
+		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+		FileUtils.writeStringToFile(file, source);
+		saveDocument(cu);
+		cu = JDTUtils.resolveCompilationUnit(uri);
+		astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+		problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 0, problems.length);
 	}
 
 	@Test
@@ -439,42 +437,37 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				"public class Foo {"+
 				"}";
 		// @formatter:on
-		File temp = null;
-		try {
-			temp = createTempFolder();
-			Path path = Paths.get(temp.getAbsolutePath(), "org", "eclipse");
-			File file = createTempFile(path.toFile(), "Foo.java", content);
-			URI uri = file.toURI();
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-			openDocument(cu, cu.getSource(), 1);
-			CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
-			IProblem[] problems = astRoot.getProblems();
-			assertEquals("Unexpected number of errors", 0, problems.length);
+		temp = createTempFolder();
+		Path path = Paths.get(temp.getAbsolutePath(), "org", "eclipse");
+		File file = createTempFile(path.toFile(), "Foo.java", content);
+		URI uri = file.toURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		openDocument(cu, cu.getSource(), 1);
+		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+		IProblem[] problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 0, problems.length);
 
-			String source = cu.getSource();
-			int length = source.length();
-			source = source.replace("org", "org.eclipse");
-			changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
-			FileUtils.writeStringToFile(file, source);
-			saveDocument(cu);
-			cu = JDTUtils.resolveCompilationUnit(uri);
-			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
-			problems = astRoot.getProblems();
-			assertEquals("Unexpected number of errors", 0, problems.length);
+		String source = cu.getSource();
+		int length = source.length();
+		source = source.replace("org", "org.eclipse");
+		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+		FileUtils.writeStringToFile(file, source);
+		saveDocument(cu);
+		cu = JDTUtils.resolveCompilationUnit(uri);
+		astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+		problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 0, problems.length);
 
-			source = cu.getSource();
-			length = source.length();
-			source = source.replace("org.eclipse", "org.eclipse.toto");
-			changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, source.length()), length);
-			FileUtils.writeStringToFile(file, source);
-			saveDocument(cu);
-			cu = JDTUtils.resolveCompilationUnit(uri);
-			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
-			problems = astRoot.getProblems();
-			assertEquals("Unexpected number of errors", 1, problems.length);
-		} finally {
-			FileUtils.deleteQuietly(temp);
-		}
+		source = cu.getSource();
+		length = source.length();
+		source = source.replace("org.eclipse", "org.eclipse.toto");
+		changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, source.length()), length);
+		FileUtils.writeStringToFile(file, source);
+		saveDocument(cu);
+		cu = JDTUtils.resolveCompilationUnit(uri);
+		astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
+		problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 1, problems.length);
 	}
 
 	private File createTempFile(File parent, String fileName, String content) throws IOException {

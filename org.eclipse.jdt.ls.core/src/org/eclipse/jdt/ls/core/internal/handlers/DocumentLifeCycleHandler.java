@@ -312,7 +312,12 @@ public class DocumentLifeCycleHandler {
 			fileBuffer.setDirty(false);
 		}
 		if (unit != null && unit.isWorkingCopy()) {
-			projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
+			try {
+				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
+				unit.getBuffer().close();
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException("Error while handling document save", e);
+			}
 		}
 	}
 
