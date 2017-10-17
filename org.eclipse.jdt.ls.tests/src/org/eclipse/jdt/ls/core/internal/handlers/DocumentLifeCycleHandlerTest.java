@@ -14,9 +14,7 @@ import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -408,16 +406,9 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				"}";
 		// @formatter:on
 		File temp = null;
-		File file = null;
 		try {
-			temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
-			temp.delete();
-			temp.mkdirs();
-			temp.deleteOnExit();
-			file = new File(temp, "Foo.java");
-			file.deleteOnExit();
-			file.createNewFile();
-			FileUtils.writeStringToFile(file, content);
+			temp = createTempFolder();
+			File file = createTempFile(temp, "Foo.java", content);
 			URI uri = file.toURI();
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 			openDocument(cu, cu.getSource(), 1);
@@ -435,12 +426,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 			problems = astRoot.getProblems();
 			assertEquals("Unexpected number of errors", 0, problems.length);
 		} finally {
-			if (file != null) {
-				file.delete();
-			}
-			if (temp != null) {
-				temp.delete();
-			}
+			FileUtils.deleteQuietly(temp);
 		}
 	}
 
@@ -454,25 +440,17 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				"}";
 		// @formatter:on
 		File temp = null;
-		File file = null;
 		try {
-			temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
-			temp.delete();
-			temp.mkdirs();
-			temp.deleteOnExit();
+			temp = createTempFolder();
 			Path path = Paths.get(temp.getAbsolutePath(), "org", "eclipse");
-			File parent = path.toFile();
-			parent.mkdirs();
-			file = new File(parent, "Foo.java");
-			file.deleteOnExit();
-			file.createNewFile();
-			FileUtils.writeStringToFile(file, content);
+			File file = createTempFile(path.toFile(), "Foo.java", content);
 			URI uri = file.toURI();
 			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 			openDocument(cu, cu.getSource(), 1);
 			CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
 			IProblem[] problems = astRoot.getProblems();
 			assertEquals("Unexpected number of errors", 0, problems.length);
+
 			String source = cu.getSource();
 			int length = source.length();
 			source = source.replace("org", "org.eclipse");
@@ -483,6 +461,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 			astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
 			problems = astRoot.getProblems();
 			assertEquals("Unexpected number of errors", 0, problems.length);
+
 			source = cu.getSource();
 			length = source.length();
 			source = source.replace("org.eclipse", "org.eclipse.toto");
@@ -494,13 +473,26 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 			problems = astRoot.getProblems();
 			assertEquals("Unexpected number of errors", 1, problems.length);
 		} finally {
-			if (file != null) {
-				file.delete();
-			}
-			if (temp != null) {
-				temp.delete();
-			}
+			FileUtils.deleteQuietly(temp);
 		}
+	}
+
+	private File createTempFile(File parent, String fileName, String content) throws IOException {
+		parent.mkdirs();
+		File file = new File(parent, fileName);
+		file.deleteOnExit();
+		file.createNewFile();
+		FileUtils.writeStringToFile(file, content);
+		return file;
+	}
+
+	private File createTempFolder() throws IOException {
+		File temp;
+		temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
+		temp.delete();
+		temp.mkdirs();
+		temp.deleteOnExit();
+		return temp;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -547,13 +539,14 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		lifeCycleHandler.didChange(changeParms);
 	}
 
-	private void saveDocument(ICompilationUnit cu) throws JavaModelException {
+	private void saveDocument(ICompilationUnit cu) throws Exception {
 		DidSaveTextDocumentParams saveParms = new DidSaveTextDocumentParams();
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
 		textDocument.setUri(JDTUtils.getFileURI(cu));
 		saveParms.setTextDocument(textDocument);
 		saveParms.setText(cu.getSource());
 		lifeCycleHandler.didSave(saveParms);
+		waitForBackgroundJobs();
 	}
 
 	private void closeDocument(ICompilationUnit cu) {
