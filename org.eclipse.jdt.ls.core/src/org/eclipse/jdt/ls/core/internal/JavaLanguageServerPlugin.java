@@ -23,6 +23,8 @@ import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,7 +43,9 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
@@ -84,8 +88,23 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private PreferenceManager preferenceManager;
 
+	private IPreferencesChangeListener preferencesChangeListener = new IPreferencesChangeListener() {
+
+		@Override
+		public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
+			if (contentProviderManager == null) {
+				return;
+			}
+			List<String> oldIds = oldPreferences == null ? null : oldPreferences.getPreferredContentProviderIds();
+			List<String> newIds = newPreferences == null ? null : newPreferences.getPreferredContentProviderIds();
+			if (!Objects.equals(oldIds, newIds)) {
+				contentProviderManager.clearCache();
+			}
+		}
+	};
+
 	public static LanguageServer getLanguageServer() {
-		return pluginInstance == null? null: pluginInstance.languageServer;
+		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
 
 	public static BundleContext getBundleContext() {
@@ -109,7 +128,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		initializeJDTOptions();
 		projectsManager = new ProjectsManager(preferenceManager);
 		contentProviderManager = new ContentProviderManager(preferenceManager);
-		logInfo(getClass()+" is started");
+		preferenceManager.addPreferencesChangeListener(preferencesChangeListener);
+		logInfo(getClass() + " is started");
 		configureProxy();
 	}
 
@@ -148,7 +168,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 			if (proxyService != null) {
 				ProxySelector.setActiveProvider(MANUAL);
 				IProxyData[] proxies = proxyService.getProxyData();
-				for (IProxyData proxy:proxies) {
+				for (IProxyData proxy : proxies) {
 					if ("HTTP".equals(proxy.getType())) {
 						proxy.setHost(httpHost);
 						proxy.setPort(httpPort == null ? -1 : Integer.valueOf(httpPort));
@@ -217,9 +237,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private void startConnection() throws IOException {
 		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
 		ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
-		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class,
-				connectionFactory.getInputStream(),
-				connectionFactory.getOutputStream());
+		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, connectionFactory.getInputStream(), connectionFactory.getOutputStream());
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
 	}
@@ -230,14 +248,18 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
-		logInfo(getClass()+" is stopping:");
+		logInfo(getClass() + " is stopping:");
 		logInfo(getThreadDump());
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
 		projectsManager = null;
+		if (preferenceManager != null) {
+			preferenceManager.removePreferencesChangeListener(preferencesChangeListener);
+		}
 		contentProviderManager = null;
 		languageServer = null;
 	}
+
 	private String getThreadDump() {
 		String lineSep = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
@@ -251,11 +273,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return sb.toString();
 	}
 
-	public WorkingCopyOwner getWorkingCopyOwner(){
+	public WorkingCopyOwner getWorkingCopyOwner() {
 		return this.protocol.getWorkingCopyOwner();
 	}
 
-	public static JavaLanguageServerPlugin getInstance(){
+	public static JavaLanguageServerPlugin getInstance() {
 		return pluginInstance;
 	}
 
@@ -301,8 +323,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	}
 
 	/**
-	 * Initialize default preference values of used bundles to match
-	 * server functionality.
+	 * Initialize default preference values of used bundles to match server
+	 * functionality.
 	 */
 	private void initializeJDTOptions() {
 		// Update JavaCore options
@@ -329,7 +351,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 * @return the Java Language Server version
 	 */
 	public static String getVersion() {
-		return context == null? "Unknown":context.getBundle().getVersion().toString();
+		return context == null ? "Unknown" : context.getBundle().getVersion().toString();
 	}
 
 	private static void redirectStandardStreams() throws FileNotFoundException {
