@@ -11,6 +11,8 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -67,6 +69,29 @@ public class PreferenceManagerTest {
 	public void testInitialize() throws Exception {
 		preferenceManager.initialize();
 		assertEquals(JavaCore.ENABLED, JavaCore.getOptions().get(JavaCore.CODEASSIST_VISIBILITY_CHECK));
+	}
+
+	@Test
+	public void testPreferencesChangeListener() throws Exception {
+		preferenceManager.initialize();
+		boolean called[] = new boolean[1];
+		called[0] = false;
+		IPreferencesChangeListener listener = new IPreferencesChangeListener() {
+
+			@Override
+			public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
+				called[0] = true;
+			}
+		};
+		preferenceManager.addPreferencesChangeListener(listener);
+		Preferences preferences = new Preferences();
+		preferenceManager.update(preferences);
+		assertTrue("No one listener has been called", called[0]);
+		preferenceManager.removePreferencesChangeListener(listener);
+		called[0] = false;
+		preferences = new Preferences();
+		preferenceManager.update(preferences);
+		assertFalse("A listener has been called", called[0]);
 	}
 
 
