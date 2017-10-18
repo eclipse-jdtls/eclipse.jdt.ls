@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -47,7 +46,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String uri = JDTUtils.getFileURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
-		FormattingOptions options = new FormattingOptions(4, true, Collections.emptyMap());// ident == 4 spaces
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
@@ -76,7 +75,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		preferenceManager.getPreferences().setJavaFormatEnabled(false);
 		String uri = JDTUtils.getFileURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
-		FormattingOptions options = new FormattingOptions(4, true, Collections.emptyMap());// ident == 4 spaces
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
@@ -98,7 +97,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String uri = JDTUtils.getFileURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
-		FormattingOptions options = new FormattingOptions(2, false, Collections.emptyMap());// ident == tab
+		FormattingOptions options = new FormattingOptions(2, false);// ident == tab
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
@@ -133,7 +132,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String uri = JDTUtils.getFileURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
-		FormattingOptions options = new FormattingOptions(4, false, Collections.emptyMap());// ident == tab
+		FormattingOptions options = new FormattingOptions(4, false);// ident == tab
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
@@ -172,7 +171,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		Range range = new Range(new Position(2, 0), new Position(3, 5));// range around foo()
 		DocumentRangeFormattingParams params = new DocumentRangeFormattingParams(range);
 		params.setTextDocument(textDocument);
-		params.setOptions(new FormattingOptions(3, true, Collections.emptyMap()));// ident == 3 spaces
+		params.setOptions(new FormattingOptions(3, true));// ident == 3 spaces
 
 		List<? extends TextEdit> edits = server.rangeFormatting(params).get();
 		//@formatter:off
