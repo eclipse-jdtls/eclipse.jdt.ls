@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
@@ -35,4 +38,12 @@ public interface JavaProtocolExtensions {
 	 */
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
+
+	/**
+	 * The implementors request is sent from the client to the server to request
+	 * implementors information at a given text document position.
+	 *
+	 */
+	@JsonRequest(value = "java/implementors", useSegment = false)
+	CompletableFuture<List<? extends SymbolInformation>> implementors(TextDocumentPositionParams position);
 }
