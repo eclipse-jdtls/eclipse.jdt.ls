@@ -366,7 +366,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
 		CodeActionHandler handler = new CodeActionHandler();
-		return computeAsync((cc) -> handler.getCodeActionCommands(params, toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.getCodeActionCommands(params, toMonitor(cc));
+		});
 	}
 
 	/* (non-Javadoc)
