@@ -72,6 +72,12 @@ final public class InitHandler {
 			preferenceManager.updateClientPrefences(param.getCapabilities());
 		}
 		String rootPath = param.getRootUri();
+		if (rootPath == null) {
+			rootPath = param.getRootPath();
+			if (rootPath != null) {
+				logInfo("In LSP 3.0, InitializeParams.rootPath is deprecated in favour of InitializeParams.rootUri!");
+			}
+		}
 		if (rootPath != null) {
 			URI uri = URI.create(rootPath);
 			if ("file".equals(uri.getScheme())){
