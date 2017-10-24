@@ -536,6 +536,7 @@ public class OrganizeImportsOperation {
 			}
 
 			ImportRewrite importsRewrite= StubUtility.createImportRewrite(astRoot, false);
+			importsRewrite.setImportOrder(new String[] { "java", "javax", "com", "org" });
 
 			Set<String> oldSingleImports= new HashSet<>();
 			Set<String>  oldDemandImports= new HashSet<>();

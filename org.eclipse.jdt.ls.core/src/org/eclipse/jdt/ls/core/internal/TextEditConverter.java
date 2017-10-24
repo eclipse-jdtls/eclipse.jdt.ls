@@ -36,8 +36,8 @@ import org.eclipse.text.edits.TextEditVisitor;
 public class TextEditConverter extends TextEditVisitor{
 
 	private final TextEdit source;
-	private final ICompilationUnit compilationUnit;
-	private final List<org.eclipse.lsp4j.TextEdit> converted;
+	protected ICompilationUnit compilationUnit;
+	protected List<org.eclipse.lsp4j.TextEdit> converted;
 
 	public TextEditConverter(ICompilationUnit unit, TextEdit edit) {
 		this.source = edit;
