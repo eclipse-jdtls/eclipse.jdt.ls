@@ -21,18 +21,28 @@ import java.net.URI;
 import java.nio.file.Paths;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.FindReplaceDocumentAdapter;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkedString;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
@@ -269,6 +279,24 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Unexpected hover ", "org.apache.commons", result);
 
 		assertEquals(logListener.getErrors().toString(), 0, logListener.getErrors().size());
+	}
+
+	@Test
+	public void testHoverThrowable() throws Exception {
+		String uriString = ClassFileUtil.getURI(project, "java.lang.Exception");
+		IClassFile classFile = JDTUtils.resolveClassFile(uriString);
+		String contents = JavaLanguageServerPlugin.getContentProviderManager().getSource(classFile, monitor);
+		IDocument document = new Document(contents);
+		IRegion region = new FindReplaceDocumentAdapter(document).find(0, "Throwable", true, false, false, false);
+		int offset = region.getOffset();
+		int line = document.getLineOfOffset(offset);
+		int character = offset - document.getLineOffset(line);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uriString);
+		Position position = new Position(line, character);
+		TextDocumentPositionParams params = new TextDocumentPositionParams(textDocument, position);
+		Hover hover = handler.hover(params, monitor);
+		assertNotNull(hover);
+		assertTrue("Unexpected hover ", !hover.getContents().isEmpty());
 	}
 
 	@Test
