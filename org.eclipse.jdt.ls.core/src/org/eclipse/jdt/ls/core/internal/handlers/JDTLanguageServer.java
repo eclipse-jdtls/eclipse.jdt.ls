@@ -518,13 +518,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#buildWorkspace()
+	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#buildWorkspace(boolean)
 	 */
 	@Override
-	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace() {
+	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
 		logInfo(">> java/buildWorkspace");
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
-		return computeAsync((cc) -> handler.buildWorkspace(toMonitor(cc)));
+		return computeAsync((cc) -> handler.buildWorkspace(forceReBuild, toMonitor(cc)));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

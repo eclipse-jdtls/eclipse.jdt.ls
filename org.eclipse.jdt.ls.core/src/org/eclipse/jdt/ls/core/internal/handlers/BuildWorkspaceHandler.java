@@ -53,9 +53,9 @@ public class BuildWorkspaceHandler {
 		this.projectsManager = projectsManager;
 	}
 
-	public BuildWorkspaceStatus buildWorkspace(IProgressMonitor monitor) {
+	public BuildWorkspaceStatus buildWorkspace(boolean forceReBuild, IProgressMonitor monitor) {
 		try {
-			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 			List<IMarker> problemMarkers = getProblemMarkers(monitor);
 			publishDiagnostics(problemMarkers);
 			List<IMarker> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).collect(Collectors.toList());

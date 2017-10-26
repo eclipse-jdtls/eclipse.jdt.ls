@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -47,6 +45,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -141,7 +140,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		IPath filePath = new Path("src").append(fileName);
 		final IFile file = testProject.getFile(filePath);
 		URI uri = Paths.get(fullpath).toUri();
-		createFolders(file.getParent(), monitor);
+		JDTUtils.createFolders(file.getParent(), monitor);
 		waitForBackgroundJobs();
 		file.createLink(uri, IResource.REPLACE, monitor);
 		waitForBackgroundJobs();
@@ -215,16 +214,4 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 		return to;
 	}
-
-	private static void createFolders(IContainer folder, IProgressMonitor monitor) throws CoreException {
-		if (!folder.exists() && folder instanceof IFolder) {
-			IContainer parent = folder.getParent();
-			createFolders(parent, monitor);
-			folder.refreshLocal(IResource.DEPTH_ZERO, monitor);
-			if (!folder.exists()) {
-				((IFolder) folder).create(true, true, monitor);
-			}
-		}
-	}
-
 }

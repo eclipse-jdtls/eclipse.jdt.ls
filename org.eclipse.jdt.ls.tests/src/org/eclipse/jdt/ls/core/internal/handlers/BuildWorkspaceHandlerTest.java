@@ -47,7 +47,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSucceedCase() throws Exception {
-		BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
+		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		waitForBackgroundJobs();
 		assertTrue(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result == BuildWorkspaceStatus.SUCCEED);
 	}
@@ -62,7 +62,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		try (InputStream stream = new ByteArrayInputStream(codeWithError.getBytes(StandardCharsets.UTF_8))) {
 			file.setContents(stream, true, false, monitor);
 			waitForBackgroundJobs();
-			BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
+			BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 			waitForBackgroundJobs();
 			assertTrue(result == BuildWorkspaceStatus.WITH_ERROR);
 		}
@@ -71,7 +71,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Test
 	public void testCanceledCase() throws Exception {
 		monitor.setCanceled(true);
-		BuildWorkspaceStatus result = handler.buildWorkspace(monitor);
+		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		waitForBackgroundJobs();
 		assertTrue(result == BuildWorkspaceStatus.CANCELLED);
 	}
