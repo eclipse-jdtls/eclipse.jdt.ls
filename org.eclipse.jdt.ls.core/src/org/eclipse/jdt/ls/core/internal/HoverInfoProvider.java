@@ -120,6 +120,9 @@ public class HoverInfoProvider {
 	}
 
 	private boolean isResolved(IJavaElement element, IProgressMonitor monitor) throws CoreException {
+		if (!(unit instanceof ICompilationUnit)) {
+			return true;
+		}
 		if (element == null) {
 			return false;
 		}
@@ -130,7 +133,7 @@ public class HoverInfoProvider {
 		final boolean[] res = new boolean[1];
 		res[0] = false;
 		SearchEngine engine = new SearchEngine();
-		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] { unit }, IJavaSearchScope.SOURCES);
+		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] { unit }, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 		try {
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope, new SearchRequestor() {
 
@@ -142,6 +145,10 @@ public class HoverInfoProvider {
 					Object o = match.getElement();
 					if (o instanceof IJavaElement) {
 						IJavaElement element = (IJavaElement) o;
+						if (element.getElementType() == IJavaElement.TYPE) {
+							res[0] = true;
+							return;
+						}
 						ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 						if (compilationUnit == null) {
 							return;
