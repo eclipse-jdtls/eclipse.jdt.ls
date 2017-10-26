@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -136,14 +135,11 @@ final public class InitHandler {
 		Job job = new Job("Initialize Workspace") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+				long start = System.currentTimeMillis();
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
 				IStatus status = projectsManager.initializeProjects(root, subMonitor.split(50));
-				try {
-					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, subMonitor.split(50));
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Build failed ", e);
-				}
+				JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 				if (status.isOK()) {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} else {

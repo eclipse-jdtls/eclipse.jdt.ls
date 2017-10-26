@@ -25,16 +25,19 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
-import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
@@ -113,31 +116,72 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		configurationImpl.setNotCoveredMojoExecutionSeverity(ProblemSeverity.ignore.toString());
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));
-		ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
-		List<IMavenProjectImportResult> importResults = configurationManager.importProjects(files, importConfig, subMonitor.split(95));
-		updateProjects(importConfig, importResults, monitor);
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		Collection<IProject> projects = new LinkedHashSet<>();
+		Collection<MavenProjectInfo> toImport = new LinkedHashSet<>();
+		//Separate existing projects from new ones
+		for (MavenProjectInfo projectInfo : files) {
+			File pom = projectInfo.getPomFile();
+			IContainer container = root.getContainerForLocation(new Path(pom.getAbsolutePath()));
+			if (container == null) {
+				toImport.add(projectInfo);
+			} else {
+				IProject project = container.getProject();
+				if (ProjectUtils.isMavenProject(project)) {
+					projects.add(container.getProject());
+				} else if (project != null) {
+					//Project doesn't have the Maven nature, so we (re)import it
+					toImport.add(projectInfo);
+				}
+			}
+		}
+		if (!toImport.isEmpty()) {
+			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+			configurationManager.importProjects(toImport, importConfig, subMonitor.split(95));
+		}
+		updateProjects(projects, monitor);
 	}
 
 	private File getProjectDirectory() {
 		return rootFolder;
 	}
 
-	private void updateProjects(ProjectImportConfiguration importConfig, List<IMavenProjectImportResult> importResults, IProgressMonitor monitor) throws CoreException {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		for (IMavenProjectImportResult importResult : importResults) {
-			IProject project = importResult.getProject();
-			if (project == null) {
-				//project already existed?
-				File projectDir = importResult.getMavenProjectInfo().getPomFile().getParentFile();
-				IContainer container = root.getContainerForLocation(new Path(projectDir.getAbsolutePath()));
-				if (container instanceof IProject) {
-					project = (IProject)container;
-					project.open(monitor);
-					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-					configurationManager.updateProjectConfiguration(new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true), monitor);
-				}
+	private void updateProjects(Collection<IProject> projects, IProgressMonitor monitor) throws CoreException {
+		if (projects.isEmpty()) {
+			return;
+		}
+		Iterator<IProject> iterator = projects.iterator();
+		while (iterator.hasNext()) {
+			IProject project = iterator.next();
+			project.open(monitor);
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			if (!needsMavenUpdate(project)) {
+				iterator.remove();
 			}
 		}
+		if (projects.isEmpty()) {
+			return;
+		}
+
+		new WorkspaceJob("Update Maven project configuration") {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				for (IProject project : projects) {
+					if (monitor.isCanceled()) {
+						return Status.CANCEL_STATUS;
+					}
+					JavaLanguageServerPlugin.logInfo("Updating project configuration for Maven project " + project.getName());
+					MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
+					configurationManager.updateProjectConfiguration(request, monitor);
+				}
+				return Status.OK_STATUS;
+			}
+		}.schedule();
+	}
+
+	private boolean needsMavenUpdate(IProject project) {
+		//TODO need to figure how to detect pom.xml changed since last time the server was running
+		return true;
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws InterruptedException {
