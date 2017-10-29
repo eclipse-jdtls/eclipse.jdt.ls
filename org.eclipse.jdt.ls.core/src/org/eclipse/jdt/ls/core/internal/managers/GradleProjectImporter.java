@@ -39,6 +39,8 @@ import com.gradleware.tooling.toolingmodel.repository.FixedRequestAttributes;
  */
 public class GradleProjectImporter extends AbstractProjectImporter {
 
+	private static final String GRADLE_HOME = "GRADLE_HOME";
+
 	private static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
 	protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild();
@@ -86,7 +88,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (Files.exists(rootFolder.resolve("gradlew"))) {
 			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
 		} else {
-			String gradleHome = System.getenv("GRADLE_HOME");
+			String gradleHome = System.getenv(GRADLE_HOME);
+			if (gradleHome == null || !new File(gradleHome).isDirectory()) {
+				gradleHome = System.getProperty(GRADLE_HOME);
+			}
 			if (gradleHome != null) {
 				File gradleHomeFile = new File(gradleHome);
 				if (gradleHomeFile.isDirectory()) {
