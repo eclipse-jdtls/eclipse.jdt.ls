@@ -33,9 +33,11 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams;
+import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
+import org.eclipse.jdt.ls.core.internal.lsp.WorkspaceFoldersProposedService;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -62,6 +64,7 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.Registration;
@@ -87,7 +90,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
+public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, WorkspaceFoldersProposedService, JavaProtocolExtensions {
 	/**
 	 * Exit code returned when JDTLanguageServer is forced to exit.
 	 */
@@ -130,6 +133,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> initialize");
 		InitHandler handler = new InitHandler(pm, preferenceManager, client);
 		return CompletableFuture.completedFuture(handler.initialize(params));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.LanguageServer#initialized(org.eclipse.lsp4j.InitializedParams)
+	 */
+	@Override
+	public void initialized(InitializedParams params) {
+		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
+			registerCapability(WorkspaceFoldersProposedService.CAPABILITY_ID, WorkspaceFoldersProposedService.CAPABILITY_NAME);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -541,6 +555,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> java/buildWorkspace");
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
 		return computeAsync((cc) -> handler.buildWorkspace(forceReBuild, toMonitor(cc)));
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.lsp.WorkspaceServiceProposed#didChangeWorkspaceFolders(org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams)
+	 */
+	@Override
+	public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
+		logInfo(">> java/didChangeWorkspaceFolders");
+		WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm);
+		handler.update(params);
+
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

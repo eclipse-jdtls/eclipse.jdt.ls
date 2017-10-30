@@ -31,6 +31,7 @@ import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -38,6 +39,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -49,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -57,52 +60,98 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
-
 public class ProjectsManager {
 
-	public static final String DEFAULT_PROJECT_NAME= "jdt.ls-java-project";
+	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
 
-	public enum CHANGE_TYPE { CREATED, CHANGED, DELETED};
+	public enum CHANGE_TYPE {
+		CREATED, CHANGED, DELETED
+	};
 
 	public ProjectsManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public void initializeProjects(final String projectPath, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		// Run as a Java runnable to trigger any build while importing
 		JavaCore.run(new IWorkspaceRunnable() {
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-				deleteInvalidProjects(subMonitor.split(5));
+				deleteInvalidProjects(rootPaths, subMonitor.split(10));
 				createJavaProject(getDefaultProject(), subMonitor.split(10));
-				if (projectPath != null) {
-					File userProjectRoot = new File(projectPath);
-					IProjectImporter importer = getImporter(userProjectRoot, subMonitor.split(20));
-					if (importer != null) {
-						importer.importToWorkspace(subMonitor.split(70));
-					}
-				}
+				importProjects(rootPaths, subMonitor.split(80));
 				subMonitor.done();
 			}
 		}, monitor);
 	}
 
-	private void deleteInvalidProjects(IProgressMonitor monitor) {
-		IProject[] projects = getWorkspaceRoot().getProjects();
-		for (IProject project : projects) {
-			if (project.exists()) {
+	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
+		for (IPath rootPath : rootPaths) {
+			File rootFolder = rootPath.toFile();
+			IProjectImporter importer = getImporter(rootFolder, subMonitor.split(30));
+			if (importer != null) {
+				importer.importToWorkspace(subMonitor.split(70));
+			}
+		}
+	}
+
+	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
+		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
+		WorkspaceJob job = new WorkspaceJob("Updating workspace folders") {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) {
+				IStatus status = Status.OK_STATUS;
+				SubMonitor subMonitor = SubMonitor.convert(monitor, addedRootPaths.size() + removedRootPaths.size());
+				try {
+					long start = System.currentTimeMillis();
+					IProject[] projects = getWorkspaceRoot().getProjects();
+					for (IProject project : projects) {
+						if (ResourceUtils.isContainedIn(project.getLocation(), removedRootPaths)) {
+							try {
+								project.delete(false, true, subMonitor.split(1));
+							} catch (CoreException e) {
+								JavaLanguageServerPlugin.logException("Problems removing '" + project.getName() + "' from workspace.", e);
+							}
+						}
+					}
+					importProjects(addedRootPaths, subMonitor.split(addedRootPaths.size()));
+					long elapsed = System.currentTimeMillis() - start;
+
+					JavaLanguageServerPlugin.logInfo("Updated workspace folders in " + elapsed + " ms");
+					return Status.OK_STATUS;
+				} catch (CoreException e) {
+					String msg = "Error updating workspace folders";
+					JavaLanguageServerPlugin.logError(msg);
+					status = StatusFactory.newErrorStatus(msg, e);
+				}
+				return status;
+			}
+		};
+		job.schedule();
+		return job;
+	}
+
+	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
+		for (IProject project : getWorkspaceRoot().getProjects()) {
+			if (project.exists() && ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
 				try {
 					project.getDescription();
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logInfo("The '" + project.getName() + "' is invalid.");
 					try {
 						project.delete(true, monitor);
 					} catch (CoreException e1) {
 						JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
 					}
+				}
+			} else {
+				try {
+					project.delete(false, true, monitor);
+				} catch (CoreException e1) {
+					JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
 				}
 			}
 		}
@@ -130,25 +179,20 @@ public class ProjectsManager {
 			if (isBuildFile(resource)) {
 				FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 				switch (status) {
-				case automatic:
-					updateProject(resource.getProject());
-					break;
-				case disabled:
-					break;
-				default:
-					if (client != null) {
-						String cmd = "java.projectConfiguration.status";
-						TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
-						ActionableNotification updateProjectConfigurationNotification = new ActionableNotification()
-								.withSeverity(MessageType.Info)
-								.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?")
-								.withCommands(asList(
-										new Command("Never", cmd, asList(uri,FeatureStatus.disabled)),
-										new Command("Now", cmd, asList(uri, FeatureStatus.interactive)),
-										new Command("Always", cmd, asList(uri, FeatureStatus.automatic))
-										));
-						client.sendActionableNotification(updateProjectConfigurationNotification);
-					}
+					case automatic:
+						updateProject(resource.getProject());
+						break;
+					case disabled:
+						break;
+					default:
+						if (client != null) {
+							String cmd = "java.projectConfiguration.status";
+							TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
+							ActionableNotification updateProjectConfigurationNotification = new ActionableNotification().withSeverity(MessageType.Info)
+									.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Never", cmd, asList(uri, FeatureStatus.disabled)),
+											new Command("Now", cmd, asList(uri, FeatureStatus.interactive)), new Command("Always", cmd, asList(uri, FeatureStatus.automatic))));
+							client.sendActionableNotification(updateProjectConfigurationNotification);
+						}
 				}
 			}
 		} catch (CoreException e) {
@@ -219,13 +263,13 @@ public class ProjectsManager {
 			source.create(true, true, monitor);
 		}
 		IPackageFragmentRoot root = javaProject.getPackageFragmentRoot(source);
-		IClasspathEntry src =JavaCore.newSourceEntry(root.getPath());
+		IClasspathEntry src = JavaCore.newSourceEntry(root.getPath());
 
 		//Find default JVM
 		IClasspathEntry jre = JavaRuntime.getDefaultJREContainerEntry();
 
 		//Add JVM to project class path
-		javaProject.setRawClasspath(new IClasspathEntry[]{jre, src} , monitor);
+		javaProject.setRawClasspath(new IClasspathEntry[] { jre, src }, monitor);
 
 		JavaLanguageServerPlugin.logInfo("Finished creating the default Java project");
 		return project;
@@ -235,8 +279,8 @@ public class ProjectsManager {
 		if (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project)) {
 			return;
 		}
-		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating "+ project.getName() + " configuration");
-		WorkspaceJob job = new WorkspaceJob("Update project "+project.getName()) {
+		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating " + project.getName() + " configuration");
+		WorkspaceJob job = new WorkspaceJob("Update project " + project.getName()) {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				IStatus status = Status.OK_STATUS;
@@ -248,9 +292,9 @@ public class ProjectsManager {
 						buildSupport.get().update(project, monitor);
 					}
 					long elapsed = System.currentTimeMillis() - start;
-					JavaLanguageServerPlugin.logInfo("Updated "+projectName + " in "+ elapsed +" ms");
+					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
 				} catch (CoreException e) {
-					String msg = "Error updating "+projectName;
+					String msg = "Error updating " + projectName;
 					JavaLanguageServerPlugin.logError(msg);
 					status = StatusFactory.newErrorStatus(msg, e);
 				}
@@ -270,5 +314,13 @@ public class ProjectsManager {
 
 	public void setConnection(JavaLanguageClient client) {
 		this.client = client;
+	}
+
+	private String projectsToString() {
+		StringBuilder b = new StringBuilder();
+		for (IProject project : getWorkspaceRoot().getProjects()) {
+			b.append(project.getName()).append(": ").append(project.getLocation().toOSString()).append('\n');
+		}
+		return b.toString();
 	}
 }

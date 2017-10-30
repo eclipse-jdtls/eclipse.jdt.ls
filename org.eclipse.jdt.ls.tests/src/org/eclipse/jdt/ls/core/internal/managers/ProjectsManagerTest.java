@@ -15,10 +15,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Test;
 
@@ -30,9 +30,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testCreateDefaultProject() throws Exception {
-		TestVMType.setTestJREAsDefault();
-
-		projectsManager.initializeProjects(null, monitor);
+		projectsManager.initializeProjects(Collections.emptyList(), monitor);
 		waitForJobsToComplete();
 		List<IProject> projects = WorkspaceHelper.getAllProjects();
 		assertEquals(1, projects.size());

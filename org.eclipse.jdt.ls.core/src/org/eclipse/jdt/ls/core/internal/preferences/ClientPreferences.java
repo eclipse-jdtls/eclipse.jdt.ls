@@ -25,6 +25,7 @@ public class ClientPreferences {
 
 	private final ClientCapabilities capabilities;
 	private final boolean v3supported;
+	private boolean hasWorkspaceFolderCapability;
 
 	public ClientPreferences(ClientCapabilities caps) {
 		if(caps == null ) {
@@ -32,10 +33,20 @@ public class ClientPreferences {
 		}
 		this.capabilities = caps;
 		this.v3supported = capabilities.getTextDocument() !=null;
+		this.hasWorkspaceFolderCapability = false;
 	}
 
 	public boolean isSignatureHelpSupported(){
 		return v3supported && capabilities.getTextDocument().getSignatureHelp() !=null;
+	}
+
+	public boolean isWorkspaceFoldersSupported() {
+		return this.hasWorkspaceFolderCapability;
+	}
+
+	/* workaround for https://github.com/eclipse/lsp4j/issues/124 */
+	public void setWorkspaceFoldersSupported(boolean capability) {
+		this.hasWorkspaceFolderCapability = capability;
 	}
 
 	public boolean isCompletionSnippetsSupported() {

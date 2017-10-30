@@ -13,7 +13,9 @@ package org.eclipse.jdt.ls.core.internal;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.stream.Stream;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 
@@ -145,6 +149,23 @@ public final class ResourceUtils {
 			uri = uri.replace(FILE_UNC_PREFIX, "file://");
 		}
 		return uri;
+	}
+
+	public static IPath filePathFromURI(String uriStr) {
+		URI uri = URI.create(uriStr);
+		if ("file".equals(uri.getScheme())) {
+			return Path.fromOSString(Paths.get(uri).toString());
+		}
+		return null;
+	}
+
+	public static boolean isContainedIn(IPath location, Collection<IPath> paths) {
+		for (IPath path : paths) {
+			if (path.isPrefixOf(location)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
