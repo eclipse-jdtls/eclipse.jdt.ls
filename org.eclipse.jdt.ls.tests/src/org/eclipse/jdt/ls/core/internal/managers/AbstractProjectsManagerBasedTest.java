@@ -23,6 +23,8 @@ import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -135,7 +138,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected IFile linkFilesToDefaultProject(String path) throws Exception {
 		IProject testProject = projectsManager.getDefaultProject();
-		String fullpath = copyFiles(path).getAbsolutePath().replace('\\', '/');
+		String fullpath = copyFiles(path, true).getAbsolutePath().replace('\\', '/');
 		String fileName = fullpath.substring(fullpath.lastIndexOf("/") + 1);
 		IPath filePath = new Path("src").append(fileName);
 		final IFile file = testProject.getFile(filePath);
@@ -148,8 +151,22 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected List<IProject> importProjects(String path) throws Exception {
-		File to = copyFiles(path);
-		projectsManager.initializeProjects(to.getAbsolutePath(), monitor);
+		return importProjects(Collections.singleton(path));
+	}
+
+	protected List<IProject> importProjects(Collection<String> paths) throws Exception {
+		final List<IPath> roots = new ArrayList<>();
+		for (String path : paths) {
+			File file = copyFiles(path, true);
+			roots.add(Path.fromOSString(file.getAbsolutePath()));
+		}
+		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
+			@Override
+			public void run(IProgressMonitor monitor) throws CoreException {
+				projectsManager.initializeProjects(roots, monitor);
+			}
+		};
+		JavaCore.run(runnable, null, monitor);
 		waitForBackgroundJobs();
 		return WorkspaceHelper.getAllProjects();
 	}
@@ -199,10 +216,13 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	private File copyFiles(String path) throws IOException {
+	protected File copyFiles(String path, boolean reimportIfExists) throws IOException {
 		File from = new File(getSourceProjectDirectory(), path);
 		File to = new File(getWorkingProjectDirectory(), path);
 		if (to.exists()) {
+			if (!reimportIfExists) {
+				return to;
+			}
 			FileUtils.forceDelete(to);
 		}
 

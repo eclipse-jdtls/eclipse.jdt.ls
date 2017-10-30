@@ -12,8 +12,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
-import java.net.URI;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +20,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -30,6 +29,7 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -62,39 +62,55 @@ final public class InitHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-
-	InitializeResult initialize(InitializeParams param){
-		logInfo("Initializing Java Language Server "+JavaLanguageServerPlugin.getVersion());
-		if(param.getCapabilities()==null){
+	InitializeResult initialize(InitializeParams param) {
+		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
+		if (param.getCapabilities() == null) {
 			preferenceManager.updateClientPrefences(new ClientCapabilities());
-		}else{
+		} else {
 			preferenceManager.updateClientPrefences(param.getCapabilities());
 		}
-		String rootPath = param.getRootUri();
-		if (rootPath == null) {
-			rootPath = param.getRootPath();
+
+		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
+
+		Collection<IPath> rootPaths = new ArrayList<>();
+		Collection<String> workspaceFolders = getWorkspaceFolders(initializationOptions);
+		if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
+			for (String uri : workspaceFolders) {
+				IPath filePath = ResourceUtils.filePathFromURI(uri);
+				if (filePath != null) {
+					rootPaths.add(filePath);
+				}
+			}
+			preferenceManager.getClientPreferences().setWorkspaceFoldersSupported(true); // workaround for https://github.com/eclipse/lsp4j/issues/124
+		} else {
+			String rootPath = param.getRootUri();
+			if (rootPath == null) {
+				rootPath = param.getRootPath();
+				if (rootPath != null) {
+					logInfo("In LSP 3.0, InitializeParams.rootPath is deprecated in favour of InitializeParams.rootUri!");
+				}
+			}
 			if (rootPath != null) {
-				logInfo("In LSP 3.0, InitializeParams.rootPath is deprecated in favour of InitializeParams.rootUri!");
+				IPath filePath = ResourceUtils.filePathFromURI(rootPath);
+				if (filePath != null) {
+					rootPaths.add(filePath);
+				}
 			}
 		}
-		if (rootPath != null) {
-			URI uri = URI.create(rootPath);
-			if ("file".equals(uri.getScheme())){
-				rootPath = Paths.get(uri).toString();
-			}
+		if (rootPaths.isEmpty()) {
+			IPath workspaceLocation = ResourcesPlugin.getWorkspace().getRoot().getLocation();
+			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
+			rootPaths.add(workspaceLocation);
 		}
-		if (rootPath == null) {
-			rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
-			logInfo("No root uri was defined. Falling back on "+rootPath);
-		}
-		triggerInitialization(rootPath);
+
+		triggerInitialization(rootPaths);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
 		}
 		try {
-			Collection<String> bundleList = getBundleList(param.getInitializationOptions());
+			Collection<String> bundleList = getBundleList(initializationOptions);
 			BundleUtils.loadBundles(bundleList);
 		} catch (CoreException e) {
 			// The additional plug-ins should not affect the main language server loading.
@@ -103,7 +119,7 @@ final public class InitHandler {
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
 		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
-		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".","@","#")));
+		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#")));
 		capabilities.setHoverProvider(Boolean.TRUE);
 		capabilities.setDefinitionProvider(Boolean.TRUE);
 		capabilities.setDocumentSymbolProvider(Boolean.TRUE);
@@ -130,15 +146,14 @@ final public class InitHandler {
 		return result;
 	}
 
-	private void triggerInitialization(String root) {
-
+	private void triggerInitialization(Collection<IPath> roots) {
 		Job job = new Job("Initialize Workspace") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				long start = System.currentTimeMillis();
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
-				IStatus status = projectsManager.initializeProjects(root, subMonitor.split(50));
+				IStatus status = projectsManager.initializeProjects(roots, subMonitor.split(50));
 				JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 				if (status.isOK()) {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
@@ -163,18 +178,32 @@ final public class InitHandler {
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule();
-
 	}
 
-	private Collection<String> getBundleList(Object initializationOptions) {
-		if (!(initializationOptions instanceof Map<?, ?>)) {
-			return null;
+	private Map<?, ?> getInitializationOptions(InitializeParams params) {
+		Object initializationOptions = params.getInitializationOptions();
+		if (initializationOptions instanceof Map<?, ?>) {
+			return (Map<?, ?>) initializationOptions;
 		}
-		Map<String, Object> optionsMap = (Map<String, Object>) initializationOptions;
+		return null;
+	}
 
-		Object bundleObject = optionsMap.get(BUNDLES_KEY);
-		if (bundleObject instanceof ArrayList<?>) {
-			return (ArrayList<String>) bundleObject;
+	private Collection<String> getWorkspaceFolders(Map<?, ?> initializationOptions) {
+		if (initializationOptions != null) {
+			Object folders = initializationOptions.get("workspaceFolders");
+			if (folders instanceof Collection<?>) {
+				return (Collection<String>) folders;
+			}
+		}
+		return null;
+	}
+
+	private Collection<String> getBundleList(Map<?, ?> initializationOptions) {
+		if (initializationOptions != null) {
+			Object bundleObject = initializationOptions.get(BUNDLES_KEY);
+			if (bundleObject instanceof Collection<?>) {
+				return (Collection<String>) bundleObject;
+			}
 		}
 		return null;
 	}
