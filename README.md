@@ -120,6 +120,7 @@ Clients
 This repository only contains the server implementation. Here are some known clients consuming this server:
 
 * [vscode-java](https://github.com/redhat-developer/vscode-java) : an extension for Visual Studio Code
+* [ide-java](https://github.com/atom/ide-java) : an extension for Atom
 
 Continuous Integration Builds
 -----------------------------
