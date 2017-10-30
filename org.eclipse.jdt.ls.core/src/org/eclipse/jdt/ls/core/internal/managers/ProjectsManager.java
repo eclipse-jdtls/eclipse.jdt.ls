@@ -44,7 +44,10 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -121,7 +124,8 @@ public class ProjectsManager {
 					importProjects(addedRootPaths, subMonitor.split(addedRootPaths.size()));
 					long elapsed = System.currentTimeMillis() - start;
 
-					JavaLanguageServerPlugin.logInfo("Updated workspace folders in " + elapsed + " ms");
+					JavaLanguageServerPlugin.logInfo("Updated workspace folders in " + elapsed + " ms: Added " + addedRootPaths.size() + " folder(s), removed" + removedRootPaths.size() + " folders.");
+					JavaLanguageServerPlugin.logInfo(getWorkspaceInfo());
 					return Status.OK_STATUS;
 				} catch (CoreException e) {
 					String msg = "Error updating workspace folders";
@@ -316,10 +320,50 @@ public class ProjectsManager {
 		this.client = client;
 	}
 
-	private String projectsToString() {
+	private String getWorkspaceInfo() {
 		StringBuilder b = new StringBuilder();
+		b.append("Projects:\n");
 		for (IProject project : getWorkspaceRoot().getProjects()) {
 			b.append(project.getName()).append(": ").append(project.getLocation().toOSString()).append('\n');
+			if (ProjectUtils.isJavaProject(project)) {
+				IJavaProject javaProject = JavaCore.create(project);
+				try {
+					b.append("  resolved classpath:\n");
+					IClasspathEntry[] cpEntries = javaProject.getRawClasspath();
+					for (IClasspathEntry cpe : cpEntries) {
+						b.append("  ").append(cpe.getPath().toString()).append('\n');
+						if (cpe.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+							IPackageFragmentRoot[] roots = javaProject.findPackageFragmentRoots(cpe);
+							for (IPackageFragmentRoot root : roots) {
+								b.append("    ").append(root.getPath().toString()).append('\n');
+							}
+						}
+					}
+				} catch (CoreException e) {
+					// ignore
+				}
+			} else {
+				b.append("  non-Java project\n");
+			}
+		}
+		b.append("Java Runtimes:\n");
+		IVMInstall defaultVMInstall = JavaRuntime.getDefaultVMInstall();
+		b.append("  default: ");
+		if (defaultVMInstall != null) {
+			b.append(defaultVMInstall.getInstallLocation().toString());
+		} else {
+			b.append("-");
+		}
+		IExecutionEnvironmentsManager eem = JavaRuntime.getExecutionEnvironmentsManager();
+		for (IExecutionEnvironment ee : eem.getExecutionEnvironments()) {
+			IVMInstall[] vms = ee.getCompatibleVMs();
+			b.append("  ").append(ee.getDescription()).append(": ");
+			if (vms.length > 0) {
+				b.append(vms[0].getInstallLocation().toString());
+			} else {
+				b.append("-");
+			}
+			b.append("\n");
 		}
 		return b.toString();
 	}
