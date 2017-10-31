@@ -35,4 +35,7 @@ public interface JavaProtocolExtensions {
 	 */
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
+
+	@JsonRequest
+	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild);
 }
