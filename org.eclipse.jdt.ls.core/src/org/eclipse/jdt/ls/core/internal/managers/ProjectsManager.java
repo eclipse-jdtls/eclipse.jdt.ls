@@ -309,27 +309,31 @@ public class ProjectsManager {
 
 	private String getWorkspaceInfo() {
 		StringBuilder b = new StringBuilder();
-		b.append("projects\n");
+		b.append("Projects:\n");
 		for (IProject project : getWorkspaceRoot().getProjects()) {
 			b.append(project.getName()).append(": ").append(project.getLocation().toOSString()).append('\n');
-			IJavaProject javaProject = JavaCore.create(project);
-			try {
-				b.append("  resolved classpath:\n");
-				IClasspathEntry[] cpEntries = javaProject.getRawClasspath();
-				for (IClasspathEntry cpe : cpEntries) {
-					b.append("  ").append(cpe.getPath().toString()).append('\n');
-					if (cpe.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
-						IPackageFragmentRoot[] roots = javaProject.findPackageFragmentRoots(cpe);
-						for (IPackageFragmentRoot root : roots) {
-							b.append("    ").append(root.getPath().toString()).append('\n');
+			if (ProjectUtils.isJavaProject(project)) {
+				IJavaProject javaProject = JavaCore.create(project);
+				try {
+					b.append("  resolved classpath:\n");
+					IClasspathEntry[] cpEntries = javaProject.getRawClasspath();
+					for (IClasspathEntry cpe : cpEntries) {
+						b.append("  ").append(cpe.getPath().toString()).append('\n');
+						if (cpe.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+							IPackageFragmentRoot[] roots = javaProject.findPackageFragmentRoots(cpe);
+							for (IPackageFragmentRoot root : roots) {
+								b.append("    ").append(root.getPath().toString()).append('\n');
+							}
 						}
 					}
+				} catch (CoreException e) {
+					// ignore
 				}
-			} catch (CoreException e) {
-				// ignore
+			} else {
+				b.append("  non-Java project\n");
 			}
 		}
-		b.append("vms\n");
+		b.append("Java Runtimes:\n");
 		IVMInstall defaultVMInstall = JavaRuntime.getDefaultVMInstall();
 		b.append("  default: ");
 		if (defaultVMInstall != null) {
