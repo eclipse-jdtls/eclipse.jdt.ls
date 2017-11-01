@@ -475,6 +475,22 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		logInfo(">> document/didChange");
+		try {
+			Job[] jobs = Job.getJobManager().find(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS);
+			boolean wait = jobs.length > 0;
+			long start = System.currentTimeMillis();
+			while (wait) {
+				jobs = Job.getJobManager().find(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS);
+				wait = (System.currentTimeMillis() - start) < 1000 && jobs.length > 0;
+				if (wait) {
+					Thread.sleep(100);
+				}
+			}
+		} catch (OperationCanceledException ignorable) {
+			// No need to pollute logs when query is cancelled
+		} catch (InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 		documentLifeCycleHandler.didChange(params);
 	}
 

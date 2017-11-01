@@ -98,16 +98,19 @@ public class DocumentLifeCycleHandler {
 	}
 
 	private void triggerValidation(ICompilationUnit cu) throws JavaModelException {
+		triggerValidation(cu, 400);
+	}
+
+	private void triggerValidation(ICompilationUnit cu, long delay) throws JavaModelException {
 		synchronized (toReconcile) {
 			toReconcile.add(cu);
 		}
 		if (validationTimer != null) {
 			validationTimer.cancel();
-			validationTimer.schedule(400);
+			validationTimer.schedule(delay);
 		} else {
 			performValidation(new NullProgressMonitor());
 		}
-
 	}
 
 	private IStatus performValidation(IProgressMonitor monitor) throws JavaModelException {
@@ -282,7 +285,7 @@ public class DocumentLifeCycleHandler {
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 			}
-			triggerValidation(unit);
+			triggerValidation(unit, 0);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
 			JavaLanguageServerPlugin.logException("Error while handling document change", e);
 		}
