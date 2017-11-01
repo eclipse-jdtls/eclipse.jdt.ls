@@ -1,0 +1,11 @@
+{
+    "projects": [
+        "org.eclipse.jdt.ls.core",
+        "org.eclipse.jdt.ls.target",
+        "org.eclipse.jdt.ls.tests"
+    ],
+
+   "targetPlatform": "org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target"
+   
+    
+}

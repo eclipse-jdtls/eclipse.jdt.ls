@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
@@ -47,22 +48,24 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		directories = null;
 	}
 
+	public void setDirectories(Collection<java.nio.file.Path> paths) {
+		directories = paths;
+	}
+
 
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException {
 		if (!applies(monitor)) {
 			return;
 		}
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, directories.size());
 		JavaLanguageServerPlugin.logInfo("Importing Eclipse project(s)");
-		int projectSize = directories.size();
-		subMonitor.setWorkRemaining(projectSize);
-		directories.forEach(d -> importDir(d, monitor));
+		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
 		subMonitor.done();
 	}
 
 	private void importDir(java.nio.file.Path dir, IProgressMonitor m) {
-		SubMonitor monitor = SubMonitor.convert(m, 100);
+		SubMonitor monitor = SubMonitor.convert(m, 4);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IPath dotProjectPath = new Path(dir.resolve(DESCRIPTION_FILE_NAME).toAbsolutePath().toString());
 		IProjectDescription descriptor;
@@ -78,20 +81,21 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 				existingProjectPath = fixDevice(existingProjectPath);
 				dotProjectPath = fixDevice(dotProjectPath);
 				if (existingProjectPath.equals(dotProjectPath.removeLastSegments(1))) {
-					project.open(IResource.NONE, monitor);
-					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+					project.open(IResource.NONE, monitor.newChild(1));
+					project.refreshLocal(IResource.DEPTH_INFINITE, monitor.newChild(1));
 					return;
 				} else {
 					project = findUniqueProject(workspace, name);
 					descriptor.setName(project.getName());
 				}
 			}
-			project.create(descriptor, monitor);
-			project.open(IResource.NONE, monitor);
-			monitor.done();
+			project.create(descriptor, monitor.newChild(1));
+			project.open(IResource.NONE, monitor.newChild(1));
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			throw new RuntimeException(e);
+		} finally {
+			monitor.done();
 		}
 	}
 

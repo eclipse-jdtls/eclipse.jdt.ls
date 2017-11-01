@@ -1,3 +1,7 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "editor.formatOnSave": true,
+  "java.import.exclusions": [
+    "**/org.eclipse.jdt.ls.tests/projects"
+  ]
 }

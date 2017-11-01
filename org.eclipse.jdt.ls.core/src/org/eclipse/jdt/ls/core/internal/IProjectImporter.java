@@ -8,20 +8,21 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core.internal.managers;
+package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 public interface IProjectImporter {
 
 	void initialize(File rootFolder);
 
-	boolean applies(IProgressMonitor monitor) throws InterruptedException, CoreException;
+	boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
-	void importToWorkspace(IProgressMonitor monitor) throws InterruptedException, CoreException;
+	void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	void reset();
 }
