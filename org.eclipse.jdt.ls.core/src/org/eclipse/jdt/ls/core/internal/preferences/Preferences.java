@@ -144,6 +144,7 @@ public class Preferences {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources");
 	}
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -291,7 +292,7 @@ public class Preferences {
 		return this;
 	}
 
-	private Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
+	public Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
 		this.updateBuildConfigurationStatus = status;
 		return this;
 	}

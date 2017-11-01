@@ -45,8 +45,10 @@ public class MavenBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		return resource != null
+		return resource != null && resource.getProject() != null
 				&& resource.getType()== IResource.FILE
-				&& resource.getName().equals("pom.xml");
+				&& resource.getName().equals("pom.xml")
+				//Check pom.xml is at the root of the project
+				&& resource.getProject().equals(resource.getParent());
 	}
 }

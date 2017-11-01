@@ -71,7 +71,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected ProjectsManager projectsManager;
 	@Mock
 	protected PreferenceManager preferenceManager;
-	protected Preferences preferences = new Preferences();
+	protected Preferences preferences;
 
 	protected SimpleLogListener logListener;
 
@@ -100,6 +100,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
+		preferences = new Preferences();
 		if (preferenceManager != null) {
 			when(preferenceManager.getPreferences()).thenReturn(preferences);
 		}
