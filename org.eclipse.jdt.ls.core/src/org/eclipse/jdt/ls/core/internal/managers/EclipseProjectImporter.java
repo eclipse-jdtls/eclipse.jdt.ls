@@ -26,7 +26,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
@@ -34,13 +34,13 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 	private Collection<java.nio.file.Path> directories;
 
 	@Override
-	public int applies(IProgressMonitor monitor) throws CoreException {
+	public boolean applies(IProgressMonitor monitor) throws CoreException {
 		if (directories == null) {
 			BasicFileDetector eclipseDetector = new BasicFileDetector(rootFolder.toPath(), DESCRIPTION_FILE_NAME)
 					.addExclusions("**/bin");//default Eclipse build dir
 			directories = eclipseDetector.scan(monitor);
 		}
-		return 1;
+		return !directories.isEmpty();
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException {
-		if (applies(monitor) == 0) {
+		if (!applies(monitor)) {
 			return;
 		}
 		SubMonitor subMonitor = SubMonitor.convert(monitor, directories.size());

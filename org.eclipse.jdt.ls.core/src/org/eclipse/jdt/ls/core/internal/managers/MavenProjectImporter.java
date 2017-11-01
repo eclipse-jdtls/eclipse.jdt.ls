@@ -30,10 +30,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.jdt.ls.core.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -64,7 +65,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 
 	@Override
-	public int applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+	public boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
 		if (files != null) {
 			Iterator<MavenProjectInfo> iter = files.iterator();
@@ -76,7 +77,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				}
 			}
 		}
-		return files != null ? files.size() : 0;
+		return files != null && !files.isEmpty();
 	}
 
 	private boolean exclude(java.nio.file.Path path) {

@@ -139,13 +139,13 @@ final public class InitHandler {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
 				try {
-					projectsManager.initializeProjects(root, subMonitor.split(50));
+					projectsManager.initializeProjects(root, subMonitor);
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Initialization failed", e);
+					JavaLanguageServerPlugin.logException("Build failed ", e);
 					connection.sendStatus(ServiceStatus.Error, getMessage(e.getStatus()));
 				}
 				return Status.OK_STATUS;
@@ -183,7 +183,7 @@ final public class InitHandler {
 	}
 
 	private class ServerStatusMonitor extends NullProgressMonitor{
-		private final static long DELAY = 300;
+		private final static long DELAY = 200;
 
 		private double totalWork;
 		private String subtask;
@@ -211,7 +211,7 @@ final public class InitHandler {
 		private void sendProgress() {
 			// throttle the sending of progress
 			long currentTime = System.currentTimeMillis();
-			if (currentTime - lastReport > DELAY) {
+			if (lastReport == 0 || currentTime - lastReport > DELAY) {
 				lastReport = currentTime;
 				String message = this.subtask == null || this.subtask.length() == 0 ? "" : (" - " + this.subtask);
 				connection.sendStatus(ServiceStatus.Starting, String.format("%.0f%%  Starting Java Language Server %s", progress / totalWork * 100, message));

@@ -3,11 +3,11 @@
 <schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.jdt.ls.core" id="importers" name="JDT LS Project Importers"/>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.importers" name="JDT LS Project Importers"/>
       </appinfo>
       <documentation>
          This extension point represents different kinds of project importers for the JDT LS.
-Each extension must implement &lt;code&gt;org.eclipse.jdt.ls.core.IProjectImporter&lt;/code&gt;. 
+Each extension must implement &lt;code&gt;org.eclipse.jdt.ls.core.internal.IProjectImporter&lt;/code&gt;.
       </documentation>
    </annotation>
 
@@ -54,9 +54,16 @@ Each extension must implement &lt;code&gt;org.eclipse.jdt.ls.core.IProjectImport
                <documentation>
                   the class that implements this project importer.  The class must implement IProjectImporter
                </documentation>
-               <appInfo>
-                  <meta.attribute kind="java" basedOn="org.eclipse.jdt.ls.core.IProjectImporter"/>
-               </appInfo>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IProjectImporter"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="order" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The query order of the importer
+               </documentation>
             </annotation>
          </attribute>
       </complexType>

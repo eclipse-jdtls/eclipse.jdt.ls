@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core;
+package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 
@@ -20,7 +20,7 @@ public interface IProjectImporter {
 
 	void initialize(File rootFolder);
 
-	int applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
+	boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 

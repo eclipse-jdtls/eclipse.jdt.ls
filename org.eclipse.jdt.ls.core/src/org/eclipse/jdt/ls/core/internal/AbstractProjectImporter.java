@@ -8,7 +8,7 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core;
+package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 import java.util.Objects;
@@ -30,7 +30,7 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 	}
 
 	@Override
-	public abstract int applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
+	public abstract boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	@Override
 	public abstract void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;

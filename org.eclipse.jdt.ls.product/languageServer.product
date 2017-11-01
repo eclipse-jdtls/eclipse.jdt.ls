@@ -55,7 +55,6 @@
       <plugin id="org.eclipse.jdt.launching"/>
       <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
-      <plugin id="org.eclipse.jdt.ls.importer.pde"/>
       <plugin id="org.eclipse.m2e.core"/>
       <plugin id="org.eclipse.m2e.jdt"/>
       <plugin id="org.eclipse.m2e.lifecyclemapping.defaults"/>
@@ -70,13 +69,9 @@
 
    <configurations>
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
       <plugin id="org.eclipse.jdt.core" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.launching" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.ls.core" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.update.configurator" autoStart="false" startLevel="0" />
    </configurations>
 
    <preferencesInfo>

@@ -25,7 +25,6 @@
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
 		<module>org.eclipse.jdt.ls.core</module>
-		<module>org.eclipse.jdt.ls.importer.pde</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.product</module>
 	</modules>
@@ -64,7 +63,7 @@
 					<configuration>
 						<skip>false</skip>
 						<outputDirectory>${basedir}/lib/</outputDirectory>
-						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with 
+						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with
 							ever daily changing timestamp -->
 						<useBaseVersion>true</useBaseVersion>
 					</configuration>

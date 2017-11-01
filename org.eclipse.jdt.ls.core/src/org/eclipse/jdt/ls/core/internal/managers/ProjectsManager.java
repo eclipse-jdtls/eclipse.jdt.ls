@@ -14,9 +14,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static java.util.Arrays.asList;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFolder;
@@ -42,8 +43,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
-import org.eclipse.jdt.ls.core.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -162,17 +163,13 @@ public class ProjectsManager {
 	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		Collection<IProjectImporter> importers = importers();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());
-		IProjectImporter preferred = null;
-		int preferredRelevance = -1;
 		for (IProjectImporter importer : importers) {
 			importer.initialize(rootFolder);
-			int relevance = importer.applies(subMonitor.split(1));
-			if (relevance > preferredRelevance) {
-				preferred = importer;
-				preferredRelevance = relevance;
+			if (importer.applies(subMonitor.split(1))) {
+				return importer;
 			}
 		}
-		return preferred;
+		return null;
 	}
 
 	public IProject getDefaultProject() {
@@ -180,17 +177,18 @@ public class ProjectsManager {
 	}
 
 	private Collection<IProjectImporter> importers() {
-		Collection<IProjectImporter> importers = new ArrayList<>();
+		Map<Integer, IProjectImporter> importers = new TreeMap<>();
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
 		for (int i = 0; i < configs.length; i++) {
 			try {
-				importers.add((IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+				Integer order = Integer.valueOf(configs[i].getAttribute("order"));
+				importers.put(order, (IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e.getStatus());
 			}
 		}
-		return importers;
+		return importers.values();
 	}
 
 	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {

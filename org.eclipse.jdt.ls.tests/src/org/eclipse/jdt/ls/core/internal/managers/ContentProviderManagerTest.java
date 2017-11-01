@@ -165,7 +165,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fakeContentProvider", "placeholderContentProvider"));
 
 		assertEquals(FAKE_DECOMPILED_SOURCE, provider.getContent(sourcelessURI, monitor));
-		assertTrue(logListener.getErrors().isEmpty());
+		assertTrue(logListener.getErrors().toString(), logListener.getErrors().isEmpty());
 	}
 
 	@Test
@@ -174,7 +174,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fakeContentProvider", "placeholderContentProvider"));
 
 		assertEquals(FAKE_DECOMPILED_SOURCE, provider.getSource(sourcelessClassFile, monitor));
-		assertTrue(logListener.getErrors().isEmpty());
+		assertTrue(logListener.getErrors().toString(), logListener.getErrors().isEmpty());
 	}
 
 	@Test
