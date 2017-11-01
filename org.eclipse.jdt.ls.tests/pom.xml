@@ -20,11 +20,12 @@
 					<version>${tycho-version}</version>
 					<configuration>
 						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<runOrder>random</runOrder>
 						<providerProperties>
 							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
 						</providerProperties>
 					</configuration>
-					
+
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -33,7 +34,9 @@
 		<profile>
 			<id>macosx-jvm-flags</id>
 			<activation>
-				<os><family>mac</family></os>
+				<os>
+					<family>mac</family>
+				</os>
 			</activation>
 			<properties>
 				<os.testArgs>-XstartOnFirstThread -noverify</os.testArgs>
