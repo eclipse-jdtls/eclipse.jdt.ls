@@ -13,9 +13,13 @@ package org.eclipse.jdt.ls.core.internal;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -31,12 +35,12 @@ public final class WorkspaceHelper {
 	}
 
 	public static void initWorkspace() {
-		JavaLanguageServerPlugin.getProjectsManager().initializeProjects(null, new NullProgressMonitor());
+		JavaLanguageServerPlugin.getProjectsManager().initializeProjects(Collections.emptyList(), new NullProgressMonitor());
 		assertEquals(1, getAllProjects().size());
 	}
 
 	public static IProject getProject(String name) {
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(name);
+		IProject project = getWorkspaceRoot().getProject(name);
 		return project.exists()?project:null;
 	}
 
@@ -45,8 +49,11 @@ public final class WorkspaceHelper {
 	}
 
 	public static List<IProject> getAllProjects() {
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		return Arrays.asList(projects);
+		return Arrays.asList(getWorkspaceRoot().getProjects());
+	}
+
+	public static IWorkspaceRoot getWorkspaceRoot() {
+		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 	public static void delete(IProject project) {

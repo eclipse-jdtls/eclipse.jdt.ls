@@ -1,21 +1,19 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
-    "version": "0.1.0",
-    "command": "mvn",
-    "isShellCommand": true,
-    "showOutput": "always",
-    "suppressTaskName": true,
+    "version": "2.0.0",
     "tasks": [
         {
             "taskName": "verify",
-            "args": ["-B", "clean","verify"],
-            "isBuildCommand": true
+            "type": "shell",
+            "command": "mvn -B verify",
+            "group": "build"
         },
         {
             "taskName": "test",
-            "args": ["-B", "test"],
-            "isTestCommand": true
+            "type": "shell",
+            "command": "mvn -B test",
+            "group": "test"
         }
     ]
 }

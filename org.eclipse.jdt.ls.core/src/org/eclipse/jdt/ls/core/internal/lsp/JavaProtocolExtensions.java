@@ -8,10 +8,11 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core.internal;
+package org.eclipse.jdt.ls.core.internal.lsp;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
