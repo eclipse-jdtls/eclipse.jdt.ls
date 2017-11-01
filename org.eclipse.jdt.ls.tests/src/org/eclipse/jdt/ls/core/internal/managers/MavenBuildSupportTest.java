@@ -14,20 +14,31 @@ import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.net.URI;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.IJobChangeListener;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.jdt.ls.tests.Unstable;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author Fred Bricon
  *
  */
+@RunWith(MockitoJUnitRunner.class)
 public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 
 	@Test
@@ -71,6 +82,33 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	@Test
 	public void testCompileWithEclipseTychoJdt() throws Exception {
 		testNonStandardCompilerId("compile-with-tycho-jdt");
+	}
+
+	@Test
+	public void testIgnoreInnerPomChanges() throws Exception {
+		IProject project = importMavenProject("archetyped");
+		assertEquals("The inner pom should not have been imported", 2, WorkspaceHelper.getAllProjects().size());
+
+		IFile innerPom = project.getFile("src/main/resources/archetype-resources/pom.xml");
+
+		preferences.setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
+		boolean[] updateTriggered = new boolean[1];
+		IJobChangeListener listener = new JobChangeAdapter() {
+			@Override
+			public void scheduled(IJobChangeEvent event) {
+				if (event.getJob().getName().contains("Update project")) {
+					updateTriggered[0] = true;
+				}
+			}
+		};
+		try {
+			Job.getJobManager().addJobChangeListener(listener);
+			projectsManager.fileChanged(innerPom.getRawLocationURI().toString(), CHANGE_TYPE.CHANGED);
+			waitForBackgroundJobs();
+			assertFalse("Update project should not have been triggered", updateTriggered[0]);
+		} finally {
+			Job.getJobManager().removeJobChangeListener(listener);
+		}
 	}
 
 	@Category(Unstable.class)
