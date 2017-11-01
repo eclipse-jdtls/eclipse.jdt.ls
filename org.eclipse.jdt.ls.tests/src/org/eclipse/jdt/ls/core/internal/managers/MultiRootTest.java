@@ -42,7 +42,6 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNotNull(WorkspaceHelper.getProject("salut"));
 		}
-
 		// simulate a new start with a different set of projects
 		{
 			Collection<String> folders = Arrays.asList(MavenMultiFolder, EclipseFolder);
