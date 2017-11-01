@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IContainer;
@@ -45,6 +46,7 @@ import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IOpenable;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
@@ -120,7 +122,7 @@ public final class JDTUtils {
 			return null;
 		}
 
-		IFile resource = findFile(uri);
+		IFile resource = (IFile) findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
 		if(resource != null){
 			if(!ProjectUtils.isJavaProject(resource.getProject())){
 				return null;
@@ -134,6 +136,42 @@ public final class JDTUtils {
 			return getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
 		//the resource is not null but no compilation unit could be created (eg. project not ready yet)
+		return null;
+	}
+
+	/**
+	 * Given the uri string returns a {@link IPackageFragement}. May return null if
+	 * it can not associate the uri with a package fragment.
+	 *
+	 * @param uriString
+	 * @return package fragment
+	 */
+	public static IPackageFragment resolvePackage(String uriString) {
+		return resolvePackage(toURI(uriString));
+	}
+
+	/**
+	 * Given the uri returns a {@link IPackageFragment}. May return null if it can
+	 * not associate the uri with a package fragment.
+	 *
+	 * @param uriString
+	 * @return package fragment
+	 */
+	public static IPackageFragment resolvePackage(URI uri) {
+		if (uri == null || JDT_SCHEME.equals(uri.getScheme()) || !uri.isAbsolute()) {
+			return null;
+		}
+
+		IFolder resource = (IFolder) findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findContainersForLocationURI);
+		if (resource != null) {
+			if (!ProjectUtils.isJavaProject(resource.getProject())) {
+				return null;
+			}
+			IJavaElement element = JavaCore.create(resource);
+			if (element instanceof IPackageFragment) {
+				return (IPackageFragment) element;
+			}
+		}
 		return null;
 	}
 
@@ -556,21 +594,21 @@ public final class JDTUtils {
 	}
 
 	public static IFile findFile(String uriString) {
-		return findFile(toURI(uriString));
+		return (IFile) findResource(toURI(uriString), ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
 	}
 
-	public static IFile findFile(URI uri) {
+	public static IResource findResource(URI uri, Function<URI, IResource[]> resourceFinder) {
 		if (uri == null || !"file".equals(uri.getScheme())) {
 			return null;
 		}
-		IFile[] resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+		IResource[] resources = resourceFinder.apply(uri);
 		if (resources.length == 0) {
 			//On Mac, Linked resources are referenced via the "real" URI, i.e file://USERS/username/...
 			//instead of file://Users/username/..., so we check against that real URI.
 			URI realUri = FileUtil.realURI(uri);
 			if (!uri.equals(realUri)) {
 				uri = realUri;
-				resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+				resources = resourceFinder.apply(uri);
 			}
 		}
 		if (resources.length == 0 && Platform.OS_WIN32.equals(Platform.getOS()) && uri.toString().startsWith(ResourceUtils.FILE_UNC_PREFIX)) {
@@ -584,7 +622,7 @@ public final class JDTUtils {
 				} catch (URISyntaxException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				}
-				resources = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
+				resources = resourceFinder.apply(uri);
 			}
 		}
 		switch(resources.length) {
@@ -593,8 +631,8 @@ public final class JDTUtils {
 		case 1:
 			return resources[0];
 		default://several candidates if a linked resource was created before the real project was configured
-			IFile file = null;
-			for (IFile f : resources) {
+				IResource resource = null;
+				for (IResource f : resources) {
 				//delete linked resource
 				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
 					try {
@@ -604,11 +642,11 @@ public final class JDTUtils {
 					}
 				}
 				//find closest project containing that file, in case of nested projects
-				if (file == null ||f.getProjectRelativePath().segmentCount() < file.getProjectRelativePath().segmentCount()) {
-					file = f;
+					if (resource == null || f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
+						resource = f;
 				}
 			}
-			return file;
+				return resource;
 		}
 	}
 

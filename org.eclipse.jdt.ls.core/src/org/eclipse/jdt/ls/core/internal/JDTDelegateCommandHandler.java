@@ -13,18 +13,8 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.OrganizeImportsOperation;
-import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.lsp4j.WorkspaceEdit;
-import org.eclipse.ltk.core.refactoring.TextChange;
-import org.eclipse.text.edits.TextEdit;
+import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 
@@ -36,53 +26,11 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 		if (!StringUtils.isBlank(commandId)) {
 			switch (commandId) {
 				case "java.edit.organizeImports":
-					return organizeImports(arguments);
+					return OrganizeImportsCommand.organizeImports(arguments);
 				default:
 					break;
 			}
 		}
 		throw new UnsupportedOperationException(String.format("Java language server doesn't support the command '%s'.", commandId));
-	}
-
-	public Object organizeImports(List<Object> arguments) {
-		String fileUri = (String) arguments.get(0);
-		if (JDTUtils.toURI(fileUri) != null) {
-			final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileUri);
-			return organizeImports(unit);
-		}
-
-		return new WorkspaceEdit();
-	}
-
-	public WorkspaceEdit organizeImports(ICompilationUnit unit) {
-		try {
-			if (unit == null) {
-				return new WorkspaceEdit();
-			}
-
-			InnovationContext context = new InnovationContext(unit, 0, unit.getBuffer().getLength() - 1);
-			CUCorrectionProposal proposal = new CUCorrectionProposal("OrganizeImports", unit, IProposalRelevance.ORGANIZE_IMPORTS) {
-				@Override
-				protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
-					CompilationUnit astRoot = context.getASTRoot();
-					OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, null);
-					editRoot.addChild(op.createTextEdit(null));
-				}
-			};
-
-			return getWorkspaceEdit(proposal, unit);
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem organize imports ", e);
-		}
-		return new WorkspaceEdit();
-	}
-
-	private WorkspaceEdit getWorkspaceEdit(CUCorrectionProposal proposal, ICompilationUnit cu) throws CoreException {
-		TextChange textChange = proposal.getTextChange();
-		TextEdit edit = textChange.getEdit();
-		TextEditConverter converter = new ImportTextEditConverter(cu, edit);
-		WorkspaceEdit $ = new WorkspaceEdit();
-		$.getChanges().put(JDTUtils.toURI(cu), converter.convert());
-		return $;
 	}
 }

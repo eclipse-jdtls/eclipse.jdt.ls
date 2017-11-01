@@ -28,6 +28,7 @@ import java.util.Comparator;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -98,7 +99,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(IPackageDeclaration.class.isAssignableFrom(elements[0].getClass()));
 		assertTrue(IType.class.isAssignableFrom(elements[1].getClass()));
 		assertTrue(cu.getResource().isLinked());
-		assertEquals(cu.getResource(), JDTUtils.findFile(uri));
+		assertEquals(cu.getResource(), JDTUtils.findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI));
 
 		uri = helloSrcRoot.resolve("NoPackage.java").toUri();
 		cu = JDTUtils.resolveCompilationUnit(uri.toString());

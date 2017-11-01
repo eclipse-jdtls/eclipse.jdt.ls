@@ -22,6 +22,7 @@ import org.eclipse.text.edits.CopyTargetEdit;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
+import org.eclipse.text.edits.MoveSourceEdit;
 import org.eclipse.text.edits.MoveTargetEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -124,6 +125,29 @@ public class TextEditConverter extends TextEditVisitor{
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
 		return false; // do not visit children
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.MoveSourceEdit)
+	 */
+	@Override
+	public boolean visit(MoveSourceEdit edit) {
+		try {
+			// If MoveSourcedEdit & MoveTargetEdit are the same level, should delete the original contenxt.
+			// See issue#https://github.com/redhat-developer/vscode-java/issues/253
+			if (edit.getParent() != null && edit.getTargetEdit() != null && edit.getParent().equals(edit.getTargetEdit().getParent())) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+				te.setNewText("");
+				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+				converted.add(te);
+				return false;
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return super.visit(edit);
 	}
 
 	/*
