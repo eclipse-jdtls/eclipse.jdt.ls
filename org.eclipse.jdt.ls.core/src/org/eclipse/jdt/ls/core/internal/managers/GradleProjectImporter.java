@@ -28,6 +28,7 @@ import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 import com.gradleware.tooling.toolingclient.GradleDistribution;
@@ -131,6 +132,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (StringUtils.isNotBlank(value)) {
 			jvmArgs.add(String.format("-D%s=%s", name, value));
 		}
+	}
+
+	@Override
+	public void reset() {
 	}
 
 }

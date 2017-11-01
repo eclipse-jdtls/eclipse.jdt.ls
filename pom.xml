@@ -63,7 +63,7 @@
 					<configuration>
 						<skip>false</skip>
 						<outputDirectory>${basedir}/lib/</outputDirectory>
-						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with 
+						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with
 							ever daily changing timestamp -->
 						<useBaseVersion>true</useBaseVersion>
 					</configuration>

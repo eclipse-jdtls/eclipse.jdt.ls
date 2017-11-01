@@ -30,7 +30,7 @@ public final class WorkspaceHelper {
 		//No instances allowed
 	}
 
-	public static void initWorkspace() {
+	public static void initWorkspace() throws CoreException {
 		JavaLanguageServerPlugin.getProjectsManager().initializeProjects(null, new NullProgressMonitor());
 		assertEquals(1, getAllProjects().size());
 	}
