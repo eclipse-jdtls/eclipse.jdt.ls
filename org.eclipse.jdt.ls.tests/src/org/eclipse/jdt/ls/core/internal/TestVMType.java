@@ -37,8 +37,10 @@ public class TestVMType extends AbstractVMInstallType {
 		IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(VMTYPE_ID);
 		IVMInstall testVMInstall = vmInstallType.findVMInstall("1.8");
 
-		// set the 1.8 test JRE as the new default JRE
-		JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
+		if (!testVMInstall.equals(JavaRuntime.getDefaultVMInstall())) {
+			// set the 1.8 test JRE as the new default JRE
+			JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
+		}
 
 		// update all environments compatible to use the test JRE
 		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
@@ -46,7 +48,7 @@ public class TestVMType extends AbstractVMInstallType {
 		for (IExecutionEnvironment environment : environments) {
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
 			for (IVMInstall compatibleVM : compatibleVMs) {
-				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId())) {
+				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && !compatibleVM.equals(environment.getDefaultVM())) {
 					environment.setDefaultVM(compatibleVM);
 				}
 			}

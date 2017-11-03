@@ -28,9 +28,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.eclipse.jdt.ls.tests.Unstable;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -111,7 +109,6 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		}
 	}
 
-	@Category(Unstable.class)
 	@Test
 	public void testBuildHelperSupport() throws Exception {
 		IProject project = importMavenProject("buildhelped");
