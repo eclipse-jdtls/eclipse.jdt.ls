@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -64,7 +65,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 			waitForBackgroundJobs();
 			BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 			waitForBackgroundJobs();
-			assertTrue(result == BuildWorkspaceStatus.WITH_ERROR);
+			assertEquals(result, BuildWorkspaceStatus.WITH_ERROR);
 		}
 	}
 
@@ -73,6 +74,6 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		monitor.setCanceled(true);
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		waitForBackgroundJobs();
-		assertTrue(result == BuildWorkspaceStatus.CANCELLED);
+		assertEquals(result, BuildWorkspaceStatus.CANCELLED);
 	}
 }
