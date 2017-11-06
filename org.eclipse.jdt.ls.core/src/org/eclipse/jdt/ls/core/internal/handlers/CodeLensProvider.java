@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -33,7 +33,7 @@ public interface CodeLensProvider {
 
 	String getType();
 
-	ArrayList<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException;
+	List<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException;
 
 	default CodeLens getCodeLens(String type, IJavaElement element, ICompilationUnit unit) throws JavaModelException {
 		CodeLens lens = new CodeLens();

@@ -104,7 +104,7 @@ public class CodeLensHandler {
 
 	public List<CodeLensProvider> getExtendedCodeLensProviders() {
 		Set<CodeLensProviderContainerDescriptor> deps = getCodeLensProviderContainerDescriptors();
-		List<CodeLensProvider> res = new ArrayList<>();
+		List<CodeLensProvider> res = new ArrayList<>(deps.size());
 		for (CodeLensProviderContainerDescriptor dep : deps) {
 			CodeLensProviderContainer container = dep.getCodeLensProviderContainer();
 			res.addAll(dep.getProviderIds().stream().map(id -> container.getCodeLensProvider(id, preferenceManager)).collect(Collectors.toSet()));

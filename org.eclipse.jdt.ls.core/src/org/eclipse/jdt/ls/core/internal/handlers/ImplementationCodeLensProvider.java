@@ -101,7 +101,7 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public ArrayList<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
+	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
 		ArrayList<CodeLens> lenses = new ArrayList<>();
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
