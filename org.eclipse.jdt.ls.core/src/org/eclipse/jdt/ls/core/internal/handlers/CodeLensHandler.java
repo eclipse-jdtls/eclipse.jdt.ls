@@ -90,7 +90,7 @@ public class CodeLensHandler {
 	}
 
 	/**
-	 * Extension point ID for the delegate command handler.
+	 * Extension point ID for the codelens provider container.
 	 */
 	private static final String EXTENSION_POINT_ID = "org.eclipse.jdt.ls.core.codeLensProviderContainer";
 
