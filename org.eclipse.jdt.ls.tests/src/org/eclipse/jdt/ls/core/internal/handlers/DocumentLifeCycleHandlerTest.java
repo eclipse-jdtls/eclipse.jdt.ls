@@ -499,7 +499,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		TextDocumentItem textDocument = new TextDocumentItem();
 		textDocument.setLanguageId("java");
 		textDocument.setText(content);
-		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setUri(JDTUtils.toURI(cu));
 		textDocument.setVersion(version);
 		openParms.setTextDocument(textDocument);
 		lifeCycleHandler.didOpen(openParms);
@@ -517,7 +517,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private void changeDocument(ICompilationUnit cu, String content, int version, Range range, int length) throws JavaModelException {
 		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
 		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setUri(JDTUtils.toURI(cu));
 		textDocument.setVersion(version);
 		changeParms.setTextDocument(textDocument);
 		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
@@ -535,7 +535,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private void saveDocument(ICompilationUnit cu) throws Exception {
 		DidSaveTextDocumentParams saveParms = new DidSaveTextDocumentParams();
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setUri(JDTUtils.toURI(cu));
 		saveParms.setTextDocument(textDocument);
 		saveParms.setText(cu.getSource());
 		lifeCycleHandler.didSave(saveParms);
@@ -545,7 +545,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private void closeDocument(ICompilationUnit cu) {
 		DidCloseTextDocumentParams closeParms = new DidCloseTextDocumentParams();
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setUri(JDTUtils.toURI(cu));
 		closeParms.setTextDocument(textDocument);
 		lifeCycleHandler.didClose(closeParms);
 	}
@@ -568,7 +568,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		for (int i = 0; i < expectedReports.length; i++) {
 			PublishDiagnosticsParams diag = diags.get(i);
 			ExpectedProblemReport expected = expectedReports[i];
-			assertEquals(JDTUtils.getFileURI(expected.cu), diag.getUri());
+			assertEquals(JDTUtils.toURI(expected.cu), diag.getUri());
 			if (expected.problemCount != diag.getDiagnostics().size()) {
 				String message = "";
 				for (Diagnostic d : diag.getDiagnostics()) {

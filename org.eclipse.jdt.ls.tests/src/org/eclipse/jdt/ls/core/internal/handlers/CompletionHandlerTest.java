@@ -1080,7 +1080,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
-		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.getFileURI(unit))
+		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
 	}

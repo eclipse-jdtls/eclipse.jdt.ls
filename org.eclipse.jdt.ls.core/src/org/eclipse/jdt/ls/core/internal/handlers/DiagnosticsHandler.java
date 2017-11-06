@@ -38,7 +38,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	public DiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
-		this.uri = JDTUtils.getFileURI(cu);
+		this.uri = JDTUtils.toURI(cu);
 		this.connection = conn;
 		this.reportAllErrors = !cu.getJavaProject().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
 	}

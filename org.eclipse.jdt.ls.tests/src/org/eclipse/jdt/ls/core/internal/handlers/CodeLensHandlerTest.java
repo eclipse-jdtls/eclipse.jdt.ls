@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -153,6 +154,21 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		r = cl.getRange();
 		//CodeLens on Foo type
 		assertRange(5, 13, 16, r);
+	}
+
+	@Test
+	public void testGetCodeLensSymbolsForClass() throws Exception {
+		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "true"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(implementationsCodeLenses);
+		handler = new CodeLensHandler(preferenceManager);
+		String uriString = ClassFileUtil.getURI(project, "java.lang.Runnable");
+		String payload = createCodeLensSymbolRequest(new URI(uriString));
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+		List<CodeLens> lenses = handler.getCodeLensSymbols(uri, monitor);
+		assertEquals("Found " + lenses, 3, lenses.size());
 	}
 
 	@Test

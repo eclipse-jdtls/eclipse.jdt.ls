@@ -66,7 +66,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 
 		CodeActionParams params = new CodeActionParams();
-		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.getFileURI(unit)));
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
 		final Range range = getRange(unit, "java.sql");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
@@ -88,7 +88,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 
 		CodeActionParams params = new CodeActionParams();
-		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.getFileURI(unit)));
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
 		final Range range = getRange(unit, "some str");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
@@ -111,7 +111,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 
 		CodeActionParams params = new CodeActionParams();
-		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.getFileURI(unit)));
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
 		final Range range = getRange(unit, ";");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
@@ -123,7 +123,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(c.getArguments());
 		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.getFileURI(unit));
+		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.toURI(unit));
 		Assert.assertEquals(1, edits.size());
 		Assert.assertEquals("", edits.get(0).getNewText());
 		Assert.assertEquals(range, edits.get(0).getRange());

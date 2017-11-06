@@ -335,7 +335,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(ICompilationUnit unit, int offset, int length) throws JavaModelException {
-		return new Location(ResourceUtils.toClientUri(getFileURI(unit)), toRange(unit, offset, length));
+		return new Location(ResourceUtils.toClientUri(toURI(unit)), toRange(unit, offset, length));
 	}
 
 	/**
@@ -369,7 +369,16 @@ public final class JDTUtils {
 	 * @return location
 	 * @throws JavaModelException
 	 */
-	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException{
+	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException {
+		String uriString = toUri(classFile);
+		if (uriString != null) {
+			Range range = toRange(classFile, offset, length);
+			return new Location(uriString, range);
+		}
+		return null;
+	}
+
+	public static String toUri(IClassFile classFile) {
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
@@ -378,8 +387,17 @@ public final class JDTUtils {
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
-		Range range = toRange(classFile, offset, length);
-		return new Location(uriString, range);
+		return uriString;
+	}
+
+	public static String toUri(ITypeRoot typeRoot) {
+		if (typeRoot instanceof ICompilationUnit) {
+			return toURI((ICompilationUnit) typeRoot);
+		}
+		if (typeRoot instanceof IClassFile) {
+			return toUri((IClassFile) typeRoot);
+		}
+		return null;
 	}
 
 	/**
@@ -433,7 +451,18 @@ public final class JDTUtils {
 	 * @param cu
 	 * @return
 	 */
+	@Deprecated
 	public static String getFileURI(ICompilationUnit cu) {
+		return toURI(cu);
+	}
+
+	/**
+	 * Returns uri for a compilation unit
+	 * 
+	 * @param cu
+	 * @return
+	 */
+	public static String toURI(ICompilationUnit cu) {
 		return getFileURI(cu.getResource());
 	}
 

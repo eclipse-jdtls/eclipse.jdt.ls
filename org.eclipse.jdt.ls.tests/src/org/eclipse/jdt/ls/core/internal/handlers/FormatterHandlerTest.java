@@ -44,7 +44,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		);
 
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
@@ -73,7 +73,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			//@formatter:on"
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
 		preferenceManager.getPreferences().setJavaFormatEnabled(false);
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
@@ -95,7 +95,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		);
 
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(2, false);// ident == tab
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
@@ -130,7 +130,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:off
 		);
 
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, false);// ident == tab
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
@@ -165,7 +165,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		);
 
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 
 		Range range = new Range(new Position(2, 0), new Position(3, 5));// range around foo()

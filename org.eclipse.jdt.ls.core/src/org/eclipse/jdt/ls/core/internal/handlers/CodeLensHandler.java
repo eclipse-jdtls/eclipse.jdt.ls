@@ -20,12 +20,14 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
@@ -80,9 +82,9 @@ public class CodeLensHandler {
 			command = JAVA_SHOW_IMPLEMENTATIONS_COMMAND;
 		}
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-			if (unit != null) {
-				IJavaElement element = JDTUtils.findElementAtSelection(unit, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue(), this.preferenceManager, monitor);
+			ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
+			if (typeRoot != null) {
+				IJavaElement element = JDTUtils.findElementAtSelection(typeRoot, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue(), this.preferenceManager, monitor);
 				if (REFERENCES_TYPE.equals(type)) {
 					try {
 						locations = findReferences(element, monitor);
@@ -162,13 +164,22 @@ public class CodeLensHandler {
 			return Collections.emptyList();
 		}
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-		if (unit == null || !unit.getResource().exists() || monitor.isCanceled()) {
-			return Collections.emptyList();
+		IClassFile classFile = null;
+		if (unit == null) {
+			classFile = JDTUtils.resolveClassFile(uri);
+			if (classFile == null) {
+				return Collections.emptyList();
+			}
+		} else {
+			if (!unit.getResource().exists() || monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
 		}
 		try {
-			IJavaElement[] elements = unit.getChildren();
+			ITypeRoot typeRoot = unit != null ? unit : classFile;
+			IJavaElement[] elements = typeRoot.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
-			collectCodeLenses(unit, elements, lenses, monitor);
+			collectCodeLenses(typeRoot, elements, lenses, monitor);
 			if (monitor.isCanceled()) {
 				lenses.clear();
 			}
@@ -179,7 +190,7 @@ public class CodeLensHandler {
 		return Collections.emptyList();
 	}
 
-	private void collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, ArrayList<CodeLens> lenses,
+	private void collectCodeLenses(ITypeRoot typeRoot, IJavaElement[] elements, ArrayList<CodeLens> lenses,
 			IProgressMonitor monitor)
 			throws JavaModelException {
 		for (IJavaElement element : elements) {
@@ -187,31 +198,31 @@ public class CodeLensHandler {
 				return;
 			}
 			if (element.getElementType() == IJavaElement.TYPE) {
-				collectCodeLenses(unit, ((IType) element).getChildren(), lenses, monitor);
+				collectCodeLenses(typeRoot, ((IType) element).getChildren(), lenses, monitor);
 			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}
 
 			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
-				CodeLens lens = getCodeLens(REFERENCES_TYPE, element, unit);
+				CodeLens lens = getCodeLens(REFERENCES_TYPE, element, typeRoot);
 				lenses.add(lens);
 			}
 			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
 				IType type = (IType) element;
 				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
-					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, unit);
+					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
 					lenses.add(lens);
 				}
 			}
 		}
 	}
 
-	private CodeLens getCodeLens(String type, IJavaElement element, ICompilationUnit unit) throws JavaModelException {
+	private CodeLens getCodeLens(String type, IJavaElement element, ITypeRoot typeRoot) throws JavaModelException {
 		CodeLens lens = new CodeLens();
 		ISourceRange r = ((ISourceReference) element).getNameRange();
-		final Range range = JDTUtils.toRange(unit, r.getOffset(), r.getLength());
+		final Range range = JDTUtils.toRange(typeRoot, r.getOffset(), r.getLength());
 		lens.setRange(range);
-		String uri = ResourceUtils.toClientUri(JDTUtils.getFileURI(unit));
+		String uri = ResourceUtils.toClientUri(JDTUtils.toUri(typeRoot));
 		lens.setData(Arrays.asList(uri, range.getStart(), type));
 		return lens;
 	}
