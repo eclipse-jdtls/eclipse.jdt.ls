@@ -82,7 +82,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 		TextEdit edit = textChange.getEdit();
 		TextEditConverter converter = new ImportTextEditConverter(cu, edit);
 		WorkspaceEdit $ = new WorkspaceEdit();
-		$.getChanges().put(JDTUtils.getFileURI(cu), converter.convert());
+		$.getChanges().put(JDTUtils.toURI(cu), converter.convert());
 		return $;
 	}
 }

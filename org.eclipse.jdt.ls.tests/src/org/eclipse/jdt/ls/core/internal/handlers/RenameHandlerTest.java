@@ -77,7 +77,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
 
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class E {\n" +
 				"   public int foo(String newname) {\n" +
@@ -113,7 +113,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "newname");
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class E {\n" +
 				"   public int bar() {\n" +
@@ -147,7 +147,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "newname");
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class E {\n" +
 				"	private int newname = 2;\n" +
@@ -178,7 +178,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "newname");
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class E {\n" +
 				"   public int newname() {\n" +
@@ -245,7 +245,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 2);
 
-		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuA))),
+		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.toURI(cuA))),
 				"package test1;\n" +
 				"public class A {\n" +
 				"   public void newname() {\n" +
@@ -253,7 +253,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"}\n"
 				);
 
-		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuB))),
+		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.toURI(cuB))),
 				"package test1;\n" +
 				"public class B {\n" +
 				"   public void foo() {\n" +
@@ -296,14 +296,14 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 2);
 
-		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuA))),
+		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.toURI(cuA))),
 				"package test1;\n" +
 				"public class A {\n" +
 				"   public void newname(){}\n" +
 				"}\n"
 				);
 
-		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuB))),
+		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.toURI(cuB))),
 				"package test1;\n" +
 				"public class B extends A {\n" +
 				"	@Override\n" +
@@ -344,7 +344,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
 
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"class B extends A {\n" +
 				"	public void newfoo() {\n" +
@@ -395,14 +395,14 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 2);
 
-		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuA))),
+		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.toURI(cuA))),
 				"package test1;\n" +
 				"public interface A {\n" +
 				"   public void newname();\n" +
 				"}\n"
 				);
 
-		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuB))),
+		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.toURI(cuB))),
 				"package test1;\n" +
 				"public class B implements A {\n" +
 				"	@Override\n" +
@@ -446,7 +446,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 2);
 
-		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuA))),
+		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.toURI(cuA))),
 				"package test1;\n" +
 				"public class A {\n" +
 				"   public void foo(){\n" +
@@ -456,7 +456,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"}\n"
 				);
 
-		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuB))),
+		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.toURI(cuB))),
 				"package test1;\n" +
 				"public class NewType {\n" +
 				"	public NewType() {}\n" +
@@ -489,7 +489,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(1, edit.getChanges().size());
 
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"class TypeA {\n" +
 				"   public void bar() {\n" +
@@ -536,7 +536,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 2);
 
-		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuA))),
+		assertEquals(TextEditUtil.apply(builderA.toString(), edit.getChanges().get(JDTUtils.toURI(cuA))),
 				"package test1;\n" +
 				"public class A {\n" +
 				"   public void foo(){\n" +
@@ -546,7 +546,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"}\n"
 				);
 
-		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.getFileURI(cuB))),
+		assertEquals(TextEditUtil.apply(builderB.toString(), edit.getChanges().get(JDTUtils.toURI(cuB))),
 				"package test1;\n" +
 				"public class NewName {\n" +
 				"   public NewName() {}\n" +
@@ -576,7 +576,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
 
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class A<TT> {\n" +
 				"	private TT t;\n" +
@@ -606,7 +606,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
 
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class B<T> {\n" +
 				"	private T t;\n" +
@@ -638,7 +638,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "i2");
 		assertNotNull(edit);
 		assertEquals(edit.getChanges().size(), 1);
-		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.getFileURI(cu))),
+		assertEquals(TextEditUtil.apply(builder.toString(), edit.getChanges().get(JDTUtils.toURI(cu))),
 				"package test1;\n" +
 				"public class E {\n" +
 				"	/**\n" +
@@ -666,7 +666,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	private WorkspaceEdit getRenameEdit(ICompilationUnit cu, Position pos, String newName) {
-		TextDocumentIdentifier identifier = new TextDocumentIdentifier(JDTUtils.getFileURI(cu));
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(JDTUtils.toURI(cu));
 
 		RenameParams params = new RenameParams(identifier, pos, newName);
 		return handler.rename(params, monitor);

@@ -123,7 +123,7 @@ public class CodeActionHandler {
 
 	private static Command textEditToCommand(ICompilationUnit unit, String label, TextEdit textEdit) {
 		TextEditConverter converter = new TextEditConverter(unit, textEdit);
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		WorkspaceEdit $ = new WorkspaceEdit();
 		$.getChanges().put(uri, converter.convert());
 		return new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList($));

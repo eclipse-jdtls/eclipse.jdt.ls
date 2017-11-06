@@ -156,7 +156,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		CodeActionParams parms = new CodeActionParams();
 
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
-		textDocument.setUri(JDTUtils.getFileURI(cu));
+		textDocument.setUri(JDTUtils.toURI(cu));
 		parms.setTextDocument(textDocument);
 		parms.setRange(range);
 		CodeActionContext context = new CodeActionContext();

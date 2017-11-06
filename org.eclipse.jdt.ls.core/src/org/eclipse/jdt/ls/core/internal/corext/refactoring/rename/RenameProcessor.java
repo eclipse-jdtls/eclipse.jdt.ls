@@ -121,7 +121,7 @@ public class RenameProcessor {
 
 	protected void convert(WorkspaceEdit root, ICompilationUnit unit, TextEdit edits) {
 		TextEditConverter converter = new TextEditConverter(unit, edits);
-		String uri = JDTUtils.getFileURI(unit);
+		String uri = JDTUtils.toURI(unit);
 		Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
 		if (changes.containsKey(uri)) {
 			changes.get(uri).addAll(converter.convert());
