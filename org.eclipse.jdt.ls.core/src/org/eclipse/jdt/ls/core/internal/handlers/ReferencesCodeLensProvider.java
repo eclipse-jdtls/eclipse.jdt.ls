@@ -109,20 +109,25 @@ public class ReferencesCodeLensProvider implements CodeLensProvider {
 	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
+	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
+		IJavaElement[] elements = unit.getChildren();
+		return collectCodeLensesCore(unit, elements, monitor);
+	}
+
+	private List<CodeLens> collectCodeLensesCore(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
 		ArrayList<CodeLens> lenses = new ArrayList<>();
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return lenses;
 			}
 			if (element.getElementType() == IJavaElement.TYPE) {
-				lenses.addAll(collectCodeLenses(unit, ((IType) element).getChildren(), monitor));
+				lenses.addAll(collectCodeLensesCore(unit, ((IType) element).getChildren(), monitor));
 			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}
 
 			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
-				CodeLens lens = getCodeLens(REFERENCES_TYPE, element, unit);
+				CodeLens lens = createCodeLens(element, unit);
 				lenses.add(lens);
 			}
 		}

@@ -101,14 +101,19 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
+	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
+		IJavaElement[] elements = unit.getChildren();
+		return collectCodeLensesCore(unit, elements, monitor);
+	}
+
+	private List<CodeLens> collectCodeLensesCore(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
 		ArrayList<CodeLens> lenses = new ArrayList<>();
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return lenses;
 			}
 			if (element.getElementType() == IJavaElement.TYPE) {
-				lenses.addAll(collectCodeLenses(unit, ((IType) element).getChildren(), monitor));
+				lenses.addAll(collectCodeLensesCore(unit, ((IType) element).getChildren(), monitor));
 			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}
@@ -116,7 +121,7 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
 				IType type = (IType) element;
 				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
-					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, unit);
+					CodeLens lens = createCodeLens(element, unit);
 					lenses.add(lens);
 				}
 			}

@@ -50,7 +50,12 @@ public class CodeLensHandler {
 			return null;
 		}
 		for (CodeLensProvider provider : codeLensProviders) {
-			lens = provider.resolveCodeLens(lens, monitor);
+			if (monitor.isCanceled()) {
+				return lens;
+			}
+			if (provider.couldHandle(lens)) {
+				lens = provider.resolveCodeLens(lens, monitor);
+			}
 		}
 		return lens;
 	}
@@ -76,7 +81,7 @@ public class CodeLensHandler {
 			IJavaElement[] elements = typeRoot.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
 			for (CodeLensProvider provider : codeLensProviders) {
-				lenses.addAll(provider.collectCodeLenses(unit, elements, monitor));
+				lenses.addAll(provider.collectCodeLenses(unit, monitor));
 				if (monitor.isCanceled()) {
 					lenses.clear();
 					break;

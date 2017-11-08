@@ -138,7 +138,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 3, result.size());
+		assertEquals("Found " + result, 5, result.size());
 
 		CodeLens cl = result.get(0);
 		Range r = cl.getRange();
@@ -153,6 +153,16 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		cl = result.get(2);
 		r = cl.getRange();
 		//CodeLens on Foo type
+		assertRange(5, 13, 16, r);
+
+		cl = result.get(3);
+		r = cl.getRange();
+		//CodeLens on Foo type from extended CodeLensProvider
+		assertRange(5, 13, 16, r);
+
+		cl = result.get(4);
+		r = cl.getRange();
+		//CodeLens on Foo type from extended CodeLensProvider
 		assertRange(5, 13, 16, r);
 	}
 
@@ -351,7 +361,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 4, result.size());
+		assertEquals("Found " + result, 6, result.size());
 
 		//CodeLens on constructor
 		CodeLens cl = result.get(0);
@@ -367,6 +377,13 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//CodeLens on Bar type
 		cl = result.get(3);
+		assertRange(5, 13, 16, cl.getRange());
+
+		//CodeLens on Bar type from extended provider
+		cl = result.get(4);
+		assertRange(5, 13, 16, cl.getRange());
+
+		cl = result.get(5);
 		assertRange(5, 13, 16, cl.getRange());
 	}
 

@@ -19,6 +19,12 @@
             <command id="dup"/>
        </delegateCommandHandler>
    </extension>
+   <extension point="org.eclipse.jdt.ls.core.codeLensProviderContainer">
+      <codeLensProviderContainer class="org.eclipse.jdt.ls.core.internal.TestCodeLensProviderContainerFactory">
+           <provider id="testprovider1"/>
+           <provider id="testprovider2"/>
+      </codeLensProviderContainer>
+   </extension>
    <extension
          point="org.eclipse.jdt.ls.core.contentProvider">
       <contentProvider
