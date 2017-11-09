@@ -58,7 +58,7 @@
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.handlers.CodeLensProviderContainer"/>
                </appinfo>
             </annotation>
          </attribute>

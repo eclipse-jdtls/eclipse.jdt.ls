@@ -83,8 +83,7 @@ public class CodeLensHandler {
 			for (CodeLensProvider provider : codeLensProviders) {
 				lenses.addAll(provider.collectCodeLenses(unit, monitor));
 				if (monitor.isCanceled()) {
-					lenses.clear();
-					break;
+					return Collections.emptyList();
 				}
 			}
 			return lenses;
