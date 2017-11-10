@@ -56,6 +56,11 @@ public class Preferences {
 	public static final String RENAME_ENABLED_KEY = "java.rename.enabled";
 
 	/**
+	 * Preference key to enable/disable executeCommand.
+	 */
+	public static final String EXECUTE_COMMAND_ENABLED_KEY = "java.executeCommand.enabled";
+
+	/**
 	 * Preference key to exclude directories when importing projects.
 	 */
 	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
@@ -116,12 +121,14 @@ public class Preferences {
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
 	public static final String TEXT_DOCUMENT_SIGNATURE_HELP = "textDocument/signatureHelp";
 	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
+	public static final String WORKSPACE_EXECUTE_COMMAND = "workspace/executeCommand";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
 	public static final String CODE_LENS_ID = UUID.randomUUID().toString();
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
 	public static final String RENAME_ID = UUID.randomUUID().toString();
+	public static final String EXECUTE_COMMAND_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -131,6 +138,7 @@ public class Preferences {
 	private boolean javaFormatEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
+	private boolean executeCommandEnabled;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
 
@@ -197,6 +205,7 @@ public class Preferences {
 		javaFormatEnabled = true;
 		signatureHelpEnabled = false;
 		renameEnabled = true;
+		executeCommandEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
 		favoriteStaticMembers = "";
@@ -233,6 +242,9 @@ public class Preferences {
 
 		boolean renameEnabled = getBoolean(configuration, RENAME_ENABLED_KEY, true);
 		prefs.setRenameEnabled(renameEnabled);
+
+		boolean executeCommandEnable = getBoolean(configuration, EXECUTE_COMMAND_ENABLED_KEY, true);
+		prefs.setExecuteCommandEnabled(executeCommandEnable);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -284,6 +296,11 @@ public class Preferences {
 
 	private Preferences setRenameEnabled(boolean enabled) {
 		this.renameEnabled = enabled;
+		return this;
+	}
+
+	private Preferences setExecuteCommandEnabled(boolean enabled) {
+		this.executeCommandEnabled = enabled;
 		return this;
 	}
 
@@ -349,6 +366,10 @@ public class Preferences {
 
 	public boolean isRenameEnabled() {
 		return renameEnabled;
+	}
+
+	public boolean isExecuteCommandEnabled() {
+		return executeCommandEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

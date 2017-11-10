@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,6 +95,14 @@ public class WorkspaceExecuteCommandHandler {
 		return fgContributedCommandHandlers;
 	}
 
+	public static Set<String> getCommands() {
+		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Set<String> commands = new HashSet<>();
+		for (DelegateCommandHandlerDescriptor handler : handlers) {
+			commands.addAll(handler.getCommands());
+		}
+		return commands;
+	}
 	/**
 	 * Execute workspace command and invoke language server delegate command
 	 * handler for matching command
