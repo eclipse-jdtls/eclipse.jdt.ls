@@ -86,11 +86,11 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		String className = "org.sample.Bar";
 		List<? extends SymbolInformation> symbols = getSymbols(className);
 		assertHasSymbol("Bar", "Bar.java", SymbolKind.Class, symbols);
-		assertHasSymbol("main(String[])", "Bar", SymbolKind.Function, symbols);
+		assertHasSymbol("main(String[])", "Bar", SymbolKind.Method, symbols);
 		assertHasSymbol("MyInterface", "Bar", SymbolKind.Interface, symbols);
-		assertHasSymbol("foo()", "MyInterface", SymbolKind.Function, symbols);
+		assertHasSymbol("foo()", "MyInterface", SymbolKind.Method, symbols);
 		assertHasSymbol("MyClass", "Bar", SymbolKind.Class, symbols);
-		assertHasSymbol("bar()", "MyClass", SymbolKind.Function, symbols);
+		assertHasSymbol("bar()", "MyClass", SymbolKind.Method, symbols);
 
 	}
 
