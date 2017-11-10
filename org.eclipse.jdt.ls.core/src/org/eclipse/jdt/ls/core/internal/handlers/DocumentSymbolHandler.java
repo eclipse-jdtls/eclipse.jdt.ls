@@ -139,7 +139,7 @@ public class DocumentSymbolHandler {
 		case IJavaElement.TYPE_PARAMETER:
 			return SymbolKind.Variable;
 		case IJavaElement.METHOD:
-			return SymbolKind.Function;
+			return SymbolKind.Method;
 		case IJavaElement.PACKAGE_DECLARATION:
 			return SymbolKind.Package;
 		case IJavaElement.TYPE:
