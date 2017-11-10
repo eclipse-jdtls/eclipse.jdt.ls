@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -40,6 +41,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
+import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
@@ -142,6 +144,10 @@ final public class InitHandler {
 			capabilities.setRenameProvider(Boolean.TRUE);
 		}
 		capabilities.setCodeActionProvider(Boolean.TRUE);
+		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
+			Set<String> commands = WorkspaceExecuteCommandHandler.getCommands();
+			capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
+		}
 		result.setCapabilities(capabilities);
 		return result;
 	}

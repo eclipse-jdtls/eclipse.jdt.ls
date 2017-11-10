@@ -14,6 +14,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeParams;
@@ -247,6 +249,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				registerCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
 			} else {
 				unregisterCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
+			}
+		}
+		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
+			if (preferenceManager.getPreferences().isExecuteCommandEnabled()) {
+				unregisterCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND);
+				registerCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND, new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+			} else {
+				unregisterCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND);
 			}
 		}
 		logInfo(">>New configuration: " + settings);
@@ -556,7 +566,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
 		return computeAsync((cc) -> handler.buildWorkspace(forceReBuild, toMonitor(cc)));
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.lsp.WorkspaceServiceProposed#didChangeWorkspaceFolders(org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams)
 	 */

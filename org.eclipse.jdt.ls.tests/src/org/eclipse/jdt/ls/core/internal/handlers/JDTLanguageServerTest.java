@@ -76,25 +76,27 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, true);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, true);
+		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(4)).registerCapability(any());
+		verify(client, times(5)).registerCapability(any());
 
 		//On 2nd call, 1 registration call should be emitted
 		reset(client);
 		server.didChangeConfiguration(params);
-		verify(client, times(1)).registerCapability(any());
+		verify(client, times(2)).registerCapability(any());
 
 		// unregister capabilities
 		reset(client);
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, false);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, false);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, false);
+		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, false);
 		params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(4)).unregisterCapability(any());
+		verify(client, times(5)).unregisterCapability(any());
 
 		//On 2nd call, no unregistration calls should be emitted
 		reset(client);
@@ -110,6 +112,7 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, true);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, true);
+		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
@@ -119,6 +122,7 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, false);
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, false);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, false);
+		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, false);
 		params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
@@ -130,6 +134,7 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isFormattingDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isRangeFormattingDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isSignatureHelpDynamicRegistrationSupported()).thenReturn(enable);
+		when(clientPreferences.isExecuteCommandDynamicRegistrationSupported()).thenReturn(enable);
 	}
 
 }
