@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
@@ -37,6 +36,7 @@ import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
@@ -138,7 +138,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 5, result.size());
+		assertEquals("Found " + result, 4, result.size());
 
 		CodeLens cl = result.get(0);
 		Range r = cl.getRange();
@@ -156,11 +156,6 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertRange(5, 13, 16, r);
 
 		cl = result.get(3);
-		r = cl.getRange();
-		//CodeLens on Foo type from extended CodeLensProvider
-		assertRange(5, 13, 16, r);
-
-		cl = result.get(4);
 		r = cl.getRange();
 		//CodeLens on Foo type from extended CodeLensProvider
 		assertRange(5, 13, 16, r);
@@ -287,9 +282,9 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(sourceUri.endsWith("IFoo.java"));
 
 		//CodeLens position
-		Map<String, Object> map = (Map<String, Object>) args.get(1);
-		assertEquals(5.0, map.get("line"));
-		assertEquals(17.0, map.get("character"));
+		Position map = (Position) args.get(1);
+		assertTrue(5.0 == map.getLine());
+		assertTrue(17.0 == map.getCharacter());
 
 		//Reference location
 		List<Location> locations = (List<Location>) args.get(2);
@@ -327,9 +322,9 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(sourceUri.endsWith(source));
 
 		//CodeLens position
-		Map<String, Object> map = (Map<String, Object>)args.get(1);
-		assertEquals(5.0, map.get("line"));
-		assertEquals(13.0, map.get("character"));
+		Position map = (Position) args.get(1);
+		assertTrue(5.0 == map.getLine());
+		assertTrue(13.0 == map.getCharacter());
 
 		//Reference location
 		List<Location> locations = (List<Location>)args.get(2);
@@ -361,7 +356,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 6, result.size());
+		assertEquals("Found " + result, 5, result.size());
 
 		//CodeLens on constructor
 		CodeLens cl = result.get(0);
@@ -381,9 +376,6 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//CodeLens on Bar type from extended provider
 		cl = result.get(4);
-		assertRange(5, 13, 16, cl.getRange());
-
-		cl = result.get(5);
 		assertRange(5, 13, 16, cl.getRange());
 	}
 

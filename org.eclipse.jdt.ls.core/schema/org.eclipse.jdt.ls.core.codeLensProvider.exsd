@@ -3,10 +3,10 @@
 <schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.codeLensProviderContainer" name="codeLensProviderContainer"/>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.internal.codelens.codeLensProvider" name="codeLensProvider"/>
       </appinfo>
       <documentation>
-         This extension point allows to add a codeLensProvider container to extend the Java Language server
+         This extension point allows to add a codeLensProvider to extend the Java Language server
       </documentation>
    </annotation>
 
@@ -18,7 +18,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="codeLensProviderContainer" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="codeLensProvider" minOccurs="1" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,18 +47,15 @@
       </complexType>
    </element>
 
-   <element name="codeLensProviderContainer">
+   <element name="codeLensProvider">
       <complexType>
-         <sequence>
-            <element ref="provider" minOccurs="1" maxOccurs="unbounded"/>
-         </sequence>
          <attribute name="class" type="string" use="required">
             <annotation>
                <documentation>
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.handlers.CodeLensProviderContainer"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.codeLens.CodeLensProvider"/>
                </appinfo>
             </annotation>
          </attribute>
@@ -69,15 +66,10 @@
                </documentation>
             </annotation>
          </attribute>
-      </complexType>
-   </element>
-
-   <element name="provider">
-      <complexType>
-         <attribute name="id" type="string" use="required">
+         <attribute name="order" type="string">
             <annotation>
                <documentation>
-                  
+                  Positive integer order. Lowest value has the highest priority. Unless you have a good reason, don&apos;t populate this value.
                </documentation>
             </annotation>
          </attribute>
@@ -93,14 +85,12 @@
          The following is an example of a language server c:
 
 &lt;pre&gt;
- &lt;extension point=&quot;org.eclipse.jdt.ls.core.codeLensProviderContainer&quot;&gt;
-  &lt;codeLensProviderContainer
-   id=&quot;MyLanguageServercodeLensProviderContainer&quot;
-   name=&quot;My Language Server CodeLens Provider Container&quot;
-   class=&quot;com.example.MyCodeLensProviderContainer&quot;&gt;
-   &lt;provider id=&quot;provider1&quot;/&gt;
-   &lt;provider id=&quot;provider2&quot;/&gt;
-  &lt;/codeLensProviderContainer&gt;
+ &lt;extension point=&quot;org.eclipse.jdt.ls.core.internal.codeLens.CodeLensProvider&quot;&gt;
+  &lt;codeLensProvider
+   id=&quot;MyLanguageServercodeLensProvider&quot;
+   name=&quot;My Language Server CodeLens Provider&quot;
+   class=&quot;com.example.MyCodeLensProvider&quot;&gt;
+  &lt;/codeLensProvider&gt;
  &lt;/extension&gt;
 &lt;/pre&gt;
       </documentation>

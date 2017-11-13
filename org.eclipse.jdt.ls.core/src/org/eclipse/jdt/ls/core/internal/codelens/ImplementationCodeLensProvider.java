@@ -8,13 +8,12 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.jdt.ls.core.internal.handlers;
+package org.eclipse.jdt.ls.core.internal.codelens;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -22,6 +21,7 @@ import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -29,19 +29,21 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
 
 /**
- * @author xuzho
+ * Implementation CodeLens Provider
  *
  */
 public class ImplementationCodeLensProvider implements CodeLensProvider {
 	private static final String JAVA_SHOW_IMPLEMENTATIONS_COMMAND = "java.show.implementations";
 	private static final String IMPLEMENTATION_TYPE = "implementations";
 
-	private final PreferenceManager preferenceManager;
+	private PreferenceManager preferenceManager;
 
-	public ImplementationCodeLensProvider(PreferenceManager preferenceManager) {
-		this.preferenceManager = preferenceManager;
+	@Override
+	public void setPreferencesManager(PreferenceManager pm) {
+		this.preferenceManager = pm;
 	}
 
 	/* (non-Javadoc)
@@ -55,20 +57,18 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 		//Note that codelens resolution is honored if the request was emitted
 		//before disabling codelenses in the preferences, else invalid codeLenses
 		//(i.e. having no commands) would be returned.
-		List<Object> data = (List<Object>) lens.getData();
-		String type = (String) data.get(2);
-		if (!type.equals(getType())) {
+		if (!couldHandle(lens)) {
 			return lens;
 		}
-		Map<String, Object> position = (Map<String, Object>) data.get(1);
-		String uri = (String) data.get(0);
+		Position position = getCodeLensStartPos(lens);
+		String uri = getCodeLensUri(lens);
 		String label = "implementation";
 		String command = JAVA_SHOW_IMPLEMENTATIONS_COMMAND;
 		List<Location> locations = null;
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-			if (unit != null) {
-				IJavaElement element = JDTUtils.findElementAtSelection(unit, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue(), this.preferenceManager, monitor);
+			ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
+			if (typeRoot != null) {
+				IJavaElement element = JDTUtils.findElementAtSelection(typeRoot, position.getLine(), position.getCharacter(), this.preferenceManager, monitor);
 				if (element instanceof IType) {
 					try {
 						locations = findImplementations((IType) element, monitor);
@@ -101,19 +101,19 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public List<CodeLens> collectCodeLenses(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
-		IJavaElement[] elements = unit.getChildren();
-		return collectCodeLensesCore(unit, elements, monitor);
+	public List<CodeLens> collectCodeLenses(ITypeRoot typeRoot, IProgressMonitor monitor) throws JavaModelException {
+		IJavaElement[] elements = typeRoot.getChildren();
+		return collectCodeLensesCore(typeRoot, elements, monitor);
 	}
 
-	private List<CodeLens> collectCodeLensesCore(ICompilationUnit unit, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
+	private List<CodeLens> collectCodeLensesCore(ITypeRoot typeRoot, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
 		ArrayList<CodeLens> lenses = new ArrayList<>();
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return lenses;
 			}
 			if (element.getElementType() == IJavaElement.TYPE) {
-				lenses.addAll(collectCodeLensesCore(unit, ((IType) element).getChildren(), monitor));
+				lenses.addAll(collectCodeLensesCore(typeRoot, ((IType) element).getChildren(), monitor));
 			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
 				continue;
 			}
@@ -121,7 +121,7 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
 				IType type = (IType) element;
 				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
-					CodeLens lens = createCodeLens(element, unit);
+					CodeLens lens = createCodeLens(element, typeRoot);
 					lenses.add(lens);
 				}
 			}

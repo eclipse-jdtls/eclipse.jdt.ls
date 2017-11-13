@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 
@@ -39,9 +40,10 @@ public class CodeLensHandler {
 	public CodeLensHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
 		codeLensProviders = new ArrayList<>();
-		codeLensProviders.add(new ReferencesCodeLensProvider(preferenceManager));
-		codeLensProviders.add(new ImplementationCodeLensProvider(preferenceManager));
-		codeLensProviders.addAll(getExtendedCodeLensProviders());
+		codeLensProviders.addAll(getCodeLensProviders());
+		for (CodeLensProvider p : codeLensProviders) {
+			p.setPreferencesManager(this.preferenceManager);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -96,72 +98,57 @@ public class CodeLensHandler {
 	/**
 	 * Extension point ID for the codelens provider container.
 	 */
-	private static final String EXTENSION_POINT_ID = "org.eclipse.jdt.ls.core.codeLensProviderContainer";
-
-	private static final String PROVIDER = "provider";
+	private static final String EXTENSION_POINT_ID = "org.eclipse.jdt.ls.core.internal.codelens.codeLensProvider";
 
 	private static final String CLASS = "class";
 
 	private static final String ID = "id";
 
-	private static Set<CodeLensProviderContainerDescriptor> fgContributedCodeLensProviderContainers;
+	private static final String ORDER = "order";
 
-	public List<CodeLensProvider> getExtendedCodeLensProviders() {
-		Set<CodeLensProviderContainerDescriptor> deps = getCodeLensProviderContainerDescriptors();
-		List<CodeLensProvider> res = new ArrayList<>(deps.size());
-		for (CodeLensProviderContainerDescriptor dep : deps) {
-			CodeLensProviderContainer container = dep.getCodeLensProviderContainer();
-			res.addAll(dep.getProviderIds().stream().map(id -> container.getCodeLensProvider(id, preferenceManager)).collect(Collectors.toSet()));
-		}
+	private static Set<CodeLensProviderDescriptor> fgContributedCodeLensProviderDescriptors;
 
-		return res;
+	public List<CodeLensProvider> getCodeLensProviders() {
+		Set<CodeLensProviderDescriptor> deps = getCodeLensProviderDescriptors();
+		return deps.stream().sorted((d1, d2) -> d1.order - d2.order).map(d -> d.getCodeLensProvider()).collect(Collectors.toList());
 	}
 
-	private static synchronized Set<CodeLensProviderContainerDescriptor> getCodeLensProviderContainerDescriptors() {
-		if (fgContributedCodeLensProviderContainers == null) {
+	private static synchronized Set<CodeLensProviderDescriptor> getCodeLensProviderDescriptors() {
+		if (fgContributedCodeLensProviderDescriptors == null) {
 			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
-			fgContributedCodeLensProviderContainers = Stream.of(elements).map(e -> new CodeLensProviderContainerDescriptor(e)).collect(Collectors.toSet());
+			fgContributedCodeLensProviderDescriptors = Stream.of(elements).map(e -> new CodeLensProviderDescriptor(e)).collect(Collectors.toSet());
 		}
-		return fgContributedCodeLensProviderContainers;
+		return fgContributedCodeLensProviderDescriptors;
 	}
 
-	private static class CodeLensProviderContainerDescriptor {
+	private static class CodeLensProviderDescriptor {
 
 		private final IConfigurationElement fConfigurationElement;
 
-		private Set<String> fProviderIds;
+		private final String id;
 
-		private CodeLensProviderContainer fCodeLensProviderContainerInstance;
+		private final int order;
 
-		public CodeLensProviderContainerDescriptor(IConfigurationElement element) {
+		public CodeLensProviderDescriptor(IConfigurationElement element) {
 			fConfigurationElement = element;
-
-			IConfigurationElement[] children = fConfigurationElement.getChildren(PROVIDER);
-			fProviderIds = Stream.of(children).map(c -> c.getAttribute(ID)).collect(Collectors.toSet());
-			fCodeLensProviderContainerInstance = null;
+			id = fConfigurationElement.getAttribute(ID);
+			order = Integer.valueOf(fConfigurationElement.getAttribute(ORDER));
 		}
 
-		public Set<String> getProviderIds() {
-			return fProviderIds;
-		}
-
-		public synchronized CodeLensProviderContainer getCodeLensProviderContainer() {
-			if (fCodeLensProviderContainerInstance == null) {
-				try {
-					Object extension = fConfigurationElement.createExecutableExtension(CLASS);
-					if (extension instanceof CodeLensProviderContainer) {
-						fCodeLensProviderContainerInstance = (CodeLensProviderContainer) extension;
-					} else {
-						String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implements org.eclipse.jdt.ls.core.internal.codeLensProviderContainer";
-						JavaLanguageServerPlugin.logError(message);
-						return null;
-					}
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Unable to create code lens provider container ", e);
+		public synchronized CodeLensProvider getCodeLensProvider() {
+			try {
+				Object extension = fConfigurationElement.createExecutableExtension(CLASS);
+				if (extension instanceof CodeLensProvider) {
+					return (CodeLensProvider) extension;
+				} else {
+					String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implements " + CodeLensProvider.class.getName();
+					JavaLanguageServerPlugin.logError(message);
 					return null;
 				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Unable to create code lens provider ", e);
+				return null;
 			}
-			return fCodeLensProviderContainerInstance;
 		}
 	}
 }

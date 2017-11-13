@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler" schema="schema/org.eclipse.jdt.ls.core.delegateCommandHandler.exsd"/>
-   <extension-point id="org.eclipse.jdt.ls.core.codeLensProviderContainer" name="codeLensProviderContainer" schema="schema/org.eclipse.jdt.ls.core.codeLensProviderContainer.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.internal.codelens.codeLensProvider" name="codeLensProvider" schema="schema/org.eclipse.jdt.ls.core.codeLensProvider.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.importers" name="JDT LS Project Importer" schema="schema/org.eclipse.jdt.ls.core.importers.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.contentProvider" name="contentProvider" schema="schema/org.eclipse.jdt.ls.core.contentProvider.exsd"/>
    <extension
@@ -72,5 +72,9 @@
          	id = "eclipseProjectImporter"
          	order = "1000"
          	class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>       	
+   </extension>
+   <extension point="org.eclipse.jdt.ls.core.internal.codelens.codeLensProvider">
+         <codeLensProvider class="org.eclipse.jdt.ls.core.internal.codelens.ReferencesCodeLensProvider" order="100" />
+         <codeLensProvider class="org.eclipse.jdt.ls.core.internal.codelens.ImplementationCodeLensProvider" order="200" />
    </extension>
 </plugin>
