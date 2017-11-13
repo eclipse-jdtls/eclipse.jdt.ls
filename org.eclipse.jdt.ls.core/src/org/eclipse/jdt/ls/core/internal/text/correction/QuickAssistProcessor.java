@@ -519,6 +519,9 @@ public class QuickAssistProcessor {
 		}
 		if (astNode instanceof TypeDeclaration) {
 			ITypeBinding typeBinding = ((TypeDeclaration) astNode).resolveBinding();
+			if (typeBinding == null) {
+				return suggestedName;
+			}
 			IType type = (IType) typeBinding.getJavaElement();
 			IMethod[] methods = type.getMethods();
 
