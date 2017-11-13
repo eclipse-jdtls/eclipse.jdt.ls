@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="104">
+<?pde version="3.8"?>
+<target name="Java Language Server Target Definition" sequenceNumber="105">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.mockito.mockito-all" version="1.9.5"/>
             <repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="2.1.2.v20170807-1324"/>
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.4.1.v20170928-1321"/>
             <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.13.1.v20170928-1321"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="3.7.1.v20170928-1359"/>
@@ -36,6 +36,10 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="1.8.2.20171007-0217"/>
             <repository location="http://download.eclipse.org/technology/m2e/releases/1.8/"/>
+        </location>
+        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+            <unit id="org.eclipse.buildship.feature.group" version="2.2.0.v20171110-0245-m"/>
+            <repository location="http://download.eclipse.org/buildship/updates/e47/milestones/2.x/2.2.0.v20171110-0245-m/"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
