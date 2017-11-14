@@ -83,7 +83,7 @@ public class CodeLensHandler {
 			IJavaElement[] elements = typeRoot.getChildren();
 			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
 			for (CodeLensProvider provider : codeLensProviders) {
-				lenses.addAll(provider.collectCodeLenses(unit, monitor));
+				lenses.addAll(provider.collectCodeLenses(typeRoot, monitor));
 				if (monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
@@ -96,7 +96,7 @@ public class CodeLensHandler {
 	}
 
 	/**
-	 * Extension point ID for the codelens provider container.
+	 * Extension point ID for the codelens provider.
 	 */
 	private static final String EXTENSION_POINT_ID = "org.eclipse.jdt.ls.core.internal.codelens.codeLensProvider";
 
