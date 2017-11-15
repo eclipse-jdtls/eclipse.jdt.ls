@@ -54,13 +54,11 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
-import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.mockito.Mock;
 
 /**
@@ -96,11 +94,6 @@ public abstract class AbstractProjectsManagerBasedTest {
 			return null;
 		}
 	});
-
-	@BeforeClass
-	public static void initJRE() throws CoreException, InterruptedException {
-		TestVMType.setTestJREAsDefault();
-	}
 
 	@Before
 	public void initProjectManager() throws CoreException {

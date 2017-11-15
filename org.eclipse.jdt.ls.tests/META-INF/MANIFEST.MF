@@ -30,3 +30,4 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.xtext.xbase.lib,
  org.eclipse.jdt.launching
 Bundle-Vendor: %Bundle-Vendor
+Bundle-Activator: org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin
