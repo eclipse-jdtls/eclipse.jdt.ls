@@ -21,6 +21,7 @@
 		<os.testArgs></os.testArgs>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
+		<generateSourceRef>true</generateSourceRef>
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
@@ -87,7 +88,7 @@
 					<version>${tycho-version}</version>
 					<configuration>
 						<sourceReferences>
-							<generate>true</generate>
+							<generate>${generateSourceRef}</generate>
 						</sourceReferences>
 					</configuration>
 					<dependencies>
@@ -350,6 +351,17 @@
 			<modules>
 				<module>org.eclipse.jdt.ls.repository</module>
 			</modules>
+		</profile>
+		<profile>
+			<id>no-git</id>
+			<activation>
+				<file>
+					<missing>../.git</missing>
+				</file>
+			</activation>
+			<properties>
+				<generateSourceRef>false</generateSourceRef>
+			</properties>
 		</profile>
 	</profiles>
 	<pluginRepositories>
