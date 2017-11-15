@@ -55,7 +55,7 @@ public class TestVMType extends AbstractVMInstallType {
 		for (IExecutionEnvironment environment : environments) {
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
 			for (IVMInstall compatibleVM : compatibleVMs) {
-				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && !compatibleVM.equals(environment.getDefaultVM())) {
+				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && compatibleVM.getVMInstallType().findVMInstall(compatibleVM.getId()) != null && !compatibleVM.equals(environment.getDefaultVM())) {
 					environment.setDefaultVM(compatibleVM);
 				}
 			}
