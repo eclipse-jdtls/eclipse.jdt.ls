@@ -33,7 +33,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 
 public class CodeLensHandler {
-
+	private final int maxProviderCount = 4;
 	private final PreferenceManager preferenceManager;
 	private List<CodeLensProvider> codeLensProviders;
 
@@ -110,7 +110,7 @@ public class CodeLensHandler {
 
 	public List<CodeLensProvider> getCodeLensProviders() {
 		Set<CodeLensProviderDescriptor> deps = getCodeLensProviderDescriptors();
-		return deps.stream().sorted((d1, d2) -> d1.order - d2.order).map(d -> d.getCodeLensProvider()).collect(Collectors.toList());
+		return deps.stream().sorted((d1, d2) -> d1.order - d2.order).map(d -> d.getCodeLensProvider()).filter(d -> d != null).limit(maxProviderCount).collect(Collectors.toList());
 	}
 
 	private static synchronized Set<CodeLensProviderDescriptor> getCodeLensProviderDescriptors() {
