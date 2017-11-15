@@ -17,7 +17,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -30,107 +32,108 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedNameAssistProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.text.edits.TextEdit;
 
 public class CodeActionHandler {
 
-	/**
-	 *
-	 */
-	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
+  /**
+   *
+   */
+  public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
-	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
+  private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
 
-	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
+  private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
 
-	/**
-	 * @param params
-	 * @return
-	 */
-	public List<Command> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
-		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		if (unit == null) {
-			return Collections.emptyList();
-		}
-		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
-		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
-		InnovationContext context = new InnovationContext(unit, start, end - start);
-		context.setASTRoot(getASTRoot(unit));
-		IProblemLocation[] locations = this.getProblemLocations(unit, params.getContext().getDiagnostics());
+  /**
+   * @param params
+   * @return
+   */
+  public List<Command> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
+    final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+    if (unit == null) {
+      return Collections.emptyList();
+    }
+    int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+    int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+    InnovationContext context = new InnovationContext(unit, start, end - start);
+    context.setASTRoot(getASTRoot(unit));
+    IProblemLocation[] locations = this.getProblemLocations(unit, params.getContext().getDiagnostics());
 
-		List<Command> $ = new ArrayList<>();
-		try {
-			CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
-			for (CUCorrectionProposal proposal : corrections) {
-				Command command = this.getCommandFromProposal(proposal);
-				$.add(command);
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
-		}
+    List<Command> $ = new ArrayList<>();
+    try {
+      CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
+      for (CUCorrectionProposal proposal : corrections) {
+        Command command = this.getCommandFromProposal(proposal);
+        $.add(command);
+      }
+    } catch (CoreException e) {
+      JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
+    }
 
-		try {
-			CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
-			for (CUCorrectionProposal proposal : corrections) {
-				Command command = this.getCommandFromProposal(proposal);
-				$.add(command);
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
-		}
+    try {
+      CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
+      for (CUCorrectionProposal proposal : corrections) {
+        Command command = this.getCommandFromProposal(proposal);
+        $.add(command);
+      }
+    } catch (CoreException e) {
+      JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
+    }
 
-		return $;
-	}
+    return $;
+  }
 
-	private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
-		String name = proposal.getName();
-		TextChange textChange = proposal.getTextChange();
-		TextEdit edit = textChange.getEdit();
-		ICompilationUnit unit = proposal.getCompilationUnit();
+  private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
+    String name = proposal.getName();
+    TextChange textChange = proposal.getTextChange();
+    TextEdit edit = textChange.getEdit();
+    ICompilationUnit unit = proposal.getCompilationUnit();
+    return textEditToCommand(unit, name, edit);
+  }
 
-		return textEditToCommand(unit, name, edit);
-	}
+  private IProblemLocation[] getProblemLocations(ICompilationUnit unit, List<Diagnostic> diagnostics) {
+    IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
+    for (int i = 0; i < diagnostics.size(); i++) {
+      Diagnostic diagnostic = diagnostics.get(i);
+      int problemId = getProblemId(diagnostic);
+      int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
+      int end = DiagnosticsHelper.getEndOffset(unit, diagnostic.getRange());
+      boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
+      locations[i] = new ProblemLocation(start, end - start, problemId, isError);
+    }
+    return locations;
+  }
 
-	private IProblemLocation[] getProblemLocations(ICompilationUnit unit, List<Diagnostic> diagnostics) {
-		IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
-		for (int i = 0; i < diagnostics.size(); i++) {
-			Diagnostic diagnostic = diagnostics.get(i);
-			int problemId = getProblemId(diagnostic);
-			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
-			int end = DiagnosticsHelper.getEndOffset(unit, diagnostic.getRange());
-			boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
-			locations[i] = new ProblemLocation(start, end - start, problemId, isError);
-		}
-		return locations;
-	}
+  private int getProblemId(Diagnostic diagnostic) {
+    int $ = 0;
+    try {
+      $ = Integer.parseInt(diagnostic.getCode());
+    } catch (NumberFormatException e) {
+      // return 0
+    }
+    return $;
+  }
 
-	private int getProblemId(Diagnostic diagnostic) {
-		int $ = 0;
-		try {
-			$ = Integer.parseInt(diagnostic.getCode());
-		} catch (NumberFormatException e) {
-			// return 0
-		}
-		return $;
-	}
+  private static Command textEditToCommand(ICompilationUnit unit, String label, TextEdit textEdit) {
+    TextEditConverter converter = new TextEditConverter(unit, textEdit);
+    String uri = JDTUtils.toURI(unit);
+    WorkspaceEdit $ = new WorkspaceEdit();
+    $.getChanges().put(uri, converter.convert());
+    return new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList($));
+  }
 
-	private static Command textEditToCommand(ICompilationUnit unit, String label, TextEdit textEdit) {
-		TextEditConverter converter = new TextEditConverter(unit, textEdit);
-		String uri = JDTUtils.toURI(unit);
-		WorkspaceEdit $ = new WorkspaceEdit();
-		$.getChanges().put(uri, converter.convert());
-		return new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList($));
-	}
-
-	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
-		return SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
-	}
+  private static CompilationUnit getASTRoot(ICompilationUnit unit) {
+    return SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+  }
 
 }
