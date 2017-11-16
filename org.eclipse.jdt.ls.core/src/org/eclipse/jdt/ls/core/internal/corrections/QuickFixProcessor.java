@@ -159,23 +159,23 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addRedundantSuperInterfaceProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.VoidMethodReturnsValue:
-			// ReturnTypeSubProcessor.addVoidMethodReturnsProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MethodReturnsVoid:
-			// ReturnTypeSubProcessor.addMethodRetunsVoidProposals(context, problem,
-			// proposals);
-			// break;
-			// case IProblem.MissingReturnType:
-			// ReturnTypeSubProcessor.addMissingReturnTypeProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.ShouldReturnValue:
-			// case IProblem.ShouldReturnValueHintMissingDefault:
-			// ReturnTypeSubProcessor.addMissingReturnStatementProposals(context,
-			// problem, proposals);
-			// break;
+      case IProblem.VoidMethodReturnsValue:
+      ReturnTypeSubProcessor.addVoidMethodReturnsProposals(context,
+      problem, proposals);
+      break;
+      case IProblem.MethodReturnsVoid:
+      ReturnTypeSubProcessor.addMethodRetunsVoidProposals(context, problem,
+      proposals);
+      break;
+      case IProblem.MissingReturnType:
+      ReturnTypeSubProcessor.addMissingReturnTypeProposals(context,
+      problem, proposals);
+      break;
+      case IProblem.ShouldReturnValue:
+      case IProblem.ShouldReturnValueHintMissingDefault:
+      ReturnTypeSubProcessor.addMissingReturnStatementProposals(context,
+      problem, proposals);
+      break;
 			// case IProblem.NonExternalizedStringLiteral:
 			// LocalCorrectionsSubProcessor.addNLSProposals(context, problem,
 			// proposals);
