@@ -16,8 +16,10 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -49,16 +51,36 @@ public interface CodeLensProvider {
 	String getType();
 
 	/**
-	 * Collect codelens.
-	 *
-	 * @param typeRoot
-	 *            java type root.
+	 * visit a type to collect codelens.
+	 * 
+	 * @param type
+	 *            type
+	 * @param context
+	 *            codelens context
 	 * @param monitor
-	 *            monitor.
-	 * @return A list of codelens.
+	 *            monitor
+	 * @return count of codelens collected
 	 * @throws JavaModelException
 	 */
-	List<CodeLens> collectCodeLenses(ITypeRoot typeRoot, IProgressMonitor monitor) throws JavaModelException;
+	default int visit(IType type, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+		return 0;
+	}
+
+	/**
+	 * visit a method to collect codelens.
+	 * 
+	 * @param method
+	 *            method
+	 * @param context
+	 *            codelens context
+	 * @param monitor
+	 *            monitor
+	 * @return count of codelens collected
+	 * @throws JavaModelException
+	 */
+	default int visit(IMethod method, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+		return 0;
+	}
 
 	/**
 	 * Accept preferences manager which may contain configuration for this codelens

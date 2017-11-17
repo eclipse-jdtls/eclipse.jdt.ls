@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
@@ -106,32 +107,31 @@ public class ReferencesCodeLensProvider implements CodeLensProvider {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider#visit(org.eclipse.jdt.core.IType, org.eclipse.jdt.ls.core.internal.codelens.CodeLensProviderContext, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public List<CodeLens> collectCodeLenses(ITypeRoot typeRoot, IProgressMonitor monitor) throws JavaModelException {
-		IJavaElement[] elements = typeRoot.getChildren();
-		return collectCodeLensesCore(typeRoot, elements, monitor);
+	public int visit(IType type, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+		if (!preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+			return 0;
+		}
+
+		CodeLens lens = createCodeLens(type, context.getRoot());
+		context.addCodeLens(lens);
+		return 1;
 	}
 
-	private List<CodeLens> collectCodeLensesCore(ITypeRoot typeRoot, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
-		ArrayList<CodeLens> lenses = new ArrayList<>();
-		for (IJavaElement element : elements) {
-			if (monitor.isCanceled()) {
-				return lenses;
-			}
-			if (element.getElementType() == IJavaElement.TYPE) {
-				lenses.addAll(collectCodeLensesCore(typeRoot, ((IType) element).getChildren(), monitor));
-			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
-				continue;
-			}
-
-			if (preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
-				CodeLens lens = createCodeLens(element, typeRoot);
-				lenses.add(lens);
-			}
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider#visit(org.eclipse.jdt.core.IMethod, org.eclipse.jdt.ls.core.internal.codelens.CodeLensProviderContext, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public int visit(IMethod method, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+		if (!preferenceManager.getPreferences().isReferencesCodeLensEnabled()) {
+			return 0;
 		}
-		return lenses;
+
+		CodeLens lens = createCodeLens(method, context.getRoot());
+		context.addCodeLens(lens);
+		return 1;
 	}
 
 	private List<Location> findReferences(IJavaElement element, IProgressMonitor monitor) throws JavaModelException, CoreException {

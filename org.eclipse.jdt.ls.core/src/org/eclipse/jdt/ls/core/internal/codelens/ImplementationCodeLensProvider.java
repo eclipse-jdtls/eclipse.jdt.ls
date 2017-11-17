@@ -98,35 +98,20 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider#visit(org.eclipse.jdt.core.IType, org.eclipse.jdt.ls.core.internal.codelens.CodeLensProviderContext, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-	public List<CodeLens> collectCodeLenses(ITypeRoot typeRoot, IProgressMonitor monitor) throws JavaModelException {
-		IJavaElement[] elements = typeRoot.getChildren();
-		return collectCodeLensesCore(typeRoot, elements, monitor);
-	}
-
-	private List<CodeLens> collectCodeLensesCore(ITypeRoot typeRoot, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
-		ArrayList<CodeLens> lenses = new ArrayList<>();
-		for (IJavaElement element : elements) {
-			if (monitor.isCanceled()) {
-				return lenses;
-			}
-			if (element.getElementType() == IJavaElement.TYPE) {
-				lenses.addAll(collectCodeLensesCore(typeRoot, ((IType) element).getChildren(), monitor));
-			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
-				continue;
-			}
-
-			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
-				IType type = (IType) element;
-				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
-					CodeLens lens = createCodeLens(element, typeRoot);
-					lenses.add(lens);
-				}
-			}
+	public int visit(IType type, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+		if (!preferenceManager.getPreferences().isImplementationsCodeLensEnabled()) {
+			return 0;
 		}
-		return lenses;
+
+		if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
+			CodeLens lens = createCodeLens(type, context.getRoot());
+			context.addCodeLens(lens);
+			return 1;
+		}
+		return 0;
 	}
 
 	private List<Location> findImplementations(IType type, IProgressMonitor monitor) throws JavaModelException {
@@ -142,4 +127,5 @@ public class ImplementationCodeLensProvider implements CodeLensProvider {
 		}
 		return result;
 	}
+
 }

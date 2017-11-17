@@ -24,16 +24,19 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.codelens.CodeLensContext;
 import org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 
 public class CodeLensHandler {
-	private final int maxProviderCount = 4;
+	private final int maxCodeLensCount = 4;
 	private final PreferenceManager preferenceManager;
 	private List<CodeLensProvider> codeLensProviders;
 
@@ -81,18 +84,45 @@ public class CodeLensHandler {
 		try {
 			ITypeRoot typeRoot = unit != null ? unit : classFile;
 			IJavaElement[] elements = typeRoot.getChildren();
-			ArrayList<CodeLens> lenses = new ArrayList<>(elements.length);
-			for (CodeLensProvider provider : codeLensProviders) {
-				lenses.addAll(provider.collectCodeLenses(typeRoot, monitor));
-				if (monitor.isCanceled()) {
-					return Collections.emptyList();
-				}
+			CodeLensContext context = new CodeLensContext(typeRoot);
+			collectCodeLenses(context, elements, monitor);
+			if (monitor.isCanceled()) {
+				context.clearCodeLenses();
 			}
-			return lenses;
+			return context.getCodeLenses();
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Problem getting code lenses for" + unit.getElementName(), e);
 		}
 		return Collections.emptyList();
+	}
+
+	private void collectCodeLenses(CodeLensContext context, IJavaElement[] elements, IProgressMonitor monitor) throws JavaModelException {
+		for (IJavaElement element : elements) {
+			if (monitor.isCanceled()) {
+				return;
+			}
+			if (element.getElementType() == IJavaElement.TYPE) {
+				collectCodeLenses(context, ((IType) element).getChildren(), monitor);
+			} else if (element.getElementType() != IJavaElement.METHOD || JDTUtils.isHiddenGeneratedElement(element)) {
+				continue;
+			}
+
+			int count = 0;
+			for (CodeLensProvider provider : codeLensProviders) {
+				if (element instanceof IType) {
+					count += provider.visit((IType) element, context, monitor);
+				} else {
+					count += provider.visit((IMethod) element, context, monitor);
+				}
+
+				if (count >= maxCodeLensCount) {
+					break;
+				}
+				if (monitor.isCanceled()) {
+					return;
+				}
+			}
+		}
 	}
 
 	/**
@@ -110,7 +140,7 @@ public class CodeLensHandler {
 
 	public List<CodeLensProvider> getCodeLensProviders() {
 		Set<CodeLensProviderDescriptor> deps = getCodeLensProviderDescriptors();
-		return deps.stream().sorted((d1, d2) -> d1.order - d2.order).map(d -> d.getCodeLensProvider()).filter(d -> d != null).limit(maxProviderCount).collect(Collectors.toList());
+		return deps.stream().sorted((d1, d2) -> d1.order - d2.order).map(d -> d.getCodeLensProvider()).filter(d -> d != null).collect(Collectors.toList());
 	}
 
 	private static synchronized Set<CodeLensProviderDescriptor> getCodeLensProviderDescriptors() {

@@ -12,17 +12,14 @@ package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IExecutableExtensionFactory;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ls.core.internal.codelens.CodeLensContext;
 import org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -67,21 +64,17 @@ public class TestCodeLensProviderFactory implements IExecutableExtensionFactory 
 		}
 
 		/* (non-Javadoc)
-		 * @see org.eclipse.jdt.ls.core.internal.handlers.CodeLensProvider#collectCodeLenses(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.IJavaElement[], org.eclipse.core.runtime.IProgressMonitor)
+		 * @see org.eclipse.jdt.ls.core.internal.codelens.CodeLensProvider#visit(org.eclipse.jdt.core.IType, org.eclipse.jdt.ls.core.internal.codelens.CodeLensProviderContext, org.eclipse.core.runtime.IProgressMonitor)
 		 */
 		@Override
-		public List<CodeLens> collectCodeLenses(ITypeRoot unit, IProgressMonitor monitor) throws JavaModelException {
-			ArrayList<CodeLens> lenses = new ArrayList<>();
-			IJavaElement[] elements = unit.getChildren();
-			if (!this.pm.getPreferences().isCodeLensEnabled() || monitor.isCanceled()) {
-				return lenses;
+		public int visit(IType type, CodeLensContext context, IProgressMonitor monitor) throws JavaModelException {
+			if (!isCodeLensEnabled() || !type.isClass()) {
+				return 0;
 			}
-			for (IJavaElement ele : elements) {
-				if (ele.getElementType() == IJavaElement.TYPE && ((IType) ele).isClass()) {
-					lenses.add(createCodeLens(ele, unit));
-				}
-			}
-			return lenses;
+
+			CodeLens lens = createCodeLens(type, context.getRoot());
+			context.addCodeLens(lens);
+			return 1;
 		}
 
 		private boolean isCodeLensEnabled() {
@@ -90,6 +83,9 @@ public class TestCodeLensProviderFactory implements IExecutableExtensionFactory 
 				return false;
 			}
 			Map<String, Object> config = prefs.asMap();
+			if (config == null) {
+				return true;
+			}
 			return getBoolean(config, CODE_LENS_ENABLED_KEY, true);
 
 		}
