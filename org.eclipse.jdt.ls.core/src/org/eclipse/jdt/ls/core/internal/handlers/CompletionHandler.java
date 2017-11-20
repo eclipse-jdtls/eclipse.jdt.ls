@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.ProgressMonitorWrapper;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -40,12 +41,20 @@ public class CompletionHandler{
 					position.getPosition().getCharacter(), monitor);
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
+			monitor.setCanceled(true);
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
+			monitor.setCanceled(true);
 		}
 		CompletionList $ = new CompletionList();
+		if (monitor.isCanceled()) {
+			$.setIsIncomplete(true);
+			completionItems = null;
+			JavaLanguageServerPlugin.logInfo("Completion request cancelled");
+		} else {
+			JavaLanguageServerPlugin.logInfo("Completion request completed");
+		}
 		$.setItems(completionItems == null ? Collections.emptyList() : completionItems);
-		JavaLanguageServerPlugin.logInfo("Completion request completed");
 		return Either.forRight($);
 	}
 
@@ -77,8 +86,27 @@ public class CompletionHandler{
 		if (offset >-1 && !monitor.isCanceled()) {
 			IBuffer buffer = unit.getBuffer();
 			if (buffer != null && buffer.getLength() >= offset) {
-				unit.codeComplete(offset, collector, monitor);
-				proposals.addAll(collector.getCompletionItems());
+				IProgressMonitor subMonitor = new ProgressMonitorWrapper(monitor) {
+					private final static int TIMEOUT = 1000;
+					private long timeLimit;
+
+					@Override
+					public void beginTask(String name, int totalWork) {
+						timeLimit = System.currentTimeMillis() + TIMEOUT;
+					}
+
+					@Override
+					public boolean isCanceled() {
+						return super.isCanceled() || timeLimit <= System.currentTimeMillis();
+					}
+
+				};
+				unit.codeComplete(offset, collector, subMonitor);
+				if (!subMonitor.isCanceled()) {
+					proposals.addAll(collector.getCompletionItems());
+				} else {
+					monitor.setCanceled(true);
+				}
 			}
 		}
 
