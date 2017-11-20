@@ -291,17 +291,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position) {
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler();
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			return handler.completion(position, monitor);
+		final IProgressMonitor[] monitors = new IProgressMonitor[1];
+		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((cc) -> {
+			monitors[0] = toMonitor(cc);
+			return handler.completion(position, monitors[0]);
 		});
+		result.join();
+		if (monitors[0].isCanceled()) {
+			result.cancel(true);
+		}
+		return result;
 	}
 
 	/* (non-Javadoc)
@@ -311,17 +310,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
 		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			return handler.resolve(unresolved, monitor);
+		final IProgressMonitor[] monitors = new IProgressMonitor[1];
+		CompletableFuture<CompletionItem> result = computeAsync((cc) -> {
+			monitors[0] = toMonitor(cc);
+			return handler.resolve(unresolved, monitors[0]);
 		});
+		result.join();
+		if (monitors[0].isCanceled()) {
+			result.cancel(true);
+		}
+		return result;
 	}
 
 	/* (non-Javadoc)
@@ -499,22 +497,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChange(DidChangeTextDocumentParams params) {
 		logInfo(">> document/didChange");
-		try {
-			Job[] jobs = Job.getJobManager().find(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS);
-			boolean wait = jobs.length > 0;
-			long start = System.currentTimeMillis();
-			while (wait) {
-				jobs = Job.getJobManager().find(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS);
-				wait = (System.currentTimeMillis() - start) < 1000 && jobs.length > 0;
-				if (wait) {
-					Thread.sleep(100);
-				}
-			}
-		} catch (OperationCanceledException ignorable) {
-			// No need to pollute logs when query is cancelled
-		} catch (InterruptedException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
 		documentLifeCycleHandler.didChange(params);
 	}
 

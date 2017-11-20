@@ -68,7 +68,6 @@ public class CompletionResolveHandler {
 		Map<String, String> data = (Map<String, String>) param.getData();
 		// clean resolve data
 		param.setData(null);
-
 		if (!data.containsKey(DATA_FIELD_URI) || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
 			return param;
 		}
@@ -88,7 +87,10 @@ public class CompletionResolveHandler {
 				completionResponse.getOffset(),
 				this.manager.getClientPreferences());
 		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
-
+		if (monitor.isCanceled()) {
+			param.setData(null);
+			return param;
+		}
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			String typeName = stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));
 			try {
@@ -130,14 +132,20 @@ public class CompletionResolveHandler {
 						//Ignore error for now as it's spamming clients on content assist.
 						//TODO cache javadoc resolution results?
 						//JavaLanguageServerPlugin.logError("Unable to get documentation under 500ms");
+						monitor.setCanceled(true);
 					} catch (Exception e) {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
+						monitor.setCanceled(true);
 					}
 					param.setDocumentation(javadoc);
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Unable to resolve compilation", e);
+				monitor.setCanceled(true);
 			}
+		}
+		if (monitor.isCanceled()) {
+			param.setData(null);
 		}
 		return param;
 	}

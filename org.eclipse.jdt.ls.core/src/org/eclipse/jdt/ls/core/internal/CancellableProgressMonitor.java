@@ -34,6 +34,9 @@ public class CancellableProgressMonitor extends NullProgressMonitor {
 	 */
 	@Override
 	public boolean isCanceled() {
+		if (super.isCanceled()) {
+			return true;
+		}
 		if(cancelChecker != null ){
 			try {
 				cancelChecker.checkCanceled();

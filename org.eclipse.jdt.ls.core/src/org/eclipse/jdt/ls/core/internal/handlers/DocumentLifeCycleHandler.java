@@ -285,7 +285,7 @@ public class DocumentLifeCycleHandler {
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 			}
-			triggerValidation(unit, 0);
+			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
 			JavaLanguageServerPlugin.logException("Error while handling document change", e);
 		}
