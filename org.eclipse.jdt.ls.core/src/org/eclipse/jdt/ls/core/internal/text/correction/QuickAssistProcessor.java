@@ -523,6 +523,9 @@ public class QuickAssistProcessor {
 				return suggestedName;
 			}
 			IType type = (IType) typeBinding.getJavaElement();
+			if (type == null) {
+				return suggestedName;
+			}
 			IMethod[] methods = type.getMethods();
 
 			int suggestedPostfix = 2;
