@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -224,6 +225,143 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Expected e2 = new Expected("Create getter and setter for 'count'...", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnusedParameter() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_UNUSED_PARAMETER, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int i, int j) {\n");
+		buf.append("       System.out.println(j);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int j) {\n");
+		buf.append("       System.out.println(j);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove 'i', keep assignments with side effects", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    /**\n");
+		buf.append("     * @param i  \n");
+		buf.append("     */\n");
+		buf.append("    public void foo(int i, int j) {\n");
+		buf.append("       System.out.println(j);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Document parameter to avoid 'unused' warning", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnusedMethod() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private void foo() {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove method 'foo'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnusedPrivateConstructor() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    int i;\n");
+		buf.append("    private E() {}\n");
+		buf.append("    public E(int i) {\n");
+		buf.append("        this.i = i;");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    int i;\n");
+		buf.append("    public E(int i) {\n");
+		buf.append("        this.i = i;");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove constructor 'E'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnusedLocalVariable() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_UNUSED_LOCAL, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        int i = 0;\n");
+		buf.append("        i++;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove 'i', keep assignments with side effects", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnusedTypeParameter() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_UNUSED_TYPE_PARAMETER, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private static class Foo {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove type 'Foo'", buf.toString());
+
+		assertCodeActions(cu, e1);
 	}
 
 	@Test

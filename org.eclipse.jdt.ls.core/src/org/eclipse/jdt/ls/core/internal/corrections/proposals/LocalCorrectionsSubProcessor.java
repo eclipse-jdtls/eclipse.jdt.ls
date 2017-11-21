@@ -377,6 +377,16 @@ public class LocalCorrectionsSubProcessor {
 			}
 		}
 
+		// TODO need to fork FixCorrectionProposal/ ICleanUp over from jdt.ui??
+		//	if (problemId==IProblem.LocalVariableIsNeverUsed){
+		//		fix= UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, true);
+		//		addProposal(context, proposals, fix);
+		//	}
+
+		if (problemId == IProblem.ArgumentIsNeverUsed) {
+			JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
+		}
+
 		if (problemId == IProblem.UnusedPrivateField) {
 			GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals);
 		}
