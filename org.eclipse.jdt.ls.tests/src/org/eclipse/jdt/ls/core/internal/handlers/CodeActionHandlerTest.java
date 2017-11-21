@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -25,6 +28,7 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -97,6 +101,29 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(1, commands.size());
 		Command c = commands.get(0);
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
+	@Test
+	public void testCodeAction_exception() throws JavaModelException {
+		URI uri = project.getFile("nopackage/Test.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		try {
+			cu.becomeWorkingCopy(new NullProgressMonitor());
+			CodeActionParams params = new CodeActionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri.toString()));
+			final Range range = new Range();
+			range.setStart(new Position(0, 17));
+			range.setEnd(new Position(0, 17));
+			params.setRange(range);
+			CodeActionContext context = new CodeActionContext();
+			context.setDiagnostics(Collections.emptyList());
+			params.setContext(context);
+			List<? extends Command> commands = server.codeAction(params).join();
+			Assert.assertNotNull(commands);
+			Assert.assertEquals(0, commands.size());
+		} finally {
+			cu.discardWorkingCopy();
+		}
 	}
 
 	@Test
