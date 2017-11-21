@@ -311,12 +311,11 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addConstructorFromSuperclassProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnusedPrivateMethod:
-			// case IProblem.UnusedPrivateConstructor:
-
-			// case IProblem.UnusedPrivateType:
-			// case IProblem.LocalVariableIsNeverUsed:
-			// case IProblem.ArgumentIsNeverUsed:
+			case IProblem.UnusedPrivateMethod:
+			case IProblem.UnusedPrivateConstructor:
+			case IProblem.UnusedPrivateType:
+			case IProblem.LocalVariableIsNeverUsed:
+			case IProblem.ArgumentIsNeverUsed:
 			case IProblem.UnusedPrivateField:
 				LocalCorrectionsSubProcessor.addUnusedMemberProposal(context, problem, proposals);
 				break;
