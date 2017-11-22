@@ -37,7 +37,7 @@ public class LinkedNameAssistProposal extends CUCorrectionProposal {
   protected void addEdits(IDocument doc, TextEdit root) throws CoreException {
     super.addEdits(doc, root);
     CompilationUnit unit = SharedASTProvider.getInstance().getAST(getCompilationUnit(), null);
-    ASTNode[] sameNodes = LinkedNodeFinder.findByNode(unit, node);
+		ASTNode[] sameNodes = LinkedNodeFinder.findByBinding(unit, node.resolveBinding());
     for (ASTNode curr : sameNodes) {
       root.addChild(new ReplaceEdit(curr.getStartPosition(), curr.getLength(), valueSuggestion));
     }

@@ -11,7 +11,9 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +85,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
       Expected e = expected[k++];
       String actual = evaluateCodeActionCommand(c, e);
       if (!e.name.equals(c.getTitle()) || !e.content.equals(actual)) {
+        WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
         aStr += '\n' + c.getTitle() + '\n' + actual;
         eStr += '\n' + e.name + '\n' + e.content;
       }
@@ -194,6 +197,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
     Iterator<Entry<String, List<TextEdit>>> editEntries = we.getChanges().entrySet().iterator();
     Entry<String, List<TextEdit>> entry = editEntries.next();
     assertNotNull("No edits generated", entry);
+    assertFalse("No TextEdits are generated", entry.getValue().isEmpty());
     assertEquals("More than one resource modified", false, editEntries.hasNext());
 
     ICompilationUnit cu = JDTUtils.resolveCompilationUnit(entry.getKey());

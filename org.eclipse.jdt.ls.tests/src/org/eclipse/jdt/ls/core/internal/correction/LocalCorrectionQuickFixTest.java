@@ -14,12 +14,12 @@ package org.eclipse.jdt.ls.core.internal.correction;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1373,18 +1373,49 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
     IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
     StringBuilder buf = new StringBuilder();
     buf.append("package test1;\n");
-    buf.append("import java.io.IOException;\n");
-    buf.append("import java.text.ParseException;\n");
     buf.append("public class E {\n");
-    buf.append("    public void foo() throws IOException, ParseException {\n");
+    buf.append("    public void foo(){\n");
     buf.append("    }\n");
     buf.append("    public void foo() {\n");
     buf.append("        foo();\n");
     buf.append("    }\n");
     buf.append("}\n");
     ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		cu.becomeWorkingCopy(new NullProgressMonitor());
     Expected e1 = new Expected("Rename method 'foo'", buf.toString());
-
     assertCodeActionExists(cu, e1);
   }
+
+  @Test
+  public void testInvalidVariableNameWithConflict() throws Exception {
+    IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+    StringBuilder buf = new StringBuilder();
+    buf.append("package test1;\n");
+    buf.append("public class E {\n");
+    buf.append("    public void foo(){\n");
+    buf.append("    }\n");
+    buf.append("    public void foo() {\n");
+    buf.append("        foo();\n");
+    buf.append("    }\n");
+    buf.append("    public void foo1() {\n");
+    buf.append("    }\n");
+    buf.append("}\n");
+    ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		cu.becomeWorkingCopy(new NullProgressMonitor());
+    buf = new StringBuilder();
+    buf.append("package test1;\n");
+    buf.append("public class E {\n");
+    buf.append("    public void foo2(){\n");
+    buf.append("    }\n");
+    buf.append("    public void foo() {\n");
+    buf.append("        foo2();\n");
+    buf.append("    }\n");
+    buf.append("    public void foo1() {\n");
+    buf.append("    }\n");
+    buf.append("}\n");
+    Expected e1 = new Expected("Rename method 'foo'", buf.toString());
+
+    assertCodeActions(cu, e1);
+  }
+
 }
