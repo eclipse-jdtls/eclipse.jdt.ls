@@ -164,7 +164,7 @@ public class QuickFixProcessor {
       problem, proposals);
       break;
       case IProblem.MethodReturnsVoid:
-      ReturnTypeSubProcessor.addMethodRetunsVoidProposals(context, problem,
+      ReturnTypeSubProcessor.addMethodReturnsVoidProposals(context, problem,
       proposals);
       break;
       case IProblem.MissingReturnType:

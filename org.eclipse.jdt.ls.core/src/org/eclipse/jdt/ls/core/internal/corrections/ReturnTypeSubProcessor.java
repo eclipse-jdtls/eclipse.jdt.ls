@@ -321,7 +321,7 @@ public class ReturnTypeSubProcessor {
 		}
 	}
 
-	public static void addMethodRetunsVoidProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) throws JavaModelException {
+	public static void addMethodReturnsVoidProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof ReturnStatement)) {
