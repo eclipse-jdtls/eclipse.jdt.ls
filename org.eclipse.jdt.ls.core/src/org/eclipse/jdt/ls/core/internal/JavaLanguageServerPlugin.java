@@ -25,8 +25,6 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
@@ -249,7 +247,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
 		logInfo(getClass() + " is stopping:");
-		logInfo(getThreadDump());
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
 		projectsManager = null;
@@ -258,19 +255,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 		contentProviderManager = null;
 		languageServer = null;
-	}
-
-	private String getThreadDump() {
-		String lineSep = System.getProperty("line.separator");
-		StringBuilder sb = new StringBuilder();
-		Thread.getAllStackTraces().entrySet().forEach(e -> {
-			sb.append(e.getKey());
-			sb.append(lineSep);
-			Stream.of(e.getValue()).forEach(ste -> {
-				sb.append("\tat ").append(ste).append(lineSep);
-			});
-		});
-		return sb.toString();
 	}
 
 	public WorkingCopyOwner getWorkingCopyOwner() {
