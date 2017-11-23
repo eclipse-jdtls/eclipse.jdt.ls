@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
@@ -23,7 +24,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
@@ -153,17 +155,24 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public CompletableFuture<Object> shutdown() {
-		logInfo(">> shutdown");
-		JavaLanguageServerPlugin.getLanguageServer().shutdown();
-		return CompletableFuture.completedFuture(new Object());
-	}
+    logInfo(">> shutdown");
+    return computeAsync((cc)->{
+      try {
+        ResourcesPlugin.getWorkspace().save(true, toMonitor(cc));
+      } catch (CoreException e) {
+        logException(e.getMessage(),e);
+      }
+      return new Object();
+    });
+  }
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.LanguageServer#exit()
 	 */
 	@Override
 	public void exit() {
-		logInfo(">> exit");
+    logInfo(">> exit");
+    JavaLanguageServerPlugin.getLanguageServer().exit();
 		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 			logInfo("Forcing exit after 1 min.");
 			System.exit(FORCED_EXIT_CODE);
