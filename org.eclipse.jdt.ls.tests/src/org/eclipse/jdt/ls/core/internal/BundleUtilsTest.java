@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -39,13 +40,18 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	private static final String EXTENSIONPOINT_ID = "testbundle.ext";
 
 	@Test
-	public void testLoad() throws BundleException, CoreException {
+	public void testLoad() throws BundleException, CoreException, ClassNotFoundException {
 		BundleUtils.loadBundles(Arrays.asList(getBundle()));
 		String bundleLocation = getBundleLocation(getBundle(), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
+
+		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+		// active the bundle by loading a class. This is needed
+		// because test bundles have lazy activation policy
+		installedBundle.loadClass("testbundle.Activator");
 		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
 		String extResult = getBundleExtensionResult();
@@ -55,13 +61,16 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void testLoadAndUpdate() throws BundleException, CoreException {
+	public void testLoadAndUpdate() throws BundleException, CoreException, ClassNotFoundException {
 		BundleUtils.loadBundles(Arrays.asList(getBundle()));
 		String bundleLocation = getBundleLocation(getBundle(), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
+
+		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+		installedBundle.loadClass("testbundle.Activator");
 		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
 		String extResult = getBundleExtensionResult();
@@ -72,6 +81,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 		installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
+		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+		installedBundle.loadClass("testbundle.Activator");
 		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
 		extResult = getBundleExtensionResult();
@@ -82,13 +93,16 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void testLoadWithWhitespace() throws BundleException, CoreException {
+	public void testLoadWithWhitespace() throws BundleException, CoreException, ClassNotFoundException {
 		BundleUtils.loadBundles(Arrays.asList(getBundle("testresources/path with whitespace", "bundle with whitespace.jar")));
 		String bundleLocation = getBundleLocation(getBundle("testresources/path with whitespace", "bundle with whitespace.jar"), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
 		assertNotNull(installedBundle);
+
+		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+		installedBundle.loadClass("testbundle.Activator");
 		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
 		String extResult = getBundleExtensionResult();
@@ -103,7 +117,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	private String getBundle() {
-		return (new File("testresources", "testbundle-0.3.0-SNAPSHOT.jar")).getAbsolutePath();
+		return getBundle("testresources", "testbundle-0.3.0-SNAPSHOT.jar");
 	}
 
 	private String getBundle(String folder, String bundleName) {
@@ -126,6 +140,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 	private String getBundleExtensionResult() {
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSIONPOINT_ID);
+		assertEquals("Expect one extension point", 1, elements.length);
 		final String[] resultValues = new String[] { "" };
 		for (IConfigurationElement e : elements) {
 			if ("java".equals(e.getAttribute("type"))) {
