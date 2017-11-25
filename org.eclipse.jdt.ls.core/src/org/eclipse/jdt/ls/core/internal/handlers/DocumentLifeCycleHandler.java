@@ -207,7 +207,7 @@ public class DocumentLifeCycleHandler {
 		try {
 			// The open event can happen before the workspace element added event when a new file is added.
 			// checks if the underlying resource exists and refreshes to sync the newly created file.
-			if(!unit.getResource().isAccessible()){
+			if (!unit.getResource().isAccessible()) {
 				try {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 				} catch (CoreException e) {
@@ -277,7 +277,7 @@ public class DocumentLifeCycleHandler {
 				String text = changeEvent.getText();
 				if (length == 0) {
 					edit = new InsertEdit(startOffset, text);
-				} else if (text.isEmpty()){
+				} else if (text.isEmpty()) {
 					edit = new DeleteEdit(startOffset, length);
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
@@ -308,13 +308,17 @@ public class DocumentLifeCycleHandler {
 	public void handleSaved(DidSaveTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		if (unit == null) {
+			JavaLanguageServerPlugin.logError(uri + " does not resolve to a ICompilationUnit");
+			return;
+		}
 		// see https://github.com/redhat-developer/vscode-java/issues/274
 		unit = checkPackageDeclaration(uri, unit);
 		IFileBuffer fileBuffer = FileBuffers.getTextFileBufferManager().getFileBuffer(unit.getPath(), LocationKind.IFILE);
 		if (fileBuffer != null) {
 			fileBuffer.setDirty(false);
 		}
-		if (unit != null && unit.isWorkingCopy()) {
+		if (unit.isWorkingCopy()) {
 			try {
 				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
 				unit.getBuffer().close();
