@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
@@ -235,7 +236,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	private void startConnection() throws IOException {
 		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
 		ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
-		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, connectionFactory.getInputStream(), connectionFactory.getOutputStream());
+		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol,
+																		JavaLanguageClient.class,
+																		connectionFactory.getInputStream(),
+																		connectionFactory.getOutputStream(),
+																		Executors.newCachedThreadPool(), new ParentProcessWatcher(this.languageServer));
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
 	}
