@@ -16,6 +16,7 @@ import org.eclipse.equinox.app.IApplicationContext;
 public class LanguageServer implements IApplication {
 
   private volatile boolean shutdown;
+  private long parentProcessId;
   private final Object waitLock = new Object();
 
 	@Override
@@ -50,4 +51,15 @@ public class LanguageServer implements IApplication {
       waitLock.notifyAll();
     }
   }
+
+	public void setParentProcessId(long pid) {
+		this.parentProcessId = pid;
+	}
+
+	/**
+	 * @return the parentProcessId
+	 */
+	long getParentProcessId() {
+		return parentProcessId;
+	}
 }
