@@ -25,6 +25,10 @@ import org.eclipse.jface.text.IDocument;
 
 final public class JsonRpcHelpers {
 
+	private JsonRpcHelpers(){
+		//avoid instantiation
+	}
+
 	/**
 	 * Convert line, column to a document offset.
 	 * @param buffer
@@ -38,8 +42,7 @@ final public class JsonRpcHelpers {
 				return toDocument(buffer).getLineOffset(line) + column;
 			}
 		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		return -1;
 	}
