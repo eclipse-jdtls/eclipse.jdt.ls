@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -35,12 +36,14 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	private final String uri;
 	private final JavaClientConnection connection;
 	private boolean reportAllErrors = true;
+	private boolean isDefaultProject;
 
 	public DiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
 		this.uri = JDTUtils.toURI(cu);
 		this.connection = conn;
-		this.reportAllErrors = !cu.getJavaProject().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+		this.isDefaultProject = JDTUtils.isDefaultProject(cu);
+		this.reportAllErrors = !isDefaultProject && JDTUtils.isOnClassPath(cu);
 	}
 
 	@Override
@@ -54,6 +57,9 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		//Syntax issues are always reported
 		if ((problem.getID() & IProblem.Syntax) != 0) {
 			return true;
+		}
+		if (!isDefaultProject && problem.getID() == IProblem.PackageIsNotExpectedPackage) {
+			return false;
 		}
 		//Type and Import issues are never reported
 		if ((problem.getID() & IProblem.TypeRelated) != 0 || //
@@ -156,5 +162,12 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
 		}
 		return new Range(start, end);
+	}
+
+	public void clearDiagnostics() {
+		JavaLanguageServerPlugin.logInfo("Clearing problems for " + this.uri.substring(this.uri.lastIndexOf('/')));
+		problems.clear();
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList());
+		this.connection.publishDiagnostics($);
 	}
 }

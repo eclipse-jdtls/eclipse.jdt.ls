@@ -458,7 +458,7 @@ public final class JDTUtils {
 
 	/**
 	 * Returns uri for a compilation unit
-	 * 
+	 *
 	 * @param cu
 	 * @return
 	 */
@@ -677,4 +677,14 @@ public final class JDTUtils {
 				IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 	}
 
+	public static boolean isOnClassPath(ICompilationUnit unit) {
+		if (unit != null && unit.getJavaProject() != null && !unit.getJavaProject().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject())) {
+			return unit.getJavaProject().isOnClasspath(unit);
+		}
+		return false;
+	}
+
+	public static boolean isDefaultProject(ICompilationUnit unit) {
+		return unit != null && unit.getResource() != null && unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+	}
 }

@@ -134,9 +134,9 @@ public class DocumentLifeCycleHandler {
 		List<CompilationUnit> astRoots = this.sharedASTProvider.getASTs(toValidate, monitor);
 		for (CompilationUnit astRoot : astRoots) {
 			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
-			DiagnosticsHandler handler = new DiagnosticsHandler(connection, (ICompilationUnit) astRoot.getTypeRoot());
+			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
+			DiagnosticsHandler handler = new DiagnosticsHandler(connection, unit);
 			handler.beginReporting();
-
 			for (IProblem problem : astRoot.getProblems()) {
 				handler.acceptProblem(problem);
 			}
@@ -214,12 +214,17 @@ public class DocumentLifeCycleHandler {
 					// ignored
 				}
 			}
-			//Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
 			IProject project = unit.getResource().getProject();
-			boolean reportOnlySyntaxErrors = project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
-			if (reportOnlySyntaxErrors) {
+			// Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
+			boolean isDefaultProject = project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+			if (isDefaultProject || !JDTUtils.isOnClassPath(unit)) {
 				Severity severity = preferenceManager.getPreferences(project).getIncompleteClasspathSeverity();
-				String msg = "Classpath is incomplete. Only syntax errors will be reported";
+				String msg;
+				if (isDefaultProject) {
+					msg = "Classpath is incomplete. Only syntax errors will be reported";
+				} else {
+					msg = unit.getElementName() + " isn't on the classpath. Only syntax errors will be reported";
+				}
 				JavaLanguageServerPlugin.logInfo(msg +" for "+uri);
 				if (severity.compareTo(Preferences.Severity.ignore) > 0){
 					ActionableNotification ignoreIncompleteClasspath = new ActionableNotification()
@@ -298,6 +303,9 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 		try {
+			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit)) {
+				new DiagnosticsHandler(connection, unit).clearDiagnostics();
+			}
 			sharedASTProvider.invalidate(unit);
 			unit.discardWorkingCopy();
 		} catch (CoreException e) {
