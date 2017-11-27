@@ -23,7 +23,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -35,6 +37,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
@@ -325,6 +328,29 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
+		assertEquals(0, diagParam.getDiagnostics().size());
+	}
+
+	@Test
+	public void testDidOpenNotOnClasspath() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = WorkspaceHelper.getProject("hello");
+		URI uri = project.getFile("nopackage/Test2.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		String source = FileUtils.readFileToString(FileUtils.toFile(uri.toURL()));
+		openDocument(cu, source, 1);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		assertEquals(project, cu.getJavaProject().getProject());
+		assertEquals(source, cu.getSource());
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		assertEquals(1, diagnosticReports.size());
+		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
+		assertEquals(1, diagParam.getDiagnostics().size());
+		closeDocument(cu);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		diagnosticReports = getClientRequests("publishDiagnostics");
+		assertEquals(2, diagnosticReports.size());
+		diagParam = diagnosticReports.get(1);
 		assertEquals(0, diagParam.getDiagnostics().size());
 	}
 
