@@ -69,7 +69,8 @@ public class BuildWorkspaceHandler {
 				return BuildWorkspaceStatus.SUCCEED;
 			} else {
 				// for default project, problem markers aren't sent. Add logs here for trouble shooting.
-				logError("Met errors while building workspace." + String.join(";", errors));
+				String newline = System.getProperty("line.separator");
+				logError("Error occured while building workspace. Details: " + newline + String.join(newline, errors));
 				return BuildWorkspaceStatus.WITH_ERROR;
 			}
 		} catch (CoreException e) {
@@ -127,10 +128,10 @@ public class BuildWorkspaceHandler {
 
 	private static String convertMarker(IMarker marker) {
 		StringBuilder builder = new StringBuilder();
-		String message = marker.getAttribute(IMarker.MESSAGE, "");
+		String message = marker.getAttribute(IMarker.MESSAGE, "<no message>");
 		String code = String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0));
-		builder.append("message:" + message);
-		builder.append("code:" + code);
+		builder.append("message: " + message + ";");
+		builder.append("code: " + code);
 		return builder.toString();
 	}
 }
