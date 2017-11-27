@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
@@ -62,10 +64,13 @@ public class BuildWorkspaceHandler {
 			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 			List<IMarker> problemMarkers = getProblemMarkers(monitor);
 			publishDiagnostics(problemMarkers);
-			List<IMarker> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).collect(Collectors.toList());
+			List<String> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).map(e -> convertMarker(e)).collect(Collectors.toList());
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;
 			} else {
+				// for default project, problem markers aren't sent. Add logs here for trouble shooting.
+				String newline = System.getProperty("line.separator");
+				logError("Error occured while building workspace. Details: " + newline + String.join(newline, errors));
 				return BuildWorkspaceStatus.WITH_ERROR;
 			}
 		} catch (CoreException e) {
@@ -119,7 +124,14 @@ public class BuildWorkspaceHandler {
 				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
 			}
 		}
+	}
 
-
+	private static String convertMarker(IMarker marker) {
+		StringBuilder builder = new StringBuilder();
+		String message = marker.getAttribute(IMarker.MESSAGE, "<no message>");
+		String code = String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0));
+		builder.append("message: " + message + ";");
+		builder.append("code: " + code);
+		return builder.toString();
 	}
 }
