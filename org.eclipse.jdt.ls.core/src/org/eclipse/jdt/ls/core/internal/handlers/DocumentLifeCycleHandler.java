@@ -64,7 +64,7 @@ import org.eclipse.text.edits.TextEdit;
 
 public class DocumentLifeCycleHandler {
 
-	public static String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
+	public static final String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
