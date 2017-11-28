@@ -10,10 +10,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.buildship.core.configuration.GradleProjectNature;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -56,6 +60,11 @@ public final class ProjectUtils {
 		IJavaProject javaProject = JavaCore.create(project);
 		Map<String, String> options = javaProject.getOptions(true);
 		return options.get(JavaCore.COMPILER_SOURCE);
+	}
+
+	public static List<IProject> getGradleProjects() {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		return Stream.of(projects).filter(ProjectUtils::isGradleProject).collect(Collectors.toList());
 	}
 
 }

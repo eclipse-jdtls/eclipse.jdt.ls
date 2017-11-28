@@ -26,6 +26,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
@@ -36,6 +37,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -50,6 +53,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
 
 public class JavaLanguageServerPlugin implements BundleActivator {
@@ -116,9 +120,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext bundleContext) {
+		IEclipsePreferences node = DefaultScope.INSTANCE.getNode(ResourcesPlugin.PI_RESOURCES);
+		node.putBoolean(ResourcesPlugin.PREF_AUTO_REFRESH, false);
 		try {
 			redirectStandardStreams();
-		} catch (FileNotFoundException e) {
+			node.flush();
+		} catch (FileNotFoundException | BackingStoreException e) {
 			logException(e.getMessage(), e);
 		}
 		JavaLanguageServerPlugin.context = bundleContext;
@@ -126,6 +133,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
 		projectsManager = new ProjectsManager(preferenceManager);
+		try {
+			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
+		} catch (CoreException e) {
+			logException(e.getMessage(), e);
+		}
 		contentProviderManager = new ContentProviderManager(preferenceManager);
 		preferenceManager.addPreferencesChangeListener(preferencesChangeListener);
 		logInfo(getClass() + " is started");
@@ -254,6 +266,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		logInfo(getClass() + " is stopping:");
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
+		ResourcesPlugin.getWorkspace().removeSaveParticipant(PLUGIN_ID);
 		projectsManager = null;
 		if (preferenceManager != null) {
 			preferenceManager.removePreferencesChangeListener(preferencesChangeListener);
@@ -385,4 +398,5 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 		return null;
 	}
+
 }

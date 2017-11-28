@@ -24,6 +24,8 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ISaveContext;
+import org.eclipse.core.resources.ISaveParticipant;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -63,7 +65,7 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
-public class ProjectsManager {
+public class ProjectsManager implements ISaveParticipant {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
 	private PreferenceManager preferenceManager;
@@ -84,8 +86,9 @@ public class ProjectsManager {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 				deleteInvalidProjects(rootPaths, subMonitor.split(10));
+				GradleBuildSupport.cleanGradleModels(subMonitor.split(10));
 				createJavaProject(getDefaultProject(), subMonitor.split(10));
-				importProjects(rootPaths, subMonitor.split(80));
+				importProjects(rootPaths, subMonitor.split(70));
 				subMonitor.done();
 			}
 		}, monitor);
@@ -132,6 +135,7 @@ public class ProjectsManager {
 					JavaLanguageServerPlugin.logError(msg);
 					status = StatusFactory.newErrorStatus(msg, e);
 				}
+				GradleBuildSupport.cleanGradleModels(monitor);
 				return status;
 			}
 		};
@@ -141,7 +145,7 @@ public class ProjectsManager {
 
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
 		for (IProject project : getWorkspaceRoot().getProjects()) {
-			if (project.exists() && ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
+			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project))) {
 				try {
 					project.getDescription();
 				} catch (CoreException e) {
@@ -367,4 +371,36 @@ public class ProjectsManager {
 		}
 		return b.toString();
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#doneSaving(org.eclipse.core.resources.ISaveContext)
+	 */
+	@Override
+	public void doneSaving(ISaveContext context) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#prepareToSave(org.eclipse.core.resources.ISaveContext)
+	 */
+	@Override
+	public void prepareToSave(ISaveContext context) throws CoreException {
+		if (context.getKind() == ISaveContext.FULL_SAVE) {
+			GradleBuildSupport.saveModels();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#rollback(org.eclipse.core.resources.ISaveContext)
+	 */
+	@Override
+	public void rollback(ISaveContext context) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.resources.ISaveParticipant#saving(org.eclipse.core.resources.ISaveContext)
+	 */
+	@Override
+	public void saving(ISaveContext context) throws CoreException {
+	}
+
 }
