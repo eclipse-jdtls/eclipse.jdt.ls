@@ -11,13 +11,21 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.List;
 
+import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -31,6 +39,16 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void importSimpleGradleProject() throws Exception {
 		importSimpleJavaProject();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest#cleanUp()
+	 */
+	@Override
+	@After
+	public void cleanUp() throws Exception {
+		super.cleanUp();
+		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 	}
 
 	@Test
@@ -58,4 +76,23 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			javaImportExclusions.remove(GRADLE1_PATTERN);
 		}
 	}
+
+	@Test
+	public void testGradlePersistence() throws Exception {
+		importProjects("gradle/nested");
+		List<IProject> projects = ProjectUtils.getGradleProjects();
+		for (IProject project : projects) {
+			assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+		}
+		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+		GradleBuildSupport.saveModels();
+		for (IProject project : projects) {
+			assertFalse(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+		}
+		IProject project = WorkspaceHelper.getProject("gradle1");
+		File gradleBuild = new File(project.getLocation().toFile(), "build.gradle");
+		gradleBuild.setLastModified(System.currentTimeMillis() + 1000);
+		assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+	}
+
 }
