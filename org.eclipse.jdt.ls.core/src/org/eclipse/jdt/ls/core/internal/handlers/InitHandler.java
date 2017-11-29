@@ -52,6 +52,7 @@ import org.eclipse.lsp4j.TextDocumentSyncKind;
  */
 final public class InitHandler {
 
+	public static final String JAVA_LS_INITIALIZATION_JOBS = "java-ls-initialization-jobs";
 	private static final String BUNDLES_KEY = "bundles";
 
 	private ProjectsManager projectsManager;
@@ -122,12 +123,6 @@ final public class InitHandler {
 		ServerCapabilities capabilities = new ServerCapabilities();
 		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
 		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#")));
-		capabilities.setHoverProvider(Boolean.TRUE);
-		capabilities.setDefinitionProvider(Boolean.TRUE);
-		capabilities.setDocumentSymbolProvider(Boolean.TRUE);
-		capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
-		capabilities.setReferencesProvider(Boolean.TRUE);
-		capabilities.setDocumentHighlightProvider(Boolean.TRUE);
 		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
 		}
@@ -143,11 +138,32 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
 			capabilities.setRenameProvider(Boolean.TRUE);
 		}
-		capabilities.setCodeActionProvider(Boolean.TRUE);
+		if (!preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
+			capabilities.setCodeActionProvider(Boolean.TRUE);
+		}
 		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			Set<String> commands = WorkspaceExecuteCommandHandler.getCommands();
 			capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
 		}
+		if (!preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
+			capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
+			capabilities.setDocumentSymbolProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
+			capabilities.setDefinitionProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
+			capabilities.setHoverProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
+			capabilities.setReferencesProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
+			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
+		}
+
 		result.setCapabilities(capabilities);
 		return result;
 	}
@@ -170,6 +186,14 @@ final public class InitHandler {
 					connection.sendStatus(ServiceStatus.Error, getMessage(e.getStatus()));
 				}
 				return Status.OK_STATUS;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+			 */
+			@Override
+			public boolean belongsTo(Object family) {
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
 			}
 
 			private String getMessage(IStatus status) {

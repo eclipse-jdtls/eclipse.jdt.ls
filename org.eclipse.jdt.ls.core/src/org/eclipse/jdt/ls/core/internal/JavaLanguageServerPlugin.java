@@ -399,4 +399,28 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return null;
 	}
 
+	public void unregisterCapability(String id, String method) {
+		if (protocol != null) {
+			protocol.unregisterCapability(id, method);
+		}
+	}
+
+	public void registerCapability(String id, String method) {
+		registerCapability(id, method, null);
+	}
+
+	public void registerCapability(String id, String method, Object options) {
+		if (protocol != null) {
+			protocol.registerCapability(id, method, options);
+		}
+	}
+
+	public void setProtocol(JDTLanguageServer protocol) {
+		this.protocol = protocol;
+	}
+
+	public JDTLanguageServer getProtocol() {
+		return protocol;
+	}
+
 }

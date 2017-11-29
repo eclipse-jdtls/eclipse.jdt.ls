@@ -88,4 +88,32 @@ public class ClientPreferences {
 	public boolean isExecuteCommandDynamicRegistrationSupported() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getExecuteCommand());
 	}
+
+	public boolean isWorkspaceSymbolDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
+	}
+
+	public boolean isDocumentSymbolDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDocumentSymbol());
+	}
+
+	public boolean isCodeActionDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCodeAction());
+	}
+
+	public boolean isDefinitionDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDefinition());
+	}
+
+	public boolean isHoverDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getHover());
+	}
+
+	public boolean isReferencesDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getReferences());
+	}
+
+	public boolean isDocumentHighlightDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDocumentHighlight());
+	}
 }
