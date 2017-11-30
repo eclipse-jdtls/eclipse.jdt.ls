@@ -160,7 +160,7 @@ public class QuickAssistProcessor {
 			}
 			return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
 		}
-		return null;
+		return new CUCorrectionProposal[0];
 	}
 
 	static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
