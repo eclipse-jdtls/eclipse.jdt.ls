@@ -26,6 +26,8 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISaveContext;
 import org.eclipse.core.resources.ISaveParticipant;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -401,6 +403,17 @@ public class ProjectsManager implements ISaveParticipant {
 	 */
 	@Override
 	public void saving(ISaveContext context) throws CoreException {
+	}
+
+	public boolean setAutoBuilding(boolean enable) throws CoreException {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceDescription description = workspace.getDescription();
+		boolean changed = description.isAutoBuilding() != enable;
+		if (changed) {
+			description.setAutoBuilding(enable);
+			workspace.setDescription(description);
+		}
+		return changed;
 	}
 
 }

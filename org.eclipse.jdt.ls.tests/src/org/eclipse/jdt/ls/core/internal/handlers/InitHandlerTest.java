@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -66,6 +67,11 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void tearDown() {
 		server.disconnectClient();
 		JavaLanguageServerPlugin.getInstance().setProtocol(protocol);
+		try {
+			projectsManager.setAutoBuilding(true);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 	}
 
 	@Test

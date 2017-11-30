@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -271,6 +272,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
 					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+		}
+		try {
+			if (pm.setAutoBuilding(true)) {
+				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, null);
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		logInfo(">>New configuration: " + settings);
 	}

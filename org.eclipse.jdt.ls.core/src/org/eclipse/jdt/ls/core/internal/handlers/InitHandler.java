@@ -176,6 +176,7 @@ final public class InitHandler {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
 				try {
+					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
