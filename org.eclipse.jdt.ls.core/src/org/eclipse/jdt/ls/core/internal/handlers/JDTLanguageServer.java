@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -37,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams;
@@ -219,6 +221,28 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		logInfo(">> workspace/didChangeConfiguration");
+		JobHelpers.waitForInitializeJobs();
+		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
+		}
+		if (preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
+		}
+		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
+		}
+		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
+		}
+		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
+		}
+		if (preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.REFERENCES_ID, Preferences.REFERENCES);
+		}
+		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
+		}
 		Object settings = params.getSettings();
 		if (settings instanceof Map) {
 			@SuppressWarnings("unchecked")
@@ -226,35 +250,19 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			preferenceManager.update(prefs);
 		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isJavaFormatEnabled()) {
-				registerCapability(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
-			} else {
-				unregisterCapability(Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING);
-			}
+			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);
 		}
 		if (preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isJavaFormatEnabled()) {
-				registerCapability(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
-			} else {
-				unregisterCapability(Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING);
-			}
+			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING, null);
 		}
 		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isCodeLensEnabled()) {
-				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
-				registerCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
-			} else {
-				unregisterCapability(Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS);
-			}
+			toggleCapability(preferenceManager.getPreferences().isCodeLensEnabled(), Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
 		}
 		if (preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isSignatureHelpEnabled()) {
-				registerCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
-			} else {
-				unregisterCapability(Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP);
-			}
+			toggleCapability(preferenceManager.getPreferences().isSignatureHelpEnabled(), Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
 		}
 		if (preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isRenameEnabled(), Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME, null);
 			if (preferenceManager.getPreferences().isRenameEnabled()) {
 				registerCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
 			} else {
@@ -262,14 +270,25 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			}
 		}
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
-			if (preferenceManager.getPreferences().isExecuteCommandEnabled()) {
-				unregisterCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND);
-				registerCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND, new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
-			} else {
-				unregisterCapability(Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND);
+			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
+					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+		}
+		try {
+			if (pm.setAutoBuilding(true)) {
+				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, null);
 			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		logInfo(">>New configuration: " + settings);
+	}
+
+	private void toggleCapability(boolean enabled, String id, String capability, Object options) {
+		if (enabled) {
+			registerCapability(id, capability, options);
+		} else {
+			unregisterCapability(id, capability);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -580,7 +599,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return new CancellableProgressMonitor(checker);
 	}
 
-	private void unregisterCapability(String id, String method) {
+	public void unregisterCapability(String id, String method) {
 		if (registeredCapabilities.remove(id)) {
 			Unregistration unregistration = new Unregistration(id, method);
 			UnregistrationParams unregistrationParams = new UnregistrationParams(Collections.singletonList(unregistration));
@@ -588,15 +607,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 	}
 
-	private void registerCapability(String id, String method) {
+	public void registerCapability(String id, String method) {
 		registerCapability(id, method, null);
 	}
 
-	private void registerCapability(String id, String method, Object options) {
+	public void registerCapability(String id, String method, Object options) {
 		if (registeredCapabilities.add(id)) {
 			Registration registration = new Registration(id, method, options);
 			RegistrationParams registrationParams = new RegistrationParams(Collections.singletonList(registration));
 			client.registerCapability(registrationParams);
 		}
 	}
+
 }

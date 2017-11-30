@@ -59,6 +59,14 @@ public class JDTLanguageServerTest {
 	@Before
 	public void setUp() {
 		when(prefManager.getClientPreferences()).thenReturn(clientPreferences);
+		when(clientPreferences.isWorkspaceSymbolDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isDocumentSymbolDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isCodeActionDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isDefinitionDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isHoverDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isReferencesDynamicRegistered()).thenReturn(Boolean.FALSE);
+		when(clientPreferences.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.FALSE);
+
 		server = new JDTLanguageServer(projManager, prefManager);
 		server.connectClient(client);
 	}
@@ -82,10 +90,10 @@ public class JDTLanguageServerTest {
 		server.didChangeConfiguration(params);
 		verify(client, times(5)).registerCapability(any());
 
-		//On 2nd call, 1 registration call should be emitted
+		//On 2nd call, no registration call should be emitted
 		reset(client);
 		server.didChangeConfiguration(params);
-		verify(client, times(2)).registerCapability(any());
+		verify(client, never()).registerCapability(any());
 
 		// unregister capabilities
 		reset(client);

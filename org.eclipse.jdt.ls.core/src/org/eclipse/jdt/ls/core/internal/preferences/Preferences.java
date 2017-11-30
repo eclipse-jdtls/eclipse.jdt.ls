@@ -122,6 +122,13 @@ public class Preferences {
 	public static final String TEXT_DOCUMENT_SIGNATURE_HELP = "textDocument/signatureHelp";
 	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
 	public static final String WORKSPACE_EXECUTE_COMMAND = "workspace/executeCommand";
+	public static final String WORKSPACE_SYMBOL = "workspace/symbol";
+	public static final String DOCUMENT_SYMBOL = "textDocument/documentSymbol";
+	public static final String CODE_ACTION = "textDocument/codeAction";
+	public static final String DEFINITION = "textDocument/definition";
+	public static final String HOVER = "textDocument/hover";
+	public static final String REFERENCES = "textDocument/references";
+	public static final String DOCUMENT_HIGHLIGHT = "textDocument/documentHighlight";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
@@ -129,6 +136,13 @@ public class Preferences {
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
 	public static final String RENAME_ID = UUID.randomUUID().toString();
 	public static final String EXECUTE_COMMAND_ID = UUID.randomUUID().toString();
+	public static final String WORKSPACE_SYMBOL_ID = UUID.randomUUID().toString();
+	public static final String DOCUMENT_SYMBOL_ID = UUID.randomUUID().toString();
+	public static final String CODE_ACTION_ID = UUID.randomUUID().toString();
+	public static final String DEFINITION_ID = UUID.randomUUID().toString();
+	public static final String HOVER_ID = UUID.randomUUID().toString();
+	public static final String REFERENCES_ID = UUID.randomUUID().toString();
+	public static final String DOCUMENT_HIGHLIGHT_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;

@@ -24,9 +24,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.ls.core.internal.handlers.InitHandler;
 import org.eclipse.m2e.core.internal.embedder.MavenExecutionContext;
 import org.eclipse.m2e.core.internal.jobs.IBackgroundProcessingQueue;
-import org.junit.Assert;
 
 /**
  * Copied from m2e's org.eclipse.m2e.tests.common/src/org/eclipse/m2e/tests/common/JobHelpers.java
@@ -90,8 +90,9 @@ public final class JobHelpers {
 				} catch(InterruptedException e) {
 				}
 			}
-
-			Assert.assertFalse("Could not flush background processing queues: " + getProcessingQueues(jobManager), processed);
+			if (processed) {
+				JavaLanguageServerPlugin.logInfo("Could not flush background processing queues: " + getProcessingQueues(jobManager));
+			}
 		} finally {
 			jobManager.resume();
 		}
@@ -137,6 +138,10 @@ public final class JobHelpers {
 		waitForJobs(BuildJobMatcher.INSTANCE, 300000);
 	}
 
+	public static void waitForInitializeJobs() {
+		waitForJobs(InitializeJobMatcher.INSTANCE, 300000);
+	}
+
 	public static void waitForJobs(IJobMatcher matcher, int maxWaitMillis) {
 		final long limit = System.currentTimeMillis() + maxWaitMillis;
 		while(true) {
@@ -145,7 +150,10 @@ public final class JobHelpers {
 				return;
 			}
 			boolean timeout = System.currentTimeMillis() > limit;
-			Assert.assertFalse("Timeout while waiting for completion of job: " + job, timeout);
+			if (timeout) {
+				JavaLanguageServerPlugin.logInfo("Timeout while waiting for completion of job: " + job);
+				break;
+			}
 			job.wakeUp();
 			try {
 				Thread.sleep(POLLING_DELAY);
@@ -179,6 +187,17 @@ public final class JobHelpers {
 		public boolean matches(Job job) {
 			return (job instanceof WorkspaceJob) || job.getClass().getName().matches("(.*\\.AutoBuild.*)")
 					|| job.getClass().getName().endsWith("JREUpdateJob");
+		}
+
+	}
+
+	static class InitializeJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new InitializeJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS);
 		}
 
 	}

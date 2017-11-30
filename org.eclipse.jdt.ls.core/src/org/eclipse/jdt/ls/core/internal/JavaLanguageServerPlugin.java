@@ -37,8 +37,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -119,13 +117,15 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
-	public void start(BundleContext bundleContext) {
-		IEclipsePreferences node = DefaultScope.INSTANCE.getNode(ResourcesPlugin.PI_RESOURCES);
-		node.putBoolean(ResourcesPlugin.PREF_AUTO_REFRESH, false);
+	public void start(BundleContext bundleContext) throws BackingStoreException {
+		try {
+			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
+		} catch (BundleException e) {
+			logException(e.getMessage(), e);
+		}
 		try {
 			redirectStandardStreams();
-			node.flush();
-		} catch (FileNotFoundException | BackingStoreException e) {
+		} catch (FileNotFoundException e) {
 			logException(e.getMessage(), e);
 		}
 		JavaLanguageServerPlugin.context = bundleContext;
@@ -397,6 +397,30 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 			return JavaLanguageServerPlugin.pluginInstance.preferenceManager;
 		}
 		return null;
+	}
+
+	public void unregisterCapability(String id, String method) {
+		if (protocol != null) {
+			protocol.unregisterCapability(id, method);
+		}
+	}
+
+	public void registerCapability(String id, String method) {
+		registerCapability(id, method, null);
+	}
+
+	public void registerCapability(String id, String method, Object options) {
+		if (protocol != null) {
+			protocol.registerCapability(id, method, options);
+		}
+	}
+
+	public void setProtocol(JDTLanguageServer protocol) {
+		this.protocol = protocol;
+	}
+
+	public JDTLanguageServer getProtocol() {
+		return protocol;
 	}
 
 }
