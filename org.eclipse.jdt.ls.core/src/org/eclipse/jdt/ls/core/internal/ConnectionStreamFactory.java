@@ -108,33 +108,6 @@ public class ConnectionStreamFactory {
 		}
 	}
 
-	protected final class DualSocketStreamProvider implements StreamProvider {
-		private final String readHost;
-		private final String writeHost;
-		private final int readPort;
-		private final int writePort;
-
-		public DualSocketStreamProvider(String readHost, int readPort, String writeHost, int writePort) {
-			this.readHost = readHost;
-			this.readPort = readPort;
-			this.writeHost = writeHost;
-			this.writePort = writePort;
-		}
-
-		@Override
-		public InputStream getInputStream() throws IOException {
-			Socket readSocket = new Socket(readHost, readPort);
-			return readSocket.getInputStream();
-		}
-
-		@Override
-		public OutputStream getOutputStream() throws IOException {
-			Socket writeSocket = new Socket(writeHost, writePort);
-			return writeSocket.getOutputStream();
-		}
-
-	}
-
 	protected final class StdIOStreamProvider implements StreamProvider {
 
 		/* (non-Javadoc)
@@ -172,20 +145,13 @@ public class ConnectionStreamFactory {
 		final String stdInName = Environment.get("STDIN_PIPE_NAME");
 		final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
 		if (stdInName != null && stdOutName != null) {
+			JavaLanguageServerPlugin.logError("STDIN_PIPE_NAME/STDOUT_PIPE_NAME support will be removed in eclipse.jdt.ls 0.12.0. Please use Standard IO or Socket connection instead.");
 			return new NamedPipeStreamProvider(stdOutName, stdInName);
 		}
 		final String host = Environment.get("CLIENT_HOST", "localhost");
 		final String port = Environment.get("CLIENT_PORT");
 		if (port != null) {
 			return new SocketStreamProvider(host, Integer.parseInt(port));
-		}
-		final String wHost = Environment.get("STDIN_HOST", "localhost");
-		final String rHost = Environment.get("STDOUT_HOST", "localhost");
-		final String wPort = Environment.get("STDIN_PORT");
-		final String rPort = Environment.get("STDOUT_PORT");
-		if (rPort != null && wPort != null) {
-			JavaLanguageServerPlugin.logError("STDIN_PORT and STDOUT_PORT will be removed in the next release. Please use CLIENT_PORT instead (single connection for both in and output)");
-			return new DualSocketStreamProvider(rHost, Integer.parseInt(rPort), wHost, Integer.parseInt(wPort));
 		}
 		return new StdIOStreamProvider();
 	}
