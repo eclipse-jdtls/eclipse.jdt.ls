@@ -11,7 +11,6 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -36,7 +35,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
 
-public class ReferencesHandler {
+public final class ReferencesHandler {
 
 	private final PreferenceManager preferenceManager;
 
@@ -49,20 +48,20 @@ public class ReferencesHandler {
 		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
 	}
 
-	List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
-		SearchEngine engine = new SearchEngine();
+	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
 
+		final List<Location> locations = new ArrayList<>();
 		try {
 			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
-					param.getPosition().getLine(),
-					param.getPosition().getCharacter(), this.preferenceManager, monitor);
+			param.getPosition().getLine(),
+			param.getPosition().getCharacter(), this.preferenceManager, monitor);
 
 			if(elementToSearch == null) {
-				return Collections.emptyList();
+				return locations;
 			}
 
+			SearchEngine engine = new SearchEngine();
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
-			List<Location> locations = new ArrayList<>();
 			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
 					createSearchScope(), new SearchRequestor() {
 
@@ -87,17 +86,14 @@ public class ReferencesHandler {
 						if (location != null ) {
 							locations.add(location);
 						}
-
 					}
-
 				}
 					}, monitor);
 
-			return locations;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Find references failure ", e);
 		}
-		return null;
+		return locations;
 	}
 
 }
