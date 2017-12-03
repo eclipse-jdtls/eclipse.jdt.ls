@@ -78,10 +78,9 @@ public class RenameHandler {
 	private RenameProcessor createRenameProcessor(IJavaElement selectedElement) throws JavaModelException {
 		if (selectedElement instanceof IType) {
 			return new RenameTypeProcessor(selectedElement);
-		} else if (selectedElement instanceof IMethod) {
-			if (((IMethod) selectedElement).isConstructor()) {
-				return new RenameTypeProcessor(((IMethod) selectedElement).getDeclaringType());
-			}
+		}
+		if (selectedElement instanceof IMethod && ((IMethod) selectedElement).isConstructor()) {
+			return new RenameTypeProcessor(((IMethod) selectedElement).getDeclaringType());
 		}
 		return new RenameProcessor(selectedElement);
 	}

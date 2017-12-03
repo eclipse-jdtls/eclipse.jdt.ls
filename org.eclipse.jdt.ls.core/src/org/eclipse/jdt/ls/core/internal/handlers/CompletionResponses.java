@@ -24,7 +24,7 @@ public final class CompletionResponses {
 		//Don't instantiate
 	}
 
-	private static Map<Long, CompletionResponse> COMPLETIONS = new ConcurrentHashMap<>();
+	private static final Map<Long, CompletionResponse> COMPLETIONS = new ConcurrentHashMap<>();
 
 	public static CompletionResponse get(Long id) {
 		return COMPLETIONS.get(id);
