@@ -36,11 +36,11 @@ import org.osgi.framework.startlevel.BundleStartLevel;
 /**
  * BundleContext and Bundle utilities
  */
-public class BundleUtils {
+public final class BundleUtils {
 
 	private static final String REFERENCE_PREFIX = "reference:";
 
-	private static class BundleInfo {
+	private static final class BundleInfo {
 
 		private String version;
 
@@ -58,6 +58,10 @@ public class BundleUtils {
 		private String getSymbolicName() {
 			return symbolicName;
 		}
+	}
+
+	private BundleUtils(){
+		//prevent instantianation
 	}
 
 	/**
@@ -168,8 +172,8 @@ public class BundleUtils {
 						return null;
 					}
 					String symbolicName = mainAttributes.getValue(Constants.BUNDLE_SYMBOLICNAME);
-					if (StringUtils.isNotBlank(symbolicName) && symbolicName.indexOf(";") >= 0) {
-						symbolicName = symbolicName.substring(0, symbolicName.indexOf(";"));
+					if (StringUtils.isNotBlank(symbolicName) && symbolicName.indexOf(';') >= 0) {
+						symbolicName = symbolicName.substring(0, symbolicName.indexOf(';'));
 					}
 					return new BundleInfo(bundleVersion, symbolicName);
 				}
