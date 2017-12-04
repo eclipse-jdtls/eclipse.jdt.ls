@@ -197,6 +197,7 @@
 									<!-- define custom output filename -->
 									<finalName>jdt-language-server-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}-${timestamp}</finalName>
 									<appendAssemblyId>false</appendAssemblyId>
+									<tarLongFileMode>posix</tarLongFileMode>
 									<descriptors>
 										<descriptor>publish-assembly.xml</descriptor>
 									</descriptors>
