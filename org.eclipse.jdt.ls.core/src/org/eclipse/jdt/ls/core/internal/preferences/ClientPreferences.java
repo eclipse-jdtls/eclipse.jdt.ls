@@ -12,6 +12,9 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
 
@@ -25,13 +28,23 @@ public class ClientPreferences {
 
 	private final ClientCapabilities capabilities;
 	private final boolean v3supported;
+	private Map<String, Object> extendedClientCapabilities;
 
 	public ClientPreferences(ClientCapabilities caps) {
+		this(caps, null);
+	}
+
+	/**
+	 * @param clientCapabilities
+	 * @param extendedClientCapabilities
+	 */
+	public ClientPreferences(ClientCapabilities caps, Map<String, Object> extendedClientCapabilities) {
 		if (caps == null) {
 			throw new IllegalArgumentException("ClientCapabilities can not be null");
 		}
 		this.capabilities = caps;
 		this.v3supported = capabilities.getTextDocument() != null;
+		this.extendedClientCapabilities = extendedClientCapabilities == null ? Collections.emptyMap() : extendedClientCapabilities;
 	}
 
 	public boolean isSignatureHelpSupported() {
@@ -120,6 +133,10 @@ public class ClientPreferences {
 
 	public boolean isWorkspaceApplyEditSupported() {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getApplyEdit());
+	}
+
+	public boolean isProgressReportSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("progressReportProvider", "false").toString());
 	}
 
 }

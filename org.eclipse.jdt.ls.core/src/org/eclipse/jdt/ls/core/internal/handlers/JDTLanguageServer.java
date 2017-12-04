@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
-import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
 import java.io.File;
 import java.net.URI;
@@ -25,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -45,11 +45,11 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
-import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -95,6 +95,7 @@ import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -120,6 +121,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
+	private ProgressReporterManager progressReporterManager;
+
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
 	}
@@ -131,6 +134,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 	public void connectClient(JavaLanguageClient client) {
 		this.client = new JavaClientConnection(client);
+		progressReporterManager = new ProgressReporterManager(client, preferenceManager);
+		Job.getJobManager().setProgressProvider(progressReporterManager);
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
@@ -139,6 +144,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 	//For testing purposes
 	public void disconnectClient() {
+		Job.getJobManager().setProgressProvider(null);
 		this.client.disconnect();
 	}
 
@@ -169,10 +175,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
-		return computeAsync((cc) -> {
+		return computeAsync((monitor) -> {
 			try {
 				InitHandler.removeWorkspaceDiagnosticsHandler();
-				ResourcesPlugin.getWorkspace().save(true, toMonitor(cc));
+				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
 			}
@@ -221,8 +227,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		logInfo(">> workspace/symbol");
 		WorkspaceSymbolHandler handler = new WorkspaceSymbolHandler();
-		return computeAsync((cc) -> {
-			return handler.search(params.getQuery(), toMonitor(cc));
+		return computeAsync((monitor) -> {
+			return handler.search(params.getQuery(), monitor);
 		});
 	}
 
@@ -372,8 +378,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		logInfo(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
-		return computeAsync((cc) -> {
-			return handler.executeCommand(params, toMonitor(cc));
+		return computeAsync((monitor) -> {
+			return handler.executeCommand(params, monitor);
 		});
 	}
 
@@ -385,18 +391,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler();
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((cc) -> {
-			monitors[0] = toMonitor(cc);
+		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
+			monitors[0] = monitor;
 			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
-				try {
-					Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
-				} catch (OperationCanceledException ignorable) {
-					// No need to pollute logs when query is cancelled
-				} catch (InterruptedException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
+				waitForLifecycleJobs(monitor);
 			}
-			return handler.completion(position, monitors[0]);
+			return handler.completion(position, monitor);
 		});
 		result.join();
 		if (monitors[0].isCanceled()) {
@@ -413,18 +413,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> document/resolveCompletionItem");
 		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<CompletionItem> result = computeAsync((cc) -> {
-			monitors[0] = toMonitor(cc);
+		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
+			monitors[0] = monitor;
 			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
-				try {
-					Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
-				} catch (OperationCanceledException ignorable) {
-					// No need to pollute logs when query is cancelled
-				} catch (InterruptedException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
+				waitForLifecycleJobs(monitor);
 			}
-			return handler.resolve(unresolved, monitors[0]);
+			return handler.resolve(unresolved, monitor);
 		});
 		result.join();
 		if (monitors[0].isCanceled()) {
@@ -440,7 +434,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
 		logInfo(">> document/hover");
 		HoverHandler handler = new HoverHandler(this.preferenceManager);
-		return computeAsync((cc) -> handler.hover(position, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.hover(position, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -450,7 +444,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
 		logInfo(">> document/signatureHelp");
 		SignatureHelpHandler handler = new SignatureHelpHandler(preferenceManager);
-		return computeAsync((cc) -> handler.signatureHelp(position, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.signatureHelp(position, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -460,16 +454,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			return handler.definition(position, toMonitor(cc));
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.definition(position, monitor);
 		});
 	}
 
@@ -480,7 +467,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
 		logInfo(">> document/references");
 		ReferencesHandler handler = new ReferencesHandler(this.preferenceManager);
-		return computeAsync((cc) -> handler.findReferences(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.findReferences(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -490,7 +477,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
 		logInfo(">> document/documentHighlight");
 		DocumentHighlightHandler handler = new DocumentHighlightHandler();
-		return computeAsync((cc) -> handler.documentHighlight(position, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.documentHighlight(position, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -500,7 +487,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
 		DocumentSymbolHandler handler = new DocumentSymbolHandler();
-		return computeAsync((cc) -> handler.documentSymbol(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.documentSymbol(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -510,16 +497,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
 		CodeActionHandler handler = new CodeActionHandler();
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			return handler.getCodeActionCommands(params, toMonitor(cc));
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.getCodeActionCommands(params, monitor);
 		});
 	}
 
@@ -530,15 +510,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
 		logInfo(">> document/codeLens");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
 			return handler.getCodeLensSymbols(params.getTextDocument().getUri(), monitor);
 		});
 	}
@@ -550,15 +523,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<CodeLens> resolveCodeLens(CodeLens unresolved) {
 		logInfo(">> codeLens/resolve");
 		CodeLensHandler handler = new CodeLensHandler(preferenceManager);
-		return computeAsync((cc) -> {
-			IProgressMonitor monitor = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
 			return handler.resolve(unresolved, monitor);
 		});
 	}
@@ -570,7 +536,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
 		logInfo(">> document/formatting");
 		FormatterHandler handler = new FormatterHandler(preferenceManager);
-		return computeAsync((cc) -> handler.formatting(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.formatting(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -580,7 +546,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends TextEdit>> rangeFormatting(DocumentRangeFormattingParams params) {
 		logInfo(">> document/rangeFormatting");
 		FormatterHandler handler = new FormatterHandler(preferenceManager);
-		return computeAsync((cc) -> handler.rangeFormatting(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.rangeFormatting(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -600,7 +566,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
 		logInfo(">> document/rename");
 		RenameHandler handler = new RenameHandler(preferenceManager);
-		return computeAsync((cc) -> handler.rename(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.rename(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -637,7 +603,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<TextEdit>> willSaveWaitUntil(WillSaveTextDocumentParams params) {
 		logInfo(">> document/willSaveWailUntil");
 		SaveActionHandler handler = new SaveActionHandler(preferenceManager);
-		return computeAsync((cc) -> handler.willSaveWaitUntil(params, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.willSaveWaitUntil(params, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -657,7 +623,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> java/classFileContents");
 		ContentProviderManager handler = JavaLanguageServerPlugin.getContentProviderManager();
 		URI uri = JDTUtils.toURI(param.getUri());
-		return computeAsync((cc) -> handler.getContent(uri, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.getContent(uri, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -677,7 +643,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
 		logInfo(">> java/buildWorkspace (" + (forceReBuild ? "full)" : "incremental)"));
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
-		return computeAsync((cc) -> handler.buildWorkspace(forceReBuild, toMonitor(cc)));
+		return computeAsync((monitor) -> handler.buildWorkspace(forceReBuild, monitor));
 	}
 
 	/* (non-Javadoc)
@@ -695,10 +661,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (client != null) {
 			client.sendStatus(serverStatus, status);
 		}
-	}
-
-	private IProgressMonitor toMonitor(CancelChecker checker) {
-		return new CancellableProgressMonitor(checker);
 	}
 
 	public void unregisterCapability(String id, String method) {
@@ -723,6 +685,24 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 	public JavaClientConnection getClientConnection() {
 		return client;
+	}
+
+	private <R> CompletableFuture<R> computeAsync(Function<IProgressMonitor, R> code) {
+		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)));
+	}
+
+	private IProgressMonitor toMonitor(CancelChecker checker) {
+		return new CancellableProgressMonitor(checker);
+	}
+
+	private void waitForLifecycleJobs(IProgressMonitor monitor) {
+		try {
+			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		} catch (OperationCanceledException ignorable) {
+			// No need to pollute logs when query is cancelled
+		} catch (InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 	}
 
 }

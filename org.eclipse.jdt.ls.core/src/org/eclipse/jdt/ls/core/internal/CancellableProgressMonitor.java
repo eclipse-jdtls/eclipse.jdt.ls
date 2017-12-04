@@ -16,22 +16,21 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 /**
+ * Progress monitor wrapping a {@link CancelChecker}. Cancelling the
+ * CancelChecker will also cancel this monitor.
  *
  * @author Gorkem Ercan
  */
 public class CancellableProgressMonitor extends NullProgressMonitor {
 
 	private final CancelChecker cancelChecker;
-	/**
-	 *
-	 */
+
+	private boolean done;
+
 	public CancellableProgressMonitor(CancelChecker checker) {
 		this.cancelChecker = checker;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.NullProgressMonitor#isCanceled()
-	 */
 	@Override
 	public boolean isCanceled() {
 		if (super.isCanceled()) {
@@ -45,5 +44,15 @@ public class CancellableProgressMonitor extends NullProgressMonitor {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void done() {
+		super.done();
+		done = true;
+	}
+
+	public boolean isDone() {
+		return done;
 	}
 }

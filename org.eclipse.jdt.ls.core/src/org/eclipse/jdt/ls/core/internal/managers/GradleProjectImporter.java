@@ -51,6 +51,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild();
 
+	public static final String IMPORTING_GRADLE_PROJECTS = "Importing Gradle project(s)";
+
 	private Collection<Path> directories;
 
 	/* (non-Javadoc)
@@ -82,11 +84,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (!applies(monitor)) {
 			return;
 		}
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-		JavaLanguageServerPlugin.logInfo("Importing Gradle project(s)");
 		int projectSize = directories.size();
-		subMonitor.setWorkRemaining(projectSize);
-		directories.forEach(d -> importDir(d, monitor));
+		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize);
+		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
+		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
+		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
 		subMonitor.done();
 	}
 

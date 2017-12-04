@@ -33,11 +33,14 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author Fred Bricon
  *
  */
+@RunWith(MockitoJUnitRunner.class)
 public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	private static final String GRADLE1_PATTERN = "**/gradle1";
@@ -45,6 +48,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void importSimpleGradleProject() throws Exception {
 		importSimpleJavaProject();
+		assertTaskCompleted(GradleProjectImporter.IMPORTING_GRADLE_PROJECTS);
 	}
 
 	/* (non-Javadoc)

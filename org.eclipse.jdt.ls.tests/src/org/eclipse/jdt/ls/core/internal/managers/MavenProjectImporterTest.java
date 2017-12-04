@@ -32,10 +32,13 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author Fred Bricon
  */
+@RunWith(MockitoJUnitRunner.class)
 public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
 	private static final String INVALID = "invalid";
@@ -61,6 +64,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		attachJobSpy();
 		importSimpleJavaProject();
 		assertEquals("New Projects should not be updated", 0, jobSpy.updateProjectJobCalled);
+		assertTaskCompleted(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS);
 	}
 
 	@Test

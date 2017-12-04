@@ -38,12 +38,19 @@ public class JavaClientConnection {
 		void sendStatusReport(StatusReport report);
 
 		/**
-		 * The actionable notification is sent from a server to a client to ask
-		 * the client to display a particular message in the user interface, and possible
+		 * The actionable notification is sent from a server to a client to ask the
+		 * client to display a particular message in the user interface, and possible
 		 * commands to execute. The commands must be implemented on the client side.
 		 */
 		@JsonNotification("language/actionableNotification")
 		void sendActionableNotification(ActionableNotification notification);
+
+		/**
+		 * The progress report notification is sent from a server to be handled by the
+		 * client.
+		 */
+		@JsonNotification("language/progressReport")
+		void sendProgressReport(ProgressReport report);
 
 	}
 
@@ -107,9 +114,19 @@ public class JavaClientConnection {
 		client.sendStatusReport( $.withMessage(status).withType(serverStatus.name()));
 	}
 
+	/**
+	 * Sends a progress report to the client to be presented to users
+	 *
+	 * @param progressReport
+	 *            The progress report to send back to the client
+	 */
+	public void sendProgressReport(ProgressReport progressReport) {
+		client.sendProgressReport(progressReport);
+	}
 
 	/**
-	 * Sends a message to the client to be presented to users, with possible commands to execute
+	 * Sends a message to the client to be presented to users, with possible
+	 * commands to execute
 	 */
 	public void sendActionableNotification(MessageType severity, String message, Object data, List<Command> commands) {
 		ActionableNotification notification = new ActionableNotification().withSeverity(severity).withMessage(message).withData(data).withCommands(commands);
