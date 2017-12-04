@@ -53,6 +53,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -110,6 +111,12 @@ public class ProjectsManager implements ISaveParticipant {
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
 		WorkspaceJob job = new WorkspaceJob("Updating workspace folders") {
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family);
+			}
+
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				IStatus status = Status.OK_STATUS;
@@ -291,6 +298,12 @@ public class ProjectsManager implements ISaveParticipant {
 		}
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating " + project.getName() + " configuration");
 		WorkspaceJob job = new WorkspaceJob("Update project " + project.getName()) {
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return IConstants.UPDATE_PROJECT_FAMILY.equals(family) || (IConstants.JOBS_FAMILY + "." + project.getName()).equals(family) || IConstants.JOBS_FAMILY.equals(family);
+			}
+
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				IStatus status = Status.OK_STATUS;

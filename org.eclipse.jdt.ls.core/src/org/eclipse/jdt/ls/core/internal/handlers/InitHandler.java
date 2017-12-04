@@ -17,6 +17,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +28,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -73,18 +73,20 @@ final public class InitHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
+	@SuppressWarnings("unchecked")
 	InitializeResult initialize(InitializeParams param) {
 		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
+		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
+		Map<String, Object> extendedClientCapabilities = getInitializationOption(initializationOptions, "extendedClientCapabilities", Map.class);
 		if (param.getCapabilities() == null) {
-			preferenceManager.updateClientPrefences(new ClientCapabilities());
+			preferenceManager.updateClientPrefences(new ClientCapabilities(), extendedClientCapabilities);
 		} else {
-			preferenceManager.updateClientPrefences(param.getCapabilities());
+			preferenceManager.updateClientPrefences(param.getCapabilities(), extendedClientCapabilities);
 		}
 
-		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
 
 		Collection<IPath> rootPaths = new ArrayList<>();
-		Collection<String> workspaceFolders = getWorkspaceFolders(initializationOptions);
+		Collection<String> workspaceFolders = getInitializationOption(initializationOptions, "workspaceFolders", Collection.class);
 		if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
 			for (String uri : workspaceFolders) {
 				IPath filePath = ResourceUtils.filePathFromURI(uri);
@@ -112,7 +114,7 @@ final public class InitHandler {
 			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
 			rootPaths.add(workspaceLocation);
 		}
-		if (initializationOptions instanceof Map && initializationOptions.get(SETTINGS_KEY) instanceof Map) {
+		if (initializationOptions.get(SETTINGS_KEY) instanceof Map) {
 			Object settings = initializationOptions.get(SETTINGS_KEY);
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
@@ -125,7 +127,7 @@ final public class InitHandler {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
 		}
 		try {
-			Collection<String> bundleList = getBundleList(initializationOptions);
+			Collection<String> bundleList = getInitializationOption(initializationOptions, BUNDLES_KEY, Collection.class);
 			BundleUtils.loadBundles(bundleList);
 		} catch (CoreException e) {
 			// The additional plug-ins should not affect the main language server loading.
@@ -204,7 +206,7 @@ final public class InitHandler {
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				long start = System.currentTimeMillis();
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
-				SubMonitor subMonitor = SubMonitor.convert(new ServerStatusMonitor(), 100);
+				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 				try {
 					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
@@ -234,23 +236,15 @@ final public class InitHandler {
 	}
 
 	private Map<?, ?> getInitializationOptions(InitializeParams params) {
-		return JSONUtility.toModel(params.getInitializationOptions(), Map.class);
+		Map<?, ?> initOptions = JSONUtility.toModel(params.getInitializationOptions(), Map.class);
+		return initOptions == null ? Collections.emptyMap() : initOptions;
 	}
 
-	private Collection<String> getWorkspaceFolders(Map<?, ?> initializationOptions) {
+	private <T> T getInitializationOption(Map<?, ?> initializationOptions, String key, Class<T> clazz) {
 		if (initializationOptions != null) {
-			Object folders = initializationOptions.get("workspaceFolders");
-			if (folders instanceof Collection<?>) {
-				return (Collection<String>) folders;
-			}
-		}
-		return null;
-	}
-	private Collection<String> getBundleList(Map<?, ?> initializationOptions) {
-		if (initializationOptions != null) {
-			Object bundleObject = initializationOptions.get(BUNDLES_KEY);
-			if (bundleObject instanceof Collection<?>) {
-				return (Collection<String>) bundleObject;
+			Object bundleObject = initializationOptions.get(key);
+			if (clazz.isInstance(bundleObject)) {
+				return clazz.cast(bundleObject);
 			}
 		}
 		return null;
@@ -267,43 +261,5 @@ final public class InitHandler {
 		removeWorkspaceDiagnosticsHandler();
 		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(workspaceDiagnosticsHandler, IResourceChangeEvent.POST_CHANGE);
-	}
-
-	private class ServerStatusMonitor extends NullProgressMonitor {
-		private final static long DELAY = 200;
-
-		private double totalWork;
-		private String subtask;
-		private double progress;
-		private long lastReport = 0;
-
-		@Override
-		public void beginTask(String task, int totalWork) {
-			this.totalWork = totalWork;
-			sendProgress();
-		}
-
-		@Override
-		public void subTask(String name) {
-			this.subtask = name;
-			sendProgress();
-		}
-
-		@Override
-		public void worked(int work) {
-			progress += work;
-			sendProgress();
-		}
-
-		private void sendProgress() {
-			// throttle the sending of progress
-			long currentTime = System.currentTimeMillis();
-			if (lastReport == 0 || currentTime - lastReport > DELAY) {
-				lastReport = currentTime;
-				String message = this.subtask == null || this.subtask.length() == 0 ? "" : (" - " + this.subtask);
-				connection.sendStatus(ServiceStatus.Starting, String.format("%.0f%%  Starting Java Language Server %s", progress / totalWork * 100, message));
-			}
-		}
-
 	}
 }

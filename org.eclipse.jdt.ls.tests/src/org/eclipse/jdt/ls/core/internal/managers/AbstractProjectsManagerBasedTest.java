@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -26,8 +27,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -42,6 +45,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -51,10 +55,13 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
@@ -69,10 +76,11 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	public static final String TEST_PROJECT_NAME = "TestProject";
 
-	protected IProgressMonitor monitor = new NullProgressMonitor();
+	protected IProgressMonitor monitor;
 	protected ProjectsManager projectsManager;
 	@Mock
 	protected PreferenceManager preferenceManager;
+
 	protected Preferences preferences;
 
 	protected SimpleLogListener logListener;
@@ -104,9 +112,15 @@ public abstract class AbstractProjectsManagerBasedTest {
 		preferences = new Preferences();
 		if (preferenceManager != null) {
 			when(preferenceManager.getPreferences()).thenReturn(preferences);
+			ClientPreferences clientPreferences = mock(ClientPreferences.class);
+			when(clientPreferences.isProgressReportSupported()).thenReturn(true);
+			when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		}
 		projectsManager = new ProjectsManager(preferenceManager);
-
+		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager);
+		progressManager.setReportThrottle(0);//disable throttling to ensure we capture all events
+		Job.getJobManager().setProgressProvider(progressManager);
+		monitor = progressManager.getDefaultMonitor();
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
 			@Override
 			public IBuffer createBuffer(ICompilationUnit workingCopy) {
@@ -199,6 +213,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		logListener = null;
 		WorkspaceHelper.deleteAllProjects();
 		FileUtils.forceDelete(getWorkingProjectDirectory());
+		Job.getJobManager().setProgressProvider(null);
 	}
 
 	protected void assertIsJavaProject(IProject project) {
@@ -240,5 +255,26 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 
 		return to;
+	}
+
+	protected void assertTaskCompleted(String taskName) {
+		List<Object> progressReports = clientRequests.get("sendProgressReport");
+		assertNotNull("No progress report were sent to the client", progressReports);
+		boolean completedTask = false;
+		Set<String> tasks = new LinkedHashSet<>(progressReports.size());
+		String taskId = null;
+		for (Object o : progressReports) {
+			ProgressReport report = (ProgressReport) o;
+			assertNotNull(report.getId());
+			tasks.add(report.getTask());
+			if (taskName.equals(report.getTask())) {
+				taskId = report.getId();
+			}
+			if (report.getId().equals(taskId) && report.isComplete()) {
+				completedTask = true;
+			}
+		}
+		assertNotNull("'" + taskName + "' was not found among " + tasks, taskId);
+		assertTrue("'" + taskName + "' was not completed", completedTask);
 	}
 }

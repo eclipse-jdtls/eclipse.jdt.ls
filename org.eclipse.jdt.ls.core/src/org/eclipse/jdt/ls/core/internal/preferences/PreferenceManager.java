@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.core.resources.IResource;
@@ -130,10 +131,12 @@ public class PreferenceManager {
 	}
 
 	/**
-	 * @param clientCapabilities the clientCapabilities to set
+	 * @param clientCapabilities
+	 *                                       the clientCapabilities to set
+	 * @param extendedClientCapabilities
 	 */
-	public void updateClientPrefences(ClientCapabilities clientCapabilities) {
-		this.clientPreferences = new ClientPreferences(clientCapabilities);
+	public void updateClientPrefences(ClientCapabilities clientCapabilities, Map<String, Object> extendedClientCapabilities) {
+		this.clientPreferences = new ClientPreferences(clientCapabilities, extendedClientCapabilities);
 	}
 
 	public IMavenConfiguration getMavenConfiguration() {

@@ -70,7 +70,12 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 **/
 	public static final String SERVER_SOURCE_ID = "Java";
 
-	public static final String PLUGIN_ID = "org.eclipse.jdt.ls.core";
+	/**
+	 * Use IConstants.PLUGIN_ID
+	 */
+	@Deprecated
+	public static final String PLUGIN_ID = IConstants.PLUGIN_ID;
+
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
 	private ServiceTracker<IProxyService, IProxyService> proxyServiceTracker = null;
