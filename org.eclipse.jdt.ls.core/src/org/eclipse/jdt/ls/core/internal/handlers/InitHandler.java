@@ -58,6 +58,7 @@ final public class InitHandler {
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
+	private static WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 
 	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection) {
 		this.projectsManager = manager;
@@ -105,9 +106,8 @@ final public class InitHandler {
 			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
 			rootPaths.add(workspaceLocation);
 		}
-
 		triggerInitialization(rootPaths);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(new WorkspaceDiagnosticsHandler(connection, projectsManager), IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
+		addWorkspaceDiagnosticsHandler();
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
@@ -240,6 +240,19 @@ final public class InitHandler {
 			}
 		}
 		return null;
+	}
+
+	public static void removeWorkspaceDiagnosticsHandler() {
+		if (workspaceDiagnosticsHandler != null) {
+			ResourcesPlugin.getWorkspace().removeResourceChangeListener(workspaceDiagnosticsHandler);
+			workspaceDiagnosticsHandler = null;
+		}
+	}
+
+	public void addWorkspaceDiagnosticsHandler() {
+		removeWorkspaceDiagnosticsHandler();
+		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(workspaceDiagnosticsHandler, IResourceChangeEvent.POST_CHANGE);
 	}
 
 	private class ServerStatusMonitor extends NullProgressMonitor {

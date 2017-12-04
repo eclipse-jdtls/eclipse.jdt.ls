@@ -158,16 +158,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public CompletableFuture<Object> shutdown() {
-    logInfo(">> shutdown");
-    return computeAsync((cc)->{
-      try {
-        ResourcesPlugin.getWorkspace().save(true, toMonitor(cc));
-      } catch (CoreException e) {
-        logException(e.getMessage(),e);
-      }
-      return new Object();
-    });
-  }
+		logInfo(">> shutdown");
+		return computeAsync((cc) -> {
+			try {
+				InitHandler.removeWorkspaceDiagnosticsHandler();
+				ResourcesPlugin.getWorkspace().save(true, toMonitor(cc));
+			} catch (CoreException e) {
+				logException(e.getMessage(), e);
+			}
+			return new Object();
+		});
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.LanguageServer#exit()

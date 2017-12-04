@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jface.text.IDocument;
@@ -127,9 +125,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testMarkerListening() throws Exception {
-		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(handler, IResourceChangeEvent.POST_BUILD | IResourceChangeEvent.POST_CHANGE);
-
+		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
+		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("maven/broken");
 
@@ -138,6 +135,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
 
 		Optional<PublishDiagnosticsParams> fooDiags = allCalls.stream().filter(p -> p.getUri().endsWith("Foo.java")).findFirst();
 		assertTrue("No Foo.java errors were found", fooDiags.isPresent());
@@ -157,10 +155,12 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		diags = pomDiags.get().getDiagnostics();
-		Collections.sort(diags, comparator );
+		Collections.sort(diags, comparator);
 		assertEquals(diags.toString(), 3, diags.size());
-		assertTrue(diags.get(0).getMessage().startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:resources:default-resources:process-resources)"));
-		assertTrue(diags.get(1).getMessage().startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:testResources:default-testResources:process-test-resources)"));
+		assertTrue(diags.get(0).getMessage()
+				.startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:resources:default-resources:process-resources)"));
+		assertTrue(diags.get(1).getMessage()
+				.startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:testResources:default-testResources:process-test-resources)"));
 		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(2).getMessage());
 	}
 
@@ -186,7 +186,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@After
 	public void removeResourceChangeListener() {
-		ResourcesPlugin.getWorkspace().removeResourceChangeListener(handler);
+		InitHandler.removeWorkspaceDiagnosticsHandler();
 	}
 
 }
