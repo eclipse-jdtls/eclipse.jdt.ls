@@ -52,6 +52,7 @@
          point="org.eclipse.jdt.ls.core.delegateCommandHandler">
       <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.JDTDelegateCommandHandler">
             <command id="java.edit.organizeImports"/>
+            <command id="java.view.classpath.fetch"/>
       </delegateCommandHandler>
    </extension>
    <extension
