@@ -123,7 +123,7 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- get major.minor.incremental from this pom, then use ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion} 
+					<!-- get major.minor.incremental from this pom, then use ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}
 						to use the x.y.z version without the -SNAPSHOT suffix -->
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
@@ -201,6 +201,7 @@
 									<descriptors>
 										<descriptor>publish-assembly.xml</descriptor>
 									</descriptors>
+									<tarLongFileMode>posix</tarLongFileMode>
 								</configuration>
 							</execution>
 						</executions>
@@ -210,14 +211,14 @@
 		</profile>
 		<profile>
 			<id>fast</id>
-			<!-- 
+			<!--
 			Enable faster builds by targeting a single TP environment.
 			Run the Maven command with specific environment properties:
 			- On MacOS : mvn clean verify -Pfast -Denvironment.os=macosx -Denvironment.ws=cocoa -Denvironment.arch=x86_64
 			- On Win32 : mvn clean verify -Pfast -Denvironment.os=win32 -Denvironment.ws=win32 -Denvironment.arch=x86
 			- On Win64 : mvn clean verify -Pfast -Denvironment.os=win32 -Denvironment.ws=win32 -Denvironment.arch=x86_64
 			- On Linux : mvn clean verify -Pfast -Denvironment.os=linux -Denvironment.ws=gtk -Denvironment.arch=x86_64
-			
+
 			 -->
 			<build>
 				<plugins>
