@@ -92,7 +92,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
 		GradleDistribution distribution = DEFAULT_DISTRIBUTION;
-		if (Files.exists(rootFolder.resolve("gradlew"))) {
+		if (Files.exists(rootFolder.resolve("gradle/wrapper/gradle-wrapper.properties"))) {
 			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
 		} else {
 			String gradleHome = System.getenv(GRADLE_HOME);
