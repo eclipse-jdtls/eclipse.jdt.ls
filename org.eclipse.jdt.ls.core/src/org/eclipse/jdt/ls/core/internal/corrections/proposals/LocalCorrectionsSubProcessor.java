@@ -68,6 +68,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 
 public class LocalCorrectionsSubProcessor {
 
@@ -347,6 +348,15 @@ public class LocalCorrectionsSubProcessor {
 			curr = curr.getSuperclass();
 		}
 		return false;
+	}
+
+	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+
+		QuickAssistProcessor.getCatchClauseToThrowsProposals(context, selectedNode, proposals);
 	}
 
 	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
