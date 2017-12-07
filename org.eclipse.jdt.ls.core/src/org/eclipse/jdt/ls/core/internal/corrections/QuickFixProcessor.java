@@ -149,12 +149,11 @@ public class QuickFixProcessor {
 			case IProblem.UnhandledExceptionOnAutoClose:
 				LocalCorrectionsSubProcessor.addUncaughtExceptionProposals(context, problem, proposals);
 				break;
-			// case IProblem.UnreachableCatch:
-			// case IProblem.InvalidCatchBlockSequence:
-			// case IProblem.InvalidUnionTypeReferenceSequence:
-			// LocalCorrectionsSubProcessor.addUnreachableCatchProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnreachableCatch:
+			case IProblem.InvalidCatchBlockSequence:
+			case IProblem.InvalidUnionTypeReferenceSequence:
+				LocalCorrectionsSubProcessor.addUnreachableCatchProposals(context, problem, proposals);
+				break;
 			// case IProblem.RedundantSuperinterface:
 			// LocalCorrectionsSubProcessor.addRedundantSuperInterfaceProposal(context,
 			// problem, proposals);

@@ -1314,7 +1314,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		buf = new StringBuilder();
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.text.ParseException;\n");
@@ -1369,4 +1368,190 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
+
+	@Test
+	public void testUnneededCatchBlock() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.text.ParseException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() throws IOException {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("        } catch (ParseException e) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.text.ParseException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() throws IOException {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() throws ParseException {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.text.ParseException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() throws IOException {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Remove catch clause", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnneededCatchBlockInInitializer() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.text.ParseException;\n");
+		buf.append("public class E {\n");
+		buf.append("    static {\n");
+		buf.append("        try {\n");
+		buf.append("            int x= 1;\n");
+		buf.append("        } catch (ParseException e) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.text.ParseException;\n");
+		buf.append("public class E {\n");
+		buf.append("    static {\n");
+		buf.append("        int x= 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove catch clause", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnneededCatchBlockSingle() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        goo();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        goo();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Remove catch clause", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnneededCatchBlockWithFinally() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("        } finally {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } finally {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } finally {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Remove catch clause", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
 }

@@ -23,6 +23,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -38,6 +39,8 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.CreationReference;
@@ -47,25 +50,33 @@ import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.ThisExpression;
+import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
+import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
@@ -76,6 +87,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRef
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
@@ -622,4 +634,151 @@ public class QuickAssistProcessor {
 		blockBody.statements().add(statementInBlockBody);
 		return blockBody;
 	}
+
+	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		CatchClause catchClause = (CatchClause) ASTResolving.findAncestor(node, ASTNode.CATCH_CLAUSE);
+		if (catchClause == null) {
+			return false;
+		}
+
+		Statement statement = ASTResolving.findParentStatement(node);
+		if (statement != catchClause.getParent() && statement != catchClause.getBody()) {
+			return false; // selection is in a statement inside the body
+		}
+
+		Type type = catchClause.getException().getType();
+		if (!type.isSimpleType() && !type.isUnionType() && !type.isNameQualifiedType()) {
+			return false;
+		}
+
+		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(catchClause);
+		if (!(bodyDeclaration instanceof MethodDeclaration) && !(bodyDeclaration instanceof Initializer)) {
+			return false;
+		}
+
+		AST ast = bodyDeclaration.getAST();
+
+		Type selectedMultiCatchType = null;
+		if (type.isUnionType() && node instanceof Name) {
+			Name topMostName = ASTNodes.getTopMostName((Name) node);
+			ASTNode parent = topMostName.getParent();
+			if (parent instanceof SimpleType) {
+				selectedMultiCatchType = (SimpleType) parent;
+			} else if (parent instanceof NameQualifiedType) {
+				selectedMultiCatchType = (NameQualifiedType) parent;
+			}
+		}
+
+		if (bodyDeclaration instanceof MethodDeclaration) {
+			MethodDeclaration methodDeclaration = (MethodDeclaration) bodyDeclaration;
+
+			ASTRewrite rewrite = ASTRewrite.create(ast);
+			if (selectedMultiCatchType != null) {
+				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
+				addExceptionToThrows(ast, methodDeclaration, rewrite, selectedMultiCatchType);
+				String label = CorrectionMessages.QuickAssistProcessor_exceptiontothrows_description;
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_EXCEPTION_WITH_THROWS);
+				resultingCollections.add(proposal);
+			} else {
+				removeCatchBlock(rewrite, catchClause);
+				if (type.isUnionType()) {
+					UnionType unionType = (UnionType) type;
+					List<Type> types = unionType.types();
+					for (Type elementType : types) {
+						if (!(elementType instanceof SimpleType || elementType instanceof NameQualifiedType)) {
+							return false;
+						}
+						addExceptionToThrows(ast, methodDeclaration, rewrite, elementType);
+					}
+				} else {
+					addExceptionToThrows(ast, methodDeclaration, rewrite, type);
+				}
+				String label = CorrectionMessages.QuickAssistProcessor_catchclausetothrows_description;
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_CATCH_CLAUSE_WITH_THROWS);
+				resultingCollections.add(proposal);
+			}
+		}
+		{ // for initializers or method declarations
+			ASTRewrite rewrite = ASTRewrite.create(ast);
+			if (selectedMultiCatchType != null) {
+				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
+				String label = CorrectionMessages.QuickAssistProcessor_removeexception_description;
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_EXCEPTION);
+				resultingCollections.add(proposal);
+			} else {
+				removeCatchBlock(rewrite, catchClause);
+				String label = CorrectionMessages.QuickAssistProcessor_removecatchclause_description;
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_CATCH_CLAUSE);
+				resultingCollections.add(proposal);
+			}
+		}
+
+		return true;
+	}
+
+	private static void removeException(ASTRewrite rewrite, UnionType unionType, Type exception) {
+		ListRewrite listRewrite = rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
+		List<Type> types = unionType.types();
+		for (Iterator<Type> iterator = types.iterator(); iterator.hasNext();) {
+			Type type = iterator.next();
+			if (type.equals(exception)) {
+				listRewrite.remove(type, null);
+			}
+		}
+	}
+
+	private static void addExceptionToThrows(AST ast, MethodDeclaration methodDeclaration, ASTRewrite rewrite, Type type2) {
+		ITypeBinding binding = type2.resolveBinding();
+		if (binding == null || isNotYetThrown(binding, methodDeclaration.thrownExceptionTypes())) {
+			Type newType = (Type) ASTNode.copySubtree(ast, type2);
+
+			ListRewrite listRewriter = rewrite.getListRewrite(methodDeclaration, MethodDeclaration.THROWN_EXCEPTION_TYPES_PROPERTY);
+			listRewriter.insertLast(newType, null);
+		}
+	}
+
+	private static void removeCatchBlock(ASTRewrite rewrite, CatchClause catchClause) {
+		TryStatement tryStatement = (TryStatement) catchClause.getParent();
+		if (tryStatement.catchClauses().size() > 1 || tryStatement.getFinally() != null || !tryStatement.resources().isEmpty()) {
+			rewrite.remove(catchClause, null);
+		} else {
+			Block block = tryStatement.getBody();
+			List<Statement> statements = block.statements();
+			int nStatements = statements.size();
+			if (nStatements == 1) {
+				ASTNode first = statements.get(0);
+				rewrite.replace(tryStatement, rewrite.createCopyTarget(first), null);
+			} else if (nStatements > 1) {
+				ListRewrite listRewrite = rewrite.getListRewrite(block, Block.STATEMENTS_PROPERTY);
+				ASTNode first = statements.get(0);
+				ASTNode last = statements.get(statements.size() - 1);
+				ASTNode newStatement = listRewrite.createCopyTarget(first, last);
+				if (ASTNodes.isControlStatementBody(tryStatement.getLocationInParent())) {
+					Block newBlock = rewrite.getAST().newBlock();
+					newBlock.statements().add(newStatement);
+					newStatement = newBlock;
+				}
+				rewrite.replace(tryStatement, newStatement, null);
+			} else {
+				rewrite.remove(tryStatement, null);
+			}
+		}
+	}
+
+	private static boolean isNotYetThrown(ITypeBinding binding, List<Type> thrownExceptions) {
+		for (Type thrownException : thrownExceptions) {
+			ITypeBinding elem = thrownException.resolveBinding();
+			if (elem != null) {
+				if (Bindings.isSuperType(elem, binding)) { // existing exception is base class of new
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 }
