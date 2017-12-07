@@ -79,31 +79,29 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		// Check if resource is accessible.
 		// We do not deal with the markers for deleted files here
 		// WorkspaceEventsHandler removes the diagnostics for deleted resources.
-		if (resource == null || !resource.isAccessible()
-				// ignore problems caused by standalone files
-				|| JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+		if (resource == null || !resource.isAccessible()) {
 			return false;
 		}
-
+		if (resource.getType() == IResource.FOLDER || resource.getType() == IResource.ROOT) {
+			return true;
+		}
+		// ignore problems caused by standalone files
+		if (resource.getType() == IResource.PROJECT) {
+			return !JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject());
+		}
 		// No marker changes continue to visit
 		if ((delta.getFlags() & IResourceDelta.MARKERS) == 0) {
-			return true;
+			return false;
 		}
-
-		IFile file = resource.getAdapter(IFile.class);
-		if (file == null) {
-			return true;
-		}
-
+		IFile file = (IFile) resource;
 		String uri = JDTUtils.getFileURI(resource);
 		IDocument document = null;
 		IMarker[] markers = null;
 		// Check if it is a Java ...
 		if (JavaCore.isJavaLikeFileName(file.getName())) {
 			markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
 			document = JsonRpcHelpers.toDocument(cu.getBuffer());
-
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {
 			//all errors on that build file should be relevant
@@ -111,10 +109,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			document = JsonRpcHelpers.toDocument(file);
 		}
 		if (document != null) {
-			this.connection
-					.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers)));
+			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers)));
 		}
-		return true;
+		return false;
 	}
 
 	/**
