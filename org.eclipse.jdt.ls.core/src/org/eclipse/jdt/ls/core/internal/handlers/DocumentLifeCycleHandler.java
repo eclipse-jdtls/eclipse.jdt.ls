@@ -16,9 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.core.filebuffers.FileBuffers;
-import org.eclipse.core.filebuffers.IFileBuffer;
-import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
@@ -33,6 +30,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -210,6 +209,13 @@ public class DocumentLifeCycleHandler {
 			if (!unit.getResource().isAccessible()) {
 				try {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
+					if (unit.getResource().exists()) {
+						IJavaElement parent = unit.getParent();
+						if (parent instanceof IPackageFragment) {
+							IPackageFragment pkg = (IPackageFragment) parent;
+							unit = pkg.createCompilationUnit(unit.getElementName(), unit.getSource(), true, new NullProgressMonitor());
+						}
+					}
 				} catch (CoreException e) {
 					// ignored
 				}
@@ -322,14 +328,10 @@ public class DocumentLifeCycleHandler {
 		}
 		// see https://github.com/redhat-developer/vscode-java/issues/274
 		unit = checkPackageDeclaration(uri, unit);
-		IFileBuffer fileBuffer = FileBuffers.getTextFileBufferManager().getFileBuffer(unit.getPath(), LocationKind.IFILE);
-		if (fileBuffer != null) {
-			fileBuffer.setDirty(false);
-		}
 		if (unit.isWorkingCopy()) {
 			try {
 				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
-				unit.getBuffer().close();
+				unit.commitWorkingCopy(true, new NullProgressMonitor());
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException("Error while handling document save", e);
 			}

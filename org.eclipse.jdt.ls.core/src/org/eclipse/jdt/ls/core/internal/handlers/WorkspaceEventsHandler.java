@@ -13,9 +13,18 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -56,6 +65,21 @@ public class WorkspaceEventsHandler {
 				cleanUpDiagnostics(fileEvent.getUri());
 			}
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
+			if (unit != null && changeType == CHANGE_TYPE.CREATED && !unit.exists()) {
+				final ICompilationUnit[] units = new ICompilationUnit[1];
+				units[0] = unit;
+				try {
+					ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+						@Override
+						public void run(IProgressMonitor monitor) throws CoreException {
+							units[0] = createCompilationUnit(units[0]);
+						}
+					}, new NullProgressMonitor());
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+				unit = units[0];
+			}
 			if (unit != null && unit.isWorkingCopy()) {
 				continue;
 			}
@@ -64,6 +88,22 @@ public class WorkspaceEventsHandler {
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
+	}
+
+	private ICompilationUnit createCompilationUnit(ICompilationUnit unit) {
+		try {
+			unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
+			if (unit.getResource().exists()) {
+				IJavaElement parent = unit.getParent();
+				if (parent instanceof IPackageFragment) {
+					IPackageFragment pkg = (IPackageFragment) parent;
+					unit = pkg.createCompilationUnit(unit.getElementName(), unit.getSource(), true, new NullProgressMonitor());
+				}
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return unit;
 	}
 
 	private void cleanUpDiagnostics(String uri){
