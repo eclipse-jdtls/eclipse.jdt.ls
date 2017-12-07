@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +24,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -451,6 +454,45 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = SharedASTProvider.getInstance().getAST(cu, new NullProgressMonitor());
 		problems = astRoot.getProblems();
+		assertEquals("Unexpected number of errors", 0, problems.length);
+	}
+
+	@Test
+	public void testCreateCompilationUnit() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		// @formatter:off
+		String fooContent =
+				"package org;\n"+
+				"public class Foo {"+
+				"}\n";
+		String barContent =
+				"package org;\n"+
+				"public class Bar {\n"+
+				"  Foo test() { return null; }\n" +
+				"}\n";
+		// @formatter:on
+		IFolder src = javaProject.getProject().getFolder("src");
+		javaProject.getPackageFragmentRoot(src);
+		File sourceDirectory = src.getRawLocation().makeAbsolute().toFile();
+		File org = new File(sourceDirectory, "org");
+		org.mkdir();
+		File file = new File(org, "Bar.java");
+		file.createNewFile();
+		FileUtils.writeStringToFile(file, barContent);
+		ICompilationUnit bar = JDTUtils.resolveCompilationUnit(file.toURI());
+		bar.getResource().refreshLocal(IResource.DEPTH_ONE, null);
+		assertNotNull("Bar doesn't exist", javaProject.findType("org.Bar"));
+		file = new File(org, "Foo.java");
+		file.createNewFile();
+		URI uri = file.toURI();
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		openDocument(unit, "", 1);
+		FileUtils.writeStringToFile(file, fooContent);
+		changeDocumentFull(unit, fooContent, 1);
+		saveDocument(unit);
+		closeDocument(unit);
+		CompilationUnit astRoot = sharedASTProvider.getAST(bar, null);
+		IProblem[] problems = astRoot.getProblems();
 		assertEquals("Unexpected number of errors", 0, problems.length);
 	}
 
