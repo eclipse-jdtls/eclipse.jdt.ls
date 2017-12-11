@@ -620,4 +620,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 	}
 
+	public JavaClientConnection getClientConnection() {
+		return client;
+	}
+
 }

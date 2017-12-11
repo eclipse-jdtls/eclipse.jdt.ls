@@ -423,4 +423,11 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		return protocol;
 	}
 
+	public JavaClientConnection getClientConnection() {
+		if (protocol != null) {
+			return protocol.getClientConnection();
+		}
+		return null;
+	}
+
 }
