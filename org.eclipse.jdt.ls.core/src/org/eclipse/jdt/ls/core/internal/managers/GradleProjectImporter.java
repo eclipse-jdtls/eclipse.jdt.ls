@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.buildship.core.configuration.BuildConfiguration;
@@ -42,7 +44,7 @@ import com.gradleware.tooling.toolingmodel.repository.FetchStrategy;
  */
 public class GradleProjectImporter extends AbstractProjectImporter {
 
-	private static final String GRADLE_HOME = "GRADLE_HOME";
+	public static final String GRADLE_HOME = "GRADLE_HOME";
 
 	private static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
@@ -95,18 +97,32 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (Files.exists(rootFolder.resolve("gradlew"))) {
 			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
 		} else {
-			String gradleHome = System.getenv(GRADLE_HOME);
-			if (gradleHome == null || !new File(gradleHome).isDirectory()) {
-				gradleHome = System.getProperty(GRADLE_HOME);
-			}
-			if (gradleHome != null) {
-				File gradleHomeFile = new File(gradleHome);
-				if (gradleHomeFile.isDirectory()) {
-					distribution = GradleDistribution.forLocalInstallation(gradleHomeFile);
-				}
+			File gradleHomeFile = getGradleHomeFile();
+			if (gradleHomeFile != null) {
+				distribution = GradleDistribution.forLocalInstallation(gradleHomeFile);
 			}
 		}
 		return distribution;
+	}
+
+	public static File getGradleHomeFile() {
+		Map<String, String> env = System.getenv();
+		Properties sysprops = System.getProperties();
+		return getGradleHomeFile(env, sysprops);
+	}
+
+	public static File getGradleHomeFile(Map<String, String> env, Properties sysprops) {
+		String gradleHome = env.get(GRADLE_HOME);
+		if (gradleHome == null || !new File(gradleHome).isDirectory()) {
+			gradleHome = sysprops.getProperty(GRADLE_HOME);
+		}
+		if (gradleHome != null) {
+			File gradleHomeFile = new File(gradleHome);
+			if (gradleHomeFile.isDirectory()) {
+				return gradleHomeFile;
+			}
+		}
+		return null;
 	}
 
 	protected void startSynchronization(Path rootFolder, IProgressMonitor monitor) {
@@ -122,8 +138,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 		}
 		if (shouldSynchronize) {
+			boolean overrideWorkspaceSettings = getGradleHomeFile() != null;
 			GradleDistribution distribution = getGradleDistribution(rootFolder);
-			BuildConfiguration configuration = CorePlugin.configurationManager().createBuildConfiguration(location, false, distribution, null, false, false, false);
+			BuildConfiguration configuration = CorePlugin.configurationManager().createBuildConfiguration(location, overrideWorkspaceSettings, distribution, null, false, false, false);
 			GradleBuild build = CorePlugin.gradleWorkspaceManager().getGradleBuild(configuration);
 			build.getModelProvider().fetchEclipseGradleProjects(FetchStrategy.LOAD_IF_NOT_CACHED, GradleConnector.newCancellationTokenSource().token(), monitor);
 			build.synchronize(NewProjectHandler.IMPORT_AND_MERGE);

@@ -16,10 +16,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import org.eclipse.buildship.core.CorePlugin;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -94,5 +99,29 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		gradleBuild.setLastModified(System.currentTimeMillis() + 1000);
 		assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
 	}
+
+	@Test
+	public void testWorkspaceSettings() throws Exception {
+		Map<String, String> env = new HashMap<>();
+		Properties sysprops = new Properties();
+		File file = null;
+		try {
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			File rootFile = root.getLocation().toFile();
+			file = new File(rootFile, "fakeGradleHome");
+			sysprops.setProperty(GradleProjectImporter.GRADLE_HOME, file.getAbsolutePath());
+			boolean overrideWorkspaceSettings = GradleProjectImporter.getGradleHomeFile(env, sysprops) != null;
+			assertFalse(overrideWorkspaceSettings);
+			file.mkdir();
+			file.deleteOnExit();
+			overrideWorkspaceSettings = GradleProjectImporter.getGradleHomeFile(env, sysprops) != null;
+			assertTrue(overrideWorkspaceSettings);
+		} finally {
+			if (file != null) {
+				file.delete();
+			}
+		}
+	}
+
 
 }
