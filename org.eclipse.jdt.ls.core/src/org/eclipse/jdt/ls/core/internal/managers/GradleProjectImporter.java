@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.gradle.tooling.GradleConnector;
 
 import com.gradleware.tooling.toolingclient.GradleDistribution;
@@ -58,6 +59,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws CoreException {
 		if (rootFolder == null) {
+			return false;
+		}
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager != null && !preferencesManager.getPreferences().isImportGradleEnabled()) {
 			return false;
 		}
 		if (directories == null) {

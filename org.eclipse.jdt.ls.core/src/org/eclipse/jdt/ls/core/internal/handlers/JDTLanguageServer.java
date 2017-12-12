@@ -222,6 +222,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		logInfo(">> workspace/didChangeConfiguration");
+		Object settings = params.getSettings();
+		if (settings instanceof Map) {
+			@SuppressWarnings("unchecked")
+			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			preferenceManager.update(prefs);
+		}
 		JobHelpers.waitForInitializeJobs();
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
@@ -243,12 +249,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
-		}
-		Object settings = params.getSettings();
-		if (settings instanceof Map) {
-			@SuppressWarnings("unchecked")
-			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
-			preferenceManager.update(prefs);
 		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);

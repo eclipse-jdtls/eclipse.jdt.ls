@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -22,6 +23,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Test;
 
@@ -52,6 +54,21 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 			assertIsMavenProject(project2);
 		} finally {
 			javaImportExclusions.remove(PROJECT1_PATTERN);
+		}
+	}
+
+	@Test
+	public void testDisableMaven() throws Exception {
+		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportMavenEnabled();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportMavenEnabled(false);
+			List<IProject> projects = importProjects("eclipse/eclipsemaven");
+			assertEquals(2, projects.size());//default + 1 eclipse projects
+			IProject eclipse = WorkspaceHelper.getProject("eclipse");
+			assertNotNull(eclipse);
+			assertFalse(eclipse.getName() + " has the Maven nature", ProjectUtils.isMavenProject(eclipse));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportMavenEnabled(enabled);
 		}
 	}
 
