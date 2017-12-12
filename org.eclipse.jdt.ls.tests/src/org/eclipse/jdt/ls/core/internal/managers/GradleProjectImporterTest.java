@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -79,6 +80,21 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertIsGradleProject(gradle2);
 		} finally {
 			javaImportExclusions.remove(GRADLE1_PATTERN);
+		}
+	}
+
+	@Test
+	public void testDisableGradle() throws Exception {
+		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleEnabled();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(false);
+			List<IProject> projects = importProjects("eclipse/eclipsegradle");
+			assertEquals(2, projects.size());//default + 1 eclipse projects
+			IProject eclipse = WorkspaceHelper.getProject("eclipse");
+			assertNotNull(eclipse);
+			assertFalse(eclipse.getName() + " has the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(enabled);
 		}
 	}
 

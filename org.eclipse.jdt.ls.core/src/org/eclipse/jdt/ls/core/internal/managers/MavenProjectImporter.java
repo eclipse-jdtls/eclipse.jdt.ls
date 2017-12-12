@@ -30,13 +30,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
@@ -66,6 +66,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager != null && !preferencesManager.getPreferences().isImportMavenEnabled()) {
+			return false;
+		}
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
 		if (files != null) {
 			Iterator<MavenProjectInfo> iter = files.iterator();

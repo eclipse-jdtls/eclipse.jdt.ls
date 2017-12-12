@@ -31,6 +31,14 @@ import org.eclipse.lsp4j.MessageType;
 public class Preferences {
 
 	/**
+	 * Preference key to enable/disable gradle importer.
+	 */
+	public static final String IMPORT_GRADLE_ENABLED = "java.import.gradle.enabled";
+	/**
+	 * Preference key to enable/disable maven importer.
+	 */
+	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
+	/**
 	 * Preference key to enable/disable reference code lenses.
 	 */
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
@@ -148,6 +156,8 @@ public class Preferences {
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
+	private boolean importGradleEnabled;
+	private boolean importMavenEnabled;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean signatureHelpEnabled;
@@ -214,6 +224,8 @@ public class Preferences {
 		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
+		importGradleEnabled = true;
+		importMavenEnabled = true;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
@@ -243,6 +255,10 @@ public class Preferences {
 		prefs.setUpdateBuildConfigurationStatus(
 				FeatureStatus.fromString(updateBuildConfiguration, FeatureStatus.interactive));
 
+		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
+		prefs.setImportGradleEnabled(importGradleEnabled);
+		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
+		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
@@ -295,6 +311,16 @@ public class Preferences {
 
 	private Preferences setReferencesCodelensEnabled(boolean enabled) {
 		this.referencesCodeLensEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setImportGradleEnabled(boolean enabled) {
+		this.importGradleEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setImportMavenEnabled(boolean enabled) {
+		this.importMavenEnabled = enabled;
 		return this;
 	}
 
@@ -360,6 +386,14 @@ public class Preferences {
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public boolean isImportGradleEnabled() {
+		return importGradleEnabled;
+	}
+
+	public boolean isImportMavenEnabled() {
+		return importMavenEnabled;
 	}
 
 	public boolean isImplementationsCodeLensEnabled() {
