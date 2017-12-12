@@ -11,16 +11,19 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IRegistryChangeEvent;
+import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -31,7 +34,6 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
 
 public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
@@ -40,80 +42,117 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	private static final String EXTENSIONPOINT_ID = "testbundle.ext";
 
 	@Test
-	public void testLoad() throws BundleException, CoreException, ClassNotFoundException {
-		BundleUtils.loadBundles(Arrays.asList(getBundle()));
+	public void testLoad() throws Exception {
+		loadBundles(Arrays.asList(getBundle()));
 		String bundleLocation = getBundleLocation(getBundle(), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
-		assertNotNull(installedBundle);
+		try {
+			assertNotNull(installedBundle);
 
-		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-		// active the bundle by loading a class. This is needed
-		// because test bundles have lazy activation policy
-		installedBundle.loadClass("testbundle.Activator");
-		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			// active the bundle by loading a class. This is needed
+			// because test bundles have lazy activation policy
+			installedBundle.loadClass("testbundle.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
-		String extResult = getBundleExtensionResult();
-		assertEquals("EXT_TOSTRING", extResult);
-		// Uninstall the bundle to clean up the testing bundle context.
-		installedBundle.uninstall();
+			String extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
 	}
 
 	@Test
-	public void testLoadAndUpdate() throws BundleException, CoreException, ClassNotFoundException {
-		BundleUtils.loadBundles(Arrays.asList(getBundle()));
+	public void testLoadWithoutLoadClass() throws Exception {
+		loadBundles(Arrays.asList(getBundle()));
+		String bundleLocation = getBundleLocation(getBundle(), true);
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		Bundle installedBundle = context.getBundle(bundleLocation);
+		try {
+			assertNotNull(installedBundle);
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			String extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
+	}
+
+	@Test
+	public void testLoadAndUpdate() throws Exception {
+		loadBundles(Arrays.asList(getBundle()));
 		String bundleLocation = getBundleLocation(getBundle(), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
-		assertNotNull(installedBundle);
+		try {
+			assertNotNull(installedBundle);
 
-		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-		installedBundle.loadClass("testbundle.Activator");
-		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("testbundle.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
-		String extResult = getBundleExtensionResult();
-		assertEquals("EXT_TOSTRING", extResult);
+			String extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING", extResult);
+			loadBundles(Arrays.asList(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar")));
+			bundleLocation = getBundleLocation(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar"), true);
 
-		BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar")));
-		bundleLocation = getBundleLocation(getBundle("testresources", "testbundle-0.6.0-SNAPSHOT.jar"), true);
+			installedBundle = context.getBundle(bundleLocation);
+			assertNotNull(installedBundle);
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("testbundle.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
-		installedBundle = context.getBundle(bundleLocation);
-		assertNotNull(installedBundle);
-		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-		installedBundle.loadClass("testbundle.Activator");
-		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
-
-		extResult = getBundleExtensionResult();
-		assertEquals("EXT_TOSTRING_0.6.0", extResult);
-
-		// Uninstall the bundle to clean up the testing bundle context.
-		installedBundle.uninstall();
+			extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING_0.6.0", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
 	}
 
 	@Test
-	public void testLoadWithWhitespace() throws BundleException, CoreException, ClassNotFoundException {
-		BundleUtils.loadBundles(Arrays.asList(getBundle("testresources/path with whitespace", "bundle with whitespace.jar")));
+	public void testLoadWithWhitespace() throws Exception {
+		loadBundles(Arrays.asList(getBundle("testresources/path with whitespace", "bundle with whitespace.jar")));
 		String bundleLocation = getBundleLocation(getBundle("testresources/path with whitespace", "bundle with whitespace.jar"), true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		Bundle installedBundle = context.getBundle(bundleLocation);
-		assertNotNull(installedBundle);
+		try {
+			assertNotNull(installedBundle);
 
-		assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-		installedBundle.loadClass("testbundle.Activator");
-		assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("testbundle.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
 
-		String extResult = getBundleExtensionResult();
-		assertEquals("EXT_TOSTRING", extResult);
-		// Uninstall the bundle to clean up the testing bundle context.
-		installedBundle.uninstall();
+			String extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
 	}
 
 	@Test(expected = CoreException.class)
-	public void testLoadThrowCoreException() throws BundleException, CoreException {
+	public void testLoadThrowCoreException() throws Exception {
 		BundleUtils.loadBundles(Arrays.asList(new String[] { "Fakedlocation" }));
+	}
+
+	private void loadBundles(List<String> bundles) throws Exception {
+		RegistryChangeListener listener = new RegistryChangeListener(false);
+		try {
+			Platform.getExtensionRegistry().addRegistryChangeListener(listener);
+			BundleUtils.loadBundles(bundles);
+			while (!listener.isChanged()) {
+				Thread.sleep(100);
+			}
+		} finally {
+			Platform.getExtensionRegistry().removeRegistryChangeListener(listener);
+		}
 	}
 
 	private String getBundle() {
@@ -160,5 +199,29 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			}
 		}
 		return resultValues[0];
+	}
+
+	private class RegistryChangeListener implements IRegistryChangeListener {
+		private boolean changed;
+
+		private RegistryChangeListener(boolean changed) {
+			this.setChanged(changed);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.core.runtime.IRegistryChangeListener#registryChanged(org.eclipse.core.runtime.IRegistryChangeEvent)
+		 */
+		@Override
+		public void registryChanged(IRegistryChangeEvent event) {
+			setChanged(true);
+		}
+
+		public boolean isChanged() {
+			return changed;
+		}
+
+		public void setChanged(boolean changed) {
+			this.changed = changed;
+		}
 	}
 }
