@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -89,6 +90,14 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertEquals(2, projects.size());
 		invalid = WorkspaceHelper.getProject(INVALID);
 		assertIsMavenProject(invalid);
+	}
+
+	@Test
+	public void testJava9Project() throws Exception {
+		IProject project = importMavenProject("salut-java9");
+		assertIsJavaProject(project);
+		assertEquals("9", getJavaSourceLevel(project));
+		assertNoErrors(project);
 	}
 
 }
