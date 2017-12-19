@@ -38,8 +38,8 @@ import org.osgi.framework.Bundle;
 public class TestVMType extends AbstractVMInstallType {
 
 	private static final String VMTYPE_ID = "org.eclipse.jdt.ls.core.internal.TestVMType";
-	private static final String RTSTUBS18_JAR = "rtstubs18.jar";
 	private static final String FAKE_JDK = "/fakejdk";
+	private static final String RTSTUBS_JAR = "rtstubs.jar";
 
 	public static void setTestJREAsDefault() throws CoreException {
 		IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(VMTYPE_ID);
@@ -49,13 +49,16 @@ public class TestVMType extends AbstractVMInstallType {
 			// set the 1.8 test JRE as the new default JRE
 			JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
 		}
-		// update all environments compatible to use the test JRE
+
+	// update all environments compatible to use the test JRE
 		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
 		IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
 		for (IExecutionEnvironment environment : environments) {
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
 			for (IVMInstall compatibleVM : compatibleVMs) {
-				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && compatibleVM.getVMInstallType().findVMInstall(compatibleVM.getId()) != null && !compatibleVM.equals(environment.getDefaultVM())) {
+				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && compatibleVM.getVMInstallType().findVMInstall(compatibleVM.getId()) != null && !compatibleVM.equals(environment.getDefaultVM())
+				// Fugly way to ensure the lowest VM version is set:
+						&& (environment.getDefaultVM() == null || compatibleVM.getId().compareTo(environment.getDefaultVM().getId()) < 0)) {
 					environment.setDefaultVM(compatibleVM);
 				}
 			}
@@ -64,6 +67,7 @@ public class TestVMType extends AbstractVMInstallType {
 
 	public TestVMType() {
 		createVMInstall("1.8");
+		createVMInstall("9");
 	}
 
 	@Override
@@ -81,10 +85,10 @@ public class TestVMType extends AbstractVMInstallType {
 	 */
 	@Override
 	public File detectInstallLocation() {
-		return getInstallLocation();
+		return null;
 	}
 
-	protected static File getInstallLocation() {
+	static File getFakeJDKsLocation() {
 		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
 		try {
 			URL url = FileLocator.toFileURL(bundle.getEntry(FAKE_JDK));
@@ -102,7 +106,7 @@ public class TestVMType extends AbstractVMInstallType {
 	@Override
 	public LibraryLocation[] getDefaultLibraryLocations(File installLocation) {
 		// for now use the same stub JAR for all
-		IPath path = Path.fromOSString(new File(installLocation, RTSTUBS18_JAR).getAbsolutePath());
+		IPath path = Path.fromOSString(new File(installLocation, RTSTUBS_JAR).getAbsolutePath());
 		return new LibraryLocation[] { new LibraryLocation(path, Path.EMPTY, Path.EMPTY) };
 	}
 
@@ -114,7 +118,6 @@ public class TestVMType extends AbstractVMInstallType {
 		return new TestVMInstall(this, id);
 	}
 
-
 }
 
 class TestVMInstall extends AbstractVMInstall {
@@ -122,12 +125,11 @@ class TestVMInstall extends AbstractVMInstall {
 	public TestVMInstall(IVMInstallType type, String id) {
 		super(type, id);
 		setNotify(false);
-		setInstallLocation(TestVMType.getInstallLocation());
+		setInstallLocation(new File(TestVMType.getFakeJDKsLocation(), id));
 	}
 
 	@Override
 	public String getJavaVersion() {
 		return getId();
 	}
-
 }
