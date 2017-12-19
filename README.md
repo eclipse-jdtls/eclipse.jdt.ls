@@ -87,7 +87,7 @@ The Java Language server supports sockets, named pipes, and standard streams of 
 to communicate with the client. Client can communicate its preferred connection methods 
 by setting up environment variables. 
 
-* To use **named pipes**, set the following environment variables before starting
+* _[DEPRECATED: use plain sockets or standard streams]_ To use **named pipes**, set the following environment variables before starting
 the server:
 
    * `STDIN_PIPE_NAME`: the named pipe used for input.
