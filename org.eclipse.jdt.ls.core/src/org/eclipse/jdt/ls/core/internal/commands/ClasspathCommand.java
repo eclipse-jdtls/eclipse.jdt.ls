@@ -12,17 +12,19 @@ package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
@@ -36,94 +38,141 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.PackageFragment;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.CollectionTypeAdapterFactory;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.EitherTypeAdapterFactory;
+import org.eclipse.lsp4j.jsonrpc.json.adapters.EnumTypeAdapterFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class ClasspathCommand {
 
-	private static Map<String, Function<List<String>, Either<ClasspathItem[], String>>> commands = new HashMap<>();
+	private static final Gson gson = new GsonBuilder()
+			.registerTypeAdapterFactory(new CollectionTypeAdapterFactory())
+			.registerTypeAdapterFactory(new EitherTypeAdapterFactory())
+			.registerTypeAdapterFactory(new EnumTypeAdapterFactory())
+			.create();
+
+	private static final Map<ClasspathNodeKind, Function<ClasspathQuery, List<ClasspathNode>>> commands;
 
 	static {
-		commands.put(ClasspathItem.CONTAINER, ClasspathCommand::getContainers);
-		commands.put(ClasspathItem.JAR, ClasspathCommand::getJars);
-		commands.put(ClasspathItem.PACKAGE, ClasspathCommand::getPackages);
-		commands.put(ClasspathItem.CLASSFILE, ClasspathCommand::getClassfiles);
-		commands.put(ClasspathItem.SOURCE, ClasspathCommand::getSource);
+		commands = new HashMap<>();
+		commands.put(ClasspathNodeKind.CONTAINER, ClasspathCommand::getContainers);
+		commands.put(ClasspathNodeKind.JAR, ClasspathCommand::getJars);
+		commands.put(ClasspathNodeKind.PACKAGE, ClasspathCommand::getPackages);
+		commands.put(ClasspathNodeKind.CLASSFILE, ClasspathCommand::getClassfiles);
 	}
 
-	public static Either<ClasspathItem[], String> getClasspathItems(List<Object> arguments) throws CoreException {
+	/**
+	 * Get the child list of ClasspathNode for the project dependency node of the
+	 * type {@link ClasspathNode}
+	 *
+	 * @param arguments
+	 *            List of the arguments which contain two entries to get class path
+	 *            children: the first entry is the query type
+	 *            {@link ClasspathNodeKind} and the second one is the query instance
+	 *            of type {@link ClasspathQuery}
+	 * @return the found ClasspathNode list
+	 * @throws CoreException
+	 */
+	public static List<ClasspathNode> getChildren(List<Object> arguments) throws CoreException {
 		if (arguments == null || arguments.size() < 2) {
-			return Either.forLeft(new ClasspathItem[0]);
+			return Collections.emptyList();
 		}
-		if (arguments.get(0) instanceof String && arguments.get(1) instanceof ArrayList<?>) {
-			String route = (String) arguments.get(0);
-			ArrayList<String> query = (ArrayList<String>) arguments.get(1);
-			Function<List<String>, Either<ClasspathItem[], String>> loader = commands.get(route);
-			if (loader == null) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No loader for %s for ClasspathCommand", route)));
-			}
-			return loader.apply(query);
-		} else {
-			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, "Arguments are not correct for ClasspathItem.getClasspathItem"));
+		ClasspathNodeKind classpathKind = gson.fromJson(gson.toJson(arguments.get(0)), ClasspathNodeKind.class);
+		ClasspathQuery params = gson.fromJson(gson.toJson(arguments.get(1)), ClasspathQuery.class);
+
+		Function<ClasspathQuery, List<ClasspathNode>> loader = commands.get(classpathKind);
+		if (loader == null) {
+			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID,
+					String.format("Unknown classpath item type: %s", classpathKind)));
 		}
+		return loader.apply(params);
 	}
 
-	private static Either<ClasspathItem[], String> getContainers(List<String> query) {
-		IJavaProject javaProject = getJavaProject(query.get(0));
+	/**
+	 * Get the source content from the .class file URI
+	 *
+	 * @param query
+	 *            the .class file URI
+	 * @return source content of the .class file. If the file content is not
+	 *         available, return the empty string.
+	 */
+	public static String getSource(List<Object> query) {
+		String uri = (String) query.get(0);
+		IClassFile classfile = JDTUtils.resolveClassFile(uri);
+		try {
+			String content = classfile.getSource();
+			return StringUtils.isBlank(content) ? "" : content;
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Failed to getSource from " + classfile.toString(), e);
+		}
+		return "";
+	}
+
+	private static List<ClasspathNode> getContainers(ClasspathQuery query) {
+		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 
 		if (javaProject != null) {
 			try {
 				IClasspathEntry[] references = javaProject.getRawClasspath();
-				return Either.forLeft(Arrays.stream(references).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER).map(entry -> {
+				return Arrays.stream(references).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER).map(entry -> {
 					try {
 						IClasspathContainer container = JavaCore.getClasspathContainer(entry.getPath(), javaProject);
-						ClasspathItem containerItem = new ClasspathItem(container.getDescription(), container.getPath(), ClasspathItem.CONTAINER);
-						return containerItem;
+						ClasspathNode containerNode = new ClasspathNode(container.getDescription(), container.getPath().toPortableString(), ClasspathNodeKind.CONTAINER);
+						return containerNode;
 					} catch (CoreException e) {
 						// Ignore it
 					}
 					return null;
-				}).filter(containerItem -> containerItem != null).toArray(ClasspathItem[]::new));
+				}).filter(containerNode -> containerNode != null).collect(Collectors.toList());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem load project library ", e);
 			}
 		}
-		return Either.forLeft(new ClasspathItem[0]);
+		return Collections.emptyList();
 	}
 
-	private static Either<ClasspathItem[], String> getJars(List<String> query) {
-		IJavaProject javaProject = getJavaProject(query.get(0));
+	private static List<ClasspathNode> getJars(ClasspathQuery query) {
+		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 
 		if (javaProject != null) {
 			try {
-				IClasspathContainer container = JavaCore.getClasspathContainer(Path.fromPortableString(query.get(1)), javaProject);
-				ArrayList<ClasspathItem> children = new ArrayList<>();
-
-				for (IClasspathEntry entry : container.getClasspathEntries()) {
-					IPackageFragmentRoot packageFragmentRoot = javaProject.findPackageFragmentRoot(entry.getPath());
-					children.add(new ClasspathItem(packageFragmentRoot.getElementName(), entry.getPath(), ClasspathItem.JAR));
+				IClasspathEntry[] references = javaProject.getRawClasspath();
+				IClasspathEntry containerEntry = null;
+				for (IClasspathEntry reference : references) {
+					if (reference.getPath().equals(Path.fromPortableString(query.getNodePath()))) {
+						containerEntry = reference;
+						break;
+					}
 				}
-				return Either.forLeft(children.toArray(new ClasspathItem[children.size()]));
+				ArrayList<ClasspathNode> children = new ArrayList<>();
+				IPackageFragmentRoot[] packageFragmentRoots = javaProject.findPackageFragmentRoots(containerEntry);
+				for (IPackageFragmentRoot fragmentRoot : packageFragmentRoots) {
+					children.add(new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getPath().toPortableString(), ClasspathNodeKind.JAR));
+				}
+				return children;
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem load project JAR entries ", e);
 			}
 		}
 
-		return Either.forLeft(new ClasspathItem[0]);
+		return Collections.emptyList();
 	}
 
-	private static Either<ClasspathItem[], String> getPackages(List<String> query) {
-		IJavaProject javaProject = getJavaProject(query.get(0));
+	private static List<ClasspathNode> getPackages(ClasspathQuery query) {
+		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(ResourceUtils.filePathFromURI(query.get(1)));
+				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getNodePath()));
 				if (packageRoot == null) {
-					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.get(1))));
+					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getNodePath())));
 				}
 				IJavaElement[] elements = packageRoot.getChildren();
-				return Either.forLeft(Arrays.stream(elements).filter(element -> {
+				return Arrays.stream(elements).filter(element -> {
 					if (element instanceof PackageFragment) {
 						try {
 							return ((PackageFragment) element).hasChildren();
@@ -132,73 +181,52 @@ public class ClasspathCommand {
 						}
 					}
 					return false;
-				}).map(element -> new ClasspathItem(element.getElementName(), element.getPath(), ClasspathItem.PACKAGE)).toArray(ClasspathItem[]::new));
+				}).map(element -> new ClasspathNode(element.getElementName(), element.getPath().toPortableString(), ClasspathNodeKind.PACKAGE)).collect(Collectors.toList());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem load project package ", e);
 			}
 		}
-		return Either.forLeft(new ClasspathItem[0]);
+		return Collections.emptyList();
 	}
 
-	private static Either<ClasspathItem[], String> getClassfiles(List<String> query) {
-		IJavaProject javaProject = getJavaProject(query.get(0));
+	private static List<ClasspathNode> getClassfiles(ClasspathQuery query) {
+		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(ResourceUtils.filePathFromURI(query.get(1)));
+				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getNodePath()));
 				if (packageRoot == null) {
-					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.get(1))));
+					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getNodePath())));
 				}
-				IPackageFragment packageFragment = packageRoot.getPackageFragment(query.get(2));
+				IPackageFragment packageFragment = packageRoot.getPackageFragment(query.getNodeId());
 				if (packageFragment != null) {
 					IClassFile[] classFiles = packageFragment.getAllClassFiles();
-					return Either.forLeft(Arrays.stream(classFiles).map(classFile -> new ClasspathItem(classFile.getElementName(), classFile.getPath(), ClasspathItem.CLASSFILE)).toArray(ClasspathItem[]::new));
+					return Arrays.stream(classFiles).map(classFile -> {
+						ClasspathNode item = new ClasspathNode(classFile.getElementName(), classFile.getPath().toPortableString(), ClasspathNodeKind.CLASSFILE);
+						item.setUri(JDTUtils.toUri(classFile));
+						return item;
+					}).collect(Collectors.toList());
 				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem load project classfile list ", e);
 			}
 		}
-		return Either.forLeft(new ClasspathItem[0]);
-	}
-
-	private static Either<ClasspathItem[], String> getSource(List<String> query) {
-		IJavaProject javaProject = getJavaProject(query.get(0));
-		if (javaProject != null) {
-			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(ResourceUtils.filePathFromURI(query.get(1)));
-				if (packageRoot == null) {
-					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.get(1))));
-				}
-				IPackageFragment packageFragment = packageRoot.getPackageFragment(query.get(2));
-				IClassFile[] classFiles = packageFragment.getAllClassFiles();
-				Optional<IClassFile> result = Arrays.stream(classFiles).filter(classFile -> classFile.getElementName().equals(query.get(3))).findAny();
-				if (result.isPresent()) {
-					String content = result.get().getSource();
-					return Either.forRight(StringUtils.isBlank(content) ? "" : content);
-				}
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem load classfile source ", e);
-			}
-		}
-		return Either.forLeft(new ClasspathItem[0]);
+		return Collections.emptyList();
 	}
 
 	private static IJavaProject getJavaProject(String projectUri) {
-		IPath rootPath = ResourceUtils.filePathFromURI(projectUri);
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		IProject targetProj = null;
-		if (rootPath != null && projects.length > 0) {
-			for (IProject proj : projects) {
-				String projectLocation = proj.getLocation().toString().toLowerCase();
-				String selectedPath = rootPath.toString().toLowerCase();
-				if (!StringUtils.isBlank(selectedPath) && !StringUtils.isBlank(projectLocation)) {
-					if (selectedPath.startsWith(projectLocation)) {
-						targetProj = proj;
-						break;
-					}
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		IContainer[] containers = root.findContainersForLocationURI(JDTUtils.toURI(projectUri));
 
-				}
-			}
+		if (containers.length == 0) {
+			return null;
 		}
-		return JavaCore.create(targetProj);
+
+		IContainer container = containers[0];
+		IProject project = container.getProject();
+		if (!project.exists()) {
+			return null;
+		}
+
+		return JavaCore.create(project);
 	}
 }

@@ -41,8 +41,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						// workspaceEdit on the custom command.
 						return result;
 					}
-				case "java.view.classpath.fetch":
-					return ClasspathCommand.getClasspathItems(arguments);
+				case "java.classpath.getChildren":
+					return ClasspathCommand.getChildren(arguments);
 				default:
 					break;
 			}
