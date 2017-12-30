@@ -324,6 +324,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((cc) -> {
 			monitors[0] = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 			return handler.completion(position, monitors[0]);
 		});
 		result.join();
@@ -343,6 +350,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<CompletionItem> result = computeAsync((cc) -> {
 			monitors[0] = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 			return handler.resolve(unresolved, monitors[0]);
 		});
 		result.join();
@@ -379,7 +393,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
-		return computeAsync((cc) -> handler.definition(position, toMonitor(cc)));
+		return computeAsync((cc) -> {
+			IProgressMonitor monitor = toMonitor(cc);
+			try {
+				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+			} catch (OperationCanceledException ignorable) {
+				// No need to pollute logs when query is cancelled
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return handler.definition(position, toMonitor(cc));
+		});
 	}
 
 	/* (non-Javadoc)
