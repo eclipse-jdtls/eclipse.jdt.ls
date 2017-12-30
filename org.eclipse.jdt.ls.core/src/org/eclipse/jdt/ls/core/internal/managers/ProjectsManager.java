@@ -285,9 +285,9 @@ public class ProjectsManager implements ISaveParticipant {
 		return project;
 	}
 
-	public void updateProject(IProject project) {
-		if (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project)) {
-			return;
+	public Job updateProject(IProject project) {
+		if (project == null || (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project))) {
+			return null;
 		}
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating " + project.getName() + " configuration");
 		WorkspaceJob job = new WorkspaceJob("Update project " + project.getName()) {
@@ -312,6 +312,7 @@ public class ProjectsManager implements ISaveParticipant {
 			}
 		};
 		job.schedule();
+		return job;
 	}
 
 	private Optional<IBuildSupport> getBuildSupport(IProject project) {
