@@ -331,7 +331,8 @@ public class DocumentLifeCycleHandler {
 		if (unit.isWorkingCopy()) {
 			try {
 				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
-				unit.commitWorkingCopy(true, new NullProgressMonitor());
+				unit.discardWorkingCopy();
+				unit.becomeWorkingCopy(new NullProgressMonitor());
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException("Error while handling document save", e);
 			}
