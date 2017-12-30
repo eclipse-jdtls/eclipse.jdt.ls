@@ -29,17 +29,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
@@ -54,6 +66,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
+	private DocumentLifeCycleHandler lifeCycleHandler;
+	private JavaClientConnection javaClient;
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
@@ -73,6 +87,53 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Before
 	public void setUp() {
 		mockLSP3Client();
+		SharedASTProvider sharedASTProvider = SharedASTProvider.getInstance();
+		sharedASTProvider.invalidateAll();
+		sharedASTProvider.clearASTCreationCount();
+		javaClient = new JavaClientConnection(client);
+		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		javaClient.disconnect();
+	}
+
+	@Test
+	public void testCompletion_javadoc() throws Exception {
+		IJavaProject javaProject = JavaCore.create(project);
+		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
+		unit.becomeWorkingCopy(null);
+		try {
+			int[] loc = findCompletionLocation(unit, "inner.");
+			TextDocumentPositionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			String source = unit.getSource();
+			changeDocument(unit, source, 3);
+			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+			changeDocument(unit, source, 4);
+			CompletionList list = server.completion(position).join().getRight();
+			for (CompletionItem item : list.getItems()) {
+				server.resolveCompletionItem(item);
+			}
+			CompletionItem resolved = list.getItems().get(0);
+			assertEquals("Test ", resolved.getDocumentation());
+		} finally {
+			unit.discardWorkingCopy();
+		}
+	}
+
+	private void changeDocument(ICompilationUnit unit, String content, int version) throws JavaModelException {
+		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
+		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
+		textDocument.setUri(JDTUtils.toURI(unit));
+		textDocument.setVersion(version);
+		changeParms.setTextDocument(textDocument);
+		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
+		event.setText(content);
+		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
+		contentChanges.add(event);
+		changeParms.setContentChanges(contentChanges);
+		lifeCycleHandler.didChange(changeParms);
 	}
 
 	//FIXME Something very fishy here: when run from command line as part of the whole test suite,
