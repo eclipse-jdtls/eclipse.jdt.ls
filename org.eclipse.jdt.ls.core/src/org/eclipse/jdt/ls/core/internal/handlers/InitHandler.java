@@ -46,6 +46,7 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.TextDocumentSyncOptions;
 
 /**
  * Handler for the VS Code extension initialization
@@ -121,7 +122,6 @@ final public class InitHandler {
 		}
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
-		capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
 		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#")));
 		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
@@ -163,6 +163,16 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
 		}
+		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
+		textDocumentSyncOptions.setChange(TextDocumentSyncKind.Incremental);
+		if (preferenceManager.getClientPreferences().isWillSaveRegistered()) {
+			textDocumentSyncOptions.setWillSave(Boolean.TRUE);
+		}
+
+		if (preferenceManager.getClientPreferences().isWillSaveWaitUntilRegistered()) {
+			textDocumentSyncOptions.setWillSaveWaitUntil(Boolean.TRUE);
+		}
+		capabilities.setTextDocumentSync(textDocumentSyncOptions);
 
 		result.setCapabilities(capabilities);
 		return result;
