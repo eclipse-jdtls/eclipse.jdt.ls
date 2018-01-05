@@ -399,10 +399,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.MissingSerialVersion:
-			// SerialVersionSubProcessor.getSerialVersionProposals(context, problem,
-			// proposals);
-			// break;
+			case IProblem.MissingSerialVersion:
+				SerialVersionSubProcessor.getSerialVersionProposals(context, problem, proposals);
+				break;
 			// case IProblem.UnnecessaryElse:
 			// LocalCorrectionsSubProcessor.getUnnecessaryElseProposals(context,
 			// problem, proposals);
