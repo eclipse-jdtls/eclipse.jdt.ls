@@ -21,7 +21,11 @@ public enum ClasspathNodeKind {
 
 	PACKAGE(4),
 
-	CLASSFILE(5);
+	CLASSFILE(5),
+
+	FILE(6),
+
+	Folder(7);
 
 	private final int value;
 

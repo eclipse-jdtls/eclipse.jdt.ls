@@ -45,6 +45,10 @@ public class ClasspathNode {
 	 */
 	private List<ClasspathNode> children;
 
+	public ClasspathNode() {
+
+	}
+
 	public ClasspathNode(String name, String path, ClasspathNodeKind kind) {
 		this.name = name;
 		this.path = path;
@@ -55,7 +59,7 @@ public class ClasspathNode {
 		return name;
 	}
 
-	public String getItemPath() {
+	public String getPath() {
 		return path;
 	}
 

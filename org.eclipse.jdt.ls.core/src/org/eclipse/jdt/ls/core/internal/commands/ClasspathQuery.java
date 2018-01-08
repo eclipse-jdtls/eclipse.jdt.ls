@@ -23,14 +23,16 @@ public class ClasspathQuery {
 	private String projectUri;
 
 	/**
-	 * The IPath portable string value.
+	 * The path value for the query. This value binding with the rootPath to unique
+	 * determine the ClasspathNode.
 	 */
-	private String nodePath;
+	private String path;
 
 	/**
-	 * The nodeId to get the ClasspathNode list.
+	 * The rootPath value for the query. This value is optional if the path can
+	 * unique determine the query ClasspathNode.
 	 */
-	private String nodeId;
+	private String rootPath;
 
 	public ClasspathQuery() {
 	}
@@ -39,15 +41,15 @@ public class ClasspathQuery {
 		this.projectUri = projectUri;
 	}
 
-	public ClasspathQuery(String projectUri, String nodePath) {
+	public ClasspathQuery(String projectUri, String path) {
 		this.projectUri = projectUri;
-		this.nodePath = nodePath;
+		this.path = path;
 	}
 
-	public ClasspathQuery(String projectUri, String nodePath, String nodeId) {
+	public ClasspathQuery(String projectUri, String path, String rootNodePath) {
 		this.projectUri = projectUri;
-		this.nodePath = nodePath;
-		this.nodeId = nodeId;
+		this.path = path;
+		this.rootPath = rootNodePath;
 	}
 
 	public String getProjectUri() {
@@ -58,19 +60,19 @@ public class ClasspathQuery {
 		this.projectUri = projectUri;
 	}
 
-	public String getNodePath() {
-		return nodePath;
+	public String getPath() {
+		return path;
 	}
 
-	public void setNodePtah(String itemPath) {
-		this.nodePath = itemPath;
+	public void setPath(String nodePath) {
+		this.path = nodePath;
 	}
 
-	public String getNodeId() {
-		return nodeId;
+	public String getRootPath() {
+		return rootPath;
 	}
 
-	public void setNodeId(String nodeId) {
-		this.nodeId = nodeId;
+	public void setRootPath(String rootPath) {
+		this.rootPath = rootPath;
 	}
 }

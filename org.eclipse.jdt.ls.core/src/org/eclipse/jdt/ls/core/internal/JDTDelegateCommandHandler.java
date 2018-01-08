@@ -42,7 +42,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						return result;
 					}
 				case "java.classpath.getChildren":
-					return ClasspathCommand.getChildren(arguments);
+					return ClasspathCommand.getChildren(arguments, monitor);
 				default:
 					break;
 			}
