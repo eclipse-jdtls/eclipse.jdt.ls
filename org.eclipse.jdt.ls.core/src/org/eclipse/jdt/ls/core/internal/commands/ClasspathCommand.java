@@ -74,17 +74,15 @@ public class ClasspathCommand {
 		commands.put(ClasspathNodeKind.JAR, ClasspathCommand::getJars);
 		commands.put(ClasspathNodeKind.PACKAGE, ClasspathCommand::getPackages);
 		commands.put(ClasspathNodeKind.CLASSFILE, ClasspathCommand::getClassfiles);
-		commands.put(ClasspathNodeKind.FILE, ClasspathCommand::getClassfiles);
 		commands.put(ClasspathNodeKind.Folder, ClasspathCommand::getFolderChildren);
 	}
 
 	/**
-	 * Get the child list of ClasspathNode for the project dependency node of the
-	 * type {@link ClasspathNode}
+	 * Get the child list of ClasspathNode for the project dependency node.
 	 *
 	 * @param arguments
 	 *            List of the arguments which contain two entries to get class path
-	 *            children: the first entry is the query type
+	 *            children: the first entry is the query target node type
 	 *            {@link ClasspathNodeKind} and the second one is the query instance
 	 *            of type {@link ClasspathQuery}
 	 * @return the found ClasspathNode list
@@ -99,23 +97,27 @@ public class ClasspathCommand {
 
 		BiFunction<ClasspathQuery, IProgressMonitor, List<ClasspathNode>> loader = commands.get(classpathKind);
 		if (loader == null) {
-			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID,
-					String.format("Unknown classpath item type: %s", classpathKind)));
+			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("Unknown classpath item type: %s", classpathKind)));
 		}
-		return loader.apply(params, pm);
+		List<ClasspathNode> result = loader.apply(params, pm);
+		sortClasspathNode(result);
+		return result;
 	}
 
 	/**
-	 * Get the source content from the .class file URI
+	 * Get the source content for the .classfile or JarEntryFile
 	 *
 	 * @param arguments
-	 *            the .class file URI
-	 * @return source content of the .class file. If the file content is not
-	 *         available, return the empty string.
+	 *            List of the arguments which contain the query instance of type
+	 *            {@link ClasspathQuery}
+	 *
+	 * @return The source content of the file. If the file content is not available,
+	 *         return the empty string.
 	 */
 	public static String getSource(List<Object> arguments, IProgressMonitor pm) {
 		ClasspathQuery query = gson.fromJson(gson.toJson(arguments.get(0)), ClasspathQuery.class);
 
+		// .classfile
 		if (query.getRootPath() == null) {
 			IClassFile classfile = JDTUtils.resolveClassFile(query.getPath());
 			try {
@@ -130,6 +132,9 @@ public class ClasspathCommand {
 		return "";
 	}
 
+	/**
+	 * Get the class path container list.
+	 */
 	private static List<ClasspathNode> getContainers(ClasspathQuery query, IProgressMonitor pm) {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 
@@ -191,7 +196,6 @@ public class ClasspathCommand {
 			try {
 				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getPath()));
 
-
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -215,13 +219,11 @@ public class ClasspathCommand {
 				IPackageFragment packageFragment = packageRoot.getPackageFragment(query.getPath());
 				if (packageFragment != null) {
 					IClassFile[] classFiles = packageFragment.getAllClassFiles();
-					return Arrays.stream(classFiles)
-							.filter(classFile -> !classFile.getElementName().contains("$"))
-							.map(classFile -> {
-								ClasspathNode item = new ClasspathNode(classFile.getElementName(), classFile.getPath().toPortableString(), ClasspathNodeKind.CLASSFILE);
-								item.setUri(JDTUtils.toUri(classFile));
-								return item;
-							}).collect(Collectors.toList());
+					return Arrays.stream(classFiles).filter(classFile -> !classFile.getElementName().contains("$")).map(classFile -> {
+						ClasspathNode item = new ClasspathNode(classFile.getElementName(), classFile.getPath().toPortableString(), ClasspathNodeKind.CLASSFILE);
+						item.setUri(JDTUtils.toUri(classFile));
+						return item;
+					}).collect(Collectors.toList());
 				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem load project classfile list ", e);
@@ -279,29 +281,29 @@ public class ClasspathCommand {
 				IPackageFragment packageFragment = (IPackageFragment) root;
 				ClasspathNode entry = new ClasspathNode(((IPackageFragment) root).getElementName(), packageFragment.getPath().toPortableString(), ClasspathNodeKind.PACKAGE);
 				result.add(entry);
-			}
-
-			if (root instanceof IClassFile) {
+			} else if (root instanceof IClassFile) {
 				IClassFile classFile = (IClassFile) root;
 				ClasspathNode entry = new ClasspathNode(classFile.getElementName(), classFile.findPrimaryType().getFullyQualifiedName(), ClasspathNodeKind.CLASSFILE);
 				entry.setUri(JDTUtils.toUri(classFile));
 				result.add(entry);
-			}
-
-			if (root instanceof JarEntryResource) {
-				result.add(getJarEntryResource((JarEntryResource) root));
+			} else if (root instanceof JarEntryResource) {
+				ClasspathNode jarNode = getJarEntryResource((JarEntryResource) root);
+				if (jarNode != null) {
+					result.add(jarNode);
+				}
 			}
 		}
-		result.sort((ClasspathNode n1, ClasspathNode n2) -> n1.getKind().getValue() - n2.getKind().getValue());
+
 		return result;
 	}
+
+
 
 	private static ClasspathNode getJarEntryResource(JarEntryResource resource) {
 		ClasspathNode entry = new ClasspathNode();
 		if (resource instanceof JarEntryDirectory) {
 			return new ClasspathNode(resource.getName(), resource.getFullPath().toPortableString(), ClasspathNodeKind.Folder);
-		}
-		else if (resource instanceof JarEntryFile) {
+		} else if (resource instanceof JarEntryFile) {
 			return new ClasspathNode(resource.getName(), resource.getFullPath().toPortableString(), ClasspathNodeKind.FILE);
 		}
 		return null;
@@ -358,7 +360,7 @@ public class ClasspathCommand {
 				}
 
 			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem load project classfile list ", e);
+				JavaLanguageServerPlugin.logException("Problem get JarEntryFile content ", e);
 			}
 		}
 		return "";
@@ -369,6 +371,15 @@ public class ClasspathCommand {
 		return s.hasNext() ? s.next() : "";
 	}
 
+	private static void sortClasspathNode(List<ClasspathNode> classpathNodes) {
+		classpathNodes.sort((ClasspathNode n1, ClasspathNode n2) -> {
+			if (n1.getKind() != n2.getKind()) {
+				return n1.getKind().getValue() - n2.getKind().getValue();
+			} else {
+				return n1.getName().compareTo(n2.getName());
+			}
+		});
+	}
 
 	private static IJavaProject getJavaProject(String projectUri) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();

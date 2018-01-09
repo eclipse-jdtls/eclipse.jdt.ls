@@ -23,9 +23,9 @@ public enum ClasspathNodeKind {
 
 	CLASSFILE(5),
 
-	FILE(6),
+	Folder(6),
 
-	Folder(7);
+	FILE(7);
 
 	private final int value;
 

@@ -62,8 +62,8 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 		query.setPath(result.get(0).getName());
 		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
-		assertEquals(43, result.size());
-		assertEquals("Consumer.class", result.get(1).getName());
+		assertEquals(2, result.size());
+		assertEquals("PropertyChangeListener.class", result.get(1).getName());
 
 		query.setRootPath(null);
 		query.setPath(result.get(1).getUri());
@@ -91,18 +91,19 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
 
 		assertEquals(13, result.size());
+		assertEquals(ClasspathNodeKind.Folder, result.get(12).getKind());
 
 		query.setRootPath(query.getPath());
 		query.setPath(result.get(0).getName());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
-		assertEquals(11, result.size());
-		assertEquals("CalendarReflection.class", result.get(0).getName());
+		assertEquals(28, result.size());
+		assertEquals("AnnotationUtils.class", result.get(0).getName());
 
 		query.setRootPath(null);
 		query.setPath(result.get(0).getUri());
 		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertTrue(content.contains("CalendarReflection"));
+		assertTrue(content.contains("AnnotationUtils"));
 	}
 
 	@Test
@@ -127,16 +128,21 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(5, result.size());
 
 		query.setRootPath(query.getPath());
+
+		query.setPath(result.get(4).getPath());
+		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
+		assertTrue(content.contains("BSD License"));
+
 		query.setPath(result.get(0).getName());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
-		assertEquals(7, result.size());
-		assertEquals("ILoggerFactory.class", result.get(0).getName());
+		assertEquals(16, result.size());
+		assertEquals("BaseDescription.class", result.get(0).getName());
 
 		query.setRootPath(null);
 		query.setPath(result.get(0).getUri());
-		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertTrue(content.contains("ILoggerFactory"));
+		content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
+		assertTrue(content.contains("BaseDescription"));
 	}
 
 	private String getProjectUri(IJavaProject project) {

@@ -1,18 +1,18 @@
-/*
- * Copyright (c) 2012-2017 Red Hat, Inc.
+/*******************************************************************************
+ * Copyright (c) 2017 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *   Red Hat, Inc. - initial API and implementation
- */
+ *     Microsoft Corporation - initial API and implementation
+ *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
 /**
- * The query instance for fetching the ClasspathNode list from the language
+ * The query object to get the project dependency information from the language
  * server.
  */
 public class ClasspathQuery {
@@ -23,14 +23,16 @@ public class ClasspathQuery {
 	private String projectUri;
 
 	/**
-	 * The path value for the query. This value binding with the rootPath to unique
-	 * determine the ClasspathNode.
+	 * The node path for the query. For the node path that cannot unique determines
+	 * the query node such as the file, classfile and folder contained inside a
+	 * package/jar, it need combine with the rootPath to uniquely identify the node.
 	 */
+
 	private String path;
 
 	/**
 	 * The rootPath value for the query. This value is optional if the path can
-	 * unique determine the query ClasspathNode.
+	 * uniquely determine the query node.
 	 */
 	private String rootPath;
 
