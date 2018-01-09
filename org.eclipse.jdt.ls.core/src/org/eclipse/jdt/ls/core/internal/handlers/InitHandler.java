@@ -182,9 +182,9 @@ final public class InitHandler {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Build failed ", e);
-					connection.sendStatus(ServiceStatus.Error, getMessage(e.getStatus()));
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+					connection.sendStatus(ServiceStatus.Error, e.getMessage());
 				}
 				return Status.OK_STATUS;
 			}
@@ -197,17 +197,6 @@ final public class InitHandler {
 				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
 			}
 
-			private String getMessage(IStatus status) {
-				String msg = status.getMessage();
-				if (msg != null && !msg.isEmpty()) {
-					return msg;
-				}
-				msg = "Initialization failed";
-				if (status.getException() != null && status.getException().getMessage() != null) {
-					msg = msg + ": " + status.getException().getMessage();
-				}
-				return msg;
-			}
 		};
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
