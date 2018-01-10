@@ -53,12 +53,11 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(1, result.size());
 
-		query.setPath(result.get(0).getPath());
+		query.setRootPath(result.get(0).getPath());
 		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE, query), monitor);
 
 		assertEquals(38, result.size());
 
-		query.setRootPath(query.getPath());
 		query.setPath(result.get(0).getName());
 		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
@@ -87,13 +86,12 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(1, result.size());
 
-		query.setPath(result.get(0).getPath());
+		query.setRootPath(result.get(0).getPath());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
 
 		assertEquals(13, result.size());
 		assertEquals(ClasspathNodeKind.Folder, result.get(12).getKind());
 
-		query.setRootPath(query.getPath());
 		query.setPath(result.get(0).getName());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
@@ -122,12 +120,10 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(3, result.size());
 
-		query.setPath(result.get(0).getPath());
+		query.setRootPath(result.get(0).getPath());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
 
 		assertEquals(5, result.size());
-
-		query.setRootPath(query.getPath());
 
 		query.setPath(result.get(4).getPath());
 		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);

@@ -26,6 +26,11 @@ public class ClasspathNode {
 	private String name;
 
 	/**
+	 * The module name of the ClasspathNode for Java 9 and above
+	 */
+	private String moduleName;
+
+	/**
 	 * The type of {@link IPath} portable string value
 	 */
 	private String path;
@@ -57,6 +62,14 @@ public class ClasspathNode {
 
 	public String getName() {
 		return name;
+	}
+
+	public void setModuleName(String moduleName) {
+		this.moduleName = moduleName;
+	}
+
+	public String getModuleName() {
+		return moduleName;
 	}
 
 	public String getPath() {

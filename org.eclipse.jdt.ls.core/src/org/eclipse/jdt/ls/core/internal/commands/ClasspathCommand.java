@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
@@ -29,6 +27,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -48,7 +47,8 @@ import org.eclipse.jdt.internal.core.JarEntryDirectory;
 import org.eclipse.jdt.internal.core.JarEntryFile;
 import org.eclipse.jdt.internal.core.JarEntryResource;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
-import org.eclipse.jdt.internal.core.JavaModelManager;
+import org.eclipse.jdt.internal.core.JavaProject;
+import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.jsonrpc.json.adapters.CollectionTypeAdapterFactory;
@@ -177,7 +177,11 @@ public class ClasspathCommand {
 					ArrayList<ClasspathNode> children = new ArrayList<>();
 					IPackageFragmentRoot[] packageFragmentRoots = javaProject.findPackageFragmentRoots(containerEntry);
 					for (IPackageFragmentRoot fragmentRoot : packageFragmentRoots) {
-						children.add(new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getPath().toPortableString(), ClasspathNodeKind.JAR));
+						ClasspathNode node = new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getPath().toPortableString(), ClasspathNodeKind.JAR);
+						children.add(node);
+						if (fragmentRoot instanceof JrtPackageFragmentRoot) {
+							node.setModuleName(fragmentRoot.getModuleDescription().getElementName());
+						}
 					}
 					return children;
 				}
@@ -194,8 +198,8 @@ public class ClasspathCommand {
 
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getPath()));
 
+				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -212,7 +216,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
+				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -236,7 +240,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
+				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -265,8 +269,13 @@ public class ClasspathCommand {
 	private static Object[] getPackageFragmentRootContent(IPackageFragmentRoot root, IProgressMonitor pm) throws CoreException {
 		ArrayList<Object> result = new ArrayList<>();
 		for (IJavaElement child : root.getChildren()) {
-			if (((IPackageFragment) child).hasChildren()) {
-				result.add(child);
+			IPackageFragment fragment = (IPackageFragment) child;
+			if (fragment.hasChildren()) {
+				if (fragment.isDefaultPackage()) {
+					result.addAll(Arrays.asList(fragment.getChildren()));
+				} else {
+					result.add(child);
+				}
 			}
 		}
 		Object[] nonJavaResources = root.getNonJavaResources();
@@ -283,7 +292,7 @@ public class ClasspathCommand {
 				result.add(entry);
 			} else if (root instanceof IClassFile) {
 				IClassFile classFile = (IClassFile) root;
-				ClasspathNode entry = new ClasspathNode(classFile.getElementName(), classFile.findPrimaryType().getFullyQualifiedName(), ClasspathNodeKind.CLASSFILE);
+				ClasspathNode entry = new ClasspathNode(classFile.getElementName(), null, ClasspathNodeKind.CLASSFILE);
 				entry.setUri(JDTUtils.toUri(classFile));
 				result.add(entry);
 			} else if (root instanceof JarEntryResource) {
@@ -335,26 +344,26 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
+				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
 				if (packageRoot instanceof JarPackageFragmentRoot) {
-					JarPackageFragmentRoot jarPackageFragmentRoot = (JarPackageFragmentRoot) packageRoot;
-					ZipFile jar = null;
-					try {
-						jar = jarPackageFragmentRoot.getJar();
-						ZipEntry entry = jar.getEntry(query.getPath().substring(1));
-						if (entry != null) {
-							try (InputStream stream = jar.getInputStream(entry)) {
-								return convertStreamToString(stream);
-							} catch (IOException e) {
-								JavaLanguageServerPlugin.logException("Can't read file content: " + entry.getName(), e);
+					Object[] resources = packageRoot.getNonJavaResources();
+
+					for (Object resource : resources) {
+						if (resource instanceof JarEntryFile) {
+							JarEntryFile file = (JarEntryFile) resource;
+							if (file.getFullPath().toPortableString().equals(query.getPath())) {
+								return readFileContent(file);
 							}
 						}
-					} finally {
-						if (jar != null) {
-							JavaModelManager.getJavaModelManager().closeZipFile(jar);
+						if (resource instanceof JarEntryDirectory) {
+							JarEntryDirectory directory = (JarEntryDirectory) resource;
+							JarEntryFile file = findJarFile(directory, query.getPath());
+							if (file != null) {
+								return readFileContent(file);
+							}
 						}
 					}
 				}
@@ -364,6 +373,30 @@ public class ClasspathCommand {
 			}
 		}
 		return "";
+	}
+
+	private static JarEntryFile findJarFile(JarEntryDirectory directory, String path) {
+		for (IJarEntryResource children : directory.getChildren()) {
+			if (children.isFile() && children.getFullPath().toPortableString().equals(path)) {
+				return (JarEntryFile) children;
+			}
+			if (!children.isFile()) {
+				JarEntryFile file = findJarFile((JarEntryDirectory) children, path);
+				if (file != null) {
+					return file;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static String readFileContent(JarEntryFile file) {
+		try (InputStream stream = (file.getContents())) {
+			return convertStreamToString(stream);
+		} catch (IOException | CoreException e) {
+			JavaLanguageServerPlugin.logException("Can't read file content: " + file.getFullPath(), e);
+		}
+		return null;
 	}
 
 	private static String convertStreamToString(java.io.InputStream is) {
@@ -379,6 +412,25 @@ public class ClasspathCommand {
 				return n1.getName().compareTo(n2.getName());
 			}
 		});
+	}
+
+	private static IPackageFragmentRoot findPackageFragmentRoot(ClasspathQuery query, IJavaProject javaProject) throws CoreException {
+		IPath queryPath = Path.fromPortableString(query.getRootPath());
+		if (query.getModuleName() == null) {
+			return javaProject.findPackageFragmentRoot(queryPath);
+		} else {
+			IPackageFragmentRoot[] allRoots = javaProject.getAllPackageFragmentRoots();
+			queryPath = JavaProject.canonicalizedPath(queryPath);
+			for (int i = 0; i < allRoots.length; i++) {
+				IPackageFragmentRoot classpathRoot = allRoots[i];
+				if (classpathRoot.getPath() != null
+						&& classpathRoot.getPath().equals(queryPath)
+						&& query.getModuleName().equals(classpathRoot.getModuleDescription().getElementName())) {
+					return classpathRoot;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static IJavaProject getJavaProject(String projectUri) {
