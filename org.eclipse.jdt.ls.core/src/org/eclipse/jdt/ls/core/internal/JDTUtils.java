@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
@@ -64,6 +65,7 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.core.JarEntryFile;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -428,6 +430,17 @@ public final class JDTUtils {
 			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
+		}
+		return uriString;
+	}
+
+	public static String toUri(JarEntryFile jarEntryFile) {
+		IPackageFragmentRoot fragmentRoot = jarEntryFile.getPackageFragmentRoot();
+		String uriString = null;
+		try {
+			uriString = new URI(JDT_SCHEME, "jarentryfile", jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException("Error generating URI for jarentryfile ", e);
 		}
 		return uriString;
 	}

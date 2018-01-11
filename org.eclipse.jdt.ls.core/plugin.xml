@@ -49,11 +49,20 @@
       </contentProvider>
    </extension>
    <extension
+         point="org.eclipse.jdt.ls.core.contentProvider">
+      <contentProvider
+            class="org.eclipse.jdt.ls.core.internal.JarFileContentProvider"
+            id="jarFileContentProvider"
+            priority="10000"
+            uriPattern=".+//jarentryfile.*"
+            cacheable="true">
+      </contentProvider>
+   </extension>
+   <extension
          point="org.eclipse.jdt.ls.core.delegateCommandHandler">
       <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.JDTDelegateCommandHandler">
             <command id="java.edit.organizeImports"/>
             <command id="java.classpath.getChildren"/>
-            <command id="java.classpath.getSource"/>
       </delegateCommandHandler>
    </extension>
    <extension

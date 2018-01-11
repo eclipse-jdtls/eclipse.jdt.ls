@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JarFileContentProvider;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
@@ -63,11 +65,6 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(2, result.size());
 		assertEquals("PropertyChangeListener.class", result.get(1).getName());
-
-		query.setRootPath(null);
-		query.setPath(result.get(1).getUri());
-		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertEquals(content, "");
 	}
 
 	@Test
@@ -92,16 +89,18 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(13, result.size());
 		assertEquals(ClasspathNodeKind.Folder, result.get(12).getKind());
 
+		query.setPath(result.get(12).getPath());
+		result = command.getChildren(Arrays.asList(ClasspathNodeKind.Folder.getValue(), query), monitor);
+		ClasspathNode node = result.get(1);
+		String content = (new JarFileContentProvider()).getContent(URI.create(node.getUri()), monitor);
+		assertTrue(content.contains("Apache License"));
+
+		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
 		query.setPath(result.get(0).getName());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
 		assertEquals(28, result.size());
 		assertEquals("AnnotationUtils.class", result.get(0).getName());
-
-		query.setRootPath(null);
-		query.setPath(result.get(0).getUri());
-		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertTrue(content.contains("AnnotationUtils"));
 	}
 
 	@Test
@@ -125,20 +124,11 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(5, result.size());
 
-		query.setPath(result.get(4).getPath());
-		String content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertTrue(content.contains("BSD License"));
-
 		query.setPath(result.get(0).getName());
 		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
 
 		assertEquals(16, result.size());
 		assertEquals("BaseDescription.class", result.get(0).getName());
-
-		query.setRootPath(null);
-		query.setPath(result.get(0).getUri());
-		content = ClasspathCommand.getSource(Arrays.asList(query), monitor);
-		assertTrue(content.contains("BaseDescription"));
 	}
 
 	private String getProjectUri(IJavaProject project) {

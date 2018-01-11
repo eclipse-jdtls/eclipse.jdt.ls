@@ -36,12 +36,6 @@ public class ClasspathQuery {
 	 */
 	private String rootPath;
 
-	/**
-	 * For Java 9 and above, the module name is required to query
-	 * package/file/folder/content.
-	 */
-	private String moduleName;
-
 	public ClasspathQuery() {
 	}
 
@@ -82,13 +76,5 @@ public class ClasspathQuery {
 
 	public void setRootPath(String rootPath) {
 		this.rootPath = rootPath;
-	}
-
-	public String getModuleName() {
-		return moduleName;
-	}
-
-	public void setModuleName(String moduleName) {
-		this.moduleName = moduleName;
 	}
 }

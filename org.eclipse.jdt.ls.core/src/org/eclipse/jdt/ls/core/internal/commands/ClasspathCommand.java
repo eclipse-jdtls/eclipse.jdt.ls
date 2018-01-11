@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,13 +19,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -46,8 +42,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.JarEntryDirectory;
 import org.eclipse.jdt.internal.core.JarEntryFile;
 import org.eclipse.jdt.internal.core.JarEntryResource;
-import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
-import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -105,34 +99,6 @@ public class ClasspathCommand {
 	}
 
 	/**
-	 * Get the source content for the .classfile or JarEntryFile
-	 *
-	 * @param arguments
-	 *            List of the arguments which contain the query instance of type
-	 *            {@link ClasspathQuery}
-	 *
-	 * @return The source content of the file. If the file content is not available,
-	 *         return the empty string.
-	 */
-	public static String getSource(List<Object> arguments, IProgressMonitor pm) {
-		ClasspathQuery query = gson.fromJson(gson.toJson(arguments.get(0)), ClasspathQuery.class);
-
-		// .classfile
-		if (query.getRootPath() == null) {
-			IClassFile classfile = JDTUtils.resolveClassFile(query.getPath());
-			try {
-				String content = classfile.getSource();
-				return StringUtils.isBlank(content) ? "" : content;
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Failed to getSource from " + classfile.toString(), e);
-			}
-		} else {
-			return getJarFileContent(query, pm);
-		}
-		return "";
-	}
-
-	/**
 	 * Get the class path container list.
 	 */
 	private static List<ClasspathNode> getContainers(ClasspathQuery query, IProgressMonitor pm) {
@@ -177,7 +143,7 @@ public class ClasspathCommand {
 					ArrayList<ClasspathNode> children = new ArrayList<>();
 					IPackageFragmentRoot[] packageFragmentRoots = javaProject.findPackageFragmentRoots(containerEntry);
 					for (IPackageFragmentRoot fragmentRoot : packageFragmentRoots) {
-						ClasspathNode node = new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getPath().toPortableString(), ClasspathNodeKind.JAR);
+						ClasspathNode node = new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getHandleIdentifier(), ClasspathNodeKind.JAR);
 						children.add(node);
 						if (fragmentRoot instanceof JrtPackageFragmentRoot) {
 							node.setModuleName(fragmentRoot.getModuleDescription().getElementName());
@@ -199,7 +165,7 @@ public class ClasspathCommand {
 		if (javaProject != null) {
 			try {
 
-				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
+				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -216,7 +182,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
+				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -240,7 +206,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
+				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -307,13 +273,13 @@ public class ClasspathCommand {
 	}
 
 
-
 	private static ClasspathNode getJarEntryResource(JarEntryResource resource) {
-		ClasspathNode entry = new ClasspathNode();
 		if (resource instanceof JarEntryDirectory) {
 			return new ClasspathNode(resource.getName(), resource.getFullPath().toPortableString(), ClasspathNodeKind.Folder);
 		} else if (resource instanceof JarEntryFile) {
-			return new ClasspathNode(resource.getName(), resource.getFullPath().toPortableString(), ClasspathNodeKind.FILE);
+			ClasspathNode entry = new ClasspathNode(resource.getName(), resource.getFullPath().toPortableString(), ClasspathNodeKind.FILE);
+			entry.setUri(JDTUtils.toUri((JarEntryFile) resource));
+			return entry;
 		}
 		return null;
 	}
@@ -340,70 +306,6 @@ public class ClasspathCommand {
 		return null;
 	}
 
-	private static String getJarFileContent(ClasspathQuery query, IProgressMonitor pm) {
-		IJavaProject javaProject = getJavaProject(query.getProjectUri());
-		if (javaProject != null) {
-			try {
-				IPackageFragmentRoot packageRoot = findPackageFragmentRoot(query, javaProject);
-				if (packageRoot == null) {
-					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
-				}
-				if (packageRoot instanceof JarPackageFragmentRoot) {
-					Object[] resources = packageRoot.getNonJavaResources();
-
-					for (Object resource : resources) {
-						if (resource instanceof JarEntryFile) {
-							JarEntryFile file = (JarEntryFile) resource;
-							if (file.getFullPath().toPortableString().equals(query.getPath())) {
-								return readFileContent(file);
-							}
-						}
-						if (resource instanceof JarEntryDirectory) {
-							JarEntryDirectory directory = (JarEntryDirectory) resource;
-							JarEntryFile file = findJarFile(directory, query.getPath());
-							if (file != null) {
-								return readFileContent(file);
-							}
-						}
-					}
-				}
-
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem get JarEntryFile content ", e);
-			}
-		}
-		return "";
-	}
-
-	private static JarEntryFile findJarFile(JarEntryDirectory directory, String path) {
-		for (IJarEntryResource children : directory.getChildren()) {
-			if (children.isFile() && children.getFullPath().toPortableString().equals(path)) {
-				return (JarEntryFile) children;
-			}
-			if (!children.isFile()) {
-				JarEntryFile file = findJarFile((JarEntryDirectory) children, path);
-				if (file != null) {
-					return file;
-				}
-			}
-		}
-		return null;
-	}
-
-	private static String readFileContent(JarEntryFile file) {
-		try (InputStream stream = (file.getContents())) {
-			return convertStreamToString(stream);
-		} catch (IOException | CoreException e) {
-			JavaLanguageServerPlugin.logException("Can't read file content: " + file.getFullPath(), e);
-		}
-		return null;
-	}
-
-	private static String convertStreamToString(java.io.InputStream is) {
-		java.util.Scanner s = new java.util.Scanner(is, "UTF-8").useDelimiter("\\A");
-		return s.hasNext() ? s.next() : "";
-	}
-
 	private static void sortClasspathNode(List<ClasspathNode> classpathNodes) {
 		classpathNodes.sort((ClasspathNode n1, ClasspathNode n2) -> {
 			if (n1.getKind() != n2.getKind()) {
@@ -412,25 +314,6 @@ public class ClasspathCommand {
 				return n1.getName().compareTo(n2.getName());
 			}
 		});
-	}
-
-	private static IPackageFragmentRoot findPackageFragmentRoot(ClasspathQuery query, IJavaProject javaProject) throws CoreException {
-		IPath queryPath = Path.fromPortableString(query.getRootPath());
-		if (query.getModuleName() == null) {
-			return javaProject.findPackageFragmentRoot(queryPath);
-		} else {
-			IPackageFragmentRoot[] allRoots = javaProject.getAllPackageFragmentRoots();
-			queryPath = JavaProject.canonicalizedPath(queryPath);
-			for (int i = 0; i < allRoots.length; i++) {
-				IPackageFragmentRoot classpathRoot = allRoots[i];
-				if (classpathRoot.getPath() != null
-						&& classpathRoot.getPath().equals(queryPath)
-						&& query.getModuleName().equals(classpathRoot.getModuleDescription().getElementName())) {
-					return classpathRoot;
-				}
-			}
-		}
-		return null;
 	}
 
 	private static IJavaProject getJavaProject(String projectUri) {
