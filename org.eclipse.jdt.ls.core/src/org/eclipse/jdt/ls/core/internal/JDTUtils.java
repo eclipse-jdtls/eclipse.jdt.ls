@@ -96,6 +96,7 @@ public final class JDTUtils {
 	public static final String PERIOD = ".";
 	public static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
+	private static final String CONTENTS_AUTHORITY = "contents";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
@@ -297,7 +298,7 @@ public final class JDTUtils {
 	 * @return class file
 	 */
 	public static IClassFile resolveClassFile(URI uri){
-		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
+		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && CONTENTS_AUTHORITY.equals(uri.getAuthority())) {
 			String handleId = uri.getQuery();
 			IJavaElement element = JavaCore.create(handleId);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
@@ -427,7 +428,7 @@ public final class JDTUtils {
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, CONTENTS_AUTHORITY, PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
@@ -438,7 +439,7 @@ public final class JDTUtils {
 		IPackageFragmentRoot fragmentRoot = jarEntryFile.getPackageFragmentRoot();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "jarentryfile", jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, CONTENTS_AUTHORITY, jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for jarentryfile ", e);
 		}
