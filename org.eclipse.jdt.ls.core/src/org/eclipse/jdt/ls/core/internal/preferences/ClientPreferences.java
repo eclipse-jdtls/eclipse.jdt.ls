@@ -118,11 +118,11 @@ public class ClientPreferences {
 	}
 
 	public boolean isWillSaveRegistered() {
-		return v3supported && capabilities.getTextDocument().getSynchronization() != null && capabilities.getTextDocument().getSynchronization().getWillSave();
+		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSave());
 	}
 
 	public boolean isWillSaveWaitUntilRegistered() {
-		return v3supported && capabilities.getTextDocument().getSynchronization() != null && capabilities.getTextDocument().getSynchronization().getWillSaveWaitUntil();
+		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSaveWaitUntil());
 	}
 
 }

@@ -60,7 +60,7 @@ public class Preferences {
 	/**
 	 * Preference key to enable/disable auto organize imports
 	 */
-	public static final String JAVA_SAVE_ACTION_AUTO_ORGANIZE_IMPORTS_KEY = "java.saveAction.autoOrganizeImports";
+	public static final String JAVA_SAVE_ACTION_AUTO_ORGANIZE_IMPORTS_KEY = "java.saveAction.organizeImports";
 
 	/**
 	 * Preference key to enable/disable signature help.
@@ -169,7 +169,7 @@ public class Preferences {
 	private boolean importMavenEnabled;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
-	private boolean javaSaveActionAutoOrganizeImportsEnabled;
+	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
@@ -240,7 +240,7 @@ public class Preferences {
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
-		javaSaveActionAutoOrganizeImportsEnabled = false;
+		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		executeCommandEnabled = true;
@@ -374,7 +374,7 @@ public class Preferences {
 	}
 
 	public Preferences setJavaSaveActionAutoOrganizeImportsEnabled(boolean javaSaveActionAutoOrganizeImportsEnabled) {
-		this.javaSaveActionAutoOrganizeImportsEnabled = javaSaveActionAutoOrganizeImportsEnabled;
+		this.javaSaveActionsOrganizeImportsEnabled = javaSaveActionAutoOrganizeImportsEnabled;
 		return this;
 	}
 
@@ -441,8 +441,8 @@ public class Preferences {
 		return javaFormatEnabled;
 	}
 
-	public boolean isJavaSaveActionAutoOrganizeImportsEnabled() {
-		return javaSaveActionAutoOrganizeImportsEnabled;
+	public boolean isJavaSaveActionOrganizeImportsEnabled() {
+		return javaSaveActionsOrganizeImportsEnabled;
 	}
 
 	public boolean isSignatureHelpEnabled() {

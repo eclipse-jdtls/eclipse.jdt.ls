@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -42,7 +41,6 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
-import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -57,8 +55,6 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.lsp4j.WillSaveTextDocumentParams;
-import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
@@ -341,42 +337,6 @@ public class DocumentLifeCycleHandler {
 				JavaLanguageServerPlugin.logException("Error while handling document save", e);
 			}
 		}
-	}
-
-	public List<org.eclipse.lsp4j.TextEdit> handleWillSaveWaitUntil(WillSaveTextDocumentParams params, IProgressMonitor monitor) {
-		List<org.eclipse.lsp4j.TextEdit> edit = new ArrayList<>();
-
-		if (monitor.isCanceled()) {
-			return edit;
-		}
-
-		String documentUri = params.getTextDocument().getUri();
-
-		if (preferenceManager.getPreferences().isJavaSaveActionAutoOrganizeImportsEnabled()) {
-			edit.addAll(handleAutoOrganizeImports(documentUri, monitor));
-		}
-
-		return edit.stream().sorted().collect(Collectors.toList());
-	}
-
-	private List<org.eclipse.lsp4j.TextEdit> handleAutoOrganizeImports(String uri, IProgressMonitor monitor) {
-		List<org.eclipse.lsp4j.TextEdit> edit = new ArrayList<>();
-		if (monitor.isCanceled()) {
-			return edit;
-		}
-
-		List<Object> params = new ArrayList<>(1);
-		params.add(uri);
-		try {
-			Object organizedResult = OrganizeImportsCommand.organizeImports(params);
-			if (organizedResult instanceof WorkspaceEdit) {
-				return ((WorkspaceEdit) organizedResult).getChanges().get(uri);
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Error wihile handling auto organize imports", e);
-		}
-
-		return edit;
 	}
 
 	private ICompilationUnit checkPackageDeclaration(String uri, ICompilationUnit unit) {

@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -34,7 +35,10 @@ import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
+import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +98,18 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testWillSaveAndWillSaveWaitUntilCapabilities() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		InitializeResult result = initialize(true);
+		Either<TextDocumentSyncKind, TextDocumentSyncOptions> o = result.getCapabilities().getTextDocumentSync();
+		assertTrue(o.isRight());
+		assertTrue(o.getRight().getWillSave());
+		assertTrue(o.getRight().getWillSaveWaitUntil());
+	}
+
+	@Test
 	public void testRegisterDelayedCapability() throws Exception {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
@@ -121,6 +137,8 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		workspaceCapabilities.setExecuteCommand(executeCommand);
 		capabilities.setWorkspace(workspaceCapabilities);
 		TextDocumentClientCapabilities textDocument = new TextDocumentClientCapabilities();
+		textDocument.getSynchronization().setWillSave(true);
+		textDocument.getSynchronization().setWillSaveWaitUntil(true);
 		capabilities.setTextDocument(textDocument);
 		params.setCapabilities(capabilities);
 		CompletableFuture<InitializeResult> result = server.initialize(params);

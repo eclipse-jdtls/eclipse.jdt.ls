@@ -629,21 +629,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#willSave(org.eclipse.lsp4j.WillSaveTextDocumentParams)
-	 */
-	@Override
-	public void willSave(WillSaveTextDocumentParams params) {
-		logInfo(">> document/willSave");
-		TextDocumentService.super.willSave(params);
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#willSaveWaitUntil(org.eclipse.lsp4j.WillSaveTextDocumentParams)
 	 */
 	@Override
 	public CompletableFuture<List<TextEdit>> willSaveWaitUntil(WillSaveTextDocumentParams params) {
 		logInfo(">> document/willSaveWailUntil");
-		return computeAsync((cc) -> documentLifeCycleHandler.handleWillSaveWaitUntil(params, toMonitor(cc)));
+		SaveActionHandler handler = new SaveActionHandler(preferenceManager);
+		return computeAsync((cc) -> handler.willSaveWaitUntil(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)
