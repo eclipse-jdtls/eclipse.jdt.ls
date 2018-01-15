@@ -98,6 +98,8 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  *
  */
 public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, WorkspaceFoldersProposedService, JavaProtocolExtensions {
+
+	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	/**
 	 * Exit code returned when JDTLanguageServer is forced to exit.
 	 */
@@ -324,12 +326,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((cc) -> {
 			monitors[0] = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
+				try {
+					Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
+				} catch (OperationCanceledException ignorable) {
+					// No need to pollute logs when query is cancelled
+				} catch (InterruptedException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 			}
 			return handler.completion(position, monitors[0]);
 		});
@@ -350,12 +354,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<CompletionItem> result = computeAsync((cc) -> {
 			monitors[0] = toMonitor(cc);
-			try {
-				Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
-			} catch (OperationCanceledException ignorable) {
-				// No need to pollute logs when query is cancelled
-			} catch (InterruptedException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
+				try {
+					Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitors[0]);
+				} catch (OperationCanceledException ignorable) {
+					// No need to pollute logs when query is cancelled
+				} catch (InterruptedException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 			}
 			return handler.resolve(unresolved, monitors[0]);
 		});

@@ -104,7 +104,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
 		unit.becomeWorkingCopy(null);
+		String joinOnCompletion = System.getProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION);
 		try {
+			System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, "true");
 			int[] loc = findCompletionLocation(unit, "inner.");
 			TextDocumentPositionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
 			String source = unit.getSource();
@@ -119,6 +121,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertEquals("Test ", resolved.getDocumentation());
 		} finally {
 			unit.discardWorkingCopy();
+			if (joinOnCompletion == null) {
+				System.clearProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION);
+			} else {
+				System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, joinOnCompletion);
+			}
 		}
 	}
 
