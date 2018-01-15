@@ -44,6 +44,7 @@ import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.SaveOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
@@ -164,6 +165,8 @@ final public class InitHandler {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
 		}
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
+		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);
+		textDocumentSyncOptions.setSave(new SaveOptions(Boolean.TRUE));
 		textDocumentSyncOptions.setChange(TextDocumentSyncKind.Incremental);
 		if (preferenceManager.getClientPreferences().isWillSaveRegistered()) {
 			textDocumentSyncOptions.setWillSave(Boolean.TRUE);
