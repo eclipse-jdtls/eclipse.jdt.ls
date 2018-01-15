@@ -18,6 +18,11 @@ package org.eclipse.jdt.ls.core.internal.commands;
 public class ClasspathQuery {
 
 	/**
+	 * The node kind that the query against.
+	 */
+	private ClasspathNodeKind kind;
+
+	/**
 	 * The project URI value.
 	 */
 	private String projectUri;
@@ -39,19 +44,30 @@ public class ClasspathQuery {
 	public ClasspathQuery() {
 	}
 
-	public ClasspathQuery(String projectUri) {
+	public ClasspathQuery(ClasspathNodeKind kind, String projectUri) {
+		this.kind = kind;
 		this.projectUri = projectUri;
 	}
 
-	public ClasspathQuery(String projectUri, String path) {
+	public ClasspathQuery(ClasspathNodeKind kind, String projectUri, String path) {
+		this.kind = kind;
 		this.projectUri = projectUri;
 		this.path = path;
 	}
 
-	public ClasspathQuery(String projectUri, String path, String rootNodePath) {
+	public ClasspathQuery(ClasspathNodeKind kind, String projectUri, String path, String rootNodePath) {
+		this.kind = kind;
 		this.projectUri = projectUri;
 		this.path = path;
 		this.rootPath = rootNodePath;
+	}
+
+	public ClasspathNodeKind getKind() {
+		return kind;
+	}
+
+	public void setKind(ClasspathNodeKind kind) {
+		this.kind = kind;
 	}
 
 	public String getProjectUri() {

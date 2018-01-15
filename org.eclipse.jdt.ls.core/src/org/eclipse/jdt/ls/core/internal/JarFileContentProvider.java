@@ -31,8 +31,6 @@ import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
  */
 public class JarFileContentProvider implements IContentProvider {
 
-	private static final String EMPTY_CONTENT = "";
-
 	@Override
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
 		return getContent(uri.getQuery(), uri.getPath().toString(), monitor);
@@ -56,27 +54,26 @@ public class JarFileContentProvider implements IContentProvider {
 					}
 					if (resource instanceof JarEntryDirectory) {
 						JarEntryDirectory directory = (JarEntryDirectory) resource;
-						JarEntryFile file = findJarFile(directory, path);
+						JarEntryFile file = findFileInJar(directory, path);
 						if (file != null) {
 							return readFileContent(file);
 						}
 					}
 				}
 			}
-
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem get JarEntryFile content ", e);
 		}
-		return EMPTY_CONTENT;
+		return null;
 	}
 
-	private static JarEntryFile findJarFile(JarEntryDirectory directory, String path) {
-		for (IJarEntryResource children : directory.getChildren()) {
-			if (children.isFile() && children.getFullPath().toPortableString().equals(path)) {
-				return (JarEntryFile) children;
+	private static JarEntryFile findFileInJar(JarEntryDirectory directory, String path) {
+		for (IJarEntryResource child : directory.getChildren()) {
+			if (child instanceof JarEntryFile && child.getFullPath().toPortableString().equals(path)) {
+				return (JarEntryFile) child;
 			}
-			if (!children.isFile()) {
-				JarEntryFile file = findJarFile((JarEntryDirectory) children, path);
+			if (child instanceof JarEntryDirectory) {
+				JarEntryFile file = findFileInJar((JarEntryDirectory) child, path);
 				if (file != null) {
 					return file;
 				}
@@ -85,13 +82,12 @@ public class JarFileContentProvider implements IContentProvider {
 		return null;
 	}
 
-	private static String readFileContent(JarEntryFile file) {
+	private static String readFileContent(JarEntryFile file) throws CoreException {
 		try (InputStream stream = (file.getContents())) {
 			return convertStreamToString(stream);
-		} catch (IOException | CoreException e) {
-			JavaLanguageServerPlugin.logException("Can't read file content: " + file.getFullPath(), e);
+		} catch (IOException e) {
+			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, "Can't read file content: " + file.getFullPath()));
 		}
-		return null;
 	}
 
 	private static String convertStreamToString(java.io.InputStream is) {

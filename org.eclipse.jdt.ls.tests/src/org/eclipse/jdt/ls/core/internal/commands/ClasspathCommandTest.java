@@ -34,8 +34,6 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 
 	private IJavaProject fJProject1;
 
-	private ClasspathCommand command = new ClasspathCommand();
-
 	@Before
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
@@ -46,22 +44,26 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testEclipseProject() throws CoreException {
 		ClasspathQuery query = new ClasspathQuery();
+		query.setKind(ClasspathNodeKind.PROJECT);
 		query.setProjectUri(getProjectUri(fJProject1));
-		List<ClasspathNode> result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.CONTAINER, query), monitor);
+		List<ClasspathNode> result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 		assertEquals(1, result.size());
 
 		query.setPath(result.get(0).getPath());
-		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.JAR, query), monitor);
+		query.setKind(ClasspathNodeKind.CONTAINER);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(1, result.size());
 
 		query.setRootPath(result.get(0).getPath());
-		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE, query), monitor);
+		query.setKind(ClasspathNodeKind.JAR);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(38, result.size());
 
 		query.setPath(result.get(0).getName());
-		result = ClasspathCommand.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.PACKAGE);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(2, result.size());
 		assertEquals("PropertyChangeListener.class", result.get(1).getName());
@@ -72,32 +74,38 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 		List<IProject> projects = importProjects("maven/salut");
 		IJavaProject jProject = JavaCore.create(projects.get(1));
 		ClasspathQuery query = new ClasspathQuery();
+		query.setKind(ClasspathNodeKind.PROJECT);
 		query.setProjectUri(getProjectUri(jProject));
 
-		List<ClasspathNode> result = command.getChildren(Arrays.asList(ClasspathNodeKind.CONTAINER.getValue(), query), monitor);
+		List<ClasspathNode> result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 		assertEquals(2, result.size());
 		assertEquals("Maven Dependencies", result.get(1).getName());
 
 		query.setPath(result.get(1).getPath());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.JAR.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.CONTAINER);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(1, result.size());
 
 		query.setRootPath(result.get(0).getPath());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.JAR);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(13, result.size());
 		assertEquals(ClasspathNodeKind.Folder, result.get(12).getKind());
 
 		query.setPath(result.get(12).getPath());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.Folder.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.Folder);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 		ClasspathNode node = result.get(1);
 		String content = (new JarFileContentProvider()).getContent(URI.create(node.getUri()), monitor);
 		assertTrue(content.contains("Apache License"));
 
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.JAR);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 		query.setPath(result.get(0).getName());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.PACKAGE);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(28, result.size());
 		assertEquals("AnnotationUtils.class", result.get(0).getName());
@@ -107,25 +115,30 @@ public class ClasspathCommandTest extends AbstractProjectsManagerBasedTest {
 	public void testGradleProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/simple-gradle");
 		IJavaProject jProject = JavaCore.create(projects.get(1));
+
 		ClasspathQuery query = new ClasspathQuery();
+		query.setKind(ClasspathNodeKind.PROJECT);
 		query.setProjectUri(getProjectUri(jProject));
 
-		List<ClasspathNode> result = command.getChildren(Arrays.asList(ClasspathNodeKind.CONTAINER.getValue(), query), monitor);
+		List<ClasspathNode> result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 		assertEquals(2, result.size());
 		assertEquals("Project and External Dependencies", result.get(1).getName());
 
 		query.setPath(result.get(1).getPath());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.JAR.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.CONTAINER);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(3, result.size());
 
 		query.setRootPath(result.get(0).getPath());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.PACKAGE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.JAR);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(5, result.size());
 
 		query.setPath(result.get(0).getName());
-		result = command.getChildren(Arrays.asList(ClasspathNodeKind.CLASSFILE.getValue(), query), monitor);
+		query.setKind(ClasspathNodeKind.PACKAGE);
+		result = ClasspathCommand.getChildren(Arrays.asList(query), monitor);
 
 		assertEquals(16, result.size());
 		assertEquals("BaseDescription.class", result.get(0).getName());

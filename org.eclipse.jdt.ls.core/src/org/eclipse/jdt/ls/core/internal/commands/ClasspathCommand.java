@@ -64,10 +64,10 @@ public class ClasspathCommand {
 
 	static {
 		commands = new HashMap<>();
-		commands.put(ClasspathNodeKind.CONTAINER, ClasspathCommand::getContainers);
-		commands.put(ClasspathNodeKind.JAR, ClasspathCommand::getJars);
-		commands.put(ClasspathNodeKind.PACKAGE, ClasspathCommand::getPackages);
-		commands.put(ClasspathNodeKind.CLASSFILE, ClasspathCommand::getClassfiles);
+		commands.put(ClasspathNodeKind.PROJECT, ClasspathCommand::getContainers);
+		commands.put(ClasspathNodeKind.CONTAINER, ClasspathCommand::getJars);
+		commands.put(ClasspathNodeKind.JAR, ClasspathCommand::getPackages);
+		commands.put(ClasspathNodeKind.PACKAGE, ClasspathCommand::getClassfiles);
 		commands.put(ClasspathNodeKind.Folder, ClasspathCommand::getFolderChildren);
 	}
 
@@ -83,15 +83,14 @@ public class ClasspathCommand {
 	 * @throws CoreException
 	 */
 	public static List<ClasspathNode> getChildren(List<Object> arguments, IProgressMonitor pm) throws CoreException {
-		if (arguments == null || arguments.size() < 2) {
-			return Collections.emptyList();
+		if (arguments == null || arguments.size() < 1) {
+			throw new IllegalArgumentException("Should have at least one arugments for getChildren");
 		}
-		ClasspathNodeKind classpathKind = gson.fromJson(gson.toJson(arguments.get(0)), ClasspathNodeKind.class);
-		ClasspathQuery params = gson.fromJson(gson.toJson(arguments.get(1)), ClasspathQuery.class);
+		ClasspathQuery params = gson.fromJson(gson.toJson(arguments.get(0)), ClasspathQuery.class);
 
-		BiFunction<ClasspathQuery, IProgressMonitor, List<ClasspathNode>> loader = commands.get(classpathKind);
+		BiFunction<ClasspathQuery, IProgressMonitor, List<ClasspathNode>> loader = commands.get(params.getKind());
 		if (loader == null) {
-			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("Unknown classpath item type: %s", classpathKind)));
+			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("Unknown classpath item type: %s", params.getKind())));
 		}
 		List<ClasspathNode> result = loader.apply(params, pm);
 		sortClasspathNode(result);
@@ -143,7 +142,7 @@ public class ClasspathCommand {
 					ArrayList<ClasspathNode> children = new ArrayList<>();
 					IPackageFragmentRoot[] packageFragmentRoots = javaProject.findPackageFragmentRoots(containerEntry);
 					for (IPackageFragmentRoot fragmentRoot : packageFragmentRoots) {
-						ClasspathNode node = new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getHandleIdentifier(), ClasspathNodeKind.JAR);
+						ClasspathNode node = new ClasspathNode(fragmentRoot.getElementName(), fragmentRoot.getPath().toPortableString(), ClasspathNodeKind.JAR);
 						children.add(node);
 						if (fragmentRoot instanceof JrtPackageFragmentRoot) {
 							node.setModuleName(fragmentRoot.getModuleDescription().getElementName());
@@ -164,8 +163,7 @@ public class ClasspathCommand {
 
 		if (javaProject != null) {
 			try {
-
-				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
+				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -182,7 +180,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
+				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -206,7 +204,7 @@ public class ClasspathCommand {
 		IJavaProject javaProject = getJavaProject(query.getProjectUri());
 		if (javaProject != null) {
 			try {
-				IPackageFragmentRoot packageRoot = (IPackageFragmentRoot) JavaCore.create(query.getRootPath());
+				IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(Path.fromPortableString(query.getRootPath()));
 				if (packageRoot == null) {
 					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, String.format("No package root found for %s", query.getPath())));
 				}
@@ -271,7 +269,6 @@ public class ClasspathCommand {
 
 		return result;
 	}
-
 
 	private static ClasspathNode getJarEntryResource(JarEntryResource resource) {
 		if (resource instanceof JarEntryDirectory) {

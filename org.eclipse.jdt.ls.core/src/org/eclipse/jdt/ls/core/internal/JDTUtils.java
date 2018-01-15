@@ -426,24 +426,22 @@ public final class JDTUtils {
 	public static String toUri(IClassFile classFile) {
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
-		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, CONTENTS_AUTHORITY, PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			return new URI(JDT_SCHEME, CONTENTS_AUTHORITY, PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
+			return null;
 		}
-		return uriString;
 	}
 
 	public static String toUri(JarEntryFile jarEntryFile) {
 		IPackageFragmentRoot fragmentRoot = jarEntryFile.getPackageFragmentRoot();
-		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, CONTENTS_AUTHORITY, jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
+			return new URI(JDT_SCHEME, CONTENTS_AUTHORITY, jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for jarentryfile ", e);
+			return null;
 		}
-		return uriString;
 	}
 
 	public static String toUri(ITypeRoot typeRoot) {

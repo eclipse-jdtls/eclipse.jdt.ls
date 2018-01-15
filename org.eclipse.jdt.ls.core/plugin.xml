@@ -54,7 +54,7 @@
             class="org.eclipse.jdt.ls.core.internal.JarFileContentProvider"
             id="jarFileContentProvider"
             priority="10000"
-            uriPattern=".+//contents.*"
+            uriPattern="jdt://contents/.*"
             cacheable="true">
       </contentProvider>
    </extension>
