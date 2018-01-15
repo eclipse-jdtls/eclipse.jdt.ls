@@ -105,8 +105,8 @@ public final class MapFlattener {
 
 	public static int getInt(Map<String, Object> configuration, String key, int def) {
 		Object val = getValue(configuration, key);
-		if (val instanceof Integer) {
-			return ((Integer) val).intValue();
+		if (val instanceof Number) {
+			return ((Number) val).intValue();
 		} else if (val instanceof String) {
 			try {
 				return Integer.parseInt((String) val);

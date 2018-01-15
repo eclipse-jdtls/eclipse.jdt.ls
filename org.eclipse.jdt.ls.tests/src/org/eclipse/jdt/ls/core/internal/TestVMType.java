@@ -30,39 +30,23 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.LibraryLocation;
-import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
-import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.osgi.framework.Bundle;
 
 
 public class TestVMType extends AbstractVMInstallType {
 
-	private static final String VMTYPE_ID = "org.eclipse.jdt.ls.core.internal.TestVMType";
+	public static final String VMTYPE_ID = "org.eclipse.jdt.ls.core.internal.TestVMType";
 	private static final String FAKE_JDK = "/fakejdk";
 	private static final String RTSTUBS_JAR = "rtstubs.jar";
 
 	public static void setTestJREAsDefault() throws CoreException {
 		IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(VMTYPE_ID);
 		IVMInstall testVMInstall = vmInstallType.findVMInstall("1.8");
-
 		if (!testVMInstall.equals(JavaRuntime.getDefaultVMInstall())) {
 			// set the 1.8 test JRE as the new default JRE
 			JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
 		}
-
-	// update all environments compatible to use the test JRE
-		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
-		IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
-		for (IExecutionEnvironment environment : environments) {
-			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
-			for (IVMInstall compatibleVM : compatibleVMs) {
-				if (VMTYPE_ID.equals(compatibleVM.getVMInstallType().getId()) && compatibleVM.getVMInstallType().findVMInstall(compatibleVM.getId()) != null && !compatibleVM.equals(environment.getDefaultVM())
-				// Fugly way to ensure the lowest VM version is set:
-						&& (environment.getDefaultVM() == null || compatibleVM.getId().compareTo(environment.getDefaultVM().getId()) < 0)) {
-					environment.setDefaultVM(compatibleVM);
-				}
-			}
-		}
+		JDTUtils.setCompatibleVMs(VMTYPE_ID);
 	}
 
 	public TestVMType() {
@@ -88,7 +72,7 @@ public class TestVMType extends AbstractVMInstallType {
 		return null;
 	}
 
-	static File getFakeJDKsLocation() {
+	public static File getFakeJDKsLocation() {
 		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
 		try {
 			URL url = FileLocator.toFileURL(bundle.getEntry(FAKE_JDK));

@@ -65,6 +65,10 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -724,5 +728,21 @@ public final class JDTUtils {
 
 	public static boolean isDefaultProject(ICompilationUnit unit) {
 		return unit != null && unit.getResource() != null && unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+	}
+
+	public static void setCompatibleVMs(String id) {
+		// update all environments compatible to use the test JRE
+		IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
+		IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
+		for (IExecutionEnvironment environment : environments) {
+			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
+			for (IVMInstall compatibleVM : compatibleVMs) {
+				if (id.equals(compatibleVM.getVMInstallType().getId()) && compatibleVM.getVMInstallType().findVMInstall(compatibleVM.getId()) != null && !compatibleVM.equals(environment.getDefaultVM())
+				// Fugly way to ensure the lowest VM version is set:
+						&& (environment.getDefaultVM() == null || compatibleVM.getId().compareTo(environment.getDefaultVM().getId()) < 0)) {
+					environment.setDefaultVM(compatibleVM);
+				}
+			}
+		}
 	}
 }
