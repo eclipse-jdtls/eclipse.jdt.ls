@@ -87,8 +87,8 @@ public class CompletionHandler{
 			IBuffer buffer = unit.getBuffer();
 			if (buffer != null && buffer.getLength() >= offset) {
 				IProgressMonitor subMonitor = new ProgressMonitorWrapper(monitor) {
-					private final static int TIMEOUT = 1000;
 					private long timeLimit;
+					private static final long TIMEOUT = 5000;
 
 					@Override
 					public void beginTask(String name, int totalWork) {
@@ -101,15 +101,14 @@ public class CompletionHandler{
 					}
 
 				};
-				unit.codeComplete(offset, collector, subMonitor);
-				if (!subMonitor.isCanceled()) {
+				try {
+					unit.codeComplete(offset, collector, subMonitor);
 					proposals.addAll(collector.getCompletionItems());
-				} else {
+				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
 			}
 		}
-
 		return proposals;
 	}
 }
