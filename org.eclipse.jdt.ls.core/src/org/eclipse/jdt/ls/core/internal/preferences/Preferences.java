@@ -31,6 +31,10 @@ import org.eclipse.lsp4j.MessageType;
 public class Preferences {
 
 	/**
+	 * Specifies the folder path to the JDK .
+	 */
+	public static final String JAVA_HOME = "java.home";
+	/**
 	 * Preference key to enable/disable gradle importer.
 	 */
 	public static final String IMPORT_GRADLE_ENABLED = "java.import.gradle.enabled";
@@ -171,6 +175,7 @@ public class Preferences {
 	private String favoriteStaticMembers;
 
 	private List<String> javaImportExclusions = new ArrayList<>();
+	private String javaHome;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
@@ -236,6 +241,7 @@ public class Preferences {
 		preferredContentProviderIds = null;
 		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
+		javaHome = null;
 	}
 
 	/**
@@ -291,7 +297,15 @@ public class Preferences {
 		List<String> preferredContentProviders = getList(configuration, PREFERRED_CONTENT_PROVIDER_KEY);
 		prefs.setPreferredContentProviderIds(preferredContentProviders);
 
+		String javaHome = getString(configuration, JAVA_HOME);
+		prefs.setJavaHome(javaHome);
+
 		return prefs;
+	}
+
+	public Preferences setJavaHome(String javaHome) {
+		this.javaHome = javaHome;
+		return this;
 	}
 
 	public Preferences setJavaImportExclusions(List<String> javaImportExclusions) {
@@ -374,6 +388,10 @@ public class Preferences {
 
 	public List<String> getJavaImportExclusions() {
 		return javaImportExclusions;
+	}
+
+	public String getJavaHome() {
+		return javaHome;
 	}
 
 	public MemberSortOrder getMemberSortOrder() {

@@ -14,6 +14,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logExcep
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.lsp4j.jsonrpc.CompletableFutures.computeAsync;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,13 +26,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.internal.launching.StandardVMType;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -276,14 +284,64 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
 					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
 		}
+		boolean jvmChanged = false;
 		try {
-			if (pm.setAutoBuilding(true)) {
+			jvmChanged = configureVM();
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		try {
+			if (pm.setAutoBuilding(true) || jvmChanged) {
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, null);
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		logInfo(">>New configuration: " + settings);
+	}
+
+	public boolean configureVM() throws CoreException {
+		String javaHome = preferenceManager.getPreferences().getJavaHome();
+		if (javaHome != null) {
+			File jvmHome = new File(javaHome);
+			if (jvmHome.isDirectory()) {
+				IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+				File location = defaultVM.getInstallLocation();
+				if (!location.equals(jvmHome)) {
+					IVMInstall vm = findVM(jvmHome);
+					if (vm == null) {
+						IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+						long unique = System.currentTimeMillis();
+						while (installType.findVMInstall(String.valueOf(unique)) != null) {
+							unique++;
+						}
+						String vmId = String.valueOf(unique);
+						VMStandin vmStandin = new VMStandin(installType, vmId);
+						String name = StringUtils.defaultIfBlank(jvmHome.getName(), "JRE");
+						vmStandin.setName(name);
+						vmStandin.setInstallLocation(jvmHome);
+						vm = vmStandin.convertToRealVM();
+					}
+					JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
+					JDTUtils.setCompatibleVMs(vm.getId());
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private IVMInstall findVM(File jvmHome) {
+		IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
+		for (IVMInstallType type : types) {
+			IVMInstall[] installs = type.getVMInstalls();
+			for (IVMInstall install : installs) {
+				if (jvmHome.equals(install.getInstallLocation())) {
+					return install;
+				}
+			}
+		}
+		return null;
 	}
 
 	private void toggleCapability(boolean enabled, String id, String capability, Object options) {

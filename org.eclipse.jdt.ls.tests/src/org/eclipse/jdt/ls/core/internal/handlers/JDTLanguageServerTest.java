@@ -11,6 +11,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -18,10 +22,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -74,6 +84,36 @@ public class JDTLanguageServerTest {
 	@After
 	public void tearDown() {
 		server.disconnectClient();
+	}
+
+	@Test
+	public void testDefaultVM() throws CoreException {
+		String oldJavaHome = prefManager.getPreferences().getJavaHome();
+		IVMInstall oldVm = JavaRuntime.getDefaultVMInstall();
+		assertNotNull(oldVm);
+		try {
+			IVMInstall vm = null;
+			IVMInstallType type = JavaRuntime.getVMInstallType(TestVMType.VMTYPE_ID);
+			IVMInstall[] installs = type.getVMInstalls();
+			for (IVMInstall install : installs) {
+				if (!install.equals(oldVm)) {
+					vm = install;
+					break;
+				}
+			}
+			assertNotNull(vm);
+			assertNotEquals(vm, oldVm);
+			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
+			prefManager.getPreferences().setJavaHome(javaHome);
+			boolean changed = server.configureVM();
+			IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+			assertTrue("A VM hasn't been changed", changed);
+			assertEquals(vm, defaultVM);
+			assertNotEquals(oldVm, defaultVM);
+		} finally {
+			prefManager.getPreferences().setJavaHome(oldJavaHome);
+			TestVMType.setTestJREAsDefault();
+		}
 	}
 
 	@Test
