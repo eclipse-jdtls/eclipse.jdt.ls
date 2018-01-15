@@ -58,9 +58,9 @@ public class Preferences {
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
 
 	/**
-	 * Preference key to enable/disable auto organize imports
+	 * Preference key to enable/disable organize imports on save
 	 */
-	public static final String JAVA_SAVE_ACTION_AUTO_ORGANIZE_IMPORTS_KEY = "java.saveAction.organizeImports";
+	public static final String JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY = "java.saveActions.organizeImports";
 
 	/**
 	 * Preference key to enable/disable signature help.
@@ -280,7 +280,7 @@ public class Preferences {
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
 
-		boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTION_AUTO_ORGANIZE_IMPORTS_KEY, false);
+		boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, false);
 		prefs.setJavaSaveActionAutoOrganizeImportsEnabled(javaSaveActionAutoOrganizeImportsEnabled);
 
 		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
@@ -441,7 +441,7 @@ public class Preferences {
 		return javaFormatEnabled;
 	}
 
-	public boolean isJavaSaveActionOrganizeImportsEnabled() {
+	public boolean isJavaSaveActionsOrganizeImportsEnabled() {
 		return javaSaveActionsOrganizeImportsEnabled;
 	}
 

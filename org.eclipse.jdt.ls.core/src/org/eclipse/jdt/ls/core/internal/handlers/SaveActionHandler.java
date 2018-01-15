@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -39,7 +40,7 @@ public class SaveActionHandler {
 
 		String documentUri = params.getTextDocument().getUri();
 
-		if (preferenceManager.getPreferences().isJavaSaveActionOrganizeImportsEnabled()) {
+		if (preferenceManager.getPreferences().isJavaSaveActionsOrganizeImportsEnabled()) {
 			edit.addAll(handleSaveActionOrganizeImports(documentUri, monitor));
 		}
 
@@ -48,11 +49,11 @@ public class SaveActionHandler {
 
 	private List<TextEdit> handleSaveActionOrganizeImports(String uri, IProgressMonitor monitor) {
 		if (monitor.isCanceled()) {
-			return new ArrayList<>();
+			return Collections.emptyList();
 		}
 		WorkspaceEdit organizedResult = organizeImportsCommand.organizeImportsInFile(uri);
 		List<TextEdit> edit = organizedResult.getChanges().get(uri);
-		edit = edit == null ? new ArrayList<>() : edit;
+		edit = edit == null ? Collections.emptyList() : edit;
 		return edit;
 	}
 
