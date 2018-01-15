@@ -333,7 +333,7 @@ public class DocumentLifeCycleHandler {
 				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
 				unit.discardWorkingCopy();
 				unit.becomeWorkingCopy(new NullProgressMonitor());
-			} catch (Exception e) {
+			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Error while handling document save", e);
 			}
 		}
