@@ -10,17 +10,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.net.Socket;
-import java.nio.channels.Channels;
 
 import org.eclipse.core.runtime.Platform;
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 /**
  * A factory for creating the streams for supported transmission methods.
@@ -34,44 +29,6 @@ public class ConnectionStreamFactory {
 		InputStream getInputStream() throws IOException;
 
 		OutputStream getOutputStream() throws IOException;
-	}
-
-
-	protected final class NamedPipeStreamProvider implements StreamProvider {
-
-		private final String readFileName;
-		private final String writeFileName;
-
-		public NamedPipeStreamProvider(String readFileName, String writeFileName) {
-			this.readFileName = readFileName;
-			this.writeFileName = writeFileName;
-		}
-
-		@Override
-		public InputStream getInputStream() throws IOException {
-			final File rFile = new File(readFileName);
-			if (isWindows()) {
-				RandomAccessFile readFile = new RandomAccessFile(rFile, "rwd");
-				return Channels.newInputStream(readFile.getChannel());
-			} else {
-				AFUNIXSocket readSocket = AFUNIXSocket.newInstance();
-				readSocket.connect(new AFUNIXSocketAddress(rFile));
-				return readSocket.getInputStream();
-			}
-		}
-		@Override
-		public OutputStream getOutputStream() throws IOException {
-			final File wFile = new File(writeFileName);
-
-			if (isWindows()) {
-				RandomAccessFile writeFile = new RandomAccessFile(wFile, "rwd");
-				return Channels.newOutputStream(writeFile.getChannel());
-			} else {
-				AFUNIXSocket writeSocket = AFUNIXSocket.newInstance();
-				writeSocket.connect(new AFUNIXSocketAddress(wFile));
-				return writeSocket.getOutputStream();
-			}
-		}
 	}
 
 	protected final class SocketStreamProvider implements StreamProvider {
@@ -142,12 +99,6 @@ public class ConnectionStreamFactory {
 	}
 
 	private StreamProvider createProvider() {
-		final String stdInName = Environment.get("STDIN_PIPE_NAME");
-		final String stdOutName = Environment.get("STDOUT_PIPE_NAME");
-		if (stdInName != null && stdOutName != null) {
-			JavaLanguageServerPlugin.logError("STDIN_PIPE_NAME/STDOUT_PIPE_NAME support will be removed in eclipse.jdt.ls 0.12.0. Please use Standard IO or Socket connection instead.");
-			return new NamedPipeStreamProvider(stdOutName, stdInName);
-		}
 		final String host = Environment.get("CLIENT_HOST", "localhost");
 		final String port = Environment.get("CLIENT_PORT");
 		if (port != null) {
