@@ -92,6 +92,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.Unregistration;
 import org.eclipse.lsp4j.UnregistrationParams;
+import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
@@ -185,8 +186,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public void exit() {
-    logInfo(">> exit");
-    JavaLanguageServerPlugin.getLanguageServer().exit();
+		logInfo(">> exit");
+		JavaLanguageServerPlugin.getLanguageServer().exit();
 		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 			logInfo("Forcing exit after 1 min.");
 			System.exit(FORCED_EXIT_CODE);
@@ -625,6 +626,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public void didClose(DidCloseTextDocumentParams params) {
 		logInfo(">> document/didClose");
 		documentLifeCycleHandler.didClose(params);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#willSaveWaitUntil(org.eclipse.lsp4j.WillSaveTextDocumentParams)
+	 */
+	@Override
+	public CompletableFuture<List<TextEdit>> willSaveWaitUntil(WillSaveTextDocumentParams params) {
+		logInfo(">> document/willSaveWailUntil");
+		SaveActionHandler handler = new SaveActionHandler(preferenceManager);
+		return computeAsync((cc) -> handler.willSaveWaitUntil(params, toMonitor(cc)));
 	}
 
 	/* (non-Javadoc)

@@ -58,6 +58,11 @@ public class Preferences {
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
 
 	/**
+	 * Preference key to enable/disable organize imports on save
+	 */
+	public static final String JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY = "java.saveActions.organizeImports";
+
+	/**
 	 * Preference key to enable/disable signature help.
 	 */
 	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
@@ -164,6 +169,7 @@ public class Preferences {
 	private boolean importMavenEnabled;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
+	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
@@ -234,6 +240,7 @@ public class Preferences {
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
+		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		executeCommandEnabled = true;
@@ -272,6 +279,9 @@ public class Preferences {
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
+
+		boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, false);
+		prefs.setJavaSaveActionAutoOrganizeImportsEnabled(javaSaveActionAutoOrganizeImportsEnabled);
 
 		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
@@ -363,6 +373,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setJavaSaveActionAutoOrganizeImportsEnabled(boolean javaSaveActionAutoOrganizeImportsEnabled) {
+		this.javaSaveActionsOrganizeImportsEnabled = javaSaveActionAutoOrganizeImportsEnabled;
+		return this;
+	}
+
 	public Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
 		this.updateBuildConfigurationStatus = status;
 		return this;
@@ -424,6 +439,10 @@ public class Preferences {
 
 	public boolean isJavaFormatEnabled() {
 		return javaFormatEnabled;
+	}
+
+	public boolean isJavaSaveActionsOrganizeImportsEnabled() {
+		return javaSaveActionsOrganizeImportsEnabled;
 	}
 
 	public boolean isSignatureHelpEnabled() {

@@ -116,4 +116,13 @@ public class ClientPreferences {
 	public boolean isDocumentHighlightDynamicRegistered() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDocumentHighlight());
 	}
+
+	public boolean isWillSaveRegistered() {
+		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSave());
+	}
+
+	public boolean isWillSaveWaitUntilRegistered() {
+		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSaveWaitUntil());
+	}
+
 }
