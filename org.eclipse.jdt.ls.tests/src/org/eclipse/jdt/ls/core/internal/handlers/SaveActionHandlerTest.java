@@ -14,17 +14,16 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
-import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -32,25 +31,23 @@ import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SaveActionHandlerTest extends AbstractProjectsManagerBasedTest {
+public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private SaveActionHandler handler;
 
 	private PreferenceManager preferenceManager;
 
-	private IPackageFragmentRoot sourceFolder;
-
 	private IProgressMonitor monitor;
 
+	@Override
 	@Before
 	public void setup() throws Exception {
-		IJavaProject javaProject = newEmptyProject();
-		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		importProjects("eclipse/hello");
+		project = WorkspaceHelper.getProject("hello");
 		preferenceManager = mock(PreferenceManager.class);
-		ClientPreferences clientPreferences = mock(ClientPreferences.class);
-		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
-		when(clientPreferences.isWillSaveRegistered()).thenReturn(true);
-		when(clientPreferences.isWillSaveWaitUntilRegistered()).thenReturn(true);
+		Preferences preferences = mock(Preferences.class);
+		when(preferences.isJavaSaveActionsOrganizeImportsEnabled()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		monitor = mock(IProgressMonitor.class);
 		when(monitor.isCanceled()).thenReturn(false);
 		handler = new SaveActionHandler(preferenceManager);
@@ -58,32 +55,25 @@ public class SaveActionHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testWillSaveWaitUntil() throws Exception {
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		URI srcUri = project.getFile("src/java/Foo4.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(srcUri);
 
 		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
+		buf.append("package java;\n");
 		buf.append("\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("}\n");
-
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
+		buf.append("public class Foo4 {\n");
 		buf.append("}\n");
 
 		WillSaveTextDocumentParams params = new WillSaveTextDocumentParams();
 		TextDocumentIdentifier document = new TextDocumentIdentifier();
-		document.setUri(cu.getPath().toOSString());
+		document.setUri(srcUri.toString());
 		params.setTextDocument(document);
 
 		List<TextEdit> result = handler.willSaveWaitUntil(params, monitor);
 
 		Document doc = new Document();
+		doc.set(cu.getSource());
 		assertEquals(TextEditUtil.apply(doc, result), buf.toString());
 	}
 

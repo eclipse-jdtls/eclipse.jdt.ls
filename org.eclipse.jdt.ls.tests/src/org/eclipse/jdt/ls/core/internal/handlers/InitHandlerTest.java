@@ -34,6 +34,7 @@ import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.SynchronizationCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
@@ -102,6 +103,8 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		when(mockCapabilies.isWillSaveRegistered()).thenReturn(Boolean.TRUE);
+		when(mockCapabilies.isWillSaveWaitUntilRegistered()).thenReturn(Boolean.TRUE);
 		InitializeResult result = initialize(true);
 		Either<TextDocumentSyncKind, TextDocumentSyncOptions> o = result.getCapabilities().getTextDocumentSync();
 		assertTrue(o.isRight());
@@ -137,8 +140,9 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		workspaceCapabilities.setExecuteCommand(executeCommand);
 		capabilities.setWorkspace(workspaceCapabilities);
 		TextDocumentClientCapabilities textDocument = new TextDocumentClientCapabilities();
-		textDocument.getSynchronization().setWillSave(true);
-		textDocument.getSynchronization().setWillSaveWaitUntil(true);
+		SynchronizationCapabilities synchronizationCapabilities = new SynchronizationCapabilities();
+		synchronizationCapabilities.setWillSave(Boolean.TRUE);
+		synchronizationCapabilities.setWillSaveWaitUntil(Boolean.TRUE);
 		capabilities.setTextDocument(textDocument);
 		params.setCapabilities(capabilities);
 		CompletableFuture<InitializeResult> result = server.initialize(params);

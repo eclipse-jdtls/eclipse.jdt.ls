@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.TextEdit;
@@ -47,7 +49,8 @@ public class SaveActionHandler {
 		return edit;
 	}
 
-	private List<TextEdit> handleSaveActionOrganizeImports(String uri, IProgressMonitor monitor) {
+	private List<TextEdit> handleSaveActionOrganizeImports(String documentUri, IProgressMonitor monitor) {
+		String uri = ResourceUtils.fixURI(JDTUtils.toURI(documentUri));
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
