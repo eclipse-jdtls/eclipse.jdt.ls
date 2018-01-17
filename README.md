@@ -85,15 +85,7 @@ Managing connection types
 -------------------------
 The Java Language server supports sockets, named pipes, and standard streams of the server process
 to communicate with the client. Client can communicate its preferred connection methods 
-by setting up environment variables. 
-
-* _[DEPRECATED: use plain sockets or standard streams]_ To use **named pipes**, set the following environment variables before starting
-the server:
-
-   * `STDIN_PIPE_NAME`: the named pipe used for input.
-   * `STDOUT_PIPE_NAME`: the named pipe used for output.
-   
-  Example: `STDIN_PIPE_NAME=/tmp/myInPipe.sock` on Linux/MacOS and `STDIN_PIPE_NAME=\\.\pipe\myInPipe` on Windows.
+by setting up environment variables.
 
 * To use a **plain socket**, set the following environment variables before starting the server:
    * `CLIENT_PORT`: the port of the socket to connect to
@@ -127,6 +119,8 @@ Continuous Integration Builds
 Our [CI server](https://ci.eclipse.org/ls/) publishes the server binaries to [http://download.eclipse.org/jdtls/snapshots/](http://download.eclipse.org/jdtls/snapshots/?d).
 
 P2 repositories are available under [http://download.eclipse.org/jdtls/snapshots/repository/](http://download.eclipse.org/jdtls/snapshots/repository?d).
+
+Milestone builds are available under [http://download.eclipse.org/jdtls/milestones/](http://download.eclipse.org/jdtls/milestones/?d).
 
 License
 -------
