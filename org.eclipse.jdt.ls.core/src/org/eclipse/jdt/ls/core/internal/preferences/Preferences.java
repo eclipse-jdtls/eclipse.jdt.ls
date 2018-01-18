@@ -78,6 +78,11 @@ public class Preferences {
 	public static final String EXECUTE_COMMAND_ENABLED_KEY = "java.executeCommand.enabled";
 
 	/**
+	 * Preference key to enable/disable the 'auto build'.
+	 */
+	public static final String AUTOBUILD_ENABLED_KEY = "java.autobuild.enabled";
+
+	/**
 	 * Preference key to exclude directories when importing projects.
 	 */
 	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
@@ -173,6 +178,7 @@ public class Preferences {
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
+	private boolean autobuildEnabled;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
 
@@ -244,6 +250,7 @@ public class Preferences {
 		signatureHelpEnabled = false;
 		renameEnabled = true;
 		executeCommandEnabled = true;
+		autobuildEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
 		favoriteStaticMembers = "";
@@ -291,6 +298,9 @@ public class Preferences {
 
 		boolean executeCommandEnable = getBoolean(configuration, EXECUTE_COMMAND_ENABLED_KEY, true);
 		prefs.setExecuteCommandEnabled(executeCommandEnable);
+
+		boolean autobuildEnable = getBoolean(configuration, AUTOBUILD_ENABLED_KEY, true);
+		prefs.setAutobuildEnabled(autobuildEnable);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -365,6 +375,11 @@ public class Preferences {
 
 	private Preferences setExecuteCommandEnabled(boolean enabled) {
 		this.executeCommandEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setAutobuildEnabled(boolean enabled) {
+		this.autobuildEnabled = enabled;
 		return this;
 	}
 
@@ -455,6 +470,10 @@ public class Preferences {
 
 	public boolean isExecuteCommandEnabled() {
 		return executeCommandEnabled;
+	}
+
+	public boolean isAutobuildEnabled() {
+		return autobuildEnabled;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

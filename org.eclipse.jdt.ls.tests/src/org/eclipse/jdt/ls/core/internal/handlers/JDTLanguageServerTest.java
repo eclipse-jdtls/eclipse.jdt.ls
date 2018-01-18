@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -26,6 +27,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallType;
@@ -67,7 +71,7 @@ public class JDTLanguageServerTest {
 	private ClientPreferences clientPreferences;
 
 	@Before
-	public void setUp() {
+	public void setUp() throws Exception {
 		when(prefManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isWorkspaceSymbolDynamicRegistered()).thenReturn(Boolean.FALSE);
 		when(clientPreferences.isDocumentSymbolDynamicRegistered()).thenReturn(Boolean.FALSE);
@@ -76,7 +80,9 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isHoverDynamicRegistered()).thenReturn(Boolean.FALSE);
 		when(clientPreferences.isReferencesDynamicRegistered()).thenReturn(Boolean.FALSE);
 		when(clientPreferences.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.FALSE);
-
+		when(projManager.setAutoBuilding(false)).thenCallRealMethod();
+		when(projManager.setAutoBuilding(true)).thenCallRealMethod();
+		projManager.setAutoBuilding(true);
 		server = new JDTLanguageServer(projManager, prefManager);
 		server.connectClient(client);
 	}
@@ -114,6 +120,27 @@ public class JDTLanguageServerTest {
 			prefManager.getPreferences().setJavaHome(oldJavaHome);
 			TestVMType.setTestJREAsDefault();
 		}
+	}
+
+	@Test
+	public void testAutobuilding() throws Exception {
+		boolean enabled = isAutoBuilding();
+		try {
+			assertTrue("Autobuilding is off", isAutoBuilding());
+			Map<String, Object> map = new HashMap<>();
+			map.put(Preferences.AUTOBUILD_ENABLED_KEY, false);
+			DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
+			server.didChangeConfiguration(params);
+			assertFalse("Autobuilding is on", isAutoBuilding());
+		} finally {
+			projManager.setAutoBuilding(enabled);
+		}
+	}
+
+	private boolean isAutoBuilding() throws CoreException {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceDescription description = workspace.getDescription();
+		return description.isAutoBuilding();
 	}
 
 	@Test
