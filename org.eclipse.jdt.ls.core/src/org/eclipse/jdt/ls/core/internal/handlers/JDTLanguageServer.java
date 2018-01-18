@@ -292,7 +292,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		try {
-			if (pm.setAutoBuilding(true) || jvmChanged) {
+			if (pm.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled()) || jvmChanged) {
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, null);
 			}
 		} catch (CoreException e) {
