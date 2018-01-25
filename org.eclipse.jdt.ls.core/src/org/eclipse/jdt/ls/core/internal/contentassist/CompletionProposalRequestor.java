@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,12 +16,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
@@ -35,12 +39,35 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private final ICompilationUnit unit;
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
+	private boolean fIsTestCodeExcluded;
 
 	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset) {
 		this.unit = aUnit;
 		response = new CompletionResponse();
 		response.setOffset(offset);
+		fIsTestCodeExcluded = !isTestSource(unit.getJavaProject(), unit);
 		setRequireExtendedContext(true);
+	}
+
+	private boolean isTestSource(IJavaProject project, ICompilationUnit cu) {
+		if (project == null) {
+			return true;
+		}
+		try {
+			IClasspathEntry[] resolvedClasspath = project.getResolvedClasspath(true);
+			final IPath resourcePath = cu.getResource().getFullPath();
+			for (IClasspathEntry e : resolvedClasspath) {
+				if (e.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+					if (e.isTest()) {
+						if (e.getPath().isPrefixOf(resourcePath)) {
+							return true;
+						}
+					}
+				}
+			}
+		} catch (JavaModelException e) {
+		}
+		return false;
 	}
 
 	@Override
@@ -167,4 +194,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			JavaLanguageServerPlugin.logException("Accept potential method declaration failed for completion ", e);
 		}
 	}
+
+	@Override
+	public boolean isTestCodeExcluded() {
+		return fIsTestCodeExcluded;
+	}
+
 }

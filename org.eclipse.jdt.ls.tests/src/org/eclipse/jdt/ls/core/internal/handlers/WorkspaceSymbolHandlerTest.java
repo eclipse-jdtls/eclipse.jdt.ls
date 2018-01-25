@@ -56,10 +56,10 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testWorkspaceSearch() {
-		String query = "Abstract";
+		String query = "Array";
 		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + " results", 33, results.size());
+		assertEquals("Unexpected results", 11, results.size());
 		Range defaultRange = JDTUtils.newRange();
 		for (SymbolInformation symbol : results) {
 			assertNotNull("Kind is missing", symbol.getKind());
@@ -67,7 +67,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 			assertTrue(symbol.getName().startsWith(query));
 			Location location = symbol.getLocation();
 			assertEquals(defaultRange, location.getRange());
-			//No class in the workspace project starts with Abstract, so everything comes from the JDK
+			//No class in the workspace project starts with Array, so everything comes from the JDK
 			assertTrue("Unexpected uri "+ location.getUri(), location.getUri().startsWith("jdt://"));
 		}
 	}
