@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -1146,6 +1146,35 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTextEdit(2, 12, 15, "Foo$Bar", resolvedItem.getTextEdit());
 	}
 
+	@Test
+	public void testCompletion_testClassesDontLeakIntoMainCode() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				//@formatter:off
+				"src/org/sample/Test.java",
+				"package org.sample;\n\n"+
+				"public class Test extends AbstractTe {\n"+
+				"}\n");
+				//@formatter:on
+		int[] loc = findCompletionLocation(unit, " AbstractTe");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertEquals("Test proposals leaked:\n" + list.getItems(), 0, list.getItems().size());
+	}
+
+	@Test
+	public void testCompletion_testClassesAvailableIntoTestCode() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"test/foo/bar/BaseTest.java",
+				"package foo.bar;\n\n"+
+				"public class BaseTest extends AbstractTe {\n"+
+				"}\n");
+				//@formatter:on
+		int[] loc = findCompletionLocation(unit, " AbstractTe");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
+		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
+	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
