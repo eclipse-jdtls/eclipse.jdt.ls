@@ -138,9 +138,6 @@ public final class SharedASTProvider {
 			return null;
 		}
 
-		final ASTParser parser = newASTParser();
-		parser.setSource(input);
-
 		final CompilationUnit root[]= new CompilationUnit[1];
 
 		SafeRunner.run(new ISafeRunnable() {
@@ -150,11 +147,23 @@ public final class SharedASTProvider {
 					if (progressMonitor != null && progressMonitor.isCanceled()) {
 						return;
 					}
-					root[0] = (CompilationUnit) parser.createAST(progressMonitor);
-
+					if (input instanceof ICompilationUnit) {
+						ICompilationUnit cu = (ICompilationUnit) input;
+						if (cu.isWorkingCopy()) {
+							root[0] = cu.reconcile(IASTSharedValues.SHARED_AST_LEVEL, true, null, progressMonitor);
+						}
+					}
+					if (root[0] == null) {
+						final ASTParser parser = newASTParser();
+						parser.setSource(input);
+						root[0] = (CompilationUnit) parser.createAST(progressMonitor);
+					}
 					//mark as unmodifiable
 					ASTNodes.setFlagsToAST(root[0], ASTNode.PROTECT);
 				} catch (OperationCanceledException ex) {
+					return;
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					return;
 				}
 			}
