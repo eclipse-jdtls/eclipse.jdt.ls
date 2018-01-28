@@ -943,9 +943,8 @@ public class UnresolvedElementsSubProcessor {
 			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
 		IJavaProject project= context.getCompilationUnit().getJavaProject();
 		if (JavaModelUtil.is50OrHigher(project)) {
-			String pref = PreferenceManager.getPrefs(context.getCompilationUnit().getResource())
-					.getFavoriteStaticMembers();
-			String[] favourites= pref.split(";"); //$NON-NLS-1$
+			String[] favourites = PreferenceManager.getPrefs(context.getCompilationUnit().getResource())
+					.getJavaCompletionFavoriteMembers();
 			if (favourites.length == 0) {
 				return;
 			}

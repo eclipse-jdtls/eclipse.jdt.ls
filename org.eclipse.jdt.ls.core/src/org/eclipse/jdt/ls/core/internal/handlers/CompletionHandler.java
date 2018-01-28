@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -83,6 +84,8 @@ public class CompletionHandler{
 
 		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
 
+		collector.setFavoriteReferences(getFavoriteStaticMembers());
+
 		if (offset >-1 && !monitor.isCanceled()) {
 			IBuffer buffer = unit.getBuffer();
 			if (buffer != null && buffer.getLength() >= offset) {
@@ -110,5 +113,13 @@ public class CompletionHandler{
 			}
 		}
 		return proposals;
+	}
+
+	private String[] getFavoriteStaticMembers() {
+		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager != null) {
+			return preferenceManager.getPreferences().getJavaCompletionFavoriteMembers();
+		}
+		return new String[0];
 	}
 }

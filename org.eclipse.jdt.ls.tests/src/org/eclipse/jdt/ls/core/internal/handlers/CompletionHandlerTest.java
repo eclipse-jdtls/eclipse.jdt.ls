@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -42,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
@@ -1174,6 +1176,60 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
+	}
+
+	@Test
+	public void testStaticImports1() throws Exception {
+		List<String> favorites = new ArrayList<>();
+		favorites.add("test1.A.foo");
+		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(favorites);
+		try {
+			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
+			//@formatter:off
+				"package test1;\n" +
+				"\n" +
+				"public class B {\n" +
+				"    public void bar() {\n" +
+				"        fo\n" +
+				"    }\n" +
+				"}\n");
+			//@formatter:on
+
+			int[] loc = findCompletionLocation(unit, "fo");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertTrue(list.getItems().size() > 0);
+			assertTrue("no proposal for foo()", "foo() : void".equals(list.getItems().get(0).getLabel()));
+		} finally {
+			PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
+		}
+	}
+
+	@Test
+	public void testStaticImports2() throws Exception {
+		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
+		ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
+		//@formatter:off
+					"package test1;\n" +
+					"\n" +
+					"public class B {\n" +
+					"    public void bar() {\n" +
+					"        /* */fo\n" +
+					"    }\n" +
+					"    public void foo(int x) {\n" + // conflicting method, no static import possible
+					"    }\n" +
+					"}\n");
+				//@formatter:on
+
+		int[] loc = findCompletionLocation(unit, "/* */fo");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertTrue(list.getItems().size() > 0);
+		for (CompletionItem it : list.getItems()) {
+			if ("foo() : void".equals(it.getLabel())) {
+				fail("there is a proposal for foo()");
+			}
+		}
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
