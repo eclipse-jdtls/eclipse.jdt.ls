@@ -110,7 +110,8 @@ public class Preferences {
 	 * favorites.
 	 * </p>
 	 */
-	public static final String FAVORITE_STATIC_MEMBERS = "java.favoriteStaticMembers";
+	public static final String JAVA_COMPLETION_FAVORITE_MEMBERS_KEY = "java.completion.favoriteStaticMembers";
+	public static final List<String> JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 
 	/**
 	 * A named preference that defines how member elements are ordered by code
@@ -184,7 +185,7 @@ public class Preferences {
 
 	private String mavenUserSettings;
 
-	private String favoriteStaticMembers;
+	private List<String> javaCompletionFavoriteMembers;
 
 	private List<String> javaImportExclusions = new ArrayList<>();
 	private String javaHome;
@@ -194,6 +195,14 @@ public class Preferences {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT = new ArrayList<>();
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assert.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assume.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assertions.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assumptions.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicContainer.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicTest.*");
+		//@formatter:on
 	}
 	public static enum Severity {
 		ignore, log, info, warning, error;
@@ -253,8 +262,8 @@ public class Preferences {
 		autobuildEnabled = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
-		favoriteStaticMembers = "";
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
+		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 		javaHome = null;
 	}
 
@@ -305,14 +314,14 @@ public class Preferences {
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
 
+		List<String> javaContentAssistFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
+		prefs.setJavaCompletionFavoriteMembers(javaContentAssistFavoriteMembers);
+
 		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
 		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
-
-		String favoriteStaticMembers = getString(configuration, FAVORITE_STATIC_MEMBERS, "");
-		prefs.setFavoriteStaticMembers(favoriteStaticMembers);
 
 		List<String> preferredContentProviders = getList(configuration, PREFERRED_CONTENT_PROVIDER_KEY);
 		prefs.setPreferredContentProviderIds(preferredContentProviders);
@@ -330,6 +339,11 @@ public class Preferences {
 
 	public Preferences setJavaImportExclusions(List<String> javaImportExclusions) {
 		this.javaImportExclusions = javaImportExclusions;
+		return this;
+	}
+
+	public Preferences setJavaCompletionFavoriteMembers(List<String> javaCompletionFavoriteMembers) {
+		this.javaCompletionFavoriteMembers = (javaCompletionFavoriteMembers == null || javaCompletionFavoriteMembers.isEmpty()) ? JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT : javaCompletionFavoriteMembers;
 		return this;
 	}
 
@@ -403,11 +417,6 @@ public class Preferences {
 		return this;
 	}
 
-	public Preferences setFavoriteStaticMembers(String favoriteStaticMembers) {
-		this.favoriteStaticMembers = favoriteStaticMembers;
-		return this;
-	}
-
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
 	}
@@ -418,6 +427,10 @@ public class Preferences {
 
 	public List<String> getJavaImportExclusions() {
 		return javaImportExclusions;
+	}
+
+	public String[] getJavaCompletionFavoriteMembers() {
+		return javaCompletionFavoriteMembers.toArray(new String[0]);
 	}
 
 	public String getJavaHome() {
@@ -483,10 +496,6 @@ public class Preferences {
 
 	public String getMavenUserSettings() {
 		return mavenUserSettings;
-	}
-
-	public String getFavoriteStaticMembers() {
-		return this.favoriteStaticMembers;
 	}
 
 	public Map<String, Object> asMap() {

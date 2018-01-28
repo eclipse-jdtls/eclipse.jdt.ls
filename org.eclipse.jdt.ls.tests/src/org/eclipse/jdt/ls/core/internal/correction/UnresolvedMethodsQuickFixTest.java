@@ -13,7 +13,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -4037,7 +4040,9 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticImportFavorite1() throws Exception {
-		PreferenceManager.getPrefs(null).setFavoriteStaticMembers("java.lang.Math.*");
+		List<String> favorites = new ArrayList<>();
+		favorites.add("java.lang.Math.*");
+		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(favorites);
 		try {
 			IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
 			StringBuilder buf = new StringBuilder();
@@ -4064,13 +4069,15 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 			assertCodeActionExists(cu, e1);
 		} finally {
-			PreferenceManager.getPrefs(null).setFavoriteStaticMembers("");
+			PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
 		}
 	}
 
 	@Test
 	public void testStaticImportFavorite2() throws Exception {
-		PreferenceManager.getPrefs(null).setFavoriteStaticMembers("java.lang.Math.max");
+		List<String> favorites = new ArrayList<>();
+		favorites.add("java.lang.Math.max");
+		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(favorites);
 		try {
 			IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
 			StringBuilder buf = new StringBuilder();
@@ -4095,7 +4102,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 			assertCodeActionExists(cu, e1);
 		} finally {
-			PreferenceManager.getPrefs(null).setFavoriteStaticMembers("");
+			PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
 		}
 	}
 
