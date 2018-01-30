@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 /**
  * Method implementations extracted from JDT UI. Mostly from
@@ -38,8 +39,6 @@ import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 public class TypeProposalUtils {
 
 	private static final String PACKAGE_INFO_JAVA = "package-info.java"; //$NON-NLS-1$
-	private static final String[] IMPORTS_ORDER = new String[] { "java",
-			"javax", "org", "com" };
 	private static final int IMPORTS_THRESHOLD = 99;
 
 	static void createName(ITypeBinding type, boolean includePackage,
@@ -162,13 +161,13 @@ public class TypeProposalUtils {
 	static ImportRewrite createImportRewrite(ICompilationUnit compilationUnit) {
 		try {
 			ImportRewrite rewrite = ImportRewrite.create(compilationUnit, true);
-			rewrite.setImportOrder(IMPORTS_ORDER);
+			String[] importOrder = JavaLanguageServerPlugin.getPreferencesManager() == null ? new String[0] : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getImportOrder();
+			rewrite.setImportOrder(importOrder);
 			rewrite.setOnDemandImportThreshold(IMPORTS_THRESHOLD);
 			rewrite.setStaticOnDemandImportThreshold(IMPORTS_THRESHOLD);
 			return rewrite;
 		} catch (JavaModelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return null;
 		}
 	}

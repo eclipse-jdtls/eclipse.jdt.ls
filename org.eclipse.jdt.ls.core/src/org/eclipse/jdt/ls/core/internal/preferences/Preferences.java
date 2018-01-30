@@ -106,8 +106,7 @@ public class Preferences {
 	/**
 	 * A named preference that holds the favorite static members.
 	 * <p>
-	 * Value is of type <code>String</code>: semicolon separated list of
-	 * favorites.
+	 * Value is of type <code>String</code>: list of favorites.
 	 * </p>
 	 */
 	public static final String JAVA_COMPLETION_FAVORITE_MEMBERS_KEY = "java.completion.favoriteStaticMembers";
@@ -138,6 +137,16 @@ public class Preferences {
 	 * Preference key for the id(s) of the preferred content provider(s).
 	 */
 	public static final String PREFERRED_CONTENT_PROVIDER_KEY = "java.contentProvider.preferred";
+
+	/**
+	 * A named preference that holds a list of package names. The list specifies the
+	 * import order used by the "Organize Imports" operation.
+	 * <p>
+	 * Value is of type <code>String</code>: list of package names
+	 * </p>
+	 */
+	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
+	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -189,6 +198,7 @@ public class Preferences {
 
 	private List<String> javaImportExclusions = new ArrayList<>();
 	private String javaHome;
+	private List<String> importOrder;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
@@ -202,8 +212,13 @@ public class Preferences {
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assumptions.*:");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicContainer.*:");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicTest.*");
-		//@formatter:on
+		JAVA_IMPORT_ORDER_DEFAULT = new ArrayList<>();
+		JAVA_IMPORT_ORDER_DEFAULT.add("java");
+		JAVA_IMPORT_ORDER_DEFAULT.add("javax");
+		JAVA_IMPORT_ORDER_DEFAULT.add("com");
+		JAVA_IMPORT_ORDER_DEFAULT.add("org");
 	}
+
 	public static enum Severity {
 		ignore, log, info, warning, error;
 
@@ -265,6 +280,7 @@ public class Preferences {
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 		javaHome = null;
+		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
 	}
 
 	/**
@@ -314,8 +330,8 @@ public class Preferences {
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
 
-		List<String> javaContentAssistFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
-		prefs.setJavaCompletionFavoriteMembers(javaContentAssistFavoriteMembers);
+		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
+		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
 
 		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
@@ -329,6 +345,8 @@ public class Preferences {
 		String javaHome = getString(configuration, JAVA_HOME);
 		prefs.setJavaHome(javaHome);
 
+		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
+		prefs.setImportOrder(javaImportOrder);
 		return prefs;
 	}
 
@@ -417,6 +435,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setImportOrder(List<String> importOrder) {
+		this.importOrder = (importOrder == null || importOrder.size() == 0) ? JAVA_IMPORT_ORDER_DEFAULT : importOrder;
+		return this;
+	}
+
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
 	}
@@ -496,6 +519,10 @@ public class Preferences {
 
 	public String getMavenUserSettings() {
 		return mavenUserSettings;
+	}
+
+	public String[] getImportOrder() {
+		return this.importOrder == null ? new String[0] : this.importOrder.toArray(new String[importOrder.size()]);
 	}
 
 	public Map<String, Object> asMap() {

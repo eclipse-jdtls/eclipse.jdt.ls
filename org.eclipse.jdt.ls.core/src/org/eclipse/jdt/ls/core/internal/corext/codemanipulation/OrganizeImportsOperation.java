@@ -64,6 +64,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.corext.utils.TypeNameMatchCollector;
@@ -536,8 +537,8 @@ public class OrganizeImportsOperation {
 			}
 
 			ImportRewrite importsRewrite= StubUtility.createImportRewrite(astRoot, false);
-			importsRewrite.setImportOrder(new String[] { "java", "javax", "com", "org" });
-
+			String[] importOrder = JavaLanguageServerPlugin.getPreferencesManager() == null ? new String[0] : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getImportOrder();
+			importsRewrite.setImportOrder(importOrder);
 			Set<String> oldSingleImports= new HashSet<>();
 			Set<String>  oldDemandImports= new HashSet<>();
 			List<SimpleName> typeReferences= new ArrayList<>();
