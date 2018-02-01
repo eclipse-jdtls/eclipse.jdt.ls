@@ -150,7 +150,8 @@ public final class SharedASTProvider {
 					if (input instanceof ICompilationUnit) {
 						ICompilationUnit cu = (ICompilationUnit) input;
 						if (cu.isWorkingCopy()) {
-							root[0] = cu.reconcile(IASTSharedValues.SHARED_AST_LEVEL, true, null, progressMonitor);
+							root[0] = cu.reconcile(IASTSharedValues.SHARED_AST_LEVEL, ICompilationUnit.FORCE_PROBLEM_DETECTION | ICompilationUnit.ENABLE_BINDINGS_RECOVERY | ICompilationUnit.ENABLE_STATEMENTS_RECOVERY, null,
+									progressMonitor);
 						}
 					}
 					if (root[0] == null) {

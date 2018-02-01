@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,6 +46,9 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
+import org.eclipse.lsp4j.CodeActionContext;
+import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
@@ -98,6 +103,64 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
 		Mockito.when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
 		return mockPreferences;
+	}
+
+	@Test
+	public void testUnimplementedMethods() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public interface E {\n");
+		buf.append("    void foo();\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class F implements E {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
+		openDocument(cu, cu.getSource(), 1);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class F implements E {\n");
+		buf.append("\n");
+		buf.append("    @Override\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        \n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		List<Command> commands = getCodeActions(cu);
+		assertTrue(commands.size() == 1);
+	}
+
+	protected List<Command> getCodeActions(ICompilationUnit cu) throws JavaModelException {
+
+		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
+		IProblem[] problems = astRoot.getProblems();
+
+		Range range = getRange(cu, problems);
+
+		CodeActionParams parms = new CodeActionParams();
+
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+		textDocument.setUri(JDTUtils.toURI(cu));
+		parms.setTextDocument(textDocument);
+		parms.setRange(range);
+		CodeActionContext context = new CodeActionContext();
+		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
+		parms.setContext(context);
+
+		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
+	}
+
+	private Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
+		IProblem problem = problems[0];
+		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 	}
 
 	@Test
