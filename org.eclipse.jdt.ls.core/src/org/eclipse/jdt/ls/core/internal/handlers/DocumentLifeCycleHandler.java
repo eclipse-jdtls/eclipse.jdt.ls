@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -245,7 +246,26 @@ public class DocumentLifeCycleHandler {
 			}
 
 			//			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
-			unit.becomeWorkingCopy(new NullProgressMonitor());
+			IProblemRequestor requestor = new IProblemRequestor() {
+
+				@Override
+				public boolean isActive() {
+					return true;
+				}
+
+				@Override
+				public void endReporting() {
+				}
+
+				@Override
+				public void beginReporting() {
+				}
+
+				@Override
+				public void acceptProblem(IProblem problem) {
+				}
+			};
+			unit.becomeWorkingCopy(requestor, new NullProgressMonitor());
 			IBuffer buffer = unit.getBuffer();
 			String newContent = params.getTextDocument().getText();
 			if (buffer != null && !buffer.getContents().equals(newContent)) {
