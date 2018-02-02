@@ -170,4 +170,11 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList());
 		this.connection.publishDiagnostics($);
 	}
+
+	/**
+	 * @noreference public for test purposes only
+	 */
+	public List<IProblem> getProblems() {
+		return problems;
+	}
 }
