@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
@@ -32,11 +33,14 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -134,12 +138,32 @@ public class DocumentLifeCycleHandler {
 		for (CompilationUnit astRoot : astRoots) {
 			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
 			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
-			DiagnosticsHandler handler = new DiagnosticsHandler(connection, unit);
-			handler.beginReporting();
-			for (IProblem problem : astRoot.getProblems()) {
-				handler.acceptProblem(problem);
-			}
-			handler.endReporting();
+			final DiagnosticsHandler handler = new DiagnosticsHandler(connection, unit);
+			WorkingCopyOwner wcOwner = new WorkingCopyOwner() {
+
+				/* (non-Javadoc)
+				 * @see org.eclipse.jdt.core.WorkingCopyOwner#createBuffer(org.eclipse.jdt.core.ICompilationUnit)
+				 */
+				@Override
+				public IBuffer createBuffer(ICompilationUnit workingCopy) {
+					ICompilationUnit original = workingCopy.getPrimary();
+					IResource resource = original.getResource();
+					if (resource instanceof IFile) {
+						return new DocumentAdapter(workingCopy, (IFile) resource);
+					}
+					return DocumentAdapter.Null;
+				}
+
+				/* (non-Javadoc)
+				 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
+				 */
+				@Override
+				public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
+					return handler;
+				}
+
+			};
+			unit.reconcile(ICompilationUnit.NO_AST, true, wcOwner, progress.newChild(1));
 		}
 		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ", validated: " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		return Status.OK_STATUS;
