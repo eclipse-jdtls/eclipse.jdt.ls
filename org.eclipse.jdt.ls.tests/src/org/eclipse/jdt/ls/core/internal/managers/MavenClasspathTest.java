@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertTrue;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IProblemRequestor;
@@ -96,10 +95,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 	private WorkingCopyOwner getWorkingCopy(IProblemRequestor handler) {
 		return new WorkingCopyOwner() {
 
-			public IBuffer createBuffer(ICompilationUnit workingCopy) {
-				return super.createBuffer(workingCopy);
-			}
-
+			@Override
 			public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
 				return handler;
 			}
