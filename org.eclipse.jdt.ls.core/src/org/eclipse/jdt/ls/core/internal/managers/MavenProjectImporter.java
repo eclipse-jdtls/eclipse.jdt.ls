@@ -39,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
+import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
@@ -47,9 +48,10 @@ import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.eclipse.m2e.core.project.MavenUpdateRequest;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
 
+@SuppressWarnings("restriction")
 public class MavenProjectImporter extends AbstractProjectImporter {
 
-	private static final String POM_FILE = "pom.xml";
+	public static final String POM_FILE = "pom.xml";
 
 	private Set<MavenProjectInfo> projectInfos = null;
 
@@ -115,7 +117,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	}
 
 	@Override
-	@SuppressWarnings("restriction")
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		JavaLanguageServerPlugin.logInfo("Importing Maven project(s)");
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
@@ -126,6 +127,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		Collection<IProject> projects = new LinkedHashSet<>();
 		Collection<MavenProjectInfo> toImport = new LinkedHashSet<>();
+		long lastWorkspaceStateSaved = getLastWorkspaceStateModified();
 		//Separate existing projects from new ones
 		for (MavenProjectInfo projectInfo : files) {
 			File pom = projectInfo.getPomFile();
@@ -146,14 +148,19 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
 			configurationManager.importProjects(toImport, importConfig, subMonitor.split(95));
 		}
-		updateProjects(projects, monitor);
+		updateProjects(projects, lastWorkspaceStateSaved, monitor);
+	}
+
+	private long getLastWorkspaceStateModified() {
+		File workspaceStateFile = MavenPluginActivator.getDefault().getMavenProjectManager().getWorkspaceStateFile();
+		return workspaceStateFile.lastModified();
 	}
 
 	private File getProjectDirectory() {
 		return rootFolder;
 	}
 
-	private void updateProjects(Collection<IProject> projects, IProgressMonitor monitor) throws CoreException {
+	private void updateProjects(Collection<IProject> projects, long lastWorkspaceStateSaved, IProgressMonitor monitor) throws CoreException {
 		if (projects.isEmpty()) {
 			return;
 		}
@@ -162,7 +169,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			IProject project = iterator.next();
 			project.open(monitor);
 			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-			if (!needsMavenUpdate(project)) {
+			if (!needsMavenUpdate(project, lastWorkspaceStateSaved)) {
 				iterator.remove();
 			}
 		}
@@ -186,9 +193,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}.schedule();
 	}
 
-	private boolean needsMavenUpdate(IProject project) {
-		//TODO need to figure how to detect pom.xml changed since last time the server was running
-		return true;
+	private boolean needsMavenUpdate(IProject project, long lastWorkspaceStateSaved) {
+		return project.getFile(POM_FILE).getLocalTimeStamp() > lastWorkspaceStateSaved;
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws OperationCanceledException {
