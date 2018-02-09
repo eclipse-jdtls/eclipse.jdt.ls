@@ -23,9 +23,13 @@ import java.util.List;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -37,9 +41,25 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	private static final String MAVEN_INVALID = "maven/invalid";
 	private static final String PROJECT1_PATTERN = "**/project1";
 
+	private MavenUpdateProjectJobSpy jobSpy;
+
+	private void attachJobSpy() {
+		jobSpy = new MavenUpdateProjectJobSpy();
+		Job.getJobManager().addJobChangeListener(jobSpy);
+	}
+
+	@After
+	public void removeJobSpy() {
+		if (jobSpy != null) {
+			Job.getJobManager().removeJobChangeListener(jobSpy);
+		}
+	}
+
 	@Test
 	public void testImportSimpleJavaProject() throws Exception {
+		attachJobSpy();
 		importSimpleJavaProject();
+		assertEquals("New Projects should not be updated", 0, jobSpy.updateProjectJobCalled);
 	}
 
 	@Test
@@ -93,11 +113,46 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	}
 
 	@Test
+	public void testUnchangedProjectShouldNotBeUpdated() throws Exception {
+		attachJobSpy();
+		String name = "salut";
+		importMavenProject(name);
+		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+		importExistingMavenProject(name);
+		assertEquals("Unchanged Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+	}
+
+	@Test
+	public void testChangedProjectShouldBeUpdated() throws Exception {
+		attachJobSpy();
+		String name = "salut";
+		IProject salut = importMavenProject(name);
+		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+		File pom = salut.getFile(MavenProjectImporter.POM_FILE).getRawLocation().toFile();
+		pom.setLastModified(System.currentTimeMillis() + 1000);
+		importExistingMavenProject(name);
+		assertEquals("Changed Project should be updated", 1, jobSpy.updateProjectJobCalled);
+	}
+
+	@Test
 	public void testJava9Project() throws Exception {
 		IProject project = importMavenProject("salut-java9");
 		assertIsJavaProject(project);
 		assertEquals("9", getJavaSourceLevel(project));
 		assertNoErrors(project);
+	}
+
+	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
+
+		int updateProjectJobCalled;
+
+		@Override
+		public void scheduled(IJobChangeEvent event) {
+			String jobName = event.getJob().getName();
+			if ("Update Maven project configuration".equals(jobName)) {
+				updateProjectJobCalled++;
+			}
+		}
 	}
 
 }

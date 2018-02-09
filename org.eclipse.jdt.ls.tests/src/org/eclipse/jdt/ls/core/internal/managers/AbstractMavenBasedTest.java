@@ -32,6 +32,13 @@ public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBase
 		return project;
 	}
 
+	protected IProject importExistingMavenProject(String name) throws Exception {
+		importExistingProjects("maven/" + name);
+		IProject project = getProject(name);
+		assertIsMavenProject(project);
+		return project;
+	}
+
 	protected IProject importSimpleJavaProject() throws Exception {
 		String name = "salut";
 		IProject project = importMavenProject(name);

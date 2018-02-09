@@ -153,10 +153,18 @@ public abstract class AbstractProjectsManagerBasedTest {
 		return importProjects(Collections.singleton(path));
 	}
 
+	protected List<IProject> importExistingProjects(String path) throws Exception {
+		return importProjects(Collections.singleton(path), false);
+	}
+
 	protected List<IProject> importProjects(Collection<String> paths) throws Exception {
+		return importProjects(paths, true);
+	}
+
+	protected List<IProject> importProjects(Collection<String> paths, boolean deleteExistingFiles) throws Exception {
 		final List<IPath> roots = new ArrayList<>();
 		for (String path : paths) {
-			File file = copyFiles(path, true);
+			File file = copyFiles(path, deleteExistingFiles);
 			roots.add(Path.fromOSString(file.getAbsolutePath()));
 		}
 		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
