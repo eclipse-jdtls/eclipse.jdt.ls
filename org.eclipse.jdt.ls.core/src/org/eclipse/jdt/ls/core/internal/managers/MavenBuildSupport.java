@@ -10,6 +10,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -26,6 +35,18 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
  */
 public class MavenBuildSupport implements IBuildSupport {
 
+	private static Map<Path, String> pomDigests = new HashMap<>();
+
+	private IProjectConfigurationManager configurationManager;
+
+	public MavenBuildSupport() {
+		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
+	}
+
+	public MavenBuildSupport(IProjectConfigurationManager configurationManager) {
+		this.configurationManager = configurationManager;
+	}
+
 	@Override
 	public boolean applies(IProject project) {
 		return ProjectUtils.isMavenProject(project);
@@ -33,15 +54,30 @@ public class MavenBuildSupport implements IBuildSupport {
 
 	@Override
 	public void update(IProject project, IProgressMonitor monitor) throws CoreException {
-		if (!applies(project)) {
+		if (!applies(project) || !needsMavenUpdate(project)) {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Maven update for "+project.getName());
 		//TODO collect dependent projects and update them as well? i.e in case a parent project was modified
-		IProjectConfigurationManager configurationManager = MavenPlugin.getProjectConfigurationManager();
 		MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
-		configurationManager.updateProjectConfiguration(request, monitor);
+		this.configurationManager.updateProjectConfiguration(request, monitor);
 	}
+
+	private boolean needsMavenUpdate(IProject project) {
+		try {
+			Path path = project.getFile("pom.xml").getLocation().toFile().toPath();
+			byte[] fileBytes = Files.readAllBytes(path);
+			byte[] digest = MessageDigest.getInstance("MD5").digest(fileBytes);
+			if (pomDigests.containsKey(path)) {
+				return !Arrays.toString(digest).equals(pomDigests.get(path));
+			}
+			pomDigests.put(path, Arrays.toString(digest));
+			return true;
+		} catch (IOException | NoSuchAlgorithmException ioe) {
+			return true;
+		}
+	}
+
 
 	@Override
 	public boolean isBuildFile(IResource resource) {

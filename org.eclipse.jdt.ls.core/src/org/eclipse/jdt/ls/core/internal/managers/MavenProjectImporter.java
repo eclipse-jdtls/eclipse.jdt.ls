@@ -45,7 +45,6 @@ import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
-import org.eclipse.m2e.core.project.MavenUpdateRequest;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
 
 @SuppressWarnings("restriction")
@@ -189,9 +188,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					if (monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					JavaLanguageServerPlugin.logInfo("Updating project configuration for Maven project " + project.getName());
-					MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
-					configurationManager.updateProjectConfiguration(request, monitor);
+					new MavenBuildSupport(configurationManager).update(project, monitor);
 				}
 				return Status.OK_STATUS;
 			}
