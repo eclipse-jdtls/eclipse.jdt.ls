@@ -34,6 +34,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
@@ -41,17 +42,16 @@ import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
 
-public class JavaLanguageServerPlugin implements BundleActivator {
+public class JavaLanguageServerPlugin extends Plugin {
 
 	public static final String MANUAL = "Manual";
 	public static final String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
@@ -85,6 +85,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
+	private DigestStore digestStore;
 	private ContentProviderManager contentProviderManager;
 
 	private JDTLanguageServer protocol;
@@ -104,7 +105,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
-	public void start(BundleContext bundleContext) throws BackingStoreException {
+	public void start(BundleContext bundleContext) throws Exception {
+		super.start(bundleContext);
 		try {
 			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
 		} catch (BundleException e) {
@@ -121,6 +123,7 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
+		digestStore = new DigestStore(getStateLocation().toFile());
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
@@ -325,6 +328,10 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 */
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
+	}
+
+	public static DigestStore getDigestStore() {
+		return pluginInstance.digestStore;
 	}
 
 	/**

@@ -45,7 +45,6 @@ import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
-import org.eclipse.m2e.core.project.MavenUpdateRequest;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
 
 @SuppressWarnings("restriction")
@@ -58,13 +57,11 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	private Set<MavenProjectInfo> projectInfos = null;
 
 	private IProjectConfigurationManager configurationManager;
+	private DigestStore digestStore;
 
 	public MavenProjectImporter() {
-		this(MavenPlugin.getProjectConfigurationManager());
-	}
-
-	public MavenProjectImporter(IProjectConfigurationManager configurationManager) {
-		this.configurationManager = configurationManager;
+		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
+		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
 	}
 
 
@@ -136,6 +133,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			File pom = projectInfo.getPomFile();
 			IContainer container = root.getContainerForLocation(new Path(pom.getAbsolutePath()));
 			if (container == null) {
+				digestStore.updateDigest(pom.toPath());
 				toImport.add(projectInfo);
 			} else {
 				IProject project = container.getProject();
@@ -143,6 +141,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					projects.add(container.getProject());
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it
+					digestStore.updateDigest(pom.toPath());
 					toImport.add(projectInfo);
 				}
 			}
@@ -185,13 +184,12 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		new WorkspaceJob("Update Maven project configuration") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				MavenBuildSupport mavenBuildSupport = new MavenBuildSupport();
 				for (IProject project : projects) {
 					if (monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					JavaLanguageServerPlugin.logInfo("Updating project configuration for Maven project " + project.getName());
-					MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
-					configurationManager.updateProjectConfiguration(request, monitor);
+					mavenBuildSupport.update(project, false, monitor);
 				}
 				return Status.OK_STATUS;
 			}

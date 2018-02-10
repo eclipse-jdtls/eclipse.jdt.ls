@@ -220,7 +220,8 @@ public class ProjectsManager implements ISaveParticipant {
 				FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 				switch (status) {
 					case automatic:
-						updateProject(resource.getProject());
+						// do not force the build, because it's not started by user and should be done only if build file has changed
+						updateProject(resource.getProject(), false);
 						break;
 					case disabled:
 						break;
@@ -315,7 +316,7 @@ public class ProjectsManager implements ISaveParticipant {
 		return project;
 	}
 
-	public Job updateProject(IProject project) {
+	public Job updateProject(IProject project, boolean force) {
 		if (project == null || (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project))) {
 			return null;
 		}
@@ -336,7 +337,7 @@ public class ProjectsManager implements ISaveParticipant {
 					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
-						buildSupport.get().update(project, monitor);
+						buildSupport.get().update(project, force, monitor);
 						registerWatcherJob.schedule();
 					}
 					long elapsed = System.currentTimeMillis() - start;
@@ -456,6 +457,7 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	public List<FileSystemWatcher> registerWatchers() {
+		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> sources = new HashSet<>();
 			try {

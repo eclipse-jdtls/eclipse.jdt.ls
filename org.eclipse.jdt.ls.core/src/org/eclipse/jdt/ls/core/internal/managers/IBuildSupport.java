@@ -25,5 +25,22 @@ public interface IBuildSupport {
 
 	boolean isBuildFile(IResource resource);
 
-	void update(IProject resource, IProgressMonitor monitor) throws CoreException;
+	/**
+	 *
+	 * @param resource
+	 *            - a project to update
+	 * @param force
+	 *            - defines if the <code>project</code> must be updated despite of
+	 *            no changes in the build descriptor are made
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	void update(IProject resource, boolean force, IProgressMonitor monitor) throws CoreException;
+
+	/**
+	 * Is equal to a non-forced update: {@code update(resource, false, monitor)}
+	 */
+	default void update(IProject resource, IProgressMonitor monitor) throws CoreException {
+		update(resource, false, monitor);
+	}
 }

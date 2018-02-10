@@ -41,7 +41,7 @@ public class GradleBuildSupport implements IBuildSupport {
 	}
 
 	@Override
-	public void update(IProject project, IProgressMonitor monitor) throws CoreException {
+	public void update(IProject project, boolean force, IProgressMonitor monitor) throws CoreException {
 		if (!applies(project)) {
 			return;
 		}
