@@ -16,8 +16,8 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -35,7 +35,7 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
  */
 public class MavenBuildSupport implements IBuildSupport {
 
-	private static Map<Path, String> pomDigests = new HashMap<>();
+	private static Map<Path, String> pomDigests = new ConcurrentHashMap<>();
 
 	private IProjectConfigurationManager configurationManager;
 
@@ -68,11 +68,8 @@ public class MavenBuildSupport implements IBuildSupport {
 			Path path = project.getFile("pom.xml").getLocation().toFile().toPath();
 			byte[] fileBytes = Files.readAllBytes(path);
 			byte[] digest = MessageDigest.getInstance("MD5").digest(fileBytes);
-			if (pomDigests.containsKey(path)) {
-				return !Arrays.toString(digest).equals(pomDigests.get(path));
-			}
-			pomDigests.put(path, Arrays.toString(digest));
-			return true;
+			String prevDigest = pomDigests.putIfAbsent(path, Arrays.toString(digest));
+			return prevDigest == null || !prevDigest.equals(Arrays.toString(digest));
 		} catch (IOException | NoSuchAlgorithmException ioe) {
 			return true;
 		}
