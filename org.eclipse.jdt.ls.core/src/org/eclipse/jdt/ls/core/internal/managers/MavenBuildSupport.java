@@ -53,8 +53,8 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	@Override
-	public void update(IProject project, IProgressMonitor monitor) throws CoreException {
-		if (!applies(project) || !needsMavenUpdate(project)) {
+	public void update(IProject project, boolean force, IProgressMonitor monitor) throws CoreException {
+		if (!applies(project) || (!needsMavenUpdate(project) && !force)) {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Maven update for "+project.getName());

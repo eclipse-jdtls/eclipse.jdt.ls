@@ -32,6 +32,6 @@ public class ProjectConfigurationUpdateHandler {
 		if (file == null) {
 			return;
 		}
-		projectManager.updateProject(file.getProject());
+		projectManager.updateProject(file.getProject(), true);
 	}
 }

@@ -25,5 +25,9 @@ public interface IBuildSupport {
 
 	boolean isBuildFile(IResource resource);
 
-	void update(IProject resource, IProgressMonitor monitor) throws CoreException;
+	void update(IProject resource, boolean force, IProgressMonitor monitor) throws CoreException;
+
+	default void update(IProject resource, IProgressMonitor monitor) throws CoreException {
+		update(resource, false, monitor);
+	}
 }
