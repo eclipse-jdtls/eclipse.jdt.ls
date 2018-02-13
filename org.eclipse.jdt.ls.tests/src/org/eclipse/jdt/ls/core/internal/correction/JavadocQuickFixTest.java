@@ -77,8 +77,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo(int a, int b, int c) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -114,8 +114,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo(int a, int b, int c) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -151,8 +151,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo(int a, int b, int c) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -188,8 +188,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public <A, B> void foo(int a) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -213,8 +213,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append(" */\n");
 		buf.append("public class E<A, B> {\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -238,8 +238,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append(" */\n");
 		buf.append("public class E<A> {\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@param' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -277,8 +277,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 1;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@return' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@return' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -310,8 +310,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 1;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@return' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@return' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -379,8 +379,8 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 1;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@throws' tag", buf.toString());
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Add '@throws' tag", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 

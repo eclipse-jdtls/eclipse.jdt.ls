@@ -386,6 +386,19 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException {\n");
 		buf.append("    }\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        goo();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() throws IOException {\n");
+		buf.append("    }\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
 		buf.append("            goo();\n");
@@ -396,20 +409,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void goo() throws IOException {\n");
-		buf.append("    }\n");
-		buf.append("    public void foo() throws IOException {\n");
-		buf.append("        goo();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -442,6 +442,24 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
+		buf.append("     * @throws IOException\n");
+		buf.append("     */\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        goo().substring(2);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public String goo() throws IOException {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("    /**\n");
+		buf.append("     * Not much to say here.\n");
 		buf.append("     */\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
@@ -453,25 +471,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("public class E {\n");
-		buf.append("    public String goo() throws IOException {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("    /**\n");
-		buf.append("     * Not much to say here.\n");
-		buf.append("     * @throws IOException\n");
-		buf.append("     */\n");
-		buf.append("    public void foo() throws IOException {\n");
-		buf.append("        goo().substring(2);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -509,18 +509,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
 		buf.append("     * @throws ParseException Parsing failed\n");
+		buf.append("     * @throws IOException\n");
 		buf.append("     */\n");
-		buf.append("    public void foo() throws ParseException {\n");
-		buf.append("        try {\n");
-		buf.append("            goo().substring(2);\n");
-		buf.append("        } catch (IOException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        }\n");
+		buf.append("    public void foo() throws ParseException, IOException {\n");
+		buf.append("        goo().substring(2);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -533,14 +529,18 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
 		buf.append("     * @throws ParseException Parsing failed\n");
-		buf.append("     * @throws IOException\n");
 		buf.append("     */\n");
-		buf.append("    public void foo() throws ParseException, IOException {\n");
-		buf.append("        goo().substring(2);\n");
+		buf.append("    public void foo() throws ParseException {\n");
+		buf.append("        try {\n");
+		buf.append("            goo().substring(2);\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -568,7 +568,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.FileNotFoundException;\n");
@@ -582,21 +581,15 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
+		buf.append("     * @throws InterruptedIOException\n");
+		buf.append("     * @throws FileNotFoundException\n");
 		buf.append("     */\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        try {\n");
-		buf.append("            goo(1).bar();\n");
-		buf.append("        } catch (FileNotFoundException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        } catch (InterruptedIOException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        }\n");
+		buf.append("    public void foo() throws FileNotFoundException, InterruptedIOException {\n");
+		buf.append("        goo(1).bar();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -637,15 +630,21 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
-		buf.append("     * @throws InterruptedIOException\n");
-		buf.append("     * @throws FileNotFoundException\n");
 		buf.append("     */\n");
-		buf.append("    public void foo() throws FileNotFoundException, InterruptedIOException {\n");
-		buf.append("        goo(1).bar();\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo(1).bar();\n");
+		buf.append("        } catch (FileNotFoundException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        } catch (InterruptedIOException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e3 = new Expected("Add throws declaration", buf.toString());
+		Expected e3 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -672,6 +671,21 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo() throws IOException {\n");
+		buf.append("        try {\n");
+		buf.append("            throw new IOException();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("            throw new IOException();\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
 		buf.append("    void foo() {\n");
 		buf.append("        try {\n");
 		buf.append("            throw new IOException();\n");
@@ -686,22 +700,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() throws IOException {\n");
-		buf.append("        try {\n");
-		buf.append("            throw new IOException();\n");
-		buf.append("        } catch (IOException e) {\n");
-		buf.append("            throw new IOException();\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -740,6 +739,28 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Test {\n");
+		buf.append("    public void test1() throws de.muenchen.test.Exception {\n");
+		buf.append("        test2();\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public void test2() throws de.muenchen.test.Exception {\n");
+		buf.append("        throw new de.muenchen.test.Exception();\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public void test3() {\n");
+		buf.append("        try {\n");
+		buf.append("            java.io.File.createTempFile(\"\", \".tmp\");\n");
+		buf.append("        } catch (Exception ex) {\n");
+		buf.append("\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class Test {\n");
 		buf.append("    public void test1() {\n");
 		buf.append("        try {\n");
 		buf.append("            test2();\n");
@@ -762,29 +783,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class Test {\n");
-		buf.append("    public void test1() throws de.muenchen.test.Exception {\n");
-		buf.append("        test2();\n");
-		buf.append("    }\n");
-		buf.append("\n");
-		buf.append("    public void test2() throws de.muenchen.test.Exception {\n");
-		buf.append("        throw new de.muenchen.test.Exception();\n");
-		buf.append("    }\n");
-		buf.append("\n");
-		buf.append("    public void test3() {\n");
-		buf.append("        try {\n");
-		buf.append("            java.io.File.createTempFile(\"\", \".tmp\");\n");
-		buf.append("        } catch (Exception ex) {\n");
-		buf.append("\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -819,6 +818,25 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return;\n");
 		buf.append("    }\n");
 		buf.append("    /**\n");
+		buf.append("     * @throws IOException\n");
+		buf.append("     * @since 3.0\n");
+		buf.append("     */\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        this.goo();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("import java.net.SocketException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() throws IOException {\n");
+		buf.append("        return;\n");
+		buf.append("    }\n");
+		buf.append("    /**\n");
 		buf.append("     * @throws SocketException Sockets are dangerous\n");
 		buf.append("     * @since 3.0\n");
 		buf.append("     */\n");
@@ -832,26 +850,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("import java.net.SocketException;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void goo() throws IOException {\n");
-		buf.append("        return;\n");
-		buf.append("    }\n");
-		buf.append("    /**\n");
-		buf.append("     * @throws IOException\n");
-		buf.append("     * @since 3.0\n");
-		buf.append("     */\n");
-		buf.append("    public void foo() throws IOException {\n");
-		buf.append("        this.goo();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -885,20 +884,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public static void goo() throws IOException, ParseException {\n");
 		buf.append("        return;\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
+		buf.append("    public void foo() throws ParseException {\n");
 		buf.append("        try {\n");
-		buf.append("            try {\n");
-		buf.append("                E.goo();\n");
-		buf.append("            } catch (ParseException e) {\n");
-		buf.append("                // TODO Auto-generated catch block\n");
-		buf.append("                e.printStackTrace();\n");
-		buf.append("            }\n");
+		buf.append("            E.goo();\n");
 		buf.append("        } catch (IOException e) {\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -946,14 +939,20 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public static void goo() throws IOException, ParseException {\n");
 		buf.append("        return;\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() throws ParseException {\n");
+		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
-		buf.append("            E.goo();\n");
+		buf.append("            try {\n");
+		buf.append("                E.goo();\n");
+		buf.append("            } catch (ParseException e) {\n");
+		buf.append("                // TODO Auto-generated catch block\n");
+		buf.append("                e.printStackTrace();\n");
+		buf.append("            }\n");
 		buf.append("        } catch (IOException e) {\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Add throws declaration", buf.toString());
+
+		Expected e4 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
@@ -1082,6 +1081,16 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends A {\n");
+		buf.append("    public void foo() throws Exception {\n");
+		buf.append("        throw new Exception();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E extends A {\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
 		buf.append("            throw new Exception();\n");
@@ -1092,17 +1101,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E extends A {\n");
-		buf.append("    public void foo() throws Exception {\n");
-		buf.append("        throw new Exception();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1127,6 +1126,18 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.Closeable;\n");
 		buf.append("import java.io.FileNotFoundException;\n");
 		buf.append("public class A implements Closeable {\n");
+		buf.append("    public void close() throws FileNotFoundException {\n");
+		buf.append("        throw new FileNotFoundException();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.Closeable;\n");
+		buf.append("import java.io.FileNotFoundException;\n");
+		buf.append("public class A implements Closeable {\n");
 		buf.append("    public void close() {\n");
 		buf.append("        try {\n");
 		buf.append("            throw new FileNotFoundException();\n");
@@ -1137,19 +1148,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.Closeable;\n");
-		buf.append("import java.io.FileNotFoundException;\n");
-		buf.append("public class A implements Closeable {\n");
-		buf.append("    public void close() throws FileNotFoundException {\n");
-		buf.append("        throw new FileNotFoundException();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e2 = new Expected("Add throws declaration", buf.toString());
+		Expected e2 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1245,22 +1244,13 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.text.ParseException;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void m1() throws IOException {\n");
-		buf.append("        try {\n");
-		buf.append("            m2();\n");
-		buf.append("        } catch (ParseException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        } catch (MyException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        }\n");
+		buf.append("    public void m1() throws IOException, ParseException, MyException {\n");
+		buf.append("        m2();\n");
 		buf.append("    }\n");
 		buf.append("    public void m2() throws IOException, ParseException, MyException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1285,13 +1275,22 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.IOException;\n");
 		buf.append("import java.text.ParseException;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void m1() throws IOException, ParseException, MyException {\n");
-		buf.append("        m2();\n");
+		buf.append("    public void m1() throws IOException {\n");
+		buf.append("        try {\n");
+		buf.append("            m2();\n");
+		buf.append("        } catch (ParseException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        } catch (MyException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("    public void m2() throws IOException, ParseException, MyException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Add throws declaration", buf.toString());
+
+		Expected e3 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -1320,20 +1319,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException, ParseException {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        try {\n");
-		buf.append("            goo();\n");
-		buf.append("        } catch (IOException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        } catch (ParseException e) {\n");
-		buf.append("            // TODO Auto-generated catch block\n");
-		buf.append("            e.printStackTrace();\n");
-		buf.append("        }\n");
+		buf.append("    public void foo() throws IOException, ParseException {\n");
+		buf.append("        goo();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-
-		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		Expected e1 = new Expected("Add throws declaration", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1360,11 +1350,20 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException, ParseException {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() throws IOException, ParseException {\n");
-		buf.append("        goo();\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        } catch (ParseException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Add throws declaration", buf.toString());
+
+		Expected e3 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -1396,14 +1395,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() throws ParseException {\n");
+		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
 		buf.append("            goo();\n");
 		buf.append("        } catch (IOException e) {\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
+		Expected e1 = new Expected("Remove catch clause", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1412,14 +1411,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
+		buf.append("    public void foo() throws ParseException {\n");
 		buf.append("        try {\n");
 		buf.append("            goo();\n");
 		buf.append("        } catch (IOException e) {\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Remove catch clause", buf.toString());
+		Expected e2 = new Expected("Replace catch clause with throws", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1480,11 +1479,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() throws IOException {\n");
+		buf.append("    public void foo() {\n");
 		buf.append("        goo();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
+		Expected e1 = new Expected("Remove catch clause", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1492,11 +1491,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
+		buf.append("    public void foo() throws IOException {\n");
 		buf.append("        goo();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Remove catch clause", buf.toString());
+		Expected e2 = new Expected("Replace catch clause with throws", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1527,21 +1526,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void goo() {\n");
 		buf.append("    }\n");
-		buf.append("    public void foo() throws IOException {\n");
-		buf.append("        try {\n");
-		buf.append("            goo();\n");
-		buf.append("        } finally {\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Replace catch clause with throws", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void goo() {\n");
-		buf.append("    }\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
 		buf.append("            goo();\n");
@@ -1549,7 +1533,22 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Remove catch clause", buf.toString());
+		Expected e1 = new Expected("Remove catch clause", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.IOException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo() {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() throws IOException {\n");
+		buf.append("        try {\n");
+		buf.append("            goo();\n");
+		buf.append("        } finally {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Replace catch clause with throws", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}

@@ -144,19 +144,19 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    <Vect1or> void foo(Vect1or[] vec) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Add type parameter 'Vect1or' to 'foo(Vect1or[])'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E<Vect1or> {\n");
 		buf.append("    void foo(Vect1or[] vec) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Add type parameter 'Vect1or' to 'E'", buf.toString());
+		Expected e5 = new Expected("Add type parameter 'Vect1or' to 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    <Vect1or> void foo(Vect1or[] vec) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Add type parameter 'Vect1or' to 'foo(Vect1or[])'", buf.toString());
 
 		assertCodeActions(cu, e1, e5, e6);
 	}
@@ -211,22 +211,21 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    <Vect1or> Vect1or[] foo() {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Add type parameter 'Vect1or' to 'foo()'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E<Vect1or> {\n");
 		buf.append("    Vect1or[] foo() {\n");
 		buf.append("        return null;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Add type parameter 'Vect1or' to 'E'", buf.toString());
+		Expected e5 = new Expected("Add type parameter 'Vect1or' to 'E'", buf.toString());
 
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    <Vect1or> Vect1or[] foo() {\n");
+		buf.append("        return null;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Add type parameter 'Vect1or' to 'foo()'", buf.toString());
 
 		assertCodeActions(cu, e1, e5, e6);
 	}
@@ -314,22 +313,22 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.ArrayList;\n");
-		buf.append("public class E {\n");
-		buf.append("    <XY> void foo(ArrayList<? extends Runnable> a) {\n");
-		buf.append("        XY v= a.get(0);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Add type parameter 'XY' to 'foo(ArrayList<? extends Runnable>)'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
 		buf.append("public class E<XY> {\n");
 		buf.append("    void foo(ArrayList<? extends Runnable> a) {\n");
 		buf.append("        XY v= a.get(0);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Add type parameter 'XY' to 'E'", buf.toString());
+		Expected e2 = new Expected("Add type parameter 'XY' to 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("public class E {\n");
+		buf.append("    <XY> void foo(ArrayList<? extends Runnable> a) {\n");
+		buf.append("        XY v= a.get(0);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Add type parameter 'XY' to 'foo(ArrayList<? extends Runnable>)'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -430,22 +429,22 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.*;\n");
-		buf.append("public class E {\n");
-		buf.append("    <ArrayListExtra> void foo() {\n");
-		buf.append("        Serializable[] v= new ArrayListExtra[10];\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		expected.add(new Expected("Add type parameter 'ArrayListExtra' to 'foo()'", buf.toString()));
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.*;\n");
 		buf.append("public class E<ArrayListExtra> {\n");
 		buf.append("    void foo() {\n");
 		buf.append("        Serializable[] v= new ArrayListExtra[10];\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		expected.add(new Expected("Add type parameter 'ArrayListExtra' to 'E'", buf.toString()));
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.*;\n");
+		buf.append("public class E {\n");
+		buf.append("    <ArrayListExtra> void foo() {\n");
+		buf.append("        Serializable[] v= new ArrayListExtra[10];\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		expected.add(new Expected("Add type parameter 'ArrayListExtra' to 'foo()'", buf.toString()));
 
 		assertCodeActions(cu, expected);
 	}
@@ -682,17 +681,17 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    float vec= 1.0;\n");
-		buf.append("}\n");
-		expected.add(new Expected("Change to 'float'", buf.toString()));
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E<floot> {\n");
 		buf.append("    floot vec= 1.0;\n");
 		buf.append("}\n");
 		expected.add(new Expected("Add type parameter 'floot' to 'E'", buf.toString()));
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    float vec= 1.0;\n");
+		buf.append("}\n");
+		expected.add(new Expected("Change to 'float'", buf.toString()));
 
 		assertCodeActions(cu, expected);
 	}
@@ -746,23 +745,23 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class E<T> {\n");
-		buf.append("    class SomeType { }\n");
-		buf.append("    <XYX> void foo() {\n");
-		buf.append("        E<XYX> list= new E<SomeType>();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Add type parameter 'XYX' to 'foo()'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E<T, XYX> {\n");
 		buf.append("    class SomeType { }\n");
 		buf.append("    void foo() {\n");
 		buf.append("        E<XYX> list= new E<SomeType>();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Add type parameter 'XYX' to 'E<T>'", buf.toString());
+		Expected e5 = new Expected("Add type parameter 'XYX' to 'E<T>'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E<T> {\n");
+		buf.append("    class SomeType { }\n");
+		buf.append("    <XYX> void foo() {\n");
+		buf.append("        E<XYX> list= new E<SomeType>();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Add type parameter 'XYX' to 'foo()'", buf.toString());
 
 		assertCodeActions(cu, e1, e5, e6);
 	}
@@ -823,18 +822,6 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Map;\n");
-		buf.append("public class E<T> {\n");
-		buf.append("    static class SomeType { }\n");
-		buf.append("    <XYX> void foo() {\n");
-		buf.append("        E<Map<String, ? extends XYX>> list= new E<Map<String, ? extends SomeType>>() {\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Add type parameter 'XYX' to 'foo()'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Map;\n");
 		buf.append("public class E<T, XYX> {\n");
 		buf.append("    static class SomeType { }\n");
 		buf.append("    void foo() {\n");
@@ -842,7 +829,19 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Add type parameter 'XYX' to 'E<T>'", buf.toString());
+		Expected e5 = new Expected("Add type parameter 'XYX' to 'E<T>'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Map;\n");
+		buf.append("public class E<T> {\n");
+		buf.append("    static class SomeType { }\n");
+		buf.append("    <XYX> void foo() {\n");
+		buf.append("        E<Map<String, ? extends XYX>> list= new E<Map<String, ? extends SomeType>>() {\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Add type parameter 'XYX' to 'foo()'", buf.toString());
 
 		assertCodeActions(cu, e1, e5, e6);
 	}

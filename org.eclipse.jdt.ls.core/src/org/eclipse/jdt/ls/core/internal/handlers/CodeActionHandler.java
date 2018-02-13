@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -68,6 +69,7 @@ public class CodeActionHandler {
 		List<Command> $ = new ArrayList<>();
 		try {
 			CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
+			Arrays.sort(corrections, new CUCorrectionProposalComparator());
 			for (CUCorrectionProposal proposal : corrections) {
 				Command command = this.getCommandFromProposal(proposal);
 				$.add(command);
@@ -78,6 +80,7 @@ public class CodeActionHandler {
 
 		try {
 			CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
+			Arrays.sort(corrections, new CUCorrectionProposalComparator());
 			for (CUCorrectionProposal proposal : corrections) {
 				Command command = this.getCommandFromProposal(proposal);
 				$.add(command);
@@ -131,6 +134,21 @@ public class CodeActionHandler {
 
 	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
 		return SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+	}
+
+	private static class CUCorrectionProposalComparator implements Comparator<CUCorrectionProposal> {
+
+		@Override
+		public int compare(CUCorrectionProposal p1, CUCorrectionProposal p2) {
+			int r1 = p1.getRelevance();
+			int r2 = p2.getRelevance();
+			int relevanceDif = r2 - r1;
+			if (relevanceDif != 0) {
+				return relevanceDif;
+			}
+			return p1.getName().compareToIgnoreCase(p2.getName());
+		}
+
 	}
 
 }

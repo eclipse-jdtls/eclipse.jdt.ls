@@ -695,26 +695,26 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
 		buf.append("    void testMethod(Vector<? extends Number> vec) {\n");
-		buf.append("        goo((int) vec.get(0));\n");
-		buf.append("    }\n");
-		buf.append("\n");
-		buf.append("    private void goo(int i) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Cast argument 'vec.get(0)' to 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void testMethod(Vector<? extends Number> vec) {\n");
 		buf.append("        goo(vec.get(0));\n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    private void goo(Number number) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(int)' to 'goo(Number)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(int)' to 'goo(Number)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("    void testMethod(Vector<? extends Number> vec) {\n");
+		buf.append("        goo((int) vec.get(0));\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    private void goo(int i) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Cast argument 'vec.get(0)' to 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1138,6 +1138,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void run(int i) {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        new Runnable() {\n");
+		buf.append("            public void run() {\n");
+		buf.append("                E.this.run(1);\n");
+		buf.append("            }\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Qualify with enclosing type 'E'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1152,7 +1166,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Remove argument to match 'run()'", buf.toString());
+		Expected e2 = new Expected("Remove argument to match 'run()'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1167,22 +1181,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void run(int i) {\n");
-		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        new Runnable() {\n");
-		buf.append("            public void run() {\n");
-		buf.append("                E.this.run(1);\n");
-		buf.append("            }\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Qualify with enclosing type 'E'", buf.toString());
+		Expected e3 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1232,12 +1231,27 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo() {\n");
 		buf.append("        new Runnable() {\n");
 		buf.append("            public void run() {\n");
+		buf.append("                E.run(1);\n");
+		buf.append("            }\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Qualify with enclosing type 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void run(int i) {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        new Runnable() {\n");
+		buf.append("            public void run() {\n");
 		buf.append("                run();\n");
 		buf.append("            }\n");
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Remove argument to match 'run()'", buf.toString());
+		Expected e2 = new Expected("Remove argument to match 'run()'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1252,22 +1266,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public static void run(int i) {\n");
-		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        new Runnable() {\n");
-		buf.append("            public void run() {\n");
-		buf.append("                E.run(1);\n");
-		buf.append("            }\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Qualify with enclosing type 'E'", buf.toString());
+		Expected e3 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1314,11 +1313,24 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    public class Inner {\n");
 		buf.append("        public void run() {\n");
+		buf.append("            E.this.run(1);\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Qualify with enclosing type 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void run(int i) {\n");
+		buf.append("    }\n");
+		buf.append("    public class Inner {\n");
+		buf.append("        public void run() {\n");
 		buf.append("            run();\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Remove argument to match 'run()'", buf.toString());
+		Expected e2 = new Expected("Remove argument to match 'run()'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1331,20 +1343,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void run(int i) {\n");
-		buf.append("    }\n");
-		buf.append("    public class Inner {\n");
-		buf.append("        public void run() {\n");
-		buf.append("            E.this.run(1);\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Qualify with enclosing type 'E'", buf.toString());
+		Expected e3 = new Expected("Change method 'run()': Add parameter 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1514,22 +1513,22 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void foo(int i) {\n");
-		buf.append("        long x= 0;\n");
-		buf.append("        foo((int) (x + 1));\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Cast argument 'x + 1' to 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
 		buf.append("    public void foo(long l) {\n");
 		buf.append("        long x= 0;\n");
 		buf.append("        foo(x + 1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'foo(int)' to 'foo(long)'", buf.toString());
+		Expected e1 = new Expected("Change method 'foo(int)' to 'foo(long)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int i) {\n");
+		buf.append("        long x= 0;\n");
+		buf.append("        foo((int) (x + 1));\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Cast argument 'x + 1' to 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1572,21 +1571,21 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("public class X {\n");
+		buf.append("    public static void xoo(float x, Object o) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change method 'xoo(int, Object)' to 'xoo(float, Object)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int i) {\n");
 		buf.append("        double x= 0.0;\n");
 		buf.append("        X.xoo((int) x, this);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Cast argument '(float)x' to 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class X {\n");
-		buf.append("    public static void xoo(float x, Object o) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'xoo(int, Object)' to 'xoo(float, Object)'", buf.toString());
+		Expected e2 = new Expected("Cast argument '(float)x' to 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1619,20 +1618,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void foo(Integer i) {\n");
-		buf.append("        foo((int) 1.0);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Cast argument '1.0' to 'int'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
 		buf.append("    public void foo(double d) {\n");
 		buf.append("        foo(1.0);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'foo(Integer)' to 'foo(double)'", buf.toString());
+		Expected e1 = new Expected("Change method 'foo(Integer)' to 'foo(double)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(Integer i) {\n");
+		buf.append("        foo((int) 1.0);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Cast argument '1.0' to 'int'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1671,19 +1670,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void goo(Vector v) {\n");
-		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        Vector x= 0;\n");
-		buf.append("        goo(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'x' to 'Vector'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
 		buf.append("    public void goo(long x) {\n");
 		buf.append("    }\n");
 		buf.append("    public void foo() {\n");
@@ -1691,7 +1677,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        goo(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector)' to 'goo(long)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(Vector)' to 'goo(long)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo(Vector v) {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Vector x= 0;\n");
+		buf.append("        goo(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change type of 'x' to 'Vector'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1735,6 +1734,15 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class A<T> {\n");
+		buf.append("    public void goo(long x) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change method 'goo(Vector<T>)' to 'goo(long)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("\n");
@@ -1743,16 +1751,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        a.goo(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'x' to 'Vector<Number>'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class A<T> {\n");
-		buf.append("    public void goo(long x) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector<T>)' to 'goo(long)'", buf.toString());
+		Expected e2 = new Expected("Change type of 'x' to 'Vector<Number>'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1834,19 +1833,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
-		buf.append("    Vector fCount= 0;\n");
-		buf.append("    public void goo(Vector v) {\n");
-		buf.append("    }\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        goo(fCount);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'fCount' to 'Vector'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
 		buf.append("    int fCount= 0;\n");
 		buf.append("    public void goo(int fCount2) {\n");
 		buf.append("    }\n");
@@ -1854,7 +1840,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        goo(fCount);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector)' to 'goo(int)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(Vector)' to 'goo(int)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("    Vector fCount= 0;\n");
+		buf.append("    public void goo(Vector v) {\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        goo(fCount);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change type of 'fCount' to 'Vector'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1899,16 +1898,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("\n");
-		buf.append("public class X<A> {\n");
-		buf.append("    Vector<String> count= 0;\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'count' to 'Vector<String>'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void goo(String count) {\n");
@@ -1917,7 +1906,17 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        goo(x.count);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector<String>)' to 'goo(String)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(Vector<String>)' to 'goo(String)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("\n");
+		buf.append("public class X<A> {\n");
+		buf.append("    Vector<String> count= 0;\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change type of 'count' to 'Vector<String>'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1958,19 +1957,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void goo(Vector v) {\n");
-		buf.append("    }\n");
-		buf.append("    public Vector foo() {\n");
-		buf.append("        goo(this.foo());\n");
-		buf.append("        return 9;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change return type of 'foo(..)' to 'Vector'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
 		buf.append("    public void goo(int i) {\n");
 		buf.append("    }\n");
 		buf.append("    public int foo() {\n");
@@ -1978,7 +1964,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 9;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector)' to 'goo(int)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(Vector)' to 'goo(int)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void goo(Vector v) {\n");
+		buf.append("    }\n");
+		buf.append("    public Vector foo() {\n");
+		buf.append("        goo(this.foo());\n");
+		buf.append("        return 9;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change return type of 'foo(..)' to 'Vector'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -2066,19 +2065,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E<T> {\n");
-		buf.append("    public void goo(Vector<String> v) {\n");
-		buf.append("    }\n");
-		buf.append("    public Vector<String> foo() {\n");
-		buf.append("        goo(this.foo());\n");
-		buf.append("        return 9;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change return type of 'foo(..)' to 'Vector<String>'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E<T> {\n");
 		buf.append("    public void goo(int i) {\n");
 		buf.append("    }\n");
 		buf.append("    public int foo() {\n");
@@ -2086,7 +2072,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 9;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'goo(Vector<String>)' to 'goo(int)'", buf.toString());
+		Expected e1 = new Expected("Change method 'goo(Vector<String>)' to 'goo(int)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E<T> {\n");
+		buf.append("    public void goo(Vector<String> v) {\n");
+		buf.append("    }\n");
+		buf.append("    public Vector<String> foo() {\n");
+		buf.append("        goo(this.foo());\n");
+		buf.append("        return 9;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change return type of 'foo(..)' to 'Vector<String>'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -3091,24 +3090,24 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class ArrayTest {\n");
-		buf.append("        public void test(int[] a){\n");
-		buf.append("                foo(a);\n");
-		buf.append("        }\n");
-		buf.append("        private void foo(int a[]) {\n");
-		buf.append("        }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change type of 'a' to 'int[]'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class ArrayTest {\n");
 		buf.append("        public void test(String[] a){\n");
 		buf.append("                foo(a);\n");
 		buf.append("        }\n");
 		buf.append("        private void foo(String[] a) {\n");
 		buf.append("        }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change method 'foo(int[])' to 'foo(String[])'", buf.toString());
+		Expected e1 = new Expected("Change method 'foo(int[])' to 'foo(String[])'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class ArrayTest {\n");
+		buf.append("        public void test(int[] a){\n");
+		buf.append("                foo(a);\n");
+		buf.append("        }\n");
+		buf.append("        private void foo(int a[]) {\n");
+		buf.append("        }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change type of 'a' to 'int[]'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -3527,21 +3526,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class A {\n");
-		buf.append("    public A() {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change constructor 'A(int, String)': Remove parameters 'int, String'",
-				buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int i) {\n");
 		buf.append("        A a= new A(i, null);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Add arguments to match 'A(int, String)'", buf.toString());
+		Expected e1 = new Expected("Add arguments to match 'A(int, String)'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {\n");
+		buf.append("    public A() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change constructor 'A(int, String)': Remove parameters 'int, String'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -3554,7 +3552,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Create constructor 'A()'", buf.toString());
 
-		assertCodeActions(cu, e2, e1, e3);
+		assertCodeActions(cu, e1, e2, e3);
 	}
 
 	@Test
@@ -3917,20 +3915,20 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    private static Object obj;\n");
 		buf.append("    public String foo(Object[] array) {\n");
-		buf.append("        return array.toString();\n");
+		buf.append("        return array.length;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'toString(..)'", buf.toString());
+		Expected e1 = new Expected("Change to 'length'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private static Object obj;\n");
 		buf.append("    public String foo(Object[] array) {\n");
-		buf.append("        return array.length;\n");
+		buf.append("        return array.toString();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Change to 'length'", buf.toString());
+		Expected e2 = new Expected("Change to 'toString(..)'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 
@@ -3953,6 +3951,15 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Object[] array) {\n");
+		buf.append("        throw new RuntimeException();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Insert 'new' keyword", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(Object[] array) {\n");
 		buf.append("        throw RuntimeException();\n");
 		buf.append("    }\n");
 		buf.append("\n");
@@ -3960,16 +3967,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return null;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create method 'RuntimeException()'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo(Object[] array) {\n");
-		buf.append("        throw new RuntimeException();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Insert 'new' keyword", buf.toString());
+		Expected e2 = new Expected("Create method 'RuntimeException()'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
