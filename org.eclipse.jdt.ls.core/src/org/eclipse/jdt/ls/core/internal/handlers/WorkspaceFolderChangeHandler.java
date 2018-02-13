@@ -15,9 +15,9 @@ import java.util.Collection;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams;
-import org.eclipse.jdt.ls.core.internal.lsp.WorkspaceFolder;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
+import org.eclipse.lsp4j.WorkspaceFolder;
 
 public class WorkspaceFolderChangeHandler {
 

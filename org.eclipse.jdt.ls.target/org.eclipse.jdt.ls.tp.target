@@ -6,11 +6,6 @@
             <repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.xtend.sdk.feature.group" version="2.12.0.v20170519-1412"/>
-            <unit id="org.eclipse.xtext.sdk.feature.group" version="2.12.0.v20170519-1412"/>
-            <repository location="http://download.eclipse.org/releases/oxygen"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
             <unit id="com.google.gson.source" version="2.7.0.v20170129-0911"/>
             <unit id="com.ibm.icu.base" version="58.2.0.v20170418-1837"/>
@@ -18,10 +13,6 @@
             <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
             <unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.3.0.v20170913-0640"/>
-            <repository location="http://download.eclipse.org/lsp4j/updates/releases/0.3.0/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="2.2.0.v20171211-1404"/>
@@ -43,6 +34,15 @@
             <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180124-2000"/>
             <repository location="http://download.eclipse.org/eclipse/updates/4.8milestones/"/>
         </location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180301-0956"/>
+			<repository location="http://download.eclipse.org/lsp4j/updates/milestones/"/>
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.xtend.sdk.feature.group" version="2.13.0.v20171020-0920"/>
+			<unit id="org.eclipse.xtext.sdk.feature.group" version="2.13.0.v20171020-0920"/>
+			<repository location="http://download.eclipse.org/releases/photon/"/>
+		</location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 </target>

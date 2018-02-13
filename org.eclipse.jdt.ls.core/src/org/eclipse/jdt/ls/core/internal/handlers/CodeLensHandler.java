@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+
+import com.google.gson.JsonArray;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -38,12 +39,14 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 public class CodeLensHandler {
@@ -59,7 +62,6 @@ public class CodeLensHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-	@SuppressWarnings("unchecked")
 	public CodeLens resolve(CodeLens lens, IProgressMonitor monitor) {
 		if (lens == null) {
 			return null;
@@ -67,10 +69,11 @@ public class CodeLensHandler {
 		//Note that codelens resolution is honored if the request was emitted
 		//before disabling codelenses in the preferences, else invalid codeLenses
 		//(i.e. having no commands) would be returned.
-		List<Object> data = (List<Object>) lens.getData();
-		String type = (String) data.get(2);
-		Map<String, Object> position = (Map<String, Object>) data.get(1);
-		String uri = (String) data.get(0);
+		final JsonArray data = (JsonArray) lens.getData();
+		final String type = JSONUtility.toModel(data.get(2), String.class);
+		final Position position = JSONUtility.toModel(data.get(1), Position.class);
+		final String uri = JSONUtility.toModel(data.get(0), String.class);
+
 		String label = null;
 		String command = null;
 		List<Location> locations = null;
@@ -84,7 +87,7 @@ public class CodeLensHandler {
 		try {
 			ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
 			if (typeRoot != null) {
-				IJavaElement element = JDTUtils.findElementAtSelection(typeRoot, ((Double) position.get("line")).intValue(), ((Double) position.get("character")).intValue(), this.preferenceManager, monitor);
+				IJavaElement element = JDTUtils.findElementAtSelection(typeRoot, position.getLine(), position.getCharacter(), this.preferenceManager, monitor);
 				if (REFERENCES_TYPE.equals(type)) {
 					try {
 						locations = findReferences(element, monitor);
