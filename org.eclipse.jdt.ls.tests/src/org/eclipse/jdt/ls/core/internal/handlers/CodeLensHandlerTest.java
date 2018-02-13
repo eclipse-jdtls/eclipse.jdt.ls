@@ -37,6 +37,7 @@ import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
@@ -277,9 +278,9 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(sourceUri.endsWith("IFoo.java"));
 
 		//CodeLens position
-		Map<String, Object> map = (Map<String, Object>) args.get(1);
-		assertEquals(5.0, map.get("line"));
-		assertEquals(17.0, map.get("character"));
+		Position p = (Position) args.get(1);
+		assertEquals(5, p.getLine());
+		assertEquals(17, p.getCharacter());
 
 		//Reference location
 		List<Location> locations = (List<Location>) args.get(2);
@@ -306,23 +307,23 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		Command command = result.getCommand();
 		assertNotNull(command);
 		assertEquals("1 reference", command.getTitle());
-		assertEquals("java.show.references",command.getCommand());
+		assertEquals("java.show.references", command.getCommand());
 
 		//Check codelens args
 		List<Object> args = command.getArguments();
-		assertEquals(3,args.size());
+		assertEquals(3, args.size());
 
 		//Check we point to the Bar class
 		String sourceUri = args.get(0).toString();
 		assertTrue(sourceUri.endsWith(source));
 
 		//CodeLens position
-		Map<String, Object> map = (Map<String, Object>)args.get(1);
-		assertEquals(5.0, map.get("line"));
-		assertEquals(13.0, map.get("character"));
+		Position p = (Position) args.get(1);
+		assertEquals(5, p.getLine());
+		assertEquals(13, p.getCharacter());
 
 		//Reference location
-		List<Location> locations = (List<Location>)args.get(2);
+		List<Location> locations = (List<Location>) args.get(2);
 		assertEquals(1, locations.size());
 		Location loc = locations.get(0);
 		assertTrue(loc.getUri().endsWith("src/java/Bar.java"));

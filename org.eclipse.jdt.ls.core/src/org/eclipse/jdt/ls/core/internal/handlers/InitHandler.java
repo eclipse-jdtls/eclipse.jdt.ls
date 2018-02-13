@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -49,6 +50,8 @@ import org.eclipse.lsp4j.SaveOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
+import org.eclipse.lsp4j.WorkspaceFoldersOptions;
+import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 
 /**
  * Handler for the VS Code extension initialization
@@ -89,7 +92,6 @@ final public class InitHandler {
 					rootPaths.add(filePath);
 				}
 			}
-			preferenceManager.getClientPreferences().setWorkspaceFoldersSupported(true); // workaround for https://github.com/eclipse/lsp4j/issues/124
 		} else {
 			String rootPath = param.getRootUri();
 			if (rootPath == null) {
@@ -185,6 +187,13 @@ final public class InitHandler {
 		}
 		capabilities.setTextDocumentSync(textDocumentSyncOptions);
 
+		WorkspaceServerCapabilities wsCapabilities = new WorkspaceServerCapabilities();
+		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
+		wsFoldersOptions.setSupported(Boolean.TRUE);
+		wsFoldersOptions.setChangeNotifications(Boolean.TRUE);
+		wsCapabilities.setWorkspaceFolders(wsFoldersOptions);
+		capabilities.setWorkspace(wsCapabilities);
+
 		result.setCapabilities(capabilities);
 		return result;
 	}
@@ -225,11 +234,7 @@ final public class InitHandler {
 	}
 
 	private Map<?, ?> getInitializationOptions(InitializeParams params) {
-		Object initializationOptions = params.getInitializationOptions();
-		if (initializationOptions instanceof Map<?, ?>) {
-			return (Map<?, ?>) initializationOptions;
-		}
-		return null;
+		return JSONUtility.toModel(params.getInitializationOptions(), Map.class);
 	}
 
 	private Collection<String> getWorkspaceFolders(Map<?, ?> initializationOptions) {

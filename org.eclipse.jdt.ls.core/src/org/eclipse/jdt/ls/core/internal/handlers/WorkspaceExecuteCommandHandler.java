@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2018 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,8 +11,11 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +29,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
@@ -139,7 +143,12 @@ public class WorkspaceExecuteCommandHandler {
 			public void run() throws Exception {
 				final IDelegateCommandHandler delegateCommandHandler = candidates.iterator().next().getDelegateCommandHandler();
 				if (delegateCommandHandler != null) {
-					resultValues[0] = delegateCommandHandler.executeCommand(params.getCommand(), params.getArguments(), monitor);
+					//Convert args to java objects before sending to extensions
+					List<Object> args = Collections.emptyList();
+					if(params.getArguments()!=null){
+						args = params.getArguments().stream().map( (element)->{ return JSONUtility.toModel(element, Object.class);}).collect(Collectors.toList());
+					}
+					resultValues[0] = delegateCommandHandler.executeCommand(params.getCommand(), args, monitor);
 				}
 			}
 

@@ -42,15 +42,14 @@ import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
-import org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams;
-import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
-import org.eclipse.jdt.ls.core.internal.lsp.WorkspaceFoldersProposedService;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -65,6 +64,7 @@ import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
+import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
@@ -105,7 +105,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, WorkspaceFoldersProposedService, JavaProtocolExtensions {
+public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService,JavaProtocolExtensions{
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	/**
@@ -159,7 +159,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void initialized(InitializedParams params) {
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
-			registerCapability(WorkspaceFoldersProposedService.CAPABILITY_ID, WorkspaceFoldersProposedService.CAPABILITY_NAME);
+			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
 		}
 	}
 
@@ -232,7 +232,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		logInfo(">> workspace/didChangeConfiguration");
-		Object settings = params.getSettings();
+		Object settings = JSONUtility.toModel(params.getSettings(), Map.class);
 		if (settings instanceof Map) {
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
@@ -681,7 +681,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.lsp.WorkspaceServiceProposed#didChangeWorkspaceFolders(org.eclipse.jdt.ls.core.internal.lsp.DidChangeWorkspaceFoldersParams)
+	 * @see org.eclipse.lsp4j.services.WorkspaceService#didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams)
 	 */
 	@Override
 	public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
