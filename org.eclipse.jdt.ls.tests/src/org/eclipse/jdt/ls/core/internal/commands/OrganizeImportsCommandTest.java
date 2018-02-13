@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2018 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,13 +16,16 @@ import static org.junit.Assert.assertEquals;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jface.text.BadLocationException;
@@ -44,9 +47,51 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
+	}
+
+	public void setupJava9() throws Exception {
+		importExistingProjects("eclipse/java9");
+		IProject project = WorkspaceHelper.getProject("java9");
+		fJProject1 = JavaCore.create(project);
+		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src/main/java"));
+	}
+
+	@Test
+	public void testOrganizeImportsModuleInfo() throws Exception {
+
+		setupJava9();
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("import foo.bar.MyDriverAction;\n");
+		buf.append("import java.sql.DriverAction;\n");
+		buf.append("import java.sql.SQLException;\n");
+		buf.append("\n");
+		buf.append("module mymodule.nine {\n");
+		buf.append("	requires java.sql;\n");
+		buf.append("	exports foo.bar;\n");
+		buf.append("	provides DriverAction with MyDriverAction;\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("module-info.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("import java.sql.DriverAction;\n");
+		buf.append("\n");
+		buf.append("import foo.bar.MyDriverAction;\n");
+		buf.append("\n");
+		buf.append("module mymodule.nine {\n");
+		buf.append("	requires java.sql;\n");
+		buf.append("	exports foo.bar;\n");
+		buf.append("	provides DriverAction with MyDriverAction;\n");
+		buf.append("}\n");
+
+		WorkspaceEdit rootEdit = new WorkspaceEdit();
+		command.organizeImportsInCompilationUnit(cu, rootEdit);
+		assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
 	}
 
 	@Test
@@ -72,7 +117,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInCompilationUnit(cu, rootEdit);
-		assertEquals(getOrganizeImportResult(cu, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
 	}
 
 	@Test
@@ -111,7 +156,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		buf.append("}\n");
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInCompilationUnit(cu, rootEdit);
-		assertEquals(getOrganizeImportResult(cu, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
 	}
 
 	@Test
@@ -150,7 +195,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInCompilationUnit(cu, rootEdit);
-		assertEquals(getOrganizeImportResult(cu, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
 	}
 
 	@Test
@@ -192,7 +237,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInPackageFragment(pack1, rootEdit);
-		assertEquals(getOrganizeImportResult(cu1, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu1, rootEdit));
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -208,7 +253,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		assertEquals(getOrganizeImportResult(cu2, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu2, rootEdit));
 	}
 
 	@Test
@@ -248,7 +293,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		buf.append("}\n");
 
 		WorkspaceEdit rootEdit = command.organizeImportsInProject(pack1.getJavaProject().getProject());
-		assertEquals(getOrganizeImportResult(cu1, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu1, rootEdit));
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -264,11 +309,11 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		assertEquals(getOrganizeImportResult(cu2, rootEdit), buf.toString());
+		assertEquals(buf.toString(), getOrganizeImportResult(cu2, rootEdit));
 	}
 
 	private String getOrganizeImportResult(ICompilationUnit cu, WorkspaceEdit we) throws BadLocationException, CoreException {
-		List<TextEdit> change = we.getChanges().get(JDTUtils.getFileURI(cu));
+		List<TextEdit> change = we.getChanges().get(JDTUtils.toURI(cu));
 		Document doc = new Document();
 		doc.set(cu.getSource());
 

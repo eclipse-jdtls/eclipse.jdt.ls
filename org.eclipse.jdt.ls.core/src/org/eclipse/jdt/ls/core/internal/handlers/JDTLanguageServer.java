@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -358,7 +358,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
-		logInfo(">> workspace/didChangeWatchedFiles");
+		logInfo(">> workspace/didChangeWatchedFiles ");
 		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client);
 		handler.didChangeWatchedFiles(params);
 	}
@@ -368,7 +368,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
-		logInfo(">> workspace/executeCommand");
+		logInfo(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
 		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		return computeAsync((cc) -> {
 			return handler.executeCommand(params, toMonitor(cc));

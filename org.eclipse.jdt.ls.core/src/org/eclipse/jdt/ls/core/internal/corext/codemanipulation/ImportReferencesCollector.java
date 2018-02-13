@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -45,6 +45,7 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.ProvidesDirective;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -57,6 +58,7 @@ import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
+import org.eclipse.jdt.core.dom.UsesDirective;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
@@ -360,6 +362,21 @@ public class ImportReferencesCollector extends GenericVisitor {
 	public boolean visit(TypeMethodReference node) {
 		doVisitNode(node.getType());
 		doVisitChildren(node.typeArguments());
+		return false;
+	}
+
+	@Override
+	public boolean visit(UsesDirective node) {
+		possibleTypeRefFound(node.getName());
+		return false;
+	}
+
+	@Override
+	public boolean visit(ProvidesDirective node) {
+		possibleTypeRefFound(node.getName());
+		for (Object impl : node.implementations()) {
+			possibleTypeRefFound((Name) impl);
+		}
 		return false;
 	}
 
