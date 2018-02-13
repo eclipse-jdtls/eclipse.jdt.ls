@@ -63,13 +63,24 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector vec) {\n");
+		buf.append("        Iterator iter = vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector vec) {\n");
 		buf.append("        iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -80,18 +91,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector vec) {\n");
-		buf.append("        Iterator iter = vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -124,6 +124,19 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector vec) {\n");
+		buf.append("        Iterator iter;\n");
+		buf.append("        if (vec != null)\n");
+		buf.append("            iter= vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector vec) {\n");
@@ -131,7 +144,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -143,20 +156,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector vec) {\n");
-		buf.append("        Iterator iter;\n");
-		buf.append("        if (vec != null)\n");
-		buf.append("            iter= vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -192,6 +192,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector vec) {\n");
+		buf.append("        Iterator iter;\n");
+		buf.append("        if (vec == null) {\n");
+		buf.append("        } else\n");
+		buf.append("            iter= vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector vec) {\n");
@@ -200,7 +214,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -213,21 +227,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector vec) {\n");
-		buf.append("        Iterator iter;\n");
-		buf.append("        if (vec == null) {\n");
-		buf.append("        } else\n");
-		buf.append("            iter= vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -262,13 +262,24 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector<String> vec) {\n");
+		buf.append("        Iterator<String> iter = vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator<String> iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector<String> vec) {\n");
 		buf.append("        iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -279,18 +290,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector<String> vec) {\n");
-		buf.append("        Iterator<String> iter = vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -479,6 +479,19 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector<String> vec) {\n");
+		buf.append("        Iterator<String> iter;\n");
+		buf.append("        if (vec != null)\n");
+		buf.append("            iter= vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator<String> iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector<String> vec) {\n");
@@ -486,7 +499,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -498,20 +511,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector<String> vec) {\n");
-		buf.append("        Iterator<String> iter;\n");
-		buf.append("        if (vec != null)\n");
-		buf.append("            iter= vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -547,6 +547,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.util.Iterator;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(Vector<String> vec) {\n");
+		buf.append("        Iterator<String> iter;\n");
+		buf.append("        if (vec == null) {\n");
+		buf.append("        } else\n");
+		buf.append("            iter= vec.iterator();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'iter'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Iterator;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Iterator<String> iter;\n");
 		buf.append("\n");
 		buf.append("    void foo(Vector<String> vec) {\n");
@@ -555,7 +569,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'iter'", buf.toString());
+		Expected e2 = new Expected("Create field 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -568,21 +582,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("            iter= vec.iterator();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'iter'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.Iterator;\n");
-		buf.append("import java.util.Vector;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo(Vector<String> vec) {\n");
-		buf.append("        Iterator<String> iter;\n");
-		buf.append("        if (vec == null) {\n");
-		buf.append("        } else\n");
-		buf.append("            iter= vec.iterator();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'iter'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'iter'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -616,25 +616,24 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Number x;\n");
+		buf.append("        Arrays.<Number>asList(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'x'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package pack;\n");
+		buf.append("import java.util.Arrays;\n");
+		buf.append("public class E {\n");
 		buf.append("    private Number x;\n");
 		buf.append("\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        Arrays.<Number>asList(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'x'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package pack;\n");
-		buf.append("import java.util.Arrays;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final Number x = null;\n");
-		buf.append("\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        Arrays.<Number>asList(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'x'", buf.toString());
+		Expected e2 = new Expected("Create field 'x'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package pack;\n");
@@ -650,12 +649,13 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package pack;\n");
 		buf.append("import java.util.Arrays;\n");
 		buf.append("public class E {\n");
+		buf.append("    private static final Number x = null;\n");
+		buf.append("\n");
 		buf.append("    public void foo() {\n");
-		buf.append("        Number x;\n");
 		buf.append("        Arrays.<Number>asList(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'x'", buf.toString());
+		Expected e4 = new Expected("Create constant 'x'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
@@ -714,6 +714,16 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo() {\n");
+		buf.append("        for (int i = 0;;) {\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'i'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
 		buf.append("    private int i;\n");
 		buf.append("\n");
 		buf.append("    void foo() {\n");
@@ -721,7 +731,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'i'", buf.toString());
+		Expected e2 = new Expected("Create field 'i'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -731,17 +741,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'i'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        for (int i = 0;;) {\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'i'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'i'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -766,6 +766,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    /**\n");
+		buf.append("     * @return Returns a number\n");
+		buf.append("     */\n");
+		buf.append("    int foo() {\n");
+		buf.append("        for (int[] i = new int[] { 1 };;) {\n");
+		buf.append("        }\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'i'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
 		buf.append("    private int[] i;\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -777,7 +791,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 0;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'i'", buf.toString());
+		Expected e2 = new Expected("Create field 'i'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -792,21 +806,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 0;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create parameter 'i'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    /**\n");
-		buf.append("     * @return Returns a number\n");
-		buf.append("     */\n");
-		buf.append("    int foo() {\n");
-		buf.append("        for (int[] i = new int[] { 1 };;) {\n");
-		buf.append("        }\n");
-		buf.append("        return 0;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'i'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'i'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -864,21 +864,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    protected int var1;\n");
+		buf.append("    public int var2;\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create field 'var2' in type 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    void foo(E e) {\n");
 		buf.append("         e.var1= 2;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'var1'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    protected int var1;\n");
-		buf.append("    public int var2;\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'var2' in type 'E'", buf.toString());
-
+		Expected e2 = new Expected("Change to 'var1'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -906,20 +905,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    protected int var1;\n");
+		buf.append("    public int var2;\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create field 'var2' in type 'E'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
 		buf.append("public class F extends E {\n");
 		buf.append("    void foo() {\n");
 		buf.append("         super.var1= 2;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'var1'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    protected int var1;\n");
-		buf.append("    public int var2;\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'var2' in type 'E'", buf.toString());
+		Expected e2 = new Expected("Change to 'var1'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -961,23 +960,23 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import test3.E;\n");
 		buf.append("public class F extends E {\n");
-		buf.append("    void foo() {\n");
-		buf.append("         this.olor= baz();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'olor'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import test3.E;\n");
-		buf.append("public class F extends E {\n");
 		buf.append("    private test2.E color;\n");
 		buf.append("\n");
 		buf.append("    void foo() {\n");
 		buf.append("         this.color= baz();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'color' in type 'F'", buf.toString());
+		Expected e1 = new Expected("Create field 'color' in type 'F'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import test3.E;\n");
+		buf.append("public class F extends E {\n");
+		buf.append("    void foo() {\n");
+		buf.append("         this.olor= baz();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change to 'olor'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1018,6 +1017,19 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int fcount) {\n");
 		buf.append("        new Runnable() {\n");
+		buf.append("            public void run() {\n");
+		buf.append("                int fCount = 7;\n");
+		buf.append("            }\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create local variable 'fCount'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(int fcount) {\n");
+		buf.append("        new Runnable() {\n");
 		buf.append("            private int fCount;\n");
 		buf.append("\n");
 		buf.append("            public void run() {\n");
@@ -1026,7 +1038,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'fCount'", buf.toString());
+		Expected e3 = new Expected("Create field 'fCount'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1041,7 +1053,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Create field 'fCount' in type 'E'", buf.toString());
+		Expected e4 = new Expected("Create field 'fCount' in type 'E'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1054,20 +1066,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create parameter 'fCount'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo(int fcount) {\n");
-		buf.append("        new Runnable() {\n");
-		buf.append("            public void run() {\n");
-		buf.append("                int fCount = 7;\n");
-		buf.append("            }\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Create local variable 'fCount'", buf.toString());
+		Expected e5 = new Expected("Create parameter 'fCount'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1247,22 +1246,22 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("public class F {\n");
 		buf.append("    public int mash;\n");
-		buf.append("    void foo(E e) {\n");
-		buf.append("         e.var.mash= 2;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'mash'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class F {\n");
-		buf.append("    public int mash;\n");
 		buf.append("    private int hash;\n");
 		buf.append("    void foo(E e) {\n");
 		buf.append("         e.var.hash= 2;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'hash' in type 'F'", buf.toString());
+		Expected e1 = new Expected("Create field 'hash' in type 'F'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class F {\n");
+		buf.append("    public int mash;\n");
+		buf.append("    void foo(E e) {\n");
+		buf.append("         e.var.mash= 2;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change to 'mash'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1286,11 +1285,34 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.File;\n");
 		buf.append("public class F {\n");
+		buf.append("    private static final String Fixe = null;\n");
+		buf.append("\n");
+		buf.append("    void foo() {\n");
+		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create constant 'Fixe'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.File;\n");
+		buf.append("public class F {\n");
+		buf.append("    void foo() {\n");
+		buf.append("        Object Fixe;\n");
+		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create local variable 'Fixe'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.File;\n");
+		buf.append("public class F {\n");
 		buf.append("    void foo() {\n");
 		buf.append("        char ch= File.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'File' (java.io)", buf.toString());
+		Expected e3 = new Expected("Change to 'File' (java.io)", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1302,19 +1324,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'Fixe'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("public class F {\n");
-		buf.append("    private static final String Fixe = null;\n");
-		buf.append("\n");
-		buf.append("    void foo() {\n");
-		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create constant 'Fixe'", buf.toString());
+		Expected e4 = new Expected("Create field 'Fixe'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1324,18 +1334,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create parameter 'Fixe'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.io.File;\n");
-		buf.append("public class F {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        Object Fixe;\n");
-		buf.append("        char ch= Fixe.pathSeparatorChar;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Create local variable 'Fixe'", buf.toString());
+		Expected e5 = new Expected("Create parameter 'Fixe'", buf.toString());
 
 		// buf = new StringBuilder();
 		// buf.append("package test1;\n");
@@ -1388,16 +1387,6 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("public class F {\n");
-		buf.append("    void foo(E e) {\n");
-		buf.append("         e.var1= new ArrayList<String>();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'var1'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("\n");
@@ -1405,8 +1394,17 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    protected int var1;\n");
 		buf.append("    public ArrayList<String> var2;\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create field 'var2' in type 'E'", buf.toString());
+		Expected e1 = new Expected("Create field 'var2' in type 'E'", buf.toString());
 
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("public class F {\n");
+		buf.append("    void foo(E e) {\n");
+		buf.append("         e.var1= new ArrayList<String>();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change to 'var1'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1429,7 +1427,6 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
@@ -1438,23 +1435,11 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    private String bla;\n");
 		buf.append("    private String cout;\n");
 		buf.append("    public int foo() {\n");
-		buf.append("        return CON1;\n");
+		buf.append("        int count;\n");
+		buf.append("        return count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'CON1'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final short CON1= 1;\n");
-		buf.append("    private static final float CON2= 1.0f;\n");
-		buf.append("    private String bla;\n");
-		buf.append("    private String cout;\n");
-		buf.append("    public int foo() {\n");
-		buf.append("        return cout;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change to 'cout'", buf.toString());
+		Expected e1 = new Expected("Create local variable 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1468,7 +1453,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Create field 'count'", buf.toString());
+		Expected e2 = new Expected("Create field 'count'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test3;\n");
+		buf.append("public class E {\n");
+		buf.append("    private static final short CON1= 1;\n");
+		buf.append("    private static final float CON2= 1.0f;\n");
+		buf.append("    private String bla;\n");
+		buf.append("    private String cout;\n");
+		buf.append("    public int foo(int count) {\n");
+		buf.append("        return count;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Create parameter 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1491,11 +1489,11 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    private static final float CON2= 1.0f;\n");
 		buf.append("    private String bla;\n");
 		buf.append("    private String cout;\n");
-		buf.append("    public int foo(int count) {\n");
-		buf.append("        return count;\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        return cout;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e5 = new Expected("Create parameter 'count'", buf.toString());
+		Expected e5 = new Expected("Change to 'cout'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1505,11 +1503,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    private String bla;\n");
 		buf.append("    private String cout;\n");
 		buf.append("    public int foo() {\n");
-		buf.append("        int count;\n");
-		buf.append("        return count;\n");
+		buf.append("        return CON1;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Create local variable 'count'", buf.toString());
+		Expected e6 = new Expected("Change to 'CON1'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}
@@ -1544,25 +1541,10 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    private String bla;\n");
 		buf.append("    private String cout;\n");
 		buf.append("    public void foo(int x) {\n");
-		buf.append("        cout= x;\n");
+		buf.append("        int count = x;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'cout'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final short CON1= 1;\n");
-		buf.append("    private static final float CON2= 1.0f;\n");
-		buf.append("    private static short var1= 1;\n");
-		buf.append("    private static float var2= 1.0f;\n");
-		buf.append("    private String bla;\n");
-		buf.append("    private String cout;\n");
-		buf.append("    public void foo(int x) {\n");
-		buf.append("        var2= x;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change to 'var2'", buf.toString());
+		Expected e1 = new Expected("Create local variable 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1578,7 +1560,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        count= x;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Create field 'count'", buf.toString());
+		Expected e2 = new Expected("Create field 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1593,22 +1575,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        count= x;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create parameter 'count'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final short CON1= 1;\n");
-		buf.append("    private static final float CON2= 1.0f;\n");
-		buf.append("    private static short var1= 1;\n");
-		buf.append("    private static float var2= 1.0f;\n");
-		buf.append("    private String bla;\n");
-		buf.append("    private String cout;\n");
-		buf.append("    public void foo(int x) {\n");
-		buf.append("        int count = x;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Create local variable 'count'", buf.toString());
+		Expected e3 = new Expected("Create parameter 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1622,7 +1589,37 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo(int x) {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Remove assignment", buf.toString());
+		Expected e4 = new Expected("Remove assignment", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test3;\n");
+		buf.append("public class E {\n");
+		buf.append("    private static final short CON1= 1;\n");
+		buf.append("    private static final float CON2= 1.0f;\n");
+		buf.append("    private static short var1= 1;\n");
+		buf.append("    private static float var2= 1.0f;\n");
+		buf.append("    private String bla;\n");
+		buf.append("    private String cout;\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        cout= x;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e5 = new Expected("Change to 'cout'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test3;\n");
+		buf.append("public class E {\n");
+		buf.append("    private static final short CON1= 1;\n");
+		buf.append("    private static final float CON2= 1.0f;\n");
+		buf.append("    private static short var1= 1;\n");
+		buf.append("    private static float var2= 1.0f;\n");
+		buf.append("    private String bla;\n");
+		buf.append("    private String cout;\n");
+		buf.append("    public void foo(int x) {\n");
+		buf.append("        var2= x;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Change to 'var2'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}
@@ -1651,14 +1648,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
 		buf.append("    public void setCount(int x) {\n");
-		buf.append("        cout= x;\n");
-		buf.append("        cout++;\n");
+		buf.append("        int count = x;\n");
+		buf.append("        count++;\n");
 		buf.append("    }\n");
 		buf.append("    public int getCount() {\n");
-		buf.append("        return cout;\n");
+		buf.append("        return count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'cout'", buf.toString());
+		Expected e1 = new Expected("Create local variable 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1679,6 +1676,20 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test3;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int cout;\n");
+		buf.append("    public void setCount(int x) {\n");
+		buf.append("        cout= x;\n");
+		buf.append("        cout++;\n");
+		buf.append("    }\n");
+		buf.append("    public int getCount() {\n");
+		buf.append("        return cout;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Change to 'cout'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test3;\n");
+		buf.append("public class E {\n");
+		buf.append("    private int cout;\n");
 		buf.append("    public void setCount(int x, int count) {\n");
 		buf.append("        count= x;\n");
 		buf.append("        count++;\n");
@@ -1687,21 +1698,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Create parameter 'count'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("public class E {\n");
-		buf.append("    private int cout;\n");
-		buf.append("    public void setCount(int x) {\n");
-		buf.append("        int count = x;\n");
-		buf.append("        count++;\n");
-		buf.append("    }\n");
-		buf.append("    public int getCount() {\n");
-		buf.append("        return count;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'count'", buf.toString());
+		Expected e4 = new Expected("Create parameter 'count'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test3;\n");
@@ -1851,6 +1848,13 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("public enum Colors {\n");
+		buf.append("    RED, BLUE\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create enum constant 'BLUE' in 'Colors'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    void foo(Colors c) {\n");
 		buf.append("        switch (c) {\n");
@@ -1858,14 +1862,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'RED'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public enum Colors {\n");
-		buf.append("    RED, BLUE\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create enum constant 'BLUE' in 'Colors'", buf.toString());
+		Expected e2 = new Expected("Change to 'RED'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1887,6 +1884,18 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    void goo(String s) {\n");
+		buf.append("    }\n");
+		buf.append("    void foo() {\n");
+		buf.append("        String x;\n");
+		buf.append("        goo(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'x'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
 		buf.append("    private String x;\n");
 		buf.append("    void goo(String s) {\n");
 		buf.append("    }\n");
@@ -1894,19 +1903,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        goo(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'x'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final String x = null;\n");
-		buf.append("    void goo(String s) {\n");
-		buf.append("    }\n");
-		buf.append("    void foo() {\n");
-		buf.append("        goo(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'x'", buf.toString());
+		Expected e2 = new Expected("Create field 'x'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -1922,14 +1919,14 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    private static final String x = null;\n");
 		buf.append("    void goo(String s) {\n");
 		buf.append("    }\n");
 		buf.append("    void foo() {\n");
-		buf.append("        String x;\n");
 		buf.append("        goo(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'x'", buf.toString());
+		Expected e4 = new Expected("Create constant 'x'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
@@ -1963,6 +1960,17 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    public E(String s) {\n");
+		buf.append("    }\n");
+		buf.append("    public E(String x) {\n");
+		buf.append("        this(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create parameter 'x'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
 		buf.append("    private static final String x = null;\n");
 		buf.append("    public E(String s) {\n");
 		buf.append("    }\n");
@@ -1970,18 +1978,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'x'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    public E(String s) {\n");
-		buf.append("    }\n");
-		buf.append("    public E(String x) {\n");
-		buf.append("        this(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create parameter 'x'", buf.toString());
+		Expected e3 = new Expected("Create constant 'x'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -2020,22 +2017,22 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends F {\n");
+		buf.append("    public E(String x) {\n");
+		buf.append("        super(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create parameter 'x'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E extends F {\n");
 		buf.append("    private static final String x = null;\n");
 		buf.append("\n");
 		buf.append("    public E() {\n");
 		buf.append("        super(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'x'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E extends F {\n");
-		buf.append("    public E(String x) {\n");
-		buf.append("        super(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create parameter 'x'", buf.toString());
+		Expected e3 = new Expected("Create constant 'x'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
@@ -2063,24 +2060,23 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    public E() {\n");
+		buf.append("        String x;\n");
+		buf.append("        new F(x);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'x'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
 		buf.append("    private String x;\n");
 		buf.append("\n");
 		buf.append("    public E() {\n");
 		buf.append("        new F(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'x'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final String x = null;\n");
-		buf.append("\n");
-		buf.append("    public E() {\n");
-		buf.append("        new F(x);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'x'", buf.toString());
+		Expected e2 = new Expected("Create field 'x'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -2094,12 +2090,13 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
+		buf.append("    private static final String x = null;\n");
+		buf.append("\n");
 		buf.append("    public E() {\n");
-		buf.append("        String x;\n");
 		buf.append("        new F(x);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'x'", buf.toString());
+		Expected e4 = new Expected("Create constant 'x'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
@@ -2122,25 +2119,24 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
+		buf.append("    void foo(int i) {\n");
+		buf.append("        String[][] bar;\n");
+		buf.append("        bar[0][i] = \"bar\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create local variable 'bar'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package p;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
 		buf.append("    private String[][] bar;\n");
 		buf.append("\n");
 		buf.append("    void foo(int i) {\n");
 		buf.append("        bar[0][i] = \"bar\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'bar'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package p;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    private static final String[][] bar = null;\n");
-		buf.append("\n");
-		buf.append("    void foo(int i) {\n");
-		buf.append("        bar[0][i] = \"bar\";\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'bar'", buf.toString());
+		Expected e2 = new Expected("Create field 'bar'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package p;\n");
@@ -2156,12 +2152,13 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package p;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
+		buf.append("    private static final String[][] bar = null;\n");
+		buf.append("\n");
 		buf.append("    void foo(int i) {\n");
-		buf.append("        String[][] bar;\n");
 		buf.append("        bar[0][i] = \"bar\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'bar'", buf.toString());
+		Expected e4 = new Expected("Create constant 'bar'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
@@ -2245,24 +2242,12 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    int var1;\n");
 		buf.append("    static int var2;\n");
 		buf.append("    public static void main(String[] var3) {\n");
-		buf.append("        println(var3);\n");
+		buf.append("        String[] var;\n");
+		buf.append("        println(var);\n");
 		buf.append("    }\n");
 		buf.append("    public static void println(String[] s) {}\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change to 'var3'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    int var1;\n");
-		buf.append("    static int var2;\n");
-		buf.append("    public static void main(String[] var3) {\n");
-		buf.append("        println(var2);\n");
-		buf.append("    }\n");
-		buf.append("    public static void println(String[] s) {}\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Change to 'var2'", buf.toString());
+		Expected e1 = new Expected("Create local variable 'var'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test;\n");
@@ -2276,7 +2261,33 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    public static void println(String[] s) {}\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Create field 'var'", buf.toString());
+		Expected e2 = new Expected("Create field 'var'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    int var1;\n");
+		buf.append("    static int var2;\n");
+		buf.append("    public static void main(String[] var3) {\n");
+		buf.append("        println(var3);\n");
+		buf.append("    }\n");
+		buf.append("    public static void println(String[] s) {}\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Change to 'var3'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    int var1;\n");
+		buf.append("    static int var2;\n");
+		buf.append("    public static void main(String[] var3, String[] var) {\n");
+		buf.append("        println(var);\n");
+		buf.append("    }\n");
+		buf.append("    public static void println(String[] s) {}\n");
+		buf.append("}\n");
+		Expected e4 = new Expected("Create parameter 'var'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test;\n");
@@ -2290,20 +2301,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    public static void println(String[] s) {}\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create constant 'var'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    int var1;\n");
-		buf.append("    static int var2;\n");
-		buf.append("    public static void main(String[] var3, String[] var) {\n");
-		buf.append("        println(var);\n");
-		buf.append("    }\n");
-		buf.append("    public static void println(String[] s) {}\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Create parameter 'var'", buf.toString());
+		Expected e5 = new Expected("Create constant 'var'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test;\n");
@@ -2312,12 +2310,11 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    int var1;\n");
 		buf.append("    static int var2;\n");
 		buf.append("    public static void main(String[] var3) {\n");
-		buf.append("        String[] var;\n");
-		buf.append("        println(var);\n");
+		buf.append("        println(var2);\n");
 		buf.append("    }\n");
 		buf.append("    public static void println(String[] s) {}\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Create local variable 'var'", buf.toString());
+		Expected e6 = new Expected("Change to 'var2'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}
@@ -2341,24 +2338,24 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("    class Runnable { }\n");
-		buf.append("    private java.lang.Runnable myRunnable;\n");
 		buf.append("    public void test() {\n");
+		buf.append("        java.lang.Runnable myRunnable;\n");
 		buf.append("        new Thread(myRunnable);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Create field 'myRunnable'", buf.toString());
+		Expected e1 = new Expected("Create local variable 'myRunnable'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("    class Runnable { }\n");
-		buf.append("    private static final java.lang.Runnable myRunnable = null;\n");
+		buf.append("    private java.lang.Runnable myRunnable;\n");
 		buf.append("    public void test() {\n");
 		buf.append("        new Thread(myRunnable);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create constant 'myRunnable'", buf.toString());
+		Expected e2 = new Expected("Create field 'myRunnable'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -2376,12 +2373,12 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("    class Runnable { }\n");
+		buf.append("    private static final java.lang.Runnable myRunnable = null;\n");
 		buf.append("    public void test() {\n");
-		buf.append("        java.lang.Runnable myRunnable;\n");
 		buf.append("        new Thread(myRunnable);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e4 = new Expected("Create local variable 'myRunnable'", buf.toString());
+		Expected e4 = new Expected("Create constant 'myRunnable'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
