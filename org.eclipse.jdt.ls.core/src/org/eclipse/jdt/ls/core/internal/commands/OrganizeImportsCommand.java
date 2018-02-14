@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017,2018 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import java.io.File;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,9 +17,13 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -45,54 +47,39 @@ import org.eclipse.text.edits.TextEdit;
 
 public class OrganizeImportsCommand {
 
-	public static Object organizeImports(List<Object> arguments) throws CoreException {
-		if (arguments == null || arguments.isEmpty()) {
-			return new WorkspaceEdit();
-		}
-
-		Object arg1 = arguments.get(0);
-		if (arg1 instanceof String) {
-			String fileUri = (String) arg1;
-			OrganizeImportsCommand command = new OrganizeImportsCommand();
-
-			IPath rootPath = ResourceUtils.filePathFromURI(fileUri);
-			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-			boolean selectProjectRoot = false;
-			IProject targetProj = null;
-			if (rootPath != null && projects.length > 0) {
-				for (IProject proj : projects) {
-					String projectLocation = proj.getLocation().toString().toLowerCase();
-					String selectedPath = rootPath.toString().toLowerCase();
-					if (!StringUtils.isBlank(selectedPath) && !StringUtils.isBlank(projectLocation)) {
-						if (selectedPath.startsWith(projectLocation)) {
-							targetProj = proj;
-							if (projectLocation.equals(selectedPath)) {
-								selectProjectRoot = true;
-							}
-							break;
-						}
-
-					}
+	public Object organizeImports(List<Object> arguments) throws CoreException {
+		WorkspaceEdit edit = new WorkspaceEdit();
+		if (arguments != null && !arguments.isEmpty() && arguments.get(0) instanceof String) {
+			final String fileUri = (String) arguments.get(0);
+			final IPath rootPath = ResourceUtils.filePathFromURI(fileUri);
+			if (rootPath == null) {
+				throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, "URI is not found"));
+			}
+			final IWorkspaceRoot wsroot = ResourcesPlugin.getWorkspace().getRoot();
+			IResource resource = wsroot.getFileForLocation(rootPath);
+			if (resource == null) {
+				resource = wsroot.getContainerForLocation(rootPath);
+			}
+			if (resource != null) {
+				final OrganizeImportsCommand command = new OrganizeImportsCommand();
+				int type = resource.getType();
+				switch (type) {
+					case IResource.PROJECT:
+						edit = command.organizeImportsInProject(resource.getAdapter(IProject.class));
+						break;
+					case IResource.FOLDER:
+						edit = command.organizeImportsInDirectory(fileUri, resource.getProject());
+						break;
+					case IResource.FILE:
+						edit = command.organizeImportsInFile(fileUri);
+						break;
+					default://This can only be IResource.ROOT. Which is not relevant to jdt.ls
+						// do nothing allow to return the empty WorkspaceEdit.
+						break;
 				}
 			}
-			// Project root URI:
-			if (targetProj != null && selectProjectRoot) {
-				return command.organizeImportsInProject(targetProj);
-			}
-
-			URI uri = URI.create(fileUri);
-			File file = new File(uri.getPath());
-			boolean exists = file.exists();
-			if (!exists) {
-				return new WorkspaceEdit();
-			}
-			if (file.isDirectory()) {
-				return command.organizeImportsInDirectory(fileUri, targetProj);
-			} else {
-				return command.organizeImportsInFile(fileUri);
-			}
 		}
-		return new WorkspaceEdit();
+		return edit;
 	}
 
 	/**

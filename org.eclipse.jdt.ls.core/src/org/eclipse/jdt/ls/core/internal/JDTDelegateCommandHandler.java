@@ -15,6 +15,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
+import org.eclipse.lsp4j.WorkspaceEdit;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 
@@ -26,7 +27,19 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 		if (!StringUtils.isBlank(commandId)) {
 			switch (commandId) {
 				case "java.edit.organizeImports":
-					return OrganizeImportsCommand.organizeImports(arguments);
+					final OrganizeImportsCommand c = new OrganizeImportsCommand();
+					final Object result = c.organizeImports(arguments);
+					final boolean applyNow = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceApplyEditSupported();
+					if (applyNow) {
+						JavaLanguageServerPlugin.getInstance().getClientConnection().applyWorkspaceEdit((WorkspaceEdit) result);
+						// return an empty object to avoid errors on client
+						return new Object();
+					} else {
+						// we are returning a workspace edit here in order to accomodate the clients that
+						// did not implement workspace/applyEdit from LSP. This still allows them to implement applying
+						// workspaceEdit on the custom command.
+						return result;
+					}
 				default:
 					break;
 			}

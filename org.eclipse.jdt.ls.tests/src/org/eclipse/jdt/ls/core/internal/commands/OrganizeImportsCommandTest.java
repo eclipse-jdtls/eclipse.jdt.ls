@@ -12,7 +12,11 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -56,6 +60,38 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		IProject project = WorkspaceHelper.getProject("java9");
 		fJProject1 = JavaCore.create(project);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src/main/java"));
+	}
+
+	@Test(expected = CoreException.class)
+	public void testGenericOrganizeImportsCall_InvalidFile() throws Exception {
+		importProjects("eclipse/hello");
+		OrganizeImportsCommand command = new OrganizeImportsCommand();
+		command.organizeImports(Arrays.asList("no/such/file.java"));
+	}
+
+	@Test
+	public void testGenericOrganizeImportsCall_null() throws Exception {
+		importProjects("eclipse/hello");
+		OrganizeImportsCommand command = new OrganizeImportsCommand();
+		Object o = command.organizeImports(null);
+		assertNotNull(o);
+	}
+
+	@Test
+	public void testGenericOrganizeImportsCall() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = WorkspaceHelper.getProject("hello");
+		String filename = project.getFile("src/java/Foo4.java").getRawLocationURI().toString();
+
+		OrganizeImportsCommand command = new OrganizeImportsCommand();
+		Object result = command.organizeImports(Arrays.asList(filename));
+		assertNotNull(result);
+		assertTrue(result instanceof WorkspaceEdit);
+		WorkspaceEdit ws = (WorkspaceEdit) result;
+		assertFalse(ws.getChanges().isEmpty());
+		TextEdit edit = ws.getChanges().values().stream().findFirst().get().get(0);
+		assertEquals(0, edit.getRange().getStart().getLine());
+		assertEquals(4, edit.getRange().getEnd().getLine());
 	}
 
 	@Test
@@ -233,7 +269,6 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("}\n");
-
 
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInPackageFragment(pack1, rootEdit);
