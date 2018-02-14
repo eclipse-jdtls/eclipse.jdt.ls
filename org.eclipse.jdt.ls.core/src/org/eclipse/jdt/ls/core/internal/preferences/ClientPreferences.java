@@ -28,16 +28,16 @@ public class ClientPreferences {
 	private boolean hasWorkspaceFolderCapability;
 
 	public ClientPreferences(ClientCapabilities caps) {
-		if(caps == null ) {
+		if (caps == null) {
 			throw new IllegalArgumentException("ClientCapabilities can not be null");
 		}
 		this.capabilities = caps;
-		this.v3supported = capabilities.getTextDocument() !=null;
+		this.v3supported = capabilities.getTextDocument() != null;
 		this.hasWorkspaceFolderCapability = false;
 	}
 
-	public boolean isSignatureHelpSupported(){
-		return v3supported && capabilities.getTextDocument().getSignatureHelp() !=null;
+	public boolean isSignatureHelpSupported() {
+		return v3supported && capabilities.getTextDocument().getSignatureHelp() != null;
 	}
 
 	public boolean isWorkspaceFoldersSupported() {
@@ -123,6 +123,10 @@ public class ClientPreferences {
 
 	public boolean isWillSaveWaitUntilRegistered() {
 		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSaveWaitUntil());
+	}
+
+	public boolean isWorkspaceApplyEditSupported() {
+		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getApplyEdit());
 	}
 
 }
