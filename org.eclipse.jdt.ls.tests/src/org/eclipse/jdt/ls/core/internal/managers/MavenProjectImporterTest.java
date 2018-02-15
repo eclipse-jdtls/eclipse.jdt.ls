@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -76,6 +77,12 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			javaImportExclusions.remove(PROJECT1_PATTERN);
 		}
+	}
+
+	@Test
+	public void testUnzippedSourceImportExclusions() throws Exception {
+		List<IProject> projects = importProjects("maven/unzipped-sources");
+		assertEquals(Arrays.asList(projectsManager.getDefaultProject()), projects);
 	}
 
 	@Test

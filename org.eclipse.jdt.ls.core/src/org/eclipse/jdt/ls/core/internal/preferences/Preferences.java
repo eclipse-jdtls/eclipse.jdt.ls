@@ -202,9 +202,10 @@ public class Preferences {
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
-		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules");
-		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata");
-		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules/**");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata/**");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources/**");
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/META-INF/maven/**");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT = new ArrayList<>();
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assert.*:");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assume.*:");
