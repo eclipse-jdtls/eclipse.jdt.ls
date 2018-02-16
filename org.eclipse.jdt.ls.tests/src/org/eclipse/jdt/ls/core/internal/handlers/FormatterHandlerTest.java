@@ -185,4 +185,40 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		String newText = TextEditUtil.apply(unit, edits);
 		assertEquals(expectedText, newText);
 	}
+
+	@Test
+	public void testDocumentFormattingWithCustomOption() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+			//@formatter:off
+			"@Deprecated package org.sample;\n\n" +
+				"public class Baz {\n"+
+				"    /**Java doc @param a some parameter*/\n"+
+				"    void foo(int a){\n"+
+				"}\n"+
+				"}\n"
+			//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(2, false);
+		options.putNumber("org.eclipse.jdt.core.formatter.blank_lines_before_package", Integer.valueOf(2));
+		options.putString("org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_package", "do not insert");
+		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		List<? extends TextEdit> edits = server.formatting(params).get();
+		assertNotNull(edits);
+
+		String expectedText =
+			"\n"+
+				"\n"+
+				"@Deprecated package org.sample;\n"+
+				"\n"+
+				"public class Baz {\n"+
+				"\t/**Java doc @param a some parameter*/\n"+
+				"\tvoid foo(int a) {\n"+
+				"\t}\n"+
+				"}\n";
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
 }

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +39,7 @@ import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -111,6 +114,13 @@ public class FormatterHandler {
 
 	private static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
 		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
+
+		Map<String, String> customOptions = options.entrySet().stream()
+			.filter(map -> chekIfValueIsNotNull(map.getValue()))
+			.collect(toMap(e -> e.getKey(), e -> getOptionValue(e.getValue())));
+
+		eclipseOptions.putAll(customOptions);
+
 		Integer tabSize = options.getTabSize();
 		if (tabSize != null) {
 			int tSize = tabSize.intValue();
@@ -125,6 +135,19 @@ public class FormatterHandler {
 		return eclipseOptions;
 	}
 
+	private static boolean chekIfValueIsNotNull(Either3<String, Number, Boolean> value) {
+		return value.getFirst() != null || value.getSecond() != null || value.getThird() != null;
+	}
+
+	private static String getOptionValue(Either3<String, Number, Boolean> option) {
+		if (option.isFirst()) {
+			return option.getFirst();
+		} else if (option.isSecond()) {
+			return option.getSecond().toString();
+		} else {
+			return option.getThird().toString();
+		}
+	}
 
 	private static List<org.eclipse.lsp4j.TextEdit> convertEdits(TextEdit[] edits, IDocument document) {
 		return Arrays.stream(edits).map(t -> convertEdit(t, document)).collect(Collectors.toList());
