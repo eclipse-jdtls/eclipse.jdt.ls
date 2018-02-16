@@ -10,17 +10,23 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -35,7 +41,20 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
  */
 public class MavenBuildSupport implements IBuildSupport {
 
-	private static Map<Path, String> pomDigests = new ConcurrentHashMap<>();
+	private static final String POM_SERLIZATION_FILE_NAME = ".pom-digests";
+
+	private static final File SERIALIZATION_FILE;
+	private static Map<String, String> pomDigests;
+
+	static {
+		File workspaceFile = ResourcesPlugin.getWorkspace().getRoot().getRawLocation().makeAbsolute().toFile();
+		SERIALIZATION_FILE = new File(workspaceFile, POM_SERLIZATION_FILE_NAME);
+		if (SERIALIZATION_FILE.exists()) {
+			pomDigests = deserializePomDigests();
+		} else {
+			pomDigests = new HashMap<>();
+		}
+	}
 
 	private IProjectConfigurationManager configurationManager;
 
@@ -57,7 +76,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		if (!applies(project) || (!needsMavenUpdate(project) && !force)) {
 			return;
 		}
-		JavaLanguageServerPlugin.logInfo("Starting Maven update for "+project.getName());
+		JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
 		//TODO collect dependent projects and update them as well? i.e in case a parent project was modified
 		MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
 		this.configurationManager.updateProjectConfiguration(request, monitor);
@@ -68,11 +87,38 @@ public class MavenBuildSupport implements IBuildSupport {
 			Path path = project.getFile("pom.xml").getLocation().toFile().toPath();
 			byte[] fileBytes = Files.readAllBytes(path);
 			byte[] digest = MessageDigest.getInstance("MD5").digest(fileBytes);
-			String prevDigest = pomDigests.putIfAbsent(path, Arrays.toString(digest));
-			return prevDigest == null || !prevDigest.equals(Arrays.toString(digest));
+			String newDigestStr = Arrays.toString(digest);
+			synchronized (pomDigests) {
+				String prevDigest = pomDigests.put(path.toString(), newDigestStr);
+				if (prevDigest == null || !prevDigest.equals(newDigestStr)) {
+					serializePomDigests();
+					return true;
+				}
+				return false;
+			}
 		} catch (IOException | NoSuchAlgorithmException ioe) {
 			return true;
 		}
+	}
+
+	private void serializePomDigests() {
+		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE))) {
+			outStream.writeObject(pomDigests);
+		} catch (IOException e) {
+			JavaLanguageServerPlugin.logException("Exception occured while serizalizion of pom digests", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, String> deserializePomDigests() {
+		Map<String, String> resultObject = null;
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(SERIALIZATION_FILE))) {
+			resultObject = (Map<String, String>) ois.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			resultObject = new HashMap<>();
+			JavaLanguageServerPlugin.logException("Exception occured while deserizalizion of pom digests", e);
+		}
+		return resultObject;
 	}
 
 

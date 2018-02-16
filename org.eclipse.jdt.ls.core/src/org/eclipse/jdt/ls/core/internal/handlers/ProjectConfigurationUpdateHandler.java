@@ -28,10 +28,11 @@ public class ProjectConfigurationUpdateHandler {
 	}
 
 	public void updateConfiguration(TextDocumentIdentifier param) {
-		IFile file  = JDTUtils.findFile(param.getUri());
+		IFile file = JDTUtils.findFile(param.getUri());
 		if (file == null) {
 			return;
 		}
+		// most likely the handler is invoked intentionally by the user, that's why force the updatedespite of no changes of pom.xml are made
 		projectManager.updateProject(file.getProject(), true);
 	}
 }
