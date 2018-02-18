@@ -33,6 +33,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
 
 		options.put(JavaCore.COMPILER_PB_UNUSED_PRIVATE_MEMBER, JavaCore.ERROR);
+		options.put(JavaCore.COMPILER_PB_DEAD_CODE, JavaCore.WARNING);
 
 		fJProject1.setOptions(options);
 
@@ -1551,6 +1552,918 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Expected e2 = new Expected("Replace catch clause with throws", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testRemoveUnreachableCodeStmt() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNNECESSARY_ELSE, JavaCore.IGNORE);
+		JavaCore.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(int x) {\n");
+		buf.append("        if (x == 9) {\n");
+		buf.append("            return true;\n");
+		buf.append("        } else\n");
+		buf.append("            return false;\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(int x) {\n");
+		buf.append("        if (x == 9) {\n");
+		buf.append("            return true;\n");
+		buf.append("        } else\n");
+		buf.append("            return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveUnreachableCodeStmt2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class E {\n");
+		buf.append("    public String getName() {\n");
+		buf.append("        try{\n");
+		buf.append("            return \"fred\";\n");
+		buf.append("        }\n");
+		buf.append("        catch (Exception e){\n");
+		buf.append("            return e.getLocalizedMessage();\n");
+		buf.append("        }\n");
+		buf.append("        System.err.print(\"wow\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		String[] expected = new String[1];
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class E {\n");
+		buf.append("    public String getName() {\n");
+		buf.append("        try{\n");
+		buf.append("            return \"fred\";\n");
+		buf.append("        }\n");
+		buf.append("        catch (Exception e){\n");
+		buf.append("            return e.getLocalizedMessage();\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveUnreachableCodeWhile() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        while (false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThen() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            System.out.println(\"a\");\n");
+		buf.append("        } else {\n");
+		buf.append("            System.out.println(\"b\");\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        System.out.println(\"b\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThen2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) {\n");
+		buf.append("            if (o == null) {\n");
+		buf.append("            	System.out.println(\"hello\");\n");
+		buf.append("        	} else {\n");
+		buf.append("            	System.out.println(\"bye\");\n");
+		buf.append("        	}\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) {\n");
+		buf.append("            System.out.println(\"bye\");\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThen3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) \n");
+		buf.append("            if (o == null) {\n");
+		buf.append("            	System.out.println(\"hello\");\n");
+		buf.append("        	} else {\n");
+		buf.append("            	System.out.println(\"bye\");\n");
+		buf.append("            	System.out.println(\"bye-bye\");\n");
+		buf.append("        	}\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) {\n");
+		buf.append("            	System.out.println(\"bye\");\n");
+		buf.append("            	System.out.println(\"bye-bye\");\n");
+		buf.append("        	}\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThen4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) \n");
+		buf.append("            if (true) \n");
+		buf.append("            	if (o == null) \n");
+		buf.append("            		System.out.println(\"hello\");\n");
+		buf.append("		System.out.println(\"bye\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) \n");
+		buf.append("            if (true) {\n");
+		buf.append("            }\n");
+		buf.append("		System.out.println(\"bye\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThen5() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) \n");
+		buf.append("            if (false) \n");
+		buf.append("            	if (o == null) \n");
+		buf.append("            		System.out.println(\"hello\");\n");
+		buf.append("		System.out.println(\"bye\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = new Object();\n");
+		buf.append("        if (o != null) {\n");
+		buf.append("        }\n");
+		buf.append("		System.out.println(\"bye\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfThenSwitch() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        switch (1) {\n");
+		buf.append("            case 1:\n");
+		buf.append("                if (false) {\n");
+		buf.append("                	foo();\n");
+		buf.append("					System.out.println(\"hi\");\n");
+		buf.append("				} else {\n");
+		buf.append("                	System.out.println(\"bye\");\n");
+		buf.append("				}\n");
+		buf.append("                break;\n");
+		buf.append("            case 2:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("            default:\n");
+		buf.append("                break;\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        switch (1) {\n");
+		buf.append("            case 1:\n");
+		buf.append("            System.out.println(\"bye\");\n");
+		buf.append("                break;\n");
+		buf.append("            case 2:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("            default:\n");
+		buf.append("                break;\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeIfElse() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        if (Math.random() == -1 || true) {\n");
+		buf.append("            System.out.println(\"a\");\n");
+		buf.append("        } else {\n");
+		buf.append("            System.out.println(\"b\");\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        System.out.println(\"a\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        if (true) return false;\n");
+		buf.append("        return true;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((false && b1) && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((b1 && false) && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (b1 && false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (b1 && false) {\n");
+		buf.append("            if (b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Split && condition", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((((b1 && false))) && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (b1 && false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (b1 && false) {\n");
+		buf.append("            if (b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Split && condition", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf5() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((((b1 && false) && b2))) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (b1 && false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf6() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((((false && b1) && b2))) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (((false && b2))) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf7() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((((false && b1))) && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf8() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1) {\n");
+		buf.append("        if ((((false && b1)))) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1) {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf9() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false && b1 && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            if (b1 && b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Split && condition", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf10() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (((false && b1 && b2))) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf11() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1) {\n");
+		buf.append("        if ((true || b1) && false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1) {\n");
+		buf.append("        if (true && false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf12() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2, boolean b3) {\n");
+		buf.append("        if (((b1 && false) && b2) | b3) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2, boolean b3) {\n");
+		buf.append("        if ((b1 && false) | b3) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf13() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((false | false && b1) & b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
+		buf.append("        if ((false | false) & b2) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeConditional() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        return true ? 1 : 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        return 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeConditional2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = true ? new Integer(1) + 2 : new Double(0.0) + 3;\n");
+		buf.append("        System.out.println(o);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = (double) (new Integer(1) + 2);\n");
+		buf.append("        System.out.println(o);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeConditional3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = true ? new Integer(1) : new Double(0.0);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        Object o = (double) new Integer(1);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeMultiStatements() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        if (true)\n");
+		buf.append("            return;\n");
+		buf.append("        foo();\n");
+		buf.append("        foo();\n");
+		buf.append("        foo();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        return;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove (including condition)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testRemoveUnreachableCodeMultiStatementsSwitch() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        switch (1) {\n");
+		buf.append("            case 1:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("                foo();\n");
+		buf.append("                new Object();\n");
+		buf.append("            case 2:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("            default:\n");
+		buf.append("                break;\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        switch (1) {\n");
+		buf.append("            case 1:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("            case 2:\n");
+		buf.append("                foo();\n");
+		buf.append("                break;\n");
+		buf.append("            default:\n");
+		buf.append("                break;\n");
+		buf.append("        };\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove", buf.toString());
 	}
 
 }

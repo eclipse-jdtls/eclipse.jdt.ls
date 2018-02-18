@@ -85,7 +85,7 @@ public class TextEditConverter extends TextEditVisitor{
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
-		return super.visit(edit);
+		return false;
 	}
 
 	/* (non-Javadoc)
