@@ -36,8 +36,7 @@
       <contentProvider
             class="org.eclipse.jdt.ls.core.internal.SourceContentProvider"
             id="sourceContentProvider"
-            priority="0"
-            cacheable="false">
+            priority="0">
       </contentProvider>
    </extension>
    <extension
@@ -46,8 +45,7 @@
             class="org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider"
             id="disassemblerContentProvider"
             priority="2147483647"
-            uriPattern=".+\.class.*"
-            cacheable="true">
+            uriPattern=".+\.class.*">
       </contentProvider>
    </extension>
    <extension
