@@ -37,10 +37,10 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -89,9 +89,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Before
 	public void setUp() {
 		mockLSP3Client();
-		SharedASTProvider sharedASTProvider = SharedASTProvider.getInstance();
-		sharedASTProvider.invalidateAll();
-		sharedASTProvider.clearASTCreationCount();
+		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
+		sharedASTProvider.disposeAST();
+		//		sharedASTProvider.clearASTCreationCount();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 	}

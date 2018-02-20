@@ -50,6 +50,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
@@ -204,7 +205,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 			result.setEdit(root);
 			fRewriter = ASTRewrite.create(fAnalyzer.getEnclosingBodyDeclaration().getAST());
 			fRewriter.setTargetSourceRangeComputer(new SelectionAwareSourceRangeComputer(fAnalyzer.getSelectedNodes(), fCUnit.getBuffer(), fSelection.getOffset(), fSelection.getLength()));
-			fImportRewrite = StubUtility.createImportRewrite(fRootNode, true);
+			fImportRewrite = CodeStyleConfiguration.createImportRewrite(fRootNode, true);
 
 			fLinkedProposalModel = new LinkedProposalModel();
 

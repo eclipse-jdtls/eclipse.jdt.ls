@@ -52,12 +52,12 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
+import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation.IChooseImportQuery;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.OrganizeImportsOperation;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.OrganizeImportsOperation.IChooseImportQuery;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -129,7 +129,7 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	@Override
 	@After
 	public void cleanUp() throws Exception {
-		SharedASTProvider.getInstance().invalidateAll();
+		CoreASTProvider.getInstance().disposeAST();
 		super.cleanUp();
 		JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportOrder(Preferences.JAVA_IMPORT_ORDER_DEFAULT);
 	}

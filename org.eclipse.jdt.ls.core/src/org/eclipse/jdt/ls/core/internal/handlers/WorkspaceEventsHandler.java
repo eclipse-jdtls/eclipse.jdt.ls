@@ -22,11 +22,11 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -84,7 +84,9 @@ public class WorkspaceEventsHandler {
 				continue;
 			}
 			if(changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED){
-				SharedASTProvider.getInstance().invalidate(unit);
+				if (CoreASTProvider.getInstance().getActiveJavaElement().equals(unit)) {
+					CoreASTProvider.getInstance().disposeAST();
+				}
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
 		}

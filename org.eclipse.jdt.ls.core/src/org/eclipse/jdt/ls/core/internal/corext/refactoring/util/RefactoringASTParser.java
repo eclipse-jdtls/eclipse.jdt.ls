@@ -26,9 +26,9 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 
 public class RefactoringASTParser {
 
@@ -129,7 +129,7 @@ public class RefactoringASTParser {
 	 * @return the parsed CompilationUnit
 	 */
 	public static CompilationUnit parseWithASTProvider(ITypeRoot typeRoot, boolean resolveBindings, IProgressMonitor pm) {
-		CompilationUnit cuNode = SharedASTProvider.getInstance().getAST(typeRoot, pm);
+		CompilationUnit cuNode = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, pm);
 		if (cuNode != null) {
 			return cuNode;
 		} else {

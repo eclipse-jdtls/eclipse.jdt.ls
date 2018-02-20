@@ -24,8 +24,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
@@ -148,7 +148,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 	protected List<Command> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
 
-		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
 
 		Range range = getRange(cu, problems);

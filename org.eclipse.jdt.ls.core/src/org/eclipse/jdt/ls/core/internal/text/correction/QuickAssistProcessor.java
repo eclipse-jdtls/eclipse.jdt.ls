@@ -76,10 +76,10 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
@@ -412,7 +412,7 @@ public class QuickAssistProcessor {
 					Type type = ((TypeMethodReference) methodReference).getType();
 					ITypeBinding typeBinding = type.resolveBinding();
 					if (typeBinding != null) {
-						ImportRewrite importRewrite = StubUtility.createImportRewrite(astRoot, true);
+						ImportRewrite importRewrite = CodeStyleConfiguration.createImportRewrite(astRoot, true);
 						expr = ast.newName(importRewrite.addImport(typeBinding));
 					}
 				}

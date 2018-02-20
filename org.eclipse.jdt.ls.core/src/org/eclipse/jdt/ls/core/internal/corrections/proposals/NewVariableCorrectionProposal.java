@@ -61,13 +61,13 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.dom.BodyDeclarationRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
-import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 
 
 public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal {
@@ -453,7 +453,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 			return imports.addImport(binding, ast, importRewriteContext, location);
 		}
 		// no binding, find type AST node instead -> ABC a= x-> use 'ABC' as is
-		Type type = ASTResolving.guessTypeForReference(ast, fOriginalNode);
+		Type type = org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.guessTypeForReference(ast, fOriginalNode);
 		if (type != null) {
 			return type;
 		}

@@ -30,19 +30,22 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
-import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -183,7 +186,7 @@ public class AnonymousTypeCompletionProposal {
 			IBinding contextBinding = null; // used to find @NonNullByDefault effective at that current context
 			if (fCompilationUnit.getJavaProject().getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true).equals(JavaCore.ENABLED)) {
 				ASTNode focusNode = NodeFinder.perform(astRoot, fReplacementOffset + dummyClassContent.length(), 0);
-				contextBinding = ASTNodes.getEnclosingDeclaration(focusNode);
+				contextBinding = getEnclosingDeclaration(focusNode);
 			}
 			ASTRewrite rewrite = ASTRewrite.create(astRoot.getAST());
 			ITrackedNodePosition trackedDeclaration = rewrite.track(declaration);
@@ -211,6 +214,32 @@ public class AnonymousTypeCompletionProposal {
 				workingCopy.discardWorkingCopy();
 			}
 		}
+	}
+
+	// TODO Remove this by addressing https://bugs.eclipse.org/bugs/show_bug.cgi?id=531511
+	private IBinding getEnclosingDeclaration(ASTNode node) {
+		while (node != null) {
+			if (node instanceof AbstractTypeDeclaration) {
+				return ((AbstractTypeDeclaration) node).resolveBinding();
+			} else if (node instanceof AnonymousClassDeclaration) {
+				return ((AnonymousClassDeclaration) node).resolveBinding();
+			} else if (node instanceof MethodDeclaration) {
+				return ((MethodDeclaration) node).resolveBinding();
+			} else if (node instanceof FieldDeclaration) {
+				List<?> fragments = ((FieldDeclaration) node).fragments();
+				if (fragments.size() > 0) {
+					return ((VariableDeclarationFragment) fragments.get(0)).resolveBinding();
+				}
+			} else if (node instanceof VariableDeclarationFragment) {
+				IVariableBinding variableBinding = ((VariableDeclarationFragment) node).resolveBinding();
+				if (variableBinding.getDeclaringMethod() != null || variableBinding.getDeclaringClass() != null) {
+					return variableBinding;
+					// workaround for incomplete wiring of DOM bindings: keep searching when variableBinding is unparented
+				}
+			}
+			node = node.getParent();
+		}
+		return null;
 	}
 
 	private String createDummyType(String name) throws JavaModelException {

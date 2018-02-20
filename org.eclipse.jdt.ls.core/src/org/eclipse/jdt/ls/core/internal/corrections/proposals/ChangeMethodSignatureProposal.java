@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
@@ -47,7 +48,6 @@ import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
-import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 
 public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 

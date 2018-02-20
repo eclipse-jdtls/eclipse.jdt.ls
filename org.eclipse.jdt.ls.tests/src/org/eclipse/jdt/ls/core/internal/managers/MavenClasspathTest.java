@@ -19,9 +19,9 @@ import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -32,23 +32,23 @@ import org.junit.Test;
 
 public class MavenClasspathTest extends AbstractMavenBasedTest {
 
-	private SharedASTProvider sharedASTProvider;
+	private CoreASTProvider sharedASTProvider;
 
 	private DocumentLifeCycleHandler lifeCycleHandler;
 	private JavaClientConnection javaClient;
 
 	@Before
 	public void setup() throws Exception {
-		sharedASTProvider = SharedASTProvider.getInstance();
-		sharedASTProvider.invalidateAll();
-		sharedASTProvider.clearASTCreationCount();
+		sharedASTProvider = CoreASTProvider.getInstance();
+		sharedASTProvider.disposeAST();
+		//		sharedASTProvider.clearASTCreationCount();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		sharedASTProvider.invalidateAll();
+		sharedASTProvider.disposeAST();
 		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
