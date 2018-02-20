@@ -39,12 +39,12 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -72,7 +72,7 @@ public class DocumentLifeCycleHandler {
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
 
-	private SharedASTProvider sharedASTProvider;
+	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 
@@ -80,7 +80,7 @@ public class DocumentLifeCycleHandler {
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.projectsManager = projectsManager;
-		this.sharedASTProvider = SharedASTProvider.getInstance();
+		this.sharedASTProvider = CoreASTProvider.getInstance();
 		if (delayValidation) {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
 				@Override
@@ -107,6 +107,7 @@ public class DocumentLifeCycleHandler {
 	private void triggerValidation(ICompilationUnit cu, long delay) throws JavaModelException {
 		synchronized (toReconcile) {
 			toReconcile.add(cu);
+			sharedASTProvider.setActiveJavaElement(cu);
 		}
 		if (validationTimer != null) {
 			validationTimer.cancel();
@@ -132,9 +133,13 @@ public class DocumentLifeCycleHandler {
 		for (ICompilationUnit cu : cusToReconcile) {
 			cu.reconcile(ICompilationUnit.NO_AST, true, null, progress.newChild(1));
 		}
-		this.sharedASTProvider.invalidateAll();
+		this.sharedASTProvider.disposeAST();
 		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
-		List<CompilationUnit> astRoots = this.sharedASTProvider.getASTs(toValidate, monitor);
+		List<CompilationUnit> astRoots = new ArrayList<>();
+		for (ICompilationUnit rootToValidate : toValidate) {
+			CompilationUnit astRoot = this.sharedASTProvider.getAST(rootToValidate, CoreASTProvider.WAIT_YES, monitor);
+			astRoots.add(astRoot);
+		}
 		for (CompilationUnit astRoot : astRoots) {
 			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
 			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
@@ -291,7 +296,9 @@ public class DocumentLifeCycleHandler {
 		}
 
 		try {
-			sharedASTProvider.invalidate(unit);
+			if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+				sharedASTProvider.disposeAST();
+			}
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
@@ -336,7 +343,9 @@ public class DocumentLifeCycleHandler {
 			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit)) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
 			}
-			sharedASTProvider.invalidate(unit);
+			if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+				sharedASTProvider.disposeAST();
+			}
 			unit.discardWorkingCopy();
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Error while handling document close", e);
@@ -366,7 +375,7 @@ public class DocumentLifeCycleHandler {
 	private ICompilationUnit checkPackageDeclaration(String uri, ICompilationUnit unit) {
 		if (unit.getResource() != null && unit.getJavaProject() != null && unit.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			try {
-				CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 				IProblem[] problems = astRoot.getProblems();
 				for (IProblem problem : problems) {
 					if (problem.getID() == IProblem.PackageIsNotExpectedPackage) {
@@ -388,7 +397,9 @@ public class DocumentLifeCycleHandler {
 						}
 						if (toRemove) {
 							file.delete(true, new NullProgressMonitor());
-							sharedASTProvider.invalidate(unit);
+							if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+								sharedASTProvider.disposeAST();
+							}
 							unit.discardWorkingCopy();
 							unit = JDTUtils.resolveCompilationUnit(uri);
 							unit.becomeWorkingCopy(new NullProgressMonitor());

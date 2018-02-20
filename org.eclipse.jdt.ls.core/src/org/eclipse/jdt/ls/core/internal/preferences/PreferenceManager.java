@@ -18,9 +18,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
@@ -42,10 +46,12 @@ public class PreferenceManager {
 	private ClientPreferences clientPreferences;
 	private IMavenConfiguration mavenConfig;
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
+	private IEclipsePreferences eclipsePrefs;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
 		preferencesChangeListeners = new ListenerList<>();
+		eclipsePrefs = InstanceScope.INSTANCE.getNode(JavaLanguageServerPlugin.PLUGIN_ID);
 		initialize();
 	}
 
@@ -59,6 +65,13 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
 		JavaCore.setOptions(javaCoreOptions);
+
+		// Initialize default preferences
+		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(JavaLanguageServerPlugin.PLUGIN_ID);
+		defEclipsePrefs.put("org.eclipse.jdt.ui.typefilter.enabled", "");
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, "");
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_ONDEMANDTHRESHOLD, "99");
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, "99");
 	}
 
 	public void update(Preferences preferences) {
@@ -175,5 +188,12 @@ public class PreferenceManager {
 	 */
 	public void removePreferencesChangeListener(IPreferencesChangeListener listener) {
 		preferencesChangeListeners.remove(listener);
+	}
+
+	/**
+	 * @return Get the workspace runtime preferences for Eclipse
+	 */
+	public IEclipsePreferences getEclipsePreferences() {
+		return eclipsePrefs;
 	}
 }

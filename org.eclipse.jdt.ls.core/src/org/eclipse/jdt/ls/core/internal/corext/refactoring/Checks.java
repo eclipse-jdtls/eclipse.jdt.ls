@@ -33,7 +33,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContex
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-import org.eclipse.ltk.internal.core.refactoring.Resources;
+import org.eclipse.ltk.core.refactoring.resource.Resources;
 
 /**
  * This class defines a set of reusable static checks methods.

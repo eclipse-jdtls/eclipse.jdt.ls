@@ -21,8 +21,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.link.LinkedModeModel;
 import org.eclipse.jface.text.link.LinkedPosition;
@@ -194,7 +194,7 @@ public class LinkedProposalPositionGroup {
 
 		@Override
 		public TextEdit computeEdits(int offset, LinkedPosition position, char trigger, int stateMask, LinkedModeModel model) throws CoreException {
-			ImportRewrite impRewrite= StubUtility.createImportRewrite(fCompilationUnit, true);
+			ImportRewrite impRewrite = CodeStyleConfiguration.createImportRewrite(fCompilationUnit, true);
 			String replaceString= impRewrite.addImport(fTypeProposal);
 
 			MultiTextEdit composedEdit= new MultiTextEdit();

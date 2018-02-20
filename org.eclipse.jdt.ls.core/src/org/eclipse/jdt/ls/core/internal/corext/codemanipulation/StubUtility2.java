@@ -48,6 +48,7 @@ import org.eclipse.jdt.core.dom.IMemberValuePairBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
@@ -368,7 +369,7 @@ public final class StubUtility2 {
 		IJavaProject javaProject= unit.getJavaProject();
 		IAnnotationBinding nullnessDefault= null;
 		if (contextBinding != null && JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
-			nullnessDefault= Bindings.findNullnessDefault(contextBinding, javaProject);
+			nullnessDefault = findNullnessDefault(contextBinding, javaProject);
 		}
 
 		MethodDeclaration decl= ast.newMethodDeclaration();
@@ -480,6 +481,55 @@ public final class StubUtility2 {
 		}
 
 		return decl;
+	}
+
+	// TODO Remove this by addressing https://bugs.eclipse.org/bugs/show_bug.cgi?id=531511
+	private static IAnnotationBinding findNullnessDefault(IBinding contextBinding, IJavaProject javaProject) {
+		if (JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
+			String annotationName = javaProject.getOption(JavaCore.COMPILER_NONNULL_BY_DEFAULT_ANNOTATION_NAME, true);
+			while (contextBinding != null) {
+				for (IAnnotationBinding annotation : contextBinding.getAnnotations()) {
+					ITypeBinding annotationType = annotation.getAnnotationType();
+					if (annotationType != null && annotationType.getQualifiedName().equals(annotationName)) {
+						return annotation;
+					}
+				}
+				// travel out:
+				switch (contextBinding.getKind()) {
+					case IBinding.METHOD:
+						IMethodBinding methodBinding = (IMethodBinding) contextBinding;
+						contextBinding = methodBinding.getDeclaringMember();
+						if (contextBinding == null) {
+							contextBinding = methodBinding.getDeclaringClass();
+						}
+						break;
+					case IBinding.VARIABLE:
+						IVariableBinding variableBinding = (IVariableBinding) contextBinding;
+						contextBinding = variableBinding.getDeclaringMethod();
+						if (contextBinding == null) {
+							contextBinding = variableBinding.getDeclaringClass();
+						}
+						break;
+					case IBinding.TYPE:
+						ITypeBinding currentClass = (ITypeBinding) contextBinding;
+						contextBinding = currentClass.getDeclaringMember();
+						if (contextBinding == null) {
+							contextBinding = currentClass.getDeclaringMethod();
+							if (contextBinding == null) {
+								contextBinding = currentClass.getDeclaringClass();
+								if (contextBinding == null) {
+									contextBinding = currentClass.getPackage();
+								}
+							}
+						}
+						break;
+					default:
+						contextBinding = null;
+						break;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static void createTypeParameters(ImportRewrite imports, ImportRewriteContext context, AST ast, IMethodBinding binding, MethodDeclaration decl) {

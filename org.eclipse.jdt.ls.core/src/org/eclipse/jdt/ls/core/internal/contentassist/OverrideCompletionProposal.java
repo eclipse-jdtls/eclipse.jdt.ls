@@ -36,11 +36,11 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
@@ -75,7 +75,7 @@ public class OverrideCompletionProposal {
 	}
 
 	private CompilationUnit getRecoveredAST(IDocument document, int offset, Document recoveredDocument) {
-		CompilationUnit ast = SharedASTProvider.getInstance().getAST(fCompilationUnit, null);
+		CompilationUnit ast = CoreASTProvider.getInstance().getAST(fCompilationUnit, CoreASTProvider.WAIT_YES, null);
 		if (ast != null) {
 			recoveredDocument.set(document.get());
 			return ast;

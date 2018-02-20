@@ -33,11 +33,11 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
-import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 
 
@@ -62,10 +62,10 @@ public class AddTypeParameterProposal extends ASTRewriteCorrectionProposal {
 		fBounds= bounds;
 
 		if (binding instanceof IMethodBinding) {
-			String[] args= { BasicElementLabels.getJavaElementName(fTypeParamName), ASTResolving.getMethodSignature((IMethodBinding) binding) };
+			String[] args = { BasicElementLabels.getJavaElementName(fTypeParamName), org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature((IMethodBinding) binding) };
 			setDisplayName(Messages.format(CorrectionMessages.AddTypeParameterProposal_method_label, args));
 		} else {
-			String[] args= { BasicElementLabels.getJavaElementName(fTypeParamName), ASTResolving.getTypeSignature((ITypeBinding) binding) };
+			String[] args = { BasicElementLabels.getJavaElementName(fTypeParamName), org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature((ITypeBinding) binding) };
 			setDisplayName(Messages.format(CorrectionMessages.AddTypeParameterProposal_type_label, args));
 		}
 	}

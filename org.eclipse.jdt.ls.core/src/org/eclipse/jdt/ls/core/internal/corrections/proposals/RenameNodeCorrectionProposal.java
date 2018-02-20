@@ -18,7 +18,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.ReplaceEdit;
@@ -42,7 +42,7 @@ public class RenameNodeCorrectionProposal extends CUCorrectionProposal {
 		super.addEdits(doc, root);
 
 		// build a full AST
-		CompilationUnit unit = SharedASTProvider.getInstance().getAST(getCompilationUnit(), null);
+		CompilationUnit unit = CoreASTProvider.getInstance().getAST(getCompilationUnit(), CoreASTProvider.WAIT_YES, null);
 
 		ASTNode name= NodeFinder.perform(unit, fOffset, fLength);
 		if (name instanceof SimpleName) {
