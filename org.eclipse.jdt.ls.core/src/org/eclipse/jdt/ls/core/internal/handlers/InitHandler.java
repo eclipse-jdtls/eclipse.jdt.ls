@@ -17,6 +17,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -56,6 +58,7 @@ final public class InitHandler {
 
 	public static final String JAVA_LS_INITIALIZATION_JOBS = "java-ls-initialization-jobs";
 	private static final String BUNDLES_KEY = "bundles";
+	public static final String SETTINGS_KEY = "settings";
 
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
@@ -107,6 +110,13 @@ final public class InitHandler {
 			IPath workspaceLocation = ResourcesPlugin.getWorkspace().getRoot().getLocation();
 			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
 			rootPaths.add(workspaceLocation);
+		}
+		if (initializationOptions instanceof Map && initializationOptions.get(SETTINGS_KEY) instanceof Map) {
+			Object settings = initializationOptions.get(SETTINGS_KEY);
+			Map<String, Object> javaSettings = new HashMap<>();
+			javaSettings.put("java", settings);
+			Preferences prefs = Preferences.createFrom(javaSettings);
+			preferenceManager.update(prefs);
 		}
 		triggerInitialization(rootPaths);
 		addWorkspaceDiagnosticsHandler();
@@ -233,7 +243,6 @@ final public class InitHandler {
 		}
 		return null;
 	}
-
 	private Collection<String> getBundleList(Map<?, ?> initializationOptions) {
 		if (initializationOptions != null) {
 			Object bundleObject = initializationOptions.get(BUNDLES_KEY);
