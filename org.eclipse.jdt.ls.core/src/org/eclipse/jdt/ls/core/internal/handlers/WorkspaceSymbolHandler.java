@@ -54,7 +54,7 @@ public class WorkspaceSymbolHandler{
 						if (match.getType().isBinary()) {
 							location = JDTUtils.toLocation(match.getType().getClassFile());
 						}  else {
-							location = JDTUtils.toLocation(match.getType().getResource().getLocationURI().toString());
+							location = JDTUtils.toLocation(match.getType());
 						}
 					} catch (Exception e) {
 						JavaLanguageServerPlugin.logException("Unable to determine location for " +  match.getSimpleTypeName(), e);
