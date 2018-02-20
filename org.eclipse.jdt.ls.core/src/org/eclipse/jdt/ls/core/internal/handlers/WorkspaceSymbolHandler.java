@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -54,7 +55,7 @@ public class WorkspaceSymbolHandler{
 						if (match.getType().isBinary()) {
 							location = JDTUtils.toLocation(match.getType().getClassFile());
 						}  else {
-							location = JDTUtils.toLocation(match.getType().getResource().getLocationURI().toString());
+							location = JDTUtils.toLocation(ResourceUtils.fixURI(match.getType().getResource().getLocationURI()));
 						}
 					} catch (Exception e) {
 						JavaLanguageServerPlugin.logException("Unable to determine location for " +  match.getSimpleTypeName(), e);
