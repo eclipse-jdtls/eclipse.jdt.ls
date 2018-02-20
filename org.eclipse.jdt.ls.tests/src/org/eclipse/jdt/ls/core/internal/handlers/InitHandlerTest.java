@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -19,7 +20,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -28,6 +32,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
@@ -54,6 +59,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
+	private static final String TEST_EXCLUSIONS = "**/test/**";
 	protected JDTLanguageServer server;
 	protected JDTLanguageServer protocol;
 
@@ -129,6 +135,31 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams();
 		server.didChangeConfiguration(params);
 		verify(client, times(7)).registerCapability(any());
+	}
+
+	@Test
+	public void testJavaImportExclusions() throws Exception {
+		Map<String, Object> initializationOptions = createInitializationOptions();
+		@SuppressWarnings("unchecked")
+		Preferences prefs = Preferences.createFrom((Map<String, Object>) (initializationOptions.get(InitHandler.SETTINGS_KEY)));
+		assertEquals(TEST_EXCLUSIONS, prefs.getJavaImportExclusions().get(0));
+	}
+
+	private Map<String, Object> createInitializationOptions() {
+		List<String> javaImportExclusions = new ArrayList<>();
+		javaImportExclusions.add(TEST_EXCLUSIONS);
+		HashMap<String, Object> exclusionsMap = getMap("exclusions", javaImportExclusions);
+		HashMap<String, Object> importMap = getMap("import", exclusionsMap);
+		Map<String, Object> javaMap = getMap("java", importMap);
+		Map<String, Object> initializationOptions = new HashMap<>();
+		initializationOptions.put(InitHandler.SETTINGS_KEY, javaMap);
+		return initializationOptions;
+	}
+
+	private HashMap<String, Object> getMap(String key, Object obj) {
+		HashMap<String, Object> map = new HashMap<>();
+		map.put(key, obj);
+		return map;
 	}
 
 	private InitializeResult initialize(boolean dynamicRegistration) throws InterruptedException, ExecutionException {
