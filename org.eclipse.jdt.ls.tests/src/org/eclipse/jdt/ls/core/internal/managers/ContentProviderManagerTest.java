@@ -29,6 +29,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,6 +67,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Before
+	@After
 	public void resetFakeContentProvider() {
 		FakeContentProvider.preferences = null;
 		FakeContentProvider.returnValue = null;
@@ -233,12 +235,12 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
-	public void testCaching() {
-		FakeContentProvider.returnValue = "cached";
-		assertEquals("cached", provider.getContent(sourcelessURI, monitor));
+	public void testNoCaching() {
+		FakeContentProvider.returnValue = "some value";
+		assertEquals(FakeContentProvider.returnValue, provider.getContent(sourcelessURI, monitor));
 
 		FakeContentProvider.returnValue = "something else";
-		assertEquals("cached", provider.getContent(sourcelessURI, monitor));
+		assertEquals(FakeContentProvider.returnValue, provider.getContent(sourcelessURI, monitor));
 	}
 
 	private void expectLoggedError(String expected) {

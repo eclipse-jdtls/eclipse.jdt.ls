@@ -28,9 +28,6 @@ import org.eclipse.jdt.ls.core.internal.IDecompiler;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
 public class ContentProviderManager {
 
 	private static final String EMPTY_CONTENT = "";
@@ -39,14 +36,11 @@ public class ContentProviderManager {
 	private static final String ID = "id";
 	private static final String PRIORITY = "priority";
 	private static final String URI_PATTERN = "uriPattern";
-	private static final String CACHEABLE = "cacheable";
 	private static final int DEFAULT_PRIORITY = 500;
 	private static final Pattern DEFAULT_URI_PATTERN = Pattern.compile("jdt://contents/.*\\.class.*");
-	private static final int MAX_CACHE_SIZE = 20;
 
 	private final PreferenceManager preferenceManager;
 
-	private Cache<String, String> cachedContent = CacheBuilder.newBuilder().maximumSize(MAX_CACHE_SIZE).build();
 	private Set<ContentProviderDescriptor> descriptors;
 
 	public ContentProviderManager(PreferenceManager preferenceManager) {
@@ -85,19 +79,9 @@ public class ContentProviderManager {
 		return getContent(uri, uri.toString(), IContentProvider.class, monitor);
 	}
 
-	public void clearCache() {
-		cachedContent.invalidateAll();
-	}
-
 	private String getContent(Object source, String cacheKey, Class<? extends IContentProvider> providerType, IProgressMonitor monitor) {
-		String content = cachedContent.getIfPresent(cacheKey);
-		if (content != null) {
-			return content;
-		}
-
 		URI uri = source instanceof URI ? (URI) source : null;
 		List<ContentProviderDescriptor> matches = findMatchingProviders(uri);
-
 		if (monitor.isCanceled()) {
 			return EMPTY_CONTENT;
 		}
@@ -117,19 +101,14 @@ public class ContentProviderManager {
 			if (previousPriority == match.priority) {
 				requestPreferredProvider(match.priority, matches);
 			}
-
 			try {
 				contentProvider.setPreferences(preferenceManager.getPreferences());
+				String content = null;
 				if (uri != null) {
 					content = contentProvider.getContent(uri, monitor);
 				} else if (source instanceof IClassFile) {
 					content = ((IDecompiler) contentProvider).getSource((IClassFile) source, monitor);
 				}
-
-				if (content != null && match.cacheable) {
-					cachedContent.put(cacheKey, content);
-				}
-
 				if (monitor.isCanceled()) {
 					return EMPTY_CONTENT;
 				} else if (content != null) {
@@ -190,7 +169,6 @@ public class ContentProviderManager {
 		private final int basePriority;
 		public int priority;
 		public final Pattern uriPattern;
-		public final boolean cacheable;
 
 		public ContentProviderDescriptor(IConfigurationElement element) {
 			configurationElement = element;
@@ -199,8 +177,6 @@ public class ContentProviderManager {
 			priority = basePriority;
 			String uriPatternString = configurationElement.getAttribute(URI_PATTERN);
 			uriPattern = uriPatternString != null ? Pattern.compile(uriPatternString) : DEFAULT_URI_PATTERN;
-			String cacheableString = configurationElement.getAttribute(CACHEABLE);
-			cacheable = cacheableString != null ? Boolean.parseBoolean(cacheableString) : true;
 		}
 
 		private int parsePriority() {

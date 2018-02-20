@@ -83,8 +83,13 @@
          <attribute name="cacheable" type="boolean">
             <annotation>
                <documentation>
-                  Indicates that the server can safely cache content for a period of time. true by default.
+                  DEPRECATED: This attribute is now ignored. 
+ 
+Indicates that the server can safely cache content for a period of time. true by default.
                </documentation>
+               <appinfo>
+                  <meta.attribute deprecated="true"/>
+               </appinfo>
             </annotation>
          </attribute>
       </complexType>

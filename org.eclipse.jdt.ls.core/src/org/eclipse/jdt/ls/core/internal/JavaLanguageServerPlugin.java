@@ -23,8 +23,6 @@ import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -43,9 +41,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
@@ -89,21 +85,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 
 	private PreferenceManager preferenceManager;
 
-	private IPreferencesChangeListener preferencesChangeListener = new IPreferencesChangeListener() {
-
-		@Override
-		public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
-			if (contentProviderManager == null) {
-				return;
-			}
-			List<String> oldIds = oldPreferences == null ? null : oldPreferences.getPreferredContentProviderIds();
-			List<String> newIds = newPreferences == null ? null : newPreferences.getPreferredContentProviderIds();
-			if (!Objects.equals(oldIds, newIds)) {
-				contentProviderManager.clearCache();
-			}
-		}
-	};
-
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
@@ -139,7 +120,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 			logException(e.getMessage(), e);
 		}
 		contentProviderManager = new ContentProviderManager(preferenceManager);
-		preferenceManager.addPreferencesChangeListener(preferencesChangeListener);
 		logInfo(getClass() + " is started");
 		configureProxy();
 	}
@@ -268,9 +248,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		JavaLanguageServerPlugin.context = null;
 		ResourcesPlugin.getWorkspace().removeSaveParticipant(PLUGIN_ID);
 		projectsManager = null;
-		if (preferenceManager != null) {
-			preferenceManager.removePreferencesChangeListener(preferencesChangeListener);
-		}
 		contentProviderManager = null;
 		languageServer = null;
 	}
