@@ -73,6 +73,21 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
+	public void testWorkspaceSearchOnFileInWorkspace() {
+		String query = "Baz";
+		List<SymbolInformation> results = handler.search(query, monitor);
+		assertNotNull(results);
+		assertEquals("Unexpected results", 2, results.size());
+		for (SymbolInformation symbol : results) {
+			assertNotNull("Kind is missing", symbol.getKind());
+			assertNotNull("ContainerName is missing", symbol.getContainerName());
+			assertTrue(symbol.getName().startsWith(query));
+			Location location = symbol.getLocation();
+			assertTrue("Unexpected uri " + location.getUri(), location.getUri().startsWith("file://"));
+		}
+	}
+
+	@Test
 	public void testProjectSearch() {
 		String query = "IFoo";
 		List<SymbolInformation> results = handler.search(query, monitor);
@@ -83,7 +98,6 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		assertEquals("java", symbol.getContainerName());
 		assertEquals(query, symbol.getName());
 		Location location = symbol.getLocation();
-		assertEquals(JDTUtils.newRange(), location.getRange());
 		assertTrue("Unexpected uri "+ location.getUri(), location.getUri().endsWith("Foo.java"));
 	}
 
