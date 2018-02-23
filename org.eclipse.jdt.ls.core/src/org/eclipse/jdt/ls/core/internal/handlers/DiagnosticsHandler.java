@@ -154,6 +154,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		try {
 			return JDTUtils.toRange(openable, problem.getSourceStart(), problem.getSourceEnd() - problem.getSourceStart() + 1);
 		} catch (CoreException e) {
+			// In case failed to open the IOpenable's buffer, use the IProblem's information to calculate the range.
 			Position start = new Position();
 			Position end = new Position();
 
