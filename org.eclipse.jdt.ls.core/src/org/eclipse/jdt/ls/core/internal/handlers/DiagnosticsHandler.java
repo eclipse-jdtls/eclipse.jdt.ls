@@ -157,7 +157,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			Position start = new Position();
 			Position end = new Position();
 
-			start.setLine(problem.getSourceLineNumber() - 1);// VSCode is 0-based
+			start.setLine(problem.getSourceLineNumber() - 1);// The protocol is 0-based.
 			end.setLine(problem.getSourceLineNumber() - 1);
 			if (problem instanceof DefaultProblem) {
 				DefaultProblem dProblem = (DefaultProblem) problem;
