@@ -96,6 +96,11 @@ by setting up environment variables.
 * To use standard streams(stdin, stdout) of the server process do not set any
 of the above environment variables and the server will fall back to standard streams.
 
+* To start a **TCP server**, set the following environment variable before starting the server:
+   * `JDTLS_SERVER_PORT`: the port of the socket to listen to
+
+   Java LS will listen to the **JDTLS_SERVER_PORT** port. See https://github.com/eclipse/eclipse.jdt.ls/pull/504.
+
 For socket and named pipes, the client is expected to create the connections
 and wait for the server to connect.
 
