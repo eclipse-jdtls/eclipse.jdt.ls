@@ -27,20 +27,34 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CatchClause;
+import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
+import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IfStatement;
+import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodReference;
+import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
@@ -55,6 +69,7 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.dom.CodeScopeBuilder;
+import org.eclipse.jdt.ls.core.internal.corext.dom.NecessaryParenthesesChecker;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
 import org.eclipse.jdt.ls.core.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
@@ -65,9 +80,11 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWith
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 
 public class LocalCorrectionsSubProcessor {
@@ -401,4 +418,176 @@ public class LocalCorrectionsSubProcessor {
 			GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals);
 		}
 	}
+
+	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+		CompilationUnit root = context.getASTRoot();
+		ASTNode selectedNode = problem.getCoveringNode(root);
+		if (selectedNode == null) {
+			return;
+		}
+
+		ASTNode parent = selectedNode.getParent();
+		while (parent instanceof ExpressionStatement) {
+			selectedNode = parent;
+			parent = selectedNode.getParent();
+		}
+
+		if (parent instanceof WhileStatement) {
+			addRemoveIncludingConditionProposal(context, parent, null, proposals);
+
+		} else if (selectedNode.getLocationInParent() == IfStatement.THEN_STATEMENT_PROPERTY) {
+			Statement elseStatement = ((IfStatement) parent).getElseStatement();
+			addRemoveIncludingConditionProposal(context, parent, elseStatement, proposals);
+
+		} else if (selectedNode.getLocationInParent() == IfStatement.ELSE_STATEMENT_PROPERTY) {
+			Statement thenStatement = ((IfStatement) parent).getThenStatement();
+			addRemoveIncludingConditionProposal(context, parent, thenStatement, proposals);
+
+		} else if (selectedNode.getLocationInParent() == ForStatement.BODY_PROPERTY) {
+			Statement body = ((ForStatement) parent).getBody();
+			addRemoveIncludingConditionProposal(context, parent, body, proposals);
+
+		} else if (selectedNode.getLocationInParent() == ConditionalExpression.THEN_EXPRESSION_PROPERTY) {
+			Expression elseExpression = ((ConditionalExpression) parent).getElseExpression();
+			addRemoveIncludingConditionProposal(context, parent, elseExpression, proposals);
+
+		} else if (selectedNode.getLocationInParent() == ConditionalExpression.ELSE_EXPRESSION_PROPERTY) {
+			Expression thenExpression = ((ConditionalExpression) parent).getThenExpression();
+			addRemoveIncludingConditionProposal(context, parent, thenExpression, proposals);
+
+		} else if (selectedNode.getLocationInParent() == InfixExpression.RIGHT_OPERAND_PROPERTY) {
+			// also offer split && / || condition proposals:
+			InfixExpression infixExpression = (InfixExpression) parent;
+			Expression leftOperand = infixExpression.getLeftOperand();
+
+			ASTRewrite rewrite = ASTRewrite.create(parent.getAST());
+
+			Expression replacement = leftOperand;
+			while (replacement instanceof ParenthesizedExpression) {
+				replacement = ((ParenthesizedExpression) replacement).getExpression();
+			}
+
+			Expression toReplace = infixExpression;
+			while (toReplace.getLocationInParent() == ParenthesizedExpression.EXPRESSION_PROPERTY) {
+				toReplace = (Expression) toReplace.getParent();
+			}
+
+			if (NecessaryParenthesesChecker.needsParentheses(replacement, toReplace.getParent(), toReplace.getLocationInParent())) {
+				if (leftOperand instanceof ParenthesizedExpression) {
+					replacement = (Expression) replacement.getParent();
+				} else if (infixExpression.getLocationInParent() == ParenthesizedExpression.EXPRESSION_PROPERTY) {
+					toReplace = ((ParenthesizedExpression) toReplace).getExpression();
+				}
+			}
+
+			rewrite.replace(toReplace, rewrite.createMoveTarget(replacement), null);
+
+			String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_description;
+			addRemoveProposal(context, rewrite, label, proposals);
+
+			InnovationContext assistContext = new InnovationContext(context.getCompilationUnit(), infixExpression.getRightOperand().getStartPosition() - 1, 0);
+			assistContext.setASTRoot(root);
+			AdvancedQuickAssistProcessor.getSplitAndConditionProposals(assistContext, infixExpression, proposals);
+			AdvancedQuickAssistProcessor.getSplitOrConditionProposals(assistContext, infixExpression, proposals);
+
+		} else if (selectedNode instanceof Statement && selectedNode.getLocationInParent().isChildListProperty()) {
+			// remove all statements following the unreachable:
+			List<Statement> statements = ASTNodes.<Statement>getChildListProperty(selectedNode.getParent(), (ChildListPropertyDescriptor) selectedNode.getLocationInParent());
+			int idx = statements.indexOf(selectedNode);
+
+			ASTRewrite rewrite = ASTRewrite.create(selectedNode.getAST());
+			String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_description;
+
+			if (idx > 0) {
+				Object prevStatement = statements.get(idx - 1);
+				if (prevStatement instanceof IfStatement) {
+					IfStatement ifStatement = (IfStatement) prevStatement;
+					if (ifStatement.getElseStatement() == null) {
+						// remove if (true), see https://bugs.eclipse.org/bugs/show_bug.cgi?id=261519
+						rewrite.replace(ifStatement, rewrite.createMoveTarget(ifStatement.getThenStatement()), null);
+						label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_including_condition_description;
+					}
+				}
+			}
+
+			for (int i = idx; i < statements.size(); i++) {
+				ASTNode statement = statements.get(i);
+				if (statement instanceof SwitchCase) {
+					break; // stop at case *: and default:
+				}
+				rewrite.remove(statement, null);
+			}
+
+			addRemoveProposal(context, rewrite, label, proposals);
+
+		} else {
+			// no special case, just remove the node:
+			addRemoveProposal(context, selectedNode, proposals);
+		}
+	}
+
+	private static void addRemoveProposal(IInvocationContext context, ASTNode selectedNode, Collection<CUCorrectionProposal> proposals) {
+		ASTRewrite rewrite = ASTRewrite.create(selectedNode.getAST());
+		rewrite.remove(selectedNode, null);
+
+		String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_description;
+		addRemoveProposal(context, rewrite, label, proposals);
+	}
+
+	private static void addRemoveIncludingConditionProposal(IInvocationContext context, ASTNode toRemove, ASTNode replacement, Collection<CUCorrectionProposal> proposals) {
+		String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_including_condition_description;
+		AST ast = toRemove.getAST();
+		ASTRewrite rewrite = ASTRewrite.create(ast);
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_UNREACHABLE_CODE_INCLUDING_CONDITION);
+
+		if (replacement == null || replacement instanceof EmptyStatement || replacement instanceof Block && ((Block) replacement).statements().size() == 0) {
+			if (ASTNodes.isControlStatementBody(toRemove.getLocationInParent())) {
+				rewrite.replace(toRemove, toRemove.getAST().newBlock(), null);
+			} else {
+				rewrite.remove(toRemove, null);
+			}
+
+		} else if (toRemove instanceof Expression && replacement instanceof Expression) {
+			Expression moved = (Expression) rewrite.createMoveTarget(replacement);
+			Expression toRemoveExpression = (Expression) toRemove;
+			Expression replacementExpression = (Expression) replacement;
+			ITypeBinding explicitCast = ASTNodes.getExplicitCast(replacementExpression, toRemoveExpression);
+			if (explicitCast != null) {
+				CastExpression cast = ast.newCastExpression();
+				if (NecessaryParenthesesChecker.needsParentheses(replacementExpression, cast, CastExpression.EXPRESSION_PROPERTY)) {
+					ParenthesizedExpression parenthesized = ast.newParenthesizedExpression();
+					parenthesized.setExpression(moved);
+					moved = parenthesized;
+				}
+				cast.setExpression(moved);
+				ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
+				ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(toRemove, imports);
+				cast.setType(imports.addImport(explicitCast, ast, importRewriteContext, TypeLocation.CAST));
+				moved = cast;
+			}
+			rewrite.replace(toRemove, moved, null);
+
+		} else {
+			ASTNode parent = toRemove.getParent();
+			ASTNode moveTarget;
+			if ((parent instanceof Block || parent instanceof SwitchStatement) && replacement instanceof Block) {
+				ListRewrite listRewrite = rewrite.getListRewrite(replacement, Block.STATEMENTS_PROPERTY);
+				List<Statement> list = ((Block) replacement).statements();
+				int lastIndex = list.size() - 1;
+				moveTarget = listRewrite.createMoveTarget(list.get(0), list.get(lastIndex));
+			} else {
+				moveTarget = rewrite.createMoveTarget(replacement);
+			}
+
+			rewrite.replace(toRemove, moveTarget, null);
+		}
+
+		proposals.add(proposal);
+	}
+
+	private static void addRemoveProposal(IInvocationContext context, ASTRewrite rewrite, String label, Collection<CUCorrectionProposal> proposals) {
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, 10);
+		proposals.add(proposal);
+	}
+
 }

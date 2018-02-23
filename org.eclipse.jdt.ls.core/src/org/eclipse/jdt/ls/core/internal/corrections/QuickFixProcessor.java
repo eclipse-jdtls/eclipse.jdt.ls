@@ -410,11 +410,10 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.getInterfaceExtendsClassProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.CodeCannotBeReached:
-			// case IProblem.DeadCode:
-			// LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.CodeCannotBeReached:
+			case IProblem.DeadCode:
+				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
+				break;
 			// case IProblem.InvalidUsageOfTypeParameters:
 			// case IProblem.InvalidUsageOfStaticImports:
 			// case IProblem.InvalidUsageOfForeachStatements:
