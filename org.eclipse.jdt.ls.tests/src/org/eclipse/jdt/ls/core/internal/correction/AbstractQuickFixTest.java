@@ -160,7 +160,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		parms.setTextDocument(textDocument);
 		parms.setRange(range);
 		CodeActionContext context = new CodeActionContext();
-		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
+		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
 		parms.setContext(context);
 
 		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());

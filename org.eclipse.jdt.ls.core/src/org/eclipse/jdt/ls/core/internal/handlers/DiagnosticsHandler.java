@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
@@ -32,6 +34,7 @@ import org.eclipse.lsp4j.Range;
 
 public class DiagnosticsHandler implements IProblemRequestor {
 
+	private final ICompilationUnit cu;
 	private final List<IProblem> problems;
 	private final String uri;
 	private final JavaClientConnection connection;
@@ -40,6 +43,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	public DiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
+		this.cu = cu;
 		this.uri = JDTUtils.toURI(cu);
 		this.connection = conn;
 		this.isDefaultProject = JDTUtils.isDefaultProject(cu);
@@ -112,7 +116,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(problems));
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(this.cu, problems));
 		this.connection.publishDiagnostics($);
 	}
 
@@ -121,7 +125,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		return true;
 	}
 
-	public static List<Diagnostic> toDiagnosticsArray(List<IProblem> problems) {
+	public static List<Diagnostic> toDiagnosticsArray(IOpenable openable, List<IProblem> problems) {
 		List<Diagnostic> array = new ArrayList<>(problems.size());
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
@@ -129,7 +133,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			diag.setMessage(problem.getMessage());
 			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
-			diag.setRange(convertRange(problem));
+			diag.setRange(convertRange(openable, problem));
 			array.add(diag);
 		}
 		return array;
@@ -146,22 +150,27 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	@SuppressWarnings("restriction")
-	private static Range convertRange(IProblem problem) {
-		Position start = new Position();
-		Position end = new Position();
+	private static Range convertRange(IOpenable openable, IProblem problem) {
+		try {
+			return JDTUtils.toRange(openable, problem.getSourceStart(), problem.getSourceEnd() - problem.getSourceStart() + 1);
+		} catch (CoreException e) {
+			// In case failed to open the IOpenable's buffer, use the IProblem's information to calculate the range.
+			Position start = new Position();
+			Position end = new Position();
 
-		start.setLine(problem.getSourceLineNumber()-1);// VSCode is 0-based
-		end.setLine(problem.getSourceLineNumber()-1);
-		if(problem instanceof DefaultProblem){
-			DefaultProblem dProblem = (DefaultProblem)problem;
-			start.setCharacter(dProblem.getSourceColumnNumber() - 1);
-			int offset = 0;
-			if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {
-				offset = dProblem.getSourceEnd() - dProblem.getSourceStart() + 1;
+			start.setLine(problem.getSourceLineNumber() - 1);// The protocol is 0-based.
+			end.setLine(problem.getSourceLineNumber() - 1);
+			if (problem instanceof DefaultProblem) {
+				DefaultProblem dProblem = (DefaultProblem) problem;
+				start.setCharacter(dProblem.getSourceColumnNumber() - 1);
+				int offset = 0;
+				if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {
+					offset = dProblem.getSourceEnd() - dProblem.getSourceStart() + 1;
+				}
+				end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
 			}
-			end.setCharacter(dProblem.getSourceColumnNumber() - 1 + offset);
+			return new Range(start, end);
 		}
-		return new Range(start, end);
 	}
 
 	public void clearDiagnostics() {

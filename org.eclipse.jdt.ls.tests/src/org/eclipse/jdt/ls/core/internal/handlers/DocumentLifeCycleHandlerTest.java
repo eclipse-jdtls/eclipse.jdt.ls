@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,17 +116,30 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 		openDocument(cu, cu.getSource(), 1);
 
-		buf = new StringBuilder();
+		List<Command> commands = getCodeActions(cu);
+		assertEquals(commands.size(), 1);
+	}
+
+	@Test
+	public void testRemoveDeadCodeAfterIf() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class F implements E {\n");
-		buf.append("\n");
-		buf.append("    @Override\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        \n");
+		buf.append("public class E {\n");
+		buf.append("    public boolean foo(boolean b1) {\n");
+		buf.append("        if (false) {\n");
+		buf.append("            return true;\n");
+		buf.append("        }\n");
+		buf.append("        return false;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
 		List<Command> commands = getCodeActions(cu);
-		assertTrue(commands.size() == 1);
+		assertEquals(commands.size(), 1);
 	}
 
 	protected List<Command> getCodeActions(ICompilationUnit cu) throws JavaModelException {
@@ -144,7 +156,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		parms.setTextDocument(textDocument);
 		parms.setRange(range);
 		CodeActionContext context = new CodeActionContext();
-		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(Arrays.asList(problems)));
+		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
 		parms.setContext(context);
 
 		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
