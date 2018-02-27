@@ -31,7 +31,7 @@ public interface IBuildSupport {
 	 *            - a project to update
 	 * @param force
 	 *            - defines if the <code>project</code> must be updated despite of
-	 *            no changes of pom.xml are made
+	 *            no changes in the build descriptor are made
 	 * @param monitor
 	 * @throws CoreException
 	 */
