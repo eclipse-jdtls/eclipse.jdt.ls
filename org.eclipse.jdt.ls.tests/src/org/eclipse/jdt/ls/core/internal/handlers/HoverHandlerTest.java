@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Paths;
 
@@ -28,6 +29,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -44,6 +46,7 @@ import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -314,6 +317,31 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertTrue("Unexpected hover ", hover.getContents().isEmpty());
 	}
+
+	@Test
+	public void testHoverWithAttachedJavadoc() throws Exception {
+		File commonPrimitivesJdoc = DependencyUtil.getJavadoc("commons-primitives", "commons-primitives", "1.0");
+		assertNotNull("Unable to locate  commons-primitives-1.0-javadoc.jar", commonPrimitivesJdoc);
+
+		importProjects("maven/attached-javadoc");
+		project = WorkspaceHelper.getProject("attached-javadoc");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		//Hovers on org.apache.commons.collections.primitives.ShortCollections which has no source but an attached javadoc
+		String payload = createHoverRequest("src/main/java/org/sample/Bar.java", 2, 56);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or return ShortCollections"));
+		assertTrue("Unexpected hover :\n" + content, content.contains("**Author:**"));
+	}
+
 	/**
 	 * @param cu
 	 * @return
@@ -333,4 +361,5 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams position = getParams(payload);
 		return handler.hover(position, monitor);
 	}
+
 }

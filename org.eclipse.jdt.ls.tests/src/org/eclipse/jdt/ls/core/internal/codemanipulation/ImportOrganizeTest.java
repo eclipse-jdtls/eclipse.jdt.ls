@@ -36,8 +36,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -53,6 +51,7 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.search.TypeNameMatch;
+import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -63,9 +62,6 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.ArtifactKey;
-import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.After;
 import org.junit.Before;
@@ -95,35 +91,9 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	}
 
 	private void requireJUnitSources() throws Exception {
-		ArtifactKey key = new ArtifactKey("junit", "junit", "3.8.1", "sources");
-		junitSrcArchive = getLocalArtifactFile(key);
-		if (junitSrcArchive == null) {
-			Artifact junit = MavenPlugin.getMaven().resolve(key.getGroupId(), key.getArtifactId(), key.getVersion(), "jar", key.getClassifier(), null, new NullProgressMonitor());
-			assertNotNull("Unable to download " + key, junit);
-			junitSrcArchive = getLocalArtifactFile(key);
-		}
-		assertTrue("junit src not found", junitSrcArchive.isFile());
+		junitSrcArchive = DependencyUtil.getSources("junit", "junit", "3.8.1");
+		assertNotNull("junit-3.8.1-sources.jar not found", junitSrcArchive);
 		addFilesFromJar(javaProject, junitSrcArchive, JUNIT_SRC_ENCODING);
-	}
-
-	//From org.eclipse.m2e.jdt.internal.BuildPathManager#getAttachedArtifactFile
-	private static File getLocalArtifactFile(ArtifactKey a) {
-		// can't use Maven resolve methods since they mark artifacts as not-found even if they could be resolved remotely
-		IMaven maven = MavenPlugin.getMaven();
-		try {
-			ArtifactRepository localRepository = maven.getLocalRepository();
-			String relPath = maven.getArtifactPath(localRepository, a.getGroupId(), a.getArtifactId(), a.getVersion(), "jar", //$NON-NLS-1$
-					a.getClassifier());
-			File file = new File(localRepository.getBasedir(), relPath).getCanonicalFile();
-			if (file.canRead()) {
-				return file;
-			}
-		} catch (CoreException ex) {
-			// fall through
-		} catch (IOException ex) {
-			// fall through
-		}
-		return null;
 	}
 
 	@Override
