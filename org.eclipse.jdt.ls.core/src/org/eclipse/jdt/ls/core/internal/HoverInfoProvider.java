@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
@@ -193,11 +192,6 @@ public class HoverInfoProvider {
 			return getString(r);
 		} else {
 			return null;
-		}
-
-		IBuffer buf= member.getOpenable().getBuffer();
-		if (buf == null) {
-			return null; // no source attachment found
 		}
 
 		Reader r = JavadocContentAccess.getMarkdownContentReader(member);
