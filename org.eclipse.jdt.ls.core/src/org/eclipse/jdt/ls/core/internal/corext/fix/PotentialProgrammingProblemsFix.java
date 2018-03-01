@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal.corext.fix;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -298,7 +297,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 			fCurrentContext = new ISerialVersionFixContext() {
 				@Override
 				public Long getSerialVersionId(ITypeBinding binding) {
-					return new Long(1);
+					return Long.valueOf(1);
 				}
 
 				@Override
@@ -313,12 +312,12 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 
 				@Override
 				public Long getSerialVersionId(ITypeBinding binding) {
-					return new Long(rng.nextLong());
+					return Long.valueOf(rng.nextLong());
 				}
 
 				@Override
 				public RefactoringStatus initialize(IProgressMonitor pm) throws CoreException {
-					rng = new Random((new Date()).getTime());
+					rng = new Random(System.currentTimeMillis());
 					return new RefactoringStatus();
 				}
 			};

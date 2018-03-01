@@ -166,7 +166,7 @@ public final class SerialVersionHashOperation extends AbstractSerialVersionOpera
 				for (int i = 7; i >= 0; i--) {
 					hash = (hash << 8) | (sha[i] & 0xFF);
 				}
-				return new Long(hash);
+				return Long.valueOf(hash);
 			}
 		} catch (NoSuchAlgorithmException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);

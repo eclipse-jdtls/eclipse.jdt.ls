@@ -15,8 +15,8 @@ package org.eclipse.jdt.ls.core.internal.correction;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -29,13 +29,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
-	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
 	@Before
 	public void setup() throws Exception {
-		fJProject1 = newEmptyProject();
-		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		IJavaProject fJProject1 = newEmptyProject();
+		Map<String, String> options = TestOptions.getDefaultOptions();
 		options.put(JavaCore.COMPILER_PB_NO_EFFECT_ASSIGNMENT, JavaCore.IGNORE);
 		options.put(JavaCore.COMPILER_PB_INDIRECT_STATIC_ACCESS, JavaCore.ERROR);
 
@@ -835,8 +834,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 	public void testMethodInAnonymous1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
-
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
@@ -1500,7 +1497,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int i) {\n");
@@ -1551,7 +1547,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int i) {\n");
@@ -1606,7 +1601,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(Integer i) {\n");
@@ -1653,7 +1647,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -1816,7 +1809,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -1940,7 +1932,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -2002,7 +1993,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class Foo {\n");
 		buf.append("    Foo(String string) {\n");
@@ -2048,7 +2038,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E<T> {\n");
@@ -2110,7 +2099,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(String s, int i, Object o) {\n");
@@ -2162,7 +2150,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
@@ -2215,7 +2202,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
@@ -2335,7 +2321,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class X {\n");
 		buf.append("    public X(Object o, int i) {\n");
@@ -2393,7 +2378,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E {\n");
@@ -2450,7 +2434,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Vector;\n");
 		buf.append("public class E<T> {\n");
@@ -2507,7 +2490,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(X x) {\n");
@@ -2559,7 +2541,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(String s) {\n");
@@ -2610,7 +2591,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.util.Collections;\n");
 		buf.append("public class E {\n");
@@ -2684,7 +2664,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
@@ -2735,7 +2714,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E<T> {\n");
 		buf.append("    public void foo(X<T> x) {\n");
@@ -2786,7 +2764,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class X {\n");
 		buf.append("    public X() {\n");
@@ -2972,7 +2949,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void foo(int i, String[] o) {\n");
@@ -3020,7 +2996,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class A<T> {\n");
 		buf.append("    public void b(int i, T[] t) {\n");
@@ -3171,7 +3146,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    /**\n");
@@ -3699,7 +3673,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class X {\n");
 		buf.append("    public int foo() {\n");
@@ -3763,7 +3736,6 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 
-		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class X {\n");
 		buf.append("    public int foo(Object o, boolean b) {\n");
@@ -4150,9 +4122,8 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticMethodInInterface1() throws Exception {
-		StringBuilder buf = new StringBuilder();
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -4185,9 +4156,8 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticMethodInInterface2() throws Exception {
-		StringBuilder buf = new StringBuilder();
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    public abstract String name();\n");
@@ -4216,9 +4186,8 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticMethodInInterface3() throws Exception {
-		StringBuilder buf = new StringBuilder();
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class XX {\n");
 		buf.append("    interface I {\n");
@@ -4258,9 +4227,8 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticMethodInInterface4() throws Exception {
-		StringBuilder buf = new StringBuilder();
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface I {\n");
 		buf.append("    int i= n();\n");
@@ -4283,9 +4251,8 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAbstractMethodInInterface() throws Exception {
-		StringBuilder buf = new StringBuilder();
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("interface Snippet {\n");
 		buf.append("    abstract String name();\n");
