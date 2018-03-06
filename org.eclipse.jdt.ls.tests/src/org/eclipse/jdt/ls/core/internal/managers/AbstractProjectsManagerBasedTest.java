@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,9 +18,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -31,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -64,6 +62,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.jsonrpc.Endpoint;
+import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -86,22 +86,24 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected SimpleLogListener logListener;
 
 	protected Map<String, List<Object>> clientRequests = new HashMap<>();
-	protected JavaLanguageClient client = (JavaLanguageClient) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { JavaLanguageClient.class }, new InvocationHandler() {
+	protected JavaLanguageClient client =
+			ServiceEndpoints.toServiceObject(new Endpoint() {
 
-		@Override
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			if (args.length == 1) {
-				String name = method.getName();
-				List<Object> params = clientRequests.get(name);
-				if (params == null) {
-					params = new ArrayList<>();
-					clientRequests.put(name, params);
-				}
-				params.add(args[0]);
-			}
-			return null;
-		}
-	});
+				@Override
+			    public CompletableFuture<?> request(String method, Object parameter) {
+			      return null;
+			    }
+
+			    @Override
+			    public void notify(String method, Object parameter) {
+			    	List<Object> params = clientRequests.get(method);
+					if (params == null) {
+						params = new ArrayList<>();
+						clientRequests.put(method, params);
+					}
+					params.add(parameter);
+			    }
+			  }, JavaLanguageClient.class);
 
 	@Before
 	public void initProjectManager() throws CoreException {

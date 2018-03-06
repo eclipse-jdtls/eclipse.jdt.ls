@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -403,7 +403,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		openDocument(cu1, cu1.getSource(), 1);
 
-		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(0, diagParam.getDiagnostics().size());
@@ -420,13 +420,13 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 		assertEquals(project, cu.getJavaProject().getProject());
 		assertEquals(source, cu.getSource());
-		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(1, diagParam.getDiagnostics().size());
 		closeDocument(cu);
 		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-		diagnosticReports = getClientRequests("publishDiagnostics");
+		diagnosticReports = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(2, diagnosticReports.size());
 		diagParam = diagnosticReports.get(1);
 		assertEquals(0, diagParam.getDiagnostics().size());
@@ -452,7 +452,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		openDocument(cu1, cu1.getSource(), 1);
 
-		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 1, diagParam.getDiagnostics().size());
@@ -485,7 +485,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		openDocument(cu1, cu1.getSource(), 1);
 
-		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 
@@ -705,7 +705,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	private void assertNewProblemReported(ExpectedProblemReport... expectedReports) {
-		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
+		List<PublishDiagnosticsParams> diags = getClientRequests("textDocument/publishDiagnostics");
 		assertEquals(expectedReports.length, diags.size());
 
 		for (int i = 0; i < expectedReports.length; i++) {
