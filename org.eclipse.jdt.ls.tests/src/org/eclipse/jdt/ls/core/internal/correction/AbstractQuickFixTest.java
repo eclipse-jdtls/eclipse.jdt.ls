@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.correction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +43,8 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.Assert;
 
 public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
+
+	private List<String> ignoredCommands;
 
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Command> codeActionCommands = evaluateCodeActions(cu);
@@ -146,6 +149,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 	}
 
+	protected void setIgnoredCommands(List<String> ignoredCommands) {
+		this.ignoredCommands = ignoredCommands;
+	}
+
 	protected List<Command> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
 
 		CompilationUnit astRoot = SharedASTProvider.getInstance().getAST(cu, null);
@@ -163,7 +170,20 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
 		parms.setContext(context);
 
-		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
+		List<Command> commands = new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
+		if (this.ignoredCommands != null) {
+			List<Command> filteredList = new ArrayList<>();
+			for (Command command : commands) {
+				for (String str : this.ignoredCommands) {
+					if (command.getTitle().matches(str)) {
+						filteredList.add(command);
+						break;
+					}
+				}
+			}
+			commands.removeAll(filteredList);
+		}
+		return commands;
 	}
 
 	private String evaluateCodeActionCommand(Command c)

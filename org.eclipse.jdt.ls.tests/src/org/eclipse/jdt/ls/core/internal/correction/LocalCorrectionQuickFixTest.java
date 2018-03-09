@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -38,6 +39,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		fJProject1.setOptions(options);
 
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
+		this.setIgnoredCommands(Arrays.asList("Extract.*"));
 	}
 
 	@Test
