@@ -76,11 +76,7 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class A{\n");
-		buf.append("	/**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
-		buf.append("    \n");
-		buf.append("    private static final int _0 = /*]*/0/*[*/;\n");
+		buf.append("	private static final int _0 = /*]*/0/*[*/;\n");
 		buf.append("\n");
 		buf.append("    void m(int i){\n");
 		buf.append("		int x= _0;\n");
@@ -143,11 +139,7 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 		buf.append("import java.util.ArrayList;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
-		buf.append("	/**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
-		buf.append("    \n");
-		buf.append("    private static final int _0 = /*]*/0/*[*/;\n");
+		buf.append("	private static final int _0 = /*]*/0/*[*/;\n");
 		buf.append("\n");
 		buf.append("    public void foo() {\n");
 		buf.append("		ArrayList<? extends Number> nl= new ArrayList<Integer>();\n");
@@ -208,11 +200,7 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class E {\n");
-		buf.append("	/**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
-		buf.append("    \n");
-		buf.append("    private static final int _0 = 0/*[*/;\n");
+		buf.append("	private static final int _0 = 0/*[*/;\n");
 		buf.append("\n");
 		buf.append("    void f(){\n");
 		buf.append("		try{\n");
@@ -222,6 +210,56 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 		buf.append("		}\n");
 		buf.append("	}	\n");
 		buf.append("}\n");
+		Expected e3 = new Expected("Extract to constant", buf.toString());
+
+		assertCodeActions(cu, e1, e2, e3);
+	}
+
+	@Test
+	public void testExtractVariableLongName() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		String x= /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
+		buf.append("        String x= /*]*/string/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Extract to local variable (replace all occurrences)", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
+		buf.append("        String x= /*]*/string/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Extract to local variable", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	private static final String NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED = /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
+		buf.append("\n");
+		buf.append("    void m(int i){\n");
+		buf.append("		String x= NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
 		Expected e3 = new Expected("Extract to constant", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);

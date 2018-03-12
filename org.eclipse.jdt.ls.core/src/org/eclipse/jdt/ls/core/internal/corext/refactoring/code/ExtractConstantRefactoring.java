@@ -115,6 +115,8 @@ public class ExtractConstantRefactoring extends Refactoring {
 	private static final String KEY_NAME = "name"; //$NON-NLS-1$
 	private static final String KEY_TYPE = "type"; //$NON-NLS-1$
 
+	private static final int CONSTANT_NAME_LIMITATION = 100;
+
 	private CompilationUnitRewrite fCuRewrite;
 	private int fSelectionStart;
 	private int fSelectionLength;
@@ -230,10 +232,13 @@ public class ExtractConstantRefactoring extends Refactoring {
 	public String guessConstantName() {
 		String[] proposals = guessConstantNames();
 		if (proposals.length > 0) {
-			return proposals[0];
-		} else {
-			return fConstantName;
+			for (String candidate : proposals) {
+				if (candidate.length() < CONSTANT_NAME_LIMITATION) {
+					return candidate;
+				}
+			}
 		}
+		return fConstantName;
 	}
 
 	/**
@@ -525,7 +530,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		//		boolean createComments = JavaPreferencesSettings.getCodeGenerationSettings(fCu.getJavaProject()).createComments;
 		//		if (createComments) {
 		String comment = CodeGeneration.getFieldComment(fCu, getConstantTypeName(), fConstantName, StubUtility.getLineDelimiterUsed(fCu));
-		if (comment != null && comment.length() > 0) {
+		if (comment != null && comment.length() > 0 && !"/**\n *\n */\n".equals(comment)) {
 			Javadoc doc = (Javadoc) fCuRewrite.getASTRewrite().createStringPlaceholder(comment, ASTNode.JAVADOC);
 			fieldDeclaration.setJavadoc(doc);
 		}
