@@ -28,8 +28,8 @@
             <repository location="http://download.eclipse.org/buildship/updates/e47/releases/2.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180214-1942"/>
-            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180214-1942/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180313-2237"/>
+            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180313-2237/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180123-1456"/>
