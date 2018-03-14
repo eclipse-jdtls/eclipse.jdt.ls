@@ -232,11 +232,10 @@ public class ExtractConstantRefactoring extends Refactoring {
 	public String guessConstantName() {
 		String[] proposals = guessConstantNames();
 		if (proposals.length > 0) {
-			for (String candidate : proposals) {
-				if (candidate.length() < CONSTANT_NAME_LIMITATION) {
-					return candidate;
-				}
+			if (proposals[0].length() > CONSTANT_NAME_LIMITATION) {
+				return proposals[0].substring(0, CONSTANT_NAME_LIMITATION);
 			}
+			return proposals[0];
 		}
 		return fConstantName;
 	}

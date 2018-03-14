@@ -253,10 +253,10 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("class A{\n");
-		buf.append("	private static final String NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED = /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
+		buf.append("	private static final String THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED = /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
 		buf.append("\n");
 		buf.append("    void m(int i){\n");
-		buf.append("		String x= NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED;\n");
+		buf.append("		String x= THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED;\n");
 		buf.append("	}\n");
 		buf.append("}\n");
 
