@@ -13,15 +13,25 @@
 package org.eclipse.jdt.ls.core.internal.corext.refactoring;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
+import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.internal.core.refactoring.Resources;
 
@@ -36,16 +46,16 @@ public class Checks {
 	private Checks() {
 	}
 
-	//	/* Constants returned by checkExpressionIsRValue */
-	//	public static final int IS_RVALUE = 0;
-	//	public static final int NOT_RVALUE_MISC = 1;
-	//	public static final int NOT_RVALUE_VOID = 2;
-	//
-	//	/**
-	//	 * @since 3.6
-	//	 */
-	//	public static final int IS_RVALUE_GUESSED = 3;
-	//
+	/* Constants returned by checkExpressionIsRValue */
+	public static final int IS_RVALUE = 0;
+	public static final int NOT_RVALUE_MISC = 1;
+	public static final int NOT_RVALUE_VOID = 2;
+
+	/**
+	 * @since 3.6
+	 */
+	public static final int IS_RVALUE_GUESSED = 3;
+
 	//	/**
 	//	 * Checks if method will have a constructor name after renaming.
 	//	 *
@@ -65,19 +75,19 @@ public class Checks {
 	//		}
 	//	}
 	//
-	//	/**
-	//	 * Checks if the given name is a valid Java field name.
-	//	 *
-	//	 * @param name
-	//	 *            the java field name.
-	//	 * @param context
-	//	 *            an {@link IJavaElement} or <code>null</code>
-	//	 * @return a refactoring status containing the error message if the name is
-	//	 *         not a valid java field name.
-	//	 */
-	//	public static RefactoringStatus checkFieldName(String name, IJavaElement context) {
-	//		return checkName(name, JavaConventionsUtil.validateFieldName(name, context));
-	//	}
+	/**
+	 * Checks if the given name is a valid Java field name.
+	 *
+	 * @param name
+	 *            the java field name.
+	 * @param context
+	 *            an {@link IJavaElement} or <code>null</code>
+	 * @return a refactoring status containing the error message if the name is not
+	 *         a valid java field name.
+	 */
+	public static RefactoringStatus checkFieldName(String name, IJavaElement context) {
+		return checkName(name, JavaConventionsUtil.validateFieldName(name, context));
+	}
 	//
 	//	/**
 	//	 * Checks if the given name is a valid Java type parameter name.
@@ -352,22 +362,22 @@ public class Checks {
 	//		}
 	//		return isExtractableExpression(node);
 	//	}
-	//
-	//	public static boolean isEnumCase(ASTNode node) {
-	//		if (node instanceof SwitchCase) {
-	//			final SwitchCase caze = (SwitchCase) node;
-	//			final Expression expression = caze.getExpression();
-	//			if (expression instanceof Name) {
-	//				final Name name = (Name) expression;
-	//				final IBinding binding = name.resolveBinding();
-	//				if (binding instanceof IVariableBinding) {
-	//					IVariableBinding variableBinding = (IVariableBinding) binding;
-	//					return variableBinding.isEnumConstant();
-	//				}
-	//			}
-	//		}
-	//		return false;
-	//	}
+
+	public static boolean isEnumCase(ASTNode node) {
+		if (node instanceof SwitchCase) {
+			final SwitchCase caze = (SwitchCase) node;
+			final Expression expression = caze.getExpression();
+			if (expression instanceof Name) {
+				final Name name = (Name) expression;
+				final IBinding binding = name.resolveBinding();
+				if (binding instanceof IVariableBinding) {
+					IVariableBinding variableBinding = (IVariableBinding) binding;
+					return variableBinding.isEnumConstant();
+				}
+			}
+		}
+		return false;
+	}
 	//
 	//	public static boolean isExtractableExpression(ASTNode node) {
 	//		if (!(node instanceof Expression)) {
@@ -380,15 +390,15 @@ public class Checks {
 	//		return true;
 	//	}
 	//
-	//	public static boolean isInsideJavadoc(ASTNode node) {
-	//		do {
-	//			if (node.getNodeType() == ASTNode.JAVADOC) {
-	//				return true;
-	//			}
-	//			node = node.getParent();
-	//		} while (node != null);
-	//		return false;
-	//	}
+	public static boolean isInsideJavadoc(ASTNode node) {
+		do {
+			if (node.getNodeType() == ASTNode.JAVADOC) {
+				return true;
+			}
+			node = node.getParent();
+		} while (node != null);
+		return false;
+	}
 
 	/**
 	 * Returns a fatal error in case the name is empty. In all other cases, an
@@ -712,26 +722,26 @@ public class Checks {
 	//			deltaFactory.change(filesToModify[i]);
 	//		}
 	//	}
-	//
-	//	public static RefactoringStatus validateEdit(ICompilationUnit unit, Object context) {
-	//		IResource resource = unit.getPrimary().getResource();
-	//		RefactoringStatus result = new RefactoringStatus();
-	//		if (resource == null) {
-	//			return result;
-	//		}
-	//		IStatus status = Resources.checkInSync(resource);
-	//		if (!status.isOK()) {
-	//			result.merge(RefactoringStatus.create(status));
-	//		}
-	//		status = Resources.makeCommittable(resource, context);
-	//		if (!status.isOK()) {
-	//			result.merge(RefactoringStatus.create(status));
-	//			if (!result.hasFatalError()) {
-	//				result.addFatalError(RefactoringCoreMessages.Checks_validateEdit);
-	//			}
-	//		}
-	//		return result;
-	//	}
+
+	public static RefactoringStatus validateEdit(ICompilationUnit unit, Object context) {
+		IResource resource = unit.getPrimary().getResource();
+		RefactoringStatus result = new RefactoringStatus();
+		if (resource == null) {
+			return result;
+		}
+		IStatus status = Resources.checkInSync(resource);
+		if (!status.isOK()) {
+			result.merge(RefactoringStatus.create(status));
+		}
+		status = Resources.makeCommittable(resource, context);
+		if (!status.isOK()) {
+			result.merge(RefactoringStatus.create(status));
+			if (!result.hasFatalError()) {
+				result.addFatalError(RefactoringCoreMessages.Checks_validateEdit);
+			}
+		}
+		return result;
+	}
 	//
 	//	/**
 	//	 * Checks whether it is possible to modify the given
@@ -803,17 +813,17 @@ public class Checks {
 	//
 	//		return pack.getJavaProject().findType(elementName, (IProgressMonitor) null);
 	//	}
-	//
-	//	public static RefactoringStatus checkTempName(String newName, IJavaElement context) {
-	//		RefactoringStatus result = Checks.checkIdentifier(newName, context);
-	//		if (result.hasFatalError()) {
-	//			return result;
-	//		}
-	//		if (!Checks.startsWithLowerCase(newName)) {
-	//			result.addWarning(RefactoringCoreMessages.ExtractTempRefactoring_convention);
-	//		}
-	//		return result;
-	//	}
+
+	public static RefactoringStatus checkTempName(String newName, IJavaElement context) {
+			RefactoringStatus result = Checks.checkIdentifier(newName, context);
+			if (result.hasFatalError()) {
+				return result;
+			}
+			if (!Checks.startsWithLowerCase(newName)) {
+				result.addWarning(RefactoringCoreMessages.ExtractTempRefactoring_convention);
+			}
+			return result;
+	}
 	//
 	//	public static RefactoringStatus checkEnumConstantName(String newName, IJavaElement context) {
 	//		RefactoringStatus result = Checks.checkFieldName(newName, context);
@@ -829,22 +839,22 @@ public class Checks {
 	//		}
 	//		return result;
 	//	}
-	//
-	//	public static RefactoringStatus checkConstantName(String newName, IJavaElement context) {
-	//		RefactoringStatus result = Checks.checkFieldName(newName, context);
-	//		if (result.hasFatalError()) {
-	//			return result;
-	//		}
-	//		for (int i = 0; i < newName.length(); i++) {
-	//			char c = newName.charAt(i);
-	//			if (Character.isLetter(c) && !Character.isUpperCase(c)) {
-	//				result.addWarning(RefactoringCoreMessages.ExtractConstantRefactoring_convention);
-	//				break;
-	//			}
-	//		}
-	//		return result;
-	//	}
-	//
+
+	public static RefactoringStatus checkConstantName(String newName, IJavaElement context) {
+		RefactoringStatus result = Checks.checkFieldName(newName, context);
+		if (result.hasFatalError()) {
+			return result;
+		}
+		for (int i = 0; i < newName.length(); i++) {
+			char c = newName.charAt(i);
+			if (Character.isLetter(c) && !Character.isUpperCase(c)) {
+				result.addWarning(RefactoringCoreMessages.ExtractConstantRefactoring_convention);
+				break;
+			}
+		}
+		return result;
+	}
+
 	//	public static boolean isException(IType iType, IProgressMonitor pm) throws JavaModelException {
 	//		try {
 	//			if (!iType.isClass()) {
@@ -862,37 +872,37 @@ public class Checks {
 	//		}
 	//	}
 	//
-	//	/**
-	//	 * @param e
-	//	 * @return int Checks.IS_RVALUE if e is an rvalue Checks.IS_RVALUE_GUESSED
-	//	 *         if e is guessed as an rvalue Checks.NOT_RVALUE_VOID if e is not
-	//	 *         an rvalue because its type is void Checks.NOT_RVALUE_MISC if e is
-	//	 *         not an rvalue for some other reason
-	//	 */
-	//	public static int checkExpressionIsRValue(Expression e) {
-	//		if (e instanceof Name) {
-	//			if (!(((Name) e).resolveBinding() instanceof IVariableBinding)) {
-	//				return NOT_RVALUE_MISC;
-	//			}
-	//		}
-	//		if (e instanceof Annotation) {
-	//			return NOT_RVALUE_MISC;
-	//		}
-	//
-	//		ITypeBinding tb = e.resolveTypeBinding();
-	//		boolean guessingRequired = false;
-	//		if (tb == null) {
-	//			guessingRequired = true;
-	//			tb = ASTResolving.guessBindingForReference(e);
-	//		}
-	//		if (tb == null) {
-	//			return NOT_RVALUE_MISC;
-	//		} else if (tb.getName().equals("void")) {
-	//			return NOT_RVALUE_VOID;
-	//		}
-	//
-	//		return guessingRequired ? IS_RVALUE_GUESSED : IS_RVALUE;
-	//	}
+	/**
+	 * @param e
+	 * @return int Checks.IS_RVALUE if e is an rvalue Checks.IS_RVALUE_GUESSED if e
+	 *         is guessed as an rvalue Checks.NOT_RVALUE_VOID if e is not an rvalue
+	 *         because its type is void Checks.NOT_RVALUE_MISC if e is not an rvalue
+	 *         for some other reason
+	 */
+	public static int checkExpressionIsRValue(Expression e) {
+		if (e instanceof Name) {
+			if (!(((Name) e).resolveBinding() instanceof IVariableBinding)) {
+				return NOT_RVALUE_MISC;
+			}
+		}
+		if (e instanceof Annotation) {
+			return NOT_RVALUE_MISC;
+		}
+
+		ITypeBinding tb = e.resolveTypeBinding();
+		boolean guessingRequired = false;
+		if (tb == null) {
+			guessingRequired = true;
+			tb = ASTResolving.guessBindingForReference(e);
+		}
+		if (tb == null) {
+			return NOT_RVALUE_MISC;
+		} else if (tb.getName().equals("void")) {
+			return NOT_RVALUE_VOID;
+		}
+
+		return guessingRequired ? IS_RVALUE_GUESSED : IS_RVALUE;
+	}
 	//
 	//	public static boolean isDeclaredIn(VariableDeclaration tempDeclaration, Class<? extends ASTNode> astNodeClass) {
 	//		ASTNode initializer = ASTNodes.getParent(tempDeclaration, astNodeClass);

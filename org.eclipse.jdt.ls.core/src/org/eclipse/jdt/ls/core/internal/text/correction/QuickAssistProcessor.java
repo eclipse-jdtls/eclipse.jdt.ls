@@ -83,7 +83,9 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
@@ -92,6 +94,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionPropos
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
+import org.eclipse.ltk.core.refactoring.Refactoring;
 
 /**
   */
@@ -148,7 +151,7 @@ public class QuickAssistProcessor {
 				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
 				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
-				// 				getExtractVariableProposal(context, problemsAtLocation, resultingCollections);
+				getExtractVariableProposal(context, problemsAtLocation, resultingCollections);
 				getExtractMethodProposal(context, coveringNode, problemsAtLocation, resultingCollections);
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
@@ -273,6 +276,112 @@ public class QuickAssistProcessor {
 			proposals.add(proposal);
 		}
 		return true;
+	}
+
+	private static boolean getExtractVariableProposal(IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+
+		ASTNode node = context.getCoveredNode();
+
+		if (!(node instanceof Expression)) {
+			if (context.getSelectionLength() != 0) {
+				return false;
+			}
+			node = context.getCoveringNode();
+			if (!(node instanceof Expression)) {
+				return false;
+			}
+		}
+		final Expression expression = (Expression) node;
+
+		ITypeBinding binding = expression.resolveTypeBinding();
+		if (binding == null || Bindings.isVoidType(binding)) {
+			return false;
+		}
+		if (proposals == null) {
+			return true;
+		}
+
+		final ICompilationUnit cu = context.getCompilationUnit();
+		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			extractTempRefactoring.setReplaceAllOccurrences(true);
+			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			extractTempRefactoring.setLinkedProposalModel(linkedProposalModel);
+			extractTempRefactoring.setCheckResultForCompileProblems(false);
+
+			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
+			int relevance;
+			if (context.getSelectionLength() == 0) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ZERO_SELECTION;
+			} else if (problemsAtLocation) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ERROR;
+			} else {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
+			}
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractTempRefactoring, relevance) {
+				@Override
+				protected void init(Refactoring refactoring) throws CoreException {
+					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
+					etr.setTempName(etr.guessTempName()); // expensive
+				}
+			};
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			proposals.add(proposal);
+		}
+
+		ExtractTempRefactoring extractTempRefactoringSelectedOnly = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
+		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			extractTempRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
+			extractTempRefactoringSelectedOnly.setCheckResultForCompileProblems(false);
+
+			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
+			int relevance;
+			if (context.getSelectionLength() == 0) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+			} else if (problemsAtLocation) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+			} else {
+				relevance = IProposalRelevance.EXTRACT_LOCAL;
+			}
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractTempRefactoringSelectedOnly, relevance) {
+				@Override
+				protected void init(Refactoring refactoring) throws CoreException {
+					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
+					etr.setTempName(etr.guessTempName()); // expensive
+				}
+			};
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			proposals.add(proposal);
+		}
+
+		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+		if (extractConstRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			extractConstRefactoring.setLinkedProposalModel(linkedProposalModel);
+			extractConstRefactoring.setCheckResultForCompileProblems(false);
+
+			String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
+			int relevance;
+			if (context.getSelectionLength() == 0) {
+				relevance = IProposalRelevance.EXTRACT_CONSTANT_ZERO_SELECTION;
+			} else if (problemsAtLocation) {
+				relevance = IProposalRelevance.EXTRACT_CONSTANT_ERROR;
+			} else {
+				relevance = IProposalRelevance.EXTRACT_CONSTANT;
+			}
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractConstRefactoring, relevance) {
+				@Override
+				protected void init(Refactoring refactoring) throws CoreException {
+					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;
+					etr.setConstantName(etr.guessConstantName()); // expensive
+				}
+			};
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			proposals.add(proposal);
+		}
+		return false;
 	}
 
 	/**
