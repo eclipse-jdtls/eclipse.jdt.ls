@@ -17,6 +17,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.ls.core.internal.Util;
 import org.junit.Test;
@@ -73,6 +75,15 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 			"    \n" +
 			"     *  another unknown tag";
 
+	static final String RAW_JAVADOC_HTML_1 = "<a href=\"file://some_location\">File</a>";
+	static final String RAW_JAVADOC_HTML_2 = "<a href=\"jdt://some_location\">JDT</a>";
+	static final String RAW_JAVADOC_HTML_SEE = "@see <a href=\"https://docs.oracle.com/javase/7/docs/api/\">Online docs for java</a>";
+	static final String RAW_JAVADOC_HTML_PARAM = "@param someString the string to enter";
+	static final String RAW_JAVADOC_HTML_SINCE = "@since 0.0.1";
+	static final String RAW_JAVADOC_HTML_VERSION = "@version 0.0.1";
+	static final String RAW_JAVADOC_HTML_THROWS = "@throws IOException";
+	static final String RAW_JAVADOC_HTML_AUTHOR = "@author someAuthor";
+
 	@Test
 	public void testBoundaries() throws IOException {
 		assertTrue(new JavaDoc2MarkdownConverter("").getAsString().isEmpty());
@@ -94,5 +105,86 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		Reader reader1 = converter.getAsReader();
 		Reader reader2 = converter.getAsReader();
 		assertNotSame(reader1, reader2);
+	}
+
+	private String[] extractLabelAndURIFromLinkMarkdown(String markdown) {
+		if (markdown == "") {
+			return new String[] { "", "" };
+		}
+
+		Pattern pattern = Pattern.compile("\\[(.*?)\\]\\((.*?)\\)");
+		Matcher matcher = pattern.matcher(markdown);
+		if (matcher.find() && matcher.groupCount() >= 2) {
+			return new String[] { matcher.group(1), matcher.group(2) };
+		}
+		return new String[] { "", "" };
+	}
+
+	@Test
+	public void testLinkToFileIsPresent() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_1);
+		String convertedMarkdown = converter.getAsString();
+
+		String[] labelAndURIFromMarkdown = extractLabelAndURIFromLinkMarkdown(convertedMarkdown);
+		assertEquals("File", labelAndURIFromMarkdown[0]);
+		assertEquals("file://some_location", labelAndURIFromMarkdown[1]);
+	}
+
+	@Test
+	public void testLinkToJdtFileIsPresent() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_2);
+		String convertedMarkdown = converter.getAsString();
+
+		String[] labelAndURIFromMarkdown = extractLabelAndURIFromLinkMarkdown(convertedMarkdown);
+		assertEquals("JDT", labelAndURIFromMarkdown[0]);
+		assertEquals("jdt://some_location", labelAndURIFromMarkdown[1]);
+	}
+
+	@Test
+	public void testSeeTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_SEE);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  **See Also:**\n    \n     *  [Online docs for java](https://docs.oracle.com/javase/7/docs/api/)", convertedMarkdown);
+	}
+
+	@Test
+	public void testParamTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_PARAM);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  **Parameters:**\n    \n     *  **someString** the string to enter", convertedMarkdown);
+	}
+
+	@Test
+	public void testSinceTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_SINCE);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  **Since:**\n    \n     *  0.0.1", convertedMarkdown);
+	}
+
+	@Test
+	public void testVersionTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_VERSION);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  @version\n    \n     *  0.0.1", convertedMarkdown);
+	}
+
+	@Test
+	public void testThrowsTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_THROWS);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  **Throws:**\n    \n     *  IOException", convertedMarkdown);
+	}
+
+	@Test
+	public void testAuthorTag() throws IOException {
+		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_AUTHOR);
+		String convertedMarkdown = converter.getAsString();
+
+		assertEquals(" *  **Author:**\n    \n     *  someAuthor", convertedMarkdown);
 	}
 }
