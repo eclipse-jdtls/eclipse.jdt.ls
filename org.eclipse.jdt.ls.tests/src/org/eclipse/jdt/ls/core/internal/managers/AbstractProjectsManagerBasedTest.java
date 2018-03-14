@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -276,5 +277,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 		assertNotNull("'" + taskName + "' was not found among " + tasks, taskId);
 		assertTrue("'" + taskName + "' was not completed", completedTask);
+	}
+
+	protected void assertMatches(String pattern, String value) {
+		assertTrue(value + " doesn't match pattern: " + pattern, Pattern.matches(pattern, value));
 	}
 }

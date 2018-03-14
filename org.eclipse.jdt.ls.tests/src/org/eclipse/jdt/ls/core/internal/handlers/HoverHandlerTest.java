@@ -342,6 +342,108 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue("Unexpected hover :\n" + content, content.contains("**Author:**"));
 	}
 
+	@Test
+	public void testHoverOnJavadocWithValueTag() throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 12, 30);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertMatches("\\[\"SimpleStringData\"\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#13\\) is a simple String", content);
+	}
+
+	@Test
+	public void testHoverOnJavadocWithLinkToMethodInClass() throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 18, 25);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertMatches("\\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)", content);
+	}
+
+	@Test
+	public void testHoverOnJavadocWithLinkToMethodInOtherClass() throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+
+		//given
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 29, 25);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertMatches("\\[Foo.linkedFromFoo2\\(\\)\\]\\(file:/.*/salut/src/main/java/java/Foo.java#14\\)", content);
+	}
+
+	@Test
+	public void testHoverOnJavadocWithMultipleDifferentTypesOfTags() throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 44, 24);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+
+		String expectedJavadoc = "This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)\n" + "\n" + " \\*  \\*\\*Parameters:\\*\\*\n" + "    \n"
+				+ "     \\*  \\*\\*someString\\*\\* the string to enter\n" + " \\*  \\*\\*Returns:\\*\\*\n" + "    \n" + "     \\*  String\n" + " \\*  \\*\\*Throws:\\*\\*\n" + "    \n" + "     \\*  IOException\n"
+				+ " \\*  \\*\\*Since:\\*\\*\n" + "    \n" + "     \\*  0.0.1\n" + " \\*  \\*\\*Version:\\*\\*\n" + "    \n" + "     \\*  0.0.1\n" + " \\*  \\*\\*Author:\\*\\*\n" + "    \n" + "     \\*  jpinkney\n"
+				+ " \\*  \\*\\*See Also:\\*\\*\n" + "    \n" + "     \\*  \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)";
+		assertMatches(expectedJavadoc, content);
+	}
+
+	@Test
+	public void testHoverWhenLinkDoesNotExist() throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+
+		//given
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 51, 25);
+		TextDocumentPositionParams position = getParams(payload);
+
+		// when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull("Hover is null", hover);
+		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().size());
+		Either<String, MarkedString> javadoc = hover.getContents().get(1);
+		String content = null;
+		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
+	}
+
 	/**
 	 * @param cu
 	 * @return

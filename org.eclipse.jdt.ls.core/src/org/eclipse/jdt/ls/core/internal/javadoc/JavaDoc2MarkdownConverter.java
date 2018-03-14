@@ -11,6 +11,11 @@
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.io.Reader;
+import java.lang.reflect.Field;
+
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.jsoup.safety.Cleaner;
+import org.jsoup.safety.Whitelist;
 
 import com.overzealous.remark.Options;
 import com.overzealous.remark.Options.Tables;
@@ -33,11 +38,29 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 		options.autoLinks = true;
 		options.reverseHtmlSmartPunctuation = true;
 		remark = new Remark(options);
+
+		//Stop remark from stripping file and jdt protocols in an href
+		try {
+			Field cleanerField = Remark.class.getDeclaredField("cleaner");
+			cleanerField.setAccessible(true);
+
+			Cleaner c = (Cleaner) cleanerField.get(remark);
+
+			Field whitelistField = Cleaner.class.getDeclaredField("whitelist");
+			whitelistField.setAccessible(true);
+
+			Whitelist w = (Whitelist) whitelistField.get(c);
+
+			w.addProtocols("a", "href", "file", "jdt");
+			whitelistField.set(whitelistField.get(c), w);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			JavaLanguageServerPlugin.logException("Unable to modify jsoup to include file and jdt protocols", e);
+		}
 	}
+
 	public JavaDoc2MarkdownConverter(Reader reader) {
 		super(reader);
 	}
-
 
 	public JavaDoc2MarkdownConverter(String javadoc) {
 		super(javadoc);
