@@ -73,6 +73,7 @@ import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
@@ -92,7 +93,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.FlowInfo;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InOutFlowAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InputFlowAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.CodeAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 

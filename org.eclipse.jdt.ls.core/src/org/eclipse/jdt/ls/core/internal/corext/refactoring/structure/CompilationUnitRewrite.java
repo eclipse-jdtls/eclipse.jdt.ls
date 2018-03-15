@@ -25,10 +25,10 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ltk.core.refactoring.CategorizedTextEditGroup;
@@ -295,7 +295,7 @@ public class CompilationUnitRewrite {
 
 	public CompilationUnit getRoot() {
 		if (fRoot == null) {
-			fRoot = SharedASTProvider.getInstance().getAST(fCu, null);
+			fRoot = CoreASTProvider.getInstance().getAST(fCu, CoreASTProvider.WAIT_YES, null);
 		}
 		return fRoot;
 	}
@@ -326,9 +326,9 @@ public class CompilationUnitRewrite {
 				 * ImportRewrite#setUseContextToFilterImplicitImports(boolean) will be set to true
 				 * and ContextSensitiveImportRewriteContext etc. can be used. */
 				if (fRoot == null && ! fResolveBindings) {
-					fImportRewrite= StubUtility.createImportRewrite(fCu, true);
+					fImportRewrite = CodeStyleConfiguration.createImportRewrite(fCu, true);
 				} else {
-					fImportRewrite= StubUtility.createImportRewrite(getRoot(), true);
+					fImportRewrite = CodeStyleConfiguration.createImportRewrite(getRoot(), true);
 				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);

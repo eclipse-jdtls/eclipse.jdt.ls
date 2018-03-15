@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -122,6 +123,9 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		contentProviderManager = new ContentProviderManager(preferenceManager);
 		logInfo(getClass() + " is started");
 		configureProxy();
+
+		// Set the ID to use for preference lookups
+		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 	}
 
 	private void configureProxy() {
@@ -406,5 +410,4 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 		return null;
 	}
-
 }

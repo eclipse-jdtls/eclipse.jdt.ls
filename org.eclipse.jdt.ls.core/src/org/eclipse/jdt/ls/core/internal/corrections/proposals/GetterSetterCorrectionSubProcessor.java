@@ -30,11 +30,11 @@ import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
@@ -115,7 +115,7 @@ public class GetterSetterCorrectionSubProcessor {
 		IJavaElement element = context.variableBinding.getJavaElement();
 		if (element instanceof IField) {
 			IField field = (IField) element;
-			CompilationUnit cu = SharedASTProvider.getInstance().getAST(field.getTypeRoot(), null);
+			CompilationUnit cu = CoreASTProvider.getInstance().getAST(field.getTypeRoot(), CoreASTProvider.WAIT_YES, null);
 			try {
 				if (isSelfEncapsulateAvailable(field)) {
 					return new SelfEncapsulateFieldProposal(getDescription(field), field.getCompilationUnit(), cu.getRoot(), context.variableBinding, field, IProposalRelevance.GETTER_SETTER_UNUSED_PRIVATE_FIELD);

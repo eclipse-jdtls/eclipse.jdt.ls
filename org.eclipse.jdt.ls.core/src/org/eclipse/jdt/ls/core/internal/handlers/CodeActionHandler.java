@@ -21,9 +21,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.SharedASTProvider;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
@@ -133,7 +133,7 @@ public class CodeActionHandler {
 	}
 
 	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
-		return SharedASTProvider.getInstance().getAST(unit, new NullProgressMonitor());
+		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 
 	private static class CUCorrectionProposalComparator implements Comparator<CUCorrectionProposal> {
