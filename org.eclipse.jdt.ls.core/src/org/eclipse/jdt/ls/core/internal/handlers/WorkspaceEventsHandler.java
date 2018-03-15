@@ -80,12 +80,14 @@ public class WorkspaceEventsHandler {
 				}
 				unit = units[0];
 			}
-			if (unit != null && unit.isWorkingCopy()) {
-				continue;
-			}
-			if(changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED){
-				if (CoreASTProvider.getInstance().getActiveJavaElement().equals(unit)) {
-					CoreASTProvider.getInstance().disposeAST();
+			if (unit != null) {
+				if (unit.isWorkingCopy()) {
+					continue;
+				}
+				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED) {
+					if (unit.equals(CoreASTProvider.getInstance().getActiveJavaElement())) {
+						CoreASTProvider.getInstance().disposeAST();
+					}
 				}
 			}
 			pm.fileChanged(fileEvent.getUri(), changeType);
