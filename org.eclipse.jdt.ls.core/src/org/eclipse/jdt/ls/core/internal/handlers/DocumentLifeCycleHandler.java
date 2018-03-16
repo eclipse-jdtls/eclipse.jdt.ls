@@ -296,7 +296,7 @@ public class DocumentLifeCycleHandler {
 		}
 
 		try {
-			if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
 				sharedASTProvider.disposeAST();
 			}
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
@@ -343,7 +343,7 @@ public class DocumentLifeCycleHandler {
 			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit)) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
 			}
-			if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
 				sharedASTProvider.disposeAST();
 			}
 			unit.discardWorkingCopy();
@@ -397,7 +397,7 @@ public class DocumentLifeCycleHandler {
 						}
 						if (toRemove) {
 							file.delete(true, new NullProgressMonitor());
-							if (sharedASTProvider.getActiveJavaElement().equals(unit)) {
+							if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
 								sharedASTProvider.disposeAST();
 							}
 							unit.discardWorkingCopy();
