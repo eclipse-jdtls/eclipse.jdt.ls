@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.ibm.icu.text.MessageFormat;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
@@ -75,16 +77,16 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
-import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LocalVariableIndex;
 import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
-import org.eclipse.jdt.ls.core.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
@@ -95,8 +97,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InputFlowAn
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.CodeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-
-import com.ibm.icu.text.MessageFormat;
 
 /* package */ class ExtractMethodAnalyzer extends CodeAnalyzer {
 

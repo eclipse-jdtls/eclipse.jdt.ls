@@ -37,7 +37,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.manipulation.ImportReferencesCollector;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
 
 
 /**
