@@ -112,6 +112,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		}
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
+		// Set the ID to use for preference lookups
+		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
 		projectsManager = new ProjectsManager(preferenceManager);
@@ -123,9 +125,6 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 		contentProviderManager = new ContentProviderManager(preferenceManager);
 		logInfo(getClass() + " is started");
 		configureProxy();
-
-		// Set the ID to use for preference lookups
-		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 	}
 
 	private void configureProxy() {

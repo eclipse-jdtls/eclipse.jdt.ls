@@ -69,7 +69,7 @@ public class PreferenceManager {
 		// Initialize default preferences
 		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(JavaLanguageServerPlugin.PLUGIN_ID);
 		defEclipsePrefs.put("org.eclipse.jdt.ui.typefilter.enabled", "");
-		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, "");
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, String.join(";", Preferences.JAVA_IMPORT_ORDER_DEFAULT));
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_ONDEMANDTHRESHOLD, "99");
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, "99");
 	}
@@ -196,4 +196,5 @@ public class PreferenceManager {
 	public IEclipsePreferences getEclipsePreferences() {
 		return eclipsePrefs;
 	}
+
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.MessageType;
@@ -443,7 +444,7 @@ public class Preferences {
 
 	public Preferences setImportOrder(List<String> importOrder) {
 		this.importOrder = (importOrder == null || importOrder.size() == 0) ? JAVA_IMPORT_ORDER_DEFAULT : importOrder;
-		IEclipsePreferences pref = JavaLanguageServerPlugin.getPreferencesManager().getEclipsePreferences();
+		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(JavaLanguageServerPlugin.PLUGIN_ID);
 		pref.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, String.join(";", importOrder));
 		return this;
 	}
