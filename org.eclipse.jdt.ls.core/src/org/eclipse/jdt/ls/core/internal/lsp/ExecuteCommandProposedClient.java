@@ -18,6 +18,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 public interface ExecuteCommandProposedClient {
 
 	@JsonRequest("workspace/executeClientCommand")
-	CompletableFuture<Object> executeCommand(ExecuteCommandParams params);
+	CompletableFuture<Object> executeClientCommand(ExecuteCommandParams params);
 
 }

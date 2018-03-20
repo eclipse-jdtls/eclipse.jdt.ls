@@ -61,8 +61,8 @@ public class JavaClientConnection {
 		logHandler.install(this);
 	}
 
-	public Object executeCommand(String id, Object... params) {
-		return this.client.executeCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).join();
+	public Object executeClientCommand(String id, Object... params) {
+		return this.client.executeClientCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).join();
 	}
 
 	/**
