@@ -122,4 +122,10 @@ public class ClientPreferences {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getApplyEdit());
 	}
 
+	public boolean isWorkspaceEditResourceChangesSupported(){
+		return capabilities.getWorkspace() != null &&
+			capabilities.getWorkspace().getWorkspaceEdit() != null
+			&& isTrue(capabilities.getWorkspace().getWorkspaceEdit().getResourceChanges());
+	}
+
 }
