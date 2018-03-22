@@ -12,11 +12,16 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static java.util.Arrays.asList;
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -48,21 +53,26 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.DidChangeWatchedFilesRegistrationOptions;
+import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
@@ -71,11 +81,23 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 public class ProjectsManager implements ISaveParticipant {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
+	private static final Set<String> watchers = new HashSet<>();
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
+	};
+
+	private Job registerWatcherJob = new Job("Register Watchers") {
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			JobHelpers.waitForJobsToComplete();
+			registerWatchers();
+			return Status.OK_STATUS;
+		}
+
 	};
 
 	public ProjectsManager(PreferenceManager preferenceManager) {
@@ -134,6 +156,7 @@ public class ProjectsManager implements ISaveParticipant {
 						}
 					}
 					importProjects(addedRootPaths, subMonitor.split(addedRootPaths.size()));
+					registerWatcherJob.schedule();
 					long elapsed = System.currentTimeMillis() - start;
 
 					JavaLanguageServerPlugin.logInfo("Updated workspace folders in " + elapsed + " ms: Added " + addedRootPaths.size() + " folder(s), removed" + removedRootPaths.size() + " folders.");
@@ -239,7 +262,7 @@ public class ProjectsManager implements ISaveParticipant {
 
 	private Collection<IProjectImporter> importers() {
 		Map<Integer, IProjectImporter> importers = new TreeMap<>();
-		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(JavaLanguageServerPlugin.PLUGIN_ID, "importers");
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, "importers");
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
 		for (int i = 0; i < configs.length; i++) {
 			try {
@@ -310,9 +333,11 @@ public class ProjectsManager implements ISaveParticipant {
 				String projectName = project.getName();
 				try {
 					long start = System.currentTimeMillis();
+					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
 						buildSupport.get().update(project, monitor);
+						registerWatcherJob.schedule();
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
@@ -428,6 +453,56 @@ public class ProjectsManager implements ISaveParticipant {
 			workspace.setDescription(description);
 		}
 		return changed;
+	}
+
+	public List<FileSystemWatcher> registerWatchers() {
+		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
+		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
+			Set<String> sources = new HashSet<>();
+			try {
+				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+				for (IProject project : projects) {
+					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
+						continue;
+					}
+					IJavaProject javaProject = JavaCore.create(project);
+					if (javaProject != null && javaProject.exists()) {
+						IClasspathEntry[] classpath = javaProject.getRawClasspath();
+						for (IClasspathEntry entry : classpath) {
+							if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+								IPath path = entry.getPath();
+								if (path != null) {
+									IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
+									if (folder.exists() && !folder.isDerived()) {
+										IPath location = folder.getLocation();
+										if (location != null) {
+											sources.add(location.toString() + "/**");
+										}
+									}
+
+								}
+							}
+						}
+					}
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
+			for (String pattern : sources) {
+				FileSystemWatcher watcher = new FileSystemWatcher(pattern, FileSystemWatcher.WATCH_KIND_DEFAULT);
+				fileWatchers.add(watcher);
+			}
+			if (!sources.equals(watchers)) {
+				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);
+				JavaLanguageServerPlugin.getInstance().unregisterCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES);
+				JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES, didChangeWatchedFilesRegistrationOptions);
+				watchers.clear();
+				watchers.addAll(sources);
+			}
+			return fileWatchers;
+		}
+		return null;
 	}
 
 }

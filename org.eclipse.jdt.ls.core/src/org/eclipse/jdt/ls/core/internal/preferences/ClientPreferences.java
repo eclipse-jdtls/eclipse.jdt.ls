@@ -99,6 +99,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
 	}
 
+	public boolean isWorkspaceChangeWatchedFilesDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getDidChangeWatchedFiles());
+	}
+
 	public boolean isDocumentSymbolDynamicRegistered() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDocumentSymbol());
 	}

@@ -159,6 +159,7 @@ public class Preferences {
 	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
 	public static final String WORKSPACE_EXECUTE_COMMAND = "workspace/executeCommand";
 	public static final String WORKSPACE_SYMBOL = "workspace/symbol";
+	public static final String WORKSPACE_WATCHED_FILES = "workspace/didChangeWatchedFiles";
 	public static final String DOCUMENT_SYMBOL = "textDocument/documentSymbol";
 	public static final String CODE_ACTION = "textDocument/codeAction";
 	public static final String DEFINITION = "textDocument/definition";
@@ -181,6 +182,7 @@ public class Preferences {
 	public static final String REFERENCES_ID = UUID.randomUUID().toString();
 	public static final String DOCUMENT_HIGHLIGHT_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_CHANGE_FOLDERS_ID = UUID.randomUUID().toString();
+	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;

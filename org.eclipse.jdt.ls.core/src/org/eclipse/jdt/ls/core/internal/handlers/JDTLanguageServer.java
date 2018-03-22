@@ -306,6 +306,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
+		pm.registerWatchers();
 		logInfo(">>New configuration: " + settings);
 	}
 
@@ -654,7 +655,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> java/didChangeWorkspaceFolders");
 		WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm);
 		handler.update(params);
-
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {
