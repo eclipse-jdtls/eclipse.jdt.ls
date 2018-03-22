@@ -20,23 +20,41 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
+import org.eclipse.lsp4j.FileChangeType;
+import org.eclipse.lsp4j.FileEvent;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.SynchronizationCapabilities;
@@ -59,9 +77,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
+	private static final String TEST_CONTENT = "test=test\n";
 	private static final String TEST_EXCLUSIONS = "**/test/**";
 	protected JDTLanguageServer server;
-	protected JDTLanguageServer protocol;
 
 	@Mock
 	private JavaLanguageClient client;
@@ -70,14 +88,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void setup() throws Exception {
 		server = new JDTLanguageServer(projectsManager, preferenceManager);
 		server.connectClient(client);
-		protocol = JavaLanguageServerPlugin.getInstance().getProtocol();
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
 
 	@After
 	public void tearDown() {
 		server.disconnectClient();
-		JavaLanguageServerPlugin.getInstance().setProtocol(protocol);
+		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		try {
 			projectsManager.setAutoBuilding(true);
 		} catch (CoreException e) {
@@ -143,6 +160,76 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		@SuppressWarnings("unchecked")
 		Preferences prefs = Preferences.createFrom((Map<String, Object>) (initializationOptions.get(InitHandler.SETTINGS_KEY)));
 		assertEquals(TEST_EXCLUSIONS, prefs.getJavaImportExclusions().get(0));
+	}
+
+	@Test
+	public void testWatchers() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		importProjects(Arrays.asList("maven/salut", "gradle/simple-gradle"));
+		newEmptyProject();
+		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+		Collections.sort(watchers, new Comparator<FileSystemWatcher>() {
+
+			@Override
+			public int compare(FileSystemWatcher o1, FileSystemWatcher o2) {
+				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
+			}
+		});
+		assertEquals(watchers.size(), 5);
+		assertEquals(watchers.get(0).getGlobPattern(), ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/TestProject/src/**");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
+		String location = project.getLocation().toString();
+		assertEquals(watchers.get(1).getGlobPattern(), location + "/src/main/java/**");
+		assertEquals(watchers.get(2).getGlobPattern(), location + "/src/test/java/**");
+		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		location = project.getLocation().toString();
+		assertEquals(watchers.get(3).getGlobPattern(), location + "/src/main/java/**");
+		assertEquals(watchers.get(4).getGlobPattern(), location + "/src/main/resources/**");
+		IJavaProject javaProject = JavaCore.create(project);
+		// for test purposes only
+		removeExclusionPattern(javaProject);
+		File outputDir = new File(new File(location), javaProject.getOutputLocation().removeFirstSegments(1).toOSString());
+		File outputFile = new File(outputDir, "test.properties");
+		String resourceName = location + "/src/main/resources/test.properties";
+		String uri = "file://" + resourceName;
+		File sourceFile = new Path(resourceName).toFile();
+		assertTrue(FileUtils.contentEquals(sourceFile, outputFile));
+		FileUtils.writeStringToFile(sourceFile, TEST_CONTENT);
+		FileEvent fileEvent = new FileEvent(uri, FileChangeType.Changed);
+		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams();
+		params.getChanges().add(fileEvent);
+		server.didChangeWatchedFiles(params);
+		JobHelpers.waitForJobsToComplete();
+		assertTrue(FileUtils.contentEquals(sourceFile, outputFile));
+		verify(client, times(1)).registerCapability(any());
+		List<FileSystemWatcher> newWatchers = projectsManager.registerWatchers();
+		verify(client, times(1)).registerCapability(any());
+		Collections.sort(newWatchers, new Comparator<FileSystemWatcher>() {
+
+			@Override
+			public int compare(FileSystemWatcher o1, FileSystemWatcher o2) {
+				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
+			}
+		});
+		assertEquals(newWatchers, watchers);
+	}
+
+	private void removeExclusionPattern(IJavaProject javaProject) throws JavaModelException {
+		IClasspathEntry[] classpath = javaProject.getRawClasspath();
+		for (int i = 0; i < classpath.length; i++) {
+			IClasspathEntry entry = classpath[i];
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				IPath path = entry.getPath();
+				if (path.toString().endsWith("resources")) {
+					IClasspathEntry newEntry = JavaCore.newSourceEntry(entry.getPath());
+					classpath[i] = newEntry;
+					javaProject.setRawClasspath(classpath, monitor);
+					return;
+				}
+			}
+		}
 	}
 
 	private Map<String, Object> createInitializationOptions() {
