@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.nio.file.FileVisitOption;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -73,15 +75,29 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 
 	@Test
 	public void testGetPackageNameNoSrc() throws Exception {
-		URI uri = Paths.get("projects", "eclipse", "hello", "Foo.java").toUri();
+		Path foo = getTmpFile("projects/eclipse/hello/Foo.java");
+		foo.toFile().getParentFile().mkdirs();
+		FileUtils.copyFile(Paths.get("projects", "eclipse", "hello", "Foo.java").toFile(), foo.toFile());
+		URI uri = foo.toUri();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
 		String packageName = JDTUtils.getPackageName(cu.getJavaProject(), uri);
 		assertEquals("", packageName);
 	}
 
+	private Path getTmpFile(String tmpPath) throws IOException {
+		File tmp = Files.createTempDirectory("temp").toFile();
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtils.deleteQuietly(tmp)));
+		Path path = tmp.toPath();
+		Path result = path.resolve(tmpPath);
+		return result;
+	}
+
 	@Test
 	public void testGetPackageNameSrc() throws Exception {
-		URI uri = Paths.get("projects", "eclipse", "hello", "src", "Foo.java").toUri();
+		Path foo = getTmpFile("projects/eclipse/hello/src/Foo.java");
+		foo.toFile().getParentFile().mkdirs();
+		FileUtils.copyFile(Paths.get("projects", "eclipse", "hello", "src", "Foo.java").toFile(), foo.toFile());
+		URI uri = foo.toUri();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
 		String packageName = JDTUtils.getPackageName(cu.getJavaProject(), uri);
 		assertEquals("", packageName);
