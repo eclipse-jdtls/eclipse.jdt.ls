@@ -15,21 +15,50 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.text.correction;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
+import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.formatter.IndentManipulation;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
+import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
+import org.eclipse.jdt.ls.core.internal.corext.fix.CompilationUnitRewriteOperationsFix.CompilationUnitRewriteOperation;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
+import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
+import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix.MakeTypeAbstractOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ModifierChangeCorrectionProposal;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.link.LinkedModeModel;
@@ -456,154 +485,149 @@ public class ModifierCorrectionSubProcessor {
 	//		return Modifier.PUBLIC;
 	//	}
 	//
-	//	public static void addAbstractMethodProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
-	//		ICompilationUnit cu = context.getCompilationUnit();
-	//
-	//		CompilationUnit astRoot = context.getASTRoot();
-	//
-	//		ASTNode selectedNode = problem.getCoveringNode(astRoot);
-	//		if (selectedNode == null) {
-	//			return;
-	//		}
-	//		MethodDeclaration decl;
-	//		if (selectedNode instanceof SimpleName) {
-	//			decl = (MethodDeclaration) selectedNode.getParent();
-	//		} else if (selectedNode instanceof MethodDeclaration) {
-	//			decl = (MethodDeclaration) selectedNode;
-	//		} else {
-	//			return;
-	//		}
-	//
-	//		ASTNode parentType = ASTResolving.findParentType(decl);
-	//		TypeDeclaration parentTypeDecl = null;
-	//		boolean parentIsAbstractClass = false;
-	//		boolean parentIsInterface = false;
-	//		if (parentType instanceof TypeDeclaration) {
-	//			parentTypeDecl = (TypeDeclaration) parentType;
-	//			parentIsAbstractClass = !parentTypeDecl.isInterface() && Modifier.isAbstract(parentTypeDecl.getModifiers());
-	//			parentIsInterface = parentTypeDecl.isInterface();
-	//		}
-	//		boolean hasNoBody = decl.getBody() == null;
-	//
-	//		int id = problem.getProblemId();
-	//		if (id == IProblem.AbstractMethodInAbstractClass || id == IProblem.EnumAbstractMethodMustBeImplemented || id == IProblem.AbstractMethodInEnum || parentIsAbstractClass) {
-	//			AST ast = astRoot.getAST();
-	//			ASTRewrite rewrite = ASTRewrite.create(ast);
-	//
-	//			removeModifier(decl, rewrite, Modifier.ABSTRACT);
-	//
-	//			if (hasNoBody) {
-	//				Block newBody = ast.newBlock();
-	//				rewrite.set(decl, MethodDeclaration.BODY_PROPERTY, newBody, null);
-	//
-	//				Type returnType = decl.getReturnType2();
-	//				if (returnType != null) {
-	//					Expression expr = ASTNodeFactory.newDefaultExpression(ast, returnType, decl.getExtraDimensions());
-	//					if (expr != null) {
-	//						ReturnStatement returnStatement = ast.newReturnStatement();
-	//						returnStatement.setExpression(expr);
-	//						newBody.statements().add(returnStatement);
-	//					}
-	//				}
-	//			}
-	//
-	//			String label = CorrectionMessages.ModifierCorrectionSubProcessor_removeabstract_description;
-	//			Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_ABSTRACT_MODIFIER, image);
-	//			proposals.add(proposal);
-	//		}
-	//
-	//		if (!hasNoBody && id == IProblem.BodyForAbstractMethod) {
-	//			AST ast = decl.getAST();
-	//			{
-	//				ASTRewrite rewrite = ASTRewrite.create(ast);
-	//				rewrite.remove(decl.getBody(), null);
-	//
-	//				int excluded;
-	//				if (parentIsInterface) {
-	//					excluded = ~(Modifier.PUBLIC | Modifier.ABSTRACT);
-	//				} else {
-	//					excluded = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.ABSTRACT);
-	//				}
-	//				ModifierRewrite.create(rewrite, decl).setModifiers(0, excluded, null);
-	//
-	//				String label = CorrectionMessages.ModifierCorrectionSubProcessor_removebody_description;
-	//				Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_METHOD_BODY, image);
-	//				proposals.add(proposal);
-	//			}
-	//
-	//			if (JavaModelUtil.is18OrHigher(cu.getJavaProject()) && parentIsInterface) {
-	//				{
-	//					// insert proposal to add static modifier
-	//					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, decl.getName());
-	//					Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//					int included = Modifier.STATIC;
-	//					int excluded = Modifier.ABSTRACT | Modifier.DEFAULT;
-	//					proposals.add(new ModifierChangeCorrectionProposal(label, cu, decl.resolveBinding(), decl, included, excluded, IProposalRelevance.ADD_STATIC_MODIFIER, image));
-	//				}
-	//
-	//				{
-	//					// insert proposal to add default modifier
-	//					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertodefault_description, decl.getName());
-	//					Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//					int included = Modifier.DEFAULT;
-	//					int excluded = Modifier.ABSTRACT | Modifier.STATIC;
-	//					proposals.add(new ModifierChangeCorrectionProposal(label, cu, decl.resolveBinding(), decl, included, excluded, IProposalRelevance.ADD_DEFAULT_MODIFIER, image));
-	//				}
-	//			}
-	//		}
-	//
-	//		if (id == IProblem.AbstractMethodInAbstractClass && parentTypeDecl != null) {
-	//			addMakeTypeAbstractProposal(context, parentTypeDecl, proposals);
-	//		}
-	//
-	//	}
-	//
-	//	private static Modifier removeModifier(final MethodDeclaration decl, final ASTRewrite rewrite, final int modifier) {
-	//		Modifier modifierNode = ASTNodes.findModifierNode(modifier, decl.modifiers());
-	//		if (modifierNode != null) {
-	//			rewrite.remove(modifierNode, null);
-	//		}
-	//		return modifierNode;
-	//	}
-	//
-	//	private static void addMakeTypeAbstractProposal(IInvocationContext context, TypeDeclaration parentTypeDecl, Collection<ICommandAccess> proposals) {
-	//		MakeTypeAbstractOperation operation = new UnimplementedCodeFix.MakeTypeAbstractOperation(parentTypeDecl);
-	//
-	//		String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_addabstract_description, BasicElementLabels.getJavaElementName(parentTypeDecl.getName().getIdentifier()));
-	//		UnimplementedCodeFix fix = new UnimplementedCodeFix(label, context.getASTRoot(), new CompilationUnitRewriteOperation[] { operation });
-	//
-	//		Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_TYPE_ABSTRACT_FIX, image, context);
-	//		proposals.add(proposal);
-	//	}
-	//
-	//	public static void addAbstractTypeProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
-	//		CompilationUnit astRoot = context.getASTRoot();
-	//
-	//		ASTNode selectedNode = problem.getCoveringNode(astRoot);
-	//		if (selectedNode == null) {
-	//			return;
-	//		}
-	//
-	//		TypeDeclaration parentTypeDecl = null;
-	//		if (selectedNode instanceof SimpleName) {
-	//			ASTNode parent = selectedNode.getParent();
-	//			if (parent != null) {
-	//				parentTypeDecl = (TypeDeclaration) parent;
-	//			}
-	//		} else if (selectedNode instanceof TypeDeclaration) {
-	//			parentTypeDecl = (TypeDeclaration) selectedNode;
-	//		}
-	//
-	//		if (parentTypeDecl == null) {
-	//			return;
-	//		}
-	//
-	//		addMakeTypeAbstractProposal(context, parentTypeDecl, proposals);
-	//	}
-	//
+	public static void addAbstractMethodProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+		ICompilationUnit cu = context.getCompilationUnit();
+
+		CompilationUnit astRoot = context.getASTRoot();
+
+		ASTNode selectedNode = problem.getCoveringNode(astRoot);
+		if (selectedNode == null) {
+			return;
+		}
+		MethodDeclaration decl;
+		if (selectedNode instanceof SimpleName) {
+			decl = (MethodDeclaration) selectedNode.getParent();
+		} else if (selectedNode instanceof MethodDeclaration) {
+			decl = (MethodDeclaration) selectedNode;
+		} else {
+			return;
+		}
+
+		ASTNode parentType = ASTResolving.findParentType(decl);
+		TypeDeclaration parentTypeDecl = null;
+		boolean parentIsAbstractClass = false;
+		boolean parentIsInterface = false;
+		if (parentType instanceof TypeDeclaration) {
+			parentTypeDecl = (TypeDeclaration) parentType;
+			parentIsAbstractClass = !parentTypeDecl.isInterface() && Modifier.isAbstract(parentTypeDecl.getModifiers());
+			parentIsInterface = parentTypeDecl.isInterface();
+		}
+		boolean hasNoBody = decl.getBody() == null;
+
+		int id = problem.getProblemId();
+		if (id == IProblem.AbstractMethodInAbstractClass || id == IProblem.EnumAbstractMethodMustBeImplemented || id == IProblem.AbstractMethodInEnum || parentIsAbstractClass) {
+			AST ast = astRoot.getAST();
+			ASTRewrite rewrite = ASTRewrite.create(ast);
+
+			removeModifier(decl, rewrite, Modifier.ABSTRACT);
+
+			if (hasNoBody) {
+				Block newBody = ast.newBlock();
+				rewrite.set(decl, MethodDeclaration.BODY_PROPERTY, newBody, null);
+
+				Type returnType = decl.getReturnType2();
+				if (returnType != null) {
+					Expression expr = ASTNodeFactory.newDefaultExpression(ast, returnType, decl.getExtraDimensions());
+					if (expr != null) {
+						ReturnStatement returnStatement = ast.newReturnStatement();
+						returnStatement.setExpression(expr);
+						newBody.statements().add(returnStatement);
+					}
+				}
+			}
+
+			String label = CorrectionMessages.ModifierCorrectionSubProcessor_removeabstract_description;
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_ABSTRACT_MODIFIER);
+			proposals.add(proposal);
+		}
+
+		if (!hasNoBody && id == IProblem.BodyForAbstractMethod) {
+			AST ast = decl.getAST();
+			{
+				ASTRewrite rewrite = ASTRewrite.create(ast);
+				rewrite.remove(decl.getBody(), null);
+
+				int excluded;
+				if (parentIsInterface) {
+					excluded = ~(Modifier.PUBLIC | Modifier.ABSTRACT);
+				} else {
+					excluded = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.ABSTRACT);
+				}
+				ModifierRewrite.create(rewrite, decl).setModifiers(0, excluded, null);
+
+				String label = CorrectionMessages.ModifierCorrectionSubProcessor_removebody_description;
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_METHOD_BODY);
+				proposals.add(proposal);
+			}
+
+			if (JavaModelUtil.is18OrHigher(cu.getJavaProject()) && parentIsInterface) {
+				{
+					// insert proposal to add static modifier
+					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, decl.getName());
+					int included = Modifier.STATIC;
+					int excluded = Modifier.ABSTRACT | Modifier.DEFAULT;
+					proposals.add(new ModifierChangeCorrectionProposal(label, cu, decl.resolveBinding(), decl, included, excluded, IProposalRelevance.ADD_STATIC_MODIFIER));
+				}
+
+				{
+					// insert proposal to add default modifier
+					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertodefault_description, decl.getName());
+					int included = Modifier.DEFAULT;
+					int excluded = Modifier.ABSTRACT | Modifier.STATIC;
+					proposals.add(new ModifierChangeCorrectionProposal(label, cu, decl.resolveBinding(), decl, included, excluded, IProposalRelevance.ADD_DEFAULT_MODIFIER));
+				}
+			}
+		}
+
+		if (id == IProblem.AbstractMethodInAbstractClass && parentTypeDecl != null) {
+			addMakeTypeAbstractProposal(context, parentTypeDecl, proposals);
+		}
+
+	}
+
+	private static Modifier removeModifier(final MethodDeclaration decl, final ASTRewrite rewrite, final int modifier) {
+		Modifier modifierNode = ASTNodes.findModifierNode(modifier, decl.modifiers());
+		if (modifierNode != null) {
+			rewrite.remove(modifierNode, null);
+		}
+		return modifierNode;
+	}
+
+	private static void addMakeTypeAbstractProposal(IInvocationContext context, TypeDeclaration parentTypeDecl, Collection<CUCorrectionProposal> proposals) {
+		MakeTypeAbstractOperation operation = new UnimplementedCodeFix.MakeTypeAbstractOperation(parentTypeDecl);
+
+		String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_addabstract_description, BasicElementLabels.getJavaElementName(parentTypeDecl.getName().getIdentifier()));
+		UnimplementedCodeFix fix = new UnimplementedCodeFix(label, context.getASTRoot(), new CompilationUnitRewriteOperation[] { operation });
+
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, IProposalRelevance.MAKE_TYPE_ABSTRACT_FIX, context);
+		proposals.add(proposal);
+	}
+
+	public static void addAbstractTypeProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+		CompilationUnit astRoot = context.getASTRoot();
+
+		ASTNode selectedNode = problem.getCoveringNode(astRoot);
+		if (selectedNode == null) {
+			return;
+		}
+
+		TypeDeclaration parentTypeDecl = null;
+		if (selectedNode instanceof SimpleName) {
+			ASTNode parent = selectedNode.getParent();
+			if (parent != null) {
+				parentTypeDecl = (TypeDeclaration) parent;
+			}
+		} else if (selectedNode instanceof TypeDeclaration) {
+			parentTypeDecl = (TypeDeclaration) selectedNode;
+		}
+
+		if (parentTypeDecl == null) {
+			return;
+		}
+
+		addMakeTypeAbstractProposal(context, parentTypeDecl, proposals);
+	}
+
 	//	public static void addNativeMethodProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 	//		ICompilationUnit cu = context.getCompilationUnit();
 	//

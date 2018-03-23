@@ -35,6 +35,13 @@ public enum CodeGenerationTemplate {
 			CodeTemplateContextType.CONSTRUCTORCOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT),
 	/**
+	 * Constructor method body template
+	 */
+	CONSTRUCTORBODY(
+			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY,
+			CodeTemplateContextType.CONSTRUCTORBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY_DEFAULT),
+	/**
 	 * Delegate comment template
 	 */
 	DELEGATECOMMENT(
@@ -93,7 +100,14 @@ public enum CodeGenerationTemplate {
 	CATCHBODY(
 			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY,
 			CodeTemplateContextType.CATCHBODY_CONTEXTTYPE,
-			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT),
+	/**
+	 * Method body content template
+	 */
+	METHODBODY(
+			CodeTemplatePreferences.CODETEMPLATE_METHODBODY,
+			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT);
 
 
 	private final String preferenceId;
@@ -129,6 +143,16 @@ class CodeTemplatePreferences {
 	 * A named preference that defines the template for constructor comments
 	 */
 	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT = CODETEMPLATES_PREFIX + "constructor" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for constructor body content
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORBODY = CODETEMPLATES_PREFIX + "constructor" + BODY_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for method body content
+	 */
+	public static final String CODETEMPLATE_METHODBODY = CODETEMPLATES_PREFIX + "method" + BODY_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for delegate method comments
@@ -226,6 +250,15 @@ class CodeTemplatePreferences {
 	 */
 	public static final String CODETEMPLATE_SETTERBODY_DEFAULT = "${field} = ${param};\n";
 
+	/**
+	 * Default value for constructor method body content
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORBODY_DEFAULT = "${body_statement}\n//${todo} Auto-generated constructor stub";
+
+	/**
+	 * Default value from method body content
+	 */
+	public static final String CODETEMPLATE_METHODBODY_DEFAULT = "// ${todo} Auto-generated method stub\n${body_statement}";
 	/**
 	 * Default value for catch body content
 	 */
