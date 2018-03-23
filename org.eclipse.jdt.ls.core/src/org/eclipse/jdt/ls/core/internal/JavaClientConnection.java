@@ -31,6 +31,7 @@ import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.Endpoint;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 
@@ -197,4 +198,14 @@ public class JavaClientConnection {
 		}
 	}
 
+	/**
+	 * Sends a Notification from a server to a client
+	 *
+	 * @param method
+	 * @param parameter
+	 *
+	 */
+	public void notify(String method, Object parameter) {
+		  ((Endpoint)client).notify(method, parameter);
+	}
 }
