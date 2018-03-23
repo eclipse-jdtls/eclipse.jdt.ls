@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
@@ -59,6 +63,10 @@ public class JavaClientConnection {
 		this.client = client;
 		logHandler = new LogHandler();
 		logHandler.install(this);
+	}
+
+	public Object executeClientCommand(Duration timeout, String id, Object... params) throws InterruptedException, ExecutionException, TimeoutException {
+		return this.client.executeClientCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).get(timeout.toNanos(), TimeUnit.NANOSECONDS);
 	}
 
 	public Object executeClientCommand(String id, Object... params) {
