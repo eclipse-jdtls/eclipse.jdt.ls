@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,15 +7,22 @@
  *
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
+ *     Pivotal Inc. - added executeClientCommand API.
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
+import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
@@ -27,9 +34,12 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import com.google.common.collect.ImmutableList;
+
 public class JavaClientConnection {
 
-	public interface JavaLanguageClient extends LanguageClient {
+	public interface JavaLanguageClient extends LanguageClient, ExecuteCommandProposedClient {
+
 		/**
 		 * The show message notification is sent from a server to a client to ask
 		 * the client to display a particular message in the user interface.
@@ -61,6 +71,14 @@ public class JavaClientConnection {
 		this.client = client;
 		logHandler = new LogHandler();
 		logHandler.install(this);
+	}
+
+	public Object executeClientCommand(Duration timeout, String id, Object... params) throws InterruptedException, ExecutionException, TimeoutException {
+		return this.client.executeClientCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).get(timeout.toNanos(), TimeUnit.NANOSECONDS);
+	}
+
+	public Object executeClientCommand(String id, Object... params) {
+		return this.client.executeClientCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).join();
 	}
 
 	/**
