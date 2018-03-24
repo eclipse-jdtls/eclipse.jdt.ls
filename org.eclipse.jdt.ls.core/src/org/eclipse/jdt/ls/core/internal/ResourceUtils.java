@@ -121,7 +121,7 @@ public final class ResourceUtils {
 	 * Fix uris by adding missing // to single file:/ prefix
 	 */
 	public static String fixURI(URI uri) {
-		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+		if (Platform.OS_WIN32.equals(Platform.getOS()) && URIUtil.isFileURI(uri)) {
 			uri = URIUtil.toFile(uri).toURI();
 		}
 		String uriString = uri.toString();
