@@ -164,8 +164,65 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public void initialized(InitializedParams params) {
+		logInfo(">> initialized");
+		JobHelpers.waitForInitializeJobs();
+		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
+		}
+		if (preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
+		}
+		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
+		}
+		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
+		}
+		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
+		}
+		if (preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.REFERENCES_ID, Preferences.REFERENCES);
+		}
+		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
+			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
+		}
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
+		}
+		// we do not have the user setting initialized yet at this point but we should
+		// still call to enable defaults in case client does not support configuration changes
+		syncCapabilitiesToSettings();
+		try {
+			boolean autoBuildChanged = pm.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
+			buildWorkspace(autoBuildChanged);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Toggles the server capabilities according to user preferences.
+	 */
+	private void syncCapabilitiesToSettings() {
+		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);
+		}
+		if (preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING, null);
+		}
+		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isCodeLensEnabled(), Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
+		}
+		if (preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isSignatureHelpEnabled(), Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
+		}
+		if (preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isRenameEnabled(), Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME, null);
+		}
+		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
+			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
+					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
 		}
 	}
 
@@ -244,52 +301,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			preferenceManager.update(prefs);
 		}
-		JobHelpers.waitForInitializeJobs();
-		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
-		}
-		if (preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
-		}
-		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
-		}
-		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
-		}
-		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
-		}
-		if (preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.REFERENCES_ID, Preferences.REFERENCES);
-		}
-		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
-		}
-		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);
-		}
-		if (preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING, null);
-		}
-		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isCodeLensEnabled(), Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
-		}
-		if (preferenceManager.getClientPreferences().isSignatureHelpDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isSignatureHelpEnabled(), Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
-		}
-		if (preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isRenameEnabled(), Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME, null);
-			if (preferenceManager.getPreferences().isRenameEnabled()) {
-				registerCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
-			} else {
-				unregisterCapability(Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME);
-			}
-		}
-		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
-					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
-		}
+		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
 		try {
 			jvmChanged = configureVM();
