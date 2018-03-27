@@ -76,7 +76,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
 		//TODO collect dependent projects and update them as well? i.e in case a parent project was modified
 		MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
-		this.configurationManager.updateProjectConfiguration(request, monitor);
+		configurationManager.updateProjectConfiguration(request, monitor);
 	}
 
 	private boolean needsMavenUpdate(IProject project) {
