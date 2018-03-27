@@ -456,7 +456,6 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	public List<FileSystemWatcher> registerWatchers() {
-		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> sources = new HashSet<>();
 			try {
@@ -494,6 +493,7 @@ public class ProjectsManager implements ISaveParticipant {
 				fileWatchers.add(watcher);
 			}
 			if (!sources.equals(watchers)) {
+				logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);
 				JavaLanguageServerPlugin.getInstance().unregisterCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES);
 				JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES, didChangeWatchedFilesRegistrationOptions);
