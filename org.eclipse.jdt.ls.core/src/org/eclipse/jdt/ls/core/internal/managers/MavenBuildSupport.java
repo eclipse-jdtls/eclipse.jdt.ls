@@ -90,7 +90,7 @@ public class MavenBuildSupport implements IBuildSupport {
 			String newDigestStr = Arrays.toString(digest);
 			synchronized (pomDigests) {
 				String prevDigest = pomDigests.put(path.toString(), newDigestStr);
-				if (prevDigest == null || !prevDigest.equals(newDigestStr)) {
+				if (!newDigestStr.equals(prevDigest)) {
 					serializePomDigests();
 					return true;
 				}
