@@ -26,7 +26,6 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -40,30 +39,28 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
  *
  */
 public class MavenBuildSupport implements IBuildSupport {
+	private Map<String, String> pomDigests;
 
 	private static final String POM_SERLIZATION_FILE_NAME = ".pom-digests";
 
-	private static final File SERIALIZATION_FILE;
-	private static Map<String, String> pomDigests;
-
-	static {
-		File workspaceFile = ResourcesPlugin.getWorkspace().getRoot().getRawLocation().makeAbsolute().toFile();
-		SERIALIZATION_FILE = new File(workspaceFile, POM_SERLIZATION_FILE_NAME);
-		if (SERIALIZATION_FILE.exists()) {
-			pomDigests = deserializePomDigests();
-		} else {
-			pomDigests = new HashMap<>();
-		}
-	}
-
 	private IProjectConfigurationManager configurationManager;
-
-	public MavenBuildSupport() {
-		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
-	}
 
 	public MavenBuildSupport(IProjectConfigurationManager configurationManager) {
 		this.configurationManager = configurationManager;
+		File f = getStateFile();
+		if (f.isFile()) {
+			pomDigests = deserializePomDigests(f);
+		} else {
+			pomDigests = new HashMap<>();
+		}
+
+	}
+
+	/**
+	 * @return
+	 */
+	private File getStateFile() {
+		return JavaLanguageServerPlugin.getInstance().getStateLocation().append(POM_SERLIZATION_FILE_NAME).toFile();
 	}
 
 	@Override
@@ -91,7 +88,7 @@ public class MavenBuildSupport implements IBuildSupport {
 			synchronized (pomDigests) {
 				String prevDigest = pomDigests.put(path.toString(), newDigestStr);
 				if (!newDigestStr.equals(prevDigest)) {
-					serializePomDigests();
+					serializePomDigests(getStateFile());
 					return true;
 				}
 				return false;
@@ -101,8 +98,8 @@ public class MavenBuildSupport implements IBuildSupport {
 		}
 	}
 
-	private void serializePomDigests() {
-		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE))) {
+	private void serializePomDigests(File f) {
+		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(f))) {
 			outStream.writeObject(pomDigests);
 		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException("Exception occured while serizalizion of pom digests", e);
@@ -110,15 +107,13 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, String> deserializePomDigests() {
-		Map<String, String> resultObject = null;
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(SERIALIZATION_FILE))) {
-			resultObject = (Map<String, String>) ois.readObject();
+	private static Map<String, String> deserializePomDigests(File f) {
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
+			return (Map<String, String>) ois.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			resultObject = new HashMap<>();
 			JavaLanguageServerPlugin.logException("Exception occured while deserizalizion of pom digests", e);
+			return new HashMap<>();
 		}
-		return resultObject;
 	}
 
 

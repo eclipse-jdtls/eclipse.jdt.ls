@@ -223,7 +223,7 @@ public class ProjectsManager implements ISaveParticipant {
 				FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 				switch (status) {
 					case automatic:
-						// do not force the build, because it's not started by user and should be done only if pom.xml has changed
+						// do not force the build, because it's not started by user and should be done only if build file has changed
 						updateProject(resource.getProject(), false);
 						break;
 					case disabled:

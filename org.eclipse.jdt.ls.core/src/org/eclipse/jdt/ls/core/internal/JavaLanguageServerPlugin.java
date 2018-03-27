@@ -34,6 +34,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
@@ -45,13 +46,11 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.util.tracker.ServiceTracker;
 
-public class JavaLanguageServerPlugin implements BundleActivator {
+public class JavaLanguageServerPlugin extends Plugin {
 
 	public static final String MANUAL = "Manual";
 	public static final String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
@@ -104,7 +103,8 @@ public class JavaLanguageServerPlugin implements BundleActivator {
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
-	public void start(BundleContext bundleContext) throws BackingStoreException {
+	public void start(BundleContext bundleContext) throws Exception {
+		super.start(bundleContext);
 		try {
 			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
 		} catch (BundleException e) {
