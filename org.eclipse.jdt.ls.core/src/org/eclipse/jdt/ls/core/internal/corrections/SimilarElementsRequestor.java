@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,10 +14,13 @@ package org.eclipse.jdt.ls.core.internal.corrections;
 
 import java.util.HashSet;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
@@ -28,8 +31,6 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-
-
 
 public class SimilarElementsRequestor extends CompletionRequestor {
 
@@ -50,6 +51,30 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 	private String fName;
 
 	private HashSet<SimilarElement> fResult;
+	private boolean fExcludeTestCode;
+
+	private static boolean isTestSource(ICompilationUnit cu) {
+		try {
+			IJavaProject javaProject = cu.getJavaProject();
+			if (javaProject == null) {
+				return false;
+			}
+			IClasspathEntry[] resolvedClasspath = javaProject.getResolvedClasspath(true);
+			final IPath resourcePath = cu.getResource().getFullPath();
+			for (IClasspathEntry e : resolvedClasspath) {
+				if (e.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+					if (e.isTest()) {
+						if (e.getPath().isPrefixOf(resourcePath)) {
+							return true;
+						}
+					}
+				}
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+		return false;
+	}
 
 	public static SimilarElement[] findSimilarElement(ICompilationUnit cu, Name name, int kind) throws JavaModelException {
 		int pos= name.getStartPosition();
@@ -71,13 +96,15 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 				cu= preparedCU;
 			}
 
-			SimilarElementsRequestor requestor= new SimilarElementsRequestor(identifier, kind, nArguments, returnType);
+			SimilarElementsRequestor requestor = new SimilarElementsRequestor(identifier, kind, nArguments, returnType, !isTestSource(cu));
 			requestor.setIgnored(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, true);
 			requestor.setIgnored(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, true);
 			requestor.setIgnored(CompletionProposal.KEYWORD, true);
 			requestor.setIgnored(CompletionProposal.LABEL_REF, true);
 			requestor.setIgnored(CompletionProposal.METHOD_DECLARATION, true);
 			requestor.setIgnored(CompletionProposal.PACKAGE_REF, true);
+			requestor.setIgnored(CompletionProposal.MODULE_REF, true);
+			requestor.setIgnored(CompletionProposal.MODULE_DECLARATION, true);
 			requestor.setIgnored(CompletionProposal.VARIABLE_DECLARATION, true);
 			requestor.setIgnored(CompletionProposal.METHOD_REF, true);
 			requestor.setIgnored(CompletionProposal.CONSTRUCTOR_INVOCATION, true);
@@ -122,15 +149,23 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 
 	/**
 	 * Constructor for SimilarElementsRequestor.
-	 * @param name the name
-	 * @param kind the type kind
-	 * @param nArguments the number of arguments
-	 * @param preferredType the preferred type
+	 *
+	 * @param name
+	 *                            the name
+	 * @param kind
+	 *                            the type kind
+	 * @param nArguments
+	 *                            the number of arguments
+	 * @param preferredType
+	 *                            the preferred type
+	 * @param excludeTestCode
+	 *                            if true, exclude results in test code
 	 */
-	private SimilarElementsRequestor(String name, int kind, int nArguments, String preferredType) {
+	private SimilarElementsRequestor(String name, int kind, int nArguments, String preferredType, boolean excludeTestCode) {
 		super();
 		fName= name;
 		fKind= kind;
+		fExcludeTestCode = excludeTestCode;
 
 		fResult= new HashSet<>();
 		// nArguments and preferredType not yet used
@@ -196,6 +231,9 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 			return;
 		}
 		String fullName= new String(Signature.toCharArray(Signature.getTypeErasure(typeNameSig)));
+		//		if (TypeFilter.isFiltered(fullName)) {  // requires jdt.ui preferences
+		//			return;
+		//		}
 		if (NameMatcher.isSimilarName(fName, Signature.getSimpleName(fullName))) {
 			addResult(new SimilarElement(kind, fullName, relevance));
 		}
@@ -208,7 +246,6 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 			addType(proposal.getSignature(), proposal.getFlags(), proposal.getRelevance());
 		}
 	}
-
 
 	public static String[] getStaticImportFavorites(ICompilationUnit cu, final String elementName, boolean isMethod, String[] favorites) throws JavaModelException {
 		StringBuffer dummyCU= new StringBuffer();
@@ -266,5 +303,8 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 		}
 	}
 
-
+	@Override
+	public boolean isTestCodeExcluded() {
+		return fExcludeTestCode;
+	}
 }

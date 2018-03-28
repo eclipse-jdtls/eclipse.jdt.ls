@@ -17,11 +17,14 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1377,4 +1380,28 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		assertCodeActionExists(cu, e1);
 	}
+
+	@Test
+	public void testDontImportTestClassesInMainCode() throws Exception {
+		IPackageFragmentRoot testSourceFolder = JavaProjectHelper.addSourceContainer(fJProject1, "src-tests", new Path[0], new Path[0], "bin-tests",
+				new IClasspathAttribute[] { JavaCore.newClasspathAttribute(IClasspathAttribute.TEST, "true") });
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pp", false, null);
+		StringBuilder buf1 = new StringBuilder();
+		buf1.append("package pp;\n");
+		buf1.append("public class C1 {\n");
+		buf1.append("    Tests at=new Tests();\n");
+		buf1.append("}\n");
+		ICompilationUnit cu1 = pack1.createCompilationUnit("C1.java", buf1.toString(), false, null);
+
+		IPackageFragment pack2 = testSourceFolder.createPackageFragment("pt", false, null);
+		StringBuilder buf2 = new StringBuilder();
+		buf2.append("package pt;\n");
+		buf2.append("public class Tests {\n");
+		buf2.append("}\n");
+		pack2.createCompilationUnit("Tests.java", buf2.toString(), false, null);
+
+		assertCodeActionNotExists(cu1, "Import 'Tests' (pt)");
+	}
+
 }

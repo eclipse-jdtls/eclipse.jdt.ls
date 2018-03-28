@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
@@ -63,6 +64,11 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			res += command.getTitle();
 		}
 		assertEquals("Not found.", expected.name, res);
+	}
+
+	protected void assertCodeActionNotExists(ICompilationUnit cu, String label) throws Exception {
+		List<Command> codeActionCommands = evaluateCodeActions(cu);
+		assertFalse("'" + label + "' should not be added to the code actions", codeActionCommands.stream().filter(ca -> ca.getTitle().equals(label)).findAny().isPresent());
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Collection<Expected> expected) throws Exception {
