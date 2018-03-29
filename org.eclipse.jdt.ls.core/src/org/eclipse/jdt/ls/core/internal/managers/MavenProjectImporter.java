@@ -188,9 +188,9 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					if (monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					// maven update should not be forced here, because it's a new project, just imported into workspace and
-					// will be run automatically, because pom.xml-s have just appeared
-					new MavenBuildSupport(configurationManager).update(project, monitor);
+
+					// it's a new project, we know we'll need to update it.
+					new MavenBuildSupport(configurationManager).update(project, true, monitor);
 				}
 				return Status.OK_STATUS;
 			}
