@@ -41,7 +41,7 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
 public class MavenBuildSupport implements IBuildSupport {
 	private Map<String, String> pomDigests;
 
-	private static final String POM_SERLIZATION_FILE_NAME = ".pom-digests";
+	private static final String POM_SERIALIZATION_FILE_NAME = ".pom-digests";
 
 	private IProjectConfigurationManager configurationManager;
 
@@ -60,7 +60,7 @@ public class MavenBuildSupport implements IBuildSupport {
 	 * @return
 	 */
 	private File getStateFile() {
-		return JavaLanguageServerPlugin.getInstance().getStateLocation().append(POM_SERLIZATION_FILE_NAME).toFile();
+		return JavaLanguageServerPlugin.getInstance().getStateLocation().append(POM_SERIALIZATION_FILE_NAME).toFile();
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(f))) {
 			outStream.writeObject(pomDigests);
 		} catch (IOException e) {
-			JavaLanguageServerPlugin.logException("Exception occured while serizalizion of pom digests", e);
+			JavaLanguageServerPlugin.logException("Exception occured while serialization of pom digests", e);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
 			return (Map<String, String>) ois.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			JavaLanguageServerPlugin.logException("Exception occured while deserizalizion of pom digests", e);
+			JavaLanguageServerPlugin.logException("Exception occured while deserialization of pom digests", e);
 			return new HashMap<>();
 		}
 	}
