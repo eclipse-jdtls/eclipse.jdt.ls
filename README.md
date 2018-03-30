@@ -7,7 +7,7 @@ The Eclipse JDT Language Server is a Java language specific implementation of th
 and can be used with any editor that supports the protocol, to offer good support for the Java Language. The server is based on:
 
 * [Eclipse LSP4J](https://github.com/eclipse/lsp4j), the Java binding for the Language Server Protocol,
-* [Eclipse JDT](http://www.eclipse.org/jdt/), which provides Java support (code completion, references, diagnostics...), 
+* [Eclipse JDT](http://www.eclipse.org/jdt/), which provides Java support (code completion, references, diagnostics...),
 * [M2Eclipse](http://www.eclipse.org/m2e/) which provides Maven support,
 * [Buildship](https://github.com/eclipse/buildship) which provides Gradle support.
 
@@ -42,13 +42,13 @@ detect the projects and import it properly.
 3. If, after importing the projects, you see an error on `pom.xml` about Tycho, you can use Quick Fix
 (Ctrl+1) to install the Tycho maven integration.
 
-4. At that point, some plug-ins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all the required dependencies. It should then be able to compile all the projects in the workspace. 
+4. At that point, some plug-ins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all the required dependencies. It should then be able to compile all the projects in the workspace.
 
 Building from the command line
 ----------------------------
 
 The following command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
-```bash    
+```bash
     $ ./mvnw clean verify
 ````
 Note: currently, the build can only run when launched with JDK 8. JDK 9 can be used to run the server though.
@@ -66,11 +66,11 @@ Running from the command line
 
 5. To start the server in the active terminal, run:
 ```bash
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.protocol=true -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data
 ```
 When running with JDK9, you need to start the server with some extra parameters:
 ```
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.protocol=true -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar -configuration ./config_linux -data /path/to/data --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED
 ```
 
 6. Choosing a value for `-configuration`: this is the path to your platform's configuration directory. For linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
@@ -84,17 +84,17 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declips
 Managing connection types
 -------------------------
 The Java Language server supports sockets, named pipes, and standard streams of the server process
-to communicate with the client. Client can communicate its preferred connection methods 
+to communicate with the client. Client can communicate its preferred connection methods
 by setting up environment variables.
 
 * To use a **plain socket**, set the following environment variables before starting the server:
    * `CLIENT_PORT`: the port of the socket to connect to
    * `CLIENT_HOST`: the host name to connect to. If not set, defaults to `localhost`.
-   
+
    The connection will be used for in and output.
-   
-* To use standard streams(stdin, stdout) of the server process do not set any 
-of the above environment variables and the server will fall back to standard streams. 
+
+* To use standard streams(stdin, stdout) of the server process do not set any
+of the above environment variables and the server will fall back to standard streams.
 
 For socket and named pipes, the client is expected to create the connections
 and wait for the server to connect.
