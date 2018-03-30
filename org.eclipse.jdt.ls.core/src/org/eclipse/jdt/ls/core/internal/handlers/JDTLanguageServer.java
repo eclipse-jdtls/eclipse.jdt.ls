@@ -167,25 +167,25 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> initialized");
 		JobHelpers.waitForInitializeJobs();
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
+			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
 		}
 		if (preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
+			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
+			registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
 		}
 		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
+			registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
 		}
 		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
+			registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
 		}
 		if (preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.REFERENCES_ID, Preferences.REFERENCES);
+			registerCapability(Preferences.REFERENCES_ID, Preferences.REFERENCES);
 		}
 		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
-			JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
+			registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
 		}
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
