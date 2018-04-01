@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.commands.ClasspathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.lsp4j.WorkspaceEdit;
 
@@ -40,6 +41,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						// workspaceEdit on the custom command.
 						return result;
 					}
+				case "java.classpath.getChildren":
+					return ClasspathCommand.getChildren(arguments, monitor);
 				default:
 					break;
 			}

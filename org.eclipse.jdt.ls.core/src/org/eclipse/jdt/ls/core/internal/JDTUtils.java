@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.ITypeParameter;
@@ -64,6 +65,7 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.core.JarEntryFile;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -94,6 +96,7 @@ public final class JDTUtils {
 	public static final String PERIOD = ".";
 	public static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
+	private static final String CONTENTS_AUTHORITY = "contents";
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
@@ -295,7 +298,7 @@ public final class JDTUtils {
 	 * @return class file
 	 */
 	public static IClassFile resolveClassFile(URI uri){
-		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
+		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && CONTENTS_AUTHORITY.equals(uri.getAuthority())) {
 			String handleId = uri.getQuery();
 			IJavaElement element = JavaCore.create(handleId);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
@@ -423,13 +426,22 @@ public final class JDTUtils {
 	public static String toUri(IClassFile classFile) {
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
-		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			return new URI(JDT_SCHEME, CONTENTS_AUTHORITY, PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
+			return null;
 		}
-		return uriString;
+	}
+
+	public static String toUri(JarEntryFile jarEntryFile) {
+		IPackageFragmentRoot fragmentRoot = jarEntryFile.getPackageFragmentRoot();
+		try {
+			return new URI(JDT_SCHEME, CONTENTS_AUTHORITY, jarEntryFile.getFullPath().toPortableString(), fragmentRoot.getHandleIdentifier(), null).toASCIIString();
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException("Error generating URI for jarentryfile ", e);
+			return null;
+		}
 	}
 
 	public static String toUri(ITypeRoot typeRoot) {
