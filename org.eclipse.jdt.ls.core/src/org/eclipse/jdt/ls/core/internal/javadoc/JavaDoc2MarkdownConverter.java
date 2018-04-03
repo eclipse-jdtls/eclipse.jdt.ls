@@ -38,7 +38,6 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 		options.autoLinks = true;
 		options.reverseHtmlSmartPunctuation = true;
 		remark = new Remark(options);
-
 		//Stop remark from stripping file and jdt protocols in an href
 		try {
 			Field cleanerField = Remark.class.getDeclaredField("cleaner");
@@ -52,7 +51,6 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 			Whitelist w = (Whitelist) whitelistField.get(c);
 
 			w.addProtocols("a", "href", "file", "jdt");
-			whitelistField.set(whitelistField.get(c), w);
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			JavaLanguageServerPlugin.logException("Unable to modify jsoup to include file and jdt protocols", e);
 		}
