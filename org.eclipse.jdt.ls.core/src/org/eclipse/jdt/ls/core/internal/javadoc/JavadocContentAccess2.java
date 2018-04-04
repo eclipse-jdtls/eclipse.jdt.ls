@@ -1802,6 +1802,7 @@ public class JavadocContentAccess2 {
 			fBuf.append(BlOCK_TAG_ENTRY_END);
 			fBuf.append(BLOCK_TAG_END);
 		}
+		fBuf.append(BlOCK_TAG_ENTRY_END);
 	}
 
 	private void handleReturnTag(TagElement tag, CharSequence returnDescription) {
@@ -1827,11 +1828,15 @@ public class JavadocContentAccess2 {
 		for (Iterator<TagElement> iter = tags.iterator(); iter.hasNext();) {
 			TagElement tag = iter.next();
 			handleBlockTagTitle(tag.getTagName());
-			fBuf.append(BlOCK_TAG_ENTRY_START);
-			fBuf.append(BLOCK_TAG_START);
-			handleContentElements(tag.fragments());
+			List fragments = tag.fragments();
+			if (!fragments.isEmpty()) {
+				fBuf.append(BLOCK_TAG_START);
+				fBuf.append(BlOCK_TAG_ENTRY_START);
+				handleContentElements(fragments);
+				fBuf.append(BlOCK_TAG_ENTRY_END);
+				fBuf.append(BLOCK_TAG_END);
+			}
 			fBuf.append(BlOCK_TAG_ENTRY_END);
-			fBuf.append(BLOCK_TAG_END);
 		}
 	}
 
