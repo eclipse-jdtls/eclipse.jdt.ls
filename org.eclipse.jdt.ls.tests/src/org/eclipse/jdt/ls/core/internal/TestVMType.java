@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -106,10 +107,25 @@ public class TestVMType extends AbstractVMInstallType {
 
 class TestVMInstall extends AbstractVMInstall {
 
+	private URL javadoc;
+	
 	public TestVMInstall(IVMInstallType type, String id) {
 		super(type, id);
 		setNotify(false);
 		setInstallLocation(new File(TestVMType.getFakeJDKsLocation(), id));
+		try {
+			javadoc = new URL("https://docs.oracle.com/javase/" + id.replace("1.", "") + "/docs/api/");
+		} catch (MalformedURLException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.launching.AbstractVMInstall#getJavadocLocation()
+	 */
+	@Override
+	public URL getJavadocLocation() {
+		return javadoc;
 	}
 
 	@Override

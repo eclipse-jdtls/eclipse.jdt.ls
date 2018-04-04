@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -114,7 +115,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testHoverStandalone() throws Exception {
 		//given
 		//Hovers on the System.out
-		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
+		URI standalone = Paths.get("projects", "maven", "salut", "src", "main", "java", "java", "Foo.java").toUri();
 		String payload = createHoverRequest(standalone, 10, 71);
 		TextDocumentPositionParams position = getParams(payload);
 
@@ -128,7 +129,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
 		assertEquals("Unexpected hover " + signature, "java.Foo", signature.getValue());
 		String doc = hover.getContents().get(1).getLeft();
-		assertEquals("Unexpected hover "+doc, "This is foo", doc);
+		assertEquals("Unexpected hover " + doc, "This is foo", doc);
 	}
 
 	@Test
@@ -153,7 +154,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testEmptyHover() throws Exception {
 		//given
 		//Hovers on the System.out
-		URI standalone = Paths.get("projects","maven","salut","src","main","java","java","Foo.java").toUri();
+		URI standalone = Paths.get("projects", "maven", "salut", "src", "main", "java", "java", "Foo.java").toUri();
 		String payload = createHoverRequest(standalone, 1, 2);
 		TextDocumentPositionParams position = getParams(payload);
 
@@ -444,7 +445,6 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
 	}
 
-
 	@Test
 	public void testHoverJavadocWithExtraTags() throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
@@ -478,6 +478,26 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				" *  **@moduleGraph**";
 		//@formatter:on
 		assertEquals("Unexpected hover ", expectedJavadoc, hover.getContents().get(1).getLeft());
+	}
+
+	@Test
+	public void testHoverOnPackageWithNewJavadoc() throws Exception {
+		importProjects("eclipse/java9");
+		project = WorkspaceHelper.getProject("java9");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		//Hovers on the java.sql import
+		String payload = createHoverRequest("src/main/java/foo/bar/MyDriverAction.java", 2, 14);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		String javadoc = hover.getContents().get(1).getLeft();
+		//Javadoc was read from https://docs.oracle.com/javase/9/docs/api/java/sql/package-summary.html
+		assertTrue(javadoc.contains("JDBC™ API Tutorial and Reference, Third Edition"));
+		assertFalse(javadoc.contains("----"));//no table nonsense
+
 	}
 
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {

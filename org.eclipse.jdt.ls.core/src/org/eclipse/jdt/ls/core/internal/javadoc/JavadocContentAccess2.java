@@ -106,6 +106,8 @@ import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
  */
 public class JavadocContentAccess2 {
 
+	private static final String UL_CLASS_BLOCK_LIST = "<ul class=\"blockList\">";
+
 	private static final String BASE_URL_COMMENT_INTRO = "<!-- baseURL=\""; //$NON-NLS-1$
 
 	private static final String BLOCK_TAG_START = "<ul>"; //$NON-NLS-1$
@@ -131,6 +133,8 @@ public class JavadocContentAccess2 {
 	private static final String JavaDoc2HTMLTextReader_version_section = "Version:";
 	private static final String JavadocContentAccess2_getproperty_message = "<p>Gets the value ofthe property{0}.</p><dl><dt>Property Description:</dt><dd>{1}</dd></dl>";
 	private static final String JavadocContentAccess2_setproperty_message = "<p>Sets the value ofthe property {0}.</p><dl><dt>Property Description:</dt><dd>{1}</dd></dl>";
+
+	private static final String CONTENT_CONTAINER = "<div class=\"contentContainer\">";
 
 	/**
 	 * Implements the "Algorithm for Inheriting Method Comments" as specified for
@@ -2123,6 +2127,27 @@ public class JavadocContentAccess2 {
 	 * @since 3.9
 	 */
 	public static String getHTMLContent(IPackageFragment packageFragment) throws CoreException {
+		String content = readHTMLContent(packageFragment);
+		return sanitizePackageJavadoc(content);
+	}
+
+	private static String sanitizePackageJavadoc(String content) {
+		if (content == null || content.isEmpty()) {
+			return content;
+		}
+		//Since Java 9, Javadoc format has changed and the JDT parsing in org.eclipse.jdt.internal.core.JavadocContent hasn't really caught up
+		//so we need to manually remove the list of classes away from the actual package Javadoc, similar to Java < 9.
+		//This is a simple, suboptimal but temporary (AHAHAH!) hack until JavadocContent fixes its parsing.
+		if (content.indexOf(CONTENT_CONTAINER) == 0) {
+			int nextListIndex = content.indexOf(UL_CLASS_BLOCK_LIST);
+			if (nextListIndex > 0) {
+				content = content.substring(CONTENT_CONTAINER.length(), nextListIndex);
+			}
+		}
+		return content;
+	}
+
+	private static String readHTMLContent(IPackageFragment packageFragment) throws CoreException {
 		IPackageFragmentRoot root = (IPackageFragmentRoot) packageFragment.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
 
 		//1==> Handle the case when the documentation is present in package-info.java or package-info.class file
