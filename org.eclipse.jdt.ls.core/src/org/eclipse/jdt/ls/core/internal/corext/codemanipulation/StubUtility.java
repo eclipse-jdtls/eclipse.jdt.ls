@@ -17,6 +17,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +88,9 @@ import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.jface.text.templates.TemplateVariable;
+import org.eclipse.text.edits.DeleteEdit;
+import org.eclipse.text.edits.MalformedTreeException;
+import org.eclipse.text.edits.MultiTextEdit;
 
 /**
  * Implementations for {@link CodeGeneration} APIs, and other helper methods to
@@ -107,25 +111,27 @@ public class StubUtility {
 	//		VALID_TYPE_BODY_TEMPLATES.add(CodeTemplateContextType.ANNOTATIONBODY_ID);
 	//	}
 	//
-	//	/*
-	//	 * Don't use this method directly, use CodeGeneration.
-	//	 */
-	//	public static String getMethodBodyContent(boolean isConstructor, IJavaProject project, String destTypeName, String methodName, String bodyStatement, String lineDelimiter) throws CoreException {
-	//		String templateName= isConstructor ? CodeTemplateContextType.CONSTRUCTORSTUB_ID : CodeTemplateContextType.METHODSTUB_ID;
-	//		Template template= getCodeTemplate(templateName, project);
-	//		if (template == null) {
-	//			return bodyStatement;
-	//		}
-	//		CodeTemplateContext context= new CodeTemplateContext(template.getContextTypeId(), project, lineDelimiter);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, methodName);
-	//		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, destTypeName);
-	//		context.setVariable(CodeTemplateContextType.BODY_STATEMENT, bodyStatement);
-	//		String str= evaluateTemplate(context, template, new String[] { CodeTemplateContextType.BODY_STATEMENT });
-	//		if (str == null && !Strings.containsOnlyWhitespaces(bodyStatement)) {
-	//			return bodyStatement;
-	//		}
-	//		return str;
-	//	}
+	/*
+	 * Don't use this method directly, use CodeGeneration.
+	 */
+	public static String getMethodBodyContent(boolean isConstructor, IJavaProject project, String destTypeName, String methodName, String bodyStatement, String lineDelimiter) throws CoreException {
+		//String templateName = isConstructor ? CodeTemplateContextType.CONSTRUCTORSTUB_ID : CodeTemplateContextType.METHODSTUB_ID;
+		//Template template = getCodeTemplate(templateName, project);
+		CodeGenerationTemplate templateSetting = isConstructor ? CodeGenerationTemplate.CONSTRUCTORBODY : CodeGenerationTemplate.METHODBODY;
+		Template template = templateSetting.createTemplate(project);
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), project, lineDelimiter);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_METHOD, methodName);
+		context.setVariable(CodeTemplateContextType.ENCLOSING_TYPE, destTypeName);
+		context.setVariable(CodeTemplateContextType.BODY_STATEMENT, bodyStatement);
+		String str = evaluateTemplate(context, template, new String[] { CodeTemplateContextType.BODY_STATEMENT });
+		if (str == null && !Strings.containsOnlyWhitespaces(bodyStatement)) {
+			return bodyStatement;
+		}
+		return str;
+	}
 
 	/*
 	 * Don't use this method directly, use CodeGeneration.
@@ -478,34 +484,33 @@ public class StubUtility {
 		}
 		return document.get();
 	}
-	//
-	//	// remove lines for empty variables
-	//	private static String fixEmptyVariables(TemplateBuffer buffer, String[] variables) throws MalformedTreeException, BadLocationException {
-	//		IDocument doc= new Document(buffer.getString());
-	//		int nLines= doc.getNumberOfLines();
-	//		MultiTextEdit edit= new MultiTextEdit();
-	//		HashSet<Integer> removedLines= new HashSet<>();
-	//		for (int i= 0; i < variables.length; i++) {
-	//			TemplateVariable position= findVariable(buffer, variables[i]); // look if Javadoc tags have to be added
-	//			if (position == null || position.getLength() > 0) {
-	//				continue;
-	//			}
-	//			int[] offsets= position.getOffsets();
-	//			for (int k= 0; k < offsets.length; k++) {
-	//				int line= doc.getLineOfOffset(offsets[k]);
-	//				IRegion lineInfo= doc.getLineInformation(line);
-	//				int offset= lineInfo.getOffset();
-	//				String str= doc.get(offset, lineInfo.getLength());
-	//				if (Strings.containsOnlyWhitespaces(str) && nLines > line + 1 && removedLines.add(new Integer(line))) {
-	//					int nextStart= doc.getLineOffset(line + 1);
-	//					edit.addChild(new DeleteEdit(offset, nextStart - offset));
-	//				}
-	//			}
-	//		}
-	//		edit.apply(doc, 0);
-	//		return doc.get();
-	//	}
-	//
+
+	// remove lines for empty variables
+	private static String fixEmptyVariables(TemplateBuffer buffer, String[] variables) throws MalformedTreeException, BadLocationException {
+		IDocument doc = new Document(buffer.getString());
+		int nLines = doc.getNumberOfLines();
+		MultiTextEdit edit = new MultiTextEdit();
+		HashSet<Integer> removedLines = new HashSet<>();
+		for (int i = 0; i < variables.length; i++) {
+			TemplateVariable position = findVariable(buffer, variables[i]); // look if Javadoc tags have to be added
+			if (position == null || position.getLength() > 0) {
+				continue;
+			}
+			int[] offsets = position.getOffsets();
+			for (int k = 0; k < offsets.length; k++) {
+				int line = doc.getLineOfOffset(offsets[k]);
+				IRegion lineInfo = doc.getLineInformation(line);
+				int offset = lineInfo.getOffset();
+				String str = doc.get(offset, lineInfo.getLength());
+				if (Strings.containsOnlyWhitespaces(str) && nLines > line + 1 && removedLines.add(Integer.valueOf(line))) {
+					int nextStart = doc.getLineOffset(line + 1);
+					edit.addChild(new DeleteEdit(offset, nextStart - offset));
+				}
+			}
+		}
+		edit.apply(doc, 0);
+		return doc.get();
+	}
 	/*
 	 * Don't use this method directly, use CodeGeneration.
 	 */
@@ -585,26 +590,25 @@ public class StubUtility {
 		}
 		return str;
 	}
-	//
-	//	private static String evaluateTemplate(CodeTemplateContext context, Template template, String[] fullLineVariables) throws CoreException {
-	//		TemplateBuffer buffer;
-	//		try {
-	//			buffer= context.evaluate(template);
-	//			if (buffer == null) {
-	//				return null;
-	//			}
-	//			String str= fixEmptyVariables(buffer, fullLineVariables);
-	//			if (Strings.containsOnlyWhitespaces(str)) {
-	//				return null;
-	//			}
-	//			return str;
-	//		} catch (BadLocationException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		} catch (TemplateException e) {
-	//			throw new CoreException(Status.CANCEL_STATUS);
-	//		}
-	//	}
-	//
+
+	private static String evaluateTemplate(CodeTemplateContext context, Template template, String[] fullLineVariables) throws CoreException {
+		TemplateBuffer buffer;
+		try {
+			buffer = context.evaluate(template);
+			if (buffer == null) {
+				return null;
+			}
+			String str = fixEmptyVariables(buffer, fullLineVariables);
+			if (Strings.containsOnlyWhitespaces(str)) {
+				return null;
+			}
+			return str;
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+	}
 
 	/*
 	 * Don't use this method directly, use CodeGeneration.

@@ -37,6 +37,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSu
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 
 /**
  */
@@ -264,17 +265,15 @@ public class QuickFixProcessor {
 			// problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE,
 			// IProposalRelevance.CHANGE_VISIBILITY);
 			// break;
-			// case IProblem.BodyForAbstractMethod:
-			// case IProblem.AbstractMethodInAbstractClass:
-			// case IProblem.AbstractMethodInEnum:
-			// case IProblem.EnumAbstractMethodMustBeImplemented:
-			// ModifierCorrectionSubProcessor.addAbstractMethodProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.AbstractMethodsInConcreteClass:
-			// ModifierCorrectionSubProcessor.addAbstractTypeProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.BodyForAbstractMethod:
+			case IProblem.AbstractMethodInAbstractClass:
+			case IProblem.AbstractMethodInEnum:
+			case IProblem.EnumAbstractMethodMustBeImplemented:
+				ModifierCorrectionSubProcessor.addAbstractMethodProposals(context, problem, proposals);
+				break;
+			case IProblem.AbstractMethodsInConcreteClass:
+				ModifierCorrectionSubProcessor.addAbstractTypeProposals(context, problem, proposals);
+				break;
 			case IProblem.AbstractMethodMustBeImplemented:
 			case IProblem.EnumConstantMustImplementAbstractMethod:
 				LocalCorrectionsSubProcessor.addUnimplementedMethodsProposals(context, problem, proposals);
