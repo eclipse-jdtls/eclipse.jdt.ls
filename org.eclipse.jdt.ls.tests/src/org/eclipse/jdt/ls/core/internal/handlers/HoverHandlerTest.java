@@ -444,10 +444,42 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
 	}
 
-	/**
-	 * @param cu
-	 * @return
-	 */
+
+	@Test
+	public void testHoverJavadocWithExtraTags() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test1;\n");
+		buf.append("/**\n" +
+				" * Some text.\n" +
+				" *\n" +
+				" * @uses java.sql.Driver\n" +
+				" *\n" +
+				" * @moduleGraph\n" +
+				" * @since 9\n" +
+				" */\n");
+		buf.append("public class Meh {}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 9, 15);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().size());
+
+		//@formatter:off
+		String expectedJavadoc = "Some text.\n" +
+				"\n" +
+				" *  **Since:**\n" +
+				"    \n" +
+				"     *  9\n" +
+				" *  **@uses**\n" +
+				"    \n" +
+				"     *  java.sql.Driver\n" +
+				" *  **@moduleGraph**";
+		//@formatter:on
+		assertEquals("Unexpected hover ", expectedJavadoc, hover.getContents().get(1).getLeft());
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);
