@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
+import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.SourceRangeFactory;
@@ -46,7 +47,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArgume
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;

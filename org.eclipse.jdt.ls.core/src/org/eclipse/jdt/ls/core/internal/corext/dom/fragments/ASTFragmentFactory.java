@@ -21,8 +21,8 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
-import org.eclipse.jdt.ls.core.internal.corext.dom.SelectionAnalyzer;
+import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
 
 /**
  * Creates various differing kinds of IASTFragments, all through a very narrow

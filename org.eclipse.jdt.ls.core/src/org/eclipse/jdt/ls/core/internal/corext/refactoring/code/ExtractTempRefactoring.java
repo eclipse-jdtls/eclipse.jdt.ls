@@ -101,6 +101,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -117,7 +118,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.JDTRefactoringDescrip
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
@@ -553,7 +553,7 @@ public class ExtractTempRefactoring extends Refactoring {
 		final String header = Messages.format(RefactoringCoreMessages.ExtractTempRefactoring_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fTempName), BasicElementLabels.getJavaCodeString(expression) });
 		final JDTRefactoringDescriptorComment comment = new JDTRefactoringDescriptorComment(project, this, header);
 		comment.addSetting(Messages.format(RefactoringCoreMessages.ExtractTempRefactoring_name_pattern, BasicElementLabels.getJavaElementName(fTempName)));
-		final BodyDeclaration decl = (BodyDeclaration) ASTNodes.getParent(fSelectedExpression.getAssociatedExpression(), BodyDeclaration.class);
+		final BodyDeclaration decl = ASTNodes.getParent(fSelectedExpression.getAssociatedExpression(), BodyDeclaration.class);
 		if (decl instanceof MethodDeclaration) {
 			final IMethodBinding method = ((MethodDeclaration) decl).resolveBinding();
 			final String label = method != null ? BindingLabelProvider.getBindingLabel(method, JavaElementLabels.ALL_FULLY_QUALIFIED) : BasicElementLabels.getJavaElementName('{' + JavaElementLabels.ELLIPSIS_STRING + '}');

@@ -50,8 +50,8 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
-import org.eclipse.jdt.ls.core.internal.corext.dom.SelectionAnalyzer;
+import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 
 /**
