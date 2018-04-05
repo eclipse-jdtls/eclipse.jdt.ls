@@ -30,7 +30,7 @@ import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jface.text.IRegion;
 
 public class InputFlowAnalyzer extends FlowAnalyzer {

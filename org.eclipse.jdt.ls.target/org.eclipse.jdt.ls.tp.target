@@ -23,14 +23,14 @@
             <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180606-2036/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180502-1828"/>
-            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.14.0.v20180512-1130"/>
-            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180518-2029"/>
-            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180515-1348"/>
-            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180518-2029"/>
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180611-0500"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180611-0826"/>
-            <repository location="http://download.eclipse.org/staging/photon/"/>
+            <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.6.0.v20180607-1330"/>
+            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.15.0.v20180607-1330"/>
+            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.100.v20180607-1243"/>
+            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.100.v20180607-1231"/>
+            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.15.0.v20180607-1330"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180607-2000"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.9.0.v20180607-2000"/>
+            <repository location="http://download.eclipse.org/eclipse/updates/4.9-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180425-1137"/>

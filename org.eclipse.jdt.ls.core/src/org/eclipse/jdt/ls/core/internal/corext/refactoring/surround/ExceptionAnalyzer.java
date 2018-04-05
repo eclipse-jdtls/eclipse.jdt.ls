@@ -37,7 +37,7 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.AbstractExceptionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 

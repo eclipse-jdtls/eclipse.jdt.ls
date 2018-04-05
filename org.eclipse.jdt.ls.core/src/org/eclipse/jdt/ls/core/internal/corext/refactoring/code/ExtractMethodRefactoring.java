@@ -95,6 +95,7 @@ import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -103,7 +104,6 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitive
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.BodyDeclarationRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
 import org.eclipse.jdt.ls.core.internal.corext.dom.StatementRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
@@ -1111,7 +1111,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		MethodDeclaration result = createNewMethodDeclaration();
 		result.setBody(createMethodBody(selectedNodes, substitute, result.getModifiers()));
 		if (fGenerateJavadoc) {
-			AbstractTypeDeclaration enclosingType = (AbstractTypeDeclaration) ASTNodes.getParent(fAnalyzer.getEnclosingBodyDeclaration(), AbstractTypeDeclaration.class);
+			AbstractTypeDeclaration enclosingType = ASTNodes.getParent(fAnalyzer.getEnclosingBodyDeclaration(), AbstractTypeDeclaration.class);
 			String string = CodeGeneration.getMethodComment(fCUnit, enclosingType.getName().getIdentifier(), result, null, lineDelimiter);
 			if (string != null) {
 				Javadoc javadoc = (Javadoc) fRewriter.createStringPlaceholder(string, ASTNode.JAVADOC);

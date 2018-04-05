@@ -20,8 +20,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.ibm.icu.text.MessageFormat;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
@@ -79,24 +77,27 @@ import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
+import org.eclipse.jdt.internal.corext.refactoring.util.CodeAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LocalVariableIndex;
-import org.eclipse.jdt.ls.core.internal.corext.dom.Selection;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.FlowContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.FlowInfo;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InOutFlowAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InputFlowAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.CodeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+
+import com.ibm.icu.text.MessageFormat;
 
 /* package */ class ExtractMethodAnalyzer extends CodeAnalyzer {
 
@@ -599,7 +600,8 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		IVariableBinding[] returnValues = returnInfo.get(flowContext, FlowInfo.WRITE | FlowInfo.WRITE_POTENTIAL | FlowInfo.UNKNOWN);
 
 		// Compute a selection that exactly covers the selected nodes
-		Selection selection = getSelectedNodeRange();
+		IRegion region = getSelectedNodeRange();
+		Selection selection = Selection.createFromStartLength(region.getOffset(), region.getLength());
 
 		List<IVariableBinding> localReads = new ArrayList<>();
 		flowContext.setComputeMode(FlowContext.ARGUMENTS);
@@ -773,7 +775,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_invalid_selection);
 				break superCall;
 			}
-			fEnclosingBodyDeclaration = (BodyDeclaration) ASTNodes.getParent(getFirstSelectedNode(), BodyDeclaration.class);
+			fEnclosingBodyDeclaration = ASTNodes.getParent(getFirstSelectedNode(), BodyDeclaration.class);
 			if (fEnclosingBodyDeclaration == null
 					|| (fEnclosingBodyDeclaration.getNodeType() != ASTNode.METHOD_DECLARATION && fEnclosingBodyDeclaration.getNodeType() != ASTNode.FIELD_DECLARATION && fEnclosingBodyDeclaration.getNodeType() != ASTNode.INITIALIZER)) {
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_invalid_selection);
