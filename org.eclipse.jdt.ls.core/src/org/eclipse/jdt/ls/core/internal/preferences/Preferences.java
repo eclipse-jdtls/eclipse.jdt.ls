@@ -117,6 +117,16 @@ public class Preferences {
 	public static final List<String> JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 
 	/**
+	 * A named preference that controls if the Java code assist only inserts
+	 * completions. When set to true, code completion overwrites the current text.
+	 * When set to false, code is simply added instead.
+	 * <p>
+	 * Value is of type <code>Boolean</code>.
+	 * </p>
+	 */
+	public static final String JAVA_COMPLETION_OVERWRITE_KEY = "java.completion.overwrite";
+
+	/**
 	 * A named preference that defines how member elements are ordered by code
 	 * actions.
 	 * <p>
@@ -197,6 +207,7 @@ public class Preferences {
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
+	private boolean completionOverwrite;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
 
@@ -284,6 +295,7 @@ public class Preferences {
 		renameEnabled = true;
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
+		completionOverwrite = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
@@ -335,6 +347,9 @@ public class Preferences {
 
 		boolean autobuildEnable = getBoolean(configuration, AUTOBUILD_ENABLED_KEY, true);
 		prefs.setAutobuildEnabled(autobuildEnable);
+
+		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
+		prefs.setCompletionOverwrite(completionOverwrite);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -421,6 +436,11 @@ public class Preferences {
 
 	public Preferences setAutobuildEnabled(boolean enabled) {
 		this.autobuildEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setCompletionOverwrite(boolean completionOverwrite) {
+		this.completionOverwrite = completionOverwrite;
 		return this;
 	}
 
@@ -521,6 +541,10 @@ public class Preferences {
 
 	public boolean isAutobuildEnabled() {
 		return autobuildEnabled;
+	}
+
+	public boolean isCompletionOverwrite() {
+		return completionOverwrite;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

@@ -40,7 +40,9 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -1176,6 +1178,99 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
+	}
+
+	@Test
+	public void testCompletion_overwrite() throws Exception {
+		ICompilationUnit unit = getCompletionOverwriteReplaceUnit();
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "method(t.");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("testInt : int")).findFirst().orElse(null);
+		assertNotNull(ci);
+		assertEquals("testInt", ci.getInsertText());
+		assertEquals(CompletionItemKind.Field, ci.getKind());
+		assertEquals("999998554", ci.getSortText());
+		assertNull(ci.getTextEdit());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		List<TextEdit> edits = new ArrayList<>();
+		edits.add(resolvedItem.getTextEdit());
+		String returned = TextEditUtil.apply(unit, edits);
+		//@formatter:off
+			String expected =
+				"package foo.bar;\n\n" +
+				"public class BaseTest {\n" +
+				"    public int testInt;\n\n" +
+				"    public boolean method(int x, int y, int z) {\n" +
+				"        return true;\n" +
+				"    } \n\n" +
+				"    public void update() {\n" +
+				"        BaseTest t = new BaseTest();\n" +
+				"        t.method(t.testInt.testInt, this.testInt);\n" +
+				"    }\n" +
+				"}\n";
+		//@formatter:on
+		assertEquals(returned, expected);
+	}
+
+	@Test
+	public void testCompletion_insert() throws Exception {
+		ICompilationUnit unit = getCompletionOverwriteReplaceUnit();
+		int[] loc = findCompletionLocation(unit, "method(t.");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("testInt : int")).findFirst().orElse(null);
+		assertNotNull(ci);
+		assertEquals("testInt", ci.getInsertText());
+		assertEquals(CompletionItemKind.Field, ci.getKind());
+		assertEquals("999998554", ci.getSortText());
+		assertNull(ci.getTextEdit());
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setCompletionOverwrite(false);
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getTextEdit());
+		List<TextEdit> edits = new ArrayList<>();
+		edits.add(resolvedItem.getTextEdit());
+		String returned = TextEditUtil.apply(unit, edits);
+		//@formatter:off
+			String expected =
+				"package foo.bar;\n\n" +
+				"public class BaseTest {\n" +
+				"    public int testInt;\n\n" +
+				"    public boolean method(int x, int y, int z) {\n" +
+				"        return true;\n" +
+				"    } \n\n" +
+				"    public void update() {\n" +
+				"        BaseTest t = new BaseTest();\n" +
+				"        t.method(t.testIntthis.testInt, this.testInt);\n" +
+				"    }\n" +
+				"}\n";
+		//@formatter:on
+		assertEquals(returned, expected);
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setCompletionOverwrite(true);
+		}
+	}
+
+	private ICompilationUnit getCompletionOverwriteReplaceUnit() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"test/foo/bar/BaseTest.java",
+				"package foo.bar;\n\n" +
+				"public class BaseTest {\n" +
+				"    public int testInt;\n\n" +
+				"    public boolean method(int x, int y, int z) {\n" +
+				"        return true;\n" +
+				"    } \n\n" +
+				"    public void update() {\n" +
+				"        BaseTest t = new BaseTest();\n" +
+				"        t.method(t.this.testInt, this.testInt);\n" +
+				"    }\n" +
+				"}\n");
+		//@formatter:on
+		return unit;
 	}
 
 	@Test
