@@ -4,16 +4,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "verify",
+            "label": "Package",
             "type": "shell",
-            "command": "mvn -B verify",
-            "group": "build"
+            "command": "./mvnw clean -B package",
+            "windows": {
+                "command": ".\\mvnw.cmd clean -B package"
+            },
+            "group": "build",
+            "problemMatcher": []
         },
         {
-            "taskName": "test",
+            "label": "Verify",
             "type": "shell",
-            "command": "mvn -B test",
-            "group": "test"
+            "command": "./mvnw -B verify",
+            "windows": {
+                "command": ".\\mvnw.cmd -B verify"
+            },
+            "group": "test",
+            "problemMatcher": []
         }
     ]
 }
