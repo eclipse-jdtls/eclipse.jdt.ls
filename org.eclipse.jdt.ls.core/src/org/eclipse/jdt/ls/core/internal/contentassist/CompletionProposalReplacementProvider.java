@@ -46,6 +46,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -135,6 +136,15 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		if (range == null) {
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+			boolean completionOverwrite = preferenceManager == null || preferenceManager.getPreferences().isCompletionOverwrite();
+			if (!completionOverwrite && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.LOCAL_VARIABLE_REF || proposal.getKind() == CompletionProposal.FIELD_REF)) {
+				// See https://github.com/redhat-developer/vscode-java/issues/462
+				int end = proposal.getReplaceEnd();
+				if (end > offset) {
+					proposal.setReplaceRange(proposal.getReplaceStart(), offset);
+				}
+			}
 			range = toReplacementRange(proposal);
 		}
 		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
@@ -324,8 +334,7 @@ public class CompletionProposalReplacementProvider {
 		try {
 			return JDTUtils.toRange(compilationUnit, proposal.getReplaceStart(), proposal.getReplaceEnd()-proposal.getReplaceStart());
 		} catch (JavaModelException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		return null;
 	}
