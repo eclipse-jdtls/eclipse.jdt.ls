@@ -18,6 +18,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -28,7 +29,11 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IExtendedModifier;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
@@ -322,135 +327,133 @@ public class ModifierCorrectionSubProcessor {
 	//		}
 	//	}
 	//
-	//	public static void addRemoveInvalidModifiersProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int relevance) {
-	//		ICompilationUnit cu = context.getCompilationUnit();
-	//
-	//		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
-	//		if (selectedNode instanceof MethodDeclaration) {
-	//			selectedNode = ((MethodDeclaration) selectedNode).getName();
-	//		}
-	//
-	//		if (!(selectedNode instanceof SimpleName)) {
-	//			return;
-	//		}
-	//
-	//		IBinding binding = ((SimpleName) selectedNode).resolveBinding();
-	//		if (binding != null) {
-	//			String methodName = BasicElementLabels.getJavaElementName(binding.getName());
-	//			String label = null;
-	//			int problemId = problem.getProblemId();
-	//
-	//			int excludedModifiers = 0;
-	//			int includedModifiers = 0;
-	//
-	//			switch (problemId) {
-	//				case IProblem.CannotHideAnInstanceMethodWithAStaticMethod:
-	//				case IProblem.UnexpectedStaticModifierForMethod:
-	//					excludedModifiers = Modifier.STATIC;
-	//					label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononstatic_description, methodName);
-	//					break;
-	//				case IProblem.UnexpectedStaticModifierForField:
-	//					excludedModifiers = Modifier.STATIC;
-	//					label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changefieldmodifiertononstatic_description, methodName);
-	//					break;
-	//				case IProblem.IllegalModifierCombinationFinalVolatileForField:
-	//					excludedModifiers = Modifier.VOLATILE;
-	//					label = CorrectionMessages.ModifierCorrectionSubProcessor_removevolatile_description;
-	//					break;
-	//				case IProblem.IllegalModifierForInterfaceMethod:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT);
-	//					break;
-	//				case IProblem.IllegalModifierForInterfaceMethod18:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP | Modifier.DEFAULT | Modifier.STATIC);
-	//					if (Modifier.isAbstract(binding.getModifiers())) {
-	//						excludedModifiers = excludedModifiers | Modifier.STRICTFP;
-	//					}
-	//					break;
-	//				case IProblem.IllegalModifierForInterface:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForClass:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForInterfaceField:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL);
-	//					break;
-	//				case IProblem.IllegalModifierForMemberInterface:
-	//				case IProblem.IllegalVisibilityModifierForInterfaceMemberType:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STATIC | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForMemberClass:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForLocalClass:
-	//					excludedModifiers = ~(Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForArgument:
-	//					excludedModifiers = ~Modifier.FINAL;
-	//					break;
-	//				case IProblem.IllegalModifierForField:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.FINAL | Modifier.VOLATILE | Modifier.TRANSIENT);
-	//					break;
-	//				case IProblem.IllegalModifierForMethod:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.NATIVE | Modifier.STRICTFP | Modifier.SYNCHRONIZED);
-	//					break;
-	//				case IProblem.IllegalModifierForConstructor:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE);
-	//					break;
-	//				case IProblem.IllegalModifierForVariable:
-	//					excludedModifiers = ~Modifier.FINAL;
-	//					break;
-	//				case IProblem.IllegalModifierForEnum:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STRICTFP);
-	//					break;
-	//				case IProblem.IllegalModifierForEnumConstant:
-	//					excludedModifiers = ~Modifier.NONE;
-	//					break;
-	//				case IProblem.IllegalModifierForEnumConstructor:
-	//					excludedModifiers = ~Modifier.PRIVATE;
-	//					break;
-	//				case IProblem.IllegalModifierForMemberEnum:
-	//					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED | Modifier.STATIC | Modifier.STRICTFP);
-	//					break;
-	//				default:
-	//					Assert.isTrue(false, "not supported"); //$NON-NLS-1$
-	//					return;
-	//			}
-	//
-	//			if (label == null) {
-	//				label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_removeinvalidmodifiers_description, methodName);
-	//			}
-	//
-	//			Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//			proposals.add(new ModifierChangeCorrectionProposal(label, cu, binding, selectedNode, includedModifiers, excludedModifiers, relevance, image));
-	//
-	//			if (problemId == IProblem.IllegalModifierCombinationFinalVolatileForField) {
-	//				proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_removefinal_description, cu, binding, selectedNode, 0, Modifier.FINAL, relevance + 1, image));
-	//			}
-	//
-	//			if (problemId == IProblem.UnexpectedStaticModifierForField && binding instanceof IVariableBinding) {
-	//				ITypeBinding declClass = ((IVariableBinding) binding).getDeclaringClass();
-	//				if (declClass.isMember()) {
-	//					proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostaticfinal_description, cu, binding, selectedNode, Modifier.FINAL, Modifier.VOLATILE, relevance + 1,
-	//							image));
-	//					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
-	//					if (parentType != null) {
-	//						proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_addstatictoparenttype_description, cu, declClass, parentType, Modifier.STATIC, 0, relevance - 1, image));
-	//					}
-	//				}
-	//			}
-	//			if (problemId == IProblem.UnexpectedStaticModifierForMethod && binding instanceof IMethodBinding) {
-	//				ITypeBinding declClass = ((IMethodBinding) binding).getDeclaringClass();
-	//				if (declClass.isMember()) {
-	//					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
-	//					if (parentType != null) {
-	//						proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_addstatictoparenttype_description, cu, declClass, parentType, Modifier.STATIC, 0, relevance - 1, image));
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//
+	public static void addRemoveInvalidModifiersProposal(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals, int relevance) {
+		ICompilationUnit cu = context.getCompilationUnit();
+
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode instanceof MethodDeclaration) {
+			selectedNode = ((MethodDeclaration) selectedNode).getName();
+		}
+
+		if (!(selectedNode instanceof SimpleName)) {
+			return;
+		}
+
+		IBinding binding = ((SimpleName) selectedNode).resolveBinding();
+		if (binding != null) {
+			String methodName = BasicElementLabels.getJavaElementName(binding.getName());
+			String label = null;
+			int problemId = problem.getProblemId();
+
+			int excludedModifiers = 0;
+			int includedModifiers = 0;
+
+			switch (problemId) {
+				case IProblem.CannotHideAnInstanceMethodWithAStaticMethod:
+				case IProblem.UnexpectedStaticModifierForMethod:
+					excludedModifiers = Modifier.STATIC;
+					label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononstatic_description, methodName);
+					break;
+				case IProblem.UnexpectedStaticModifierForField:
+					excludedModifiers = Modifier.STATIC;
+					label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changefieldmodifiertononstatic_description, methodName);
+					break;
+				case IProblem.IllegalModifierCombinationFinalVolatileForField:
+					excludedModifiers = Modifier.VOLATILE;
+					label = CorrectionMessages.ModifierCorrectionSubProcessor_removevolatile_description;
+					break;
+				case IProblem.IllegalModifierForInterfaceMethod:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT);
+					break;
+				case IProblem.IllegalModifierForInterfaceMethod18:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP | Modifier.DEFAULT | Modifier.STATIC);
+					if (Modifier.isAbstract(binding.getModifiers())) {
+						excludedModifiers = excludedModifiers | Modifier.STRICTFP;
+					}
+					break;
+				case IProblem.IllegalModifierForInterface:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForClass:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForInterfaceField:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL);
+					break;
+				case IProblem.IllegalModifierForMemberInterface:
+				case IProblem.IllegalVisibilityModifierForInterfaceMemberType:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STATIC | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForMemberClass:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForLocalClass:
+					excludedModifiers = ~(Modifier.ABSTRACT | Modifier.FINAL | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForArgument:
+					excludedModifiers = ~Modifier.FINAL;
+					break;
+				case IProblem.IllegalModifierForField:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.FINAL | Modifier.VOLATILE | Modifier.TRANSIENT);
+					break;
+				case IProblem.IllegalModifierForMethod:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE | Modifier.STATIC | Modifier.ABSTRACT | Modifier.FINAL | Modifier.NATIVE | Modifier.STRICTFP | Modifier.SYNCHRONIZED);
+					break;
+				case IProblem.IllegalModifierForConstructor:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PROTECTED | Modifier.PRIVATE);
+					break;
+				case IProblem.IllegalModifierForVariable:
+					excludedModifiers = ~Modifier.FINAL;
+					break;
+				case IProblem.IllegalModifierForEnum:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.STRICTFP);
+					break;
+				case IProblem.IllegalModifierForEnumConstant:
+					excludedModifiers = ~Modifier.NONE;
+					break;
+				case IProblem.IllegalModifierForEnumConstructor:
+					excludedModifiers = ~Modifier.PRIVATE;
+					break;
+				case IProblem.IllegalModifierForMemberEnum:
+					excludedModifiers = ~(Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED | Modifier.STATIC | Modifier.STRICTFP);
+					break;
+				default:
+					Assert.isTrue(false, "not supported"); //$NON-NLS-1$
+					return;
+			}
+
+			if (label == null) {
+				label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_removeinvalidmodifiers_description, methodName);
+			}
+
+			proposals.add(new ModifierChangeCorrectionProposal(label, cu, binding, selectedNode, includedModifiers, excludedModifiers, relevance));
+
+			if (problemId == IProblem.IllegalModifierCombinationFinalVolatileForField) {
+				proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_removefinal_description, cu, binding, selectedNode, 0, Modifier.FINAL, relevance + 1));
+			}
+
+			if (problemId == IProblem.UnexpectedStaticModifierForField && binding instanceof IVariableBinding) {
+				ITypeBinding declClass = ((IVariableBinding) binding).getDeclaringClass();
+				if (declClass.isMember()) {
+					proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostaticfinal_description, cu, binding, selectedNode, Modifier.FINAL, Modifier.VOLATILE, relevance + 1));
+					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
+					if (parentType != null) {
+						proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_addstatictoparenttype_description, cu, declClass, parentType, Modifier.STATIC, 0, relevance - 1));
+					}
+				}
+			}
+			if (problemId == IProblem.UnexpectedStaticModifierForMethod && binding instanceof IMethodBinding) {
+				ITypeBinding declClass = ((IMethodBinding) binding).getDeclaringClass();
+				if (declClass.isMember()) {
+					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
+					if (parentType != null) {
+						proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_addstatictoparenttype_description, cu, declClass, parentType, Modifier.STATIC, 0, relevance - 1));
+					}
+				}
+			}
+		}
+	}
+
 	//	private static String getMethodLabel(IMethodBinding targetMethod) {
 	//		return BasicElementLabels.getJavaElementName(targetMethod.getDeclaringClass().getName() + '.' + targetMethod.getName());
 	//	}

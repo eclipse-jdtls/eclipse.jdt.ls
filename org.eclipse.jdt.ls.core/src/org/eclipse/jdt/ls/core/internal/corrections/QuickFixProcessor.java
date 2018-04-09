@@ -224,31 +224,30 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context,
 			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_STATIC);
 			// break;
-			// case IProblem.CannotHideAnInstanceMethodWithAStaticMethod:
-			// case IProblem.IllegalModifierForInterfaceMethod:
-			// case IProblem.IllegalModifierForInterface:
-			// case IProblem.IllegalModifierForClass:
-			// case IProblem.IllegalModifierForInterfaceField:
-			// case IProblem.UnexpectedStaticModifierForField:
-			// case IProblem.IllegalModifierCombinationFinalVolatileForField:
-			// case IProblem.IllegalModifierForMemberInterface:
-			// case IProblem.IllegalModifierForMemberClass:
-			// case IProblem.IllegalModifierForLocalClass:
-			// case IProblem.IllegalModifierForArgument:
-			// case IProblem.IllegalModifierForField:
-			// case IProblem.IllegalModifierForMethod:
-			// case IProblem.IllegalModifierForConstructor:
-			// case IProblem.IllegalModifierForVariable:
-			// case IProblem.IllegalModifierForEnum:
-			// case IProblem.IllegalModifierForEnumConstant:
-			// case IProblem.IllegalModifierForEnumConstructor:
-			// case IProblem.IllegalModifierForMemberEnum:
-			// case IProblem.IllegalVisibilityModifierForInterfaceMemberType:
-			// case IProblem.UnexpectedStaticModifierForMethod:
-			// case IProblem.IllegalModifierForInterfaceMethod18:
-			// ModifierCorrectionSubProcessor.addRemoveInvalidModifiersProposal(context,
-			// problem, proposals, IProposalRelevance.REMOVE_INVALID_MODIFIERS);
-			// break;
+			case IProblem.CannotHideAnInstanceMethodWithAStaticMethod:
+			case IProblem.IllegalModifierForInterfaceMethod:
+			case IProblem.IllegalModifierForInterface:
+			case IProblem.IllegalModifierForClass:
+			case IProblem.IllegalModifierForInterfaceField:
+			case IProblem.UnexpectedStaticModifierForField:
+			case IProblem.IllegalModifierCombinationFinalVolatileForField:
+			case IProblem.IllegalModifierForMemberInterface:
+			case IProblem.IllegalModifierForMemberClass:
+			case IProblem.IllegalModifierForLocalClass:
+			case IProblem.IllegalModifierForArgument:
+			case IProblem.IllegalModifierForField:
+			case IProblem.IllegalModifierForMethod:
+			case IProblem.IllegalModifierForConstructor:
+			case IProblem.IllegalModifierForVariable:
+			case IProblem.IllegalModifierForEnum:
+			case IProblem.IllegalModifierForEnumConstant:
+			case IProblem.IllegalModifierForEnumConstructor:
+			case IProblem.IllegalModifierForMemberEnum:
+			case IProblem.IllegalVisibilityModifierForInterfaceMemberType:
+			case IProblem.UnexpectedStaticModifierForMethod:
+			case IProblem.IllegalModifierForInterfaceMethod18:
+				ModifierCorrectionSubProcessor.addRemoveInvalidModifiersProposal(context, problem, proposals, IProposalRelevance.REMOVE_INVALID_MODIFIERS);
+				break;
 			// case IProblem.NotVisibleField:
 			// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context,
 			// problem, proposals,
