@@ -42,6 +42,7 @@ import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -84,6 +85,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
+	private DigestStore digestStore;
 	private ContentProviderManager contentProviderManager;
 
 	private JDTLanguageServer protocol;
@@ -121,6 +123,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
+		digestStore = new DigestStore(this);
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
@@ -325,6 +328,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
+	}
+
+	public static DigestStore getDigestStore() {
+		return pluginInstance.digestStore;
 	}
 
 	/**

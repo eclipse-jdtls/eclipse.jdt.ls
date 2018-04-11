@@ -57,13 +57,11 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	private Set<MavenProjectInfo> projectInfos = null;
 
 	private IProjectConfigurationManager configurationManager;
+	private DigestStore digestStore;
 
 	public MavenProjectImporter() {
-		this(MavenPlugin.getProjectConfigurationManager());
-	}
-
-	public MavenProjectImporter(IProjectConfigurationManager configurationManager) {
-		this.configurationManager = configurationManager;
+		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
+		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
 	}
 
 
@@ -135,6 +133,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			File pom = projectInfo.getPomFile();
 			IContainer container = root.getContainerForLocation(new Path(pom.getAbsolutePath()));
 			if (container == null) {
+				digestStore.updateDigest(pom.toPath());
 				toImport.add(projectInfo);
 			} else {
 				IProject project = container.getProject();
@@ -142,6 +141,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					projects.add(container.getProject());
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it
+					digestStore.updateDigest(pom.toPath());
 					toImport.add(projectInfo);
 				}
 			}
@@ -190,7 +190,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					}
 
 					// it's a new project, we know we'll need to update it.
-					new MavenBuildSupport(configurationManager).update(project, true, monitor);
+					new MavenBuildSupport().update(project, false, monitor);
 				}
 				return Status.OK_STATUS;
 			}

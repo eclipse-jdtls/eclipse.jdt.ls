@@ -77,14 +77,12 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.m2e.core.MavenPlugin;
 
 public class ProjectsManager implements ISaveParticipant {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
 	private static final Set<String> watchers = new HashSet<>();
 	private PreferenceManager preferenceManager;
-	private MavenBuildSupport mavenBuildSupport;
 	private JavaLanguageClient client;
 
 	public enum CHANGE_TYPE {
@@ -104,7 +102,6 @@ public class ProjectsManager implements ISaveParticipant {
 
 	public ProjectsManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
-		this.mavenBuildSupport = new MavenBuildSupport(MavenPlugin.getProjectConfigurationManager());
 	}
 
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
@@ -362,7 +359,7 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	private Stream<IBuildSupport> buildSupports() {
-		return Stream.of(new GradleBuildSupport(), mavenBuildSupport);
+		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport());
 	}
 
 	public void setConnection(JavaLanguageClient client) {
