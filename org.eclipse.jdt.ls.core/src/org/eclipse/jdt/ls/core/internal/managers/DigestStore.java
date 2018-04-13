@@ -25,30 +25,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Plugin;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 
 /**
  * @author Thomas Mäder
  *
- *         This class handles digests for pom files. It serves to prevent
- *         unnecessary updating of maven info on workspace projects.
- *
+ *         This class handles digests for build files. It serves to prevent
+ *         unnecessary updating of maven/gradle, etc. info on workspace
+ *         projects.
  */
 public class DigestStore {
-	private Map<String, String> pomDigests;
-
+	private Map<String, String> fileDigests;
 	private File stateFile;
 
-	private static final String POM_SERIALIZATION_FILE_NAME = ".pom-digests";
+	private static final String SERIALIZATION_FILE_NAME = ".file-digests";
 
-	public DigestStore(Plugin plugin) {
-		this.stateFile = plugin.getStateLocation().append(POM_SERIALIZATION_FILE_NAME).toFile();
+	public DigestStore(File stateLocation) {
+		this.stateFile = new File(stateLocation, SERIALIZATION_FILE_NAME);
 		if (stateFile.isFile()) {
-			pomDigests = deserializePomDigests();
+			fileDigests = deserializePomDigests();
 		} else {
-			pomDigests = new HashMap<>();
+			fileDigests = new HashMap<>();
 		}
 	}
 
@@ -65,9 +63,9 @@ public class DigestStore {
 	public boolean updateDigest(Path p) throws CoreException {
 		try {
 			String digest = computeDigest(p);
-			synchronized (pomDigests) {
-				if (!digest.equals(pomDigests.get(p.toString()))) {
-					pomDigests.put(p.toString(), digest);
+			synchronized (fileDigests) {
+				if (!digest.equals(fileDigests.get(p.toString()))) {
+					fileDigests.put(p.toString(), digest);
 					serializePomDigests();
 					return true;
 				} else {
@@ -82,7 +80,7 @@ public class DigestStore {
 
 	private void serializePomDigests() {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(stateFile))) {
-			outStream.writeObject(pomDigests);
+			outStream.writeObject(fileDigests);
 		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException("Exception occured while serialization of pom digests", e);
 		}

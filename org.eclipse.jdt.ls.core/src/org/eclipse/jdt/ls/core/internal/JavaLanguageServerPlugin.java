@@ -123,7 +123,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
-		digestStore = new DigestStore(this);
+		digestStore = new DigestStore(getStateLocation().toFile());
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
