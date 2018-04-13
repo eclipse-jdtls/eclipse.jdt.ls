@@ -44,7 +44,7 @@ public class DigestStore {
 	public DigestStore(File stateLocation) {
 		this.stateFile = new File(stateLocation, SERIALIZATION_FILE_NAME);
 		if (stateFile.isFile()) {
-			fileDigests = deserializePomDigests();
+			fileDigests = deserializeFileDigests();
 		} else {
 			fileDigests = new HashMap<>();
 		}
@@ -66,7 +66,7 @@ public class DigestStore {
 			synchronized (fileDigests) {
 				if (!digest.equals(fileDigests.get(p.toString()))) {
 					fileDigests.put(p.toString(), digest);
-					serializePomDigests();
+					serializeFileDigests();
 					return true;
 				} else {
 					return false;
@@ -78,20 +78,20 @@ public class DigestStore {
 
 	}
 
-	private void serializePomDigests() {
+	private void serializeFileDigests() {
 		try (ObjectOutputStream outStream = new ObjectOutputStream(new FileOutputStream(stateFile))) {
 			outStream.writeObject(fileDigests);
 		} catch (IOException e) {
-			JavaLanguageServerPlugin.logException("Exception occured while serialization of pom digests", e);
+			JavaLanguageServerPlugin.logException("Exception occured while serialization of file digests", e);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, String> deserializePomDigests() {
+	private Map<String, String> deserializeFileDigests() {
 		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(stateFile))) {
 			return (Map<String, String>) ois.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			JavaLanguageServerPlugin.logException("Exception occured while deserialization of pom digests", e);
+			JavaLanguageServerPlugin.logException("Exception occured while deserialization of file digests", e);
 			return new HashMap<>();
 		}
 	}
