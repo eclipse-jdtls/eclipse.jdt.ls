@@ -46,7 +46,7 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 		assertNoErrors(project);
 
 		//Giving a nudge, so that errors show up
-		projectsManager.updateProject(project);
+		projectsManager.updateProject(project, false);
 
 		waitForBackgroundJobs();
 		assertHasErrors(project);
@@ -54,7 +54,7 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 
 		//Fix gradle file, trigger build
 		setContent(gradleUri, originalGradle);
-		projectsManager.updateProject(project);
+		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();
 		assertNoErrors(project);
 		assertEquals("1.7", ProjectUtils.getJavaSourceLevel(project));

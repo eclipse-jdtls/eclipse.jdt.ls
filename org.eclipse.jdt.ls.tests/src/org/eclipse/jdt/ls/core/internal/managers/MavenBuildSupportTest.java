@@ -54,7 +54,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		//Contents changed outside the workspace, so should not change
 		assertNoErrors(project);
 
-		projectsManager.updateProject(project);
+		projectsManager.updateProject(project, false);
 
 		//Giving a nudge, so that errors show up
 		waitForBackgroundJobs();
@@ -62,7 +62,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 
 		//Fix pom, trigger build
 		setContent(pomUri, originalPom);
-		projectsManager.updateProject(project);
+		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();
 		assertNoErrors(project);
 	}

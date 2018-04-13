@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.nio.file.Path;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -25,6 +27,17 @@ import org.eclipse.m2e.core.project.MavenUpdateRequest;
  *
  */
 public class MavenBuildSupport implements IBuildSupport {
+	private IProjectConfigurationManager configurationManager;
+	private DigestStore digestStore;
+
+	public MavenBuildSupport() {
+		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
+		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
+	}
+
+	/**
+	 * @return
+	 */
 
 	@Override
 	public boolean applies(IProject project) {
@@ -32,23 +45,23 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	@Override
-	public void update(IProject project, IProgressMonitor monitor) throws CoreException {
+	public void update(IProject project, boolean force, IProgressMonitor monitor) throws CoreException {
 		if (!applies(project)) {
 			return;
 		}
-		JavaLanguageServerPlugin.logInfo("Starting Maven update for "+project.getName());
-		//TODO collect dependent projects and update them as well? i.e in case a parent project was modified
-		IProjectConfigurationManager configurationManager = MavenPlugin.getProjectConfigurationManager();
-		MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
-		configurationManager.updateProjectConfiguration(request, monitor);
+		Path pomPath = project.getFile("pom.xml").getLocation().toFile().toPath();
+		if (digestStore.updateDigest(pomPath) || force) {
+			JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
+			//TODO collect dependent projects and update them as well? i.e in case a parent project was modified
+			MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
+			configurationManager.updateProjectConfiguration(request, monitor);
+		}
 	}
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		return resource != null && resource.getProject() != null
-				&& resource.getType()== IResource.FILE
-				&& resource.getName().equals("pom.xml")
-				//Check pom.xml is at the root of the project
+		return resource != null && resource.getProject() != null && resource.getType() == IResource.FILE && resource.getName().equals("pom.xml")
+		//Check pom.xml is at the root of the project
 				&& resource.getProject().equals(resource.getParent());
 	}
 }
