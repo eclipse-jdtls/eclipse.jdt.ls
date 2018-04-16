@@ -69,7 +69,7 @@ public class CompletionResolveHandler {
 		Map<String, String> data = JSONUtility.toModel(param.getData(),Map.class);
 		// clean resolve data
 		param.setData(null);
-		if (!data.containsKey(DATA_FIELD_URI) || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
+		if (data == null || !data.containsKey(DATA_FIELD_URI) || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
 			return param;
 		}
 		int proposalId = Integer.parseInt(data.get(DATA_FIELD_PROPOSAL_ID));
