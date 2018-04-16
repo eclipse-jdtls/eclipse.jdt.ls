@@ -57,7 +57,6 @@ public class BuildWorkspaceHandler {
 
 	public BuildWorkspaceStatus buildWorkspace(boolean forceReBuild, IProgressMonitor monitor) {
 		try {
-			ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			if (monitor.isCanceled()) {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
