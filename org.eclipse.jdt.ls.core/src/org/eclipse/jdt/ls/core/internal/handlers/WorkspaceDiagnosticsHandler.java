@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +100,10 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		IMarker[] markers = null;
 		// Check if it is a Java ...
 		if (JavaCore.isJavaLikeFileName(file.getName())) {
-			markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+			IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+			IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
+			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
+			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
 			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
 			document = JsonRpcHelpers.toDocument(cu.getBuffer());
 		} // or a build file
