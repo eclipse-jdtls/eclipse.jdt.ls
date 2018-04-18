@@ -75,6 +75,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getRangeFormatting());
 	}
 
+	public boolean isOnTypeFormattingDynamicRegistrationSupported() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getOnTypeFormatting());
+	}
+
 	public boolean isCodeLensDynamicRegistrationSupported() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCodeLens());
 	}

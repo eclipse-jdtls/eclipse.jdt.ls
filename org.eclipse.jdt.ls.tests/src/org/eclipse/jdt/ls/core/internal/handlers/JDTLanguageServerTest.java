@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -152,10 +152,11 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, true);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, true);
 		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, true);
+		map.put(Preferences.JAVA_FORMAT_ON_TYPE_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(5)).registerCapability(any());
+		verify(client, times(6)).registerCapability(any());
 
 		//On 2nd call, no registration call should be emitted
 		reset(client);
@@ -168,10 +169,11 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.JAVA_FORMAT_ENABLED_KEY, false);
 		map.put(Preferences.SIGNATURE_HELP_ENABLED_KEY, false);
 		map.put(Preferences.EXECUTE_COMMAND_ENABLED_KEY, false);
+		map.put(Preferences.JAVA_FORMAT_ON_TYPE_ENABLED_KEY, false);
 		params = new DidChangeConfigurationParams(map);
 
 		server.didChangeConfiguration(params);
-		verify(client, times(5)).unregisterCapability(any());
+		verify(client, times(6)).unregisterCapability(any());
 
 		//On 2nd call, no unregistration calls should be emitted
 		reset(client);
@@ -210,6 +212,7 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isRangeFormattingDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isSignatureHelpDynamicRegistrationSupported()).thenReturn(enable);
 		when(clientPreferences.isExecuteCommandDynamicRegistrationSupported()).thenReturn(enable);
+		when(clientPreferences.isOnTypeFormattingDynamicRegistrationSupported()).thenReturn(enable);
 	}
 
 }

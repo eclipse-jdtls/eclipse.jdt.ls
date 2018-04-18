@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -74,6 +74,11 @@ public class Preferences {
 	 * Preference key to enable/disable formatter.
 	 */
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
+
+	/**
+	 * Preference key to enable/disable formatter on-type.
+	 */
+	public static final String JAVA_FORMAT_ON_TYPE_ENABLED_KEY = "java.format.onType.enabled";
 
 	/**
 	 * Preference key to enable/disable organize imports on save
@@ -178,6 +183,7 @@ public class Preferences {
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
+	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
 	public static final String TEXT_DOCUMENT_CODE_LENS = "textDocument/codeLens";
 	public static final String TEXT_DOCUMENT_SIGNATURE_HELP = "textDocument/signatureHelp";
 	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
@@ -193,6 +199,7 @@ public class Preferences {
 	public static final String WORKSPACE_CHANGE_FOLDERS = "workspace/didChangeWorkspaceFolders";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
+	public static final String FORMATTING_ON_TYPE_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_RANGE_ID = UUID.randomUUID().toString();
 	public static final String CODE_LENS_ID = UUID.randomUUID().toString();
 	public static final String SIGNATURE_HELP_ID = UUID.randomUUID().toString();
@@ -216,6 +223,7 @@ public class Preferences {
 	private boolean importMavenEnabled;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
+	private boolean javaFormatOnTypeEnabled;
 	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean renameEnabled;
@@ -308,6 +316,7 @@ public class Preferences {
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
+		javaFormatOnTypeEnabled = false;
 		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
 		renameEnabled = true;
@@ -353,6 +362,9 @@ public class Preferences {
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
+
+		boolean javaFormatOnTypeEnabled = getBoolean(configuration, JAVA_FORMAT_ON_TYPE_ENABLED_KEY, false);
+		prefs.setJavaFormatOnTypeEnabled(javaFormatOnTypeEnabled);
 
 		boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, false);
 		prefs.setJavaSaveActionAutoOrganizeImportsEnabled(javaSaveActionAutoOrganizeImportsEnabled);
@@ -631,5 +643,13 @@ public class Preferences {
 
 	public Collection<IPath> getRootPaths() {
 		return rootPaths;
+	}
+
+	public boolean isJavaFormatOnTypeEnabled() {
+		return javaFormatOnTypeEnabled;
+	}
+
+	public void setJavaFormatOnTypeEnabled(boolean javaFormatOnTypeEnabled) {
+		this.javaFormatOnTypeEnabled = javaFormatOnTypeEnabled;
 	}
 }

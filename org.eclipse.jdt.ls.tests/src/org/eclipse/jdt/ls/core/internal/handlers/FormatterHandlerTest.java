@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,12 +27,14 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -296,4 +298,295 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			FormatterManager.configureFormatter(preferenceManager, projectsManager);
 		}
 	}
+
+	@Test // typing ; should format the current line
+	public void testFormattingOnTypeSemiColumn() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n\n"
+			+ "public class Baz {  \n"
+			+ "String          name       ;\n"//typed ; here
+			+ "}\n"
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 27), ";");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {  \n"
+			+ "    String name;\n"
+			+ "}\n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing new_line should format the current line if previous character doesn't close a block
+	public void testFormattingOnTypeNewLine() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"
+			+ "String          name       ;\n"//typed \n here
+			+ "}\n"
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 28), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"//this part won't be formatted
+			+ "    String name;\n"
+			+ "}\n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing } should format the previous block
+	public void testFormattingOnTypeCloseBlock() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"
+			+ "String          name       ;\n"
+			+ "}  "//typed } here
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(4, 0), "}");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "    String name;\n"
+			+ "}";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing new_line after opening a block should only format the current line
+	public void testFormattingOnTypeReturnAfterOpeningBlock() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"//typed \n here
+			+ "String          name       ;\n"
+			+ "}  \n"
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(2, 33), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "String          name       ;\n"
+			+ "}  \n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing new_line after closing a block should format the that block
+	public void testFormattingOnTypeReturnAfterClosedBlock() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"
+			+ "String          name       ;\n"
+			+ "}  \n"//typed \n here
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(4, 3), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "    String name;\n"
+			+ "}\n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing new_line after inserting a new line should format the previous block if previous non-whitespace char is }
+	public void testFormattingOnTypeReturnAfterEmptyLine() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {  \n"
+			+ "String          name       ;\n"
+			+ "}  \n"
+			+ "   \n"//typed \n here
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(5, 3), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "    String name;\n"
+			+ "}\n"
+			+ "   \n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test // typing new_line after an empty block on a single line should format that block
+	public void testFormattingOnTypeReturnAfterEmptyBlock() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "    public      class     Baz {}  \n"//typed \n here
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(2, 34), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "}\n";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test
+	public void testDisableFormattingOnType() throws Exception {
+		//@formatter:off
+		String text =  "package org.sample;\n"
+					+ "\n"
+					+ "    public      class     Baz {  \n"
+					+ "String          name       ;\n"
+					+ "}\n";
+				//@formatter:on
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 28), "\n");
+		params.setTextDocument(textDocument);
+		params.setOptions(options);
+		//Check it's disabled by default
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(text, newText);
+	}
+
+	@After
+	public void tearDown() {
+		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(false);
+	}
+
+
 }
