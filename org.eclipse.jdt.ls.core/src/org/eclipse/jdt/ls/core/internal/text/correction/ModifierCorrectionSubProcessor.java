@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -46,7 +47,9 @@ import org.eclipse.jdt.core.formatter.IndentManipulation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
@@ -214,101 +217,99 @@ public class ModifierCorrectionSubProcessor {
 	//		}
 	//	}
 	//
-	//	public static void addChangeOverriddenModifierProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int kind) throws JavaModelException {
-	//		ICompilationUnit cu = context.getCompilationUnit();
-	//
-	//		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
-	//		if (!(selectedNode instanceof MethodDeclaration)) {
-	//			return;
-	//		}
-	//
-	//		IMethodBinding method = ((MethodDeclaration) selectedNode).resolveBinding();
-	//		ITypeBinding curr = method.getDeclaringClass();
-	//
-	//		if (kind == TO_VISIBLE && problem.getProblemId() != IProblem.OverridingNonVisibleMethod) {
-	//			// e.g. IProblem.InheritedMethodReducesVisibility, IProblem.MethodReducesVisibility
-	//			List<IMethodBinding> methods = Bindings.findOverriddenMethods(method, false, false);
-	//			if (!methods.isEmpty()) {
-	//				int includedModifiers = 0;
-	//				for (IMethodBinding binding : methods) {
-	//					int temp = JdtFlags.getVisibilityCode(binding);
-	//					includedModifiers = JdtFlags.getHigherVisibility(temp, includedModifiers);
-	//				}
-	//				int excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
-	//				String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodvisibility_description, new String[] { getVisibilityString(includedModifiers) });
-	//				Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//				proposals.add(new ModifierChangeCorrectionProposal(label, cu, method, selectedNode, includedModifiers, excludedModifiers, IProposalRelevance.CHANGE_OVERRIDDEN_MODIFIER_1, image));
-	//			}
-	//		}
-	//
-	//		IMethodBinding overriddenInClass = null;
-	//		while (overriddenInClass == null && curr.getSuperclass() != null) {
-	//			curr = curr.getSuperclass();
-	//			overriddenInClass = Bindings.findOverriddenMethodInType(curr, method);
-	//		}
-	//		if (overriddenInClass != null) {
-	//			final IMethodBinding overriddenDecl = overriddenInClass.getMethodDeclaration();
-	//			final ICompilationUnit overriddenMethodCU = ASTResolving.findCompilationUnitForBinding(cu, context.getASTRoot(), overriddenDecl.getDeclaringClass());
-	//
-	//			if (overriddenMethodCU != null) {
-	//				//target method and compilation unit for the quick fix
-	//				IMethodBinding targetMethod = overriddenDecl;
-	//				ICompilationUnit targetCU = overriddenMethodCU;
-	//
-	//				String label;
-	//				int excludedModifiers;
-	//				int includedModifiers;
-	//				switch (kind) {
-	//					case TO_VISIBLE:
-	//						if (JdtFlags.isPrivate(method)) {
-	//							// Propose to increase the visibility of this method, because decreasing to private is not possible.
-	//							targetMethod = method;
-	//							targetCU = cu;
-	//
-	//							excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
-	//							includedModifiers = JdtFlags.getVisibilityCode(overriddenDecl);
-	//						} else if (JdtFlags.isPackageVisible(method) && !overriddenDecl.getDeclaringClass().getPackage().isEqualTo(method.getDeclaringClass().getPackage())) {
-	//							// method is package visible but not in the same package as overridden method
-	//							// propose to make the method protected
-	//
-	//							excludedModifiers = Modifier.PRIVATE;
-	//							includedModifiers = Modifier.PROTECTED;
-	//
-	//							// if it is already protected, ignore it
-	//							if (JdtFlags.isProtected(overriddenDecl)) {
-	//								return;
-	//							}
-	//						} else {
-	//							excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
-	//							includedModifiers = JdtFlags.getVisibilityCode(method);
-	//
-	//							if (JdtFlags.getVisibilityCode(overriddenDecl) == JdtFlags.getVisibilityCode(method)) {
-	//								// don't propose the same visibility it already has
-	//								return;
-	//							}
-	//						}
-	//
-	//						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changeoverriddenvisibility_description, new String[] { getMethodLabel(targetMethod), getVisibilityString(includedModifiers) });
-	//						break;
-	//					case TO_NON_FINAL:
-	//						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononfinal_description, getMethodLabel(targetMethod));
-	//						excludedModifiers = Modifier.FINAL;
-	//						includedModifiers = 0;
-	//						break;
-	//					case TO_NON_STATIC:
-	//						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononstatic_description, getMethodLabel(targetMethod));
-	//						excludedModifiers = Modifier.STATIC;
-	//						includedModifiers = 0;
-	//						break;
-	//					default:
-	//						Assert.isTrue(false, "not supported"); //$NON-NLS-1$
-	//						return;
-	//				}
-	//				Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//				proposals.add(new ModifierChangeCorrectionProposal(label, targetCU, targetMethod, selectedNode, includedModifiers, excludedModifiers, IProposalRelevance.CHANGE_OVERRIDDEN_MODIFIER_2, image));
-	//			}
-	//		}
-	//	}
+	public static void addChangeOverriddenModifierProposal(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals, int kind) throws JavaModelException {
+		ICompilationUnit cu = context.getCompilationUnit();
+
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (!(selectedNode instanceof MethodDeclaration)) {
+			return;
+		}
+
+		IMethodBinding method = ((MethodDeclaration) selectedNode).resolveBinding();
+		ITypeBinding curr = method.getDeclaringClass();
+
+		if (kind == TO_VISIBLE && problem.getProblemId() != IProblem.OverridingNonVisibleMethod) {
+			// e.g. IProblem.InheritedMethodReducesVisibility, IProblem.MethodReducesVisibility
+			List<IMethodBinding> methods = Bindings.findOverriddenMethods(method, false, false);
+			if (!methods.isEmpty()) {
+				int includedModifiers = 0;
+				for (IMethodBinding binding : methods) {
+					int temp = JdtFlags.getVisibilityCode(binding);
+					includedModifiers = JdtFlags.getHigherVisibility(temp, includedModifiers);
+				}
+				int excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
+				String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodvisibility_description, new String[] { getVisibilityString(includedModifiers) });
+				proposals.add(new ModifierChangeCorrectionProposal(label, cu, method, selectedNode, includedModifiers, excludedModifiers, IProposalRelevance.CHANGE_OVERRIDDEN_MODIFIER_1));
+			}
+		}
+
+		IMethodBinding overriddenInClass = null;
+		while (overriddenInClass == null && curr.getSuperclass() != null) {
+			curr = curr.getSuperclass();
+			overriddenInClass = Bindings.findOverriddenMethodInType(curr, method);
+		}
+		if (overriddenInClass != null) {
+			final IMethodBinding overriddenDecl = overriddenInClass.getMethodDeclaration();
+			final ICompilationUnit overriddenMethodCU = ASTResolving.findCompilationUnitForBinding(cu, context.getASTRoot(), overriddenDecl.getDeclaringClass());
+
+			if (overriddenMethodCU != null) {
+				//target method and compilation unit for the quick fix
+				IMethodBinding targetMethod = overriddenDecl;
+				ICompilationUnit targetCU = overriddenMethodCU;
+
+				String label;
+				int excludedModifiers;
+				int includedModifiers;
+				switch (kind) {
+					case TO_VISIBLE:
+						if (JdtFlags.isPrivate(method)) {
+							// Propose to increase the visibility of this method, because decreasing to private is not possible.
+							targetMethod = method;
+							targetCU = cu;
+
+							excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
+							includedModifiers = JdtFlags.getVisibilityCode(overriddenDecl);
+						} else if (JdtFlags.isPackageVisible(method) && !overriddenDecl.getDeclaringClass().getPackage().isEqualTo(method.getDeclaringClass().getPackage())) {
+							// method is package visible but not in the same package as overridden method
+							// propose to make the method protected
+
+							excludedModifiers = Modifier.PRIVATE;
+							includedModifiers = Modifier.PROTECTED;
+
+							// if it is already protected, ignore it
+							if (JdtFlags.isProtected(overriddenDecl)) {
+								return;
+							}
+						} else {
+							excludedModifiers = Modifier.PRIVATE | Modifier.PROTECTED | Modifier.PUBLIC;
+							includedModifiers = JdtFlags.getVisibilityCode(method);
+
+							if (JdtFlags.getVisibilityCode(overriddenDecl) == JdtFlags.getVisibilityCode(method)) {
+								// don't propose the same visibility it already has
+								return;
+							}
+						}
+
+						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changeoverriddenvisibility_description, new String[] { getMethodLabel(targetMethod), getVisibilityString(includedModifiers) });
+						break;
+					case TO_NON_FINAL:
+						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononfinal_description, getMethodLabel(targetMethod));
+						excludedModifiers = Modifier.FINAL;
+						includedModifiers = 0;
+						break;
+					case TO_NON_STATIC:
+						label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemethodtononstatic_description, getMethodLabel(targetMethod));
+						excludedModifiers = Modifier.STATIC;
+						includedModifiers = 0;
+						break;
+					default:
+						Assert.isTrue(false, "not supported"); //$NON-NLS-1$
+						return;
+				}
+				proposals.add(new ModifierChangeCorrectionProposal(label, targetCU, targetMethod, selectedNode, includedModifiers, excludedModifiers, IProposalRelevance.CHANGE_OVERRIDDEN_MODIFIER_2));
+			}
+		}
+	}
 	//
 	//	public static void addNonFinalLocalProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 	//		ICompilationUnit cu = context.getCompilationUnit();
@@ -454,20 +455,20 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 
-	//	private static String getMethodLabel(IMethodBinding targetMethod) {
-	//		return BasicElementLabels.getJavaElementName(targetMethod.getDeclaringClass().getName() + '.' + targetMethod.getName());
-	//	}
-	//
-	//	private static String getVisibilityString(int code) {
-	//		if (Modifier.isPublic(code)) {
-	//			return "public"; //$NON-NLS-1$
-	//		} else if (Modifier.isProtected(code)) {
-	//			return "protected"; //$NON-NLS-1$
-	//		} else if (Modifier.isPrivate(code)) {
-	//			return "private"; //$NON-NLS-1$
-	//		}
-	//		return CorrectionMessages.ModifierCorrectionSubProcessor_default;
-	//	}
+	private static String getMethodLabel(IMethodBinding targetMethod) {
+		return BasicElementLabels.getJavaElementName(targetMethod.getDeclaringClass().getName() + '.' + targetMethod.getName());
+	}
+
+		private static String getVisibilityString(int code) {
+			if (Modifier.isPublic(code)) {
+				return "public"; //$NON-NLS-1$
+			} else if (Modifier.isProtected(code)) {
+				return "protected"; //$NON-NLS-1$
+			} else if (Modifier.isPrivate(code)) {
+				return "private"; //$NON-NLS-1$
+			}
+			return CorrectionMessages.ModifierCorrectionSubProcessor_default;
+		}
 	//
 	//	private static int getNeededVisibility(ASTNode currNode, ITypeBinding targetType, IBinding binding) {
 	//		ITypeBinding currNodeBinding = Bindings.getBindingOfParentType(currNode);
