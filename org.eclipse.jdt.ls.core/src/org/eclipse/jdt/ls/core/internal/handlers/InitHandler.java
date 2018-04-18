@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.CompletionOptions;
+import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -142,6 +143,9 @@ final public class InitHandler {
 		}
 		if (!preferenceManager.getClientPreferences().isRangeFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentRangeFormattingProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isOnTypeFormattingDynamicRegistrationSupported()) {
+			capabilities.setDocumentOnTypeFormattingProvider(new DocumentOnTypeFormattingOptions(";", Arrays.asList("\n", "}")));
 		}
 		if (!preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
 			capabilities.setCodeLensProvider(new CodeLensOptions(true));
