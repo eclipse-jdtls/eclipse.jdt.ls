@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
@@ -101,7 +102,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		$.setKind(mapKind(proposal.getKind()));
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
-		data.put(CompletionResolveHandler.DATA_FIELD_URI,unit.getResource().getLocationURI().toString());
+		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(unit));
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID,String.valueOf(response.getId()));
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID,String.valueOf(index));
 		$.setData(data);
