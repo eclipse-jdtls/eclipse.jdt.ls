@@ -187,6 +187,31 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_dataFieldURI() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+			"src/java/Foo.java",
+			"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		Objec\n"+
+				"	}\n"+
+				"}\n");
+		int[] loc = findCompletionLocation(unit, "Objec");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		for ( CompletionItem item : items) {
+			@SuppressWarnings("unchecked")
+			Map<String,String> data = (Map<String, String>) item.getData();
+			assertNotNull(data);
+			String uri = data.get(CompletionResolveHandler.DATA_FIELD_URI);
+			assertTrue(isNotBlank(uri));
+			assertTrue("unexpected URI prefix: " + uri, uri.matches("file://.*/src/java/Foo\\.java"));
+		}
+	}
+
 
 	@Test
 	public void testCompletion_constructor() throws Exception{
