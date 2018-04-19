@@ -469,4 +469,35 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testOverrideStaticMethod() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    public static void foo() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove 'static' modifier of 'C.foo'(..)", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
 }
