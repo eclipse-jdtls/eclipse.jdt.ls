@@ -102,6 +102,52 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
+	public void testTaskMarkers() throws Exception {
+		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
+		initHandler.addWorkspaceDiagnosticsHandler();
+		//import project
+		importProjects("eclipse/hello");
+
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+
+		Optional<PublishDiagnosticsParams> taskDiags = allCalls.stream().filter(p -> p.getUri().endsWith("TaskMarkerTest.java")).findFirst();
+		assertTrue("No TaskMarkerTest.java markers were found", taskDiags.isPresent());
+		List<Diagnostic> diags = taskDiags.get().getDiagnostics();
+		assertEquals("Some marker is missing", 3, diags.size());
+		long todoMarkers = diags.stream().filter(p -> p.getMessage().startsWith("TODO")).count();
+		assertEquals("A TODO marker is missing", todoMarkers, 2);
+		Collections.sort(diags, new Comparator<Diagnostic>() {
+
+			@Override
+			public int compare(Diagnostic o1, Diagnostic o2) {
+				return o1.getMessage().compareTo(o2.getMessage());
+			}
+		});
+		Range r;
+		Diagnostic d = diags.get(1);
+		assertEquals("TODO task 2", d.getMessage());
+		assertEquals(DiagnosticSeverity.Information, d.getSeverity());
+		r = d.getRange();
+		assertEquals(11, r.getStart().getLine());
+		assertEquals(11, r.getStart().getCharacter());
+		assertEquals(11, r.getEnd().getLine());
+		assertEquals(22, r.getEnd().getCharacter());
+		d = diags.get(0);
+		assertEquals("TODO task 1", d.getMessage());
+		assertEquals(DiagnosticSeverity.Information, d.getSeverity());
+		r = d.getRange();
+		assertEquals(9, r.getStart().getLine());
+		assertEquals(11, r.getStart().getCharacter());
+		assertEquals(9, r.getEnd().getLine());
+		assertEquals(22, r.getEnd().getCharacter());
+	}
+
+	@Test
 	public void testMavenMarkers() throws Exception {
 		String msg1 = "Some dependency is missing";
 		IMarker m1 = createMavenMarker(IMarker.SEVERITY_ERROR, msg1, 2, 95, 100);

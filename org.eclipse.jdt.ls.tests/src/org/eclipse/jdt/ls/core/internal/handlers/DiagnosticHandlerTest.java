@@ -16,20 +16,38 @@ import static org.junit.Assert.assertNotEquals;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
+import org.junit.Before;
 import org.junit.Test;
 
 public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
+	private JavaClientConnection javaClient;
+
+	@Before
+	public void setup() throws Exception {
+		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
+		sharedASTProvider.disposeAST();
+		//		sharedASTProvider.clearASTCreationCount();
+		javaClient = new JavaClientConnection(client);
+	}
 	@Test
 	public void testMultipleLineRange() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
@@ -55,4 +73,57 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		Range range = diagnostics.get(0).getRange();
 		assertNotEquals(range.getStart().getLine(), range.getEnd().getLine());
 	}
+
+	@Test
+	public void testTask() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    // TODO task\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		final DiagnosticsHandler handler = new DiagnosticsHandler(javaClient, cu);
+		WorkingCopyOwner wcOwner = new WorkingCopyOwner() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#createBuffer(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IBuffer createBuffer(ICompilationUnit workingCopy) {
+				ICompilationUnit original = workingCopy.getPrimary();
+				IResource resource = original.getResource();
+				if (resource instanceof IFile) {
+					return new DocumentAdapter(workingCopy, (IFile) resource);
+				}
+				return DocumentAdapter.Null;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
+				return handler;
+			}
+
+		};
+		cu.becomeWorkingCopy(null);
+		try {
+			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+			List<IProblem> problems = handler.getProblems();
+			assertEquals(problems.size(), 1);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			assertEquals(diagnostics.size(), 1);
+			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
+			assertEquals(severity, DiagnosticSeverity.Information);
+		} finally {
+			cu.discardWorkingCopy();
+		}
+	}
+
 }
