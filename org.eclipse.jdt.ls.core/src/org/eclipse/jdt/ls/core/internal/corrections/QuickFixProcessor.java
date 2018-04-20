@@ -216,10 +216,9 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context,
 			// problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE);
 			// break;
-			// case IProblem.FinalMethodCannotBeOverridden:
-			// ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL);
-			// break;
+			case IProblem.FinalMethodCannotBeOverridden:
+				ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL);
+				break;
 			case IProblem.CannotOverrideAStaticMethodWithAnInstanceMethod:
 				ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_STATIC);
 				break;
