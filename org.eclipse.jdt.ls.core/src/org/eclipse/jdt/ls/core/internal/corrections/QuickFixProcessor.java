@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LocalCorrectionsSubProcessor;
@@ -246,22 +247,16 @@ public class QuickFixProcessor {
 			case IProblem.IllegalModifierForInterfaceMethod18:
 				ModifierCorrectionSubProcessor.addRemoveInvalidModifiersProposal(context, problem, proposals, IProposalRelevance.REMOVE_INVALID_MODIFIERS);
 				break;
-			// case IProblem.NotVisibleField:
-			// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context,
-			// problem, proposals,
-			// IProposalRelevance.GETTER_SETTER_NOT_VISIBLE_FIELD);
-			// ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE,
-			// IProposalRelevance.CHANGE_VISIBILITY);
-			// break;
-			// case IProblem.NotVisibleMethod:
-			// case IProblem.NotVisibleConstructor:
-			// case IProblem.NotVisibleType:
-			// case IProblem.JavadocNotVisibleType:
-			// ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE,
-			// IProposalRelevance.CHANGE_VISIBILITY);
-			// break;
+			case IProblem.NotVisibleField:
+				GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_NOT_VISIBLE_FIELD);
+				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE, IProposalRelevance.CHANGE_VISIBILITY);
+				break;
+			case IProblem.NotVisibleMethod:
+			case IProblem.NotVisibleConstructor:
+			case IProblem.NotVisibleType:
+			case IProblem.JavadocNotVisibleType:
+				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE, IProposalRelevance.CHANGE_VISIBILITY);
+				break;
 			case IProblem.BodyForAbstractMethod:
 			case IProblem.AbstractMethodInAbstractClass:
 			case IProblem.AbstractMethodInEnum:
