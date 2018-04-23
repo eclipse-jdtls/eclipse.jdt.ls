@@ -53,6 +53,7 @@ public class TestVMType extends AbstractVMInstallType {
 	public TestVMType() {
 		createVMInstall("1.8");
 		createVMInstall("9");
+		createVMInstall("10");
 	}
 
 	@Override
@@ -108,7 +109,7 @@ public class TestVMType extends AbstractVMInstallType {
 class TestVMInstall extends AbstractVMInstall {
 
 	private URL javadoc;
-	
+
 	public TestVMInstall(IVMInstallType type, String id) {
 		super(type, id);
 		setNotify(false);
