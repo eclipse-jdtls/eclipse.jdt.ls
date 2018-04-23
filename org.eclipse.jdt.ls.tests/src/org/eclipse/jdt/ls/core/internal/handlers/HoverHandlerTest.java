@@ -500,6 +500,27 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	}
 
+	@Test
+	public void testHoverOnJava10var() throws Exception {
+		importProjects("eclipse/java10");
+		project = WorkspaceHelper.getProject("java10");
+		assertNoErrors(project);
+
+		handler = new HoverHandler(preferenceManager);
+		//given
+		//Hovers on name.toUpperCase()
+		String payload = createHoverRequest("src/main/java/foo/bar/Foo.java", 8, 34);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		assertNotNull(hover.toString(), hover.getContents().get(0).getRight());
+		String javadoc = hover.getContents().get(0).getRight().getValue();
+		assertEquals("String java.lang.String.toUpperCase()", javadoc);
+
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);
