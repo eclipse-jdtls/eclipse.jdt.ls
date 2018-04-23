@@ -120,6 +120,7 @@ final public class InitHandler {
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			preferenceManager.update(prefs);
 		}
+		preferenceManager.getPreferences().setRootPaths(rootPaths);
 		triggerInitialization(rootPaths);
 		addWorkspaceDiagnosticsHandler();
 		Integer processId = param.getProcessId();

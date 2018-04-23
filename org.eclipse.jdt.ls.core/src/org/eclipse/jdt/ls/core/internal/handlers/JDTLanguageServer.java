@@ -16,6 +16,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -51,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -297,9 +300,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> workspace/didChangeConfiguration");
 		Object settings = JSONUtility.toModel(params.getSettings(), Map.class);
 		if (settings instanceof Map) {
+			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			preferenceManager.update(prefs);
+			preferenceManager.getPreferences().setRootPaths(rootPaths);
 		}
 		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
@@ -319,6 +324,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		pm.registerWatchers();
+		FormatterManager.configureFormatter(preferenceManager, pm);
 		logInfo(">>New configuration: " + settings);
 	}
 

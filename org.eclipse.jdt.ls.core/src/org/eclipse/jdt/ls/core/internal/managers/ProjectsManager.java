@@ -15,6 +15,10 @@ import static java.util.Arrays.asList;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -209,6 +213,22 @@ public class ProjectsManager implements ISaveParticipant {
 		if (resource == null) {
 			return;
 		}
+		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
+		if (formatterUrl != null) {
+			try {
+				URL url = getUrl(formatterUrl);
+				URI formatterUri = url.toURI();
+				URI uri = JDTUtils.toURI(uriString);
+				if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+					if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
+						registerWatchers();
+					}
+					FormatterManager.configureFormatter(preferenceManager, this);
+				}
+			} catch (URISyntaxException e) {
+				// ignore
+			}
+		}
 		try {
 			if (changeType == CHANGE_TYPE.DELETED) {
 				resource = resource.getParent();
@@ -239,6 +259,23 @@ public class ProjectsManager implements ISaveParticipant {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
+	}
+
+	public URL getUrl(String formatterUrl) {
+		URL url = null;
+		try {
+			url = new URL(ResourceUtils.toClientUri(formatterUrl));
+		} catch (MalformedURLException e1) {
+			File file = findFile(formatterUrl);
+			if (file != null && file.isFile()) {
+				try {
+					url = file.toURI().toURL();
+				} catch (MalformedURLException e) {
+					JavaLanguageServerPlugin.logInfo("Invalid formatter:" + formatterUrl);
+				}
+			}
+		}
+		return url;
 	}
 
 	public boolean isBuildFile(IResource resource) {
@@ -490,6 +527,16 @@ public class ProjectsManager implements ISaveParticipant {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
+			String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
+			if (formatterUrl != null) {
+				File file = new File(formatterUrl);
+				if (!file.isFile()) {
+					file = findFile(formatterUrl);
+				}
+				if (file.isFile()) {
+					sources.add(file.getAbsolutePath());
+				}
+			}
 			for (String pattern : sources) {
 				FileSystemWatcher watcher = new FileSystemWatcher(pattern, FileSystemWatcher.WATCH_KIND_DEFAULT);
 				fileWatchers.add(watcher);
@@ -503,6 +550,23 @@ public class ProjectsManager implements ISaveParticipant {
 				watchers.addAll(sources);
 			}
 			return fileWatchers;
+		}
+		return null;
+	}
+
+	public File findFile(String formatterUrl) {
+		File file = new File(formatterUrl);
+		if (file.exists()) {
+			return file;
+		}
+		Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+		if (rootPaths != null) {
+			for (IPath rootPath : rootPaths) {
+				File f = new File(rootPath.toOSString(), formatterUrl);
+				if (f.isFile()) {
+					return f;
+				}
+			}
 		}
 		return null;
 	}

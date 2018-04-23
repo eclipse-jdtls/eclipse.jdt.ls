@@ -13,11 +13,19 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
+import java.net.URL;
 import java.util.List;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
+import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
@@ -28,6 +36,7 @@ import org.eclipse.lsp4j.TextEdit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.osgi.framework.Bundle;
 
 /**
  * @author Fred Bricon
@@ -206,6 +215,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		options.putString("org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_package", "do not insert");
 		options.putBoolean("org.eclipse.jdt.core.formatter.put_empty_statement_on_new_line", Boolean.TRUE);
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		preferenceManager.getPreferences().setJavaFormatComments(false);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
 
@@ -222,6 +232,68 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				"  }\n"+
 				"}\n";
 		String newText = TextEditUtil.apply(unit, edits);
+		preferenceManager.getPreferences().setJavaFormatComments(true);
 		assertEquals(expectedText, newText);
+	}
+
+	@Test
+	public void testGoogleFormatter() throws Exception {
+		try {
+			String text =
+			//@formatter:off
+					"package org.sample;\n\n" +
+					"public class Baz {\n" +
+					"  String name;\n" +
+					"}\n";
+				//@formatter:on"
+			ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
+			String uri = JDTUtils.toURI(unit);
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+			FormattingOptions options = new FormattingOptions(2, true);// ident == 2 spaces
+			DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+			URL googleFormatter = bundle.getEntry("/formatter resources/eclipse-java-google-style.xml");
+			URL url = FileLocator.resolve(googleFormatter);
+			preferenceManager.getPreferences().setFormatterUrl(url.toExternalForm());
+			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			List<? extends TextEdit> edits = server.formatting(params).get();
+			assertNotNull(edits);
+			String newText = TextEditUtil.apply(unit, edits);
+			assertEquals(text, newText);
+		} finally {
+			preferenceManager.getPreferences().setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+		}
+	}
+
+	@Test
+	public void testGoogleFormatterFilePath() throws Exception {
+		try {
+			String text =
+			//@formatter:off
+					"package org.sample;\n\n" +
+					"public class Baz {\n" +
+					"  String name;\n" +
+					"}\n";
+				//@formatter:on"
+			ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
+			String uri = JDTUtils.toURI(unit);
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+			FormattingOptions options = new FormattingOptions(2, true);// ident == 2 spaces
+			DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+			URL googleFormatter = bundle.getEntry("/formatter resources/eclipse-java-google-style.xml");
+			URL url = FileLocator.resolve(googleFormatter);
+			File file = ResourceUtils.toFile(URIUtil.toURI(url));
+			preferenceManager.getPreferences().setFormatterUrl(file.getAbsolutePath());
+			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			List<? extends TextEdit> edits = server.formatting(params).get();
+			assertNotNull(edits);
+			String newText = TextEditUtil.apply(unit, edits);
+			assertEquals(text, newText);
+		} finally {
+			preferenceManager.getPreferences().setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+		}
 	}
 }
