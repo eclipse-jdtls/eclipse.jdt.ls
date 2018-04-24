@@ -148,9 +148,11 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 			}
 
 			fIsClosed= true;
-			fDocument.removeDocumentListener(this);
+			if (fDocument != null) {
+				fDocument.removeDocumentListener(this);
+			}
 
-			if (fTextFileBuffer != null) {
+			if (fTextFileBuffer != null && fFile != null) {
 				try {
 					ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 					manager.disconnect(fFile.getFullPath(), LocationKind.NORMALIZE, null);
