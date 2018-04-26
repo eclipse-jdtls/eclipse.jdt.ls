@@ -143,7 +143,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		if(problem.isError()) {
 			return DiagnosticSeverity.Error;
 		}
-		if (problem.isWarning() && ((problem.getID() & IProblem.Task) == 0)) {
+		if (problem.isWarning() && (problem.getID() != IProblem.Task)) {
 			return DiagnosticSeverity.Warning;
 		}
 		return DiagnosticSeverity.Information;
