@@ -126,4 +126,56 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	@Test
+	public void testNotUsed() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private int i;\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		final DiagnosticsHandler handler = new DiagnosticsHandler(javaClient, cu);
+		WorkingCopyOwner wcOwner = new WorkingCopyOwner() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#createBuffer(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IBuffer createBuffer(ICompilationUnit workingCopy) {
+				ICompilationUnit original = workingCopy.getPrimary();
+				IResource resource = original.getResource();
+				if (resource instanceof IFile) {
+					return new DocumentAdapter(workingCopy, (IFile) resource);
+				}
+				return DocumentAdapter.Null;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
+				return handler;
+			}
+
+		};
+		cu.becomeWorkingCopy(null);
+		try {
+			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+			List<IProblem> problems = handler.getProblems();
+			assertEquals(problems.size(), 1);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			assertEquals(diagnostics.size(), 1);
+			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
+			assertEquals(severity, DiagnosticSeverity.Warning);
+		} finally {
+			cu.discardWorkingCopy();
+		}
+	}
+
 }
