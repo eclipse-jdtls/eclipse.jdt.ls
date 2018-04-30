@@ -15,11 +15,13 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
@@ -38,6 +40,18 @@ public class Preferences {
 	 * Specifies the folder path to the JDK .
 	 */
 	public static final String JAVA_HOME = "java.home";
+	/**
+	 * Specifies the file path to the formatter xml url.
+	 */
+	public static final String JAVA_FORMATTER_URL = "java.format.settings.url";
+	/**
+	 * Specifies the formatter profile name.
+	 */
+	public static final String JAVA_FORMATTER_PROFILE_NAME = "java.format.settings.profile";
+	/**
+	 * Preference key used to include the comments during the formatting.
+	 */
+	public static final String JAVA_FORMAT_COMMENTS = "java.format.comments.enabled";
 	/**
 	 * Preference key to enable/disable gradle importer.
 	 */
@@ -208,6 +222,7 @@ public class Preferences {
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
 	private boolean completionOverwrite;
+	private boolean javaFormatComments;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
 
@@ -218,6 +233,9 @@ public class Preferences {
 	private List<String> javaImportExclusions = new ArrayList<>();
 	private String javaHome;
 	private List<String> importOrder;
+	private String formatterUrl;
+	private String formatterProfileName;
+	private Collection<IPath> rootPaths;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
@@ -296,11 +314,14 @@ public class Preferences {
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
 		completionOverwrite = true;
+		javaFormatComments = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 		javaHome = null;
+		formatterUrl = null;
+		formatterProfileName = null;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
 	}
 
@@ -369,6 +390,15 @@ public class Preferences {
 		String javaHome = getString(configuration, JAVA_HOME);
 		prefs.setJavaHome(javaHome);
 
+		String formatterUrl = getString(configuration, JAVA_FORMATTER_URL);
+		prefs.setFormatterUrl(formatterUrl);
+
+		String formatterProfileName = getString(configuration, JAVA_FORMATTER_PROFILE_NAME);
+		prefs.setFormatterProfileName(formatterProfileName);
+
+		boolean javaFormatComments = getBoolean(configuration, JAVA_FORMAT_COMMENTS, true);
+		prefs.setJavaFormatComments(javaFormatComments);
+
 		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
 		prefs.setImportOrder(javaImportOrder);
 		return prefs;
@@ -376,6 +406,25 @@ public class Preferences {
 
 	public Preferences setJavaHome(String javaHome) {
 		this.javaHome = javaHome;
+		return this;
+	}
+
+	public Preferences setFormatterUrl(String formatterUrl) {
+		this.formatterUrl = formatterUrl;
+		return this;
+	}
+
+	public Preferences setJavaFormatComments(boolean javaFormatComments) {
+		this.javaFormatComments = javaFormatComments;
+		return this;
+	}
+
+	public boolean isJavaFormatComments() {
+		return this.javaFormatComments;
+	}
+
+	public Preferences setFormatterProfileName(String formatterProfileName) {
+		this.formatterProfileName = formatterProfileName;
 		return this;
 	}
 
@@ -491,6 +540,14 @@ public class Preferences {
 		return javaHome;
 	}
 
+	public String getFormatterUrl() {
+		return formatterUrl;
+	}
+
+	public String getFormatterProfileName() {
+		return formatterProfileName;
+	}
+
 	public MemberSortOrder getMemberSortOrder() {
 		return this.memberOrders;
 	}
@@ -565,5 +622,14 @@ public class Preferences {
 			return null;
 		}
 		return Collections.unmodifiableMap(configuration);
+	}
+
+	public Preferences setRootPaths(Collection<IPath> rootPaths) {
+		this.rootPaths = rootPaths;
+		return this;
+	}
+
+	public Collection<IPath> getRootPaths() {
+		return rootPaths;
 	}
 }

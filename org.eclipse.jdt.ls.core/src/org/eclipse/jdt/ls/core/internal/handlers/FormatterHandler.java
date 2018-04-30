@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.internal.compiler.env.IModule;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -74,7 +75,7 @@ public class FormatterHandler {
 			return Collections.emptyList();
 		}
 
-		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options,cu));
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options, cu));
 
 		try {
 			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
@@ -85,7 +86,14 @@ public class FormatterHandler {
 				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 			}
 			String sourceToFormat = document.get();
-			TextEdit format = formatter.format(CodeFormatter.K_COMPILATION_UNIT, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
+			int kind;
+			if (cu.getResource() != null && cu.getResource().getName().equals(IModule.MODULE_INFO_JAVA)) {
+				kind = CodeFormatter.K_MODULE_INFO;
+			} else {
+				kind = CodeFormatter.K_COMPILATION_UNIT;
+			}
+			kind |= (preferenceManager.getPreferences().isJavaFormatComments() ? CodeFormatter.F_INCLUDE_COMMENTS : 0);
+			TextEdit format = formatter.format(kind, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
 			if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
 				// nothing to return
 				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
