@@ -533,7 +533,7 @@ public class ProjectsManager implements ISaveParticipant {
 				if (!file.isFile()) {
 					file = findFile(formatterUrl);
 				}
-				if (file.isFile()) {
+				if (file != null && file.isFile()) {
 					sources.add(file.getAbsolutePath());
 				}
 			}
