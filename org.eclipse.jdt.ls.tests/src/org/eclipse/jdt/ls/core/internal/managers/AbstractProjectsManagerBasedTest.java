@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +56,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -87,6 +89,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected SimpleLogListener logListener;
 
 	protected Map<String, List<Object>> clientRequests = new HashMap<>();
+
 	protected JavaLanguageClient client = (JavaLanguageClient) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { JavaLanguageClient.class }, new InvocationHandler() {
 
 		@Override
@@ -111,12 +114,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
 		preferences = new Preferences();
-		if (preferenceManager != null) {
-			when(preferenceManager.getPreferences()).thenReturn(preferences);
-			ClientPreferences clientPreferences = mock(ClientPreferences.class);
-			when(clientPreferences.isProgressReportSupported()).thenReturn(true);
-			when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		if (preferenceManager == null) {
+			preferenceManager = mock(PreferenceManager.class);
 		}
+		initPreferenceManager(true);
+
+		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
 		projectsManager = new ProjectsManager(preferenceManager);
 		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager);
 		progressManager.setReportThrottle(0);//disable throttling to ensure we capture all events
@@ -133,6 +136,17 @@ public abstract class AbstractProjectsManagerBasedTest {
 				return DocumentAdapter.Null;
 			}
 		});
+	}
+
+	protected void initPreferenceManager(boolean supportClassFileContents) {
+		PreferenceManager.initialize();
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
+		ClientPreferences clientPreferences = mock(ClientPreferences.class);
+		when(clientPreferences.isProgressReportSupported()).thenReturn(true);
+		when(clientPreferences.isClassFileContentSupported()).thenReturn(supportClassFileContents);
+		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {

@@ -521,6 +521,35 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	}
 
+	@Test
+	public void testNoLinkWhenClassContentUnsupported() throws Exception {
+		initPreferenceManager(false);
+		testClassContentSupport("Uses WordUtils");
+	}
+
+	@Test
+	public void testLinkWhenClassContentSupported() throws Exception {
+		assertNotNull(DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5"));
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		testClassContentSupport("Uses \\[WordUtils\\]\\(jdt:.*\\)");
+	}
+
+	private void testClassContentSupport(String expectedJavadoc) throws Exception {
+		importProjects("maven/salut");
+		project = WorkspaceHelper.getProject("salut");
+		handler = new HoverHandler(preferenceManager);
+		//given
+		//Hovers on name.toUpperCase()
+		String payload = createHoverRequest("src/main/java/org/sample/TestJavadoc.java", 17, 20);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		String javadoc = hover.getContents().get(1).getLeft();
+		assertMatches(expectedJavadoc, javadoc);
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);

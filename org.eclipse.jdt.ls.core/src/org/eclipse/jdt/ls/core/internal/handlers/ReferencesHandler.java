@@ -45,50 +45,50 @@ public final class ReferencesHandler {
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES);
+		int scope = IJavaSearchScope.SOURCES;
+		if (preferenceManager.isClientSupportsClassFileContent()) {
+			scope |= IJavaSearchScope.APPLICATION_LIBRARIES;
+		}
+		return SearchEngine.createJavaSearchScope(projects, scope);
 	}
 
 	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
 
 		final List<Location> locations = new ArrayList<>();
 		try {
-			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()),
-			param.getPosition().getLine(),
-			param.getPosition().getCharacter(), this.preferenceManager, monitor);
+			IJavaElement elementToSearch = JDTUtils.findElementAtSelection(JDTUtils.resolveTypeRoot(param.getTextDocument().getUri()), param.getPosition().getLine(), param.getPosition().getCharacter(), this.preferenceManager, monitor);
 
-			if(elementToSearch == null) {
+			if (elementToSearch == null) {
 				return locations;
 			}
 
+			boolean includeClassFiles = preferenceManager.isClientSupportsClassFileContent();
 			SearchEngine engine = new SearchEngine();
 			SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
-			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
-					createSearchScope(), new SearchRequestor() {
+
+			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
 
 				@Override
 				public void acceptSearchMatch(SearchMatch match) throws CoreException {
 					Object o = match.getElement();
 					if (o instanceof IJavaElement) {
 						IJavaElement element = (IJavaElement) o;
-						ICompilationUnit compilationUnit = (ICompilationUnit) element
-								.getAncestor(IJavaElement.COMPILATION_UNIT);
+						ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 						Location location = null;
 						if (compilationUnit != null) {
-							location = JDTUtils.toLocation(compilationUnit, match.getOffset(),
-									match.getLength());
-						}
-						else{
+							location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
+						} else if (includeClassFiles) {
 							IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 							if (cf != null && cf.getSourceRange() != null) {
 								location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
 							}
 						}
-						if (location != null ) {
+						if (location != null) {
 							locations.add(location);
 						}
 					}
 				}
-					}, monitor);
+			}, monitor);
 
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Find references failure ", e);
@@ -97,6 +97,3 @@ public final class ReferencesHandler {
 	}
 
 }
-
-
-
