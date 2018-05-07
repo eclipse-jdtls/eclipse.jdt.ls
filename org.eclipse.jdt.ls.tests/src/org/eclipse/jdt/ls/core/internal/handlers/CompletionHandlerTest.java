@@ -1368,6 +1368,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
 		reset(preferenceManager);
+		initPreferenceManager(true);
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);

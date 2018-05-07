@@ -292,7 +292,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		logInfo(">> workspace/symbol");
-		WorkspaceSymbolHandler handler = new WorkspaceSymbolHandler();
+		WorkspaceSymbolHandler handler = new WorkspaceSymbolHandler(preferenceManager);
 		return computeAsync((monitor) -> {
 			return handler.search(params.getQuery(), monitor);
 		});

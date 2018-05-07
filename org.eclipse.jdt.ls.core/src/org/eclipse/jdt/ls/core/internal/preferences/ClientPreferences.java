@@ -147,4 +147,8 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("progressReportProvider", "false").toString());
 	}
 
+	public boolean isClassFileContentSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("classFileContentsSupport", "false").toString());
+	}
+
 }

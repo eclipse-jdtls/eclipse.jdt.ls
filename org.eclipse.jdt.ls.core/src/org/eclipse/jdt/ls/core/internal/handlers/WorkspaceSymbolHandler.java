@@ -14,11 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.Flags;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -28,11 +25,18 @@ import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 
 public class WorkspaceSymbolHandler{
+
+	private PreferenceManager preferenceManager;
+
+	public WorkspaceSymbolHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	public List<SymbolInformation> search(String query, IProgressMonitor monitor) {
 		if (query == null || query.trim().isEmpty()) {
@@ -86,8 +90,7 @@ public class WorkspaceSymbolHandler{
 	}
 
 	private IJavaSearchScope createSearchScope() throws JavaModelException {
-		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
+		return JDTUtils.createSearchScope(null, preferenceManager);
 	}
 
 }

@@ -421,4 +421,11 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 		return null;
 	}
+
+	//Public for testing purposes
+	public static void setPreferencesManager(PreferenceManager preferenceManager) {
+		if (pluginInstance != null) {
+			pluginInstance.preferenceManager = preferenceManager;
+		}
+	}
 }

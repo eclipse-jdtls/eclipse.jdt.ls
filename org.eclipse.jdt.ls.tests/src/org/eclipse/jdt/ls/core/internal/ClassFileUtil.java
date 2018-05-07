@@ -45,7 +45,7 @@ public final class ClassFileUtil {
 		new SearchEngine().searchAllTypeNames(packageName.toCharArray(),SearchPattern.R_EXACT_MATCH,
 				className.toCharArray(), SearchPattern.R_EXACT_MATCH,
 				IJavaSearchConstants.TYPE,
-				JDTUtils.createSearchScope(javaProject),
+				JDTUtils.createSearchScope(javaProject, JavaLanguageServerPlugin.getPreferencesManager()),
 				extractor,
 				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
 				new NullProgressMonitor());

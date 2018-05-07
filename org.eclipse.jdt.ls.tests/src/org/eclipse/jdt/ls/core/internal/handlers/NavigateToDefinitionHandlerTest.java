@@ -12,8 +12,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -23,8 +23,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -40,12 +38,9 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	private NavigateToDefinitionHandler handler;
 	private IProject project;
-	private PreferenceManager preferenceManager;
 
 	@Before
 	public void setUp() throws Exception {
-		preferenceManager = mock(PreferenceManager.class);
-		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
@@ -63,6 +58,18 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	@Test
 	public void testAttachedSource() throws Exception {
 		testClass("org.apache.commons.lang3.StringUtils", 20, 26);
+	}
+
+	@Test
+	public void testNoClassContentSupport() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(false);
+		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.StringUtils");
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(20, 26)), monitor);
+		assertNotNull(definitions);
+		assertEquals(1, definitions.size());
+		assertNull(definitions.get(0).getUri());
+		assertNull(definitions.get(0).getRange().getStart());
+		assertNull(definitions.get(0).getRange().getEnd());
 	}
 
 	@Test

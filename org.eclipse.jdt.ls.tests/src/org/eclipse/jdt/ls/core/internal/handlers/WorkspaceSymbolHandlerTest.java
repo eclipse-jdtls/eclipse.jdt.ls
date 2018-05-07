@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");//We need at least 1 project
-		handler = new WorkspaceSymbolHandler();
+		handler = new WorkspaceSymbolHandler(preferenceManager);
 	}
 
 	@Test
@@ -54,6 +55,18 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		assertEquals(0, results.size());
 	}
 
+
+	@Test
+	public void testWorkspaceSearchNoClassContentSupport() {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(false);
+		//No classes from binaries can be found
+		List<SymbolInformation> results = handler.search("Array", monitor);
+		assertNotNull(results);
+		assertEquals("Unexpected results", 0, results.size());
+
+		//... but workspace classes can still be found
+		testWorkspaceSearchOnFileInWorkspace();
+	}
 
 	@Test
 	public void testWorkspaceSearch() {

@@ -63,8 +63,20 @@ public final class ProjectUtils {
 	}
 
 	public static List<IProject> getGradleProjects() {
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		return Stream.of(projects).filter(ProjectUtils::isGradleProject).collect(Collectors.toList());
+		return Stream.of(getAllProjects()).filter(ProjectUtils::isGradleProject).collect(Collectors.toList());
 	}
 
+	public static IJavaProject[] getJavaProjects() {
+		//@formatter:off
+		return Stream.of(getAllProjects())
+					.filter(ProjectUtils::isJavaProject)
+					.map(p -> JavaCore.create(p))
+					.filter(p -> p != null)
+					.toArray(IJavaProject[]::new);
+		//@formatter:on
+	}
+
+	public static IProject[] getAllProjects() {
+		return ResourcesPlugin.getWorkspace().getRoot().getProjects();
+	}
 }

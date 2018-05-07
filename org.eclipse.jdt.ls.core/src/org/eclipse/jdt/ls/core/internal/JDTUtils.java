@@ -421,6 +421,10 @@ public final class JDTUtils {
 	}
 
 	public static String toUri(IClassFile classFile) {
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null && !JavaLanguageServerPlugin.getPreferencesManager().isClientSupportsClassFileContent()) {
+			return null;
+		}
+
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
@@ -549,7 +553,7 @@ public final class JDTUtils {
 						SearchPattern pattern = SearchPattern.createPattern(name, IJavaSearchConstants.TYPE,
 								IJavaSearchConstants.DECLARATIONS, SearchPattern.R_FULL_MATCH);
 
-						IJavaSearchScope scope = createSearchScope(unit.getJavaProject());
+						IJavaSearchScope scope = createSearchScope(unit.getJavaProject(), preferenceManager);
 
 						List<IJavaElement> elements = new ArrayList<>();
 						SearchRequestor requestor = new SearchRequestor() {
@@ -711,12 +715,18 @@ public final class JDTUtils {
 		return false;
 	}
 
-	public static IJavaSearchScope createSearchScope(IJavaProject project) {
-		if (project == null) {
-			return SearchEngine.createWorkspaceScope();
+	public static IJavaSearchScope createSearchScope(IJavaProject project, PreferenceManager preferenceManager) {
+		IJavaProject[] elements;
+		if (project == null) {//workspace search
+			elements = ProjectUtils.getJavaProjects();
+		} else {
+			elements = new IJavaProject[] { project };
 		}
-		return SearchEngine.createJavaSearchScope(new IJavaProject[] { project },
-				IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
+		int scope = IJavaSearchScope.SOURCES;
+		if (preferenceManager != null && preferenceManager.isClientSupportsClassFileContent()) {
+			scope |= IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES;
+		}
+		return SearchEngine.createJavaSearchScope(elements, scope);
 	}
 
 	public static boolean isOnClassPath(ICompilationUnit unit) {

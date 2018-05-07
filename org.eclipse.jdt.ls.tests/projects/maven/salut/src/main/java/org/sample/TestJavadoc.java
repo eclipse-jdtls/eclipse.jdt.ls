@@ -1,5 +1,5 @@
 package org.sample;
-
+import org.apache.commons.lang3.text.WordUtils;
 public class TestJavadoc {
 
 	private String foo() {
@@ -11,5 +11,11 @@ public class TestJavadoc {
 		/** Test */
 		public String test;
 	}
-
+	
+	/**
+	 * Uses {@link WordUtils} 
+	 */
+	public void commonsLang() {
+		
+	}
 }
