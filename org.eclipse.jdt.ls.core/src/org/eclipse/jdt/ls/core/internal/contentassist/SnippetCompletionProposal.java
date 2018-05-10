@@ -11,18 +11,24 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageDeclaration;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
@@ -33,13 +39,19 @@ import org.eclipse.jdt.internal.codeassist.complete.CompletionOnFieldType;
 import org.eclipse.jdt.internal.codeassist.complete.CompletionOnKeyword2;
 import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameReference;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContext;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.templates.Template;
+import org.eclipse.jface.text.templates.TemplateBuffer;
+import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
@@ -52,6 +64,9 @@ public class SnippetCompletionProposal {
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
+
+	private static String PACKAGEHEADER = "package_header";
+	private static String CURSOR = "cursor";
 
 	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) {
 		if (cu == null) {
@@ -195,9 +210,9 @@ public class SnippetCompletionProposal {
 
 		try {
 			if (needsPublic) {
-				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
+				classSnippetItem.setInsertText(getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
 			} else {
-				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
+				classSnippetItem.setInsertText(getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
 			}
 			setFields(classSnippetItem, cu);
 		} catch (CoreException e) {
@@ -221,9 +236,9 @@ public class SnippetCompletionProposal {
 
 		try {
 			if (needsPublic) {
-				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
+				interfaceSnippetItem.setInsertText(getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
 			} else {
-				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
+				interfaceSnippetItem.setInsertText(getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
 			}
 			setFields(interfaceSnippetItem, cu);
 		} catch (CoreException e) {
@@ -248,4 +263,53 @@ public class SnippetCompletionProposal {
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "0");
 		ci.setData(data);
 	}
+
+	private static String getSnippetContent(ICompilationUnit cu, CodeGenerationTemplate templateSetting, String lineDelimiter, boolean snippetStringSupport) throws CoreException {
+		Template template = templateSetting.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
+
+		IPackageDeclaration[] packageDeclarations = cu.getPackageDeclarations();
+		String packageName = cu.getParent().getElementName();
+		String packageHeader = ((packageName != null && !packageName.isEmpty()) && (packageDeclarations == null || packageDeclarations.length == 0)) ? "package " + packageName + ";\n\n" : "";
+		context.setVariable(PACKAGEHEADER, packageHeader);
+		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
+		List<IType> types = Arrays.asList(cu.getAllTypes());
+		int postfix = 0;
+		while (types != null && !types.isEmpty() && types.stream().filter(isTypeExists(typeName)).findFirst().isPresent()) {
+			typeName = "Inner" + JavaCore.removeJavaLikeExtension(cu.getElementName()) + (postfix == 0 ? "" : "_" + postfix);
+			postfix++;
+		}
+		if (postfix > 0 && snippetStringSupport) {
+			context.setVariable(CodeTemplateContextType.TYPENAME, "${1:" + typeName + "}");
+		} else {
+			context.setVariable(CodeTemplateContextType.TYPENAME, typeName);
+		}
+		context.setVariable(CURSOR, snippetStringSupport ? "${0}" : "");
+
+		// TODO Consider making evaluateTemplate public in StubUtility
+		TemplateBuffer buffer;
+		try {
+			buffer = context.evaluate(template);
+		} catch (BadLocationException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		} catch (TemplateException e) {
+			throw new CoreException(Status.CANCEL_STATUS);
+		}
+		if (buffer == null) {
+			return null;
+		}
+		String str = buffer.getString();
+		if (Strings.containsOnlyWhitespaces(str)) {
+			return null;
+		}
+		return str;
+	}
+
+	private static Predicate<IType> isTypeExists(String typeName) {
+		return type -> type.getElementName().equals(typeName);
+	}
+
 }
