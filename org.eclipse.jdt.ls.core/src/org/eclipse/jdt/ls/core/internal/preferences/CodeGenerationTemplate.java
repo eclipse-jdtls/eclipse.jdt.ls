@@ -11,10 +11,11 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeTemplateContextType;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jface.text.templates.Template;
 
 public enum CodeGenerationTemplate {
+
 	/**
 	 * Field comment template
 	 */
@@ -99,7 +100,7 @@ public enum CodeGenerationTemplate {
 	 */
 	CATCHBODY(
 			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY,
-			CodeTemplateContextType.CATCHBODY_CONTEXTTYPE,
+			CodeTemplateContextType.CATCHBLOCK_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT),
 	/**
 	 * Method body content template
@@ -114,7 +115,7 @@ public enum CodeGenerationTemplate {
 	 */
 	CLASSSNIPPET_PUBLIC(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
-			CodeTemplateContextType.CLASSSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CLASSSNIPPET_PUBLIC),
 
 	/**
@@ -122,7 +123,7 @@ public enum CodeGenerationTemplate {
 	 */
 	CLASSSNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
-			CodeTemplateContextType.CLASSSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CLASSSNIPPET_DEFAULT),
 
 	/**
@@ -130,7 +131,7 @@ public enum CodeGenerationTemplate {
 	 */
 	INTERFACESNIPPET_PUBLIC(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
-			CodeTemplateContextType.INTERFACESNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_PUBLIC),
 
 	/**
@@ -138,7 +139,7 @@ public enum CodeGenerationTemplate {
 	 */
 	INTERFACESNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
-			CodeTemplateContextType.INTERFACESNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_DEFAULT);
 
 	private final String preferenceId;
@@ -161,9 +162,10 @@ public enum CodeGenerationTemplate {
  * Preference key names, internal for now.
  */
 class CodeTemplatePreferences {
-	private static final String CODETEMPLATES_PREFIX = "java.codetemplates."; //$NON-NLS-1$
-	public static final String COMMENT_SUFFIX = ".comment"; //$NON-NLS-1$
-	public static final String BODY_SUFFIX = ".body"; //$NON-NLS-1$
+	private static final String CODETEMPLATES_PREFIX = "org.eclipse.jdt.ui.text.codetemplates."; //$NON-NLS-1$
+	public static final String COMMENT_SUFFIX = "comment"; //$NON-NLS-1$
+	public static final String BODY_SUFFIX = "body"; //$NON-NLS-1$
+	private static final String BLOCK_SUFFIX = "block"; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for field comments
@@ -193,7 +195,7 @@ class CodeTemplatePreferences {
 	/**
 	 * A named preference that defines the template for overridden method comments
 	 */
-	public static final String CODETEMPLATE_OVERRIDECOMMENT = CODETEMPLATES_PREFIX + "overriddenMethod" + COMMENT_SUFFIX; //$NON-NLS-1$
+	public static final String CODETEMPLATE_OVERRIDECOMMENT = CODETEMPLATES_PREFIX + "override" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for method comments
@@ -233,7 +235,11 @@ class CodeTemplatePreferences {
 	/**
 	 * A named preference that defines the template for setter method body content
 	 */
-	public static final String CODETEMPLATE_CATCHBODY = CODETEMPLATES_PREFIX + "catch" + BODY_SUFFIX; //$NON-NLS-1$
+	public static final String CODETEMPLATE_CATCHBODY = CODETEMPLATES_PREFIX + "catch" + BLOCK_SUFFIX; //$NON-NLS-1$
+
+	public static final String CLASSSNIPPET_CONTEXTTYPE = "classsnippet_context"; //$NON-NLS-1$
+
+	public static final String INTERFACESNIPPET_CONTEXTTYPE = "interfacesnippet_context"; //$NON-NLS-1$
 
 	/**
 	 * Default value for field comments

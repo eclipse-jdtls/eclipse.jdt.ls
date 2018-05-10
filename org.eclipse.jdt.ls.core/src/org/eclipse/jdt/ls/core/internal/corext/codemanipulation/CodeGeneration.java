@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 
 
 /**
@@ -40,7 +41,7 @@ public class CodeGeneration {
 	/**
 	 * Returns the content for a new type comment using the 'type comment' code
 	 * template. The returned content is unformatted and is not indented.
-	 * 
+	 *
 	 * @param cu
 	 *            The compilation unit where the type is contained. The
 	 *            compilation unit does not need to exist.
@@ -68,7 +69,7 @@ public class CodeGeneration {
 	/**
 	 * Returns the content for a new field comment using the 'field comment'
 	 * code template. The returned content is unformatted and is not indented.
-	 * 
+	 *
 	 * @param cu
 	 *            The compilation unit where the field is contained. The
 	 *            compilation unit does not need to exist.
@@ -250,7 +251,7 @@ public class CodeGeneration {
 	public static String getMethodComment(ICompilationUnit cu, String declaringTypeName, MethodDeclaration decl, boolean isDeprecated, String overriddenMethodName, String overriddenMethodDeclaringTypeName, String[] overriddenMethodParameterTypeNames, String lineDelimiter) throws CoreException {
 		return StubUtility.getMethodComment(cu, declaringTypeName, decl, isDeprecated, overriddenMethodName, overriddenMethodDeclaringTypeName, overriddenMethodParameterTypeNames, false, lineDelimiter);
 	}
-	
+
 	/**
 	 * Returns the content of body for a getter method using the getter method body template.
 	 * <code>null</code> is returned if the template is empty.
@@ -335,5 +336,5 @@ public class CodeGeneration {
 	 */
 	public static String getSetterComment(ICompilationUnit cu, String declaringTypeName, String methodName, String fieldName, String fieldType, String paramName, String bareFieldName, String lineDelimiter) throws CoreException {
 		return StubUtility.getSetterComment(cu, declaringTypeName, methodName, fieldName, fieldType, paramName, bareFieldName, lineDelimiter);
-	}	
+	}
 }

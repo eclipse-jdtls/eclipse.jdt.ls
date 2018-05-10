@@ -10,9 +10,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -26,18 +31,26 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
+import org.eclipse.jface.text.templates.Template;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
+import org.eclipse.text.templates.ContextTypeRegistry;
+import org.eclipse.text.templates.TemplatePersistenceData;
+import org.eclipse.text.templates.TemplateReaderWriter;
+import org.eclipse.text.templates.TemplateStoreCore;
 
 /**
  * Preference manager
@@ -50,6 +63,7 @@ public class PreferenceManager {
 
 	private Preferences preferences ;
 	private static final String M2E_APT_ID = "org.jboss.tools.maven.apt";
+	private static final String CUSTOM_CODE_TEMPLATES = IConstants.PLUGIN_ID + ".custom_code_templates";
 	private ClientPreferences clientPreferences;
 	private IMavenConfiguration mavenConfig;
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
@@ -82,11 +96,60 @@ public class PreferenceManager {
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, "99");
 		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, "T,SF,SI,SM,F,I,C,M"); //$NON-NLS-1$
 
+		defEclipsePrefs.put(StubUtility.CODEGEN_KEYWORD_THIS, Boolean.FALSE.toString());
+		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
+		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
+		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
+
 		IEclipsePreferences m2eAptPrefs = DefaultScope.INSTANCE.getNode(M2E_APT_ID);
 		if (m2eAptPrefs != null) {
 			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
 		}
 		initializeMavenPreferences();
+
+		// Initialize templates
+		Template [] templates = new Template [] {
+				CodeGenerationTemplate.FIELDCOMMENT.createTemplate(null),
+				CodeGenerationTemplate.METHODCOMMENT.createTemplate(null),
+				CodeGenerationTemplate.CONSTRUCTORCOMMENT.createTemplate(null),
+				CodeGenerationTemplate.CONSTRUCTORBODY.createTemplate(null),
+				CodeGenerationTemplate.DELEGATECOMMENT.createTemplate(null),
+				CodeGenerationTemplate.OVERRIDECOMMENT.createTemplate(null),
+				CodeGenerationTemplate.TYPECOMMENT.createTemplate(null),
+				CodeGenerationTemplate.GETTERCOMMENT.createTemplate(null),
+				CodeGenerationTemplate.SETTERCOMMENT.createTemplate(null),
+				CodeGenerationTemplate.GETTERBODY.createTemplate(null),
+				CodeGenerationTemplate.SETTERBOY.createTemplate(null),
+				CodeGenerationTemplate.CATCHBODY.createTemplate(null),
+				CodeGenerationTemplate.METHODBODY.createTemplate(null)
+		};
+
+		TemplatePersistenceData[] templateData = Arrays.asList(templates).stream()
+				.map(t -> new TemplatePersistenceData(t, true, t.getDescription()))
+				.collect(Collectors.toList()).toArray(new TemplatePersistenceData[0]);
+
+		TemplateReaderWriter trw = new TemplateReaderWriter();
+		try (Writer wrt = new StringWriter()) {
+			trw.save(templateData, wrt);
+			defEclipsePrefs.put(CUSTOM_CODE_TEMPLATES, wrt.toString());
+		} catch (IOException e) {
+		}
+
+		ContextTypeRegistry registry = new ContextTypeRegistry();
+		// Register standard context types from JDT
+		CodeTemplateContextType.registerContextTypes(registry);
+		// Register additional context types
+		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE));
+		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE));
+
+		TemplateStoreCore tscore = new TemplateStoreCore(defEclipsePrefs, CUSTOM_CODE_TEMPLATES);
+		try {
+			tscore.load();
+		} catch (IOException e) {
+		}
+
+		JavaManipulation.setCodeTemplateStore(tscore);
+		JavaManipulation.setCodeTemplateContextRegistry(registry);
 	}
 
 	private static void initializeMavenPreferences() {
