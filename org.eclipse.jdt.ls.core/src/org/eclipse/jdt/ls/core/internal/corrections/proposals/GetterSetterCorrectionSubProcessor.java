@@ -5,25 +5,26 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Originally copied from org.eclipse.jdt.internal.ui.text.correction.GetterSetterCorrectionSubProcessor
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.ILocalVariable;
-import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -37,19 +38,20 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.GetterSetterUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
+import org.eclipse.ltk.core.refactoring.Change;
 
 public class GetterSetterCorrectionSubProcessor {
 
@@ -69,6 +71,70 @@ public class GetterSetterCorrectionSubProcessor {
 			this.qualifier = qualifier;
 			this.variableBinding = variableBinding;
 		}
+	}
+
+	public static class SelfEncapsulateFieldProposal extends CUCorrectionProposal { // public for tests
+
+		public SelfEncapsulateFieldProposal(int relevance, IField field) {
+			super(getDescription(field), field.getCompilationUnit(), getRefactoringChange(field), relevance);
+		}
+
+		public static Change getRefactoringChange(IField field) {
+			SelfEncapsulateFieldRefactoring refactoring;
+			try {
+				refactoring = new SelfEncapsulateFieldRefactoring(field);
+
+				refactoring.setVisibility(Flags.AccPublic);
+				refactoring.setConsiderVisibility(false);//private field references are just searched in local file
+				refactoring.checkInitialConditions(new NullProgressMonitor());
+				refactoring.checkFinalConditions(new NullProgressMonitor());
+				return refactoring.createChange(new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+			return null;
+		}
+
+		private static String getDescription(IField field) {
+			return Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_creategetterunsingencapsulatefield_description, BasicElementLabels.getJavaElementName(field.getElementName()));
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.contentassist.ICompletionProposalExtension5#getAdditionalProposalInfo(org.eclipse.core.runtime.IProgressMonitor)
+		 * @since 3.5
+		 */
+		@Override
+		public String getAdditionalProposalInfo(IProgressMonitor monitor) {
+			return CorrectionMessages.GetterSetterCorrectionSubProcessor_additional_info;
+		}
+	}
+
+	/**
+	 * Used by quick assist
+	 *
+	 * @param context
+	 *            the invocation context
+	 * @param coveringNode
+	 *            the covering node
+	 * @param locations
+	 *            the problems at the corrent location
+	 * @param resultingCollections
+	 *            the resulting proposals
+	 * @return <code>true</code> if the quick assist is applicable at this offset
+	 */
+	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocation[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
+		if (locations != null) {
+			for (int i = 0; i < locations.length; i++) {
+				int problemId = locations[i].getProblemId();
+				if (problemId == IProblem.UnusedPrivateField) {
+					return false;
+				}
+				if (problemId == IProblem.UnqualifiedFieldAccess) {
+					return false;
+				}
+			}
+		}
+		return addGetterSetterProposal(context, coveringNode, resultingCollections, IProposalRelevance.GETTER_SETTER_QUICK_ASSIST);
 	}
 
 	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocation location, Collection<CUCorrectionProposal> proposals, int relevance) {
@@ -149,13 +215,12 @@ public class GetterSetterCorrectionSubProcessor {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField) {
 				IField field = (IField) element;
-				CompilationUnit cu = CoreASTProvider.getInstance().getAST(field.getTypeRoot(), CoreASTProvider.WAIT_YES, null);
 				try {
-					if (isSelfEncapsulateAvailable(field)) {
-						return new SelfEncapsulateFieldProposal(getDescription(field), field.getCompilationUnit(), cu.getRoot(), context.variableBinding, field, relevance);
+					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
+						return new SelfEncapsulateFieldProposal(relevance, field);
 					}
 				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException("Exception when adding getter proposal", e);
+					JavaLanguageServerPlugin.log(e);
 				}
 			}
 		}
@@ -235,14 +300,12 @@ public class GetterSetterCorrectionSubProcessor {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField) {
 				IField field = (IField) element;
-				CompilationUnit cu = CoreASTProvider.getInstance().getAST(field.getTypeRoot(), CoreASTProvider.WAIT_YES, null);
 				try {
-					if (isSelfEncapsulateAvailable(field)) {
-						return new SelfEncapsulateFieldProposal(getDescription(field), field.getCompilationUnit(), cu.getRoot(), context.variableBinding, field, relevance);
-
+					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
+						return new SelfEncapsulateFieldProposal(relevance, field);
 					}
 				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException("Exception when adding setter proposal", e);
+					JavaLanguageServerPlugin.log(e);
 				}
 			}
 		}
@@ -276,34 +339,4 @@ public class GetterSetterCorrectionSubProcessor {
 		return result;
 	}
 
-	private static String getDescription(IField field) {
-		return Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_creategetterunsingencapsulatefield_description, BasicElementLabels.getJavaElementName(field.getElementName()));
-	}
-
-	private static boolean isSelfEncapsulateAvailable(IField field) throws JavaModelException {
-		return isAvailable(field) && !JdtFlags.isEnum(field) && !field.getDeclaringType().isInterface();
-	}
-
-	private static boolean isAvailable(IJavaElement javaElement) throws JavaModelException {
-		if (javaElement == null) {
-			return false;
-		}
-		if (!javaElement.exists()) {
-			return false;
-		}
-		if (javaElement.isReadOnly()) {
-			return false;
-		}
-		// work around for https://bugs.eclipse.org/bugs/show_bug.cgi?id=48422
-		// the Java project is now cheating regarding its children so we shouldn't
-		// call isStructureKnown if the project isn't open.
-		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=52474
-		if (!(javaElement instanceof IJavaProject) && !(javaElement instanceof ILocalVariable) && !javaElement.isStructureKnown()) {
-			return false;
-		}
-		if (javaElement instanceof IMember && ((IMember) javaElement).isBinary()) {
-			return false;
-		}
-		return true;
-	}
 }
