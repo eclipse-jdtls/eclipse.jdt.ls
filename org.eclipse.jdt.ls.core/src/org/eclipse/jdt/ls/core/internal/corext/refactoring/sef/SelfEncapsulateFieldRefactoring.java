@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Originally copied from org.eclipse.jdt.internal.corext.refactoring.slf.SelfEncapsulateFieldRefactoring
+ * Originally copied from org.eclipse.jdt.internal.corext.refactoring.slf.AccessAnalyzer
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     jens.lukowski@gmx.de - contributed code to convert prefix and postfix
@@ -648,6 +648,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 		String fieldAccess = createFieldAccess();
 		String body = CodeGeneration.getSetterMethodBodyContent(fField.getCompilationUnit(), getTypeName(field.getParent()), fSetterName, fieldAccess, fArgName, lineDelimiter);
 		if (body != null) {
+			body = body.substring(0, body.lastIndexOf(lineDelimiter));
 			ASTNode setterNode = rewriter.createStringPlaceholder(body, ASTNode.BLOCK);
 			block.statements().add(setterNode);
 		} else {
@@ -665,6 +666,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 			String string = CodeGeneration.getSetterComment(fField.getCompilationUnit(), getTypeName(field.getParent()), fSetterName, fField.getElementName(), ASTNodes.asString(type), fArgName, StubUtility.getBaseName(fField),
 					lineDelimiter);
 			if (string != null) {
+				string = string.substring(0, string.lastIndexOf(lineDelimiter));
 				Javadoc javadoc = (Javadoc) fRewriter.createStringPlaceholder(string, ASTNode.JAVADOC);
 				result.setJavadoc(javadoc);
 			}
@@ -686,6 +688,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 
 		String body = CodeGeneration.getGetterMethodBodyContent(fField.getCompilationUnit(), getTypeName(field.getParent()), fGetterName, fField.getElementName(), lineDelimiter);
 		if (body != null) {
+			body = body.substring(0, body.lastIndexOf(lineDelimiter));
 			ASTNode getterNode = rewriter.createStringPlaceholder(body, ASTNode.BLOCK);
 			block.statements().add(getterNode);
 		} else {
@@ -696,6 +699,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 		if (fGenerateJavadoc) {
 			String string = CodeGeneration.getGetterComment(fField.getCompilationUnit(), getTypeName(field.getParent()), fGetterName, fField.getElementName(), ASTNodes.asString(type), StubUtility.getBaseName(fField), lineDelimiter);
 			if (string != null) {
+				string = string.substring(0, string.lastIndexOf(lineDelimiter));
 				Javadoc javadoc = (Javadoc) fRewriter.createStringPlaceholder(string, ASTNode.JAVADOC);
 				result.setJavadoc(javadoc);
 			}
