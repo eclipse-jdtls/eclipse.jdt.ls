@@ -18,18 +18,18 @@
             <repository location="http://download.eclipse.org/buildship/updates/e47/releases/2.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180313-2237"/>
-            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180313-2237/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180515-2017"/>
+            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180515-2017/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180419-0833"/>
-            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.14.0.v20180412-1130"/>
-            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180326-1331"/>
-            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180413-0846"/>
-            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180419-0833"/>
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180423-1043"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180423-1043"/>
-            <repository location="http://download.eclipse.org/eclipse/updates/4.8-I-builds/I20180423-0655/"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180509-2000"/>
+            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180504-1554"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180509-2000"/>
+            <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180502-1828"/>
+            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.14.0.v20180502-1828"/>
+            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180502-1819"/>
+            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180508-1121"/>
+            <repository location="http://download.eclipse.org/eclipse/updates/4.8milestones/S-4.8M7-201805092000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180301-0956"/>
