@@ -130,7 +130,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 			builder.append(' ');
 			builder.append(parameterNames[i]);
 
-			parameterInfos.add(new ParameterInformation(builder.toString(), null));
+			parameterInfos.add(new ParameterInformation(builder.toString()));
 		}
 
 		$.setParameters(parameterInfos);

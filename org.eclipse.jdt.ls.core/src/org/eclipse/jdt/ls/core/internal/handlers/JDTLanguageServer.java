@@ -65,6 +65,7 @@ import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -409,10 +410,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#completion(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#completion(org.eclipse.lsp4j.CompletionParams)
 	 */
 	@Override
-	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler();
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];

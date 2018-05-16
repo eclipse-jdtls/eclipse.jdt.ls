@@ -27,12 +27,12 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequesto
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class CompletionHandler{
 
-	Either<List<CompletionItem>, CompletionList> completion(TextDocumentPositionParams position,
+	Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
 			IProgressMonitor monitor) {
 		List<CompletionItem> completionItems = null;
 		try {

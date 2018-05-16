@@ -88,7 +88,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		assertEquals(help.getSignatures().size(), 1);
 		assertEquals(help.getSignatures().get(0).getLabel(), "foo(String s) : int");
-		assertTrue(help.getSignatures().get(0).getDocumentation().length() > 0);
+		assertTrue(help.getSignatures().get(0).getDocumentation().getLeft().length() > 0);
 	}
 
 	@Test
