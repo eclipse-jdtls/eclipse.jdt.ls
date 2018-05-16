@@ -174,7 +174,7 @@ public class JavaClientConnection {
 		ApplyWorkspaceEditParams $ = new ApplyWorkspaceEditParams();
 		$.setEdit(edit);
 		ApplyWorkspaceEditResponse response = client.applyEdit($).join();
-		return response.getApplied().booleanValue();
+		return response.isApplied();
 	}
 
 	/**

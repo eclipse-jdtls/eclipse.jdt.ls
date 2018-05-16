@@ -49,10 +49,10 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.junit.After;
@@ -75,7 +75,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
-					"    \"method\": \"textDocument/hover\",\n" +
+					"    \"method\": \"textDocument/completion\",\n" +
 					"    \"params\": {\n" +
 					"        \"textDocument\": {\n" +
 					"            \"uri\": \"${file}\"\n" +
@@ -112,7 +112,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		try {
 			System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, "true");
 			int[] loc = findCompletionLocation(unit, "inner.");
-			TextDocumentPositionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
 			String source = unit.getSource();
 			changeDocument(unit, source, 3);
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
@@ -122,7 +122,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				server.resolveCompletionItem(item);
 			}
 			CompletionItem resolved = list.getItems().get(0);
-			assertEquals("Test ", resolved.getDocumentation());
+			assertEquals("Test ", resolved.getDocumentation().getLeft());
 		} finally {
 			unit.discardWorkingCopy();
 			if (joinOnCompletion == null) {

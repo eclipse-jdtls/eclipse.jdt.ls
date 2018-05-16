@@ -32,8 +32,8 @@
             <repository location="http://download.eclipse.org/eclipse/updates/4.8milestones/S-4.8M7-201805092000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180301-0956"/>
-            <repository location="http://download.eclipse.org/lsp4j/updates/milestones/"/>
+            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180425-1137"/>
+            <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="2.13.0.v20171020-0920"/>
