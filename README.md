@@ -114,6 +114,7 @@ This repository only contains the server implementation. Here are some known cli
 * [vscode-java](https://github.com/redhat-developer/vscode-java) : an extension for Visual Studio Code
 * [ide-java](https://github.com/atom/ide-java) : an extension for Atom
 * [ycmd](https://github.com/Valloric/ycmd) : a code-completion and code-comprehension server for multiple clients
+* [Oni: Modern Modal Editing - powered by Neovim](https://github.com/onivim/oni/wiki/Language-Support#java) : a setup to integrate with Java Language Server
 
 Continuous Integration Builds
 -----------------------------
