@@ -17,6 +17,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.Expression;
@@ -32,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.resource.Resources;
 
@@ -742,68 +747,67 @@ public class Checks {
 		}
 		return result;
 	}
-	//
-	//	/**
-	//	 * Checks whether it is possible to modify the given
-	//	 * <code>IJavaElement</code>. The <code>IJavaElement</code> must exist and
-	//	 * be non read-only to be modifiable. Moreover, if it is a
-	//	 * <code>IMember</code> it must not be binary. The returned
-	//	 * <code>RefactoringStatus</code> has <code>ERROR</code> severity if it is
-	//	 * not possible to modify the element.
-	//	 *
-	//	 * @param javaElement
-	//	 * @return the status
-	//	 * @throws JavaModelException
-	//	 *
-	//	 * @see IJavaElement#exists
-	//	 * @see IJavaElement#isReadOnly
-	//	 * @see IMember#isBinary
-	//	 * @see RefactoringStatus
-	//	 */
-	//	public static RefactoringStatus checkAvailability(IJavaElement javaElement) throws JavaModelException {
-	//		RefactoringStatus result = new RefactoringStatus();
-	//		if (!javaElement.exists()) {
-	//			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_not_in_model, getJavaElementName(javaElement)));
-	//		}
-	//		if (javaElement.isReadOnly()) {
-	//			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_read_only, getJavaElementName(javaElement)));
-	//		}
-	//		if (javaElement.exists() && !javaElement.isStructureKnown()) {
-	//			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_unknown_structure, getJavaElementName(javaElement)));
-	//		}
-	//		if (javaElement instanceof IMember && ((IMember) javaElement).isBinary()) {
-	//			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_binary, getJavaElementName(javaElement)));
-	//		}
-	//		return result;
-	//	}
-	//
-	//	private static String getJavaElementName(IJavaElement element) {
-	//		return JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
-	//	}
-	//
-	//	public static boolean isAvailable(IJavaElement javaElement) throws JavaModelException {
-	//		if (javaElement == null) {
-	//			return false;
-	//		}
-	//		if (!javaElement.exists()) {
-	//			return false;
-	//		}
-	//		if (javaElement.isReadOnly()) {
-	//			return false;
-	//		}
-	//		// work around for https://bugs.eclipse.org/bugs/show_bug.cgi?id=48422
-	//		// the Java project is now cheating regarding its children so we shouldn't
-	//		// call isStructureKnown if the project isn't open.
-	//		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=52474
-	//		if (!(javaElement instanceof IJavaProject) && !(javaElement instanceof ILocalVariable) && !javaElement.isStructureKnown()) {
-	//			return false;
-	//		}
-	//		if (javaElement instanceof IMember && ((IMember) javaElement).isBinary()) {
-	//			return false;
-	//		}
-	//		return true;
-	//	}
-	//
+
+	/**
+	 * Checks whether it is possible to modify the given <code>IJavaElement</code>.
+	 * The <code>IJavaElement</code> must exist and be non read-only to be
+	 * modifiable. Moreover, if it is a <code>IMember</code> it must not be binary.
+	 * The returned <code>RefactoringStatus</code> has <code>ERROR</code> severity
+	 * if it is not possible to modify the element.
+	 *
+	 * @param javaElement
+	 * @return the status
+	 * @throws JavaModelException
+	 *
+	 * @see IJavaElement#exists
+	 * @see IJavaElement#isReadOnly
+	 * @see IMember#isBinary
+	 * @see RefactoringStatus
+	 */
+	public static RefactoringStatus checkAvailability(IJavaElement javaElement) throws JavaModelException {
+		RefactoringStatus result = new RefactoringStatus();
+		if (!javaElement.exists()) {
+			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_not_in_model, getJavaElementName(javaElement)));
+		}
+		if (javaElement.isReadOnly()) {
+			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_read_only, getJavaElementName(javaElement)));
+		}
+		if (javaElement.exists() && !javaElement.isStructureKnown()) {
+			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_unknown_structure, getJavaElementName(javaElement)));
+		}
+		if (javaElement instanceof IMember && ((IMember) javaElement).isBinary()) {
+			result.addFatalError(Messages.format(RefactoringCoreMessages.Refactoring_binary, getJavaElementName(javaElement)));
+		}
+		return result;
+	}
+
+	private static String getJavaElementName(IJavaElement element) {
+		return JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
+	}
+
+	public static boolean isAvailable(IJavaElement javaElement) throws JavaModelException {
+		if (javaElement == null) {
+			return false;
+		}
+		if (!javaElement.exists()) {
+			return false;
+		}
+		if (javaElement.isReadOnly()) {
+			return false;
+		}
+		// work around for https://bugs.eclipse.org/bugs/show_bug.cgi?id=48422
+		// the Java project is now cheating regarding its children so we shouldn't
+		// call isStructureKnown if the project isn't open.
+		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=52474
+		if (!(javaElement instanceof IJavaProject) && !(javaElement instanceof ILocalVariable) && !javaElement.isStructureKnown()) {
+			return false;
+		}
+		if (javaElement instanceof IMember && ((IMember) javaElement).isBinary()) {
+			return false;
+		}
+		return true;
+	}
+
 	//	public static IType findTypeInPackage(IPackageFragment pack, String elementName) throws JavaModelException {
 	//		Assert.isTrue(pack.exists());
 	//		Assert.isTrue(!pack.isReadOnly());
