@@ -214,4 +214,11 @@ public class PreferenceManager {
 		return getClientPreferences() != null && getClientPreferences().isClassFileContentSupported();
 	}
 
+	/**
+	 * Checks whether the client supports markdown in completion
+	 */
+	public boolean isClientSupportsCompletionDocumentationMarkDown() {
+		return getClientPreferences() != null && getClientPreferences().isSupportsCompletionDocumentationMarkdown();
+	}
+
 }

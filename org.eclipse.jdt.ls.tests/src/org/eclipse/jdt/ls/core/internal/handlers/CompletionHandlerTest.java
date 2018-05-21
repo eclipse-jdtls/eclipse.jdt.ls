@@ -51,6 +51,8 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
@@ -123,6 +125,42 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			}
 			CompletionItem resolved = list.getItems().get(0);
 			assertEquals("Test ", resolved.getDocumentation().getLeft());
+		} finally {
+			unit.discardWorkingCopy();
+			if (joinOnCompletion == null) {
+				System.clearProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION);
+			} else {
+				System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, joinOnCompletion);
+			}
+		}
+	}
+
+	@Test
+	public void testCompletion_javadocMarkdown() throws Exception {
+		IJavaProject javaProject = JavaCore.create(project);
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
+		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
+		unit.becomeWorkingCopy(null);
+		String joinOnCompletion = System.getProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION);
+		try {
+			System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, "true");
+			int[] loc = findCompletionLocation(unit, "inner.");
+			CompletionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			String source = unit.getSource();
+			changeDocument(unit, source, 3);
+			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+			changeDocument(unit, source, 4);
+			CompletionList list = server.completion(position).join().getRight();
+			for (CompletionItem item : list.getItems()) {
+				server.resolveCompletionItem(item);
+			}
+			CompletionItem resolved = list.getItems().get(0);
+			MarkupContent markup = resolved.getDocumentation().getRight();
+			assertNotNull(markup);
+			assertEquals(MarkupKind.MARKDOWN, markup.getKind());
+			assertEquals("Test", markup.getValue());
 		} finally {
 			unit.discardWorkingCopy();
 			if (joinOnCompletion == null) {
