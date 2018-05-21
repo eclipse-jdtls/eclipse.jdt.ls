@@ -34,6 +34,8 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacem
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.osgi.util.NLS;
 
 import com.google.common.io.CharStreams;
@@ -126,7 +128,12 @@ public class CompletionResolveHandler {
 					try {
 						final IMember curMember = member;
 						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
-							Reader reader = JavadocContentAccess.getPlainTextContentReader(curMember);
+							Reader reader;
+							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+								reader = JavadocContentAccess.getMarkdownContentReader(curMember);
+							} else {
+								reader = JavadocContentAccess.getPlainTextContentReader(curMember);
+							}
 							return reader == null? null:CharStreams.toString(reader);
 						}, 500, TimeUnit.MILLISECONDS, true);
 					} catch (UncheckedTimeoutException tooSlow) {
@@ -138,7 +145,14 @@ public class CompletionResolveHandler {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
 						monitor.setCanceled(true);
 					}
-					param.setDocumentation(javadoc);
+					if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+						MarkupContent markupContent = new MarkupContent();
+						markupContent.setKind(MarkupKind.MARKDOWN);
+						markupContent.setValue(javadoc);
+						param.setDocumentation(markupContent);
+					} else {
+						param.setDocumentation(javadoc);
+					}
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Unable to resolve compilation", e);
