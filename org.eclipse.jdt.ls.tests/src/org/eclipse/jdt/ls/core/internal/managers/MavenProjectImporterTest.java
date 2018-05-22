@@ -18,11 +18,19 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -143,6 +151,47 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		pom.setLastModified(System.currentTimeMillis() + 1000);
 		importExistingMavenProject(name);
 		assertEquals("Changed Project should be updated", 1, jobSpy.updateProjectJobCalled);
+	}
+
+	@Test
+	public void testPreexistingIProjectDifferentName() throws Exception {
+		File from = new File(getSourceProjectDirectory(), "maven/salut");
+		Path projectDir = Files.createTempDirectory("testImportDifferentName");
+
+		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
+		IWorkspace workspace = wsRoot.getWorkspace();
+		String projectName = projectDir.getFileName().toString();
+		IProject salut = wsRoot.getProject("salut");
+		salut.delete(true, monitor);
+		IProjectDescription description = workspace.newProjectDescription(projectName);
+		description.setLocation(new org.eclipse.core.runtime.Path(projectDir.toFile().getAbsolutePath()));
+
+		IProject project = wsRoot.getProject(projectName);
+		project.create(description, monitor);
+
+
+		assertTrue(WorkspaceHelper.getAllProjects().contains(project));
+
+		FileUtils.copyDirectory(from, projectDir.toFile());
+
+		assertTrue(project.exists());
+		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), Collections.emptySet());
+		updateJob.join(20000, monitor);
+		assertEquals(IStatus.OK, updateJob.getResult().getSeverity());
+	}
+
+	@Test
+	public void testPreexistingIProjectSameName() throws Exception {
+		File from = new File(getSourceProjectDirectory(), "maven/salut");
+		Path workspaceDir = Files.createTempDirectory("preexistingProjectTest");
+		Path projectDir = Files.createDirectory(workspaceDir.resolve("TheSalutProject"));
+		FileUtils.copyDirectory(from, projectDir.toFile());
+
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), monitor);
+
+		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), Collections.emptySet());
+		updateJob.join(20000, monitor);
+		assertEquals(IStatus.OK, updateJob.getResult().getSeverity());
 	}
 
 	@Test
