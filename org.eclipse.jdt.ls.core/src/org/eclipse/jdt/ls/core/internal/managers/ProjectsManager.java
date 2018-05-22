@@ -175,6 +175,7 @@ public class ProjectsManager implements ISaveParticipant {
 				return status;
 			}
 		};
+		job.setRule(getWorkspaceRoot());
 		job.schedule();
 		return job;
 	}
