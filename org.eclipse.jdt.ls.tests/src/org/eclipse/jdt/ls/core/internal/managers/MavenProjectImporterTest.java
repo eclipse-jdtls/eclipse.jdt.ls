@@ -30,7 +30,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -177,7 +176,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(project.exists());
 		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), Collections.emptySet());
 		updateJob.join(20000, monitor);
-		assertEquals(IStatus.OK, updateJob.getResult().getSeverity());
+		assertTrue("Failed to import preexistingProjectTest:\n" + updateJob.getResult().getException(), updateJob.getResult().isOK());
 	}
 
 	@Test
@@ -191,7 +190,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
 		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), Collections.emptySet());
 		updateJob.join(20000, monitor);
-		assertEquals(IStatus.OK, updateJob.getResult().getSeverity());
+		assertTrue("Failed to import testImportDifferentName:\n" + updateJob.getResult().getException(), updateJob.getResult().isOK());
 	}
 
 	@Test
