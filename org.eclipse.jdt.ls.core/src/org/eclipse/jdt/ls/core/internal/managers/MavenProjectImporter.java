@@ -121,7 +121,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(true);
 		configurationImpl.setNotCoveredMojoExecutionSeverity(ProblemSeverity.ignore.toString());
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 105);
 		subMonitor.setTaskName(IMPORTING_MAVEN_PROJECTS);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
@@ -142,6 +142,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it
 					digestStore.updateDigest(pom.toPath());
+					// need to delete project due to m2e failing to create if linked and not the same name
+					project.delete(IProject.FORCE | IProject.NEVER_DELETE_PROJECT_CONTENT, subMonitor.split(5));
 					toImport.add(projectInfo);
 				}
 			}
