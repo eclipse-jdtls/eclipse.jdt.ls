@@ -1228,6 +1228,50 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_testMethodWithParams() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/org/sample/Test.java",
+		"package org.sample;\n" +
+		"public class Test {\n" +
+		"	public static void main(String[] args) {\n" +
+		"		fo\n" +
+		"		System.out.println(\"Hello World!\");\n" +
+		"	}\n\n" +
+		"	/**\n" +
+		"	* This method has Javadoc\n" +
+		"	*/\n" +
+		"	public static void foo(String bar) {\n" +
+		"	}\n" +
+		"	/**\n" +
+		"	* Another Javadoc\n" +
+		"	*/\n" +
+		"	public static void foo() {\n" +
+		"	}\n" +
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "\t\tfo");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("foo(String bar) : void")).findFirst().orElse(null);
+		assertNotNull(ci);
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem);
+		assertNotNull(resolvedItem.getDocumentation());
+		assertNotNull(resolvedItem.getDocumentation().getLeft());
+		String javadoc = resolvedItem.getDocumentation().getLeft();
+		assertEquals(javadoc, " This method has Javadoc ");
+		ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("foo() : void")).findFirst().orElse(null);
+		assertNotNull(ci);
+		resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem);
+		assertNotNull(resolvedItem.getDocumentation());
+		assertNotNull(resolvedItem.getDocumentation().getLeft());
+		javadoc = resolvedItem.getDocumentation().getLeft();
+		assertEquals(javadoc, " Another Javadoc ");
+	}
+
+	@Test
 	public void testCompletion_testClassesAvailableIntoTestCode() throws Exception {
 		ICompilationUnit unit = getWorkingCopy(
 		//@formatter:off
