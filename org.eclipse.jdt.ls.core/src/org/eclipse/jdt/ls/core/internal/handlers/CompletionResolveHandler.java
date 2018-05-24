@@ -111,6 +111,10 @@ public class CompletionResolveHandler {
 						paramSigs = parameters;
 					}
 					IMethod method = type.getMethod(name, paramSigs);
+					IMethod[] methods = type.findMethods(method);
+					if (methods != null && methods.length > 0) {
+						method = methods[0];
+					}
 					if (method.exists()) {
 						member = method;
 					} else {
