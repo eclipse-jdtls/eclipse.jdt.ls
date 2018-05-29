@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.corext.codemanipulation;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.function.Predicate;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
@@ -37,6 +39,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -204,6 +207,35 @@ public class StubUtility {
 		context.setVariable(CodeTemplateContextType.EXCEPTION_VAR, variableName);
 		return evaluateTemplate(context, template);
 	}
+
+	public static String getSnippetContent(ICompilationUnit cu, CodeGenerationTemplate templateSetting, String lineDelimiter) throws CoreException {
+		Template template = templateSetting.createTemplate(cu.getJavaProject());
+		if (template == null) {
+			return null;
+		}
+		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
+		setVariables(context, cu);
+		return evaluateTemplate(context, template);
+	}
+
+	private static void setVariables(CodeTemplateContext context, ICompilationUnit cu) throws CoreException {
+		IPackageDeclaration[] packageDeclarations = cu.getPackageDeclarations();
+		String packageHeader = (packageDeclarations == null || packageDeclarations.length == 0) ? "package " + cu.getParent().getElementName() + ";\n\n" : "";
+		context.setVariable(CodeTemplateContextType.PACKAGEHEADER, packageHeader);
+		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
+		List<IType> types = Arrays.asList(cu.getAllTypes());
+		int postfix = 0;
+		while (types != null && !types.isEmpty() && types.stream().filter(isTypeExists(typeName)).findFirst().isPresent()) {
+			typeName = "Inner" + JavaCore.removeJavaLikeExtension(cu.getElementName()) + (postfix == 0 ? "" : "_" + postfix);
+			postfix++;
+		}
+		context.setVariable(CodeTemplateContextType.TYPENAME, "${1:" + typeName + "}");
+	}
+
+	private static Predicate<IType> isTypeExists(String typeName) {
+		return type -> type.getElementName().equals(typeName);
+	}
+
 	//
 	//	/*
 	//	 * Don't use this method directly, use CodeGeneration.

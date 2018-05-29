@@ -107,7 +107,23 @@ public enum CodeGenerationTemplate {
 	METHODBODY(
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY,
 			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
-			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT),
+
+	/**
+	 * Snippet `class` content template
+	 */
+	CLASSSNIPPET(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplateContextType.CLASSSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_CLASSSNIPPET_DEFAULT),
+
+	/**
+	 * Snippet `interface` content template
+	 */
+	INTERFACESNIPPET(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplateContextType.INTERFACESNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_DEFAULT);
 
 
 	private final String preferenceId;
@@ -168,6 +184,11 @@ class CodeTemplatePreferences {
 	 * A named preference that defines the template for method comments
 	 */
 	public static final String CODETEMPLATE_METHODCOMMENT = CODETEMPLATES_PREFIX + "method" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for snippet body content
+	 */
+	public static final String CODETEMPLATE_CODESNIPPET = CODETEMPLATES_PREFIX + "snippet" + BODY_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for type comments
@@ -263,4 +284,14 @@ class CodeTemplatePreferences {
 	 * Default value for catch body content
 	 */
 	public static final String CODETEMPLATE_CATCHBODY_DEFAULT = "// ${todo} Auto-generated catch block\n${exception_var}.printStackTrace();";
+
+	/**
+	 * Default value for class snippet body content
+	 */
+	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n}";
+
+	/**
+	 * Default value for interface snippet body content
+	 */
+	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n}";
 }
