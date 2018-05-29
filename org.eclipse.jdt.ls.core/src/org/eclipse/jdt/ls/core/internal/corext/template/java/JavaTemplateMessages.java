@@ -80,6 +80,7 @@ final class JavaTemplateMessages extends NLS {
 	public static String TemplateSet_error_read;
 	public static String TemplateSet_error_write;
 	public static String Context_error_cannot_evaluate;
+	public static String CodeTemplateContextType_variable_description_packageheader;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, JavaTemplateMessages.class);

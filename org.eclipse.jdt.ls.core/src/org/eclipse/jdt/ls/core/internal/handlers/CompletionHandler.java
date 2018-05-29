@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -40,6 +41,7 @@ public class CompletionHandler{
 			completionItems = this.computeContentAssist(unit,
 					position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
+            completionItems.addAll(SnippetCompletionProposal.getSnippets(unit));
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
