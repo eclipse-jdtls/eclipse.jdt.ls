@@ -120,10 +120,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			changeDocument(unit, source, 4);
 			CompletionList list = server.completion(position).join().getRight();
-			for (CompletionItem item : list.getItems()) {
-				server.resolveCompletionItem(item);
-			}
-			CompletionItem resolved = list.getItems().get(0);
+			CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
 			assertEquals("Test ", resolved.getDocumentation().getLeft());
 		} finally {
 			unit.discardWorkingCopy();
@@ -153,10 +150,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			changeDocument(unit, source, 4);
 			CompletionList list = server.completion(position).join().getRight();
-			for (CompletionItem item : list.getItems()) {
-				server.resolveCompletionItem(item);
-			}
-			CompletionItem resolved = list.getItems().get(0);
+			CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
 			MarkupContent markup = resolved.getDocumentation().getRight();
 			assertNotNull(markup);
 			assertEquals(MarkupKind.MARKDOWN, markup.getKind());
@@ -301,7 +295,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(1, list.getItems().size());
+		assertEquals(3, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		// Check completion item
 		assertNull(item.getInsertText());
@@ -339,7 +333,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(9, list.getItems().size());
+		assertEquals(11, list.getItems().size());
 
 		//// .SECONDS - enum value
 		CompletionItem secondsFieldItem = list.getItems().get(0);
@@ -484,7 +478,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(1, list.getItems().size());
+		assertEquals(3, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Field, item.getKind());
 		assertEquals("myTestString", item.getInsertText());
@@ -513,7 +507,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(1, list.getItems().size());
+		assertEquals(3, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Class, item.getKind());
 		assertEquals("Map", item.getInsertText());
@@ -575,6 +569,236 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(8, range.getStart().getCharacter());
 		assertEquals(0, range.getEnd().getLine());
 		assertEquals(15, range.getEnd().getCharacter());
+	}
+
+	@Test
+	public void testSnippet_interface() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		int[] loc = findCompletionLocation(unit, "");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(9);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("package org.sample;\n\n/**\n * ${1:Test}\n */\npublic interface ${1:Test} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_interface2() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(8);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:Test}\n */\npublic interface ${1:Test} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_interface3() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(6);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest}\n */\npublic interface ${1:InnerTest} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_interface4() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{}\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{}\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(6);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest_1}\n */\npublic interface ${1:InnerTest_1} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_interface5() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(23);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest_1}\n */\npublic interface ${1:InnerTest_1} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_class() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		int[] loc = findCompletionLocation(unit, "");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(8);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("package org.sample;\n\n/**\n * ${1:Test}\n */\npublic class ${1:Test} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_class2() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(7);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:Test}\n */\npublic class ${1:Test} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_class3() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\n");
+		int[] loc = findCompletionLocation(unit, "");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(5);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest}\n */\npublic class ${1:InnerTest} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_class4() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(5);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest_1}\n */\npublic class ${1:InnerTest_1} {\n\n}");
+		assertEquals(expectedText.toString(), te);
+	}
+
+	@Test
+	public void testSnippet_class5() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(21);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertNotNull(te);
+		StringBuilder expectedText = new StringBuilder();
+		expectedText.append("/**\n * ${1:InnerTest_1}\n */\npublic class ${1:InnerTest_1} {\n\n}");
+		assertEquals(expectedText.toString(), te);
 	}
 
 	@Test
@@ -1224,7 +1448,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:on
 		int[] loc = findCompletionLocation(unit, " AbstractTe");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
-		assertEquals("Test proposals leaked:\n" + list.getItems(), 0, list.getItems().size());
+		assertEquals("Test proposals leaked:\n" + list.getItems(), 2, list.getItems().size());
 	}
 
 	@Test
@@ -1239,7 +1463,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		int[] loc = findCompletionLocation(unit, " AbstractTe");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
-		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
+		assertEquals("Test proposals missing from :\n" + list, 3, list.getItems().size());
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
 	}
 
