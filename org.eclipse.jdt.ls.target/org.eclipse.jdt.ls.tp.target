@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="110">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="110">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -14,22 +15,22 @@
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="2.2.0.v20171211-1404"/>
+            <unit id="org.eclipse.buildship.feature.group" version="2.2.1.v20180125-1441"/>
             <repository location="http://download.eclipse.org/buildship/updates/e47/releases/2.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180515-2017"/>
-            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180515-2017/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180529-1731"/>
+            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180529-1731/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180509-2000"/>
-            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180504-1554"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180509-2000"/>
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180502-1828"/>
-            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.14.0.v20180502-1828"/>
-            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180502-1819"/>
-            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180508-1121"/>
-            <repository location="http://download.eclipse.org/eclipse/updates/4.8milestones/S-4.8M7-201805092000/"/>
+            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.14.0.v20180512-1130"/>
+            <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180518-2029"/>
+            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180515-1348"/>
+            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180518-2029"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180524-0900"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180524-1240"/>
+            <repository location="http://download.eclipse.org/staging/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180425-1137"/>
@@ -41,9 +42,9 @@
             <repository location="http://download.eclipse.org/releases/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<unit id="org.jboss.tools.maven.apt.feature.feature.group" version="1.5.0.201805160042"/>
-			<repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.0-2018-05-16_00-46-30-H11"/>
-		</location>
+            <unit id="org.jboss.tools.maven.apt.feature.feature.group" version="1.5.0.201805160042"/>
+            <repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.0-2018-05-16_00-46-30-H11"/>
+        </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 </target>
