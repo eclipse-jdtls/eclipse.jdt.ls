@@ -44,6 +44,8 @@ public class CodeTemplateContextType extends TemplateContextType {
 	public static final String GETTERCOMMENT_CONTEXTTYPE= "gettercomment_context"; //$NON-NLS-1$
 	public static final String SETTERCOMMENT_CONTEXTTYPE= "settercomment_context"; //$NON-NLS-1$
 	public static final String CATCHBODY_CONTEXTTYPE = "catchbody_context"; //$NON-NLS-1$
+	public static final String CLASSSNIPPET_CONTEXTTYPE = "classsnippet_context"; //$NON-NLS-1$
+	public static final String INTERFACESNIPPET_CONTEXTTYPE = "interfacesnippet_context"; //$NON-NLS-1$
 
 	/* resolver types */
 	public static final String EXCEPTION_TYPE= "exception_type"; //$NON-NLS-1$
@@ -65,6 +67,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 	public static final String TYPENAME= "type_name"; //$NON-NLS-1$
 	public static final String FILENAME= "file_name"; //$NON-NLS-1$
 	public static final String PACKAGENAME= "package_name"; //$NON-NLS-1$
+	public static final String PACKAGEHEADER = "package_header"; //$NON-NLS-1$
 	public static final String PROJECTNAME= "project_name"; //$NON-NLS-1$
 
 	public static final String PACKAGE_DECLARATION= "package_declaration"; //$NON-NLS-1$
@@ -101,6 +104,8 @@ public class CodeTemplateContextType extends TemplateContextType {
 		contextTypes.add(new CodeTemplateContextType(GETTERCOMMENT_CONTEXTTYPE));
 		contextTypes.add(new CodeTemplateContextType(SETTERCOMMENT_CONTEXTTYPE));
 		contextTypes.add(new CodeTemplateContextType(CATCHBODY_CONTEXTTYPE));
+		contextTypes.add(new CodeTemplateContextType(CLASSSNIPPET_CONTEXTTYPE));
+		contextTypes.add(new CodeTemplateContextType(INTERFACESNIPPET_CONTEXTTYPE));
 		return contextTypes;
 	}
 
@@ -319,6 +324,11 @@ public class CodeTemplateContextType extends TemplateContextType {
 					JavaTemplateMessages.CodeTemplateContextType_variable_description_barefieldname));
 			addCompilationUnitVariables();
 			fIsComment = true;
+		} else if (CLASSSNIPPET_CONTEXTTYPE.equals(contextName) || INTERFACESNIPPET_CONTEXTTYPE.equals(contextName)) {
+			addResolver(new CodeTemplateVariableResolver(PACKAGEHEADER,
+					JavaTemplateMessages.CodeTemplateContextType_variable_description_packageheader));
+			addResolver(new CodeTemplateVariableResolver(TYPENAME,
+					JavaTemplateMessages.CodeTemplateContextType_variable_description_typename));
 		}
 	}
 
