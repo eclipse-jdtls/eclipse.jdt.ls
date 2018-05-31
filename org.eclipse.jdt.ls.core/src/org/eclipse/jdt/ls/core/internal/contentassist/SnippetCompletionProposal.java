@@ -11,9 +11,11 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -26,13 +28,20 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 
+import com.google.common.collect.Sets;
+
 public class SnippetCompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
+	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	public static List<CompletionItem> getSnippets(ICompilationUnit cu) {
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
+		}
+		//This check might need to be pushed back to the different get*Snippet() methods, depending on future features
+		if (UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
+			return Collections.emptyList();
 		}
 		List<CompletionItem> res = new ArrayList<>(2);
 		CompletionItem classSnippet = getClassSnippet(cu);
@@ -53,7 +62,7 @@ public class SnippetCompletionProposal {
 		classSnippetItem.setSortText(SortTextHelper.convertRelevance(1));
 
 		try {
-			classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET, cu.findRecommendedLineSeparator()));
+			classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
 			setFields(classSnippetItem, cu);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
@@ -69,13 +78,18 @@ public class SnippetCompletionProposal {
 		interfaceSnippetItem.setSortText(SortTextHelper.convertRelevance(0));
 
 		try {
-			interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET, cu.findRecommendedLineSeparator()));
+			interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
 			setFields(interfaceSnippetItem, cu);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
 		}
 		return interfaceSnippetItem;
+	}
+
+	private static boolean isSnippetStringSupported() {
+		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
 	}
 
 	private static void setFields(CompletionItem ci, ICompilationUnit cu) {
