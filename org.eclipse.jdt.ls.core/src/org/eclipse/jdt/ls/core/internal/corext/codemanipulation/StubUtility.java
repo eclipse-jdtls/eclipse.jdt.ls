@@ -208,19 +208,20 @@ public class StubUtility {
 		return evaluateTemplate(context, template);
 	}
 
-	public static String getSnippetContent(ICompilationUnit cu, CodeGenerationTemplate templateSetting, String lineDelimiter) throws CoreException {
+	public static String getSnippetContent(ICompilationUnit cu, CodeGenerationTemplate templateSetting, String lineDelimiter, boolean snippetStringSupport) throws CoreException {
 		Template template = templateSetting.createTemplate(cu.getJavaProject());
 		if (template == null) {
 			return null;
 		}
 		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), lineDelimiter);
-		setVariables(context, cu);
+		setVariables(context, cu, snippetStringSupport);
 		return evaluateTemplate(context, template);
 	}
 
-	private static void setVariables(CodeTemplateContext context, ICompilationUnit cu) throws CoreException {
+	private static void setVariables(CodeTemplateContext context, ICompilationUnit cu, boolean snippetStringSupport) throws CoreException {
 		IPackageDeclaration[] packageDeclarations = cu.getPackageDeclarations();
-		String packageHeader = (packageDeclarations == null || packageDeclarations.length == 0) ? "package " + cu.getParent().getElementName() + ";\n\n" : "";
+		String packageName = cu.getParent().getElementName();
+		String packageHeader = ((packageName != null && !packageName.isEmpty()) && (packageDeclarations == null || packageDeclarations.length == 0)) ? "package " + packageName + ";\n\n" : "";
 		context.setVariable(CodeTemplateContextType.PACKAGEHEADER, packageHeader);
 		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
 		List<IType> types = Arrays.asList(cu.getAllTypes());
@@ -229,7 +230,12 @@ public class StubUtility {
 			typeName = "Inner" + JavaCore.removeJavaLikeExtension(cu.getElementName()) + (postfix == 0 ? "" : "_" + postfix);
 			postfix++;
 		}
-		context.setVariable(CodeTemplateContextType.TYPENAME, "${1:" + typeName + "}");
+		if (postfix > 0 && snippetStringSupport) {
+			context.setVariable(CodeTemplateContextType.TYPENAME, "${1:" + typeName + "}");
+		} else {
+			context.setVariable(CodeTemplateContextType.TYPENAME, typeName);
+		}
+		context.setVariable(CodeTemplateContextType.CURSOR, snippetStringSupport ? "${0}" : "");
 	}
 
 	private static Predicate<IType> isTypeExists(String typeName) {

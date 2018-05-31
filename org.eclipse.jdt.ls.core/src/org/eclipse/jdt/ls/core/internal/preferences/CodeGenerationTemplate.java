@@ -288,10 +288,10 @@ class CodeTemplatePreferences {
 	/**
 	 * Default value for class snippet body content
 	 */
-	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n}";
+	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
 
 	/**
 	 * Default value for interface snippet body content
 	 */
-	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n}";
+	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
 }

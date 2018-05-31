@@ -78,6 +78,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 	public static final String ANNOTATION_BODY= "annotationbody"; //$NON-NLS-1$
 	public static final String TYPE_COMMENT= "typecomment"; //$NON-NLS-1$
 	public static final String FILE_COMMENT= "filecomment"; //$NON-NLS-1$
+	public static final String CURSOR = "cursor"; //$NON-NLS-1$
 
 	private static Map<String, TemplateContextType> codeTemplateContextTypeRegistry = null;
 
