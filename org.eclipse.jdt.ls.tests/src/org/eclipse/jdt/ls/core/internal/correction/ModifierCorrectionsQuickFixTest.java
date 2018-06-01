@@ -531,5 +531,66 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 
 	}
+	@Test
+	public void testInvisibleMethod() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private void test() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo(){\n");
+		buf.append("        C c = new C();\n");
+		buf.append("        c.test();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    void test() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo(){\n");
+		buf.append("        C c = new C();\n");
+		buf.append("        c.test();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'test()' to 'package'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleConstructor() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private C() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo(){\n");
+		buf.append("        C c = new C();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    C() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo(){\n");
+		buf.append("        C c = new C();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'C()' to 'package'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
 
 }
