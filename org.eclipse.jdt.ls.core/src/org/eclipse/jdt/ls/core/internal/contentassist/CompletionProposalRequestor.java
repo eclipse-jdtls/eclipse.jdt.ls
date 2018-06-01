@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -34,6 +35,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 
+import com.google.common.collect.ImmutableSet;
+
 public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private List<CompletionProposal> proposals = new ArrayList<>();
@@ -41,6 +44,19 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
 	private boolean fIsTestCodeExcluded;
+
+	// Update SUPPORTED_KINDS when mapKind changes
+	// @formatter:off
+	public static final Set<CompletionItemKind> SUPPORTED_KINDS = ImmutableSet.of(CompletionItemKind.Constructor,
+																				CompletionItemKind.Class,
+																				CompletionItemKind.Module,
+																				CompletionItemKind.Field,
+																				CompletionItemKind.Keyword,
+																				CompletionItemKind.Reference,
+																				CompletionItemKind.Variable,
+																				CompletionItemKind.Function,
+																				CompletionItemKind.Text);
+	// @formatter:on
 
 	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset) {
 		this.unit = aUnit;
@@ -120,6 +136,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 
 	private CompletionItemKind mapKind(final int kind) {
+		//When a new CompletionItemKind is added, don't forget to update SUPPORTED_KINDS
 		switch (kind) {
 		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 		case CompletionProposal.CONSTRUCTOR_INVOCATION:
