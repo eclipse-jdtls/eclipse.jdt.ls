@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="110">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="111">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -37,8 +37,8 @@
             <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.xtend.sdk.feature.group" version="2.13.0.v20171020-0920"/>
-            <unit id="org.eclipse.xtext.sdk.feature.group" version="2.13.0.v20171020-0920"/>
+            <unit id="org.eclipse.xtend.sdk.feature.group" version="2.14.0.v20180523-0937"/>
+            <unit id="org.eclipse.xtext.sdk.feature.group" version="2.14.0.v20180523-0937"/>
             <repository location="http://download.eclipse.org/releases/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
