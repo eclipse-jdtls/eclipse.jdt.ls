@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
@@ -37,8 +38,9 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
-import org.eclipse.text.edits.TextEdit;
 
 public class CodeActionHandler {
 
@@ -94,11 +96,9 @@ public class CodeActionHandler {
 
 	private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
 		String name = proposal.getName();
-		TextChange textChange = proposal.getTextChange();
-		TextEdit edit = textChange.getEdit();
 		ICompilationUnit unit = proposal.getCompilationUnit();
 
-		return textEditToCommand(unit, name, edit);
+		return new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
 	}
 
 	private IProblemLocation[] getProblemLocations(ICompilationUnit unit, List<Diagnostic> diagnostics) {
@@ -124,12 +124,24 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private static Command textEditToCommand(ICompilationUnit unit, String label, TextEdit textEdit) {
-		TextEditConverter converter = new TextEditConverter(unit, textEdit);
-		String uri = JDTUtils.toURI(unit);
+	private static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) {
 		WorkspaceEdit $ = new WorkspaceEdit();
-		$.getChanges().put(uri, converter.convert());
-		return new Command(label, COMMAND_ID_APPLY_EDIT, Arrays.asList($));
+
+		if (change instanceof TextChange) {
+			TextEditConverter converter = new TextEditConverter(unit, ((TextChange) change).getEdit());
+			String uri = JDTUtils.toURI(unit);
+			$.getChanges().put(uri, converter.convert());
+		} else if (change instanceof CompositeChange) {
+			for (Change c : ((CompositeChange) change).getChildren()) {
+				if (c instanceof CompilationUnitChange) {
+					TextEditConverter converter = new TextEditConverter(((CompilationUnitChange) c).getCompilationUnit(), ((TextChange) c).getEdit());
+					String uri = JDTUtils.toURI(((CompilationUnitChange) c).getCompilationUnit());
+					$.getChanges().put(uri, converter.convert());
+				}
+			}
+		}
+
+		return $;
 	}
 
 	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
