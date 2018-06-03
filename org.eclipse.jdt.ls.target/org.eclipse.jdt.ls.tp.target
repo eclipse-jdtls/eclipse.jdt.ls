@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="111">
+<?pde version="3.8"?><target name="Java Language Server Target Definition" sequenceNumber="112">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.mockito.mockito-all" version="1.9.5"/>
@@ -28,8 +28,8 @@
             <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180518-2029"/>
             <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180515-1348"/>
             <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180518-2029"/>
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180524-0900"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180524-1240"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180531-0700"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180531-1055"/>
             <repository location="http://download.eclipse.org/staging/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
