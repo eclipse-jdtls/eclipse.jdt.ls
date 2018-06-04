@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,11 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.ResourceChange;
+import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
@@ -54,8 +59,11 @@ public class RenameProcessor {
 	private IJavaProject fProjectCache;
 	private IScanner fScannerCache;
 
-	public RenameProcessor(IJavaElement selectedElement) {
+	protected PreferenceManager preferenceManager;
+
+	public RenameProcessor(IJavaElement selectedElement, PreferenceManager preferenceManager) {
 		fElement = selectedElement;
+		this.preferenceManager = preferenceManager;
 	}
 
 	public void renameOccurrences(WorkspaceEdit edit, String newName, IProgressMonitor monitor) throws CoreException {
@@ -122,11 +130,20 @@ public class RenameProcessor {
 	protected void convert(WorkspaceEdit root, ICompilationUnit unit, TextEdit edits) {
 		TextEditConverter converter = new TextEditConverter(unit, edits);
 		String uri = JDTUtils.toURI(unit);
-		Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
-		if (changes.containsKey(uri)) {
-			changes.get(uri).addAll(converter.convert());
+		if (preferenceManager.getClientPreferences().isWorkspaceEditResourceChangesSupported()) {
+			List<Either<ResourceChange, TextDocumentEdit>> changes = root.getResourceChanges();
+			if (changes == null) {
+				changes = new LinkedList<>();
+				root.setResourceChanges(changes);
+			}
+			changes.add(Either.forRight(converter.convertToTextDocumentEdit(0)));
 		} else {
-			changes.put(uri, converter.convert());
+			Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
+			if (changes.containsKey(uri)) {
+				changes.get(uri).addAll(converter.convert());
+			} else {
+				changes.put(uri, converter.convert());
+			}
 		}
 	}
 

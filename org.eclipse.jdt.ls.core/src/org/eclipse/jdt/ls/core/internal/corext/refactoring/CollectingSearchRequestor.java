@@ -27,9 +27,9 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.ReferencesInBinaryContext;
 
 /**
- * Collects the results returned by a <code>SearchEngine</code>. If a
- * {@link ReferencesInBinaryContext} is passed, matches that are inside a binary
- * element are not collected (but added to the context if they are accurate).
+ * Collects the results returned by a <code>SearchEngine</code>.
+ * If a {@link ReferencesInBinaryContext} is passed, matches that are
+ * inside a binary element are not collected (but added to the context if they are accurate).
  */
 public class CollectingSearchRequestor extends SearchRequestor {
 	private final ArrayList<SearchMatch> fFound;
@@ -40,23 +40,22 @@ public class CollectingSearchRequestor extends SearchRequestor {
 	}
 
 	public CollectingSearchRequestor(ReferencesInBinaryContext binaryRefs) {
-		fFound = new ArrayList<>();
-		fBinaryRefs = binaryRefs;
+		fFound= new ArrayList<>();
+		fBinaryRefs= binaryRefs;
 	}
 
 	/**
-	 * The default implementation calls {@link #collectMatch(SearchMatch)} for all
-	 * matches that make it through {@link #filterMatch(SearchMatch)}.
+	 * The default implementation calls {@link #collectMatch(SearchMatch)} for
+	 * all matches that make it through {@link #filterMatch(SearchMatch)}.
 	 *
-	 * @param match
-	 *            the found match
+	 * @param match the found match
 	 * @throws CoreException
 	 *
 	 * @see org.eclipse.jdt.core.search.SearchRequestor#acceptSearchMatch(org.eclipse.jdt.core.search.SearchMatch)
 	 */
 	@Override
 	public void acceptSearchMatch(SearchMatch match) throws CoreException {
-		if (!filterMatch(match)) {
+		if (! filterMatch(match)) {
 			collectMatch(match);
 		}
 	}
@@ -66,16 +65,13 @@ public class CollectingSearchRequestor extends SearchRequestor {
 	}
 
 	/**
-	 * Returns whether the given match should be filtered out. The default
-	 * implementation filters out matches in binaries iff
-	 * {@link #CollectingSearchRequestor(ReferencesInBinaryContext)} has been called
-	 * with a non-<code>null</code> argument. Accurate binary matches are added to
-	 * the {@link ReferencesInBinaryContext}.
+	 * Returns whether the given match should be filtered out.
+	 * The default implementation filters out matches in binaries iff
+	 * {@link #CollectingSearchRequestor(ReferencesInBinaryContext)} has been called with a
+	 * non-<code>null</code> argument. Accurate binary matches are added to the {@link ReferencesInBinaryContext}.
 	 *
-	 * @param match
-	 *            the match to test
-	 * @return <code>true</code> iff the given match should <em>not</em> be
-	 *         collected
+	 * @param match the match to test
+	 * @return <code>true</code> iff the given match should <em>not</em> be collected
 	 * @throws CoreException
 	 */
 	public boolean filterMatch(SearchMatch match) throws CoreException {
@@ -94,7 +90,7 @@ public class CollectingSearchRequestor extends SearchRequestor {
 
 	private static boolean isBinaryElement(Object element) throws JavaModelException {
 		if (element instanceof IMember) {
-			return ((IMember) element).isBinary();
+			return ((IMember)element).isBinary();
 
 		} else if (element instanceof ICompilationUnit) {
 			return true;
@@ -120,4 +116,5 @@ public class CollectingSearchRequestor extends SearchRequestor {
 		return fFound;
 	}
 }
+
 
