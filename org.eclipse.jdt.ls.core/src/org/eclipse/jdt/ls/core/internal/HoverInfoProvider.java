@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2018 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -103,13 +103,13 @@ public class HoverInfoProvider {
 			}
 			boolean resolved = isResolved(curr, monitor);
 			if (resolved) {
-				MarkedString signature = this.computeSignature(curr);
+				MarkedString signature = computeSignature(curr);
 				if (signature != null) {
 					res.add(Either.forRight(signature));
 				}
-				String javadoc = computeJavadocHover(curr);
-				if (javadoc != null) {
-					res.add(Either.forLeft(javadoc));
+				MarkedString javadoc = computeJavadoc(curr);
+				if (javadoc != null && javadoc.getValue() != null) {
+					res.add(Either.forLeft(javadoc.getValue()));
 				}
 			}
 		} catch (Exception e) {
@@ -163,7 +163,7 @@ public class HoverInfoProvider {
 		return res[0];
 	}
 
-	private MarkedString computeSignature(IJavaElement element)  {
+	public static MarkedString computeSignature(IJavaElement element)  {
 		if (element == null) {
 			return null;
 		}
@@ -178,7 +178,7 @@ public class HoverInfoProvider {
 	}
 
 
-	private String computeJavadocHover(IJavaElement element) throws CoreException {
+	public static MarkedString computeJavadoc(IJavaElement element) throws CoreException {
 		IMember member;
 		if (element instanceof ITypeParameter) {
 			member= ((ITypeParameter) element).getDeclaringMember();
@@ -189,7 +189,7 @@ public class HoverInfoProvider {
 			if(r == null ) {
 				return null;
 			}
-			return getString(r);
+			return new MarkedString(LANGUAGE_ID, getString(r));
 		} else {
 			return null;
 		}
@@ -198,7 +198,7 @@ public class HoverInfoProvider {
 		if(r == null ) {
 			return null;
 		}
-		return getString(r);
+		return new MarkedString(LANGUAGE_ID, getString(r));
 	}
 
 	/**
