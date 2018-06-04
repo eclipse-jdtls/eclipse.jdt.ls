@@ -529,7 +529,371 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		Expected e1 = new Expected("Remove 'final' modifier of 'C.foo'(..)", buf.toString());
 
 		assertCodeActions(cu, e1);
-
 	}
 
+	@Test
+	public void testInvisibleFieldRequestedInSamePackage1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo (C c) {\n");
+		buf.append("         c.test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    int test;\n");
+		buf.append("}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo (C c) {\n");
+		buf.append("         c.test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'test' to 'package'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("\n");
+		buf.append("    /**\n");
+		buf.append("     * @return the test\n");
+		buf.append("     */\n");
+		buf.append("    public int getTest() {\n");
+		buf.append("        return test;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    /**\n");
+		buf.append("     * @param test the test to set\n");
+		buf.append("     */\n");
+		buf.append("    public void setTest(int test) {\n");
+		buf.append("        this.test = test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo (C c) {\n");
+		buf.append("         c.setTest(1);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testInvisibleFieldRequestedInSamePackage2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    protected int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'test' to 'protected'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("\n");
+		buf.append("    /**\n");
+		buf.append("     * @return the test\n");
+		buf.append("     */\n");
+		buf.append("    public int getTest() {\n");
+		buf.append("        return test;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    /**\n");
+		buf.append("     * @param test the test to set\n");
+		buf.append("     */\n");
+		buf.append("    public void setTest(int test) {\n");
+		buf.append("        this.test = test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         setTest(1);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         int test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Create local variable 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    private int test;\n");
+		buf.append("\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e4 = new Expected("Create field 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo (int test) {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e5 = new Expected("Create parameter 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e6 = new Expected("Remove assignment", buf.toString());
+
+		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
+	}
+
+	@Test
+	public void testInvisibleMethodRequestedInOtherType() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private void test() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        C c = new C();\n");
+		buf.append("        c.test();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    void test() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        C c = new C();\n");
+		buf.append("        c.test();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'test()' to 'package'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleMethodRequestedInOtherPackage() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private void add() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test1", false, null);
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import test.C;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo (C c) {\n");
+		buf.append("         c.add();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack2.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    public void add() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'add()' to 'public'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleConstructorRequestedInOtherType() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private C() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        C c = new C();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    C() {}\n");
+		buf.append("}\n");
+		buf.append("class D {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        C c = new C();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'C()' to 'package'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleConstructorRequestedInInSuperType() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    private C() {}\n");
+		buf.append("}\n");
+		pack.createCompilationUnit("C.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("class D extends C{\n");
+		buf.append("    public D() {\n");
+		buf.append("        super();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class C {\n");
+		buf.append("    protected C() {}\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'C()' to 'protected'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleTypeRequestedInOtherPackage() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A {}\n");
+		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
+		buf = new StringBuilder();
+		buf.append("package test2;\n");
+		buf.append("public class B {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        test1.A a = null;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack2.createCompilationUnit("B.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A {}\n");
+		Expected e1 = new Expected("Change visibility of 'A' to 'public'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleTypeRequestedInGenericType() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A<T> {}\n");
+		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
+		buf = new StringBuilder();
+		buf.append("package test2;\n");
+		buf.append("public class B {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        test1.A<String> a = null;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack2.createCompilationUnit("B.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class A<T> {}\n");
+		Expected e1 = new Expected("Change visibility of 'A' to 'public'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testInvisibleTypeRequestedFromSuperClass() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("    private class InnerA {}\n");
+		buf.append("}\n");
+		pack.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class B extends A{\n");
+		buf.append("    public void foo () {\n");
+		buf.append("        InnerA a = null;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("B.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("    class InnerA {}\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Change visibility of 'InnerA' to 'package'", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
 }
