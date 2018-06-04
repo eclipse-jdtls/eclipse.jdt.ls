@@ -10,7 +10,6 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-
 package org.eclipse.jdt.ls.core.internal.corext.refactoring;
 
 import java.util.ArrayList;

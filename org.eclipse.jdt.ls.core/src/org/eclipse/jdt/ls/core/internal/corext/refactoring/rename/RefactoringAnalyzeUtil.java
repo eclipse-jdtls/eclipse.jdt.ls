@@ -18,16 +18,25 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.LambdaExpression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.SourceRangeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusContext;
+import org.eclipse.ltk.core.refactoring.TextChange;
+import org.eclipse.text.edits.TextEdit;
 
 public class RefactoringAnalyzeUtil {
 
@@ -35,14 +44,14 @@ public class RefactoringAnalyzeUtil {
 		//no instances
 	}
 
-	//	public static IRegion[] getNewRanges(TextEdit[] edits, TextChange change) {
-	//		IRegion[] result = new IRegion[edits.length];
-	//		for (int i = 0; i < edits.length; i++) {
-	//			result[i] = RefactoringAnalyzeUtil.getNewTextRange(edits[i], change);
-	//		}
-	//		return result;
-	//	}
-	//
+	public static IRegion[] getNewRanges(TextEdit[] edits, TextChange change) {
+		IRegion[] result = new IRegion[edits.length];
+		for (int i = 0; i < edits.length; i++) {
+			result[i] = RefactoringAnalyzeUtil.getNewTextRange(edits[i], change);
+		}
+		return result;
+	}
+
 	public static RefactoringStatus reportProblemNodes(String modifiedWorkingCopySource, SimpleName[] problemNodes) {
 		RefactoringStatus result = new RefactoringStatus();
 		for (int i = 0; i < problemNodes.length; i++) {
@@ -51,21 +60,21 @@ public class RefactoringAnalyzeUtil {
 		}
 		return result;
 	}
-	//
-	//	public static LambdaExpression getLambdaExpression(TextEdit edit, TextChange change, CompilationUnit cuNode) {
-	//		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
-	//		return ((LambdaExpression) ASTNodes.getParent(decl, LambdaExpression.class));
-	//	}
-	//
-	//	public static MethodDeclaration getMethodDeclaration(TextEdit edit, TextChange change, CompilationUnit cuNode) {
-	//		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
-	//		return ((MethodDeclaration) ASTNodes.getParent(decl, MethodDeclaration.class));
-	//	}
-	//
-	//	public static Block getBlock(TextEdit edit, TextChange change, CompilationUnit cuNode) {
-	//		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
-	//		return ((Block) ASTNodes.getParent(decl, Block.class));
-	//	}
+
+	public static LambdaExpression getLambdaExpression(TextEdit edit, TextChange change, CompilationUnit cuNode) {
+		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
+		return (ASTNodes.getParent(decl, LambdaExpression.class));
+	}
+
+	public static MethodDeclaration getMethodDeclaration(TextEdit edit, TextChange change, CompilationUnit cuNode) {
+		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
+		return (ASTNodes.getParent(decl, MethodDeclaration.class));
+	}
+
+	public static Block getBlock(TextEdit edit, TextChange change, CompilationUnit cuNode) {
+		ASTNode decl = RefactoringAnalyzeUtil.findSimpleNameNode(RefactoringAnalyzeUtil.getNewTextRange(edit, change), cuNode);
+		return (ASTNodes.getParent(decl, Block.class));
+	}
 
 	public static IProblem[] getIntroducedCompileProblems(CompilationUnit newCUNode, CompilationUnit oldCuNode) {
 		Set<IProblem> subResult = new HashSet<>();
@@ -79,11 +88,11 @@ public class RefactoringAnalyzeUtil {
 		}
 		return subResult.toArray(new IProblem[subResult.size()]);
 	}
-	//
-	//	public static IRegion getNewTextRange(TextEdit edit, TextChange change) {
-	//		return change.getPreviewEdit(edit).getRegion();
-	//	}
-	//
+
+	public static IRegion getNewTextRange(TextEdit edit, TextChange change) {
+		return change.getPreviewEdit(edit).getRegion();
+	}
+
 	private static IProblem findCorrespondingProblem(Set<IProblem> oldProblems, IProblem iProblem) {
 		for (Iterator<IProblem> iter = oldProblems.iterator(); iter.hasNext();) {
 			IProblem oldProblem = iter.next();
@@ -104,20 +113,20 @@ public class RefactoringAnalyzeUtil {
 		return true;
 	}
 
-	//	private static SimpleName getSimpleName(ASTNode node) {
-	//		if (node instanceof SimpleName) {
-	//			return (SimpleName) node;
-	//		}
-	//		if (node instanceof VariableDeclaration) {
-	//			return ((VariableDeclaration) node).getName();
-	//		}
-	//		return null;
-	//	}
-	//
-	//	private static SimpleName findSimpleNameNode(IRegion range, CompilationUnit cuNode) {
-	//		ASTNode node = NodeFinder.perform(cuNode, range.getOffset(), range.getLength());
-	//		return getSimpleName(node);
-	//	}
+	private static SimpleName getSimpleName(ASTNode node) {
+		if (node instanceof SimpleName) {
+			return (SimpleName) node;
+		}
+		if (node instanceof VariableDeclaration) {
+			return ((VariableDeclaration) node).getName();
+		}
+		return null;
+	}
+
+	private static SimpleName findSimpleNameNode(IRegion range, CompilationUnit cuNode) {
+		ASTNode node = NodeFinder.perform(cuNode, range.getOffset(), range.getLength());
+		return getSimpleName(node);
+	}
 
 	private static Set<IProblem> getOldProblems(CompilationUnit oldCuNode) {
 		return new HashSet<>(Arrays.asList(ASTNodes.getProblems(oldCuNode, ASTNodes.INCLUDE_ALL_PARENTS, ASTNodes.PROBLEMS)));

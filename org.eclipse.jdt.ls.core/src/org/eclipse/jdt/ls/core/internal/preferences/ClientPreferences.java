@@ -161,4 +161,7 @@ public class ClientPreferences {
 		//@formatter:on
 	}
 
+	public boolean isWorkspaceEditResourceChangesSupported() {
+		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getWorkspaceEdit() != null && isTrue(capabilities.getWorkspace().getWorkspaceEdit().getResourceChanges());
+	}
 }

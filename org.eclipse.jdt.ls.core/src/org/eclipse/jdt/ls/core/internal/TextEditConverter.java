@@ -18,6 +18,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.eclipse.lsp4j.TextDocumentEdit;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.text.edits.CopyTargetEdit;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
@@ -54,6 +56,13 @@ public class TextEditConverter extends TextEditVisitor{
 			this.source.accept(this);
 		}
 		return converted;
+	}
+
+	public TextDocumentEdit convertToTextDocumentEdit(int version) {
+		String uri = JDTUtils.toURI(compilationUnit);
+		VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(version);
+		identifier.setUri(uri);
+		return new TextDocumentEdit(identifier, this.convert());
 	}
 
 	/* (non-Javadoc)

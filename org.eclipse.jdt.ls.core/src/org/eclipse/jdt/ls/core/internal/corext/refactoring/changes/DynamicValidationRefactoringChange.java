@@ -6,6 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Originally copied from org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
