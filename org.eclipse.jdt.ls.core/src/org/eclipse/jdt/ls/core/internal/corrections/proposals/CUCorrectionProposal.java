@@ -51,7 +51,7 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	 *            text edits or {@link #createTextChange()} to provide a text change
 	 * @param relevance the relevance of this proposal
 	 */
-	public CUCorrectionProposal(String name, ICompilationUnit cu, TextChange change, int relevance) {
+	public CUCorrectionProposal(String name, ICompilationUnit cu, Change change, int relevance) {
 		super(name, change, relevance);
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$

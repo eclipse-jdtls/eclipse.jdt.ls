@@ -210,7 +210,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    private int count= 0;\n");
 		buf.append("    public void foo() {\n");
-		buf.append("        count= 1 + 2;\n");
+		buf.append("        setCount(1 + 2);\n");
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * @return the count\n");

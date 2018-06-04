@@ -54,6 +54,7 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
@@ -74,6 +75,8 @@ import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeParameter;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -1528,21 +1531,38 @@ public class StubUtility {
 	//	public static boolean doAddComments(IJavaProject project) {
 	//		return Boolean.valueOf(PreferenceConstants.getPreference(PreferenceConstants.CODEGEN_ADD_COMMENTS, project)).booleanValue();
 	//	}
-	//
-	//	/**
-	//	 * Only to be used by tests
-	//	 *
-	//	 * @param templateId the template id
-	//	 * @param pattern the new pattern
-	//	 * @param project not used
-	//	 */
-	//	public static void setCodeTemplate(String templateId, String pattern, IJavaProject project) {
-	//		TemplateStore codeTemplateStore= JavaPlugin.getDefault().getCodeTemplateStore();
-	//		TemplatePersistenceData data= codeTemplateStore.getTemplateData(templateId);
-	//		Template orig= data.getTemplate();
-	//		Template copy= new Template(orig.getName(), orig.getDescription(), orig.getContextTypeId(), pattern, true);
-	//		data.setTemplate(copy);
-	//	}
-	//
+
+	public static ImportRewrite createImportRewrite(ICompilationUnit cu, boolean restoreExistingImports) throws JavaModelException {
+		return CodeStyleConfiguration.createImportRewrite(cu, restoreExistingImports);
+	}
+
+	/**
+	 * Returns a {@link ImportRewrite} using
+	 * {@link ImportRewrite#create(CompilationUnit, boolean)} and configures the
+	 * rewriter with the settings as specified in the JDT UI preferences.
+	 * <p>
+	 * This method sets
+	 * {@link ImportRewrite#setUseContextToFilterImplicitImports(boolean)} to
+	 * <code>true</code> iff the given AST has been resolved with bindings. Clients
+	 * should always supply a context when they call one of the
+	 * <code>addImport(...)</code> methods.
+	 * </p>
+	 *
+	 * @param astRoot
+	 *            the AST root to create the rewriter on
+	 * @param restoreExistingImports
+	 *            specifies if the existing imports should be kept or removed.
+	 * @return the new rewriter configured with the settings as specified in the JDT
+	 *         UI preferences.
+	 *
+	 * @see ImportRewrite#create(CompilationUnit, boolean)
+	 */
+	public static ImportRewrite createImportRewrite(CompilationUnit astRoot, boolean restoreExistingImports) {
+		ImportRewrite rewrite = CodeStyleConfiguration.createImportRewrite(astRoot, restoreExistingImports);
+		if (astRoot.getAST().hasResolvedBindings()) {
+			rewrite.setUseContextToFilterImplicitImports(true);
+		}
+		return rewrite;
+	}
 
 }
