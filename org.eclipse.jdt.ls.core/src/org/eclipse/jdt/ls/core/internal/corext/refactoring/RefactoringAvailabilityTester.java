@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -49,6 +50,7 @@ import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.MethodChecks;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgPolicyFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgUtils;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
 
@@ -70,14 +72,14 @@ public final class RefactoringAvailabilityTester {
 			return null;
 		}
 		if (!(element instanceof IType)) {
-			element= element.getAncestor(IJavaElement.TYPE);
+			element = element.getAncestor(IJavaElement.TYPE);
 		}
 		return (IType) element;
 	}
 
 	public static IJavaElement[] getJavaElements(final Object[] elements) {
-		List<IJavaElement> result= new ArrayList<>();
-		for (int index= 0; index < elements.length; index++) {
+		List<IJavaElement> result = new ArrayList<>();
+		for (int index = 0; index < elements.length; index++) {
 			if (elements[index] instanceof IJavaElement) {
 				result.add((IJavaElement) elements[index]);
 			}
@@ -86,22 +88,22 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static IMember[] getPullUpMembers(final IType type) throws JavaModelException {
-		final List<IMember> list= new ArrayList<>(3);
+		final List<IMember> list = new ArrayList<>(3);
 		if (type.exists()) {
-			IMember[] members= type.getFields();
-			for (int index= 0; index < members.length; index++) {
+			IMember[] members = type.getFields();
+			for (int index = 0; index < members.length; index++) {
 				if (isPullUpAvailable(members[index])) {
 					list.add(members[index]);
 				}
 			}
-			members= type.getMethods();
-			for (int index= 0; index < members.length; index++) {
+			members = type.getMethods();
+			for (int index = 0; index < members.length; index++) {
 				if (isPullUpAvailable(members[index])) {
 					list.add(members[index]);
 				}
 			}
-			members= type.getTypes();
-			for (int index= 0; index < members.length; index++) {
+			members = type.getTypes();
+			for (int index = 0; index < members.length; index++) {
 				if (isPullUpAvailable(members[index])) {
 					list.add(members[index]);
 				}
@@ -111,16 +113,16 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static IMember[] getPushDownMembers(final IType type) throws JavaModelException {
-		final List<IMember> list= new ArrayList<>(3);
+		final List<IMember> list = new ArrayList<>(3);
 		if (type.exists()) {
-			IMember[] members= type.getFields();
-			for (int index= 0; index < members.length; index++) {
+			IMember[] members = type.getFields();
+			for (int index = 0; index < members.length; index++) {
 				if (isPushDownAvailable(members[index])) {
 					list.add(members[index]);
 				}
 			}
-			members= type.getMethods();
-			for (int index= 0; index < members.length; index++) {
+			members = type.getMethods();
+			for (int index = 0; index < members.length; index++) {
 				if (isPushDownAvailable(members[index])) {
 					list.add(members[index]);
 				}
@@ -130,8 +132,8 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static IResource[] getResources(final Object[] elements) {
-		List<IResource> result= new ArrayList<>();
-		for (int index= 0; index < elements.length; index++) {
+		List<IResource> result = new ArrayList<>();
+		for (int index = 0; index < elements.length; index++) {
 			if (elements[index] instanceof IResource) {
 				result.add((IResource) elements[index]);
 			}
@@ -187,11 +189,11 @@ public final class RefactoringAvailabilityTester {
 		if (members.length == 0) {
 			return false;
 		}
-		final IType type= members[0].getDeclaringType();
+		final IType type = members[0].getDeclaringType();
 		if (type == null) {
 			return false;
 		}
-		for (int index= 0; index < members.length; index++) {
+		for (int index = 0; index < members.length; index++) {
 			if (!type.equals(members[index].getDeclaringType())) {
 				return false;
 			}
@@ -210,7 +212,7 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isConvertAnonymousAvailable(final IType type) throws JavaModelException {
 		if (Checks.isAvailable(type)) {
-			final IJavaElement element= type.getParent();
+			final IJavaElement element = type.getParent();
 			if (element instanceof IField && JdtFlags.isEnum((IMember) element)) {
 				return false;
 			}
@@ -233,9 +235,9 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isDelegateCreationAvailable(final IField field) throws JavaModelException {
 		return field.exists() && (Flags.isStatic(field.getFlags()) && Flags.isFinal(field.getFlags()) /*
-		 * &&
-		 * hasInitializer(field)
-		 */);
+																										* &&
+																										* hasInitializer(field)
+																										*/);
 	}
 
 	public static boolean isDeleteAvailable(final IJavaElement element) {
@@ -249,7 +251,7 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		}
 		if (element instanceof IPackageFragmentRoot) {
-			IPackageFragmentRoot root= (IPackageFragmentRoot) element;
+			IPackageFragmentRoot root = (IPackageFragmentRoot) element;
 			if (root.isExternal() || Checks.isClasspathDelete(root)) {
 				return false;
 			}
@@ -292,18 +294,18 @@ public final class RefactoringAvailabilityTester {
 			//			if (ReorgUtils.containsOnlyWorkingSets(Arrays.asList(objects))) {
 			//				return true;
 			//			}
-			final IResource[] resources= RefactoringAvailabilityTester.getResources(objects);
-			final IJavaElement[] elements= RefactoringAvailabilityTester.getJavaElements(objects);
+			final IResource[] resources = RefactoringAvailabilityTester.getResources(objects);
+			final IJavaElement[] elements = RefactoringAvailabilityTester.getJavaElements(objects);
 
 			if (objects.length != resources.length + elements.length) {
 				return false;
 			}
-			for (int index= 0; index < resources.length; index++) {
+			for (int index = 0; index < resources.length; index++) {
 				if (!isDeleteAvailable(resources[index])) {
 					return false;
 				}
 			}
-			for (int index= 0; index < elements.length; index++) {
+			for (int index = 0; index < elements.length; index++) {
 				if (!isDeleteAvailable(elements[index])) {
 					return false;
 				}
@@ -384,7 +386,7 @@ public final class RefactoringAvailabilityTester {
 			if (nodes.length == 1) {
 				return nodes[0] instanceof Statement || Checks.isExtractableExpression(nodes[0]);
 			} else {
-				for (int index= 0; index < nodes.length; index++) {
+				for (int index = 0; index < nodes.length; index++) {
 					if (!(nodes[index] instanceof Statement)) {
 						return false;
 					}
@@ -405,7 +407,7 @@ public final class RefactoringAvailabilityTester {
 		if (!member.exists()) {
 			return false;
 		}
-		final int type= member.getElementType();
+		final int type = member.getElementType();
 		if (type != IJavaElement.METHOD && type != IJavaElement.FIELD && type != IJavaElement.TYPE) {
 			return false;
 		}
@@ -416,16 +418,16 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		}
 		if (member instanceof IMethod) {
-			final IMethod method= (IMethod) member;
+			final IMethod method = (IMethod) member;
 			if (method.isConstructor()) {
 				return false;
 			}
 			if (JdtFlags.isNative(method)) {
 				return false;
 			}
-			member= method.getDeclaringType();
+			member = method.getDeclaringType();
 		} else if (member instanceof IField) {
-			member= member.getDeclaringType();
+			member = member.getDeclaringType();
 		}
 		if (member instanceof IType) {
 			if (JdtFlags.isEnum(member) || JdtFlags.isAnnotation(member)) {
@@ -434,11 +436,10 @@ public final class RefactoringAvailabilityTester {
 			if (member.getDeclaringType() != null && !JdtFlags.isStatic(member)) {
 				return false;
 			}
-			if (((IType)member).isAnonymous())
-			 {
+			if (((IType) member).isAnonymous()) {
 				return false; // see https://bugs.eclipse.org/bugs/show_bug.cgi?id=253727
 			}
-			if (((IType)member).isLambda()) {
+			if (((IType) member).isLambda()) {
 				return false;
 			}
 		}
@@ -447,11 +448,11 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isExtractSupertypeAvailable(final IMember[] members) throws JavaModelException {
 		if (members != null && members.length != 0) {
-			final IType type= getTopLevelType(members);
+			final IType type = getTopLevelType(members);
 			if (type != null && !type.isClass()) {
 				return false;
 			}
-			for (int index= 0; index < members.length; index++) {
+			for (int index = 0; index < members.length; index++) {
 				if (!isExtractSupertypeAvailable(members[index])) {
 					return false;
 				}
@@ -504,19 +505,19 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isGeneralizeTypeAvailable(final IJavaElement element) throws JavaModelException {
 		if (element != null && element.exists()) {
-			String type= null;
+			String type = null;
 			if (element instanceof IMethod) {
-				type= ((IMethod) element).getReturnType();
+				type = ((IMethod) element).getReturnType();
 			} else if (element instanceof IField) {
-				final IField field= (IField) element;
+				final IField field = (IField) element;
 				if (JdtFlags.isEnum(field)) {
 					return false;
 				}
-				type= field.getTypeSignature();
+				type = field.getTypeSignature();
 			} else if (element instanceof ILocalVariable) {
 				return true;
 			} else if (element instanceof IType) {
-				final IType clazz= (IType) element;
+				final IType clazz = (IType) element;
 				if (JdtFlags.isEnum(clazz)) {
 					return false;
 				}
@@ -567,9 +568,9 @@ public final class RefactoringAvailabilityTester {
 		if (!Checks.isAvailable(element)) {
 			return false;
 		} else if (element instanceof IJavaProject) {
-			IJavaProject project= (IJavaProject) element;
-			IClasspathEntry[] classpathEntries= project.getRawClasspath();
-			for (int i= 0; i < classpathEntries.length; i++) {
+			IJavaProject project = (IJavaProject) element;
+			IClasspathEntry[] classpathEntries = project.getRawClasspath();
+			for (int i = 0; i < classpathEntries.length; i++) {
 				if (classpathEntries[i].getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 					return true;
 				}
@@ -593,7 +594,7 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		}
 
-		for (int i= 0; i < elements.length; i++) {
+		for (int i = 0; i < elements.length; i++) {
 			if (!(isInferTypeArgumentsAvailable(elements[i]))) {
 				return false;
 			}
@@ -714,10 +715,10 @@ public final class RefactoringAvailabilityTester {
 	//	}
 
 	public static ASTNode getInlineableMethodNode(ITypeRoot typeRoot, CompilationUnit root, int offset, int length) {
-		ASTNode node= null;
+		ASTNode node = null;
 		try {
-			node= getInlineableMethodNode(NodeFinder.perform(root, offset, length, typeRoot), typeRoot);
-		} catch(JavaModelException e) {
+			node = getInlineableMethodNode(NodeFinder.perform(root, offset, length, typeRoot), typeRoot);
+		} catch (JavaModelException e) {
 			// Do nothing
 		}
 		if (node != null) {
@@ -732,16 +733,15 @@ public final class RefactoringAvailabilityTester {
 		}
 		switch (node.getNodeType()) {
 			case ASTNode.SIMPLE_NAME:
-				StructuralPropertyDescriptor locationInParent= node.getLocationInParent();
+				StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
 				if (locationInParent == MethodDeclaration.NAME_PROPERTY) {
 					return node.getParent();
-				} else if (locationInParent == MethodInvocation.NAME_PROPERTY
-						|| locationInParent == SuperMethodInvocation.NAME_PROPERTY) {
+				} else if (locationInParent == MethodInvocation.NAME_PROPERTY || locationInParent == SuperMethodInvocation.NAME_PROPERTY) {
 					return unit instanceof ICompilationUnit ? node.getParent() : null; // don't start on invocations in binary
 				}
 				return null;
 			case ASTNode.EXPRESSION_STATEMENT:
-				node= ((ExpressionStatement)node).getExpression();
+				node = ((ExpressionStatement) node).getExpression();
 		}
 		switch (node.getNodeType()) {
 			case ASTNode.METHOD_DECLARATION:
@@ -872,26 +872,26 @@ public final class RefactoringAvailabilityTester {
 	//				&& isIntroduceParameterAvailable(selection.resolveSelectedNodes(), selection.resolveCoveringNode());
 	//	}
 
-	//	public static boolean isMoveAvailable(final IResource[] resources, final IJavaElement[] elements) throws JavaModelException {
-	//		if (elements != null) {
-	//			for (int index= 0; index < elements.length; index++) {
-	//				IJavaElement element= elements[index];
-	//				if (element == null || !element.exists()) {
-	//					return false;
-	//				}
-	//				if ((element instanceof IType) && ((IType) element).isLocal()) {
-	//					return false;
-	//				}
-	//				if ((element instanceof IPackageDeclaration)) {
-	//					return false;
-	//				}
-	//				if (element instanceof IField && JdtFlags.isEnum((IMember) element)) {
-	//					return false;
-	//				}
-	//			}
-	//		}
-	//		return ReorgPolicyFactory.createMovePolicy(resources, elements).canEnable();
-	//	}
+	public static boolean isMoveAvailable(final IResource[] resources, final IJavaElement[] elements) throws JavaModelException {
+		if (elements != null) {
+			for (int index = 0; index < elements.length; index++) {
+				IJavaElement element = elements[index];
+				if (element == null || !element.exists()) {
+					return false;
+				}
+				if ((element instanceof IType) && ((IType) element).isLocal()) {
+					return false;
+				}
+				if ((element instanceof IPackageDeclaration)) {
+					return false;
+				}
+				if (element instanceof IField && JdtFlags.isEnum((IMember) element)) {
+					return false;
+				}
+			}
+		}
+		return ReorgPolicyFactory.createMovePolicy(resources, elements).canEnable();
+	}
 	//
 	//	public static boolean isMoveAvailable(final JavaTextSelection selection) throws JavaModelException {
 	//		final IJavaElement element= selection.resolveEnclosingElement();
@@ -924,8 +924,7 @@ public final class RefactoringAvailabilityTester {
 	//	}
 
 	public static boolean isMoveMethodAvailable(final IMethod method) throws JavaModelException {
-		return method.exists() && !method.isConstructor() && !method.isBinary() && !method.isReadOnly()
-				&& !JdtFlags.isStatic(method) && (JdtFlags.isDefaultMethod(method) || !method.getDeclaringType().isInterface());
+		return method.exists() && !method.isConstructor() && !method.isBinary() && !method.isReadOnly() && !JdtFlags.isStatic(method) && (JdtFlags.isDefaultMethod(method) || !method.getDeclaringType().isInterface());
 	}
 
 	//	public static boolean isMoveMethodAvailable(final IStructuredSelection selection) throws JavaModelException {
@@ -948,14 +947,14 @@ public final class RefactoringAvailabilityTester {
 		if (!member.exists()) {
 			return false;
 		}
-		final int type= member.getElementType();
+		final int type = member.getElementType();
 		if (type != IJavaElement.METHOD && type != IJavaElement.FIELD && type != IJavaElement.TYPE) {
 			return false;
 		}
 		if (JdtFlags.isEnum(member) && type != IJavaElement.TYPE) {
 			return false;
 		}
-		final IType declaring= member.getDeclaringType();
+		final IType declaring = member.getDeclaringType();
 		if (declaring == null) {
 			return false;
 		}
@@ -963,7 +962,7 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		}
 		if (type == IJavaElement.METHOD && declaring.isInterface()) {
-			boolean is18OrHigher= JavaModelUtil.is18OrHigher(member.getJavaProject());
+			boolean is18OrHigher = JavaModelUtil.is18OrHigher(member.getJavaProject());
 			if (!is18OrHigher || !Flags.isStatic(member.getFlags())) {
 				return false;
 			}
@@ -984,7 +983,7 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isMoveStaticAvailable(final IMember[] members) throws JavaModelException {
-		for (int index= 0; index < members.length; index++) {
+		for (int index = 0; index < members.length; index++) {
 			if (!isMoveStaticAvailable(members[index])) {
 				return false;
 			}
@@ -1032,7 +1031,7 @@ public final class RefactoringAvailabilityTester {
 		if (!member.exists()) {
 			return false;
 		}
-		final int type= member.getElementType();
+		final int type = member.getElementType();
 		if (type != IJavaElement.METHOD && type != IJavaElement.FIELD && type != IJavaElement.TYPE) {
 			return false;
 		}
@@ -1048,14 +1047,14 @@ public final class RefactoringAvailabilityTester {
 			}
 		}
 		if (member instanceof IMethod) {
-			final IMethod method= (IMethod) member;
+			final IMethod method = (IMethod) member;
 			if (method.isConstructor()) {
 				return false;
 			}
 			if (JdtFlags.isNative(method)) {
 				return false;
 			}
-			final IType declaring= method.getDeclaringType();
+			final IType declaring = method.getDeclaringType();
 			if (declaring != null && declaring.isAnnotation()) {
 				return false;
 			}
@@ -1065,11 +1064,11 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isPullUpAvailable(final IMember[] members) throws JavaModelException {
 		if (members != null && members.length != 0) {
-			final IType type= getTopLevelType(members);
+			final IType type = getTopLevelType(members);
 			if (type != null && getPullUpMembers(type).length != 0) {
 				return true;
 			}
-			for (int index= 0; index < members.length; index++) {
+			for (int index = 0; index < members.length; index++) {
 				if (!isPullUpAvailable(members[index])) {
 					return false;
 				}
@@ -1117,7 +1116,7 @@ public final class RefactoringAvailabilityTester {
 		if (!member.exists()) {
 			return false;
 		}
-		final int type= member.getElementType();
+		final int type = member.getElementType();
 		if (type != IJavaElement.METHOD && type != IJavaElement.FIELD) {
 			return false;
 		}
@@ -1131,14 +1130,14 @@ public final class RefactoringAvailabilityTester {
 			return false;
 		}
 		if (type == IJavaElement.METHOD) {
-			final IMethod method= (IMethod) member;
+			final IMethod method = (IMethod) member;
 			if (method.isConstructor()) {
 				return false;
 			}
 			if (JdtFlags.isNative(method)) {
 				return false;
 			}
-			final IType declaring= method.getDeclaringType();
+			final IType declaring = method.getDeclaringType();
 			if (declaring != null && declaring.isAnnotation()) {
 				return false;
 			}
@@ -1148,14 +1147,14 @@ public final class RefactoringAvailabilityTester {
 
 	public static boolean isPushDownAvailable(final IMember[] members) throws JavaModelException {
 		if (members != null && members.length != 0) {
-			final IType type= getTopLevelType(members);
+			final IType type = getTopLevelType(members);
 			if (type != null && RefactoringAvailabilityTester.getPushDownMembers(type).length != 0) {
 				return true;
 			}
 			if (type != null && JdtFlags.isEnum(type)) {
 				return false;
 			}
-			for (int index= 0; index < members.length; index++) {
+			for (int index = 0; index < members.length; index++) {
 				if (!isPushDownAvailable(members[index])) {
 					return false;
 				}
@@ -1363,14 +1362,14 @@ public final class RefactoringAvailabilityTester {
 			case IJavaElement.TYPE:
 				return isRenameAvailable((IType) element);
 			case IJavaElement.METHOD:
-				final IMethod method= (IMethod) element;
+				final IMethod method = (IMethod) element;
 				if (method.isConstructor()) {
 					return isRenameAvailable(method.getDeclaringType());
 				} else {
 					return isRenameAvailable(method);
 				}
 			case IJavaElement.FIELD:
-				final IField field= (IField) element;
+				final IField field = (IField) element;
 				if (Flags.isEnum(field.getFlags())) {
 					return isRenameEnumConstAvailable(field);
 				} else {
@@ -1490,6 +1489,6 @@ public final class RefactoringAvailabilityTester {
 		if (!type.exists()) {
 			return false;
 		}
-		return ReorgUtils.isInsideCompilationUnit(type) && type.isClass() && !type.isAnonymous()  && !type.isLambda();
+		return ReorgUtils.isInsideCompilationUnit(type) && type.isClass() && !type.isAnonymous() && !type.isLambda();
 	}
 }
