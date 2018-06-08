@@ -19,8 +19,8 @@
             <repository location="http://download.eclipse.org/buildship/updates/e47/releases/2.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180529-1731"/>
-            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180529-1731/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.0.20180606-2036"/>
+            <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.0.20180606-2036/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.5.0.v20180502-1828"/>
@@ -28,8 +28,8 @@
             <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.0.v20180518-2029"/>
             <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.0.v20180515-1348"/>
             <unit id="org.eclipse.equinox.sdk.feature.group" version="3.14.0.v20180518-2029"/>
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180531-0700"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180531-1055"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180607-1630"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.8.0.v20180607-1630"/>
             <repository location="http://download.eclipse.org/staging/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
