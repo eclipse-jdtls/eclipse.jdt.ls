@@ -72,7 +72,7 @@ public class SnippetCompletionProposal {
 			monitor = new NullProgressMonitor();
 		}
 		//This check might need to be pushed back to the different get*Snippet() methods, depending on future features
-		if (UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
+		if (!isSnippetStringSupported() || UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
 			return Collections.emptyList();
 		}
 		boolean needsPublic = needsPublic(cu, completionContext, monitor);
@@ -195,9 +195,9 @@ public class SnippetCompletionProposal {
 
 		try {
 			if (needsPublic) {
-				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
+				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
 			} else {
-				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
+				classSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.CLASSSNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
 			}
 			setFields(classSnippetItem, cu);
 		} catch (CoreException e) {
@@ -221,9 +221,9 @@ public class SnippetCompletionProposal {
 
 		try {
 			if (needsPublic) {
-				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
+				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC, cu.findRecommendedLineSeparator(), true));
 			} else {
-				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), isSnippetStringSupported()));
+				interfaceSnippetItem.setInsertText(StubUtility.getSnippetContent(cu, CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT, cu.findRecommendedLineSeparator(), true));
 			}
 			setFields(interfaceSnippetItem, cu);
 		} catch (CoreException e) {

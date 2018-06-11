@@ -661,21 +661,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testSnippet_nested_inner_interface_noplaceholder() throws JavaModelException {
+	public void testSnippet_nested_inner_interface_nosnippet() throws JavaModelException {
 		mockLSP2Client();
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		assertFalse(items.isEmpty());
-		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
-
-		CompletionItem item = items.get(23);
-		assertEquals("interface", item.getLabel());
-		String te = item.getInsertText();
-		assertEquals("/**\n * InnerTest_1\n */\npublic interface InnerTest_1 {\n\n\t\n}", te);
+		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
 	}
 
 	@Test
@@ -747,21 +740,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testSnippet_sibling_inner_class_noplaceholder() throws JavaModelException {
+	public void testSnippet_sibling_inner_class_nosnippets() throws JavaModelException {
 		mockLSP2Client();
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		assertFalse(items.isEmpty());
-		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
-
-		CompletionItem item = items.get(5);
-		assertEquals("class", item.getLabel());
-		String te = item.getInsertText();
-		assertEquals("/**\n * InnerTest_1\n */\npublic class InnerTest_1 {\n\n\t\n}", te);
+		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
 	}
 
 	@Test
