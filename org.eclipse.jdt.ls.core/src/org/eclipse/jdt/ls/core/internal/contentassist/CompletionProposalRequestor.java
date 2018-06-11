@@ -44,6 +44,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
 	private boolean fIsTestCodeExcluded;
+	private CompletionContext context;
 
 	// Update SUPPORTED_KINDS when mapKind changes
 	// @formatter:off
@@ -130,6 +131,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	@Override
 	public void acceptContext(CompletionContext context) {
 		super.acceptContext(context);
+		this.context = context;
 		response.setContext(context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
@@ -216,6 +218,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	@Override
 	public boolean isTestCodeExcluded() {
 		return fIsTestCodeExcluded;
+	}
+
+	public CompletionContext getContext() {
+		return context;
 	}
 
 }

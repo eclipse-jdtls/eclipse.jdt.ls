@@ -110,21 +110,36 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT),
 
 	/**
+	 * Snippet `public class` content template
+	 */
+	CLASSSNIPPET_PUBLIC(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplateContextType.CLASSSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_CLASSSNIPPET_PUBLIC),
+
+	/**
 	 * Snippet `class` content template
 	 */
-	CLASSSNIPPET(
+	CLASSSNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
 			CodeTemplateContextType.CLASSSNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CLASSSNIPPET_DEFAULT),
 
 	/**
+	 * Snippet `public interface` content template
+	 */
+	INTERFACESNIPPET_PUBLIC(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplateContextType.INTERFACESNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_PUBLIC),
+
+	/**
 	 * Snippet `interface` content template
 	 */
-	INTERFACESNIPPET(
+	INTERFACESNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
 			CodeTemplateContextType.INTERFACESNIPPET_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_DEFAULT);
-
 
 	private final String preferenceId;
 	private final String contextType;
@@ -288,10 +303,18 @@ class CodeTemplatePreferences {
 	/**
 	 * Default value for class snippet body content
 	 */
-	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}class ${type_name} {\n\n\t${cursor}\n}";
 
+	/**
+	 * Default value for public class snippet body content
+	 */
+	public static final String CODETEMPLATE_CLASSSNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for interface snippet body content
 	 */
-	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}interface ${type_name} {\n\n\t${cursor}\n}";
+	/**
+	 * Default value for public interface snippet body content
+	 */
+	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
 }
