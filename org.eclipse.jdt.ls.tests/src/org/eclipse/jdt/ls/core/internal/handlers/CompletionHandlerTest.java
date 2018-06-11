@@ -296,7 +296,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(3, list.getItems().size());
+		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		// Check completion item
 		assertNull(item.getInsertText());
@@ -334,7 +334,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(11, list.getItems().size());
+		assertEquals(9, list.getItems().size());
 
 		//// .SECONDS - enum value
 		CompletionItem secondsFieldItem = list.getItems().get(0);
@@ -479,7 +479,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(3, list.getItems().size());
+		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Field, item.getKind());
 		assertEquals("myTestString", item.getInsertText());
@@ -508,7 +508,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(3, list.getItems().size());
+		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Class, item.getKind());
 		assertEquals("Map", item.getInsertText());
@@ -1429,7 +1429,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:on
 		int[] loc = findCompletionLocation(unit, " AbstractTe");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
-		assertEquals("Test proposals leaked:\n" + list.getItems(), 2, list.getItems().size());
+		assertEquals("Test proposals leaked:\n" + list.getItems(), 0, list.getItems().size());
 	}
 
 	@Test
@@ -1488,7 +1488,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		int[] loc = findCompletionLocation(unit, " AbstractTe");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
-		assertEquals("Test proposals missing from :\n" + list, 3, list.getItems().size());
+		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
 	}
 
@@ -1583,6 +1583,168 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 		//@formatter:on
 		return unit;
+	}
+
+	@Test
+	public void testSnippet_with_public() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+			"package org.sample;\n" +
+			"public ");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "public ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class")
+						&& item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+		String text = ci.getInsertText();
+		assertEquals("class Test {\n\n\t${0}\n}", text);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+		text = ci.getInsertText();
+		assertEquals("interface Test {\n\n\t${0}\n}", text);
+	}
+
+	@Test
+	public void testSnippet_context_javadoc() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+			"package org.sample;\n" +
+			"/**\n */");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "/**");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+	}
+
+	@Test
+	public void testSnippet_context_package() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+			"package org.sample;\n");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "package ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+	}
+
+	@Test
+	public void testSnippet_context_method1() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"	}\n"
+			+	"}\n");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "{\n\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+		String text = ci.getInsertText();
+		assertEquals("class ${1:InnerTest} {\n\n\t${0}\n}", text);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+	}
+
+	@Test
+	public void testSnippet_context_method2() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		if (c\n"
+			+	"	}\n"
+			+	"}\n");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "if (c");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+	}
+
+	@Test
+	public void testSnippet_context_method3() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		int \n"
+			+	"	}\n"
+			+	"}\n");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "int ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
+	}
+
+	@Test
+	public void testSnippet_context_static() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	static {\n"
+			+	"	}\n"
+			+	"}\n");
+			//@formatter:off
+		int[] loc = findCompletionLocation(unit, "static {\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+		String text = ci.getInsertText();
+		assertEquals("class ${1:InnerTest} {\n\n\t${0}\n}", text);
+		ci = list.getItems().stream()
+				.filter( item->  (item.getLabel().matches("interface") && item.getKind() == CompletionItemKind.Snippet))
+				.findFirst().orElse(null);
+		assertNull(ci);
 	}
 
 	@Test

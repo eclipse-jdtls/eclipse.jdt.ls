@@ -41,7 +41,6 @@ public class CompletionHandler{
 			completionItems = this.computeContentAssist(unit,
 					position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
-            completionItems.addAll(SnippetCompletionProposal.getSnippets(unit));
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
@@ -109,6 +108,7 @@ public class CompletionHandler{
 				try {
 					unit.codeComplete(offset, collector, subMonitor);
 					proposals.addAll(collector.getCompletionItems());
+					proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
