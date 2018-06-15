@@ -15,11 +15,11 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.ProgressMonitorWrapper;
@@ -32,6 +32,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
+import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -39,17 +40,40 @@ import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import com.google.common.collect.Sets;
+
 public class CompletionHandler{
 
 	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*"));
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
+	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<CompletionItem>() {
+
+		private final String DEFAULT_SORT_TEXT = String.valueOf(SortTextHelper.MAX_RELEVANCE_VALUE);
+
+		@Override
+		public int compare(CompletionItem o1, CompletionItem o2) {
+			return getSortText(o1).compareTo(getSortText(o2));
+		}
+
+		private String getSortText(CompletionItem ci) {
+			return StringUtils.defaultString(ci.getSortText(), DEFAULT_SORT_TEXT);
+		}
+
+	};
+
+	private PreferenceManager manager;
+
+	public CompletionHandler(PreferenceManager manager) {
+		this.manager = manager;
+	}
+
 	Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
 			IProgressMonitor monitor) {
-		List<CompletionItem> completionItems = null;
+		CompletionList $ = null;
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
-			completionItems = this.computeContentAssist(unit,
+			$ = this.computeContentAssist(unit,
 					position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
 		} catch (OperationCanceledException ignorable) {
@@ -59,27 +83,30 @@ public class CompletionHandler{
 			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
 			monitor.setCanceled(true);
 		}
-		CompletionList $ = new CompletionList();
+		if ($ == null) {
+			$ = new CompletionList();
+		}
+		if ($.getItems() == null) {
+			$.setItems(Collections.emptyList());
+		}
 		if (monitor.isCanceled()) {
 			$.setIsIncomplete(true);
-			completionItems = null;
 			JavaLanguageServerPlugin.logInfo("Completion request cancelled");
 		} else {
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
 		}
-		$.setItems(completionItems == null ? Collections.emptyList() : completionItems);
 		return Either.forRight($);
 	}
 
-	private List<CompletionItem> computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) throws JavaModelException {
+	private CompletionList computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) throws JavaModelException {
 		CompletionResponses.clear();
 		if (unit == null) {
-			return Collections.emptyList();
+			return null;
 		}
 		List<CompletionItem> proposals = new ArrayList<>();
 
 		final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
-		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset);
+		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset, manager);
 		// Allow completions for unresolved types - since 3.3
 		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
 		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
@@ -95,7 +122,6 @@ public class CompletionHandler{
 		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
 
 		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
-
 		collector.setFavoriteReferences(getFavoriteStaticMembers());
 
 		if (offset >-1 && !monitor.isCanceled()) {
@@ -128,7 +154,10 @@ public class CompletionHandler{
 				}
 			}
 		}
-		return proposals;
+		proposals.sort(PROPOSAL_COMPARATOR);
+		CompletionList list = new CompletionList(proposals);
+		list.setIsIncomplete(!collector.isComplete());
+		return list;
 	}
 
 	private String[] getFavoriteStaticMembers() {

@@ -21,7 +21,7 @@ import org.eclipse.jdt.core.CompletionProposal;
  *
  */
 public final class SortTextHelper {
-	private static final int CEILING = 999_999_999;
+	public static final int CEILING = 999_999_999;
 
 	public static final int MAX_RELEVANCE_VALUE = 99_999_999;
 

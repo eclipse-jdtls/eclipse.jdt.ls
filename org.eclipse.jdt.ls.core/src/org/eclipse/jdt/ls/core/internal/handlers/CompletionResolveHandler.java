@@ -32,7 +32,6 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
@@ -94,11 +93,6 @@ public class CompletionResolveHandler {
 		if (unit == null) {
 			throw new IllegalStateException(NLS.bind("Unable to match Compilation Unit from {0} ", uri));
 		}
-		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit,
-				completionResponse.getContext(),
-				completionResponse.getOffset(),
-				this.manager.getClientPreferences());
-		proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 		if (monitor.isCanceled()) {
 			param.setData(null);
 			return param;
