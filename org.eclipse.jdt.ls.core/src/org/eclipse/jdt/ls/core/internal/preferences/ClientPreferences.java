@@ -53,7 +53,7 @@ public class ClientPreferences {
 	}
 
 	public boolean isWorkspaceFoldersSupported() {
-		return isTrue(capabilities.getWorkspace().getWorkspaceFolders());
+		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getWorkspaceFolders());
 	}
 
 	public boolean isCompletionSnippetsSupported() {
@@ -97,15 +97,15 @@ public class ClientPreferences {
 	}
 
 	public boolean isExecuteCommandDynamicRegistrationSupported() {
-		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getExecuteCommand());
+		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getExecuteCommand());
 	}
 
 	public boolean isWorkspaceSymbolDynamicRegistered() {
-		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
+		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
 	}
 
 	public boolean isWorkspaceChangeWatchedFilesDynamicRegistered() {
-		return v3supported && isDynamicRegistrationSupported(capabilities.getWorkspace().getDidChangeWatchedFiles());
+		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getDidChangeWatchedFiles());
 	}
 
 	public boolean isDocumentSymbolDynamicRegistered() {
