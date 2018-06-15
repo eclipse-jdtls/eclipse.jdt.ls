@@ -472,7 +472,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
-		CompletionHandler handler = new CompletionHandler();
+		CompletionHandler handler = new CompletionHandler(preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
 			monitors[0] = monitor;
