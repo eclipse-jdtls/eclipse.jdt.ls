@@ -60,6 +60,15 @@ public class ClientPreferencesTest {
 	}
 
 	@Test
+	public void testIsExecuteCommandDynamicRegistrationSupported() throws Exception {
+		assertTrue(prefs.isV3Supported());
+		assertFalse(prefs.isExecuteCommandDynamicRegistrationSupported());
+		assertFalse(prefs.isWorkspaceSymbolDynamicRegistered());
+		assertFalse(prefs.isWorkspaceChangeWatchedFilesDynamicRegistered());
+		assertFalse(prefs.isWorkspaceFoldersSupported());
+	}
+
+	@Test
 	public void testIsSignatureHelpSupported() throws Exception {
 		assertFalse(prefs.isSignatureHelpSupported());
 		when(text.getSignatureHelp()).thenReturn(new SignatureHelpCapabilities());
