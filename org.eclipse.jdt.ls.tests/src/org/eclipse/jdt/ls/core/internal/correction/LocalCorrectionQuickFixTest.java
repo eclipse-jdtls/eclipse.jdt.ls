@@ -1743,9 +1743,9 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo() {\n");
 		buf.append("        Object o = new Object();\n");
 		buf.append("        if (o != null) {\n");
-		buf.append("            	System.out.println(\"bye\");\n");
-		buf.append("            	System.out.println(\"bye-bye\");\n");
-		buf.append("        	}\n");
+		buf.append("        	System.out.println(\"bye\");\n");
+		buf.append("        	System.out.println(\"bye-bye\");\n");
+		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove (including condition)", buf.toString());
@@ -1984,8 +1984,8 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
 		buf.append("        if (b1 && false) {\n");
 		buf.append("            if (b2) {\n");
-		buf.append("            return true;\n");
-		buf.append("        }\n");
+		buf.append("                return true;\n");
+		buf.append("            }\n");
 		buf.append("        }\n");
 		buf.append("        return false;\n");
 		buf.append("    }\n");
@@ -2028,8 +2028,8 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
 		buf.append("        if (b1 && false) {\n");
 		buf.append("            if (b2) {\n");
-		buf.append("            return true;\n");
-		buf.append("        }\n");
+		buf.append("                return true;\n");
+		buf.append("            }\n");
 		buf.append("        }\n");
 		buf.append("        return false;\n");
 		buf.append("    }\n");
@@ -2193,8 +2193,8 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public boolean foo(boolean b1, boolean b2) {\n");
 		buf.append("        if (false) {\n");
 		buf.append("            if (b1 && b2) {\n");
-		buf.append("            return true;\n");
-		buf.append("        }\n");
+		buf.append("                return true;\n");
+		buf.append("            }\n");
 		buf.append("        }\n");
 		buf.append("        return false;\n");
 		buf.append("    }\n");
