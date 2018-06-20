@@ -454,6 +454,157 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(3, edits.size());
 	}
 
+	@Test
+	public void testCompletion_method_guessMethodArgumentsFalse() throws JavaModelException {
+		testCompletion_method_guessMethodArguments(false, "test(${1:name}, ${2:i});");
+	}
+
+	@Test
+	public void testCompletion_method_guessMethodArgumentsTrue() throws JavaModelException {
+		testCompletion_method_guessMethodArguments(true, "test(${1:str}, ${2:x});");
+	}
+
+	private void testCompletion_method_guessMethodArguments(boolean guessMethodArguments, String expected) throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/java/Foo.java",
+				"public class Foo {\n" +
+				"	static void test(String name, int i) {}\n" +
+				"	public static void main(String[] args) {\n" +
+				"		String str = \"x\";\n" +
+				"		int  x = 0;\n" +
+				"		tes\n" +
+				"	}\n\n" +
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "tes");
+		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(guessMethodArguments);
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(String name, int i) : void")).findFirst().orElse(null);
+			assertNotNull(ci);
+
+			assertEquals("test", ci.getInsertText());
+			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals("999999163", ci.getSortText());
+			assertNull(ci.getTextEdit());
+
+			CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+			assertNotNull(resolvedItem.getTextEdit());
+			assertTextEdit(5, 2, 5, expected, resolvedItem.getTextEdit());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(oldGuessMethodArguments);
+		}
+	}
+
+	@Test
+	public void testCompletion_method_guessMethodArguments2() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/java/Foo.java",
+				"public class Foo {\n" +
+				"	static void test(String name, int i) {}\n" +
+				"	public static void main(String[] args) {\n" +
+				"		String str = \"x\";\n" +
+				"		tes\n" +
+				"	}\n\n" +
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "tes");
+		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(String name, int i) : void")).findFirst().orElse(null);
+			assertNotNull(ci);
+
+			assertEquals("test", ci.getInsertText());
+			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals("999999163", ci.getSortText());
+			assertNull(ci.getTextEdit());
+
+			CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+			assertNotNull(resolvedItem.getTextEdit());
+			assertTextEdit(4, 2, 5, "test(${1:str}, ${2:0});", resolvedItem.getTextEdit());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(oldGuessMethodArguments);
+		}
+	}
+
+	@Test
+	public void testCompletion_method_guessMethodArguments3() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/java/Foo.java",
+				"public class Foo {\n" +
+				"	static void test(int i, int j) {}\n" +
+				"	public static void main(String[] args) {\n" +
+				"		int one=1;\n" +
+				"		int two=2;\n" +
+				"		tes\n" +
+				"	}\n\n" +
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "tes");
+		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(int i, int j) : void")).findFirst().orElse(null);
+			assertNotNull(ci);
+
+			assertEquals("test", ci.getInsertText());
+			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals("999999163", ci.getSortText());
+			assertNull(ci.getTextEdit());
+
+			CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+			assertNotNull(resolvedItem.getTextEdit());
+			assertTextEdit(5, 2, 5, "test(${1:one}, ${2:two});", resolvedItem.getTextEdit());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(oldGuessMethodArguments);
+		}
+	}
+
+	@Test
+	public void testCompletion_method_guessMethodArgumentsConstructor() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/java/Foo.java",
+				"public class Foo {\n" +
+				"	public static void main(String[] args) {\n" +
+				"		String str = \"x\";\n" +
+				"		new A\n" +
+				"	}\n" +
+				"	private static class A { public A(String name){} }\n" +
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "new A");
+		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("A(String name)")).findFirst().orElse(null);
+			assertNotNull(ci);
+
+			assertEquals("A", ci.getInsertText());
+			assertEquals(CompletionItemKind.Constructor, ci.getKind());
+			assertEquals("999999051", ci.getSortText());
+			assertNull(ci.getTextEdit());
+
+			CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+			assertNotNull(resolvedItem.getTextEdit());
+			assertTextEdit(3, 6, 7, "A(${1:str})", resolvedItem.getTextEdit());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(oldGuessMethodArguments);
+		}
+	}
+
 	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp) {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);

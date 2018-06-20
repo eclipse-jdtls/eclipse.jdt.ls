@@ -442,12 +442,26 @@ public class CompletionProposalReplacementProvider {
 		int count= parameterNames.length;
 
 		if(client.isCompletionSnippetsSupported()){
+			String[] choices = null;
+			boolean guessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
+			if (guessMethodArguments && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER)) {
+				try {
+					choices = guessParameters(parameterNames, proposal);
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+			}
 			for (int i= 0; i < count; i++) {
 				if (i != 0) {
 					buffer.append(COMMA);
 					buffer.append(SPACE);
 				}
-				char[] argument = parameterNames[i];
+				char[] argument;
+				if (choices != null) {
+					argument = choices[i].toCharArray();
+				} else {
+					argument = parameterNames[i];
+				}
 				if (client.isCompletionSnippetsSupported()) {
 					String replace = new String(argument);
 					replace = CompletionUtils.sanitizeCompletion(replace);
@@ -460,6 +474,53 @@ public class CompletionProposalReplacementProvider {
 				buffer.append("}");
 			}
 		}
+	}
+
+	private String[] guessParameters(char[][] parameterNames, CompletionProposal proposal) throws JavaModelException {
+		int count = parameterNames.length;
+		String[] result = new String[count];
+		String[] parameterTypes = getParameterTypes(proposal);
+		IJavaElement[][] assignableElements = getAssignableElements(proposal);
+		ParameterGuesser guesser = new ParameterGuesser(compilationUnit);
+		for (int i = count - 1; i >= 0; i--) {
+			String paramName = new String(parameterNames[i]);
+			String argumentProposal = guesser.parameterProposals(parameterTypes[i], paramName, assignableElements[i]);
+			if (argumentProposal != null) {
+				result[i] = argumentProposal;
+			} else {
+				result[i] = paramName;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Originally copied from
+	 * org.eclipse.jdt.internal.ui.text.java.ParameterGuessingProposal.getParameterTypes()
+	 */
+	private String[] getParameterTypes(CompletionProposal proposal) {
+		char[] signature = SignatureUtil.fix83600(proposal.getSignature());
+		char[][] types = Signature.getParameterTypes(signature);
+
+		String[] ret = new String[types.length];
+		for (int i = 0; i < types.length; i++) {
+			ret[i] = new String(Signature.toCharArray(types[i]));
+		}
+		return ret;
+	}
+
+	/*
+	 * Orginally copied from org.eclipse.jdt.internal.ui.text.java.ParameterGuessingProposal.getAssignableElements()
+	 */
+	private IJavaElement[][] getAssignableElements(CompletionProposal proposal) {
+		char[] signature = SignatureUtil.fix83600(proposal.getSignature());
+		char[][] types = Signature.getParameterTypes(signature);
+
+		IJavaElement[][] assignableElements = new IJavaElement[types.length][];
+		for (int i = 0; i < types.length; i++) {
+			assignableElements[i] = context.getVisibleElements(new String(types[i]));
+		}
+		return assignableElements;
 	}
 
 	private final boolean canAutomaticallyAppendSemicolon(CompletionProposal proposal) {
