@@ -13,19 +13,23 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.util.SimpleDocument;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.text.edits.CopyTargetEdit;
 import org.eclipse.text.edits.DeleteEdit;
+import org.eclipse.text.edits.ISourceModifier;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.MoveSourceEdit;
 import org.eclipse.text.edits.MoveTargetEdit;
+import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditVisitor;
@@ -122,18 +126,26 @@ public class TextEditConverter extends TextEditVisitor{
 	@Override
 	public boolean visit(CopyTargetEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
-			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+			if (edit.getSourceEdit() != null) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 
-			Document doc = new Document(compilationUnit.getSource());
-			edit.apply(doc, TextEdit.UPDATE_REGIONS);
-			String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
-			te.setNewText(content);
-			converted.add(te);
+				Document doc = new Document(compilationUnit.getSource());
+				edit.apply(doc, TextEdit.UPDATE_REGIONS);
+				String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
+
+				if (edit.getSourceEdit().getSourceModifier() != null) {
+					content = applySourceModifier(content, edit.getSourceEdit().getSourceModifier());
+				}
+
+				te.setNewText(content);
+				converted.add(te);
+			}
+			return false; // do not visit children
 		} catch (MalformedTreeException | BadLocationException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
-		return false; // do not visit children
+		return super.visit(edit);
 	}
 
 	/*
@@ -168,17 +180,42 @@ public class TextEditConverter extends TextEditVisitor{
 	@Override
 	public boolean visit(MoveTargetEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
-			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+			if (edit.getSourceEdit() != null) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 
-			Document doc = new Document(compilationUnit.getSource());
-			edit.apply(doc, TextEdit.UPDATE_REGIONS);
-			String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
-			te.setNewText(content);
-			converted.add(te);
+				Document doc = new Document(compilationUnit.getSource());
+				edit.apply(doc, TextEdit.UPDATE_REGIONS);
+				String content = doc.get(edit.getSourceEdit().getOffset(), edit.getSourceEdit().getLength());
+				if (edit.getSourceEdit().getSourceModifier() != null) {
+					content = applySourceModifier(content, edit.getSourceEdit().getSourceModifier());
+				}
+				te.setNewText(content);
+				converted.add(te);
+				return false; // do not visit children
+			}
 		} catch (MalformedTreeException | BadLocationException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
-		return false; // do not visit children
+		return super.visit(edit);
+	}
+
+	private String applySourceModifier(String content, ISourceModifier modifier) {
+		if (StringUtils.isBlank(content) || modifier == null) {
+			return content;
+		}
+
+		SimpleDocument subDocument = new SimpleDocument(content);
+		TextEdit newEdit = new MultiTextEdit(0, subDocument.getLength());
+		ReplaceEdit[] replaces = modifier.getModifications(content);
+		for (ReplaceEdit replace : replaces) {
+			newEdit.addChild(replace);
+		}
+		try {
+			newEdit.apply(subDocument, TextEdit.NONE);
+		} catch (BadLocationException e) {
+			JavaLanguageServerPlugin.logException("Error applying edit to document", e);
+		}
+		return subDocument.get();
 	}
 }
