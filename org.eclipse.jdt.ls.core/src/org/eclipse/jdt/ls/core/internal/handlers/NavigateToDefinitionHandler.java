@@ -24,7 +24,6 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class NavigateToDefinitionHandler {
@@ -42,11 +41,7 @@ public class NavigateToDefinitionHandler {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
 		}
-		if (location == null) {
-			location = new Location();
-			location.setRange(new Range());
-		}
-		return Arrays.asList(location);
+		return location == null ? null : Arrays.asList(location);
 	}
 
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
