@@ -144,14 +144,22 @@ public class Preferences {
 	 * </p>
 	 */
 	public static final String JAVA_COMPLETION_OVERWRITE_KEY = "java.completion.overwrite";
+	/**
+	 * A named preference that controls if method arguments are guessed when a
+	 * method is selected from as list of code assist proposal.
+	 * <p>
+	 * Value is of type <code>Boolean</code>.
+	 * </p>
+	 */
+	public static final String JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY = "java.completion.guessMethodArguments";
 
 	/**
 	 * A named preference that defines how member elements are ordered by code
 	 * actions.
 	 * <p>
-	 * Value is of type <code>String</code>: A comma separated list of the
-	 * following entries. Each entry must be in the list, no duplication. List
-	 * order defines the sort order.
+	 * Value is of type <code>String</code>: A comma separated list of the following
+	 * entries. Each entry must be in the list, no duplication. List order defines
+	 * the sort order.
 	 * <ul>
 	 * <li><b>T</b>: Types</li>
 	 * <li><b>C</b>: Constructors</li>
@@ -230,6 +238,7 @@ public class Preferences {
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
 	private boolean completionOverwrite;
+	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
 	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
@@ -323,6 +332,7 @@ public class Preferences {
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
 		completionOverwrite = true;
+		guessMethodArguments = false;
 		javaFormatComments = true;
 		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
@@ -383,6 +393,9 @@ public class Preferences {
 
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
+
+		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
+		prefs.setGuessMethodArguments(guessMethodArguments);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -505,6 +518,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setGuessMethodArguments(boolean guessMethodArguments) {
+		this.guessMethodArguments = guessMethodArguments;
+		return this;
+	}
+
 	public Preferences setJavaFormatEnabled(boolean enabled) {
 		this.javaFormatEnabled = enabled;
 		return this;
@@ -614,6 +632,10 @@ public class Preferences {
 
 	public boolean isCompletionOverwrite() {
 		return completionOverwrite;
+	}
+
+	public boolean isGuessMethodArguments() {
+		return guessMethodArguments;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {
