@@ -612,7 +612,7 @@ public class ModifierCorrectionSubProcessor {
 		String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_addabstract_description, BasicElementLabels.getJavaElementName(parentTypeDecl.getName().getIdentifier()));
 		UnimplementedCodeFix fix = new UnimplementedCodeFix(label, context.getASTRoot(), new CompilationUnitRewriteOperation[] { operation });
 
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, IProposalRelevance.MAKE_TYPE_ABSTRACT_FIX, context);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_TYPE_ABSTRACT_FIX, context);
 		proposals.add(proposal);
 	}
 

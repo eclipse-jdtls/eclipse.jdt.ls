@@ -23,8 +23,10 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -48,6 +50,7 @@ import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.CreationReference;
+import org.eclipse.jdt.core.dom.Dimension;
 import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
@@ -91,9 +94,14 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.CleanUpOptions;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsCleanUp;
+import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsFix;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
@@ -101,6 +109,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
@@ -167,7 +176,7 @@ public class QuickAssistProcessor {
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
-				//				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
+				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
 				//				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
@@ -446,6 +455,44 @@ public class QuickAssistProcessor {
 			proposal.setLinkedProposalModel(linkedProposalModel);
 			proposals.add(proposal);
 		}
+		return true;
+	}
+
+	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {
+		while (covering instanceof Name || covering instanceof Type || covering instanceof Dimension || covering.getParent() instanceof MethodDeclaration
+				|| covering.getLocationInParent() == AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY) {
+			covering = covering.getParent();
+		}
+
+		ClassInstanceCreation cic;
+		if (covering instanceof ClassInstanceCreation) {
+			cic = (ClassInstanceCreation) covering;
+		} else if (covering.getLocationInParent() == ClassInstanceCreation.ANONYMOUS_CLASS_DECLARATION_PROPERTY) {
+			cic = (ClassInstanceCreation) covering.getParent();
+		} else if (covering instanceof Name) {
+			ASTNode normalized = ASTNodes.getNormalizedNode(covering);
+			if (normalized.getLocationInParent() != ClassInstanceCreation.TYPE_PROPERTY) {
+				return false;
+			}
+			cic = (ClassInstanceCreation) normalized.getParent();
+		} else {
+			return false;
+		}
+
+		IProposableFix fix = LambdaExpressionsFix.createConvertToLambdaFix(cic);
+		if (fix == null) {
+			return false;
+		}
+
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		Map<String, String> options = new HashMap<>();
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptions.TRUE);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUp(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
+		resultingCollections.add(proposal);
 		return true;
 	}
 
