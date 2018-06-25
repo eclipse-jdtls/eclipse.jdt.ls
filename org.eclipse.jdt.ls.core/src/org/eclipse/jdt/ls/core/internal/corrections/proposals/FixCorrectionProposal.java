@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.ls.core.internal.corext.fix.ICleanUp;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.ltk.core.refactoring.TextChange;
@@ -31,16 +32,22 @@ import org.eclipse.ltk.core.refactoring.TextFileChange;
 public class FixCorrectionProposal extends LinkedCorrectionProposal {
 
 	private final IProposableFix fFix;
+	private final ICleanUp fCleanUp;
 	private CompilationUnit fCompilationUnit;
 
-	public FixCorrectionProposal(IProposableFix fix, int relevance, IInvocationContext context) {
+	public FixCorrectionProposal(IProposableFix fix, ICleanUp cleanUp, int relevance, IInvocationContext context) {
 		super(fix.getDisplayString(), context.getCompilationUnit(), null, relevance);
 		fFix = fix;
+		fCleanUp = cleanUp;
 		fCompilationUnit = context.getASTRoot();
 	}
 
 	public IStatus getFixStatus() {
 		return fFix.getStatus();
+	}
+
+	public ICleanUp getCleanUp() {
+		return fCleanUp;
 	}
 
 	@Override
