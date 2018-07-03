@@ -26,10 +26,10 @@
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="1.6.0.v20180615-1922"/>
             <unit id="org.eclipse.equinox.core.sdk.feature.group" version="3.15.0.v20180615-1922"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="3.8.100.v20180611-1436"/>
-            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.100.v20180614-0806"/>
-            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.15.0.v20180615-1922"/>
-            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180628-0230"/>
-            <unit id="org.eclipse.sdk.feature.group" version="4.9.0.v20180628-0230"/>
+            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="1.5.100.v20180626-2028"/>
+            <unit id="org.eclipse.equinox.sdk.feature.group" version="3.15.0.v20180626-2028"/>
+            <unit id="org.eclipse.jdt.source.feature.group" version="3.14.0.v20180702-2027"/>
+            <unit id="org.eclipse.sdk.feature.group" version="4.9.0.v20180702-2027"/>
             <repository location="http://download.eclipse.org/eclipse/updates/4.9-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
