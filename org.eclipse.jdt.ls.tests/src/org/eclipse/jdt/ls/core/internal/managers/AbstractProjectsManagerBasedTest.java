@@ -138,15 +138,16 @@ public abstract class AbstractProjectsManagerBasedTest {
 		});
 	}
 
-	protected void initPreferenceManager(boolean supportClassFileContents) {
+	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
 		PreferenceManager.initialize();
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
 		ClientPreferences clientPreferences = mock(ClientPreferences.class);
 		when(clientPreferences.isProgressReportSupported()).thenReturn(true);
-		when(clientPreferences.isClassFileContentSupported()).thenReturn(supportClassFileContents);
+		when(clientPreferences.isSemanticHighlightingSupported()).thenReturn(true);
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		return clientPreferences;
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {

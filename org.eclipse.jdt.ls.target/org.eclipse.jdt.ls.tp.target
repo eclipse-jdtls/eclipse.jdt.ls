@@ -38,7 +38,6 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="2.14.0.v20180523-0937"/>
-            <unit id="org.eclipse.xtext.sdk.feature.group" version="2.14.0.v20180523-0937"/>
             <repository location="http://download.eclipse.org/releases/photon/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">

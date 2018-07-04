@@ -188,6 +188,13 @@ public class ClientPreferences {
 				&& capabilities.getTextDocument().getDocumentSymbol() != null
 				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport() != null
 				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport().booleanValue();
+	}
+
+	public boolean isSemanticHighlightingSupported() {
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getSemanticHighlightingCapabilities() != null
+				&& capabilities.getTextDocument().getSemanticHighlightingCapabilities().getSemanticHighlighting() != null
+				&& capabilities.getTextDocument().getSemanticHighlightingCapabilities().getSemanticHighlighting().booleanValue();
 		//@formatter:on
 	}
 }

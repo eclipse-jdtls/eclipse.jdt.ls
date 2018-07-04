@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,12 +48,18 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.highlighting.HighlightedPosition;
+import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
+import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BadPositionCategoryException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -60,11 +68,14 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+
+import com.google.common.collect.Iterables;
 
 public class DocumentLifeCycleHandler {
 
@@ -76,12 +87,14 @@ public class DocumentLifeCycleHandler {
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
+	private SemanticHighlightingService semanticHighlightingService;
 
 	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, boolean delayValidation) {
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.projectsManager = projectsManager;
 		this.sharedASTProvider = CoreASTProvider.getInstance();
+		this.semanticHighlightingService = new SemanticHighlightingService(this.connection, this.sharedASTProvider, this.preferenceManager);
 		if (delayValidation) {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
 				@Override
@@ -282,15 +295,17 @@ public class DocumentLifeCycleHandler {
 				buffer.setContents(newContent);
 			}
 			triggerValidation(unit);
+			installSemanticHighlightings(unit);
 			// see https://github.com/redhat-developer/vscode-java/issues/274
 			checkPackageDeclaration(uri, unit);
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Error while opening document", e);
+		} catch (JavaModelException | BadPositionCategoryException e) {
+			JavaLanguageServerPlugin.logException("Error while opening document. URI: " + uri, e);
 		}
 	}
 
 	public void handleChanged(DidChangeTextDocumentParams params) {
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		String uri = params.getTextDocument().getUri();
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 
 		if (unit == null || !unit.isWorkingCopy() || params.getContentChanges().isEmpty() || unit.getResource().isDerived()) {
 			return;
@@ -301,6 +316,7 @@ public class DocumentLifeCycleHandler {
 				sharedASTProvider.disposeAST();
 			}
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
+			List<HighlightedPositionDiffContext> diffContexts = newArrayList();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
 				Range range = changeEvent.getRange();
@@ -325,12 +341,33 @@ public class DocumentLifeCycleHandler {
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
-				edit.apply(document, TextEdit.NONE);
+
+				// Avoid any computation if the `SemanticHighlightingService#isEnabled` is `false`.
+				if (semanticHighlightingService.isEnabled()) {
+					IDocument oldState = new Document(unit.getBuffer().getContents());
+					IDocument newState = JsonRpcHelpers.toDocument(unit.getBuffer());
+					//@formatter:off
+					List<HighlightedPosition> oldPositions = diffContexts.isEmpty()
+						? semanticHighlightingService.getHighlightedPositions(uri)
+						: Iterables.getLast(diffContexts).newPositions;
+					//@formatter:on
+					edit.apply(newState, TextEdit.NONE);
+					// This is a must. Make the document immutable.
+					// Otherwise, any consecutive `newStates` get out-of-sync due to the shared buffer from the compilation unit.
+					newState = new Document(newState.get());
+					List<HighlightedPosition> newPositions = semanticHighlightingService.calculateHighlightedPositions(unit, true);
+					DocumentEvent event = new DocumentEvent(newState, startOffset, length, text);
+					diffContexts.add(new HighlightedPositionDiffContext(oldState, event, oldPositions, newPositions));
+				} else {
+					IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+					edit.apply(document, TextEdit.NONE);
+				}
+
 			}
 			triggerValidation(unit);
-		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
-			JavaLanguageServerPlugin.logException("Error while handling document change", e);
+			updateSemanticHighlightings(params.getTextDocument(), diffContexts);
+		} catch (JavaModelException | MalformedTreeException | BadLocationException | BadPositionCategoryException e) {
+			JavaLanguageServerPlugin.logException("Error while handling document change. URI: " + uri, e);
 		}
 	}
 
@@ -354,8 +391,9 @@ public class DocumentLifeCycleHandler {
 					unit.delete(true, null);
 				}
 			}
+			uninstallSemanticHighlightings(uri);
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Error while handling document close", e);
+			JavaLanguageServerPlugin.logException("Error while handling document close. URI: " + uri, e);
 		}
 	}
 
@@ -374,7 +412,7 @@ public class DocumentLifeCycleHandler {
 				unit.discardWorkingCopy();
 				unit.becomeWorkingCopy(new NullProgressMonitor());
 			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException("Error while handling document save", e);
+				JavaLanguageServerPlugin.logException("Error while handling document save. URI: " + uri, e);
 			}
 		}
 	}
@@ -421,6 +459,18 @@ public class DocumentLifeCycleHandler {
 			}
 		}
 		return unit;
+	}
+
+	protected void installSemanticHighlightings(ICompilationUnit unit) throws JavaModelException, BadPositionCategoryException {
+		this.semanticHighlightingService.install(unit);
+	}
+
+	protected void uninstallSemanticHighlightings(String uri) {
+		this.semanticHighlightingService.uninstall(uri);
+	}
+
+	protected void updateSemanticHighlightings(VersionedTextDocumentIdentifier textDocument, List<HighlightedPositionDiffContext> diffContexts) throws BadLocationException, BadPositionCategoryException, JavaModelException {
+		this.semanticHighlightingService.update(textDocument, diffContexts);
 	}
 
 }

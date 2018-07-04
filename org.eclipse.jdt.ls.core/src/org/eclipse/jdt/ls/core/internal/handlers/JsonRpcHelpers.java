@@ -37,10 +37,23 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int toOffset(IBuffer buffer, int line, int column){
+		if (buffer != null) {
+			return toOffset(toDocument(buffer), line, column);
+		}
+		return -1;
+	}
+
+	/**
+	 * Convert line, column to a document offset.
+	 * 
+	 * @param document
+	 * @param line
+	 * @param column
+	 * @return
+	 */
+	public static int toOffset(IDocument document, int line, int column) {
 		try {
-			if (buffer != null) {
-				return toDocument(buffer).getLineOffset(line) + column;
-			}
+			return document.getLineOffset(line) + column;
 		} catch (BadLocationException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
@@ -55,11 +68,21 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int[] toLine(IBuffer buffer, int offset){
-		IDocument document = toDocument(buffer);
+		return toLine(toDocument(buffer), offset);
+	}
+
+	/**
+	 * Convert the document offset to line number and column.
+	 *
+	 * @param document
+	 * @param line
+	 * @return
+	 */
+	public static int[] toLine(IDocument document, int offset) {
 		try {
 			int line = document.getLineOfOffset(offset);
 			int column = offset - document.getLineOffset(line);
-			return new int[] {line, column};
+			return new int[] { line, column };
 		} catch (BadLocationException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}

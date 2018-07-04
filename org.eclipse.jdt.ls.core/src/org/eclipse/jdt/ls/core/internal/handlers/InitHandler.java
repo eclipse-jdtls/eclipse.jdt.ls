@@ -36,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -46,6 +47,7 @@ import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.SaveOptions;
+import org.eclipse.lsp4j.SemanticHighlightingServerCapabilities;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
@@ -197,6 +199,12 @@ final public class InitHandler {
 			textDocumentSyncOptions.setWillSaveWaitUntil(Boolean.TRUE);
 		}
 		capabilities.setTextDocumentSync(textDocumentSyncOptions);
+
+		if (preferenceManager.getClientPreferences().isSemanticHighlightingSupported()) {
+			SemanticHighlightingServerCapabilities semanticHighlightingCapabilities = new SemanticHighlightingServerCapabilities();
+			semanticHighlightingCapabilities.setScopes(SemanticHighlightingService.getAllScopes());
+			capabilities.setSemanticHighlighting(semanticHighlightingCapabilities);
+		}
 
 		WorkspaceServerCapabilities wsCapabilities = new WorkspaceServerCapabilities();
 		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
