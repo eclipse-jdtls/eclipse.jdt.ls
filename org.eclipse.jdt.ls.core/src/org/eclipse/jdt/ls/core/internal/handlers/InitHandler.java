@@ -172,6 +172,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			capabilities.setDefinitionProvider(Boolean.TRUE);
 		}
+		if (!preferenceManager.getClientPreferences().isTypeDefinitionDynamicRegistered()) {
+			capabilities.setTypeDefinitionProvider(Boolean.TRUE);
+		}
 		if (!preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
 			capabilities.setHoverProvider(Boolean.TRUE);
 		}

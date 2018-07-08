@@ -120,6 +120,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDefinition());
 	}
 
+	public boolean isTypeDefinitionDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getTypeDefinition());
+	}
+
 	public boolean isHoverDynamicRegistered() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getHover());
 	}

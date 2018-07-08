@@ -1,13 +1,15 @@
+
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Red Hat Inc. - initial API and implementation
- *******************************************************************************/
+* Copyright (c) 2018 Microsoft Corporation and others.
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v1.0
+* which accompanies this distribution, and is available at
+* http://www.eclipse.org/legal/epl-v10.html
+*
+* Contributors:
+*     Microsoft Corporation - initial API and implementation
+*******************************************************************************/
+
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
@@ -30,25 +32,21 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @author Fred Bricon
- *
- */
-public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBasedTest {
+public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	private NavigateToDefinitionHandler handler;
+	private NavigateToTypeDefinitionHandler handler;
 	private IProject project;
 
 	@Before
 	public void setUp() throws Exception {
-		handler = new NavigateToDefinitionHandler(preferenceManager);
+		handler = new NavigateToTypeDefinitionHandler();
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
 	}
 
 	@Test
 	public void testGetEmptyDefinition() throws Exception {
-		List<? extends Location> definitions = handler.definition(
+		List<? extends Location> definitions = handler.typeDefinition(
 				new TextDocumentPositionParams(new TextDocumentIdentifier("/foo/bar"), new Position(1, 1)), monitor);
 		assertNull(definitions);
 	}
@@ -59,28 +57,37 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
+	public void testLocalVariable() throws Exception {
+		testClass("java.Foo3", 18, 24);
+	}
+
+	@Test
+	public void testClassField() throws Exception {
+		testClass("java.Foo3", 17, 30);
+	}
+
+	@Test
+	public void testExternalClassField() throws Exception {
+		testClass("java.Foo3", 17, 11);
+	}
+
+	@Test
 	public void testNoClassContentSupport() throws Exception {
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
 		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.StringUtils");
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(false);
-		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(20, 26)), monitor);
+		List<? extends Location> definitions = handler.typeDefinition(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(20, 26)), monitor);
 		assertNull(definitions);
-	}
-
-	@Test
-	public void testDisassembledSource() throws Exception {
-		testClass("javax.tools.Tool", 6, 44);
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler
-				.definition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
+				.typeDefinition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
 		assertNotNull(definitions);
 		assertEquals(1, definitions.size());
 		assertNotNull(definitions.get(0).getUri());
 		assertTrue(definitions.get(0).getRange().getStart().getLine() >= 0);
 	}
-
 }
