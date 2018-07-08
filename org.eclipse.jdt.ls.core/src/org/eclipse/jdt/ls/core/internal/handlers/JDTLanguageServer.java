@@ -184,6 +184,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
 		}
+		if (preferenceManager.getClientPreferences().isTypeDefinitionDynamicRegistered()) {
+			registerCapability(Preferences.TYPEDEFINITION_ID, Preferences.TYPEDEFINITION);
+		}
 		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
 			registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
 		}
@@ -483,6 +486,19 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.definition(position, monitor);
+		});
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 */
+	@Override
+	public CompletableFuture<List<? extends Location>> typeDefinition(TextDocumentPositionParams position) {
+		logInfo(">> document/typeDefinition");
+		NavigateToTypeDefinitionHandler handler = new NavigateToTypeDefinitionHandler();
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.typeDefinition(position, monitor);
 		});
 	}
 
