@@ -19,12 +19,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,6 +86,20 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 		IProject foo = getProject("foo");
 		assertIsJavaProject(foo);
+	}
+
+	@Test
+	public void testUseReleaseFlagByDefault() throws Exception {
+		String name = "java7";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		Map<String, String> options = ProjectUtils.getJavaOptions(project);
+		assertEquals(JavaCore.ENABLED, options.get(JavaCore.COMPILER_RELEASE));
+
+		//unfortunately, the fake jdk10 we use doesn't cause the compiler to cause a compilation error
+		//when using a real jdk, the error is generated as expected.
+		//assertHasErrors(project);
 	}
 
 	@Test
