@@ -66,6 +66,7 @@ public class PreferenceManager {
 		// Update JavaCore options
 		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
+		javaCoreOptions.put(JavaCore.COMPILER_RELEASE, JavaCore.ENABLED);
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
 		JavaCore.setOptions(javaCoreOptions);
 

@@ -54,12 +54,16 @@ public final class ProjectUtils {
 	}
 
 	public static String getJavaSourceLevel(IProject project) {
+		Map<String, String> options = getJavaOptions(project);
+		return options == null ? null : options.get(JavaCore.COMPILER_SOURCE);
+	}
+
+	public static Map<String, String> getJavaOptions(IProject project) {
 		if (!isJavaProject(project)) {
 			return null;
 		}
 		IJavaProject javaProject = JavaCore.create(project);
-		Map<String, String> options = javaProject.getOptions(true);
-		return options.get(JavaCore.COMPILER_SOURCE);
+		return javaProject.getOptions(true);
 	}
 
 	public static List<IProject> getGradleProjects() {
