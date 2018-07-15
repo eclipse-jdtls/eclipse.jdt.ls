@@ -32,6 +32,13 @@ public class ProblemLocation implements IProblemLocation {
 		this.isError = isError;
 	}
 
+	public ProblemLocation(IProblem problem) {
+		this.problemId = problem.getID();
+		this.offset = problem.getSourceStart();
+		this.length = problem.getSourceEnd() - this.offset + 1;
+		this.isError = problem.isError();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation#getOffset()
 	 */
