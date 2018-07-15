@@ -29,7 +29,9 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -38,6 +40,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
@@ -45,12 +48,14 @@ import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.CreationReference;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -63,6 +68,7 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
@@ -73,7 +79,9 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
@@ -83,6 +91,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
@@ -94,6 +103,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrecti
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 
@@ -173,12 +183,172 @@ public class QuickAssistProcessor {
 				//				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
+				getConvertVarTypeToResolvedTypeProposal(context, coveringNode, resultingCollections);
+				getConvertResolvedTypeToVarTypeProposal(context, coveringNode, resultingCollections);
 			}
 			return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
 		}
 		return new CUCorrectionProposal[0];
 	}
 
+	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
+		CompilationUnit astRoot = context.getASTRoot();
+		IJavaElement root = astRoot.getJavaElement();
+		if (root == null) {
+			return false;
+		}
+		IJavaProject javaProject = root.getJavaProject();
+		if (javaProject == null) {
+			return false;
+		}
+		if (!JavaModelUtil.is10OrHigher(javaProject)) {
+			return false;
+		}
+
+		if (!(node instanceof SimpleName)) {
+			return false;
+		}
+		SimpleName name = (SimpleName) node;
+		IBinding binding = name.resolveBinding();
+		if (!(binding instanceof IVariableBinding)) {
+			return false;
+		}
+		IVariableBinding varBinding = (IVariableBinding) binding;
+		if (varBinding.isField() || varBinding.isParameter()) {
+			return false;
+		}
+
+		ASTNode varDeclaration = astRoot.findDeclaringNode(varBinding);
+		if (varDeclaration == null) {
+			return false;
+		}
+
+		ITypeBinding typeBinding = varBinding.getType();
+		if (typeBinding == null || typeBinding.isAnonymous() || typeBinding.isIntersectionType() || typeBinding.isWildcardType()) {
+			return false;
+		}
+
+		Type type = null;
+		if (varDeclaration instanceof SingleVariableDeclaration) {
+			type = ((SingleVariableDeclaration) varDeclaration).getType();
+		} else if (varDeclaration instanceof VariableDeclarationFragment) {
+			ASTNode parent = varDeclaration.getParent();
+			if (parent instanceof VariableDeclarationStatement) {
+				type = ((VariableDeclarationStatement) parent).getType();
+			} else if (parent instanceof VariableDeclarationExpression) {
+				type = ((VariableDeclarationExpression) parent).getType();
+			}
+		}
+		if (type == null || !type.isVar()) {
+			return false;
+		}
+
+		proposals.add(new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, false, IProposalRelevance.CHANGE_VARIABLE));
+		return true;
+	}
+
+	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
+		CompilationUnit astRoot = context.getASTRoot();
+		IJavaElement root = astRoot.getJavaElement();
+		if (root == null) {
+			return false;
+		}
+		IJavaProject javaProject = root.getJavaProject();
+		if (javaProject == null) {
+			return false;
+		}
+		if (!JavaModelUtil.is10OrHigher(javaProject)) {
+			return false;
+		}
+
+		if (!(node instanceof SimpleName)) {
+			return false;
+		}
+		SimpleName name = (SimpleName) node;
+		IBinding binding = name.resolveBinding();
+		if (!(binding instanceof IVariableBinding)) {
+			return false;
+		}
+		IVariableBinding varBinding = (IVariableBinding) binding;
+		if (varBinding.isField() || varBinding.isParameter()) {
+			return false;
+		}
+
+		ASTNode varDeclaration = astRoot.findDeclaringNode(varBinding);
+		if (varDeclaration == null) {
+			return false;
+		}
+
+		Type type = null;
+		Expression expression = null;
+
+		ITypeBinding typeBinding = varBinding.getType();
+		if (typeBinding == null) {
+			return false;
+		}
+		ITypeBinding expressionTypeBinding = null;
+
+		if (varDeclaration instanceof SingleVariableDeclaration) {
+			SingleVariableDeclaration svDecl = (SingleVariableDeclaration) varDeclaration;
+			type = svDecl.getType();
+			expression = svDecl.getInitializer();
+			if (expression != null) {
+				expressionTypeBinding = expression.resolveTypeBinding();
+			} else {
+				ASTNode parent = svDecl.getParent();
+				if (parent instanceof EnhancedForStatement) {
+					EnhancedForStatement efStmt = (EnhancedForStatement) parent;
+					expression = efStmt.getExpression();
+					if (expression != null) {
+						ITypeBinding expBinding = expression.resolveTypeBinding();
+						if (expBinding != null) {
+							if (expBinding.isArray()) {
+								expressionTypeBinding = expBinding.getElementType();
+							} else {
+								ITypeBinding iterable = Bindings.findTypeInHierarchy(expBinding, "java.lang.Iterable"); //$NON-NLS-1$
+								if (iterable != null) {
+									ITypeBinding[] typeArguments = iterable.getTypeArguments();
+									if (typeArguments.length == 1) {
+										expressionTypeBinding = typeArguments[0];
+										expressionTypeBinding = Bindings.normalizeForDeclarationUse(expressionTypeBinding, context.getASTRoot().getAST());
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} else if (varDeclaration instanceof VariableDeclarationFragment) {
+			ASTNode parent = varDeclaration.getParent();
+			expression = ((VariableDeclarationFragment) varDeclaration).getInitializer();
+			if (expression != null) {
+				expressionTypeBinding = expression.resolveTypeBinding();
+			}
+			if (parent instanceof VariableDeclarationStatement) {
+				type = ((VariableDeclarationStatement) parent).getType();
+			} else if (parent instanceof VariableDeclarationExpression) {
+				VariableDeclarationExpression varDecl = (VariableDeclarationExpression) parent;
+				// cannot convert a VariableDeclarationExpression with multiple fragments to var.
+				if (varDecl.fragments().size() > 1) {
+					return false;
+				}
+				type = varDecl.getType();
+			}
+		}
+
+		if (type == null || type.isVar()) {
+			return false;
+		}
+		if (expression == null || expression instanceof ArrayInitializer || expression instanceof LambdaExpression || expression instanceof MethodReference) {
+			return false;
+		}
+		if (expressionTypeBinding == null || !expressionTypeBinding.isEqualTo(typeBinding)) {
+			return false;
+		}
+
+		proposals.add(new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, IProposalRelevance.CHANGE_VARIABLE));
+		return true;
+	}
 	static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
 		final ArrayList<ASTNode> coveredNodes = new ArrayList<>();
 		final int selectionBegin = context.getSelectionOffset();
