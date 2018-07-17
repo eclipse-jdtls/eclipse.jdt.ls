@@ -614,4 +614,60 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testExtractMethodAnonymousClass() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.concurrent.ExecutorService;\n");
+		buf.append("import java.util.concurrent.Executors;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        ExecutorService executor = Executors.newSingleThreadExecutor();\n");
+		buf.append("        executor.execute(new Runnable() {\n");
+		buf.append("            @Override\n");
+		buf.append("            public void run() {\n");
+		buf.append("                String inLocalThread = \"SecondThreadValue\";\n");
+		buf.append("                /*[*/System.out.println(inLocalThread);/*]*/\n");
+		buf.append("            }\n");
+		buf.append("        });\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public static void extracted() {}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.concurrent.ExecutorService;\n");
+		buf.append("import java.util.concurrent.Executors;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        ExecutorService executor = Executors.newSingleThreadExecutor();\n");
+		buf.append("        executor.execute(new Runnable() {\n");
+		buf.append("            @Override\n");
+		buf.append("            public void run() {\n");
+		buf.append("                String inLocalThread = \"SecondThreadValue\";\n");
+		buf.append("                extracted(inLocalThread);\n");
+		buf.append("            }\n");
+		buf.append("\n");
+		buf.append("            private void extracted(String inLocalThread) {\n");
+		buf.append("                /*[*/System.out.println(inLocalThread);/*]*/\n");
+		buf.append("            }\n");
+		buf.append("        });\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public static void extracted() {}\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Extract to method", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
 }
