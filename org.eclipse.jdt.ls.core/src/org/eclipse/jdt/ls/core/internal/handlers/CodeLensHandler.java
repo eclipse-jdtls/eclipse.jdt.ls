@@ -15,8 +15,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.gson.JsonArray;
-
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -43,11 +41,16 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+
+import com.google.gson.JsonArray;
 
 public class CodeLensHandler {
 
@@ -97,8 +100,10 @@ public class CodeLensHandler {
 				} else if (IMPLEMENTATION_TYPE.equals(type)) {
 					if (element instanceof IType) {
 						try {
-							locations = findImplementations((IType) element, monitor);
-						} catch (CoreException e) {
+							IDocument document = JsonRpcHelpers.toDocument(typeRoot.getBuffer());
+							int offset = document.getLineOffset(position.getLine()) + position.getCharacter();
+							locations = findImplementations((IType) element, offset, monitor);
+						} catch (CoreException | BadLocationException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}
 					}
@@ -118,18 +123,13 @@ public class CodeLensHandler {
 		return lens;
 	}
 
-	private List<Location> findImplementations(IType type, IProgressMonitor monitor) throws JavaModelException {
-		IType[] results = type.newTypeHierarchy(monitor).getAllSubtypes(type);
-		final List<Location> result = new ArrayList<>();
-		for (IType t : results) {
-			ICompilationUnit compilationUnit = (ICompilationUnit) t.getAncestor(IJavaElement.COMPILATION_UNIT);
-			if (compilationUnit == null) {
-				continue;
-			}
-			Location location = JDTUtils.toLocation(t);
-			result.add(location);
-		}
-		return result;
+	private List<Location> findImplementations(IType type, int offset, IProgressMonitor monitor) throws CoreException {
+		//java.lang.Object is a special case. We need to minimize heavy cost of I/O,
+		// by avoiding opening all files from the Object hierarchy
+		boolean useDefaultLocation = "java.lang.Object".equals(type.getFullyQualifiedName());
+		ImplementationToLocationMapper mapper = new ImplementationToLocationMapper(preferenceManager.isClientSupportsClassFileContent(), useDefaultLocation);
+		ImplementationCollector<Location> searcher = new ImplementationCollector<>(new Region(offset, 0), type, mapper);
+		return searcher.findImplementations(monitor);
 	}
 
 	private List<Location> findReferences(IJavaElement element, IProgressMonitor monitor)

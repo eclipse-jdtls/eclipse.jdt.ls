@@ -184,6 +184,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
 		}
+		if (!preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
+			capabilities.setImplementationProvider(Boolean.TRUE);
+		}
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);
 		textDocumentSyncOptions.setSave(new SaveOptions(Boolean.TRUE));
@@ -258,6 +261,7 @@ final public class InitHandler {
 		return null;
 	}
 
+	@Deprecated
 	public static void removeWorkspaceDiagnosticsHandler() {
 		if (workspaceDiagnosticsHandler != null) {
 			ResourcesPlugin.getWorkspace().removeResourceChangeListener(workspaceDiagnosticsHandler);

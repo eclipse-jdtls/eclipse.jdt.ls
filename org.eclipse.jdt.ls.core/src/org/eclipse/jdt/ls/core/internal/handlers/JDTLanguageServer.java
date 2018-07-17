@@ -199,6 +199,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
 		}
+		if (preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
+			registerCapability(Preferences.IMPLEMENTATION_ID, Preferences.IMPLEMENTATION);
+		}
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
@@ -698,6 +701,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		handler.update(params);
 	}
 
+	@Override
+	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
+		logInfo(">> document/implementation");
+		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+	}
+
 	public void sendStatus(ServiceStatus serverStatus, String status) {
 		if (client != null) {
 			client.sendStatus(serverStatus, status);
@@ -730,6 +739,13 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 	private <R> CompletableFuture<R> computeAsync(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)));
+	}
+
+	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
+		return CompletableFutures.computeAsync((cc) -> {
+			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
+			return code.apply(monitor);
+		});
 	}
 
 	private IProgressMonitor toMonitor(CancelChecker checker) {

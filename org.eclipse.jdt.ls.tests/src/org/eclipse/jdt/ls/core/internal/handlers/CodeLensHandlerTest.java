@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
@@ -252,7 +251,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testResolveImplementationsCodeLense() {
+	public void testResolveImplementationsCodeLens() {
 		String source = "src/java/IFoo.java";
 		String payload = createCodeLensImplementationsRequest(source, 5, 17, 21);
 
