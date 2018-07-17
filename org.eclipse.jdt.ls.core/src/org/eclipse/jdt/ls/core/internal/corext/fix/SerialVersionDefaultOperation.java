@@ -18,6 +18,8 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 
 
 /**
@@ -55,14 +57,14 @@ public final class SerialVersionDefaultOperation extends AbstractSerialVersionOp
 	}
 
 	@Override
-	protected void addLinkedPositions(final ASTRewrite rewrite, final VariableDeclarationFragment fragment, final LinkedProposalModel positionGroups) {
+	protected void addLinkedPositions(final ASTRewrite rewrite, final VariableDeclarationFragment fragment, final LinkedProposalModelCore positionGroups) {
 
 		Assert.isNotNull(rewrite);
 		Assert.isNotNull(fragment);
 
 		final Expression initializer= fragment.getInitializer();
 		if (initializer != null) {
-			LinkedProposalPositionGroup group= new LinkedProposalPositionGroup(GROUP_INITIALIZER);
+			LinkedProposalPositionGroupCore group = new LinkedProposalPositionGroupCore(GROUP_INITIALIZER);
 			group.addPosition(rewrite.track(initializer), true);
 			positionGroups.addPositionGroup(group);
 		}

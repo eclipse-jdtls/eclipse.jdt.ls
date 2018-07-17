@@ -55,6 +55,7 @@ import org.eclipse.jdt.core.util.IFieldInfo;
 import org.eclipse.jdt.core.util.IInnerClassesAttribute;
 import org.eclipse.jdt.core.util.IInnerClassesAttributeEntry;
 import org.eclipse.jdt.core.util.IMethodInfo;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -284,7 +285,7 @@ public final class SerialVersionHashOperation extends AbstractSerialVersionOpera
 	}
 
 	@Override
-	protected void addLinkedPositions(ASTRewrite rewrite, VariableDeclarationFragment fragment, LinkedProposalModel positionGroups) {
+	protected void addLinkedPositions(ASTRewrite rewrite, VariableDeclarationFragment fragment, LinkedProposalModelCore positionGroups) {
 		//Do nothing
 	}
 

@@ -55,13 +55,17 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore;
+import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
-public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOperationsFix {
+public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOperationsFixCore {
 
 	/** Name of the serializable class */
 	private static final String SERIALIZABLE_NAME = "java.io.Serializable"; //$NON-NLS-1$
@@ -255,7 +259,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 		}
 
 		@Override
-		protected void addLinkedPositions(ASTRewrite rewrite, VariableDeclarationFragment fragment, LinkedProposalModel positionGroups) {
+		protected void addLinkedPositions(ASTRewrite rewrite, VariableDeclarationFragment fragment, LinkedProposalModelCore positionGroups) {
 		}
 
 	}
@@ -339,7 +343,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 		return new RefactoringStatus();
 	}
 
-	public static ICleanUpFix createCleanUp(CompilationUnit compilationUnit, boolean addSerialVersionIds) {
+	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, boolean addSerialVersionIds) {
 
 		IProblem[] problems = compilationUnit.getProblems();
 		IProblemLocation[] locations = new IProblemLocation[problems.length];
@@ -354,7 +358,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 		return createCleanUp(compilationUnit, locations, addSerialVersionIds);
 	}
 
-	public static ICleanUpFix createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems, boolean addSerialVersionIds) {
+	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems, boolean addSerialVersionIds) {
 		if (addSerialVersionIds) {
 
 			final ICompilationUnit unit = (ICompilationUnit) compilationUnit.getJavaElement();

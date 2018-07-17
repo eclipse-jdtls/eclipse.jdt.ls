@@ -59,18 +59,21 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore;
+import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.corext.dom.NecessaryParenthesesChecker;
 import org.eclipse.jdt.ls.core.internal.corext.dom.StatementRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.text.edits.TextEditGroup;
 
 /**
  * Fix which removes unused code.
  */
-public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
+public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 
 	private static class SideEffectFinder extends ASTVisitor {
 
@@ -130,7 +133,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel model) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore model) throws CoreException {
 			ImportDeclaration node= fImportDeclaration;
 			TextEditGroup group= createTextEditGroup(FixMessages.UnusedCodeFix_RemoveImport_description, cuRewrite);
 			cuRewrite.getASTRewrite().remove(node, group);
@@ -150,7 +153,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel linkedModel) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore linkedModel) throws CoreException {
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 			IBinding binding= fUnusedName.resolveBinding();
 			CompilationUnit root= (CompilationUnit) fUnusedName.getRoot();
@@ -181,7 +184,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel model) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore model) throws CoreException {
 			for (int i= 0; i < fUnusedNames.length; i++) {
 				removeUnusedName(cuRewrite, fUnusedNames[i]);
 			}
@@ -449,7 +452,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel model) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore model) throws CoreException {
 
 			TextEditGroup group= createTextEditGroup(FixMessages.UnusedCodeFix_RemoveCast_description, cuRewrite);
 
@@ -477,7 +480,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel model) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore model) throws CoreException {
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 
 			TextEditGroup group= createTextEditGroup(FixMessages.UnusedCodeFix_RemoveCast_description, cuRewrite);
@@ -618,7 +621,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 	 * removeUnusedLocalVariables, removeUnusedImports, removeUnusedCast); }
 	 */
 
-	public static ICleanUpFix createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems,
+	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems,
 			boolean removeUnusedPrivateMethods,
 			boolean removeUnusedPrivateConstructors,
 			boolean removeUnusedPrivateFields,
@@ -660,7 +663,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFix {
 				if (name != null) {
 					IBinding binding= name.resolveBinding();
 					if (binding instanceof IVariableBinding && !isFormalParameterInEnhancedForStatement(name) && (!((IVariableBinding) binding).isField() || isSideEffectFree(name, compilationUnit))) {
-						VariableDeclarationFragment parent= (VariableDeclarationFragment) ASTNodes.getParent(name, VariableDeclarationFragment.class);
+						VariableDeclarationFragment parent= ASTNodes.getParent(name, VariableDeclarationFragment.class);
 						if (parent != null) {
 							ASTNode varDecl= parent.getParent();
 							if (!variableDeclarations.containsKey(varDecl)) {

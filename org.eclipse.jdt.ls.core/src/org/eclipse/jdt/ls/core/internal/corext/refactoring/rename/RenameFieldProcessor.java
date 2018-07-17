@@ -48,6 +48,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
@@ -71,7 +72,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.delegates.DelegateFie
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.delegates.DelegateMethodCreator;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IDelegateUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ITextUpdating;
