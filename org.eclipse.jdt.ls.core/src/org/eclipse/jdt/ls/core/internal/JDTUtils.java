@@ -488,6 +488,16 @@ public final class JDTUtils {
 		return new Range(new Position(), new Position());
 	}
 
+	/**
+	 * Creates a new {@link Range} with its start and end {@link Position}s set to
+	 * the given line
+	 *
+	 * @return a new {@link Range};
+	 */
+	public static Range newLineRange(int line, int start, int end) {
+		return new Range(new Position(line, start), new Position(line, end));
+	}
+
 	private static void setPosition(Position position, int[] coords) {
 		assert coords.length == 2;
 		position.setLine(coords[0]);

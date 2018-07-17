@@ -61,6 +61,10 @@ public class ProgressReporterManager extends ProgressProvider {
 		return new ProgressReporter();
 	}
 
+	public IProgressMonitor getProgressReporter(CancelChecker checker) {
+		return new ProgressReporter(checker);
+	}
+
 	@Override
 	public IProgressMonitor createProgressGroup() {
 		return getDefaultMonitor();

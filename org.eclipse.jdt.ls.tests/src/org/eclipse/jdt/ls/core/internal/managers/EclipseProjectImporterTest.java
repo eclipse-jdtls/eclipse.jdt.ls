@@ -65,7 +65,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 			assertIsJavaProject(project);
 			assertNoErrors(project);
 			//1 message sent to the platform logger
-			assertEquals(1, logListener.getErrors().size());
+			assertEquals(logListener.getErrors().toString(), 1, logListener.getErrors().size());
 			String error = logListener.getErrors().get(0);
 			assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
 			//but no message sent to the client

@@ -208,6 +208,7 @@ public class Preferences {
 	public static final String REFERENCES = "textDocument/references";
 	public static final String DOCUMENT_HIGHLIGHT = "textDocument/documentHighlight";
 	public static final String WORKSPACE_CHANGE_FOLDERS = "workspace/didChangeWorkspaceFolders";
+	public static final String IMPLEMENTATION = "textDocument/implementation";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_ON_TYPE_ID = UUID.randomUUID().toString();
@@ -226,6 +227,7 @@ public class Preferences {
 	public static final String DOCUMENT_HIGHLIGHT_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_CHANGE_FOLDERS_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
+	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;

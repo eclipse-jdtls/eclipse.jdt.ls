@@ -91,8 +91,8 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "Baz";
 		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Unexpected results", 2, results.size());
 		Range defaultRange = JDTUtils.newRange();
+		assertEquals("Unexpected results", 2, results.size());
 		for (SymbolInformation symbol : results) {
 			assertNotNull("Kind is missing", symbol.getKind());
 			assertNotNull("ContainerName is missing", symbol.getContainerName());
@@ -108,7 +108,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "IFoo";
 		List<SymbolInformation> results = handler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Found "+ results.size() + " results", 1, results.size());
+		assertEquals("Found " + results.size() + " results", 2, results.size());
 		SymbolInformation symbol = results.get(0);
 		assertEquals(SymbolKind.Interface, symbol.getKind());
 		assertEquals("java", symbol.getContainerName());
