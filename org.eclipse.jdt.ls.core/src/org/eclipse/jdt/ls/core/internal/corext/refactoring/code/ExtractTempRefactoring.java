@@ -101,6 +101,8 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
@@ -112,8 +114,6 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.ASTFragmentFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IASTFragment;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IExpressionFragment;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArguments;
@@ -373,7 +373,7 @@ public class ExtractTempRefactoring extends Refactoring {
 
 	private CompilationUnitChange fChange;
 
-	private LinkedProposalModel fLinkedProposalModel;
+	private LinkedProposalModelCore fLinkedProposalModel;
 
 	private static final String KEY_NAME = "name"; //$NON-NLS-1$
 	private static final String KEY_TYPE = "type"; //$NON-NLS-1$
@@ -432,7 +432,7 @@ public class ExtractTempRefactoring extends Refactoring {
 		fCheckResultForCompileProblems = checkResultForCompileProblems;
 	}
 
-	public void setLinkedProposalModel(LinkedProposalModel linkedProposalModel) {
+	public void setLinkedProposalModel(LinkedProposalModelCore linkedProposalModel) {
 		fLinkedProposalModel = linkedProposalModel;
 	}
 
@@ -749,7 +749,7 @@ public class ExtractTempRefactoring extends Refactoring {
 
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCURewrite.getASTRewrite();
-			LinkedProposalPositionGroup nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
+			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
 			nameGroup.addPosition(rewrite.track(vdf.getName()), true);
 
 			String[] nameSuggestions = guessTempNames();
@@ -970,7 +970,7 @@ public class ExtractTempRefactoring extends Refactoring {
 			}
 		}
 		if (fLinkedProposalModel != null) {
-			LinkedProposalPositionGroup typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
+			LinkedProposalPositionGroupCore typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
 			typeGroup.addPosition(rewrite.track(resultingType), false);
 			if (typeBinding != null) {
 				ITypeBinding[] relaxingTypes = ASTResolving.getNarrowingTypes(ast, typeBinding);
