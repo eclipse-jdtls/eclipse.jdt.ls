@@ -814,7 +814,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 
 	private void initializeDuplicates() {
 		ASTNode start = fAnalyzer.getEnclosingBodyDeclaration();
-		while (!(start instanceof AbstractTypeDeclaration)) {
+		while (!(start instanceof AbstractTypeDeclaration || start instanceof AnonymousClassDeclaration)) {
 			start = start.getParent();
 		}
 

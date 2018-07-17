@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
@@ -635,7 +636,7 @@ public class QuickAssistProcessor {
 	}
 
 	private static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
-		while (astNode != null && !(astNode instanceof TypeDeclaration)) {
+		while (astNode != null && !(astNode instanceof TypeDeclaration || astNode instanceof AnonymousClassDeclaration)) {
 			astNode = astNode.getParent();
 		}
 		if (astNode instanceof TypeDeclaration) {
