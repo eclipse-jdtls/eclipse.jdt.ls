@@ -16,7 +16,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 
 /**
  * A proposal for quick fixes and quick assists that works on a AST rewriter and
@@ -29,7 +29,7 @@ import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
  */
 public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 
-	private LinkedProposalModel fLinkedProposalModel;
+	private LinkedProposalModelCore fLinkedProposalModel;
 
 	/**
 	 * Constructs a linked correction proposal.
@@ -53,14 +53,14 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 		fLinkedProposalModel = null;
 	}
 
-	protected LinkedProposalModel getLinkedProposalModel() {
+	protected LinkedProposalModelCore getLinkedProposalModel() {
 		if (fLinkedProposalModel == null) {
-			fLinkedProposalModel = new LinkedProposalModel();
+			fLinkedProposalModel = new LinkedProposalModelCore();
 		}
 		return fLinkedProposalModel;
 	}
 
-	public void setLinkedProposalModel(LinkedProposalModel model) {
+	public void setLinkedProposalModel(LinkedProposalModelCore model) {
 		fLinkedProposalModel = model;
 	}
 

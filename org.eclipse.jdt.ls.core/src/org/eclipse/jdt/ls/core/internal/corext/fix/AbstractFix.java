@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.corext.fix;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 
 
 public abstract class AbstractFix implements IProposableFix {
@@ -34,7 +35,7 @@ public abstract class AbstractFix implements IProposableFix {
 		return fDisplayString;
 	}
 
-	public LinkedProposalModel getLinkedPositions() {
+	public LinkedProposalModelCore getLinkedPositions() {
 		return null;
 	}
 
