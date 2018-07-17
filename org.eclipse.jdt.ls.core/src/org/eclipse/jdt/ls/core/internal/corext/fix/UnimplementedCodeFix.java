@@ -27,14 +27,19 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore;
+import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.text.edits.TextEditGroup;
 
 
-public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFix {
+public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 
 	public static final class MakeTypeAbstractOperation extends CompilationUnitRewriteOperation {
 
@@ -45,20 +50,20 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFix {
 		}
 
 		@Override
-		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModel linkedProposalPositions) throws CoreException {
+		public void rewriteAST(CompilationUnitRewrite cuRewrite, LinkedProposalModelCore linkedProposalPositions) throws CoreException {
 			AST ast= cuRewrite.getAST();
 			ASTRewrite rewrite= cuRewrite.getASTRewrite();
 			Modifier newModifier= ast.newModifier(Modifier.ModifierKeyword.ABSTRACT_KEYWORD);
 			TextEditGroup textEditGroup= createTextEditGroup(CorrectionMessages.UnimplementedCodeFix_TextEditGroup_label, cuRewrite);
 			rewrite.getListRewrite(fTypeDeclaration, TypeDeclaration.MODIFIERS2_PROPERTY).insertLast(newModifier, textEditGroup);
 
-			LinkedProposalPositionGroup group= new LinkedProposalPositionGroup("modifier"); //$NON-NLS-1$
+			LinkedProposalPositionGroupCore group = new LinkedProposalPositionGroupCore("modifier"); //$NON-NLS-1$
 			group.addPosition(rewrite.track(newModifier), !linkedProposalPositions.hasLinkedPositions());
 			linkedProposalPositions.addPositionGroup(group);
 		}
 	}
 
-	public static ICleanUpFix createCleanUp(CompilationUnit root, boolean addMissingMethod, boolean makeTypeAbstract, IProblemLocation[] problems) {
+	public static ICleanUpFixCore createCleanUp(CompilationUnit root, boolean addMissingMethod, boolean makeTypeAbstract, IProblemLocation[] problems) {
 		Assert.isLegal(!addMissingMethod || !makeTypeAbstract);
 		if (!addMissingMethod && !makeTypeAbstract) {
 			return null;

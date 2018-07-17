@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.corext.fix;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 
 
 public abstract class AbstractFix implements IProposableFix {
