@@ -34,8 +34,8 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup.PositionInformation;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.text.edits.TextEditGroup;
 
 /**
@@ -246,9 +246,9 @@ public class ModifierRewrite {
 				// out of tricks...
 				trackedFallback = fModifierRewrite.getASTRewrite().track(fModifierRewrite.getParent());
 			}
-			return new LinkedProposalPositionGroup.StartPositionInformation(trackedFallback);
+			return new LinkedProposalPositionGroupCore.StartPositionInformation(trackedFallback);
 		} else {
-			return new LinkedProposalPositionGroup.TrackedNodesPosition(trackedNodes);
+			return new LinkedProposalPositionGroupCore.TrackedNodesPosition(trackedNodes);
 		}
 	}
 }
