@@ -34,12 +34,12 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGeneration;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.VariableDeclarationRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup.PositionInformation;
 
 public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 
@@ -124,7 +124,7 @@ public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 			ModifierRewrite listRewrite = ModifierRewrite.create(rewrite, declNode);
 			PositionInformation trackedDeclNode = listRewrite.setModifiers(fIncludedModifiers, fExcludedModifiers, null);
 
-			LinkedProposalPositionGroup positionGroup = new LinkedProposalPositionGroup("group"); //$NON-NLS-1$
+			LinkedProposalPositionGroupCore positionGroup = new LinkedProposalPositionGroupCore("group"); //$NON-NLS-1$
 			positionGroup.addPosition(trackedDeclNode);
 			getLinkedProposalModel().addPositionGroup(positionGroup);
 

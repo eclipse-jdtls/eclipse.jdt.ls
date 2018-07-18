@@ -57,10 +57,10 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.CodeScopeBuilder;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.RefactoringASTParser;
@@ -104,7 +104,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 	private CodeScopeBuilder.Scope fScope;
 	private ASTNode[] fSelectedNodes;
 
-	private LinkedProposalModel fLinkedProposalModel;
+	private LinkedProposalModelCore fLinkedProposalModel;
 
 	private final boolean fIsMultiCatch;
 
@@ -131,7 +131,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 		return new SurroundWithTryCatchRefactoring(cu, Selection.createFromStartLength(offset, length), isMultiCatch);
 	}
 
-	public LinkedProposalModel getLinkedProposalModel() {
+	public LinkedProposalModelCore getLinkedProposalModel() {
 		return fLinkedProposalModel;
 	}
 
@@ -207,7 +207,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 			fRewriter.setTargetSourceRangeComputer(new SelectionAwareSourceRangeComputer(fAnalyzer.getSelectedNodes(), fCUnit.getBuffer(), fSelection.getOffset(), fSelection.getLength()));
 			fImportRewrite = CodeStyleConfiguration.createImportRewrite(fRootNode, true);
 
-			fLinkedProposalModel = new LinkedProposalModel();
+			fLinkedProposalModel = new LinkedProposalModelCore();
 
 			fScope = CodeScopeBuilder.perform(fAnalyzer.getEnclosingBodyDeclaration(), fSelection).findScope(fSelection.getOffset(), fSelection.getLength());
 			fScope.setCursor(fSelection.getOffset());

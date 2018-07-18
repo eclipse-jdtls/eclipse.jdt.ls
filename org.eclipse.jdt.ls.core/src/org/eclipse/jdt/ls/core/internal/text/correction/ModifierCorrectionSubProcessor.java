@@ -58,14 +58,14 @@ import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix.MakeTypeAbstractOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -869,7 +869,7 @@ public class ModifierCorrectionSubProcessor {
 	//
 	public static final String KEY_MODIFIER = "modifier"; //$NON-NLS-1$
 
-	private static class ModifierLinkedModeProposal extends LinkedProposalPositionGroup.Proposal {
+	private static class ModifierLinkedModeProposal extends LinkedProposalPositionGroupCore.ProposalCore {
 
 		private final int fModifier;
 
@@ -922,12 +922,12 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 
-	public static void installLinkedVisibilityProposals(LinkedProposalModel linkedProposalModel, ASTRewrite rewrite, List<IExtendedModifier> modifiers, boolean inInterface, String groupId) {
+	public static void installLinkedVisibilityProposals(LinkedProposalModelCore linkedProposalModel, ASTRewrite rewrite, List<IExtendedModifier> modifiers, boolean inInterface, String groupId) {
 		ASTNode modifier = findVisibilityModifier(modifiers);
 		if (modifier != null) {
 			int selected = ((Modifier) modifier).getKeyword().toFlagValue();
 
-			LinkedProposalPositionGroup positionGroup = linkedProposalModel.getPositionGroup(groupId, true);
+			LinkedProposalPositionGroupCore positionGroup = linkedProposalModel.getPositionGroup(groupId, true);
 			positionGroup.addPosition(rewrite.track(modifier), false);
 			positionGroup.addProposal(new ModifierLinkedModeProposal(selected, 10));
 
@@ -941,7 +941,7 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 
-	public static void installLinkedVisibilityProposals(LinkedProposalModel linkedProposalModel, ASTRewrite rewrite, List<IExtendedModifier> modifiers, boolean inInterface) {
+	public static void installLinkedVisibilityProposals(LinkedProposalModelCore linkedProposalModel, ASTRewrite rewrite, List<IExtendedModifier> modifiers, boolean inInterface) {
 		ModifierCorrectionSubProcessor.installLinkedVisibilityProposals(linkedProposalModel, rewrite, modifiers, inInterface, KEY_MODIFIER);
 	}
 

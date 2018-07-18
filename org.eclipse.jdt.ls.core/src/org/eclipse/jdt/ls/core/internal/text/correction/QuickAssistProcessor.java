@@ -91,8 +91,8 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
@@ -438,7 +438,7 @@ public class QuickAssistProcessor {
 		extractMethodRefactoring.setMethodName(uniqueMethodName);
 		if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
-			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
 
 			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
@@ -476,7 +476,7 @@ public class QuickAssistProcessor {
 		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
 		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			extractTempRefactoring.setReplaceAllOccurrences(true);
-			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractTempRefactoring.setLinkedProposalModel(linkedProposalModel);
 			extractTempRefactoring.setCheckResultForCompileProblems(false);
 
@@ -503,7 +503,7 @@ public class QuickAssistProcessor {
 		ExtractTempRefactoring extractTempRefactoringSelectedOnly = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
 		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
 		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractTempRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
 			extractTempRefactoringSelectedOnly.setCheckResultForCompileProblems(false);
 
@@ -529,7 +529,7 @@ public class QuickAssistProcessor {
 
 		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
 		if (extractConstRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			LinkedProposalModel linkedProposalModel = new LinkedProposalModel();
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractConstRefactoring.setLinkedProposalModel(linkedProposalModel);
 			extractConstRefactoring.setCheckResultForCompileProblems(false);
 
@@ -603,7 +603,7 @@ public class QuickAssistProcessor {
 	 *             if an exception occurs while accessing the Java element
 	 *             corresponding to the <code>functionalMethod</code>
 	 */
-	public static LambdaExpression convertMethodRefernceToLambda(MethodReference methodReference, IMethodBinding functionalMethod, CompilationUnit astRoot, ASTRewrite rewrite, LinkedProposalModel linkedProposalModel,
+	public static LambdaExpression convertMethodRefernceToLambda(MethodReference methodReference, IMethodBinding functionalMethod, CompilationUnit astRoot, ASTRewrite rewrite, LinkedProposalModelCore linkedProposalModel,
 			boolean createBlockBody) throws JavaModelException {
 
 		AST ast = astRoot.getAST();

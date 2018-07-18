@@ -72,6 +72,8 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -83,8 +85,6 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.ASTFragmentFactory;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IASTFragment;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IExpressionFragment;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalModel;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LinkedProposalPositionGroup;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArguments;
@@ -142,7 +142,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 	private CompilationUnitChange fChange;
 	private String[] fGuessedConstNames;
 
-	private LinkedProposalModel fLinkedProposalModel;
+	private LinkedProposalModelCore fLinkedProposalModel;
 	private boolean fCheckResultForCompileProblems;
 
 	/**
@@ -191,7 +191,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		fCheckResultForCompileProblems = checkResultForCompileProblems;
 	}
 
-	public void setLinkedProposalModel(LinkedProposalModel linkedProposalModel) {
+	public void setLinkedProposalModel(LinkedProposalModelCore linkedProposalModel) {
 		fLinkedProposalModel = linkedProposalModel;
 	}
 
@@ -546,7 +546,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCuRewrite.getASTRewrite();
-			LinkedProposalPositionGroup nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
+			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
 			nameGroup.addPosition(rewrite.track(variableDeclarationFragment.getName()), true);
 
 			String[] nameSuggestions = guessConstantNames();
@@ -557,7 +557,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 				nameGroup.addProposal(nameSuggestions[i], nameSuggestions.length - i);
 			}
 
-			LinkedProposalPositionGroup typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
+			LinkedProposalPositionGroupCore typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
 			typeGroup.addPosition(rewrite.track(type), true);
 
 			ITypeBinding typeBinding = guessBindingForReference(fragment.getAssociatedExpression());
