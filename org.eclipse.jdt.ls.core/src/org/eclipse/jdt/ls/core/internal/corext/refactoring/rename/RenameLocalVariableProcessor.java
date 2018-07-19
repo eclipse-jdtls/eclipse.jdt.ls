@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
+import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -50,7 +51,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameAnalyzeUtil.LocalAnalyzePackage;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corext.util.TextChangeManager;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
