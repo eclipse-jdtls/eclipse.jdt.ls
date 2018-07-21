@@ -71,6 +71,7 @@ import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatur
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
+import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -93,7 +94,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpd
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ISimilarDeclarationUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.QualifiedNameFinder;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corext.util.Changes;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;

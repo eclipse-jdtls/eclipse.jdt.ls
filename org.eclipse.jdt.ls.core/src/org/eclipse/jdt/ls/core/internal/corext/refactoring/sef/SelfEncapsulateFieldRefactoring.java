@@ -78,6 +78,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
+import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
@@ -97,7 +98,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringScopeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngine;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
