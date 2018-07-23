@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -347,6 +348,12 @@ public class DocumentLifeCycleHandler {
 				sharedASTProvider.disposeAST();
 			}
 			unit.discardWorkingCopy();
+			if (JDTUtils.isDefaultProject(unit)) {
+				File f = new File(unit.getUnderlyingResource().getLocationURI());
+				if (!f.exists()) {
+					unit.delete(true, null);
+				}
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Error while handling document close", e);
 		}
