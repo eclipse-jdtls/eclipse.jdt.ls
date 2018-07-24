@@ -36,9 +36,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
+import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -75,6 +79,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	@Deprecated
 	public static final String PLUGIN_ID = IConstants.PLUGIN_ID;
+
+	public static final String DEFAULT_MEMBER_SORT_ORDER = "T,SF,SI,SM,F,I,C,M"; //$NON-NLS-1$
+
 
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
@@ -121,6 +128,14 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaLanguageServerPlugin.pluginInstance = this;
 		// Set the ID to use for preference lookups
 		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
+
+		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
+		fDefaultPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, DEFAULT_MEMBER_SORT_ORDER);
+
+		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
+		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();
+		preferenceCache.install();
+
 		preferenceManager = new PreferenceManager();
 		initializeJDTOptions();
 		digestStore = new DigestStore(getStateLocation().toFile());
