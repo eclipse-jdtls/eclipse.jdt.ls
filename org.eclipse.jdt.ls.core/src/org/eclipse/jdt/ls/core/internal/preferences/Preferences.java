@@ -25,6 +25,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.MessageType;
 
@@ -242,7 +244,6 @@ public class Preferences {
 	private boolean completionOverwrite;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
-	private MemberSortOrder memberOrders;
 	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
@@ -336,7 +337,6 @@ public class Preferences {
 		completionOverwrite = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
-		memberOrders = new MemberSortOrder(null);
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
@@ -466,7 +466,10 @@ public class Preferences {
 	}
 
 	private Preferences setMembersSortOrder(String sortOrder) {
-		this.memberOrders = new MemberSortOrder(sortOrder);
+		if (sortOrder != null) {
+			IEclipsePreferences fPreferenceStore = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+			fPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, sortOrder);
+		}
 		return this;
 	}
 
@@ -578,10 +581,6 @@ public class Preferences {
 
 	public String getFormatterProfileName() {
 		return formatterProfileName;
-	}
-
-	public MemberSortOrder getMemberSortOrder() {
-		return this.memberOrders;
 	}
 
 	public List<String> getPreferredContentProviderIds() {
