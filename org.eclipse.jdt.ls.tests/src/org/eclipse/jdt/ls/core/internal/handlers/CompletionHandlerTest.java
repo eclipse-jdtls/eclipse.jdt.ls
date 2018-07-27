@@ -1938,6 +1938,44 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_linksInMarkdown() throws JavaModelException{
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
+		Mockito.when(mockCapabilies.isClassFileContentSupported()).thenReturn(true);
+
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n"+
+				"public class Test {\n"+
+				"    public void foo(){\n"+
+				"      this.zz \n"+
+				"    }\n"+
+				"    \n"+
+				"	/**\n"+
+				"	 * @see Baz\n"+
+				"	 */\n"+
+				"    public Baz zzzzzzz(){ \n"+
+				"      return null;\n"+
+				"    }\n" +
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "this.zz");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem ci = list.getItems().get(0);
+		assertEquals("zzzzzzz() : Baz", ci.getLabel());
+
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem.getDocumentation().getRight());
+		String doc = resolvedItem.getDocumentation().getRight().getValue();
+		assertTrue("Unexpected documentation content in " + doc, doc.contains("*  [Baz](file:/"));
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
 				.replace("${line}", String.valueOf(line))

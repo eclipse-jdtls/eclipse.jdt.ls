@@ -33,6 +33,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.MarkupContent;
@@ -135,7 +136,7 @@ public class CompletionResolveHandler {
 						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
 							Reader reader;
 							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-								reader = JavadocContentAccess.getMarkdownContentReader(curMember);
+								reader = JavadocContentAccess2.getMarkdownContentReader(curMember);
 							} else {
 								reader = JavadocContentAccess.getPlainTextContentReader(curMember);
 							}
