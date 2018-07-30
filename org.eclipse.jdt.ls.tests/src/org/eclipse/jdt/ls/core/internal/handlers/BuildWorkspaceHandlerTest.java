@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -20,28 +21,21 @@ import java.nio.charset.StandardCharsets;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
-/**
- * @author xuzho
- *
- */
-@RunWith(MockitoJUnitRunner.class)
 public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest {
-	@Mock
-	private JavaClientConnection connection;
-	@InjectMocks
+	private JavaLanguageClient client = mock(JavaLanguageClient.class);
+	private JavaClientConnection javaClient = new JavaClientConnection(client);
+
 	private BuildWorkspaceHandler handler;
 	private IFile file;
 
 	@Before
 	public void setUp() throws Exception {
+		handler = new BuildWorkspaceHandler(javaClient, projectsManager);
 		importProjects("maven/salut2");
 		file = linkFilesToDefaultProject("singlefile/Single.java");
 	}

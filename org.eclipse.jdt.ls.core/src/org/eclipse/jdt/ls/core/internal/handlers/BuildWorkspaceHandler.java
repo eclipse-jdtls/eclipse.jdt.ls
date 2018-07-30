@@ -60,6 +60,7 @@ public class BuildWorkspaceHandler {
 			if (monitor.isCanceled()) {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
+			projectsManager.cleanupResources(projectsManager.getDefaultProject());
 			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 			List<IMarker> problemMarkers = getProblemMarkers(monitor);
 			publishDiagnostics(problemMarkers);
