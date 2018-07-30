@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -117,6 +118,7 @@ public class ProjectsManager implements ISaveParticipant {
 				deleteInvalidProjects(rootPaths, subMonitor.split(10));
 				GradleBuildSupport.cleanGradleModels(subMonitor.split(10));
 				createJavaProject(getDefaultProject(), subMonitor.split(10));
+				cleanupResources(getDefaultProject());
 				importProjects(rootPaths, subMonitor.split(70));
 				subMonitor.done();
 			}
@@ -178,6 +180,41 @@ public class ProjectsManager implements ISaveParticipant {
 		job.setRule(getWorkspaceRoot());
 		job.schedule();
 		return job;
+	}
+
+	public void cleanupResources(IProject project) throws CoreException {
+		IJavaProject javaProj = JavaCore.create(project);
+		if (javaProj == null) {
+			return;
+		}
+
+		Arrays.stream(javaProj.getPackageFragments()).filter(packageFragment -> {
+			try {
+				return packageFragment.containsJavaResources() && packageFragment.getKind() == IPackageFragmentRoot.K_SOURCE;
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Unable to collect " + project.getName() + "' package fragements", e);
+			}
+			return false;
+		}).flatMap(packageFragment -> {
+			try {
+				return Arrays.stream(packageFragment.getCompilationUnits());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Unable to collect " + project.getName() + "'s compilation units", e);
+			}
+			return null;
+		}).forEach((cu) -> {
+			try {
+				IResource resource = cu.getResource();
+				if (resource.isLinked()) {
+					File f = new File(cu.getUnderlyingResource().getLocationURI());
+					if (!f.exists()) {
+						cu.delete(true, null);
+					}
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Unable to delete missing compilation unit (" + cu.getElementName() + ") from " + project.getName(), e);
+			}
+		});
 	}
 
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
