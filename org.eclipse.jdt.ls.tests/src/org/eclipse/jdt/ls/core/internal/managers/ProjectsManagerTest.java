@@ -14,12 +14,18 @@ import static org.eclipse.jdt.ls.core.internal.JobHelpers.waitForJobsToComplete;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.junit.Test;
 
 /**
@@ -27,6 +33,9 @@ import org.junit.Test;
  *
  */
 public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
+
+	private JavaLanguageClient client = mock(JavaLanguageClient.class);
+	private JavaClientConnection javaClient = new JavaClientConnection(client);
 
 	@Test
 	public void testCreateDefaultProject() throws Exception {
@@ -38,6 +47,21 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(result);
 		assertEquals(projectsManager.getDefaultProject(), result);
 		assertTrue("the default project doesn't exist", result.exists());
+	}
+
+	@Test
+	public void testCleanupDefaultProject() throws Exception {
+		projectsManager.initializeProjects(Collections.emptyList(), monitor);
+		waitForJobsToComplete();
+		IFile file = linkFilesToDefaultProject("singlefile/WithError.java");
+		java.io.File pysicalFile = new java.io.File(file.getLocationURI());
+		pysicalFile.delete();
+
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(javaClient, projectsManager);
+		BuildWorkspaceStatus result = handler.buildWorkspace(true, monitor);
+
+		waitForBackgroundJobs();
+		assertTrue(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result == BuildWorkspaceStatus.SUCCEED);
 	}
 
 }
