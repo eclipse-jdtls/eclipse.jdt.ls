@@ -13,7 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DateFormat;
-import java.util.Calendar;
+import java.util.Date;
 
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
@@ -32,7 +32,6 @@ public class LogHandler {
 	private DateFormat dateFormat;
 	private int logLevelMask;
 	private JavaClientConnection connection;
-	private Calendar calendar;
 	private ILogFilter filter;
 
 	public LogHandler() {
@@ -46,7 +45,6 @@ public class LogHandler {
 	public void install(JavaClientConnection rcpConnection) {
 		this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 		this.logLevelMask = getLogLevelMask(System.getProperty("log.level", ""));//Empty by default
-		this.calendar = Calendar.getInstance();
 		this.connection = rcpConnection;
 
 		this.logListener = new ILogListener() {
@@ -80,7 +78,7 @@ public class LogHandler {
 			//no op;
 			return;
 		}
-		String dateString = this.dateFormat.format(this.calendar.getTime());
+		String dateString = this.dateFormat.format(new Date());
 		String message = status.getMessage();
 		if (status.getException() != null) {
 			message = message + '\n' + status.getException().getMessage();
