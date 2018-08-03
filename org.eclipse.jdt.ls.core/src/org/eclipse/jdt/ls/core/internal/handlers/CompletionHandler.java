@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
@@ -109,6 +110,7 @@ public class CompletionHandler{
 					unit.codeComplete(offset, collector, subMonitor);
 					proposals.addAll(collector.getCompletionItems());
 					proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
+					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
