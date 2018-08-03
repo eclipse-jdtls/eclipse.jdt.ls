@@ -137,7 +137,7 @@ final public class InitHandler {
 		}
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
-		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#")));
+		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*")));
 		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
 		}

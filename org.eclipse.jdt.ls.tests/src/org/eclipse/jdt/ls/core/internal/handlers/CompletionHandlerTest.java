@@ -45,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
@@ -52,6 +53,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Range;
@@ -317,6 +319,122 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(7, range.getStart().getCharacter());
 		assertEquals(0, range.getEnd().getLine());
 		//Not checking the range end character
+	}
+
+	@Test
+	public void testCompletion_javadocComment() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"public class Foo {\n"+
+		"	/** */ \n"+
+		"	void foo(int i, String s) {\n"+
+		"	}\n"+
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "/**");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertNull(item.getInsertText());
+		assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
+		assertEquals(CompletionItemKind.Snippet, item.getKind());
+		assertEquals("999999999", item.getSortText());
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		assertNotNull(item.getTextEdit());
+		assertEquals("\n * ${0}\n * @param i\n * @param s\n", item.getTextEdit().getNewText());
+		Range range = item.getTextEdit().getRange();
+		assertEquals(1, range.getStart().getLine());
+		assertEquals(4, range.getStart().getCharacter());
+		assertEquals(1, range.getEnd().getLine());
+		assertEquals(" * @param i\n * @param s\n", item.getDocumentation().getLeft());
+	}
+
+	@Test
+	public void testCompletion_javadocCommentNoSnippet() throws JavaModelException {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"public class Foo {\n"+
+		"	/** */ \n"+
+		"	void foo(int i, String s) {\n"+
+		"	}\n"+
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "/**");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertNull(item.getInsertText());
+		assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
+		assertEquals(CompletionItemKind.Snippet, item.getKind());
+		assertEquals("999999999", item.getSortText());
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.PlainText);
+		assertNotNull(item.getTextEdit());
+		assertEquals("\n * @param i\n * @param s\n", item.getTextEdit().getNewText());
+		Range range = item.getTextEdit().getRange();
+		assertEquals(1, range.getStart().getLine());
+		assertEquals(4, range.getStart().getCharacter());
+		assertEquals(1, range.getEnd().getLine());
+		assertEquals(" * @param i\n * @param s\n", item.getDocumentation().getLeft());
+	}
+
+	@Test
+	public void testCompletion_javadocCommentPartial() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"public class Foo {\n"+
+		"	/** \n"+
+		"	 * @int \n"+
+		"	*/ \n"+
+		"	void foo(int i, String s) {\n"+
+		"	}\n"+
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "/**");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(0, list.getItems().size());
+	}
+
+	@Test
+	public void testCompletion_javadocCommentRegular() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"public class Foo {\n"+
+		"	/* */ \n"+
+		"	void foo(int i, String s) {\n"+
+		"	}\n"+
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "/*");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(0, list.getItems().size());
+	}
+
+	@Test
+	public void testCompletion_javadocCommentNoParam() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"public class Foo {\n"+
+		"	/** */ \n"+
+		"	void foo() {\n"+
+		"	}\n"+
+		"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "/**");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(0, list.getItems().size());
 	}
 
 	@Test
