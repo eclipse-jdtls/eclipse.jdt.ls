@@ -274,4 +274,16 @@ public class ClientPreferences {
 				.stream().filter(k -> kind.startsWith(k)).findAny().isPresent();
 		//@formatter:on
 	}
+
+	/**
+	 * {@code true} if the client supports the deprecated property
+	 */
+	public boolean isDeprecatedSupported() {
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getCompletion() != null
+				&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+				&& capabilities.getTextDocument().getCompletion().getCompletionItem().getDeprecatedSupport() != null
+				&& capabilities.getTextDocument().getCompletion().getCompletionItem().getDeprecatedSupport().booleanValue();
+		//@formatter:on
+	}
 }

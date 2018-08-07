@@ -55,6 +55,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private CompletionResponse response;
 	private boolean fIsTestCodeExcluded;
 	private CompletionContext context;
+	private boolean deprecatedSupported;
 
 	// Update SUPPORTED_KINDS when mapKind changes
 	// @formatter:off
@@ -140,6 +141,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(index));
 		$.setData(data);
+		if (deprecatedSupported) {
+			$.setDeprecated(isDeprecated(proposal));
+		}
 		this.descriptionProvider.updateDescription(proposal, $);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
 		if (proposal.getKind() == CompletionProposal.FIELD_REF) {
@@ -195,64 +199,63 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
 
-
 	private CompletionItemKind mapKind(final CompletionProposal proposal) {
 		//When a new CompletionItemKind is added, don't forget to update SUPPORTED_KINDS
 		int kind = proposal.getKind();
 		int flags = proposal.getFlags();
 		switch (kind) {
-		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-		case CompletionProposal.CONSTRUCTOR_INVOCATION:
-			return CompletionItemKind.Constructor;
-		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-		case CompletionProposal.TYPE_REF:
-			if (Flags.isInterface(flags)) {
-				return CompletionItemKind.Interface;
-			} else if (Flags.isEnum(flags)) {
-				return CompletionItemKind.Enum;
-			}
-			return CompletionItemKind.Class;
-		case CompletionProposal.FIELD_IMPORT:
-		case CompletionProposal.METHOD_IMPORT:
-		case CompletionProposal.METHOD_NAME_REFERENCE:
-		case CompletionProposal.PACKAGE_REF:
-		case CompletionProposal.TYPE_IMPORT:
-		case CompletionProposal.MODULE_DECLARATION:
-		case CompletionProposal.MODULE_REF:
-			return CompletionItemKind.Module;
-		case CompletionProposal.FIELD_REF:
-			if (Flags.isEnum(flags)) {
-				return CompletionItemKind.EnumMember;
-			}
-			if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
-				return CompletionItemKind.Constant;
-			}
-			return CompletionItemKind.Field;
-		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-			return CompletionItemKind.Field;
-		case CompletionProposal.KEYWORD:
-			return CompletionItemKind.Keyword;
-		case CompletionProposal.LABEL_REF:
-			return CompletionItemKind.Reference;
-		case CompletionProposal.LOCAL_VARIABLE_REF:
-		case CompletionProposal.VARIABLE_DECLARATION:
-			return CompletionItemKind.Variable;
-		case CompletionProposal.METHOD_DECLARATION:
-		case CompletionProposal.METHOD_REF:
-		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
-		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-			return CompletionItemKind.Method;
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+				return CompletionItemKind.Constructor;
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.TYPE_REF:
+				if (Flags.isInterface(flags)) {
+					return CompletionItemKind.Interface;
+				} else if (Flags.isEnum(flags)) {
+					return CompletionItemKind.Enum;
+				}
+				return CompletionItemKind.Class;
+			case CompletionProposal.FIELD_IMPORT:
+			case CompletionProposal.METHOD_IMPORT:
+			case CompletionProposal.METHOD_NAME_REFERENCE:
+			case CompletionProposal.PACKAGE_REF:
+			case CompletionProposal.TYPE_IMPORT:
+			case CompletionProposal.MODULE_DECLARATION:
+			case CompletionProposal.MODULE_REF:
+				return CompletionItemKind.Module;
+			case CompletionProposal.FIELD_REF:
+				if (Flags.isEnum(flags)) {
+					return CompletionItemKind.EnumMember;
+				}
+				if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
+					return CompletionItemKind.Constant;
+				}
+				return CompletionItemKind.Field;
+			case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
+				return CompletionItemKind.Field;
+			case CompletionProposal.KEYWORD:
+				return CompletionItemKind.Keyword;
+			case CompletionProposal.LABEL_REF:
+				return CompletionItemKind.Reference;
+			case CompletionProposal.LOCAL_VARIABLE_REF:
+			case CompletionProposal.VARIABLE_DECLARATION:
+				return CompletionItemKind.Variable;
+			case CompletionProposal.METHOD_DECLARATION:
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				return CompletionItemKind.Method;
 			//text
-		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
-		case CompletionProposal.JAVADOC_BLOCK_TAG:
-		case CompletionProposal.JAVADOC_FIELD_REF:
-		case CompletionProposal.JAVADOC_INLINE_TAG:
-		case CompletionProposal.JAVADOC_METHOD_REF:
-		case CompletionProposal.JAVADOC_PARAM_REF:
-		case CompletionProposal.JAVADOC_TYPE_REF:
-		case CompletionProposal.JAVADOC_VALUE_REF:
-		default:
-			return CompletionItemKind.Text;
+			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+			case CompletionProposal.JAVADOC_BLOCK_TAG:
+			case CompletionProposal.JAVADOC_FIELD_REF:
+			case CompletionProposal.JAVADOC_INLINE_TAG:
+			case CompletionProposal.JAVADOC_METHOD_REF:
+			case CompletionProposal.JAVADOC_PARAM_REF:
+			case CompletionProposal.JAVADOC_TYPE_REF:
+			case CompletionProposal.JAVADOC_VALUE_REF:
+			default:
+				return CompletionItemKind.Text;
 		}
 	}
 
@@ -357,6 +360,27 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				Assert.isTrue(false);
 				return null;
 		}
+	}
+
+	public boolean isDeprecated(CompletionProposal proposal) {
+		int flags = proposal.getFlags();
+		boolean deprecated = Flags.isDeprecated(flags);
+		if (!deprecated) {
+			CompletionProposal[] requiredProposals = proposal.getRequiredProposals();
+			if (requiredProposals != null) {
+				for (int i = 0; i < requiredProposals.length; i++) {
+					CompletionProposal requiredProposal = requiredProposals[i];
+					if (requiredProposal.getKind() == CompletionProposal.TYPE_REF) {
+						deprecated |= Flags.isDeprecated(requiredProposal.getFlags());
+					}
+				}
+			}
+		}
+		return deprecated;
+	}
+
+	public void addDeprecatedProperty(boolean addDeprecatedProperty) {
+		this.deprecatedSupported = addDeprecatedProperty;
 	}
 
 }

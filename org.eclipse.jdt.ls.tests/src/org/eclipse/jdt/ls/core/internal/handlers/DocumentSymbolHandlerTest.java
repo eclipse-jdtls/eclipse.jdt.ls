@@ -168,7 +168,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		DocumentSymbolParams params = new DocumentSymbolParams();
 		params.setTextDocument(identifier);
 		//@formatter:off
-		List<DocumentSymbol> symbols = new DocumentSymbolHandler(true)
+		List<DocumentSymbol> symbols = new DocumentSymbolHandler(true, true)
 				.documentSymbol(params, monitor).stream()
 				.map(Either::getRight).collect(toList());
 		//@formatter:on
@@ -240,7 +240,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		DocumentSymbolParams params = new DocumentSymbolParams();
 		params.setTextDocument(identifier);
 		//@formatter:off
-		List<SymbolInformation> symbols = new DocumentSymbolHandler(false)
+		List<SymbolInformation> symbols = new DocumentSymbolHandler(false, true)
 				.documentSymbol(params, monitor).stream()
 				.map(Either::getLeft).collect(toList());
 		//@formatter:on

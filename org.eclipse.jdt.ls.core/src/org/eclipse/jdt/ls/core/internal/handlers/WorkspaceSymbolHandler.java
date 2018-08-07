@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -57,17 +58,19 @@ public class WorkspaceSymbolHandler{
 			if (query.contains("*") || query.contains("?")) {
 				typeMatchRule |= SearchPattern.R_PATTERN_MATCH;
 			}
+			final boolean deprecatedSupported = JavaLanguageServerPlugin.getPreferencesManager().isClientSupportsDeprecated();
 			new SearchEngine().searchAllTypeNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
 
 				@Override
 				public void acceptTypeNameMatch(TypeNameMatch match) {
 					try {
 						Location location = null;
+						IType type = match.getType();
 						try {
-							if (!sourceOnly && match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType().getClassFile());
-							} else if (!match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType());
+							if (!sourceOnly && type.isBinary()) {
+								location = JDTUtils.toLocation(type.getClassFile());
+							} else if (!type.isBinary()) {
+								location = JDTUtils.toLocation(type);
 							}
 						} catch (Exception e) {
 							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
@@ -80,6 +83,9 @@ public class WorkspaceSymbolHandler{
 							symbolInformation.setName(match.getSimpleTypeName());
 							symbolInformation.setKind(mapKind(match));
 							symbolInformation.setLocation(location);
+							if (deprecatedSupported) {
+								symbolInformation.setDeprecated(Flags.isDeprecated(match.getModifiers()));
+							}
 							symbols.add(symbolInformation);
 							if (maxResults > 0 && symbols.size() >= maxResults) {
 								monitor.setCanceled(true);
@@ -104,6 +110,7 @@ public class WorkspaceSymbolHandler{
 					}
 					return SymbolKind.Class;
 				}
+
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 		} catch (Exception e) {
 			if (e instanceof OperationCanceledException) {

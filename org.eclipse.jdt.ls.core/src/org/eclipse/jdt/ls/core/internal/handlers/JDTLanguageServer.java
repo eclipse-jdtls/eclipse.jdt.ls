@@ -584,9 +584,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
-		boolean hierarchicalDocumentSymbolSupported = preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported();
-		DocumentSymbolHandler handler = new DocumentSymbolHandler(hierarchicalDocumentSymbolSupported);
 		return computeAsync((monitor) -> {
+			boolean hierarchicalDocumentSymbolSupported = preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported();
+			boolean deprecatedSupported = preferenceManager.isClientSupportsDeprecated();
+			DocumentSymbolHandler handler = new DocumentSymbolHandler(hierarchicalDocumentSymbolSupported, deprecatedSupported);
 			waitForLifecycleJobs(monitor);
 			return handler.documentSymbol(params, monitor);
 		});

@@ -59,9 +59,11 @@ public class DocumentSymbolHandler {
 	private static Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
 	private boolean hierarchicalDocumentSymbolSupported;
+	private boolean deprecatedSupported;
 
-	public DocumentSymbolHandler(boolean hierarchicalDocumentSymbolSupported) {
+	public DocumentSymbolHandler(boolean hierarchicalDocumentSymbolSupported, boolean deprecatedSupported) {
 		this.hierarchicalDocumentSymbolSupported = hierarchicalDocumentSymbolSupported;
+		this.deprecatedSupported = deprecatedSupported;
 	}
 
 	public List<Either<SymbolInformation, DocumentSymbol>> documentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
@@ -151,7 +153,9 @@ public class DocumentSymbolHandler {
 			symbol.setRange(getRange(unit));
 			symbol.setSelectionRange(getSelectionRange(unit));
 			symbol.setKind(mapKind(unit));
-			symbol.setDeprecated(isDeprecated(unit));
+			if (deprecatedSupported) {
+				symbol.setDeprecated(isDeprecated(unit));
+			}
 			symbol.setDetail(getDetail(unit, name));
 			if (unit instanceof IParent) {
 				//@formatter:off
@@ -243,39 +247,39 @@ public class DocumentSymbolHandler {
 				} catch (JavaModelException ignore) {
 				}
 				return SymbolKind.Class;
-		case IJavaElement.ANNOTATION:
-			return SymbolKind.Property; // TODO: find a better mapping
-		case IJavaElement.CLASS_FILE:
-		case IJavaElement.COMPILATION_UNIT:
-			return SymbolKind.File;
-		case IJavaElement.FIELD:
-			IField field = (IField) element;
-				try {
-					if (field.isEnumConstant()) {
-						return SymbolKind.EnumMember;
+			case IJavaElement.ANNOTATION:
+				return SymbolKind.Property; // TODO: find a better mapping
+			case IJavaElement.CLASS_FILE:
+			case IJavaElement.COMPILATION_UNIT:
+				return SymbolKind.File;
+			case IJavaElement.FIELD:
+				IField field = (IField) element;
+					try {
+						if (field.isEnumConstant()) {
+							return SymbolKind.EnumMember;
+						}
+						int flags = field.getFlags();
+						if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
+							return SymbolKind.Constant;
+						}
+					} catch (JavaModelException ignore) {
 					}
-					int flags = field.getFlags();
-					if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
-						return SymbolKind.Constant;
-					}
-				} catch (JavaModelException ignore) {
-				}
-			return SymbolKind.Field;
-		case IJavaElement.IMPORT_CONTAINER:
-		case IJavaElement.IMPORT_DECLARATION:
-			//should we return SymbolKind.Namespace?
-		case IJavaElement.JAVA_MODULE:
-			return SymbolKind.Module;
-		case IJavaElement.INITIALIZER:
-			return SymbolKind.Constructor;
-		case IJavaElement.LOCAL_VARIABLE:
-			return SymbolKind.Variable;
-		case IJavaElement.TYPE_PARAMETER:
-			return SymbolKind.TypeParameter;
-		case IJavaElement.METHOD:
-			return SymbolKind.Method;
-		case IJavaElement.PACKAGE_DECLARATION:
-			return SymbolKind.Package;
+				return SymbolKind.Field;
+			case IJavaElement.IMPORT_CONTAINER:
+			case IJavaElement.IMPORT_DECLARATION:
+				//should we return SymbolKind.Namespace?
+			case IJavaElement.JAVA_MODULE:
+				return SymbolKind.Module;
+			case IJavaElement.INITIALIZER:
+				return SymbolKind.Constructor;
+			case IJavaElement.LOCAL_VARIABLE:
+				return SymbolKind.Variable;
+			case IJavaElement.TYPE_PARAMETER:
+				return SymbolKind.TypeParameter;
+			case IJavaElement.METHOD:
+				return SymbolKind.Method;
+			case IJavaElement.PACKAGE_DECLARATION:
+				return SymbolKind.Package;
 		}
 		return SymbolKind.String;
 	}

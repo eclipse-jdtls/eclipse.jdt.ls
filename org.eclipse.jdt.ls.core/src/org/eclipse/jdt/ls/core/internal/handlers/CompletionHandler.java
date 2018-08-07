@@ -91,6 +91,10 @@ public class CompletionHandler{
 		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
 
 		collector.setFavoriteReferences(getFavoriteStaticMembers());
+		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager != null) {
+			collector.addDeprecatedProperty(preferenceManager.isClientSupportsDeprecated());
+		}
 
 		if (offset >-1 && !monitor.isCanceled()) {
 			IBuffer buffer = unit.getBuffer();

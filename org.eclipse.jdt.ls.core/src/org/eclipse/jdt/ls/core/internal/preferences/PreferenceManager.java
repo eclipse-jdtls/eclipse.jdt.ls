@@ -324,4 +324,10 @@ public class PreferenceManager {
 		return getClientPreferences() != null && getClientPreferences().isSupportsCompletionDocumentationMarkdown();
 	}
 
+	/**
+	 * Checks whether the client supports deprecated flag
+	 */
+	public boolean isClientSupportsDeprecated() {
+		return getClientPreferences() != null && getClientPreferences().isDeprecatedSupported();
+	}
 }
