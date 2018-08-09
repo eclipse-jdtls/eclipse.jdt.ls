@@ -82,6 +82,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
@@ -89,7 +90,6 @@ import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.NameMatcher;
 import org.eclipse.jdt.ls.core.internal.corrections.SimilarElement;
 import org.eclipse.jdt.ls.core.internal.corrections.SimilarElementsRequestor;
@@ -104,7 +104,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public class UnresolvedElementsSubProcessor {
 
-	public static void getVariableProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getVariableProposals(IInvocationContext context, IProblemLocationCore problem,
 			IVariableBinding resolvedField, Collection<CUCorrectionProposal> proposals) throws CoreException {
 
 		ICompilationUnit cu= context.getCompilationUnit();
@@ -540,7 +540,7 @@ public class UnresolvedElementsSubProcessor {
 	}
 
 
-	public static void getTypeProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getTypeProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -860,7 +860,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
-	public static void getMethodProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getMethodProposals(IInvocationContext context, IProblemLocationCore problem,
 			boolean isOnlyParameterMismatch, Collection<CUCorrectionProposal> proposals) throws CoreException {
 
 		ICompilationUnit cu= context.getCompilationUnit();
@@ -1144,7 +1144,7 @@ public class UnresolvedElementsSubProcessor {
 		return false;
 	}
 
-	private static void addParameterMissmatchProposals(IInvocationContext context, IProblemLocation problem,
+	private static void addParameterMissmatchProposals(IInvocationContext context, IProblemLocationCore problem,
 			List<IMethodBinding> similarElements, ASTNode invocationNode, List<Expression> arguments,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		int nSimilarElements= similarElements.size();
@@ -1384,7 +1384,7 @@ public class UnresolvedElementsSubProcessor {
 	}
 
 	private static void doEqualNumberOfParameters(IInvocationContext context, ASTNode invocationNode,
-			IProblemLocation problem, List<Expression> arguments, ITypeBinding[] argTypes, IMethodBinding methodBinding,
+			IProblemLocationCore problem, List<Expression> arguments, ITypeBinding[] argTypes, IMethodBinding methodBinding,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ITypeBinding[] paramTypes= methodBinding.getParameterTypes();
 		int[] indexOfDiff= new int[paramTypes.length];
@@ -1626,7 +1626,7 @@ public class UnresolvedElementsSubProcessor {
 	}
 
 
-	public static void getConstructorProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getConstructorProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -1691,7 +1691,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
-	public static void getAmbiguousTypeReferenceProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getAmbiguousTypeReferenceProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		final ICompilationUnit cu= context.getCompilationUnit();
 		int offset= problem.getOffset();
@@ -1716,7 +1716,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
-	public static void getArrayAccessProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getArrayAccessProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 
 		CompilationUnit root= context.getASTRoot();
@@ -1745,7 +1745,7 @@ public class UnresolvedElementsSubProcessor {
 		proposals.add(new RenameNodeCorrectionProposal(label, context.getCompilationUnit(), offset, length, lengthId, IProposalRelevance.ARRAY_CHANGE_TO_LENGTH));
 	}
 
-	public static void getAnnotationMemberProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getAnnotationMemberProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ICompilationUnit cu= context.getCompilationUnit();

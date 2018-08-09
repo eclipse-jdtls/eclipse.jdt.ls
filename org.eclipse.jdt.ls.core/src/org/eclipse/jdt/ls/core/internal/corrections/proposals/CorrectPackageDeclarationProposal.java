@@ -20,10 +20,10 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.DeleteEdit;
@@ -33,9 +33,9 @@ import org.eclipse.text.edits.TextEdit;
 
 public class CorrectPackageDeclarationProposal extends CUCorrectionProposal {
 
-	private IProblemLocation fLocation;
+	private IProblemLocationCore fLocation;
 
-	public CorrectPackageDeclarationProposal(ICompilationUnit cu, IProblemLocation location, int relevance) {
+	public CorrectPackageDeclarationProposal(ICompilationUnit cu, IProblemLocationCore location, int relevance) {
 		super(CorrectionMessages.CorrectPackageDeclarationProposal_name, cu, relevance);
 		fLocation= location;
 	}

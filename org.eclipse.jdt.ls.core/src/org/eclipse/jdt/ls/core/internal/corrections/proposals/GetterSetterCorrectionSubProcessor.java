@@ -43,6 +43,7 @@ import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.GetterSetterUtil;
@@ -50,7 +51,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabili
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public class GetterSetterCorrectionSubProcessor {
@@ -122,7 +122,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            the resulting proposals
 	 * @return <code>true</code> if the quick assist is applicable at this offset
 	 */
-	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocation[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
+	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
 		if (locations != null) {
 			for (int i = 0; i < locations.length; i++) {
 				int problemId = locations[i].getProblemId();
@@ -137,7 +137,7 @@ public class GetterSetterCorrectionSubProcessor {
 		return addGetterSetterProposal(context, coveringNode, resultingCollections, IProposalRelevance.GETTER_SETTER_QUICK_ASSIST);
 	}
 
-	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocation location, Collection<CUCorrectionProposal> proposals, int relevance) {
+	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocationCore location, Collection<CUCorrectionProposal> proposals, int relevance) {
 		addGetterSetterProposal(context, location.getCoveringNode(context.getASTRoot()), proposals, relevance);
 	}
 

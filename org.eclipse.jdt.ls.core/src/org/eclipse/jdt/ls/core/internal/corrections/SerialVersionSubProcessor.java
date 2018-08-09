@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.corext.fix.PotentialProgrammingProblemsFix;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
@@ -63,7 +64,7 @@ public final class SerialVersionSubProcessor {
 	 * @param proposals
 	 *            the proposal collection to extend
 	 */
-	public static final void getSerialVersionProposals(final IInvocationContext context, final IProblemLocation location, final Collection<CUCorrectionProposal> proposals) {
+	public static final void getSerialVersionProposals(final IInvocationContext context, final IProblemLocationCore location, final Collection<CUCorrectionProposal> proposals) {
 
 		Assert.isNotNull(context);
 		Assert.isNotNull(location);

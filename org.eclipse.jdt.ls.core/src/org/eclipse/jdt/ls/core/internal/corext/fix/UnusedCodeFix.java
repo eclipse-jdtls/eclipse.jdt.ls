@@ -67,10 +67,10 @@ import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.corext.dom.StatementRewrite;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.text.edits.TextEditGroup;
 
 /**
@@ -529,7 +529,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		}
 	}
 
-	public static UnusedCodeFix createRemoveUnusedImportFix(CompilationUnit compilationUnit, IProblemLocation problem) {
+	public static UnusedCodeFix createRemoveUnusedImportFix(CompilationUnit compilationUnit, IProblemLocationCore problem) {
 		if (isUnusedImport(problem)) {
 			ImportDeclaration node= getImportDeclaration(problem, compilationUnit);
 			if (node != null) {
@@ -543,12 +543,12 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		return null;
 	}
 
-	public static boolean isUnusedImport(IProblemLocation problem) {
+	public static boolean isUnusedImport(IProblemLocationCore problem) {
 		int id= problem.getProblemId();
 		return id == IProblem.UnusedImport || id == IProblem.DuplicateImport || id == IProblem.ConflictingImport || id == IProblem.CannotImportPackage || id == IProblem.ImportNotFound;
 	}
 
-	public static UnusedCodeFix createUnusedMemberFix(CompilationUnit compilationUnit, IProblemLocation problem, boolean removeAllAssignements) {
+	public static UnusedCodeFix createUnusedMemberFix(CompilationUnit compilationUnit, IProblemLocationCore problem, boolean removeAllAssignements) {
 		if (isUnusedMember(problem)) {
 			SimpleName name= getUnusedName(compilationUnit, problem);
 			if (name != null) {
@@ -567,7 +567,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		return null;
 	}
 
-	public static UnusedCodeFix createUnusedTypeParameterFix(CompilationUnit compilationUnit, IProblemLocation problemLoc) {
+	public static UnusedCodeFix createUnusedTypeParameterFix(CompilationUnit compilationUnit, IProblemLocationCore problemLoc) {
 		if (problemLoc.getProblemId() == IProblem.UnusedTypeParameter) {
 			SimpleName name= getUnusedName(compilationUnit, problemLoc);
 			if (name != null) {
@@ -582,13 +582,13 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		return null;
 	}
 
-	public static boolean isUnusedMember(IProblemLocation problem) {
+	public static boolean isUnusedMember(IProblemLocationCore problem) {
 		int id= problem.getProblemId();
 		return id == IProblem.UnusedPrivateMethod || id == IProblem.UnusedPrivateConstructor || id == IProblem.UnusedPrivateField || id == IProblem.UnusedPrivateType
 				|| id == IProblem.LocalVariableIsNeverUsed || id == IProblem.ArgumentIsNeverUsed;
 	}
 
-	public static UnusedCodeFix createRemoveUnusedCastFix(CompilationUnit compilationUnit, IProblemLocation problem) {
+	public static UnusedCodeFix createRemoveUnusedCastFix(CompilationUnit compilationUnit, IProblemLocationCore problem) {
 		if (problem.getProblemId() != IProblem.UnnecessaryCast) {
 			return null;
 		}
@@ -614,9 +614,9 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 	 * boolean removeUnusedPrivateTypes, boolean removeUnusedLocalVariables,
 	 * boolean removeUnusedImports, boolean removeUnusedCast) {
 	 *
-	 * IProblem[] problems= compilationUnit.getProblems(); IProblemLocation[]
-	 * locations= new IProblemLocation[problems.length]; for (int i= 0; i <
-	 * problems.length; i++) { locations[i]= new ProblemLocation(problems[i]); }
+	 * IProblem[] problems= compilationUnit.getProblems(); IProblemLocationCore[]
+	 * locations= new IProblemLocationCore[problems.length]; for (int i= 0; i <
+	 * problems.length; i++) { locations[i]= new ProblemLocationCore(problems[i]); }
 	 *
 	 * return createCleanUp(compilationUnit, locations,
 	 * removeUnusedPrivateMethods, removeUnusedPrivateConstructors,
@@ -624,7 +624,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 	 * removeUnusedLocalVariables, removeUnusedImports, removeUnusedCast); }
 	 */
 
-	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems,
+	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocationCore[] problems,
 			boolean removeUnusedPrivateMethods,
 			boolean removeUnusedPrivateConstructors,
 			boolean removeUnusedPrivateFields,
@@ -637,7 +637,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		Hashtable<ASTNode, List<SimpleName>> variableDeclarations= new Hashtable<>();
 		LinkedHashSet<CastExpression> unnecessaryCasts= new LinkedHashSet<>();
 		for (int i= 0; i < problems.length; i++) {
-			IProblemLocation problem= problems[i];
+			IProblemLocationCore problem = problems[i];
 			int id= problem.getProblemId();
 
 			if (removeUnusedImports && (id == IProblem.UnusedImport || id == IProblem.DuplicateImport || id == IProblem.ConflictingImport ||
@@ -755,7 +755,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		return sideEffects.size() > 0;
 	}
 
-	private static SimpleName getUnusedName(CompilationUnit compilationUnit, IProblemLocation problem) {
+	private static SimpleName getUnusedName(CompilationUnit compilationUnit, IProblemLocationCore problem) {
 		ASTNode selectedNode= problem.getCoveringNode(compilationUnit);
 
 		if (selectedNode instanceof MethodDeclaration) {
@@ -817,7 +817,7 @@ public class UnusedCodeFix extends CompilationUnitRewriteOperationsFixCore {
 		return result;
 	}
 
-	private static ImportDeclaration getImportDeclaration(IProblemLocation problem, CompilationUnit compilationUnit) {
+	private static ImportDeclaration getImportDeclaration(IProblemLocationCore problem, CompilationUnit compilationUnit) {
 		ASTNode selectedNode= problem.getCoveringNode(compilationUnit);
 		if (selectedNode != null) {
 			ASTNode node= ASTNodes.getParent(selectedNode, ASTNode.IMPORT_DECLARATION);

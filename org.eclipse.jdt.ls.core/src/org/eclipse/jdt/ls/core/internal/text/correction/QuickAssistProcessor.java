@@ -93,12 +93,12 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -131,7 +131,7 @@ public class QuickAssistProcessor {
 	public QuickAssistProcessor() {
 	}
 
-	public CUCorrectionProposal[] getAssists(IInvocationContext context, IProblemLocation[] locations) throws CoreException {
+	public CUCorrectionProposal[] getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
@@ -383,10 +383,10 @@ public class QuickAssistProcessor {
 		return coveredNodes;
 	}
 
-	static boolean noErrorsAtLocation(IProblemLocation[] locations) {
+	static boolean noErrorsAtLocation(IProblemLocationCore[] locations) {
 		if (locations != null) {
 			for (int i = 0; i < locations.length; i++) {
-				IProblemLocation location = locations[i];
+				IProblemLocationCore location = locations[i];
 				if (location.isError()) {
 					if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && JavaCore.getOptionForConfigurableSeverity(location.getProblemId()) != null) {
 						// continue (only drop out for severe (non-optional) errors)

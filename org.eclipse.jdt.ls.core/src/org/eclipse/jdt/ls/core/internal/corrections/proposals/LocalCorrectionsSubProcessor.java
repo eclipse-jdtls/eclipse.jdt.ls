@@ -69,6 +69,7 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
@@ -79,7 +80,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAna
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
@@ -89,7 +89,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 
 public class LocalCorrectionsSubProcessor {
 
-	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu = context.getCompilationUnit();
 
 		CompilationUnit astRoot = context.getASTRoot();
@@ -367,7 +367,7 @@ public class LocalCorrectionsSubProcessor {
 		return false;
 	}
 
-	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode == null) {
 			return;
@@ -376,7 +376,7 @@ public class LocalCorrectionsSubProcessor {
 		QuickAssistProcessor.getCatchClauseToThrowsProposals(context, selectedNode, proposals);
 	}
 
-	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		IProposableFix fix = UnimplementedCodeFix.createAddUnimplementedMethodsFix(context.getASTRoot(), problem);
 
 		if (fix != null) {
@@ -390,7 +390,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		int problemId = problem.getProblemId();
 
 		UnusedCodeFix fix = UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, false);
@@ -419,7 +419,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		CompilationUnit root = context.getASTRoot();
 		ASTNode selectedNode = problem.getCoveringNode(root);
 		if (selectedNode == null) {
