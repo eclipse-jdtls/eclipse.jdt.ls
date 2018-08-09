@@ -22,11 +22,10 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 
 public class MissingReturnTypeInLambdaCorrectionProposal extends MissingReturnTypeCorrectionProposal {
 
@@ -81,8 +80,9 @@ public class MissingReturnTypeInLambdaCorrectionProposal extends MissingReturnTy
 		org.eclipse.jdt.core.dom.NodeFinder finder= new org.eclipse.jdt.core.dom.NodeFinder(root, returnOffset, 0);
 		ASTNode varDeclFrag= ASTResolving.findAncestor(finder.getCoveringNode(), ASTNode.VARIABLE_DECLARATION_FRAGMENT);
 		IVariableBinding varDeclFragBinding= null;
-		if (varDeclFrag != null)
+		if (varDeclFrag != null) {
 			varDeclFragBinding= ((VariableDeclarationFragment) varDeclFrag).resolveBinding();
+		}
 		for (int i= 0; i < bindings.length; i++) {
 			IVariableBinding curr= (IVariableBinding) bindings[i];
 			ITypeBinding type= curr.getType();
