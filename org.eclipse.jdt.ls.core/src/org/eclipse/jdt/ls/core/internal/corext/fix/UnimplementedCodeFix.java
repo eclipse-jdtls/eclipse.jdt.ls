@@ -33,9 +33,9 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.text.edits.TextEditGroup;
 
 
@@ -63,7 +63,7 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCor
 		}
 	}
 
-	public static ICleanUpFixCore createCleanUp(CompilationUnit root, boolean addMissingMethod, boolean makeTypeAbstract, IProblemLocation[] problems) {
+	public static ICleanUpFixCore createCleanUp(CompilationUnit root, boolean addMissingMethod, boolean makeTypeAbstract, IProblemLocationCore[] problems) {
 		Assert.isLegal(!addMissingMethod || !makeTypeAbstract);
 		if (!addMissingMethod && !makeTypeAbstract) {
 			return null;
@@ -76,7 +76,7 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCor
 		ArrayList<CompilationUnitRewriteOperation> operations= new ArrayList<>();
 
 		for (int i= 0; i < problems.length; i++) {
-			IProblemLocation problem= problems[i];
+			IProblemLocationCore problem = problems[i];
 			if (addMissingMethod) {
 				ASTNode typeNode= getSelectedTypeNode(root, problem);
 				if (typeNode != null && !isTypeBindingNull(typeNode)) {
@@ -103,7 +103,7 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCor
 		return new UnimplementedCodeFix(label, root, operations.toArray(new CompilationUnitRewriteOperation[operations.size()]));
 	}
 
-	public static IProposableFix createAddUnimplementedMethodsFix(final CompilationUnit root, IProblemLocation problem) {
+	public static IProposableFix createAddUnimplementedMethodsFix(final CompilationUnit root, IProblemLocationCore problem) {
 		ASTNode typeNode= getSelectedTypeNode(root, problem);
 		if (typeNode == null) {
 			return null;
@@ -155,7 +155,7 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCor
 //		}
 	}
 
-	public static UnimplementedCodeFix createMakeTypeAbstractFix(CompilationUnit root, IProblemLocation problem) {
+	public static UnimplementedCodeFix createMakeTypeAbstractFix(CompilationUnit root, IProblemLocationCore problem) {
 		ASTNode typeNode= getSelectedTypeNode(root, problem);
 		if (!(typeNode instanceof TypeDeclaration)) {
 			return null;
@@ -168,7 +168,7 @@ public class UnimplementedCodeFix extends CompilationUnitRewriteOperationsFixCor
 		return new UnimplementedCodeFix(label, root, new CompilationUnitRewriteOperation[] { operation });
 	}
 
-	public static ASTNode getSelectedTypeNode(CompilationUnit root, IProblemLocation problem) {
+	public static ASTNode getSelectedTypeNode(CompilationUnit root, IProblemLocationCore problem) {
 		ASTNode selectedNode= problem.getCoveringNode(root);
 		if (selectedNode == null) {
 			return null;

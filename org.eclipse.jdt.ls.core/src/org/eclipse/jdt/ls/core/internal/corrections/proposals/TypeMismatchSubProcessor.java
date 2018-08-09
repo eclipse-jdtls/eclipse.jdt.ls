@@ -55,13 +55,13 @@ import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
@@ -73,7 +73,7 @@ public class TypeMismatchSubProcessor {
 	private TypeMismatchSubProcessor() {
 	}
 
-	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocation problem,
+	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 
 		ICompilationUnit cu= context.getCompilationUnit();
@@ -298,7 +298,7 @@ public class TypeMismatchSubProcessor {
 		return new CastCorrectionProposal(label, cu, nodeToCast, castTypeBinding, relevance);
 	}
 
-	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocation problem,
+	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
@@ -348,7 +348,7 @@ public class TypeMismatchSubProcessor {
 		}
 	}
 
-	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocation problem,
+	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
@@ -417,7 +417,7 @@ public class TypeMismatchSubProcessor {
 		return false;
 	}
 
-	public static void addTypeMismatchInForEachProposals(IInvocationContext context, IProblemLocation problem,
+	public static void addTypeMismatchInForEachProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);

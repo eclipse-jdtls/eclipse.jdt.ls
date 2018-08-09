@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -61,9 +62,9 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
-import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOperationsFixCore {
@@ -267,7 +268,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 
 	private static ISerialVersionFixContext fCurrentContext;
 
-	public static IProposableFix[] createMissingSerialVersionFixes(CompilationUnit compilationUnit, IProblemLocation problem) {
+	public static IProposableFix[] createMissingSerialVersionFixes(CompilationUnit compilationUnit, IProblemLocationCore problem) {
 		if (problem.getProblemId() != IProblem.MissingSerialVersion) {
 			return null;
 		}
@@ -347,19 +348,19 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, boolean addSerialVersionIds) {
 
 		IProblem[] problems = compilationUnit.getProblems();
-		IProblemLocation[] locations = new IProblemLocation[problems.length];
+		IProblemLocationCore[] locations = new IProblemLocationCore[problems.length];
 		for (int i = 0; i < problems.length; i++) {
-			// locations[i]= new ProblemLocation(problems[i]);
+			// locations[i]= new ProblemLocationCore(problems[i]);
 			boolean isError = problems[i].isError();
 			int problemId = problems[i].getID();
 			int length = problems[i].getSourceEnd() - problems[i].getSourceStart();
 			int offset = problems[i].getSourceStart();
-			locations[i] = new ProblemLocation(offset, length, problemId, isError);
+			locations[i] = new ProblemLocationCore(offset, length, problemId, new String[0], isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
 		}
 		return createCleanUp(compilationUnit, locations, addSerialVersionIds);
 	}
 
-	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocation[] problems, boolean addSerialVersionIds) {
+	public static ICleanUpFixCore createCleanUp(CompilationUnit compilationUnit, IProblemLocationCore[] problems, boolean addSerialVersionIds) {
 		if (addSerialVersionIds) {
 
 			final ICompilationUnit unit = (ICompilationUnit) compilationUnit.getJavaElement();
@@ -395,7 +396,7 @@ public class PotentialProgrammingProblemsFix extends CompilationUnitRewriteOpera
 		return null;
 	}
 
-	private static SimpleName getSelectedName(CompilationUnit compilationUnit, IProblemLocation problem) {
+	private static SimpleName getSelectedName(CompilationUnit compilationUnit, IProblemLocationCore problem) {
 		final ASTNode selection = problem.getCoveredNode(compilationUnit);
 		if (selection == null) {
 			return null;

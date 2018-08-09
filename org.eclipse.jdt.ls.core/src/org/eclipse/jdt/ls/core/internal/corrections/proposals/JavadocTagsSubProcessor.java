@@ -56,12 +56,12 @@ import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGeneration;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -326,7 +326,7 @@ public class JavadocTagsSubProcessor {
 
 	}
 
-	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (node == null) {
 			return;
@@ -371,7 +371,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getUnusedAndUndocumentedParameterOrExceptionProposals(IInvocationContext context,
-			IProblemLocation problem, Collection<CUCorrectionProposal> proposals) {
+			IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 		IJavaProject project= cu.getJavaProject();
 
@@ -411,7 +411,7 @@ public class JavadocTagsSubProcessor {
 		proposals.add(proposal);
 	}
 
-	public static void getMissingJavadocCommentProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getMissingJavadocCommentProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (node == null) {
@@ -655,7 +655,7 @@ public class JavadocTagsSubProcessor {
 		return null;
 	}
 
-	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		while (node != null && !(node instanceof TagElement)) {
@@ -672,7 +672,7 @@ public class JavadocTagsSubProcessor {
 				IProposalRelevance.REMOVE_TAG));
 	}
 
-	public static void getInvalidQualificationProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getInvalidQualificationProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (!(node instanceof Name)) {

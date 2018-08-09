@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -59,7 +60,7 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocation[] locations)
+	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
 			throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return new CUCorrectionProposal[0];
@@ -68,7 +69,7 @@ public class QuickFixProcessor {
 		HashSet<Integer> handledProblems = new HashSet<>(locations.length);
 		ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
 		for (int i = 0; i < locations.length; i++) {
-			IProblemLocation curr = locations[i];
+			IProblemLocationCore curr = locations[i];
 			Integer id = Integer.valueOf(curr.getProblemId());
 			if (handledProblems.add(id)) {
 				process(context, curr, resultingCollections);
@@ -77,7 +78,7 @@ public class QuickFixProcessor {
 		return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
 	}
 
-	private void process(IInvocationContext context, IProblemLocation problem,
+	private void process(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations

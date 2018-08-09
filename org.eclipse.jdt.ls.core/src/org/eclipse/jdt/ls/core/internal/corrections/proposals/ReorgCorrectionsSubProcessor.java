@@ -29,18 +29,18 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.TextEdit;
 
 
 public class ReorgCorrectionsSubProcessor {
 
-	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -78,7 +78,7 @@ public class ReorgCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocation problem,
+	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -87,7 +87,7 @@ public class ReorgCorrectionsSubProcessor {
 		proposals.add(new CorrectPackageDeclarationProposal(cu, problem, relevance));
 	}
 
-	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocation problem,
+	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		IProposableFix fix= UnusedCodeFix.createRemoveUnusedImportFix(context.getASTRoot(), problem);
 		if (fix != null) {

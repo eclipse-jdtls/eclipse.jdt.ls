@@ -20,16 +20,17 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
-import org.eclipse.jdt.ls.core.internal.corrections.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.ProblemLocation;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
@@ -66,7 +67,7 @@ public class CodeActionHandler {
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
 		context.setASTRoot(getASTRoot(unit));
-		IProblemLocation[] locations = this.getProblemLocations(unit, params.getContext().getDiagnostics());
+		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<Command> $ = new ArrayList<>();
 		try {
@@ -101,15 +102,15 @@ public class CodeActionHandler {
 		return new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
 	}
 
-	private IProblemLocation[] getProblemLocations(ICompilationUnit unit, List<Diagnostic> diagnostics) {
-		IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
+	private IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
+		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
 			Diagnostic diagnostic = diagnostics.get(i);
 			int problemId = getProblemId(diagnostic);
 			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
 			int end = DiagnosticsHelper.getEndOffset(unit, diagnostic.getRange());
 			boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
-			locations[i] = new ProblemLocation(start, end - start, problemId, isError);
+			locations[i] = new ProblemLocationCore(start, end - start, problemId, new String[0], isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
 		}
 		return locations;
 	}
