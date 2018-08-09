@@ -34,7 +34,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 
 /**

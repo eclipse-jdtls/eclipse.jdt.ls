@@ -28,8 +28,8 @@ import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 
 public class AddArgumentCorrectionProposal extends ASTRewriteCorrectionProposal {
 

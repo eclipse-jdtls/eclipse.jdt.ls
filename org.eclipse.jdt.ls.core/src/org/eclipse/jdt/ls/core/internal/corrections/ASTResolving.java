@@ -22,8 +22,8 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
-import org.eclipse.jdt.ls.core.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 
 /**
