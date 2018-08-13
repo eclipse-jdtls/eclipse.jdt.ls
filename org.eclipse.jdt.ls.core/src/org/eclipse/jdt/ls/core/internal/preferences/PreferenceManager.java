@@ -27,11 +27,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
@@ -171,6 +171,8 @@ public class PreferenceManager {
 		IJavaProject project = JavaCore.create(resource.getProject());
 
 		CodeGenerationSettings res = new CodeGenerationSettings();
+		res.overrideAnnotation = true;
+		res.createComments = false;
 		// TODO indentation settings should be retrieved from client/external
 		// settings?
 		res.tabWidth = CodeFormatterUtil.getTabWidth(project);
