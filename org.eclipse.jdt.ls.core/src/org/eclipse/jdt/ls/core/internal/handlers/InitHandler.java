@@ -221,6 +221,7 @@ final public class InitHandler {
 				try {
 					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
+					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {

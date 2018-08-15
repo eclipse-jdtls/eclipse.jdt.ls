@@ -205,12 +205,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
-		try {
-			boolean autoBuildChanged = pm.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
-			buildWorkspace(autoBuildChanged);
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
 	}
 
 	/**
