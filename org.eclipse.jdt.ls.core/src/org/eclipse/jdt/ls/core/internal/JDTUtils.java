@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import static org.eclipse.core.resources.IResource.DEPTH_ONE;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -601,8 +603,34 @@ public final class JDTUtils {
 		return Character.isJavaIdentifierPart(ch) || ch == '.';
 	}
 
+	public static boolean isFolder(String uriString) {
+		IFile fakeFile = findFile(uriString); // This may return IFile even when uriString really describes a IContainer
+		IContainer parent = fakeFile == null ? null : fakeFile.getParent();
+		if (parent == null) {
+			return false;
+		}
+		String name = fakeFile.getName();
+		try {
+			if (!parent.isSynchronized(DEPTH_ONE)) {
+				parent.refreshLocal(DEPTH_ONE, null);
+			}
+			for (IResource member : parent.members()) {
+				if (name.equals(member.getName())) {
+					return (member instanceof IFolder);
+				}
+			}
+		} catch (CoreException e) {
+			// Ignore
+		}
+		return false;
+	}
+
 	public static IFile findFile(String uriString) {
 		return (IFile) findResource(toURI(uriString), ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
+	}
+
+	public static IContainer findFolder(String uriString) {
+		return (IContainer) findResource(toURI(uriString), ResourcesPlugin.getWorkspace().getRoot()::findContainersForLocationURI);
 	}
 
 	public static IResource findResource(URI uri, Function<URI, IResource[]> resourceFinder) {

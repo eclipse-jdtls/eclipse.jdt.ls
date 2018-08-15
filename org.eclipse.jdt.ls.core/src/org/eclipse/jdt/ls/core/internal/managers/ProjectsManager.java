@@ -247,7 +247,7 @@ public class ProjectsManager implements ISaveParticipant {
 		if (uriString == null) {
 			return;
 		}
-		IResource resource = JDTUtils.findFile(uriString);
+		IResource resource = JDTUtils.isFolder(uriString) ? JDTUtils.findFolder(uriString) : JDTUtils.findFile(uriString);
 		if (resource == null) {
 			return;
 		}

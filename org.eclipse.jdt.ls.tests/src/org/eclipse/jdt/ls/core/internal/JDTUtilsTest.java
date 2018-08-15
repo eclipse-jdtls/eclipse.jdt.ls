@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -203,5 +204,18 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(iFile.getFullPath().toString() + " doesn't exist.", iFile.exists());
 		Path path = Paths.get(tempDir + "/test");
 		Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+	}
+
+	@Test
+	public void testIsFolder() throws Exception {
+		IProject project = WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME);
+		IContainer iFolder = project.getFolder("/src/org/eclipse");
+		URI uriFolder = iFolder.getLocationURI();
+		IFile iFile = project.getFile("/src/org/eclipse/Test.java");
+		URI uriFile = iFile.getLocationURI();
+		assertTrue(JDTUtils.isFolder(uriFolder.toString()));
+		assertFalse(JDTUtils.isFolder(uriFile.toString()));
+		assertNotNull(JDTUtils.findFile(uriFile.toString()));
+		assertNotNull(JDTUtils.findFolder(uriFolder.toString()));
 	}
 }
