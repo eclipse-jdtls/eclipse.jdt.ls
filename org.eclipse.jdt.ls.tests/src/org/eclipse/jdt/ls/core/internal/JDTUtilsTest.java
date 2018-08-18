@@ -209,9 +209,17 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 	@Test
 	public void testIsFolder() throws Exception {
 		IProject project = WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME);
-		IContainer iFolder = project.getFolder("/src/org/eclipse");
+
+		// Creating test folders and file using 'java.io.*' API (from the outside of the workspace)
+		File dir = new File(project.getLocation().toString(), "/src/org/eclipse/testIsFolder");
+		dir.mkdirs();
+		File file = new File(dir, "Test.java");
+		file.createNewFile();
+
+		// Accessing test folders and file using 'org.eclipse.core.resources.*' API (from inside of the workspace)
+		IContainer iFolder = project.getFolder("/src/org/eclipse/testIsFolder");
 		URI uriFolder = iFolder.getLocationURI();
-		IFile iFile = project.getFile("/src/org/eclipse/Test.java");
+		IFile iFile = project.getFile("/src/org/eclipse/testIsFolder/Test.java");
 		URI uriFile = iFile.getLocationURI();
 		assertTrue(JDTUtils.isFolder(uriFolder.toString()));
 		assertFalse(JDTUtils.isFolder(uriFile.toString()));
