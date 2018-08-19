@@ -15,6 +15,7 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logExcep
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,11 +37,14 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
 
 /**
  * @author xuzho
@@ -61,6 +65,13 @@ public class BuildWorkspaceHandler {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
 			projectsManager.cleanupResources(projectsManager.getDefaultProject());
+			IProject[] projects = ProjectUtils.getAllProjects();
+			for (IProject project : projects) {
+				if (!project.equals(projectsManager.getDefaultProject())) {
+					String uri = JDTUtils.getFileURI(project);
+					connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
+				}
+			}
 			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 			List<IMarker> problemMarkers = getProblemMarkers(monitor);
 			publishDiagnostics(problemMarkers);
@@ -99,6 +110,13 @@ public class BuildWorkspaceHandler {
 			IResource resource = entry.getKey();
 			// ignore problems caused by standalone files
 			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+				continue;
+			}
+			if (resource instanceof IProject) {
+				String uri = JDTUtils.getFileURI(resource);
+				Range range = new Range(new Position(0, 0), new Position(0, 0));
+				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, entry.getValue().toArray(new IMarker[0]));
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
 				continue;
 			}
 			IFile file = resource.getAdapter(IFile.class);

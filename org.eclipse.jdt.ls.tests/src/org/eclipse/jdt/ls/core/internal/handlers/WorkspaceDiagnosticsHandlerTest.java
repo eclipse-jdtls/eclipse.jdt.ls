@@ -210,6 +210,32 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(2).getMessage());
 	}
 
+	@Test
+	public void testProjectLevelMarkers() throws Exception {
+		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
+		initHandler.addWorkspaceDiagnosticsHandler();
+		//import project
+		importProjects("maven/broken");
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/broken")).findFirst();
+		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
+		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
+		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
+			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
+			if (diff == 0) {
+				diff = d1.getMessage().compareTo(d2.getMessage());
+			}
+			return diff;
+		};
+		Collections.sort(diags, comparator);
+		assertEquals(diags.toString(), 5, diags.size());
+		assertTrue(diags.get(4).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+	}
+
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {
 		IMarker m = mock(IMarker.class);
 		when(m.exists()).thenReturn(true);
