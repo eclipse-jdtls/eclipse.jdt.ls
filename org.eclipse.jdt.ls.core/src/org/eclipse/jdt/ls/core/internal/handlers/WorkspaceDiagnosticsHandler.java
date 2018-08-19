@@ -86,9 +86,19 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		if (resource.getType() == IResource.FOLDER || resource.getType() == IResource.ROOT) {
 			return true;
 		}
-		// ignore problems caused by standalone files
+
 		if (resource.getType() == IResource.PROJECT) {
-			return !JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject());
+			// ignore problems caused by standalone files (problems in the default project)
+			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+				return false;
+			}
+			// report problems for other projects
+			String uri = JDTUtils.getFileURI(resource);
+			IMarker[] markers = resource.findMarkers(null, true, IResource.DEPTH_ONE);
+			Range range = new Range(new Position(0, 0), new Position(0, 0));
+			List<Diagnostic> diagnostics = toDiagnosticArray(range, markers);
+			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+			return true;
 		}
 		// No marker changes continue to visit
 		if ((delta.getFlags() & IResourceDelta.MARKERS) == 0) {
@@ -119,7 +129,33 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	/**
-	 * Transforms {@link IMarker}s of a {@link IDocument} into a list of {@link Diagnostic}s.
+	 * Transforms {@link IMarker}s into a list of {@link Diagnostic}s
+	 *
+	 * @param range
+	 * @param markers
+	 * @return a list of {@link Diagnostic}s
+	 */
+	public static List<Diagnostic> toDiagnosticArray(Range range, IMarker[] markers) {
+		List<Diagnostic> diagnostics = Stream.of(markers).map(m -> toDiagnostic(range, m)).filter(d -> d != null).collect(Collectors.toList());
+		return diagnostics;
+	}
+
+	private static Diagnostic toDiagnostic(Range range, IMarker marker) {
+		if (marker == null || !marker.exists()) {
+			return null;
+		}
+		Diagnostic d = new Diagnostic();
+		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
+		d.setMessage(marker.getAttribute(IMarker.MESSAGE, ""));
+		d.setCode(String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0)));
+		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
+		d.setRange(range);
+		return d;
+	}
+
+	/**
+	 * Transforms {@link IMarker}s of a {@link IDocument} into a list of
+	 * {@link Diagnostic}s.
 	 *
 	 * @param document
 	 * @param markers
