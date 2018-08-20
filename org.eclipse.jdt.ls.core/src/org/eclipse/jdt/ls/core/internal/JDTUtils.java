@@ -609,20 +609,14 @@ public final class JDTUtils {
 		if (parent == null) {
 			return false;
 		}
-		String name = fakeFile.getName();
-		try {
-			if (!parent.isSynchronized(DEPTH_ONE)) {
+		if (!parent.isSynchronized(DEPTH_ONE)) {
+			try {
 				parent.refreshLocal(DEPTH_ONE, null);
+			} catch (CoreException e) {
+				// Ignore
 			}
-			for (IResource member : parent.members()) {
-				if (name.equals(member.getName())) {
-					return (member instanceof IFolder);
-				}
-			}
-		} catch (CoreException e) {
-			// Ignore
 		}
-		return false;
+		return (parent.findMember(fakeFile.getName()) instanceof IFolder);
 	}
 
 	public static IFile findFile(String uriString) {
