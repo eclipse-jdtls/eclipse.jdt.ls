@@ -19,6 +19,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.internal.MavenPluginActivator;
+import org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.MavenUpdateRequest;
 
@@ -60,4 +62,14 @@ public class MavenBuildSupport implements IBuildSupport {
 		//Check pom.xml is at the root of the project
 				&& resource.getProject().equals(resource.getParent());
 	}
+
+	/**
+	 * Save maven project workspace state.
+	 */
+	public static void saveWorkspaceState() {
+		MavenPluginActivator mavenPluginActivator = MavenPluginActivator.getDefault();
+		ProjectRegistryManager projectRegistryManager = mavenPluginActivator.getMavenProjectManagerImpl();
+		projectRegistryManager.writeWorkspaceState();
+	}
+
 }
