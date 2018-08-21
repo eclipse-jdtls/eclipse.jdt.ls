@@ -202,6 +202,22 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	}
 
 	@Test
+	public void testJava110Project() throws Exception {
+		IProject project = importMavenProject("salut-java110");
+		assertIsJavaProject(project);
+		assertEquals("10", getJavaSourceLevel(project));
+		assertNoErrors(project);
+	}
+
+	@Test
+	public void testJava10Project() throws Exception {
+		IProject project = importMavenProject("salut-java10");
+		assertIsJavaProject(project);
+		assertEquals("10", getJavaSourceLevel(project));
+		assertNoErrors(project);
+	}
+
+	@Test
 	public void testAnnotationProcessing() throws Exception {
 		IProject project = importMavenProject("autovalued");
 		assertIsJavaProject(project);
