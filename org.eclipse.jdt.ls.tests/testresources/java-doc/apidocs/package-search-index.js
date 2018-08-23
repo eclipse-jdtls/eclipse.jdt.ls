@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"bar.foo"}]

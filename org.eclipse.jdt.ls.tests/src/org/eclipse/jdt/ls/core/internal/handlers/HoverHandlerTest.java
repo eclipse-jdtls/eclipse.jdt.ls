@@ -21,9 +21,13 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -482,20 +486,40 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testHoverOnPackageWithNewJavadoc() throws Exception {
-		importProjects("eclipse/java9");
-		project = WorkspaceHelper.getProject("java9");
+		// See org.eclipse.jdt.ls.tests/testresources/java-doc/readme.txt to generate the remote javadoc
+		importProjects("eclipse/remote-javadoc");
+		project = WorkspaceHelper.getProject("remote-javadoc");
+
+		// First we need to attach our custom Javadoc to java-doc-0.0.1-SNAPSHOT.jar
+		IJavaProject javaProject = JavaCore.create(project);
+		IClasspathEntry[] classpath = javaProject.getRawClasspath();
+		List<IClasspathEntry> newClasspath = new ArrayList<>(classpath.length);
+
+		for (IClasspathEntry cpe : classpath) {
+			if (cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && cpe.getPath().lastSegment().equals("java-doc-0.0.1-SNAPSHOT.jar")) {
+				String javadocPath = new File("testresources/java-doc/apidocs").getAbsoluteFile().toURI().toString();
+				IClasspathAttribute atts[] = new IClasspathAttribute[] { JavaCore.newClasspathAttribute("javadoc_location", javadocPath) };
+				IClasspathEntry newCpe = JavaCore.newLibraryEntry(cpe.getPath(), null, null, null, atts, false);
+				newClasspath.add(newCpe);
+			} else {
+				newClasspath.add(cpe);
+			}
+		}
+
+		javaProject.setRawClasspath(newClasspath.toArray(new IClasspathEntry[classpath.length]), monitor);
+
 		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on the java.sql import
-		String payload = createHoverRequest("src/main/java/foo/bar/MyDriverAction.java", 2, 14);
+		String payload = createHoverRequest("src/main/java/foo/bar/Bar.java", 2, 14);
 		TextDocumentPositionParams position = getParams(payload);
 
 		//when
 		Hover hover = handler.hover(position, monitor);
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
-		//Javadoc was read from https://docs.oracle.com/javase/9/docs/api/java/sql/package-summary.html
-		assertTrue(javadoc.contains("JDBC™ API Tutorial and Reference, Third Edition"));
+		//Javadoc was read from file://.../org.eclipse.jdt.ls.tests/testresources/java-doc/apidocs/bar/foo/package-summary.html
+		assertTrue(javadoc.contains("this doc is powered by **HTML5**"));
 		assertFalse(javadoc.contains("----"));//no table nonsense
 
 	}
