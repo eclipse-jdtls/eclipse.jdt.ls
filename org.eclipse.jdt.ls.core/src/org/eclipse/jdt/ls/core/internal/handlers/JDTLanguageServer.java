@@ -124,6 +124,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
+	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
@@ -205,6 +206,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
+
+		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
+		workspaceDiagnosticsHandler.addResourceChangeListener();
+		
+		computeAsync((monitor) -> {
+			try {
+				workspaceDiagnosticsHandler.publichDiagnostic(monitor);
+			} catch (CoreException e) {
+				logException(e.getMessage(), e);
+			}
+			return new Object();
+		});
 	}
 
 	/**
@@ -244,7 +257,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
 			try {
-				InitHandler.removeWorkspaceDiagnosticsHandler();
+				if (workspaceDiagnosticsHandler != null) {
+					workspaceDiagnosticsHandler.removeResourceChangeListener();
+					workspaceDiagnosticsHandler = null;
+				}
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
@@ -681,7 +697,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
 		logInfo(">> java/buildWorkspace (" + (forceReBuild ? "full)" : "incremental)"));
-		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm, workspaceDiagnosticsHandler);
 		return computeAsync((monitor) -> handler.buildWorkspace(forceReBuild, monitor));
 	}
 

@@ -10,22 +10,29 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -54,6 +61,14 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
 		this.connection = connection;
 		this.projectsManager = projectsManager;
+	}
+
+	public void addResourceChangeListener() {
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
+	}
+
+	public void removeResourceChangeListener() {
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
 
 	@Override
@@ -127,6 +142,66 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		return false;
 	}
+
+	public List<IMarker> publichDiagnostic(IProgressMonitor monitor) throws CoreException {
+		List<IMarker> problemMarkers = getProblemMarkers(monitor);
+		publishDiagnostics(problemMarkers);
+		return problemMarkers;
+	}
+
+	private List<IMarker> getProblemMarkers(IProgressMonitor monitor) throws CoreException {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		List<IMarker> markers = new ArrayList<>();
+		for (IProject project : projects) {
+			if (monitor != null && monitor.isCanceled()) {
+				throw new OperationCanceledException();
+			}
+			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE)));
+			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.TASK_MARKER, true, IResource.DEPTH_INFINITE)));
+		}
+		return markers;
+	}
+
+	private void publishDiagnostics(List<IMarker> markers) {
+		Map<IResource, List<IMarker>> map = markers.stream().collect(Collectors.groupingBy(IMarker::getResource));
+		for (Map.Entry<IResource, List<IMarker>> entry : map.entrySet()) {
+			IResource resource = entry.getKey();
+			// ignore problems caused by standalone files
+			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+				continue;
+			}
+			if (resource instanceof IProject) {
+				String uri = JDTUtils.getFileURI(resource);
+				Range range = new Range(new Position(0, 0), new Position(0, 0));
+				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, entry.getValue().toArray(new IMarker[0]));
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+				continue;
+			}
+			IFile file = resource.getAdapter(IFile.class);
+			if (file == null) {
+				continue;
+			}
+			IDocument document = null;
+			String uri = JDTUtils.getFileURI(resource);
+			if (JavaCore.isJavaLikeFileName(file.getName())) {
+				ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+				try {
+					document = JsonRpcHelpers.toDocument(cu.getBuffer());
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException("Failed to publish diagnostics.", e);
+				}
+			} else if (projectsManager.isBuildFile(file)) {
+				document = JsonRpcHelpers.toDocument(file);
+			}
+
+			if (document != null) {
+				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, entry.getValue().toArray(new IMarker[0]));
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+			}
+		}
+	}
+
+
 
 	/**
 	 * Transforms {@link IMarker}s into a list of {@link Diagnostic}s
