@@ -339,9 +339,55 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void foo() {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Remove 'i', keep assignments with side effects", buf.toString());
+		Expected e1 = new Expected("Remove 'i' and all assignments", buf.toString());
+		Expected e2 = new Expected("Remove 'i', keep assignments with side effects", buf.toString());
 
-		assertCodeActions(cu, e1);
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnusedLocalVariableWithKeepingAssignments() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_UNUSED_LOCAL, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class B {\n");
+		buf.append("    void test(){\n");
+		buf.append("        String c=\"Test\",d=String.valueOf(true),e=c;\n");
+		buf.append("        e+=\"\";\n");
+		buf.append("        d=\"blubb\";\n");
+		buf.append("        d=String.valueOf(12);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("B.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class B {\n");
+		buf.append("    void test(){\n");
+		buf.append("        String c=\"Test\",e=c;\n");
+		buf.append("        e+=\"\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Remove 'd' and all assignments", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class B {\n");
+		buf.append("    void test(){\n");
+		buf.append("        String c=\"Test\";\n");
+		buf.append("        String.valueOf(true);\n");
+		buf.append("        String e=c;\n");
+		buf.append("        e+=\"\";\n");
+		buf.append("        String.valueOf(12);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Remove 'd', keep assignments with side effects", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
 	}
 
 	@Test
