@@ -404,11 +404,18 @@ public class LocalCorrectionsSubProcessor {
 			}
 		}
 
-		// TODO need to fork FixCorrectionProposal/ ICleanUp over from jdt.ui??
-		//	if (problemId==IProblem.LocalVariableIsNeverUsed){
-		//		fix= UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, true);
-		//		addProposal(context, proposals, fix);
-		//	}
+		if (problemId == IProblem.LocalVariableIsNeverUsed) {
+			fix = UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, true);
+			if (fix != null) {
+				try {
+					CompilationUnitChange change = fix.createChange(null);
+					CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+					proposals.add(proposal);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.log(e);
+				}
+			}
+		}
 
 		if (problemId == IProblem.ArgumentIsNeverUsed) {
 			JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
