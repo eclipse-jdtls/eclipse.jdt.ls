@@ -45,7 +45,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -59,11 +58,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	@Mock
 	private JavaClientConnection connection;
 
-	@InjectMocks
 	private WorkspaceDiagnosticsHandler handler;
 
 	@Before
 	public void setup() throws Exception {
+		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
 		handler.addResourceChangeListener();
 	}
 
