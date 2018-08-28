@@ -17,13 +17,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 
 /**
  * @author Fred Bricon
@@ -61,7 +58,7 @@ public final class WorkspaceHelper {
 		try {
 			project.delete(true, new NullProgressMonitor());
 		} catch (CoreException e) {
-			e.printStackTrace();
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 	}
 

@@ -229,6 +229,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		WorkspaceHelper.deleteAllProjects();
 		FileUtils.forceDelete(getWorkingProjectDirectory());
 		Job.getJobManager().setProgressProvider(null);
+		JobHelpers.waitForJobsToComplete();
 	}
 
 	protected void assertIsJavaProject(IProject project) {
