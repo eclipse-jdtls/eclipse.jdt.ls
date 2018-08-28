@@ -17,12 +17,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.IOUtils;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jface.text.IDocument;
@@ -107,7 +116,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("eclipse/hello");
-
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 
@@ -234,6 +242,47 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.sort(diags, comparator);
 		assertEquals(diags.toString(), 5, diags.size());
 		assertTrue(diags.get(4).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+	}
+
+	@Test
+	public void testProjectConfigurationIsNotUpToDate() throws Exception {
+		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
+		initHandler.addWorkspaceDiagnosticsHandler();
+		//import project
+		importProjects("maven/salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IFile pom = project.getFile("/pom.xml");
+		assertTrue(pom.exists());
+		try (InputStream is = pom.getContents(); InputStream nis = new ByteArrayInputStream(change(is).getBytes())) {
+			pom.setContents(nis, IResource.FORCE, null);
+		}
+		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/salut")).findFirst();
+		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
+		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
+		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
+			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
+			if (diff == 0) {
+				diff = d1.getMessage().compareTo(d2.getMessage());
+			}
+			return diff;
+		};
+		Collections.sort(diags, comparator);
+		assertEquals(diags.toString(), 3, diags.size());
+		Diagnostic diag = diags.get(1);
+		assertTrue(diag.getMessage().startsWith("Project configuration is not up-to-date with pom.xml, requires an update."));
+		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
+	}
+
+	private String change(InputStream is) throws IOException {
+		String str = IOUtils.toString(is);
+		String newStr = str.replaceAll("1.7", "1.8");
+		return newStr;
 	}
 
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {

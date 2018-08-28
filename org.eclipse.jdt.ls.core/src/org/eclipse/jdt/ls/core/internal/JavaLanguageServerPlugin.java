@@ -22,7 +22,6 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +37,6 @@ import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
@@ -137,7 +135,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 		preferenceCache.install();
 
 		preferenceManager = new PreferenceManager();
-		initializeJDTOptions();
 		digestStore = new DigestStore(getStateLocation().toFile());
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
@@ -325,17 +322,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 			pluginInstance.languageServer = newLanguageServer;
 			pluginInstance.startConnection();
 		}
-	}
-
-	/**
-	 * Initialize default preference values of used bundles to match server
-	 * functionality.
-	 */
-	private void initializeJDTOptions() {
-		// Update JavaCore options
-		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
-		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
-		JavaCore.setOptions(javaCoreOptions);
 	}
 
 	/**

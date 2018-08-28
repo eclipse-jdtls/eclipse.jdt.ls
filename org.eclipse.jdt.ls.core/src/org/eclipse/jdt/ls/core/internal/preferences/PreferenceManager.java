@@ -35,6 +35,9 @@ import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
+import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
+import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 
 /**
  * Preference manager
@@ -83,6 +86,12 @@ public class PreferenceManager {
 		if (m2eAptPrefs != null) {
 			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
 		}
+		initializeMavenPreferences();
+	}
+
+	private static void initializeMavenPreferences() {
+		IEclipsePreferences store = DefaultScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
+		store.put(MavenPreferenceConstants.P_OUT_OF_DATE_PROJECT_CONFIG_PB, ProblemSeverity.warning.toString());
 	}
 
 	public void update(Preferences preferences) {

@@ -146,9 +146,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		Diagnostic d = new Diagnostic();
 		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
-		d.setMessage(marker.getAttribute(IMarker.MESSAGE, ""));
-		d.setCode(String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0)));
+		String message = marker.getAttribute(IMarker.MESSAGE, "");
+		if (message != null && message.startsWith("Project configuration is not up-to-date with pom.xml.")) {
+			message = "Project configuration is not up-to-date with pom.xml, requires an update.";
+		}
+		d.setMessage(message);
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
+		d.setCode(String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0)));
 		d.setRange(range);
 		return d;
 	}
