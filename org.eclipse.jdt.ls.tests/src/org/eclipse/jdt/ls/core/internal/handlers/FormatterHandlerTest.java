@@ -21,6 +21,9 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -35,6 +38,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -45,6 +49,17 @@ import org.osgi.framework.Bundle;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
+
+	private IJavaProject javaProject;
+
+	private String originalTabChar;
+
+	@Before
+	public void setUp() {
+		javaProject = JavaCore.create(project);
+		originalTabChar = javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, true);
+		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.TAB);
+	}
 
 	@Test
 	public void testDocumentFormatting() throws Exception {
@@ -96,6 +111,8 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testDocumentFormattingWithTabs() throws Exception {
+		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
+
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
 		//@formatter:off
 			"package org.sample;\n\n" +
@@ -301,6 +318,8 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test // typing ; should format the current line
 	public void testFormattingOnTypeSemiColumn() throws Exception {
+		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.SPACE);
+
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
 		//@formatter:off
 			  "package org.sample;\n\n"
@@ -312,7 +331,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
-		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		FormattingOptions options = new FormattingOptions(4, false);// ident == tab
 
 		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 27), ";");
 		params.setTextDocument(textDocument);
@@ -328,7 +347,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			  "package org.sample;\n"
 			+ "\n"
 			+ "public class Baz {  \n"
-			+ "    String name;\n"
+			+ "\tString name;\n"
 			+ "}\n";
 		//@formatter:on
 
@@ -585,6 +604,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@After
 	public void tearDown() {
+		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, originalTabChar);
 		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(false);
 	}
 
