@@ -153,9 +153,7 @@ public class FormatterHandler {
 			}
 		}
 		boolean insertSpaces = options.isInsertSpaces();
-		if (insertSpaces) {
-			eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
-		}
+		eclipseOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 		return eclipseOptions;
 	}
 
