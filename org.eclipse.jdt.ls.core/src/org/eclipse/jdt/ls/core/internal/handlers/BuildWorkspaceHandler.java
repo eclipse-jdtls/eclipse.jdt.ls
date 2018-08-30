@@ -62,7 +62,7 @@ public class BuildWorkspaceHandler {
 				}
 			}
 			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
-			List<IMarker> problemMarkers = workspaceDiagnosticsHandler.publichDiagnostic(monitor);
+			List<IMarker> problemMarkers = workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 			List<String> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).map(e -> convertMarker(e)).collect(Collectors.toList());
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;

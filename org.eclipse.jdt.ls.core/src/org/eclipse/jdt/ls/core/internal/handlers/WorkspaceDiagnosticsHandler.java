@@ -143,7 +143,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		return false;
 	}
 
-	public List<IMarker> publichDiagnostic(IProgressMonitor monitor) throws CoreException {
+	public List<IMarker> publishDiagnostics(IProgressMonitor monitor) throws CoreException {
 		List<IMarker> problemMarkers = getProblemMarkers(monitor);
 		publishDiagnostics(problemMarkers);
 		return problemMarkers;

@@ -212,7 +212,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		
 		computeAsync((monitor) -> {
 			try {
-				workspaceDiagnosticsHandler.publichDiagnostic(monitor);
+				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
 			}

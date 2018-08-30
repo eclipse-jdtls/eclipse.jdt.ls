@@ -245,8 +245,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testProjectConfigurationIsNotUpToDate() throws Exception {
-		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
-		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("maven/salut");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
