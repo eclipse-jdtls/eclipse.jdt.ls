@@ -21,7 +21,11 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
@@ -54,9 +58,19 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		return resource != null
-				&& resource.getType()== IResource.FILE
-				&& resource.getName().endsWith(GRADLE_SUFFIX);
+		if (resource != null && resource.getType() == IResource.FILE && resource.getName().endsWith(GRADLE_SUFFIX) && resource.getProject() != null && ProjectUtils.isGradleProject(resource.getProject())) {
+			try {
+				if (!ProjectUtils.isJavaProject(resource.getProject())) {
+					return true;
+				}
+				IJavaProject javaProject = JavaCore.create(resource.getProject());
+				IPath outputLocation = javaProject.getOutputLocation();
+				return outputLocation == null || !outputLocation.isPrefixOf(resource.getFullPath());
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		return false;
 	}
 
 	/**
