@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.eclipse.buildship.core.CorePlugin;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -143,5 +145,14 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		}
 	}
 
-
+	@Test
+	public void testBuildFile() throws Exception {
+		IProject project = importSimpleJavaProject();
+		IFile file = project.getFile("/bin/build.gradle");
+		assertFalse(projectsManager.isBuildFile(file));
+		importProjects("gradle/gradle-withoutjava");
+		project = getProject("gradle-withoutjava");
+		file = project.getFile("/build.gradle");
+		assertTrue(projectsManager.isBuildFile(file));
+	}
 }
