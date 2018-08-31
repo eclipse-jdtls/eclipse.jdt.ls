@@ -41,10 +41,10 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -58,8 +58,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	@Mock
 	private JavaClientConnection connection;
 
-	@InjectMocks
 	private WorkspaceDiagnosticsHandler handler;
+
+	@Before
+	public void setup() throws Exception {
+		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
+		handler.addResourceChangeListener();
+	}
 
 	@Test
 	public void testToDiagnosticsArray() throws Exception {
@@ -112,8 +117,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testTaskMarkers() throws Exception {
-		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
-		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("eclipse/hello");
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
@@ -179,8 +182,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testMarkerListening() throws Exception {
-		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
-		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("maven/broken");
 
@@ -220,8 +221,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testProjectLevelMarkers() throws Exception {
-		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
-		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("maven/broken");
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
@@ -246,8 +245,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testProjectConfigurationIsNotUpToDate() throws Exception {
-		InitHandler initHandler = new InitHandler(projectsManager, preferenceManager, connection);
-		initHandler.addWorkspaceDiagnosticsHandler();
 		//import project
 		importProjects("maven/salut");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
@@ -307,7 +304,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@After
 	public void removeResourceChangeListener() {
-		InitHandler.removeWorkspaceDiagnosticsHandler();
+		handler.removeResourceChangeListener();
 	}
 
 }

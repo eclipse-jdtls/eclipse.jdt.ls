@@ -26,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceDiagnosticsHandler;
 import org.junit.Test;
 
 /**
@@ -57,7 +58,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		java.io.File physicalFile = new java.io.File(file.getLocationURI());
 		physicalFile.delete();
 
-		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(javaClient, projectsManager);
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(javaClient, projectsManager, new WorkspaceDiagnosticsHandler(javaClient, projectsManager));
 		BuildWorkspaceStatus result = handler.buildWorkspace(true, monitor);
 
 		waitForBackgroundJobs();

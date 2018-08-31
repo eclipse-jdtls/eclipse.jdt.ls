@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -66,7 +65,6 @@ final public class InitHandler {
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
-	private static WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 
 	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection) {
 		this.projectsManager = manager;
@@ -123,7 +121,6 @@ final public class InitHandler {
 		}
 		preferenceManager.getPreferences().setRootPaths(rootPaths);
 		triggerInitialization(rootPaths);
-		addWorkspaceDiagnosticsHandler();
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
@@ -221,6 +218,7 @@ final public class InitHandler {
 				try {
 					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
+					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
@@ -261,17 +259,4 @@ final public class InitHandler {
 		return null;
 	}
 
-	@Deprecated
-	public static void removeWorkspaceDiagnosticsHandler() {
-		if (workspaceDiagnosticsHandler != null) {
-			ResourcesPlugin.getWorkspace().removeResourceChangeListener(workspaceDiagnosticsHandler);
-			workspaceDiagnosticsHandler = null;
-		}
-	}
-
-	public void addWorkspaceDiagnosticsHandler() {
-		removeWorkspaceDiagnosticsHandler();
-		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(workspaceDiagnosticsHandler, IResourceChangeEvent.POST_CHANGE);
-	}
 }
