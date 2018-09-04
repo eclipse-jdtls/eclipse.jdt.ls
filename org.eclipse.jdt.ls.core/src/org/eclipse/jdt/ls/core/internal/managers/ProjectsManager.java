@@ -503,7 +503,7 @@ public class ProjectsManager implements ISaveParticipant {
 	public void prepareToSave(ISaveContext context) throws CoreException {
 		if (context.getKind() == ISaveContext.FULL_SAVE) {
 			GradleBuildSupport.saveModels();
-			MavenBuildSupport.saveWorkspaceState();
+			MavenBuildSupport.stopMavenPlugin();
 		}
 	}
 

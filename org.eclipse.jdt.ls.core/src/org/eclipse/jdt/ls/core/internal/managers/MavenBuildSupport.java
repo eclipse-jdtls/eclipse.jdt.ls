@@ -16,13 +16,15 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.internal.MavenPluginActivator;
-import org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.MavenUpdateRequest;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
 
 /**
  * @author Fred Bricon
@@ -64,12 +66,17 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	/**
-	 * Save maven project workspace state.
+	 * Stop maven plugin in order to save maven project workspace state.
 	 */
-	public static void saveWorkspaceState() {
-		MavenPluginActivator mavenPluginActivator = MavenPluginActivator.getDefault();
-		ProjectRegistryManager projectRegistryManager = mavenPluginActivator.getMavenProjectManagerImpl();
-		projectRegistryManager.writeWorkspaceState();
+	public static void stopMavenPlugin() {
+		Bundle bundle = Platform.getBundle(IMavenConstants.PLUGIN_ID);
+		if (bundle != null) {
+			try {
+				bundle.stop(Bundle.STOP_TRANSIENT);
+			} catch (BundleException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
 	}
 
 }
