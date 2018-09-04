@@ -81,6 +81,10 @@ public class JavaClientConnection {
 		return this.client.executeClientCommand(new ExecuteCommandParams(id, ImmutableList.copyOf(params))).join();
 	}
 
+	public void sendNotification(String id, Object... params) {
+		client.sendNotification(new ExecuteCommandParams(id, ImmutableList.copyOf(params)));
+	}
+
 	/**
 	 * Sends the logMessage message back to the client as a notification
 	 * @param msg The message to send back to the client
