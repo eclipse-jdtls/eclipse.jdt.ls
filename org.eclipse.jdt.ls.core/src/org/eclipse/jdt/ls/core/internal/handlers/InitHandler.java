@@ -41,7 +41,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
-import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.InitializeParams;
@@ -134,7 +133,9 @@ final public class InitHandler {
 		}
 		InitializeResult result = new InitializeResult();
 		ServerCapabilities capabilities = new ServerCapabilities();
-		capabilities.setCompletionProvider(new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*")));
+		if (!preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
+			capabilities.setCompletionProvider(CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+		}
 		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
 		}

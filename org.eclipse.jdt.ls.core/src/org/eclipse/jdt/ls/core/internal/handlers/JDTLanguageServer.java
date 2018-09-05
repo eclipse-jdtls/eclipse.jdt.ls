@@ -173,6 +173,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
 		JobHelpers.waitForInitializeJobs();
+		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
+			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+		}
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
 		}
@@ -209,7 +212,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
 		workspaceDiagnosticsHandler.addResourceChangeListener();
-		
+
 		computeAsync((monitor) -> {
 			try {
 				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
@@ -224,6 +227,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * Toggles the server capabilities according to user preferences.
 	 */
 	private void syncCapabilitiesToSettings() {
+		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
+			toggleCapability(preferenceManager.getPreferences().isCompletionEnabled(), Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);
 		}

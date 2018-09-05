@@ -129,6 +129,11 @@ public class Preferences {
 	public static final String MAVEN_USER_SETTINGS_KEY = "java.configuration.maven.userSettings";
 
 	/**
+	 * Preference key to enable/disable the 'completion'.
+	 */
+	public static final String COMPLETION_ENABLED_KEY = "java.completion.enabled";
+
+	/**
 	 * A named preference that holds the favorite static members.
 	 * <p>
 	 * Value is of type <code>String</code>: list of favorites.
@@ -201,6 +206,7 @@ public class Preferences {
 	public static final String WORKSPACE_SYMBOL = "workspace/symbol";
 	public static final String WORKSPACE_WATCHED_FILES = "workspace/didChangeWatchedFiles";
 	public static final String DOCUMENT_SYMBOL = "textDocument/documentSymbol";
+	public static final String COMPLETION = "textDocument/completion";
 	public static final String CODE_ACTION = "textDocument/codeAction";
 	public static final String DEFINITION = "textDocument/definition";
 	public static final String TYPEDEFINITION = "textDocument/typeDefinition";
@@ -219,6 +225,7 @@ public class Preferences {
 	public static final String EXECUTE_COMMAND_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_SYMBOL_ID = UUID.randomUUID().toString();
 	public static final String DOCUMENT_SYMBOL_ID = UUID.randomUUID().toString();
+	public static final String COMPLETION_ID = UUID.randomUUID().toString();
 	public static final String CODE_ACTION_ID = UUID.randomUUID().toString();
 	public static final String DEFINITION_ID = UUID.randomUUID().toString();
 	public static final String TYPEDEFINITION_ID = UUID.randomUUID().toString();
@@ -243,6 +250,7 @@ public class Preferences {
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
+	private boolean completionEnabled;
 	private boolean completionOverwrite;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
@@ -336,6 +344,7 @@ public class Preferences {
 		renameEnabled = true;
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
+		completionEnabled = true;
 		completionOverwrite = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
@@ -395,6 +404,8 @@ public class Preferences {
 		boolean autobuildEnable = getBoolean(configuration, AUTOBUILD_ENABLED_KEY, true);
 		prefs.setAutobuildEnabled(autobuildEnable);
 
+		boolean completionEnable = getBoolean(configuration, COMPLETION_ENABLED_KEY, true);
+		prefs.setCompletionEnabled(completionEnable);
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
 
@@ -520,6 +531,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setCompletionEnabled(boolean enabled) {
+		this.completionEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setCompletionOverwrite(boolean completionOverwrite) {
 		this.completionOverwrite = completionOverwrite;
 		return this;
@@ -631,6 +647,10 @@ public class Preferences {
 
 	public boolean isAutobuildEnabled() {
 		return autobuildEnabled;
+	}
+
+	public boolean isCompletionEnabled() {
+		return completionEnabled;
 	}
 
 	public boolean isCompletionOverwrite() {

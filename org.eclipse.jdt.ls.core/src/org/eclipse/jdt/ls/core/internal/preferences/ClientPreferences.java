@@ -56,6 +56,10 @@ public class ClientPreferences {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getWorkspaceFolders());
 	}
 
+	public boolean isCompletionDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCompletion());
+	}
+
 	public boolean isCompletionSnippetsSupported() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null
