@@ -22,6 +22,6 @@ public interface ExecuteCommandProposedClient {
 	CompletableFuture<Object> executeClientCommand(ExecuteCommandParams params);
 
 	@JsonNotification("workspace/notify")
-	CompletableFuture<Object> sendNotification(ExecuteCommandParams params);
+	void sendNotification(ExecuteCommandParams params);
 
 }
