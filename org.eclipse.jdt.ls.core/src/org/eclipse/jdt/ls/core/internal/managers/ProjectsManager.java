@@ -407,12 +407,13 @@ public class ProjectsManager implements ISaveParticipant {
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
 				IStatus status = Status.OK_STATUS;
 				String projectName = project.getName();
+				SubMonitor progress = SubMonitor.convert(monitor, 100).checkCanceled();
 				try {
 					long start = System.currentTimeMillis();
-					project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+					project.refreshLocal(IResource.DEPTH_INFINITE, progress.split(5));
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
-						buildSupport.get().update(project, force, monitor);
+						buildSupport.get().update(project, force, progress.split(95));
 						registerWatcherJob.schedule();
 					}
 					long elapsed = System.currentTimeMillis() - start;
