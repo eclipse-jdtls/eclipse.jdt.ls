@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -58,6 +59,7 @@ import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensOptions;
@@ -78,6 +80,7 @@ import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
+import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -545,22 +548,22 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#documentSymbol(org.eclipse.lsp4j.DocumentSymbolParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends SymbolInformation>> documentSymbol(DocumentSymbolParams params) {
+	public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
 		DocumentSymbolHandler handler = new DocumentSymbolHandler();
-		return computeAsync((monitor) -> handler.documentSymbol(params, monitor));
+		return computeAsync((monitor) -> handler.documentSymbol(params, monitor).stream().map(symbol -> Either.<SymbolInformation, DocumentSymbol>forLeft(symbol)).collect(Collectors.toList()));
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#codeAction(org.eclipse.lsp4j.CodeActionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Command>> codeAction(CodeActionParams params) {
+	public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
 		CodeActionHandler handler = new CodeActionHandler();
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.getCodeActionCommands(params, monitor);
+			return handler.getCodeActionCommands(params, monitor).stream().map(command -> Either.<Command, CodeAction>forLeft(command)).collect(Collectors.toList());
 		});
 	}
 

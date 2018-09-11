@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -32,6 +33,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -74,7 +76,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		final Range range = getRange(unit, "java.sql");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
-		List<? extends Command> commands = server.codeAction(params).join();
+		List<? extends Command> commands = getCommands(params);
 		Assert.assertNotNull(commands);
 		Assert.assertEquals(2, commands.size());
 		Command c = commands.get(0);
@@ -96,7 +98,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		final Range range = getRange(unit, "some str");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
-		List<? extends Command> commands = server.codeAction(params).join();
+		List<? extends Command> commands = getCommands(params);
 		Assert.assertNotNull(commands);
 		Assert.assertEquals(1, commands.size());
 		Command c = commands.get(0);
@@ -118,7 +120,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 			CodeActionContext context = new CodeActionContext();
 			context.setDiagnostics(Collections.emptyList());
 			params.setContext(context);
-			List<? extends Command> commands = server.codeAction(params).join();
+			List<? extends Command> commands = getCommands(params);
 			Assert.assertNotNull(commands);
 			Assert.assertEquals(0, commands.size());
 		} finally {
@@ -142,7 +144,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		final Range range = getRange(unit, ";");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
-		List<? extends Command> commands = server.codeAction(params).join();
+		List<? extends Command> commands = getCommands(params);
 		Assert.assertNotNull(commands);
 		Assert.assertEquals(1, commands.size());
 		Command c = commands.get(0);
@@ -160,6 +162,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		String str= unit.getSource();
 		int start = str.lastIndexOf(search);
 		return JDTUtils.toRange(unit, start, search.length());
+	}
+
+	private List<Command> getCommands(CodeActionParams params) {
+		return server.codeAction(params).join().stream().map(Either::getLeft).collect(Collectors.toList());
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){
