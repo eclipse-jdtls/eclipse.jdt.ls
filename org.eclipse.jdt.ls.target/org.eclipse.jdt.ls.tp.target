@@ -33,7 +33,7 @@
             <repository location="http://download.eclipse.org/eclipse/updates/4.9-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.4.0.v20180425-1137"/>
+            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.5.0.v20180903-1212"/>
             <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
