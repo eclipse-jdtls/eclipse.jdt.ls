@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.util.stream.Collectors.toList;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
@@ -550,8 +551,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
-		DocumentSymbolHandler handler = new DocumentSymbolHandler();
-		return computeAsync((monitor) -> handler.documentSymbol(params, monitor).stream().map(symbol -> Either.<SymbolInformation, DocumentSymbol>forLeft(symbol)).collect(Collectors.toList()));
+		boolean hierarchicalDocumentSymbolSupported = preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported();
+		DocumentSymbolHandler handler = new DocumentSymbolHandler(hierarchicalDocumentSymbolSupported);
+		return computeAsync((monitor) -> handler.documentSymbol(params, monitor));
 	}
 
 	/* (non-Javadoc)

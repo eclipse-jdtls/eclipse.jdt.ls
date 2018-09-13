@@ -10,13 +10,29 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static org.eclipse.jdt.core.IJavaElement.COMPILATION_UNIT;
+import static org.eclipse.jdt.core.IJavaElement.FIELD;
+import static org.eclipse.jdt.core.IJavaElement.METHOD;
+import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
+import static org.eclipse.jdt.core.IJavaElement.TYPE;
+import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ROOT_VARIABLE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
@@ -28,21 +44,37 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.xtext.xbase.lib.Exceptions;
 
 public class DocumentSymbolHandler {
 
-	public List<? extends SymbolInformation> documentSymbol(DocumentSymbolParams params,
-			IProgressMonitor monitor) {
+	private boolean hierarchicalDocumentSymbolSupported;
+
+	public DocumentSymbolHandler(boolean hierarchicalDocumentSymbolSupported) {
+		this.hierarchicalDocumentSymbolSupported = hierarchicalDocumentSymbolSupported;
+	}
+
+	public List<Either<SymbolInformation, DocumentSymbol>> documentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
+
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
 		if (unit == null) {
 			return Collections.emptyList();
 		}
-		SymbolInformation[] elements = this.getOutline(unit, monitor);
-		return Arrays.asList(elements);
+
+		if (hierarchicalDocumentSymbolSupported) {
+			List<DocumentSymbol> symbols = this.getHierarchicalOutline(unit, monitor);
+			return symbols.stream().map(Either::<SymbolInformation, DocumentSymbol>forRight).collect(toList());
+		} else {
+			SymbolInformation[] elements = this.getOutline(unit, monitor);
+			return Arrays.asList(elements).stream().map(Either::<SymbolInformation, DocumentSymbol>forLeft).collect(toList());
+		}
 	}
 
 	private SymbolInformation[] getOutline(ITypeRoot unit, IProgressMonitor monitor) {
@@ -52,7 +84,7 @@ public class DocumentSymbolHandler {
 			collectChildren(unit, elements, symbols, monitor);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem getting outline for" +  unit.getElementName(), e);
+			JavaLanguageServerPlugin.logException("Problem getting outline for" + unit.getElementName(), e);
 		}
 		return new SymbolInformation[0];
 	}
@@ -60,11 +92,11 @@ public class DocumentSymbolHandler {
 	private void collectChildren(ITypeRoot unit, IJavaElement[] elements, ArrayList<SymbolInformation> symbols,
 			IProgressMonitor monitor)
 			throws JavaModelException {
-		for(IJavaElement element : elements ){
+		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
-				return;
+				throw new OperationCanceledException();
 			}
-			if(element instanceof IParent){
+			if (element instanceof IParent) {
 				collectChildren(unit, filter(((IParent) element).getChildren()), symbols, monitor);
 			}
 			int type = element.getElementType();
@@ -88,6 +120,77 @@ public class DocumentSymbolHandler {
 				}
 			}
 		}
+	}
+
+	private List<DocumentSymbol> getHierarchicalOutline(ITypeRoot unit, IProgressMonitor monitor) {
+		try {
+			return Stream.of(filter(unit.getChildren())).map(child -> toDocumentSymbol(child, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
+		} catch (OperationCanceledException e) {
+			logInfo("User abort while collecting the document symbols.");
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Problem getting outline for" + unit.getElementName(), e);
+		}
+		return emptyList();
+	}
+
+	private DocumentSymbol toDocumentSymbol(IJavaElement unit, IProgressMonitor monitor) {
+		int type = unit.getElementType();
+		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT) {
+			return null;
+		}
+		if (monitor.isCanceled()) {
+			throw new OperationCanceledException("User abort");
+		}
+		DocumentSymbol symbol = new DocumentSymbol();
+		try {
+			String name = getName(unit);
+			symbol.setName(name);
+			symbol.setRange(getRange(unit));
+			symbol.setSelectionRange(getSelectionRange(unit));
+			symbol.setKind(mapKind(unit));
+			symbol.setDeprecated(isDeprecated(unit));
+			symbol.setDetail(getDetail(unit, name));
+			if (unit instanceof IParent) {
+				//@formatter:off
+				IJavaElement[] children = filter(((IParent) unit).getChildren());
+				symbol.setChildren(Stream.of(children)
+						.map(child -> toDocumentSymbol(child, monitor))
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList()));
+				//@formatter:off
+			}
+		} catch (JavaModelException e) {
+			Exceptions.sneakyThrow(e);
+		}
+		return symbol;
+	}
+
+	private String getName(IJavaElement element) {
+		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT);
+		return name == null ? element.getElementName() : name;
+	}
+
+	private Range getRange(IJavaElement element) throws JavaModelException {
+		return JDTUtils.toLocation(element, FULL_RANGE).getRange();
+	}
+
+	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
+		return JDTUtils.toLocation(element).getRange();
+	}
+
+	private boolean isDeprecated(IJavaElement element) throws JavaModelException {
+		if (element instanceof ITypeRoot) {
+			return Flags.isDeprecated(((ITypeRoot) element).findPrimaryType().getFlags());
+		}
+		return false;
+	}
+
+	private String getDetail(IJavaElement element, String name) {
+		String nameWithDetails = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
+		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
+			return nameWithDetails.substring(name.length());
+		}
+		return "";
 	}
 
 	private IJavaElement[] filter(IJavaElement[] elements) {
@@ -144,7 +247,7 @@ public class DocumentSymbolHandler {
 			return SymbolKind.Package;
 		case IJavaElement.TYPE:
 			try {
-				return ( ((IType)element).isInterface() ? SymbolKind.Interface : SymbolKind.Class);
+				return (((IType)element).isInterface() ? SymbolKind.Interface : SymbolKind.Class);
 			} catch (JavaModelException e) {
 				return SymbolKind.Class;
 			}

@@ -176,4 +176,18 @@ public class ClientPreferences {
 	public boolean isWorkspaceEditResourceChangesSupported() {
 		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getWorkspaceEdit() != null && isTrue(capabilities.getWorkspace().getWorkspaceEdit().getResourceChanges());
 	}
+
+	/**
+	 * {@code true} if the client has explicitly set the
+	 * {@code textDocument.documentSymbol.hierarchicalDocumentSymbolSupport} to
+	 * {@code true} when initializing the LS. Otherwise, {@code false}.
+	 */
+	public boolean isHierarchicalDocumentSymbolSupported() {
+		//@formatter:off
+		return v3supported
+				&& capabilities.getTextDocument().getDocumentSymbol() != null
+				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport() != null
+				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport().booleanValue();
+		//@formatter:on
+	}
 }

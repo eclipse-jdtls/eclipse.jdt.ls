@@ -311,7 +311,7 @@ public final class JavaElementLabels {
 	/**
 	 * User-readable string for separating the return type (e.g. " : ").
 	 */
-	public final static String DECL_STRING= ":";
+	public final static String DECL_STRING= " : ";
 	/**
 	 * User-readable string for concatenating categories (e.g. " ").
 	 * @since 3.5

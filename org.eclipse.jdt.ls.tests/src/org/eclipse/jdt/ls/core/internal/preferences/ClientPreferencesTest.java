@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensCapabilities;
 import org.eclipse.lsp4j.CompletionCapabilities;
 import org.eclipse.lsp4j.CompletionItemCapabilities;
+import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.FormattingCapabilities;
 import org.eclipse.lsp4j.RangeFormattingCapabilities;
 import org.eclipse.lsp4j.RenameCapabilities;
@@ -128,5 +129,19 @@ public class ClientPreferencesTest {
 		assertFalse(prefs.isRenameDynamicRegistrationSupported());
 		when(text.getRename()).thenReturn(new RenameCapabilities(true));
 		assertTrue(prefs.isRenameDynamicRegistrationSupported());
+	}
+
+	@Test
+	public void testIsHierarchicalDocumentSymbolSupported() throws Exception {
+		DocumentSymbolCapabilities capabilities = new DocumentSymbolCapabilities();
+		assertFalse(prefs.isHierarchicalDocumentSymbolSupported());
+		when(text.getDocumentSymbol()).thenReturn(capabilities);
+		assertFalse(prefs.isHierarchicalDocumentSymbolSupported());
+		capabilities.setHierarchicalDocumentSymbolSupport(false);
+		when(text.getDocumentSymbol()).thenReturn(capabilities);
+		assertFalse(prefs.isHierarchicalDocumentSymbolSupported());
+		capabilities.setHierarchicalDocumentSymbolSupport(true);
+		when(text.getDocumentSymbol()).thenReturn(capabilities);
+		assertTrue(prefs.isHierarchicalDocumentSymbolSupported());
 	}
 }

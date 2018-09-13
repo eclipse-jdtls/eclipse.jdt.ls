@@ -324,6 +324,40 @@ public final class JDTUtils {
 	}
 
 	/**
+	 * Enumeration for determining the location of a Java element. Either returns
+	 * with the name range only, or the extended source range around the name of the
+	 * element.
+	 */
+	public static enum LocationType {
+		/**
+		 * This is range encapsulating only the name of the Java element.
+		 */
+		NAME_RANGE {
+
+			@Override
+			ISourceRange getRange(IJavaElement element) throws JavaModelException {
+				return getNameRange(element);
+			}
+
+		},
+		/**
+		 * The range enclosing this element not including leading/trailing whitespace
+		 * but everything else like comments. This information is typically used to
+		 * determine if the the clients cursor is inside the element.
+		 */
+		FULL_RANGE {
+
+			@Override
+			ISourceRange getRange(IJavaElement element) throws JavaModelException {
+				return getSourceRange(element);
+			}
+
+		};
+
+		/* default */ abstract ISourceRange getRange(IJavaElement element) throws JavaModelException;
+	}
+
+	/**
 	 * Creates a location for a given java element.
 	 * Element can be a {@link ICompilationUnit} or {@link IClassFile}
 	 *
@@ -331,14 +365,29 @@ public final class JDTUtils {
 	 * @return location or null
 	 * @throws JavaModelException
 	 */
-	public static Location toLocation(IJavaElement element) throws JavaModelException{
+	public static Location toLocation(IJavaElement element) throws JavaModelException {
+		return toLocation(element, LocationType.NAME_RANGE);
+	}
+
+	/**
+	 * Creates a location for a given java element. Unlike {@link #toLocation} this
+	 * method can be called to return with a range that contains surrounding
+	 * comments (method body), not just the name of the Java element. Element can be
+	 * a {@link ICompilationUnit} or {@link IClassFile}
+	 *
+	 * @param element
+	 * @param type the range type. The {@link LocationType#NAME_RANGE name} or {@link LocationType#FULL_RANGE full} range.
+	 * @return location or null
+	 * @throws JavaModelException
+	 */
+	public static Location toLocation(IJavaElement element, LocationType type) throws JavaModelException {
 		ICompilationUnit unit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		if (unit == null && cf == null) {
 			return null;
 		}
 		if (element instanceof ISourceReference) {
-			ISourceRange nameRange = getNameRange(element);
+			ISourceRange nameRange = type.getRange(element);
 			if (SourceRange.isAvailable(nameRange)) {
 				if (cf == null) {
 					return toLocation(unit, nameRange.getOffset(), nameRange.getLength());
@@ -355,7 +404,7 @@ public final class JDTUtils {
 		if (element instanceof IMember) {
 			IMember member = (IMember) element;
 			nameRange = member.getNameRange();
-			if ( (!SourceRange.isAvailable(nameRange))) {
+			if ((!SourceRange.isAvailable(nameRange))) {
 				nameRange = member.getSourceRange();
 			}
 		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
@@ -367,6 +416,22 @@ public final class JDTUtils {
 			nameRange = getNameRange(element.getParent());
 		}
 		return nameRange;
+	}
+
+	private static ISourceRange getSourceRange(IJavaElement element) throws JavaModelException {
+		ISourceRange sourceRange = null;
+		if (element instanceof IMember) {
+			IMember member = (IMember) element;
+			sourceRange = member.getSourceRange();
+		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
+			sourceRange = ((ISourceReference) element).getSourceRange();
+		} else if (element instanceof ISourceReference) {
+			sourceRange = ((ISourceReference) element).getSourceRange();
+		}
+		if (!SourceRange.isAvailable(sourceRange) && element.getParent() != null) {
+			sourceRange = getSourceRange(element.getParent());
+		}
+		return sourceRange;
 	}
 
 	/**
