@@ -343,7 +343,7 @@ public final class JDTUtils {
 		/**
 		 * The range enclosing this element not including leading/trailing whitespace
 		 * but everything else like comments. This information is typically used to
-		 * determine if the the clients cursor is inside the element.
+		 * determine if the client's cursor is inside the element.
 		 */
 		FULL_RANGE {
 
