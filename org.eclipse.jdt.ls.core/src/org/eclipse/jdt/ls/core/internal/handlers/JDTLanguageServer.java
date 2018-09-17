@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static java.util.stream.Collectors.toList;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
@@ -553,7 +552,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> document/documentSymbol");
 		boolean hierarchicalDocumentSymbolSupported = preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported();
 		DocumentSymbolHandler handler = new DocumentSymbolHandler(hierarchicalDocumentSymbolSupported);
-		return computeAsync((monitor) -> handler.documentSymbol(params, monitor));
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.documentSymbol(params, monitor);
+		});
 	}
 
 	/* (non-Javadoc)
