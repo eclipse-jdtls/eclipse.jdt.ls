@@ -12,8 +12,10 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +48,10 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.Messages;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Listens to the resource change events and converts {@link IMarker}s to {@link Diagnostic}s.
@@ -55,6 +61,8 @@ import org.eclipse.m2e.core.internal.IMavenConstants;
  */
 @SuppressWarnings("restriction")
 public final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IResourceDeltaVisitor {
+
+	public static final String PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML = "Project configuration is not up-to-date with pom.xml, requires an update.";
 	private final JavaClientConnection connection;
 	private final ProjectsManager projectsManager;
 
@@ -101,18 +109,35 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		if (resource.getType() == IResource.FOLDER || resource.getType() == IResource.ROOT) {
 			return true;
 		}
-
 		if (resource.getType() == IResource.PROJECT) {
 			// ignore problems caused by standalone files (problems in the default project)
 			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
 				return false;
 			}
 			// report problems for other projects
-			String uri = JDTUtils.getFileURI(resource);
 			IMarker[] markers = resource.findMarkers(null, true, IResource.DEPTH_ONE);
 			Range range = new Range(new Position(0, 0), new Position(0, 0));
-			List<Diagnostic> diagnostics = toDiagnosticArray(range, markers);
-			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+
+			Multimap<String, IMarker> allMarkers = HashMultimap.create(1, markers.length);
+
+			String uri = JDTUtils.getFileURI(resource);
+			for (IMarker marker : markers) {
+				if (!marker.exists()) {
+					continue;
+				}
+				if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
+					String message = marker.getAttribute(IMarker.MESSAGE, "");
+					if (Messages.ProjectConfigurationUpdateRequired.equals(message)) {
+						allMarkers.put(uri + "/pom.xml", marker);
+					}
+				} else {
+					allMarkers.put(uri, marker);
+				}
+			}
+			for (Entry<String, Collection<IMarker>> e : allMarkers.asMap().entrySet()) {
+				List<Diagnostic> diagnostics = toDiagnosticArray(range, e.getValue());
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(e.getKey()), diagnostics));
+			}
 			return true;
 		}
 		// No marker changes continue to visit
@@ -173,7 +198,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (resource instanceof IProject) {
 				String uri = JDTUtils.getFileURI(resource);
 				Range range = new Range(new Position(0, 0), new Position(0, 0));
-				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, entry.getValue().toArray(new IMarker[0]));
+				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, entry.getValue());
 				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
 				continue;
 			}
@@ -210,8 +235,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param markers
 	 * @return a list of {@link Diagnostic}s
 	 */
-	public static List<Diagnostic> toDiagnosticArray(Range range, IMarker[] markers) {
-		List<Diagnostic> diagnostics = Stream.of(markers).map(m -> toDiagnostic(range, m)).filter(d -> d != null).collect(Collectors.toList());
+	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers) {
+		List<Diagnostic> diagnostics = markers.stream().map(m -> toDiagnostic(range, m)).filter(d -> d != null).collect(Collectors.toList());
 		return diagnostics;
 	}
 
@@ -222,8 +247,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		Diagnostic d = new Diagnostic();
 		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 		String message = marker.getAttribute(IMarker.MESSAGE, "");
-		if (message != null && message.startsWith("Project configuration is not up-to-date with pom.xml.")) {
-			message = "Project configuration is not up-to-date with pom.xml, requires an update.";
+		if (Messages.ProjectConfigurationUpdateRequired.equals(message)) {
+			message = PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML;
 		}
 		d.setMessage(message);
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));

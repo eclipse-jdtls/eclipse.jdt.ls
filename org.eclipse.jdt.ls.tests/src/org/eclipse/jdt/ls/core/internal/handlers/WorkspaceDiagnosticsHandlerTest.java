@@ -262,17 +262,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/salut")).findFirst();
 		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
-		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
-			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
-			if (diff == 0) {
-				diff = d1.getMessage().compareTo(d2.getMessage());
-			}
-			return diff;
-		};
-		Collections.sort(diags, comparator);
-		assertEquals(diags.toString(), 3, diags.size());
-		Diagnostic diag = diags.get(1);
-		assertTrue(diag.getMessage().startsWith("Project configuration is not up-to-date with pom.xml, requires an update."));
+		assertEquals(diags.toString(), 2, diags.size());
+		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
+		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
+		diags = pomDiags.get().getDiagnostics();
+		assertEquals(diags.toString(), 1, diags.size());
+		Diagnostic diag = diags.get(0);
+		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
 	}
 
