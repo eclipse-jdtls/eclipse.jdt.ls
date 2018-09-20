@@ -99,10 +99,9 @@ public class ConnectionStreamFactory {
 	}
 
 	private StreamProvider createProvider() {
-		final String host = Environment.get("CLIENT_HOST", "localhost");
-		final String port = Environment.get("CLIENT_PORT");
+		Integer port = JDTEnvironmentUtils.getClientPort();
 		if (port != null) {
-			return new SocketStreamProvider(host, Integer.parseInt(port));
+			return new SocketStreamProvider(JDTEnvironmentUtils.getClientHost(), port);
 		}
 		return new StdIOStreamProvider();
 	}
