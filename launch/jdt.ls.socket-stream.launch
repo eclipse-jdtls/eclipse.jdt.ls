@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
+<setAttribute key="additional_plugins"/>
+<booleanAttribute key="append.args" value="true"/>
+<stringAttribute key="application" value="org.eclipse.jdt.ls.core.id1"/>
+<booleanAttribute key="askclear" value="false"/>
+<booleanAttribute key="automaticAdd" value="true"/>
+<booleanAttribute key="automaticValidate" value="false"/>
+<stringAttribute key="bootstrap" value=""/>
+<stringAttribute key="checked" value="[NONE]"/>
+<booleanAttribute key="clearConfig" value="false"/>
+<booleanAttribute key="clearws" value="true"/>
+<booleanAttribute key="clearwslog" value="false"/>
+<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream"/>
+<booleanAttribute key="default" value="false"/>
+<stringAttribute key="deselected_workspace_plugins" value="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ui"/>
+<stringAttribute key="featureDefaultLocation" value="workspace"/>
+<stringAttribute key="featurePluginResolution" value="workspace"/>
+<booleanAttribute key="includeOptional" value="false"/>
+<stringAttribute key="location" value="${workspace_loc}/../runtime-JDT-LS"/>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
+<mapEntry key="CLIENT_PORT" value="5036"/>
+<mapEntry key="socket.stream.debug" value="true"/>
+</mapAttribute>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
+<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
+<stringAttribute key="pde.version" value="3.3"/>
+<stringAttribute key="product" value="org.eclipse.sdk.ide"/>
+<setAttribute key="selected_features"/>
+<stringAttribute key="selected_target_plugins" value="com.google.gson@default:default,com.google.guava*15.0.0.v201403281430@default:default,com.google.guava*21.0.0.v20170206-1425@default:default,com.gradleware.tooling.client@default:default,com.gradleware.tooling.model@default:default,com.gradleware.tooling.utils@default:default,com.ibm.icu.base@default:default,javax.inject@default:default,javax.xml@default:default,org.apache.ant@default:default,org.apache.commons.io@default:default,org.apache.commons.lang3@default:default,org.apache.log4j@default:default,org.eclipse.buildship.core@default:default,org.eclipse.compare.core@default:default,org.eclipse.core.commands@default:default,org.eclipse.core.contenttype@default:default,org.eclipse.core.expressions@default:default,org.eclipse.core.filebuffers@default:default,org.eclipse.core.filesystem.macosx@default:false,org.eclipse.core.filesystem@default:default,org.eclipse.core.jobs@default:default,org.eclipse.core.net@default:default,org.eclipse.core.resources@default:default,org.eclipse.core.runtime@default:true,org.eclipse.core.variables@default:default,org.eclipse.debug.core@default:default,org.eclipse.equinox.app@default:default,org.eclipse.equinox.common@2:true,org.eclipse.equinox.frameworkadmin.equinox@default:default,org.eclipse.equinox.frameworkadmin@default:default,org.eclipse.equinox.preferences@default:default,org.eclipse.equinox.region@default:false,org.eclipse.equinox.registry@default:default,org.eclipse.equinox.security.macosx@default:false,org.eclipse.equinox.security@default:default,org.eclipse.equinox.simpleconfigurator.manipulator@default:default,org.eclipse.equinox.simpleconfigurator@1:true,org.eclipse.equinox.transforms.hook@default:false,org.eclipse.equinox.weaving.hook@default:false,org.eclipse.jdt.apt.core@default:default,org.eclipse.jdt.apt.pluggable.core@default:default,org.eclipse.jdt.compiler.apt@default:false,org.eclipse.jdt.compiler.tool@default:false,org.eclipse.jdt.core.manipulation@default:default,org.eclipse.jdt.core@default:default,org.eclipse.jdt.debug@default:default,org.eclipse.jdt.junit.core@default:default,org.eclipse.jdt.junit.runtime@default:default,org.eclipse.jdt.launching@default:default,org.eclipse.jface.text@default:default,org.eclipse.jface@default:default,org.eclipse.lsp4j.jsonrpc@default:default,org.eclipse.lsp4j@default:default,org.eclipse.ltk.core.refactoring@default:default,org.eclipse.m2e.archetype.common@default:default,org.eclipse.m2e.core@default:default,org.eclipse.m2e.jdt@default:default,org.eclipse.m2e.lifecyclemapping.defaults@default:default,org.eclipse.m2e.maven.indexer@default:default,org.eclipse.m2e.maven.runtime.slf4j.simple@default:default,org.eclipse.m2e.maven.runtime@default:default,org.eclipse.m2e.workspace.cli@default:default,org.eclipse.osgi.compatibility.state@default:false,org.eclipse.osgi.services@default:default,org.eclipse.osgi.util@default:default,org.eclipse.osgi@-1:true,org.eclipse.swt.cocoa.macosx.x86_64@default:false,org.eclipse.swt@default:default,org.eclipse.text@default:default,org.eclipse.xtend.lib.macro@default:default,org.eclipse.xtend.lib@default:default,org.eclipse.xtext.logging@default:false,org.eclipse.xtext.xbase.lib@default:default,org.gradle.toolingapi@default:default,org.hamcrest.core@default:default,org.jboss.tools.maven.apt.core@default:default,org.junit@default:default,org.slf4j.api@default:default"/>
+<stringAttribute key="selected_workspace_plugins" value="org.eclipse.jdt.ls.core@default:default"/>
+<booleanAttribute key="show_selected_only" value="false"/>
+<stringAttribute key="templateConfig" value="${target_home}/configuration/config.ini"/>
+<booleanAttribute key="tracing" value="false"/>
+<booleanAttribute key="useCustomFeatures" value="false"/>
+<booleanAttribute key="useDefaultConfig" value="true"/>
+<booleanAttribute key="useDefaultConfigArea" value="true"/>
+<booleanAttribute key="useProduct" value="false"/>
+</launchConfiguration>

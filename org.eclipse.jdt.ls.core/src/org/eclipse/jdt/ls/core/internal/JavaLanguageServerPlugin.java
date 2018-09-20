@@ -17,12 +17,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.Authenticator;
+import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.Channels;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
@@ -48,6 +56,7 @@ import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -249,13 +258,30 @@ public class JavaLanguageServerPlugin extends Plugin {
 	}
 
 	private void startConnection() throws IOException {
+		Launcher<JavaLanguageClient> launcher;
+		ExecutorService executorService = Executors.newCachedThreadPool();
 		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
-		ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
-		Launcher<JavaLanguageClient> launcher = Launcher.createLauncher(protocol,
-																		JavaLanguageClient.class,
-																		connectionFactory.getInputStream(),
-																		connectionFactory.getOutputStream(),
-																		Executors.newCachedThreadPool(), new ParentProcessWatcher(this.languageServer));
+		if (JDTEnvironmentUtils.inSocketStreamDebugMode()) {
+			String host = JDTEnvironmentUtils.getClientHost();
+			Integer port = JDTEnvironmentUtils.getClientPort();
+			InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
+			AsynchronousServerSocketChannel serverSocket = AsynchronousServerSocketChannel.open().bind(inetSocketAddress);
+			try {
+				AsynchronousSocketChannel socketChannel = serverSocket.accept().get();
+				InputStream in = Channels.newInputStream(socketChannel);
+				OutputStream out = Channels.newOutputStream(socketChannel);
+				Function<MessageConsumer, MessageConsumer> messageConsumer = it -> it;
+				launcher = Launcher.createIoLauncher(protocol, JavaLanguageClient.class, in, out, executorService, messageConsumer);
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException("Error when opening a socket channel at " + host + ":" + port + ".", e);
+			}
+		} else {
+			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
+			InputStream in = connectionFactory.getInputStream();
+			OutputStream out = connectionFactory.getOutputStream();
+			Function<MessageConsumer, MessageConsumer> wrapper = new ParentProcessWatcher(this.languageServer);
+			launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, in, out, executorService, wrapper);
+		}
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
 	}
