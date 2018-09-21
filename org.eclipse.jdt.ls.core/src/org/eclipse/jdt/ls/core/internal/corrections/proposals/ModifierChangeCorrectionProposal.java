@@ -40,6 +40,7 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.VariableDeclarationRewrite;
+import org.eclipse.lsp4j.CodeActionKind;
 
 public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 
@@ -49,7 +50,7 @@ public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 	private int fExcludedModifiers;
 
 	public ModifierChangeCorrectionProposal(String label, ICompilationUnit targetCU, IBinding binding, ASTNode node, int includedModifiers, int excludedModifiers, int relevance) {
-		super(label, targetCU, null, relevance);
+		super(label, CodeActionKind.QuickFix, targetCU, null, relevance);
 		fBinding = binding;
 		fNode = node;
 		fIncludedModifiers = includedModifiers;

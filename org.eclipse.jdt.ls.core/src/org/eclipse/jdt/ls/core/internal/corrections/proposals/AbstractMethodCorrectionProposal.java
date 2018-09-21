@@ -51,6 +51,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrectionProposal {
@@ -60,7 +61,7 @@ public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrect
 
 	public AbstractMethodCorrectionProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode,
 			ITypeBinding binding, int relevance) {
-		super(label, targetCU, null, relevance);
+		super(label, CodeActionKind.QuickFix, targetCU, null, relevance);
 
 		Assert.isTrue(binding != null && Bindings.isDeclarationBinding(binding));
 

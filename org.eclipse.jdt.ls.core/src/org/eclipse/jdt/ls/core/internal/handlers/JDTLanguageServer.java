@@ -27,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -564,10 +563,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
-		CodeActionHandler handler = new CodeActionHandler();
+		CodeActionHandler handler = new CodeActionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.getCodeActionCommands(params, monitor).stream().map(command -> Either.<Command, CodeAction>forLeft(command)).collect(Collectors.toList());
+			return handler.getCodeActionCommands(params, monitor);
 		});
 	}
 

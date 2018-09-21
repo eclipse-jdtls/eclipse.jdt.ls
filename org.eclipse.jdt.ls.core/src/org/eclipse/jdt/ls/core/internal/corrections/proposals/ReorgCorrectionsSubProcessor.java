@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.TextEdit;
 
 
@@ -93,7 +94,7 @@ public class ReorgCorrectionsSubProcessor {
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), change.getCompilationUnit(),
+				CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(),
 						change, IProposalRelevance.REMOVE_UNUSED_IMPORT);
 				proposals.add(proposal);
 			} catch (CoreException e) {
@@ -103,7 +104,7 @@ public class ReorgCorrectionsSubProcessor {
 
 		final ICompilationUnit cu= context.getCompilationUnit();
 		String name= CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description;
-		CUCorrectionProposal proposal= new CUCorrectionProposal(name, cu, IProposalRelevance.ORGANIZE_IMPORTS) {
+		CUCorrectionProposal proposal = new CUCorrectionProposal(name, CodeActionKind.QuickFix, cu, null, IProposalRelevance.ORGANIZE_IMPORTS) {
 
 			@Override
 			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {

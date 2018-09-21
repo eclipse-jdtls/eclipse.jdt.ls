@@ -61,6 +61,7 @@ import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.fix.TypeParametersFix.InsertTypeArgumentsVisitor;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
@@ -84,7 +85,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 
 	private TypeChangeCorrectionProposal(ICompilationUnit targetCU, IBinding binding, CompilationUnit astRoot, ITypeBinding newType, boolean isNewTypeVar, boolean offerSuperTypeProposals,
 			int relevance) {
-		super("", targetCU, null, relevance); //$NON-NLS-1$
+		super("", CodeActionKind.QuickFix, targetCU, null, relevance); //$NON-NLS-1$
 
 		Assert.isTrue(binding != null && (binding.getKind() == IBinding.METHOD || binding.getKind() == IBinding.VARIABLE) && Bindings.isDeclarationBinding(binding));
 

@@ -100,6 +100,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.SwapDescription;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class UnresolvedElementsSubProcessor {
@@ -286,7 +287,7 @@ public class UnresolvedElementsSubProcessor {
 					rewrite.remove(statement, null);
 				}
 				String label= CorrectionMessages.UnresolvedElementsSubProcessor_removestatement_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 						IProposalRelevance.REMOVE_ASSIGNMENT);
 				proposals.add(proposal);
 			}
@@ -475,7 +476,7 @@ public class UnresolvedElementsSubProcessor {
 							String label = Messages.format(
 									CorrectionMessages.UnresolvedElementsSubProcessor_changetomethod_description,
 									org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(curr));
-							ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+							ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 									IProposalRelevance.CHANGE_TO_METHOD);
 							newProposals.add(proposal);
 
@@ -710,7 +711,7 @@ public class UnresolvedElementsSubProcessor {
 			}
 			ASTRewrite rewrite= ASTRewrite.create(node.getAST());
 			rewrite.replace(node, rewrite.createStringPlaceholder(simpleName, ASTNode.SIMPLE_TYPE), null);
-			proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, relevance);
+			proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, relevance);
 		}
 		if (importRewrite != null) {
 			proposal.setImportRewrite(importRewrite);
@@ -722,7 +723,7 @@ public class UnresolvedElementsSubProcessor {
 		ASTRewrite rewrite= ASTRewrite.create(node.getAST());
 		String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_change_full_type_description, BindingLabelProvider.getBindingLabel(binding, JavaElementLabels.ALL_DEFAULT));
 
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, relevance);
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, relevance);
 
 		ImportRewrite imports= proposal.createImportRewrite((CompilationUnit) node.getRoot());
 		Type type= imports.addImport(binding, node.getAST());
@@ -977,7 +978,7 @@ public class UnresolvedElementsSubProcessor {
 					label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_add_static_import_description, elementLabel);
 				}
 
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label,
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix,
 						context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_STATIC_IMPORT);
 				proposal.setImportRewrite(importRewrite);
 				proposals.add(proposal);
@@ -1136,7 +1137,7 @@ public class UnresolvedElementsSubProcessor {
 			rewrite.replace(accessExpression, parents, null);
 
 			String label= CorrectionMessages.UnresolvedElementsSubProcessor_missingcastbrackets_description;
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 					IProposalRelevance.ADD_PARENTHESES_AROUND_CAST);
 			proposals.add(proposal);
 			return true;
@@ -1304,7 +1305,7 @@ public class UnresolvedElementsSubProcessor {
 			} else {
 				label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_removearguments_description, arg);
 			}
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 					IProposalRelevance.REMOVE_ARGUMENTS);
 			proposals.add(proposal);
 		}
@@ -1459,7 +1460,7 @@ public class UnresolvedElementsSubProcessor {
 				{
 					String[] arg= new String[] { getArgumentName(arguments, idx1), getArgumentName(arguments, idx2) };
 					String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_swaparguments_description, arg);
-					ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label,
+					ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix,
 							context.getCompilationUnit(), rewrite, IProposalRelevance.SWAP_ARGUMENTS);
 					proposals.add(proposal);
 				}
@@ -1601,7 +1602,7 @@ public class UnresolvedElementsSubProcessor {
 
 		String label = Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_changetoouter_description,
 				org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(currType));
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(),
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(),
 				rewrite, IProposalRelevance.QUALIFY_WITH_ENCLOSING_TYPE);
 
 		ImportRewrite imports= proposal.createImportRewrite(context.getASTRoot());
@@ -1706,7 +1707,7 @@ public class UnresolvedElementsSubProcessor {
 				CompilationUnit root= context.getASTRoot();
 
 				String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_importexplicit_description, BasicElementLabels.getJavaElementName(qualifiedTypeName));
-				ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, ASTRewrite.create(root.getAST()), IProposalRelevance.IMPORT_EXPLICIT);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, ASTRewrite.create(root.getAST()), IProposalRelevance.IMPORT_EXPLICIT);
 
 				ImportRewrite imports= proposal.createImportRewrite(root);
 				imports.addImport(qualifiedTypeName);

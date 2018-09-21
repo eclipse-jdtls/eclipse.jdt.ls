@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.lsp4j.CodeActionKind;
 
 /**
  */
@@ -952,7 +953,7 @@ public class AdvancedQuickAssistProcessor {
 
 		// add correction proposal
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_splitAndCondition_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_AND_CONDITION);
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_AND_CONDITION);
 		resultingCollections.add(proposal);
 		return true;
 	}
@@ -1140,7 +1141,7 @@ public class AdvancedQuickAssistProcessor {
 
 		// add correction proposal
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_splitOrCondition_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_OR_CONDITION);
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_OR_CONDITION);
 		resultingCollections.add(proposal);
 		return true;
 	}

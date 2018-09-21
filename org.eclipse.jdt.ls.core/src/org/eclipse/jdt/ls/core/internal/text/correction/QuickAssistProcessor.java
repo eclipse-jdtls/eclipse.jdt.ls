@@ -114,6 +114,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 
 /**
@@ -451,7 +452,7 @@ public class QuickAssistProcessor {
 			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
 
 			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractMethodRefactoring, relevance);
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractMethodRefactoring, relevance);
 			proposal.setLinkedProposalModel(linkedProposalModel);
 			proposals.add(proposal);
 		}
@@ -536,7 +537,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractTempRefactoring, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractTempRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -563,7 +564,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_LOCAL;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractTempRefactoringSelectedOnly, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractTempRefactoringSelectedOnly, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -589,7 +590,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_CONSTANT;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, cu, extractConstRefactoring, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractConstRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;
@@ -1008,7 +1009,7 @@ public class QuickAssistProcessor {
 				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
 				addExceptionToThrows(ast, methodDeclaration, rewrite, selectedMultiCatchType);
 				String label = CorrectionMessages.QuickAssistProcessor_exceptiontothrows_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_EXCEPTION_WITH_THROWS);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_EXCEPTION_WITH_THROWS);
 				resultingCollections.add(proposal);
 			} else {
 				removeCatchBlock(rewrite, catchClause);
@@ -1025,7 +1026,7 @@ public class QuickAssistProcessor {
 					addExceptionToThrows(ast, methodDeclaration, rewrite, type);
 				}
 				String label = CorrectionMessages.QuickAssistProcessor_catchclausetothrows_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_CATCH_CLAUSE_WITH_THROWS);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_CATCH_CLAUSE_WITH_THROWS);
 				resultingCollections.add(proposal);
 			}
 		}
@@ -1034,12 +1035,12 @@ public class QuickAssistProcessor {
 			if (selectedMultiCatchType != null) {
 				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
 				String label = CorrectionMessages.QuickAssistProcessor_removeexception_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_EXCEPTION);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_EXCEPTION);
 				resultingCollections.add(proposal);
 			} else {
 				removeCatchBlock(rewrite, catchClause);
 				String label = CorrectionMessages.QuickAssistProcessor_removecatchclause_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_CATCH_CLAUSE);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_CATCH_CLAUSE);
 				resultingCollections.add(proposal);
 			}
 		}

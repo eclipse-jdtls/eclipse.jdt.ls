@@ -197,4 +197,19 @@ public class ClientPreferences {
 				&& capabilities.getTextDocument().getSemanticHighlightingCapabilities().getSemanticHighlighting().booleanValue();
 		//@formatter:on
 	}
+
+	/**
+	 * {@code true} if the client has explicitly set the
+	 * {@code textDocument.documentSymbol.hierarchicalDocumentSymbolSupport} to
+	 * {@code true} when initializing the LS. Otherwise, {@code false}.
+	 */
+	public boolean isSupportedCodeActionKind(String kind) {
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getCodeAction() != null
+				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport() != null
+				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind() != null
+				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind().getValueSet() != null
+				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind().getValueSet().contains(kind);
+		//@formatter:on
+	}
 }

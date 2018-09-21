@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.lsp4j.CodeActionKind;
 
 public class AddArgumentCorrectionProposal extends ASTRewriteCorrectionProposal {
 
@@ -38,7 +39,7 @@ public class AddArgumentCorrectionProposal extends ASTRewriteCorrectionProposal 
 	private ASTNode fCallerNode;
 
 	public AddArgumentCorrectionProposal(String label, ICompilationUnit cu, ASTNode callerNode, int[] insertIdx, ITypeBinding[] expectedTypes, int relevance) {
-		super(label, cu, null, relevance);
+		super(label, CodeActionKind.QuickFix, cu, null, relevance);
 		fCallerNode= callerNode;
 		fInsertIndexes= insertIdx;
 		fParamTypes= expectedTypes;

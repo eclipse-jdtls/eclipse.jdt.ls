@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,9 +44,12 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
+import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
@@ -59,10 +63,12 @@ import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -75,6 +81,9 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private JavaClientConnection javaClient;
 
 	private File temp;
+
+	@Mock
+	private ClientPreferences clientPreferences;
 
 	@Before
 	public void setup() throws Exception {
@@ -116,8 +125,9 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), false, null);
 		openDocument(cu, cu.getSource(), 1);
 
-		List<Command> commands = getCodeActions(cu);
-		assertEquals(commands.size(), 1);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(cu);
+		assertEquals(codeActions.size(), 1);
+		assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 	}
 
 	@Test
@@ -138,11 +148,12 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		List<Command> commands = getCodeActions(cu);
-		assertEquals(commands.size(), 1);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(cu);
+		assertEquals(codeActions.size(), 1);
+		assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 	}
 
-	protected List<Command> getCodeActions(ICompilationUnit cu) throws JavaModelException {
+	protected List<Either<Command, CodeAction>> getCodeActions(ICompilationUnit cu) throws JavaModelException {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
@@ -159,7 +170,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
 		parms.setContext(context);
 
-		return new CodeActionHandler().getCodeActionCommands(parms, new NullProgressMonitor());
+		return new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
 	}
 
 	private Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
@@ -172,6 +183,8 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Mockito.when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
 		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
 		Mockito.when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
+		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
 		return mockPreferences;
 	}
 

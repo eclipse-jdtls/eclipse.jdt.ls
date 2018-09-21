@@ -48,8 +48,8 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 	 *            The image that is displayed for this proposal or
 	 *            <code>null</code> if no image is desired.
 	 */
-	public LinkedCorrectionProposal(String name, ICompilationUnit cu, ASTRewrite rewrite, int relevance) {
-		super(name, cu, rewrite, relevance);
+	public LinkedCorrectionProposal(String name, String kind, ICompilationUnit cu, ASTRewrite rewrite, int relevance) {
+		super(name, kind, cu, rewrite, relevance);
 		fLinkedProposalModel = null;
 	}
 

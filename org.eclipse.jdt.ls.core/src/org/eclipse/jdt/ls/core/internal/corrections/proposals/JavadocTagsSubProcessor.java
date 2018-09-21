@@ -66,6 +66,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.eclipse.text.edits.TextEditGroup;
@@ -82,7 +83,7 @@ public class JavadocTagsSubProcessor {
 		private final String fComment;
 
 		private AddJavadocCommentProposal(String name, ICompilationUnit cu, int relevance, int insertPosition, String comment) {
-			super(name, cu, relevance);
+			super(name, CodeActionKind.Source, cu, null, relevance);
 			fInsertPosition= insertPosition;
 			fComment= comment;
 		}
@@ -115,7 +116,7 @@ public class JavadocTagsSubProcessor {
 		private final ASTNode fMissingNode;
 
 		public AddMissingJavadocTagProposal(String label, ICompilationUnit cu, BodyDeclaration bodyDecl, ASTNode missingNode, int relevance) {
-			super(label, cu, null, relevance);
+			super(label, CodeActionKind.Source, cu, null, relevance);
 			fBodyDecl= bodyDecl;
 			fMissingNode= missingNode;
 		}
@@ -210,7 +211,7 @@ public class JavadocTagsSubProcessor {
 		private final BodyDeclaration fBodyDecl;
 
 		public AddAllMissingJavadocTagsProposal(String label, ICompilationUnit cu, BodyDeclaration bodyDecl, int relevance) {
-			super(label, cu, null, relevance);
+			super(label, CodeActionKind.Source, cu, null, relevance);
 			fBodyDecl= bodyDecl;
 		}
 
@@ -668,7 +669,7 @@ public class JavadocTagsSubProcessor {
 		rewrite.remove(node, null);
 
 		String label= CorrectionMessages.JavadocTagsSubProcessor_removetag_description;
-		proposals.add(new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite,
+		proposals.add(new ASTRewriteCorrectionProposal(label, CodeActionKind.Source, context.getCompilationUnit(), rewrite,
 				IProposalRelevance.REMOVE_TAG));
 	}
 
@@ -690,7 +691,7 @@ public class JavadocTagsSubProcessor {
 		rewrite.replace(name, ast.newName(typeBinding.getQualifiedName()), null);
 
 		String label= CorrectionMessages.JavadocTagsSubProcessor_qualifylinktoinner_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(),
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.Source, context.getCompilationUnit(),
 				rewrite, IProposalRelevance.QUALIFY_INNER_TYPE_NAME);
 
 		proposals.add(proposal);

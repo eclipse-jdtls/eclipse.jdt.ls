@@ -68,6 +68,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.BodyDeclarationRewrite;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal {
@@ -85,7 +86,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 
 	public NewVariableCorrectionProposal(String label, ICompilationUnit cu, int variableKind, SimpleName node,
 			ITypeBinding senderBinding, int relevance) {
-		super(label, cu, null, relevance);
+		super(label, CodeActionKind.QuickFix, cu, null, relevance);
 		if (senderBinding == null) {
 			Assert.isTrue(variableKind == PARAM || variableKind == LOCAL);
 		} else {

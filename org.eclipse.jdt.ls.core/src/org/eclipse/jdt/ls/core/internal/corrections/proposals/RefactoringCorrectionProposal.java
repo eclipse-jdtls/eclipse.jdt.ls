@@ -27,8 +27,8 @@ public class RefactoringCorrectionProposal extends LinkedCorrectionProposal {
 	private final Refactoring fRefactoring;
 	private RefactoringStatus fRefactoringStatus;
 
-	public RefactoringCorrectionProposal(String name, ICompilationUnit cu, Refactoring refactoring, int relevance) {
-		super(name, cu, null, relevance);
+	public RefactoringCorrectionProposal(String name, String kind, ICompilationUnit cu, Refactoring refactoring, int relevance) {
+		super(name, kind, cu, null, relevance);
 		fRefactoring = refactoring;
 	}
 
