@@ -27,6 +27,7 @@ import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 /**
@@ -48,7 +49,7 @@ public class CorrectMainTypeNameProposal extends ASTRewriteCorrectionProposal {
 	 * @param relevance the relevance
 	 */
 	public CorrectMainTypeNameProposal(ICompilationUnit cu, IInvocationContext context, String oldTypeName, String newTypeName, int relevance) {
-		super("", cu, null, relevance); //$NON-NLS-1$
+		super("", CodeActionKind.QuickFix, cu, null, relevance); //$NON-NLS-1$
 		fContext= context;
 
 		setDisplayName(Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renametype_description, BasicElementLabels.getJavaElementName(newTypeName)));

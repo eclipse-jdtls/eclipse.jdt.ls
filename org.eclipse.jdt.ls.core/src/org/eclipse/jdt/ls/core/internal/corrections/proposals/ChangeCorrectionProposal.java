@@ -28,6 +28,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 public class ChangeCorrectionProposal {
 	private Change fChange;
 	private String fName;
+	private String fKind;
 	private int fRelevance;
 
 	/**
@@ -38,11 +39,12 @@ public class ChangeCorrectionProposal {
 	 *            if the change will be created by implementors of {@link #createChange()}
 	 * @param relevance the relevance of this proposal
 	 */
-	public ChangeCorrectionProposal(String name, Change change, int relevance) {
+	public ChangeCorrectionProposal(String name, String kind, Change change, int relevance) {
 		if (name == null) {
 			throw new IllegalArgumentException("Name must not be null"); //$NON-NLS-1$
 		}
 		fName= name;
+		fKind = kind;
 		fChange= change;
 		fRelevance= relevance;
 	}
@@ -127,6 +129,15 @@ public class ChangeCorrectionProposal {
 	 */
 	public String getName() {
 		return fName;
+	}
+
+	/**
+	 * Returns the kind of the proposal.
+	 *
+	 * @return the kind of the proposal
+	 */
+	public String getKind() {
+		return fKind;
 	}
 
 	/**

@@ -33,12 +33,16 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
@@ -54,11 +58,17 @@ public class CodeActionHandler {
 
 	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
 
+	private PreferenceManager preferenceManager;
+
+	public CodeActionHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
+
 	/**
 	 * @param params
 	 * @return
 	 */
-	public List<Command> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
+	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return Collections.emptyList();
@@ -69,13 +79,12 @@ public class CodeActionHandler {
 		context.setASTRoot(getASTRoot(unit));
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
-		List<Command> $ = new ArrayList<>();
+		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		try {
 			CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
 			Arrays.sort(corrections, new CUCorrectionProposalComparator());
 			for (CUCorrectionProposal proposal : corrections) {
-				Command command = this.getCommandFromProposal(proposal);
-				$.add(command);
+				$.add(getCodeActionFromProposal(proposal, params.getContext()));
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
@@ -85,8 +94,7 @@ public class CodeActionHandler {
 			CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
 			Arrays.sort(corrections, new CUCorrectionProposalComparator());
 			for (CUCorrectionProposal proposal : corrections) {
-				Command command = this.getCommandFromProposal(proposal);
-				$.add(command);
+				$.add(getCodeActionFromProposal(proposal, params.getContext()));
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
@@ -95,11 +103,20 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private Command getCommandFromProposal(CUCorrectionProposal proposal) throws CoreException {
+	private Either<Command, CodeAction> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 		ICompilationUnit unit = proposal.getCompilationUnit();
+		Command command = new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
 
-		return new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			CodeAction codeAction = new CodeAction(name);
+			codeAction.setKind(proposal.getKind());
+			codeAction.setCommand(command);
+			codeAction.setDiagnostics(context.getDiagnostics());
+			return Either.forRight(codeAction);
+		} else {
+			return Either.forLeft(command);
+		}
 	}
 
 	private IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {

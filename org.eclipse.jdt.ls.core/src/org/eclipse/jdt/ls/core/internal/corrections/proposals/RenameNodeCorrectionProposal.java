@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
@@ -31,7 +32,7 @@ public class RenameNodeCorrectionProposal extends CUCorrectionProposal {
 	private int fLength;
 
 	public RenameNodeCorrectionProposal(String name, ICompilationUnit cu, int offset, int length, String newName, int relevance) {
-		super(name, cu, relevance);
+		super(name, CodeActionKind.Refactor, cu, null, relevance);
 		fOffset= offset;
 		fLength= length;
 		fNewName= newName;

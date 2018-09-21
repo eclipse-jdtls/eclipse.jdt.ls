@@ -42,33 +42,64 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	private ICompilationUnit fCompilationUnit;
 
 	/**
-	 * Constructs a correction proposal working on a compilation unit with a given text change.
+	 * Constructs a correction proposal working on a compilation unit with a given
+	 * text change.
 	 *
-	 * @param name the name that is displayed in the proposal selection dialog
-	 * @param cu the compilation unit to which the change can be applied
-	 * @param change the change that is executed when the proposal is applied or <code>null</code>
-	 *            if implementors override {@link #addEdits(IDocument, TextEdit)} to provide the
-	 *            text edits or {@link #createTextChange()} to provide a text change
-	 * @param relevance the relevance of this proposal
+	 * @param name
+	 *            the name that is displayed in the proposal selection dialog
+	 * @param kind
+	 *            the kind of the correction type that the proposal performs
+	 * @param cu
+	 *            the compilation unit to which the change can be applied
+	 * @param change
+	 *            the change that is executed when the proposal is applied or
+	 *            <code>null</code> if implementors override
+	 *            {@link #addEdits(IDocument, TextEdit)} to provide the text edits
+	 *            or {@link #createTextChange()} to provide a text change
+	 * @param relevance
+	 *            the relevance of this proposal
 	 */
-	public CUCorrectionProposal(String name, ICompilationUnit cu, Change change, int relevance) {
-		super(name, change, relevance);
+	public CUCorrectionProposal(String name, String kind, ICompilationUnit cu, Change change, int relevance) {
+		super(name, kind, change, relevance);
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
 		}
-		fCompilationUnit= cu;
+		fCompilationUnit = cu;
+	}
+
+	/**
+	 * Constructs a correction proposal working on a compilation unit with a given
+	 * text change.
+	 *
+	 * @param name
+	 *            the name that is displayed in the proposal selection dialog
+	 * @param cu
+	 *            the compilation unit to which the change can be applied
+	 * @param change
+	 *            the change that is executed when the proposal is applied or
+	 *            <code>null</code> if implementors override
+	 *            {@link #addEdits(IDocument, TextEdit)} to provide the text edits
+	 *            or {@link #createTextChange()} to provide a text change
+	 * @param relevance
+	 *            the relevance of this proposal
+	 */
+	public CUCorrectionProposal(String name, ICompilationUnit cu, Change change, int relevance) {
+		this(name, null, cu, null, relevance);
 	}
 
 	/**
 	 * Constructs a correction proposal working on a compilation unit.
 	 * <p>
-	 * Users have to override {@link #addEdits(IDocument, TextEdit)} to provide the text edits or
-	 * {@link #createTextChange()} to provide a text change.
+	 * Users have to override {@link #addEdits(IDocument, TextEdit)} to provide the
+	 * text edits or {@link #createTextChange()} to provide a text change.
 	 * </p>
 	 *
-	 * @param name the name that is displayed in the proposal selection dialog
-	 * @param cu the compilation unit on that the change works
-	 * @param relevance the relevance of this proposal
+	 * @param name
+	 *            the name that is displayed in the proposal selection dialog
+	 * @param cu
+	 *            the compilation unit on that the change works
+	 * @param relevance
+	 *            the relevance of this proposal
 	 */
 	protected CUCorrectionProposal(String name, ICompilationUnit cu, int relevance) {
 		this(name, cu, null, relevance);

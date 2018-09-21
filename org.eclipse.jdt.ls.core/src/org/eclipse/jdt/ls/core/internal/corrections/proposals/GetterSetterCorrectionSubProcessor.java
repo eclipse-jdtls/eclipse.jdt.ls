@@ -51,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabili
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public class GetterSetterCorrectionSubProcessor {
@@ -76,7 +77,7 @@ public class GetterSetterCorrectionSubProcessor {
 	public static class SelfEncapsulateFieldProposal extends CUCorrectionProposal { // public for tests
 
 		public SelfEncapsulateFieldProposal(int relevance, IField field) {
-			super(getDescription(field), field.getCompilationUnit(), getRefactoringChange(field), relevance);
+			super(getDescription(field), CodeActionKind.Refactor, field.getCompilationUnit(), getRefactoringChange(field), relevance);
 		}
 
 		public static Change getRefactoringChange(IField field) {
@@ -209,7 +210,7 @@ public class GetterSetterCorrectionSubProcessor {
 			context.astRewrite.replace(context.accessNode, mi, null);
 
 			String label = Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_replacewithgetter_description, BasicElementLabels.getJavaCodeString(ASTNodes.asString(context.accessNode)));
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.compilationUnit, context.astRewrite, relevance);
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.compilationUnit, context.astRewrite, relevance);
 			return proposal;
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();
@@ -294,7 +295,7 @@ public class GetterSetterCorrectionSubProcessor {
 			context.astRewrite.replace(context.accessNode.getParent(), mi, null);
 
 			String label = Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_replacewithsetter_description, BasicElementLabels.getJavaCodeString(ASTNodes.asString(context.accessNode)));
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.compilationUnit, context.astRewrite, relevance);
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.compilationUnit, context.astRewrite, relevance);
 			return proposal;
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();

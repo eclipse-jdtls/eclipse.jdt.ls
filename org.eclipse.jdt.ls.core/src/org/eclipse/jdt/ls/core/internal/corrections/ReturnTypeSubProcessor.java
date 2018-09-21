@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.MissingReturnTypeC
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.MissingReturnTypeInLambdaCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class ReturnTypeSubProcessor {
@@ -114,24 +115,6 @@ public class ReturnTypeSubProcessor {
 
 	}
 
-
-	public static void addMethodWithConstrNameProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
-		ICompilationUnit cu= context.getCompilationUnit();
-
-		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
-		if (selectedNode instanceof MethodDeclaration) {
-			MethodDeclaration declaration= (MethodDeclaration) selectedNode;
-
-			ASTRewrite rewrite= ASTRewrite.create(declaration.getAST());
-			rewrite.set(declaration, MethodDeclaration.CONSTRUCTOR_PROPERTY, Boolean.TRUE, null);
-
-			String label= CorrectionMessages.ReturnTypeSubProcessor_constrnamemethod_description;
-			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.CHANGE_TO_CONSTRUCTOR);
-			proposals.add(proposal);
-		}
-
-	}
-
 	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -161,7 +144,7 @@ public class ReturnTypeSubProcessor {
 				ASTRewrite rewrite= ASTRewrite.create(ast);
 
 				String label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_voidmethodreturns_description, BindingLabelProvider.getBindingLabel(binding, BindingLabelProvider.DEFAULT_TEXTFLAGS));
-				LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.VOID_METHOD_RETURNS);
+				LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.VOID_METHOD_RETURNS);
 				ImportRewrite imports= proposal.createImportRewrite(astRoot);
 				ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(methodDeclaration, imports);
 				Type newReturnType= imports.addImport(binding, ast, importRewriteContext, TypeLocation.RETURN_TYPE);
@@ -196,7 +179,7 @@ public class ReturnTypeSubProcessor {
 			rewrite.remove(returnStatement.getExpression(), null);
 
 			String label= CorrectionMessages.ReturnTypeSubProcessor_removereturn_description;
-			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.CHANGE_TO_RETURN);
+			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.CHANGE_TO_RETURN);
 			proposals.add(proposal);
 		}
 	}
@@ -232,7 +215,7 @@ public class ReturnTypeSubProcessor {
 			ASTRewrite rewrite= ASTRewrite.create(ast);
 
 			String label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_missingreturntype_description, BindingLabelProvider.getBindingLabel(typeBinding, BindingLabelProvider.DEFAULT_TEXTFLAGS));
-			LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, cu, rewrite, IProposalRelevance.MISSING_RETURN_TYPE);
+			LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.MISSING_RETURN_TYPE);
 
 			ImportRewrite imports= proposal.createImportRewrite(astRoot);
 			ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
@@ -314,7 +297,7 @@ public class ReturnTypeSubProcessor {
 					}
 
 					String label= CorrectionMessages.ReturnTypeSubProcessor_changetovoid_description;
-					ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.CHANGE_RETURN_TYPE_TO_VOID);
+					ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.CHANGE_RETURN_TYPE_TO_VOID);
 					proposals.add(proposal);
 				}
 			}

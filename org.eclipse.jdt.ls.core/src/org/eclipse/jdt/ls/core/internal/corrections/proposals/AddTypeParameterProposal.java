@@ -39,6 +39,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 
@@ -51,7 +52,7 @@ public class AddTypeParameterProposal extends ASTRewriteCorrectionProposal {
 	private final ITypeBinding[] fBounds;
 
 	public AddTypeParameterProposal(ICompilationUnit targetCU, IBinding binding, CompilationUnit astRoot, String name, ITypeBinding[] bounds, int relevance) {
-		super("", targetCU, null, relevance); //$NON-NLS-1$
+		super("", CodeActionKind.QuickFix, targetCU, null, relevance); //$NON-NLS-1$
 
 		Assert.isTrue(binding != null && Bindings.isDeclarationBinding(binding));
 		Assert.isTrue(binding instanceof IMethodBinding || binding instanceof ITypeBinding);

@@ -32,6 +32,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposal {
@@ -42,7 +43,7 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 	protected ReturnStatement fExistingReturn;
 
 	public MissingReturnTypeCorrectionProposal(ICompilationUnit cu, MethodDeclaration decl, ReturnStatement existingReturn, int relevance) {
-		super("", cu, null, relevance);
+		super("", CodeActionKind.QuickFix, cu, null, relevance);
 		fMethodDecl= decl;
 		fExistingReturn= existingReturn;
 	}

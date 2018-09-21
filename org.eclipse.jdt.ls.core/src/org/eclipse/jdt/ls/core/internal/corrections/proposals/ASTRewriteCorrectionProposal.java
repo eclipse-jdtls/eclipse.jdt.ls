@@ -43,8 +43,8 @@ public class ASTRewriteCorrectionProposal extends CUCorrectionProposal {
 	 *            <code>null</code> if {@link #getRewrite()} is overridden
 	 * @param relevance the relevance of this proposal
 	 */
-	public ASTRewriteCorrectionProposal(String name, ICompilationUnit cu, ASTRewrite rewrite, int relevance) {
-		super(name, cu, relevance);
+	public ASTRewriteCorrectionProposal(String name, String kind, ICompilationUnit cu, ASTRewrite rewrite, int relevance) {
+		super(name, kind, cu, null, relevance);
 		fRewrite= rewrite;
 	}
 

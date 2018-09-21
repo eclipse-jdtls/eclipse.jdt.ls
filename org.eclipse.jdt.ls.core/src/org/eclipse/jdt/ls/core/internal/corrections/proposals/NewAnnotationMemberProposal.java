@@ -33,6 +33,7 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class NewAnnotationMemberProposal extends ASTRewriteCorrectionProposal {
@@ -42,7 +43,7 @@ public class NewAnnotationMemberProposal extends ASTRewriteCorrectionProposal {
 
 	public NewAnnotationMemberProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode,
 			ITypeBinding binding, int relevance) {
-		super(label, targetCU, null, relevance);
+		super(label, CodeActionKind.QuickFix, targetCU, null, relevance);
 		fInvocationNode= invocationNode;
 		fSenderBinding= binding;
 	}

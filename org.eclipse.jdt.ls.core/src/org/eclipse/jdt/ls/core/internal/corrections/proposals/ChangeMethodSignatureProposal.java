@@ -48,6 +48,7 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
+import org.eclipse.lsp4j.CodeActionKind;
 
 public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 
@@ -99,7 +100,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 	public ChangeMethodSignatureProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode,
 			IMethodBinding binding, ChangeDescription[] paramChanges, ChangeDescription[] exceptionChanges,
 			int relevance) {
-		super(label, targetCU, null, relevance);
+		super(label, CodeActionKind.QuickFix, targetCU, null, relevance);
 
 		Assert.isTrue(binding != null && Bindings.isDeclarationBinding(binding));
 

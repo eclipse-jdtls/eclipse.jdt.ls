@@ -33,6 +33,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class ImplementInterfaceProposal extends ASTRewriteCorrectionProposal {
@@ -42,7 +43,7 @@ public class ImplementInterfaceProposal extends ASTRewriteCorrectionProposal {
 	private ITypeBinding fNewInterface;
 
 	public ImplementInterfaceProposal(ICompilationUnit targetCU, ITypeBinding binding, CompilationUnit astRoot, ITypeBinding newInterface, int relevance) {
-		super("", targetCU, null, relevance); //$NON-NLS-1$
+		super("", CodeActionKind.QuickFix, targetCU, null, relevance); //$NON-NLS-1$
 
 		Assert.isTrue(binding != null && Bindings.isDeclarationBinding(binding));
 

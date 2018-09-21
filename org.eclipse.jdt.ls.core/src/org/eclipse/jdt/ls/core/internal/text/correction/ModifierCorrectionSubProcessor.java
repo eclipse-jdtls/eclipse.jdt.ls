@@ -81,6 +81,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.link.LinkedModeModel;
 import org.eclipse.jface.text.link.LinkedPosition;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -550,7 +551,7 @@ public class ModifierCorrectionSubProcessor {
 			}
 
 			String label = CorrectionMessages.ModifierCorrectionSubProcessor_removeabstract_description;
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_ABSTRACT_MODIFIER);
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.REMOVE_ABSTRACT_MODIFIER);
 			proposals.add(proposal);
 		}
 
@@ -569,7 +570,7 @@ public class ModifierCorrectionSubProcessor {
 				ModifierRewrite.create(rewrite, decl).setModifiers(0, excluded, null);
 
 				String label = CorrectionMessages.ModifierCorrectionSubProcessor_removebody_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite, IProposalRelevance.REMOVE_METHOD_BODY);
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.REMOVE_METHOD_BODY);
 				proposals.add(proposal);
 			}
 

@@ -66,6 +66,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class TypeMismatchSubProcessor {
@@ -166,7 +167,7 @@ public class TypeMismatchSubProcessor {
 				ASTRewrite rewrite= ASTRewrite.create(ast);
 
 				String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changereturntype_description, BasicElementLabels.getJavaElementName(currBinding.getName()));
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 						IProposalRelevance.CHANGE_METHOD_RETURN_TYPE);
 
 				ImportRewrite imports= proposal.createImportRewrite(astRoot);
@@ -202,7 +203,7 @@ public class TypeMismatchSubProcessor {
 			expression.setOperator(InfixExpression.Operator.NOT_EQUALS);
 			rewrite.replace(nodeToCast, expression, null);
 
-			proposals.add(new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite,
+			proposals.add(new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite,
 					IProposalRelevance.INSERT_NULL_CHECK));
 		}
 
@@ -475,7 +476,7 @@ public class TypeMismatchSubProcessor {
 
 		String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_incompatible_for_each_type_description, new String[] { BasicElementLabels.getJavaElementName(parameter.getName().getIdentifier()), BindingLabelProvider.getBindingLabel(expectedBinding, BindingLabelProvider.DEFAULT_TEXTFLAGS) });
 		ASTRewrite rewrite= ASTRewrite.create(ast);
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, cu, rewrite,
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 				IProposalRelevance.INCOMPATIBLE_FOREACH_TYPE);
 
 		ImportRewrite importRewrite= proposal.createImportRewrite(astRoot);

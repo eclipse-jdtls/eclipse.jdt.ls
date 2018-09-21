@@ -21,6 +21,7 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.ls.core.internal.corext.fix.ICleanUp;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.TextFileChange;
 
@@ -36,7 +37,7 @@ public class FixCorrectionProposal extends LinkedCorrectionProposal {
 	private CompilationUnit fCompilationUnit;
 
 	public FixCorrectionProposal(IProposableFix fix, ICleanUp cleanUp, int relevance, IInvocationContext context) {
-		super(fix.getDisplayString(), context.getCompilationUnit(), null, relevance);
+		super(fix.getDisplayString(), CodeActionKind.QuickFix, context.getCompilationUnit(), null, relevance);
 		fFix = fix;
 		fCleanUp = cleanUp;
 		fCompilationUnit = context.getASTRoot();
