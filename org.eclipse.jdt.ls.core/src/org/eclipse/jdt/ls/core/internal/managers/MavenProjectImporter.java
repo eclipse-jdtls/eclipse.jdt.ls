@@ -187,6 +187,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 				MavenBuildSupport mavenBuildSupport = new MavenBuildSupport();
+				mavenBuildSupport.setShouldCollectProjects(false);
 				for (IProject project : projects) {
 					if (monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;

@@ -15,12 +15,16 @@ import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -80,6 +84,19 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	@Test
 	public void testCompileWithEclipseTychoJdt() throws Exception {
 		testNonStandardCompilerId("compile-with-tycho-jdt");
+	}
+
+	@Test
+	public void testMultipleProjects() throws Exception {
+		IProject project = importMavenProject("multimodule");
+		Set<IProject> projects = new LinkedHashSet<>();
+		new MavenBuildSupport().collectProjects(projects, project, new NullProgressMonitor());
+		assertEquals(projects.size(), 4);
+		for (IProject p : projects) {
+			if ("module3".equals(p.getName())) {
+				fail("module3 exists");
+			}
+		}
 	}
 
 	@Test
