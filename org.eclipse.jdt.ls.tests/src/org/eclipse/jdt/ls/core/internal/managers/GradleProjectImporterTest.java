@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -154,5 +155,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		project = getProject("gradle-withoutjava");
 		file = project.getFile("/build.gradle");
 		assertTrue(projectsManager.isBuildFile(file));
+	}
+
+	@Test
+	public void testJava11Project() throws Exception {
+		IProject project = importGradleProject("gradle-11");
+		assertIsJavaProject(project);
+		assertEquals("11", getJavaSourceLevel(project));
+		assertNoErrors(project);
 	}
 }

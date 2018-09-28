@@ -54,6 +54,7 @@ public class TestVMType extends AbstractVMInstallType {
 		createVMInstall("1.8");
 		createVMInstall("9");
 		createVMInstall("10");
+		createVMInstall("11");
 	}
 
 	@Override

@@ -546,6 +546,42 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testHoverOnJava11var() throws Exception {
+		importProjects("eclipse/java11");
+		project = WorkspaceHelper.getProject("java11");
+		assertNoErrors(project);
+
+		handler = new HoverHandler(preferenceManager);
+		//given
+		//Hovers on the 1st var of (var i, var j)
+		String payload = createHoverRequest("src/main/java/foo/bar/Foo.java", 15, 21);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
+		String type = hover.getContents().getLeft().get(0).getRight().getValue();
+		assertEquals("foo.bar.Foo", type);
+		String javadoc = hover.getContents().getLeft().get(1).getLeft();
+		assertEquals("It's a Foo class", javadoc);
+
+		//Hovers on the 2nd var of (var i, var j)
+		payload = createHoverRequest("src/main/java/foo/bar/Foo.java", 15, 28);
+		position = getParams(payload);
+
+		//when
+		hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
+		type = hover.getContents().getLeft().get(0).getRight().getValue();
+		assertEquals("foo.bar.Foo.Bar", type);
+		javadoc = hover.getContents().getLeft().get(1).getLeft();
+		assertEquals("It's a Bar interface", javadoc);
+
+	}
+
+	@Test
 	public void testNoLinkWhenClassContentUnsupported() throws Exception {
 		initPreferenceManager(false);
 		testClassContentSupport("Uses WordUtils");
