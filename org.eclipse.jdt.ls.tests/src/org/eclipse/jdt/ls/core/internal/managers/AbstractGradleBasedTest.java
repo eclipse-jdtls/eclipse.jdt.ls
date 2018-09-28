@@ -26,12 +26,16 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 public abstract class AbstractGradleBasedTest extends AbstractProjectsManagerBasedTest {
 
 	protected IProject importSimpleJavaProject() throws Exception {
-		String name = "simple-gradle";
+		IProject project = importGradleProject("simple-gradle");
+		assertIsJavaProject(project);
+		assertEquals("1.7", getJavaSourceLevel(project));
+		return project;
+	}
+
+	protected IProject importGradleProject(String name) throws Exception {
 		importProjects("gradle/"+name);
 		IProject project = getProject(name);
-		assertIsJavaProject(project);
 		assertIsGradleProject(project);
-		assertEquals("1.7", getJavaSourceLevel(project));
 		return project;
 	}
 
