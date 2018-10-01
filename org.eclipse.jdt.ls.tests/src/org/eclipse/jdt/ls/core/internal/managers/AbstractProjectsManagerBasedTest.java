@@ -245,10 +245,10 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	protected void assertNoErrors(IProject project) {
+	protected void assertNoErrors(IResource resource) {
 		try {
-			List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
-			assertEquals(project.getName() + " has errors: \n"+ResourceUtils.toString(markers), 0, markers.size());
+			List<IMarker> markers = ResourceUtils.getErrorMarkers(resource);
+			assertEquals(resource.getName() + " has errors: \n" + ResourceUtils.toString(markers), 0, markers.size());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
