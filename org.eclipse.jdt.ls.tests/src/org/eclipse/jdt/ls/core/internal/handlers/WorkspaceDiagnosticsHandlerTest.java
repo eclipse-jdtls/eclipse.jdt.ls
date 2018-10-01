@@ -17,22 +17,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -40,6 +36,7 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.Messages;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -250,10 +247,15 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
-		try (InputStream is = pom.getContents(); InputStream nis = new ByteArrayInputStream(change(is).getBytes())) {
-			pom.setContents(nis, IResource.FORCE, null);
-		}
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("1.7", "1.8"));
+
 		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
+		assertNoErrors(project);
+		List<IMarker> warnings = ResourceUtils.getWarningMarkers(project);
+
+		Optional<IMarker> outOfDateWarning = warnings.stream().filter(w -> Messages.ProjectConfigurationUpdateRequired.equals(ResourceUtils.getMessage(w))).findFirst();
+		assertTrue("No out-of-date warning found", outOfDateWarning.isPresent());
+
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
@@ -270,12 +272,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
-	}
-
-	private String change(InputStream is) throws IOException {
-		String str = IOUtils.toString(is);
-		String newStr = str.replaceAll("1.7", "1.8");
-		return newStr;
 	}
 
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {

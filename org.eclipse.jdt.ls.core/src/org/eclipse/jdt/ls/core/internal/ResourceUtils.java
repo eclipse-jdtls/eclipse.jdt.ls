@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -23,8 +25,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.codehaus.plexus.util.IOUtil;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -63,12 +68,23 @@ public final class ResourceUtils {
 		return findMarkers(resource, IMarker.SEVERITY_ERROR);
 	}
 
+	public static List<IMarker> getWarningMarkers(IResource resource) throws CoreException {
+		return findMarkers(resource, IMarker.SEVERITY_WARNING);
+	}
+
 	public static String toString(List<IMarker> markers) {
 		if (markers == null || markers.isEmpty()) {
 			return "";
 		}
 		String s = markers.stream().map(m -> toString(m)).collect(Collectors.joining(", "));
 		return s;
+	}
+
+	public static String getMessage(IMarker marker) {
+		if (marker == null) {
+			return null;
+		}
+		return marker.getAttribute(IMarker.MESSAGE, null);
 	}
 
 	public static String toString(IMarker marker) {
@@ -114,6 +130,34 @@ public final class ResourceUtils {
 			Files.write(content, toFile(fileURI), Charsets.UTF_8);
 		} catch (IOException e) {
 			throw new CoreException(StatusFactory.newErrorStatus("Can not write to " + fileURI, e));
+		}
+	}
+
+	public static String getContent(IFile file) throws CoreException {
+		if (file == null) {
+			return null;
+		}
+		String content;
+		try {
+			content = IOUtil.toString(file.getContents());
+		} catch (IOException e) {
+			throw new CoreException(StatusFactory.newErrorStatus("Can not get " + file.getRawLocation() + " content", e));
+		}
+		return content;
+	}
+
+	/**
+	 * Writes content to file, within the workspace. A change event is emitted.
+	 */
+	public static void setContent(IFile file, String content) throws CoreException {
+		Assert.isNotNull(file, "file can not be null");
+		if (content == null) {
+			content = "";
+		}
+		try (InputStream newContent = new ByteArrayInputStream(content.getBytes())) {
+			file.setContents(newContent, IResource.FORCE, null);
+		} catch (IOException e) {
+			throw new CoreException(StatusFactory.newErrorStatus("Can not write to " + file.getRawLocation(), e));
 		}
 	}
 
