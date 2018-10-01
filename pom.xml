@@ -363,11 +363,13 @@
 	</pluginRepositories>
 	<distributionManagement>
 		<repository>
-			<id>jdt.ls.releases</id>
+			<id>repo.eclipse.org</id>
+			<name>jdt.ls releases</name>
 			<url>https://repo.eclipse.org/content/repositories/jdtls-releases/</url>
 		</repository>
 		<snapshotRepository>
-			<id>jdt.ls.snapshots</id>
+			<id>repo.eclipse.org</id>
+			<name>jdt.ls snapshots</name>
 			<url>https://repo.eclipse.org/content/repositories/jdtls-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
