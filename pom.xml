@@ -1,6 +1,7 @@
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eclipse.jdt.ls</groupId>
 	<artifactId>parent</artifactId>
@@ -64,7 +65,7 @@
 					<configuration>
 						<skip>false</skip>
 						<outputDirectory>${basedir}/lib/</outputDirectory>
-						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with
+						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with 
 							ever daily changing timestamp -->
 						<useBaseVersion>true</useBaseVersion>
 					</configuration>
@@ -360,4 +361,14 @@
 			<url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
 		</pluginRepository>
 	</pluginRepositories>
+	<distributionManagement>
+		<repository>
+			<id>jdt.ls.releases</id>
+			<url>https://repo.eclipse.org/content/repositories/jdtls-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>jdt.ls.snapshots</id>
+			<url>https://repo.eclipse.org/content/repositories/jdtls-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
