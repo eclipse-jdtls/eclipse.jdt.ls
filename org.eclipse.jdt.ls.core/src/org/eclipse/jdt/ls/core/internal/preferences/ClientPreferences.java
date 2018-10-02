@@ -230,4 +230,9 @@ public class ClientPreferences {
 				.stream().filter(k -> kind.startsWith(k)).findAny().isPresent();
 		//@formatter:on
 	}
+
+	public boolean isTypeHierarchyDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getTypeHierarchyCapabilities());
+	}
+
 }

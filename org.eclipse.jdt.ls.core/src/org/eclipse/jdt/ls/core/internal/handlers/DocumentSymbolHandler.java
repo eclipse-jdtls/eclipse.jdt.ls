@@ -18,10 +18,8 @@ import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
 import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
+import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.NAME_RANGE;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ROOT_VARIABLE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,13 +29,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IParent;
-import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -50,11 +48,11 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 
 public class DocumentSymbolHandler {
+
 	private static Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
 	private boolean hierarchicalDocumentSymbolSupported;
@@ -111,7 +109,7 @@ public class DocumentSymbolHandler {
 				SymbolInformation si = new SymbolInformation();
 				String name = JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
 				si.setName(name == null ? element.getElementName() : name);
-				si.setKind(mapKind(element));
+				si.setKind(JDTUtils.getSymbolKind(element));
 				if (element.getParent() != null) {
 					si.setContainerName(element.getParent().getElementName());
 				}
@@ -145,13 +143,13 @@ public class DocumentSymbolHandler {
 		}
 		DocumentSymbol symbol = new DocumentSymbol();
 		try {
-			String name = getName(unit);
+			String name = JDTUtils.getName(unit);
 			symbol.setName(name);
 			symbol.setRange(getRange(unit));
 			symbol.setSelectionRange(getSelectionRange(unit));
-			symbol.setKind(mapKind(unit));
-			symbol.setDeprecated(isDeprecated(unit));
-			symbol.setDetail(getDetail(unit, name));
+			symbol.setKind(JDTUtils.getSymbolKind(unit));
+			symbol.setDeprecated(JDTUtils.isDeprecated(unit));
+			symbol.setDetail(JDTUtils.getDetail(unit));
 			if (unit instanceof IParent) {
 				//@formatter:off
 				IJavaElement[] children = filter(((IParent) unit).getChildren());
@@ -165,36 +163,6 @@ public class DocumentSymbolHandler {
 			Exceptions.sneakyThrow(e);
 		}
 		return symbol;
-	}
-
-	private String getName(IJavaElement element) {
-		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT);
-		return name == null ? element.getElementName() : name;
-	}
-
-	private Range getRange(IJavaElement element) throws JavaModelException {
-		Location location = JDTUtils.toLocation(element, FULL_RANGE);
-		return location == null ? DEFAULT_RANGE : location.getRange();
-	}
-
-	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
-		Location location = JDTUtils.toLocation(element);
-		return location == null ? DEFAULT_RANGE : location.getRange();
-	}
-
-	private boolean isDeprecated(IJavaElement element) throws JavaModelException {
-		if (element instanceof ITypeRoot) {
-			return Flags.isDeprecated(((ITypeRoot) element).findPrimaryType().getFlags());
-		}
-		return false;
-	}
-
-	private String getDetail(IJavaElement element, String name) {
-		String nameWithDetails = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
-		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
-			return nameWithDetails.substring(name.length());
-		}
-		return "";
 	}
 
 	private IJavaElement[] filter(IJavaElement[] elements) {
@@ -228,35 +196,16 @@ public class DocumentSymbolHandler {
 		}
 	}
 
-	public static SymbolKind mapKind(IJavaElement element) {
-		switch (element.getElementType()) {
-		case IJavaElement.ANNOTATION:
-			return SymbolKind.Property; // TODO: find a better mapping
-		case IJavaElement.CLASS_FILE:
-		case IJavaElement.COMPILATION_UNIT:
-			return SymbolKind.File;
-		case IJavaElement.FIELD:
-			return SymbolKind.Field;
-		case IJavaElement.IMPORT_CONTAINER:
-		case IJavaElement.IMPORT_DECLARATION:
-			return SymbolKind.Module;
-		case IJavaElement.INITIALIZER:
-			return SymbolKind.Constructor;
-		case IJavaElement.LOCAL_VARIABLE:
-		case IJavaElement.TYPE_PARAMETER:
-			return SymbolKind.Variable;
-		case IJavaElement.METHOD:
-			return SymbolKind.Method;
-		case IJavaElement.PACKAGE_DECLARATION:
-			return SymbolKind.Package;
-		case IJavaElement.TYPE:
-			try {
-				return (((IType)element).isInterface() ? SymbolKind.Interface : SymbolKind.Class);
-			} catch (JavaModelException e) {
-				return SymbolKind.Class;
-			}
-		}
-		return SymbolKind.String;
+	private Range getRange(IJavaElement element) throws JavaModelException {
+		Assert.isNotNull(element, "element");
+		Location location = FULL_RANGE.toLocation(element);
+		return location == null ? DEFAULT_RANGE : location.getRange();
+	}
+
+	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
+		Assert.isNotNull(element, "element");
+		Location location = NAME_RANGE.toLocation(element);
+		return location == null ? DEFAULT_RANGE : location.getRange();
 	}
 
 }

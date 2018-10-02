@@ -226,6 +226,10 @@ final public class InitHandler {
 		wsCapabilities.setWorkspaceFolders(wsFoldersOptions);
 		capabilities.setWorkspace(wsCapabilities);
 
+		if (!preferenceManager.getClientPreferences().isTypeHierarchyDynamicRegistered()) {
+			capabilities.setTypeHierarchyProvider(Boolean.TRUE);
+		}
+
 		result.setCapabilities(capabilities);
 		return result;
 	}

@@ -92,17 +92,21 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.Registration;
 import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
+import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.TypeHierarchyItem;
+import org.eclipse.lsp4j.TypeHierarchyParams;
 import org.eclipse.lsp4j.Unregistration;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
@@ -522,12 +526,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.definition(position, monitor);
+			return Either.forLeft(handler.definition(position, monitor));
 		});
 	}
 
@@ -535,12 +539,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> typeDefinition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
 		logInfo(">> document/typeDefinition");
 		NavigateToTypeDefinitionHandler handler = new NavigateToTypeDefinitionHandler();
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.typeDefinition(position, monitor);
+			return Either.forLeft(handler.typeDefinition(position, monitor));
 		});
 	}
 
@@ -756,9 +760,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
-		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+		return computeAsyncWithClientProgress((monitor) -> Either.forLeft(new ImplementationsHandler(preferenceManager).findImplementations(position, monitor)));
 	}
 
 	@Override
@@ -771,6 +775,28 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params) {
 		logInfo(">> java/addOverridableMethods");
 		return computeAsync((montior) -> OverrideMethodsHandler.addOverridableMethods(params));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeHierarchy(org.eclipse.lsp4j.TypeHierarchyParams)
+	 */
+	@Override
+	public CompletableFuture<TypeHierarchyItem> typeHierarchy(TypeHierarchyParams params) {
+		logInfo(">> textDocument/typeHierarchy");
+		TypeHierarchyHandler handler = new TypeHierarchyHandler(preferenceManager);
+		return computeAsyncWithClientProgress(monitor -> handler.typeHierarchy(params, monitor));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#resolveTypeHierarchy(org.eclipse.lsp4j.ResolveTypeHierarchyItemParams)
+	 */
+	@Override
+	public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
+		logInfo(">> typeHierarchy/resolve");
+		TypeHierarchyResolveHandler handler = new TypeHierarchyResolveHandler(preferenceManager);
+		return computeAsyncWithClientProgress(monitor -> handler.resolve(params, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

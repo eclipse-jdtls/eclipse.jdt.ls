@@ -144,4 +144,5 @@ public class ClientPreferencesTest {
 		when(text.getDocumentSymbol()).thenReturn(capabilities);
 		assertTrue(prefs.isHierarchicalDocumentSymbolSupported());
 	}
+
 }
