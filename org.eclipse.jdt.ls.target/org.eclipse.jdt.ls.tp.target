@@ -34,7 +34,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.5.0.v20180903-1212"/>
-            <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
+            <repository location="http://download.eclipse.org/lsp4j/updates/releases/0.5.0/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="2.14.0.v20180523-0937"/>
