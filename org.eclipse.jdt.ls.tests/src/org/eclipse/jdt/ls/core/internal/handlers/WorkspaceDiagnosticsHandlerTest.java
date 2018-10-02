@@ -15,6 +15,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -251,7 +253,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("eclipse/wtpproject")).findFirst();
-		assertFalse(projectDiags.isPresent());
+		assertTrue(projectDiags.isPresent());
+		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 0, projectDiags.get().getDiagnostics().size());
 	}
 
 	@Test
@@ -286,6 +289,80 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
+	}
+
+	@Test
+	public void testResetPomDiagnostics() throws Exception {
+		//import project
+		importProjects("maven/multimodule");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		IFile pom = project.getFile("/pom.xml");
+		assertTrue(pom.exists());
+		//@formatter:off
+		String compilerPlugin = "\n<build>\n" +
+				"    <pluginManagement>\n" +
+				"        <plugins>\n" +
+				"            <plugin>\n" +
+				"                <artifactId>maven-compiler-plugin</artifactId>\n" +
+				"                <version>3.8.0</version>\n" +
+				"                <configuration>\n" +
+				"                    <release>9</release>\n" +
+				"                </configuration>\n" +
+				"            </plugin>\n" +
+				"        </plugins>\n" +
+				"    </pluginManagement>\n" +
+				"</build>\n";
+		//@formatter:on
+
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<profiles>", compilerPlugin + "\n<profiles>"));
+
+		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+
+		List<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml") && !p.getDiagnostics().isEmpty()).collect(Collectors.toList());
+		assertEquals("No pom.xml errors were found", 3, pomDiags.size());
+		assertTrue(pomDiags.get(0).getUri(), pomDiags.get(0).getUri().endsWith("childmodule/pom.xml"));
+		assertEquals(1, pomDiags.get(0).getDiagnostics().size());
+		assertEquals(pomDiags.get(0).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
+		assertTrue(pomDiags.get(1).getUri().endsWith("module2/pom.xml"));
+		assertEquals(1, pomDiags.get(1).getDiagnostics().size());
+		assertEquals(pomDiags.get(1).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
+		assertTrue(pomDiags.get(2).getUri().endsWith("module3/pom.xml"));
+		assertEquals(1, pomDiags.get(2).getDiagnostics().size());
+		assertEquals(pomDiags.get(2).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
+
+		reset(connection);
+		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		projectsManager.updateProject(project, true);
+		waitForBackgroundJobs();
+
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		allCalls = captor.getAllValues();
+
+		pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).collect(Collectors.toList());
+		boolean reset1 = false;
+		boolean reset2 = false;
+		boolean reset3 = true;
+		for (PublishDiagnosticsParams diag : pomDiags) {
+			String uri = diag.getUri();
+			if (uri.endsWith("childmodule/pom.xml")) {
+				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 0, diag.getDiagnostics().size());
+				reset1 = true;
+			} else if (uri.endsWith("module2/pom.xml")) {
+				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 0, diag.getDiagnostics().size());
+				reset2 = true;
+			} else if (uri.endsWith("module3/pom.xml")) {//not a active module so was not updated. But this is actually a dubious behavior. Need to change that
+				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 1, diag.getDiagnostics().size());
+				reset3 = false;
+			}
+		}
+		assertTrue("childmodule/pom.xml diagnostics were not reset", reset1);
+		assertTrue("module2/pom.xml diagnostics were not reset", reset2);
+		assertFalse("module3/pom.xml diagnostics were reset", reset3);
+
 	}
 
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {

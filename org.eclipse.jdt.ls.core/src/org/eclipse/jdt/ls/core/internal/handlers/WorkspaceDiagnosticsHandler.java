@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,9 +49,6 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.Messages;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 /**
  * Listens to the resource change events and converts {@link IMarker}s to {@link Diagnostic}s.
@@ -115,29 +111,37 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
 				return false;
 			}
+			IProject project = (IProject) resource;
 			// report problems for other projects
-			IMarker[] markers = resource.findMarkers(null, true, IResource.DEPTH_ONE);
+			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_ONE);
 			Range range = new Range(new Position(0, 0), new Position(0, 0));
 
-			Multimap<String, IMarker> allMarkers = HashMultimap.create(1, markers.length);
+			List<IMarker> projectMarkers = new ArrayList<>(markers.length);
 
-			String uri = JDTUtils.getFileURI(resource);
+			String uri = JDTUtils.getFileURI(project);
+			IFile pom = project.getFile("pom.xml");
+			List<IMarker> pomMarkers = new ArrayList<>();
+			if (pom.exists()) {
+				pomMarkers.addAll(Arrays.asList(pom.findMarkers(null, true, 1)));
+			}
+
 			for (IMarker marker : markers) {
 				if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
 					continue;
 				}
 				if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
-					String message = marker.getAttribute(IMarker.MESSAGE, "");
-					if (Messages.ProjectConfigurationUpdateRequired.equals(message)) {
-						allMarkers.put(uri + "/pom.xml", marker);
-					}
+					pomMarkers.add(marker);
 				} else {
-					allMarkers.put(uri, marker);
+					projectMarkers.add(marker);
 				}
 			}
-			for (Entry<String, Collection<IMarker>> e : allMarkers.asMap().entrySet()) {
-				List<Diagnostic> diagnostics = toDiagnosticArray(range, e.getValue());
-				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(e.getKey()), diagnostics));
+
+			List<Diagnostic> diagnostics = toDiagnosticArray(range, projectMarkers);
+			String clientUri = ResourceUtils.toClientUri(uri);
+			connection.publishDiagnostics(new PublishDiagnosticsParams(clientUri, diagnostics));
+			if (pom.exists()) {
+				diagnostics = toDiagnosticArray(range, pomMarkers);
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
 			}
 			return true;
 		}
