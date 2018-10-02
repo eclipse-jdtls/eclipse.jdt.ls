@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -238,6 +239,19 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.sort(diags, comparator);
 		assertEquals(diags.toString(), 5, diags.size());
 		assertTrue(diags.get(4).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+	}
+
+	@Test
+	public void testMissingNatures() throws Exception {
+		//import project
+		importProjects("eclipse/wtpproject");
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("eclipse/wtpproject")).findFirst();
+		assertFalse(projectDiags.isPresent());
 	}
 
 	@Test

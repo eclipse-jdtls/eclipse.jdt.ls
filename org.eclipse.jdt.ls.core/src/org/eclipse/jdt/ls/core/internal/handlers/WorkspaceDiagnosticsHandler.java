@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.core.internal.resources.CheckMissingNaturesListener;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -122,7 +123,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 
 			String uri = JDTUtils.getFileURI(resource);
 			for (IMarker marker : markers) {
-				if (!marker.exists()) {
+				if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
 					continue;
 				}
 				if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
