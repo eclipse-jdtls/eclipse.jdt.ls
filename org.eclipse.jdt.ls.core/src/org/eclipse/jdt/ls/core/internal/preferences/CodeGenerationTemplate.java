@@ -275,12 +275,12 @@ class CodeTemplatePreferences {
 	/**
 	 * Default value for getter comments
 	 */
-	public static final String CODETEMPLATE_GETTERCOMMENT_DEFAULT = "/**\n" + " * @return the ${bare_field_name}\n" + " */\n";
+	public static final String CODETEMPLATE_GETTERCOMMENT_DEFAULT = "/**\n" + " * @return the ${bare_field_name}\n" + " */";
 
 	/**
 	 * Default value for setter comments
 	 */
-	public static final String CODETEMPLATE_SETTERCOMMENT_DEFAULT = "/**\n" + " * @param ${param} the ${bare_field_name} to set\n" + " */\n";
+	public static final String CODETEMPLATE_SETTERCOMMENT_DEFAULT = "/**\n" + " * @param ${param} the ${bare_field_name} to set\n" + " */";
 
 	/**
 	 * Default value for getter method body content

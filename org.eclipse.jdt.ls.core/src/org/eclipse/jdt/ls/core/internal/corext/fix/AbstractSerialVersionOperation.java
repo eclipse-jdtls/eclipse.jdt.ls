@@ -27,12 +27,12 @@ import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.manipulation.CodeGeneration;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
 import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGeneration;
 import org.eclipse.text.edits.TextEditGroup;
 
 /**
