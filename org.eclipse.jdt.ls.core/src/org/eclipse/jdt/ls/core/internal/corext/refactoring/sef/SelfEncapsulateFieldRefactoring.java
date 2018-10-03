@@ -67,6 +67,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CodeGeneration;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.EncapsulateFieldDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
@@ -75,6 +76,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
+import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -90,8 +92,6 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.CodeGeneration;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.VariableDeclarationRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
@@ -666,7 +666,6 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 			String string = CodeGeneration.getSetterComment(fField.getCompilationUnit(), getTypeName(field.getParent()), fSetterName, fField.getElementName(), ASTNodes.asString(type), fArgName, StubUtility.getBaseName(fField),
 					lineDelimiter);
 			if (string != null) {
-				string = string.substring(0, string.lastIndexOf(lineDelimiter));
 				Javadoc javadoc = (Javadoc) fRewriter.createStringPlaceholder(string, ASTNode.JAVADOC);
 				result.setJavadoc(javadoc);
 			}
@@ -699,7 +698,6 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 		if (fGenerateJavadoc) {
 			String string = CodeGeneration.getGetterComment(fField.getCompilationUnit(), getTypeName(field.getParent()), fGetterName, fField.getElementName(), ASTNodes.asString(type), StubUtility.getBaseName(fField), lineDelimiter);
 			if (string != null) {
-				string = string.substring(0, string.lastIndexOf(lineDelimiter));
 				Javadoc javadoc = (Javadoc) fRewriter.createStringPlaceholder(string, ASTNode.JAVADOC);
 				result.setJavadoc(javadoc);
 			}
