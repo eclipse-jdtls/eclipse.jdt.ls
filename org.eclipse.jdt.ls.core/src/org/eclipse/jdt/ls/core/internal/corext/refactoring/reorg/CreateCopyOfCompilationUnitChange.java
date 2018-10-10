@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -39,7 +40,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.IRefactoringSearchReq
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngine;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngine2;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.nls.changes.CreateTextFileChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.TypeOccurrenceCollector;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementResourceMapping;

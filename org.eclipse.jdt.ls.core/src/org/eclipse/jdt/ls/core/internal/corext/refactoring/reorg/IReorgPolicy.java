@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArguments;
+import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IQualifiedNameUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.ltk.core.refactoring.Change;

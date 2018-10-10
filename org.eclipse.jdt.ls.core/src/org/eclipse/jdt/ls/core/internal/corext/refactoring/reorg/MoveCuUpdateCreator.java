@@ -46,6 +46,7 @@ import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeReferenceMatch;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -54,7 +55,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.CollectingSearchReque
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringScopeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngine;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.ReferencesInBinaryContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ReferenceFinderUtil;
 import org.eclipse.jdt.ls.core.internal.corext.util.SearchUtils;
