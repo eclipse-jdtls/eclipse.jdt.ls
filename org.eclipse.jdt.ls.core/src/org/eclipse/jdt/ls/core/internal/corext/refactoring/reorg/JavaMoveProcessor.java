@@ -26,7 +26,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.JavaRefactoringArguments;
+import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DynamicValidationStateChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
