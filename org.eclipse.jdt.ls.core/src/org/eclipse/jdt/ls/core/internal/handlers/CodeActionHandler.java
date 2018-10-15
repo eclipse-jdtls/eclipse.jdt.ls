@@ -49,9 +49,6 @@ import org.eclipse.ltk.core.refactoring.TextChange;
 
 public class CodeActionHandler {
 
-	/**
-	 *
-	 */
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
@@ -107,7 +104,6 @@ public class CodeActionHandler {
 		String name = proposal.getName();
 		ICompilationUnit unit = proposal.getCompilationUnit();
 		Command command = new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
-
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());

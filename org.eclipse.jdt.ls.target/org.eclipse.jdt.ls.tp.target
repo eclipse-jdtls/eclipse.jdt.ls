@@ -33,12 +33,13 @@
             <repository location="http://download.eclipse.org/eclipse/updates/4.10-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.5.0.v20180903-1212"/>
-            <repository location="http://download.eclipse.org/lsp4j/updates/releases/0.5.0/"/>
+           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
+           <repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastStableBuild/artifact/build/p2-repository/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.xtend.sdk.feature.group" version="2.14.0.v20180523-0937"/>
-            <repository location="http://download.eclipse.org/releases/photon/"/>
+            <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
+            <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
+            <repository location="http://download.eclipse.org/releases/2018-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.feature.feature.group" version="1.5.0.201805160042"/>
