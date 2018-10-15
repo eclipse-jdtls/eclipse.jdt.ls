@@ -35,7 +35,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Before
 	public void setUp() throws Exception {
-		handler = new BuildWorkspaceHandler(javaClient, projectsManager, new WorkspaceDiagnosticsHandler(javaClient, projectsManager));
+		handler = new BuildWorkspaceHandler(javaClient, projectsManager);
 		importProjects("maven/salut2");
 		file = linkFilesToDefaultProject("singlefile/Single.java");
 	}

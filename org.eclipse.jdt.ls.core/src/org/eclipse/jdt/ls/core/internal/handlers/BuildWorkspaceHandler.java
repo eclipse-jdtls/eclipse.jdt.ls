@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,12 +41,10 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 public class BuildWorkspaceHandler {
 	private JavaClientConnection connection;
 	private final ProjectsManager projectsManager;
-	private final WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 
-	public BuildWorkspaceHandler(JavaClientConnection connection, ProjectsManager projectsManager, WorkspaceDiagnosticsHandler workspaceDiagnosticHandler) {
+	public BuildWorkspaceHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
 		this.connection = connection;
 		this.projectsManager = projectsManager;
-		this.workspaceDiagnosticsHandler = workspaceDiagnosticHandler;
 	}
 
 	public BuildWorkspaceStatus buildWorkspace(boolean forceReBuild, IProgressMonitor monitor) {
@@ -61,8 +60,14 @@ public class BuildWorkspaceHandler {
 					connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 				}
 			}
-			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.FULL_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
-			List<IMarker> problemMarkers = workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+			ResourcesPlugin.getWorkspace().build(forceReBuild ? IncrementalProjectBuilder.CLEAN_BUILD : IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+			List<IMarker> problemMarkers = new ArrayList<>();
+			for (IProject project : projects) {
+				List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+				if (markers != null) {
+					problemMarkers.addAll(markers);
+				}
+			}
 			List<String> errors = problemMarkers.stream().filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).map(e -> convertMarker(e)).collect(Collectors.toList());
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;
