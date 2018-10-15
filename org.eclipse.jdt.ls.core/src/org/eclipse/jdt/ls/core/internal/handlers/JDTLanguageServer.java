@@ -59,6 +59,8 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensOptions;
@@ -185,7 +187,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION);
+			registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
 		}
 		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
@@ -255,6 +257,21 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
 					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
 		}
+		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
+			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
+		}
+	}
+
+	private CodeActionOptions getCodeActionOptions() {
+		String[] kinds = { CodeActionKind.QuickFix, CodeActionKind.Refactor, CodeActionKind.RefactorExtract, CodeActionKind.RefactorInline, CodeActionKind.RefactorRewrite, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports };
+		List<String> codeActionKinds = new ArrayList<>();
+		for (String kind : kinds) {
+			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
+				codeActionKinds.add(kind);
+			}
+		}
+		CodeActionOptions options = new CodeActionOptions(codeActionKinds);
+		return options;
 	}
 
 	/* (non-Javadoc)
