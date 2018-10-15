@@ -114,35 +114,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			IProject project = (IProject) resource;
 			// report problems for other projects
 			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_ONE);
-			Range range = new Range(new Position(0, 0), new Position(0, 0));
-
-			List<IMarker> projectMarkers = new ArrayList<>(markers.length);
-
-			String uri = JDTUtils.getFileURI(project);
-			IFile pom = project.getFile("pom.xml");
-			List<IMarker> pomMarkers = new ArrayList<>();
-			if (pom.exists()) {
-				pomMarkers.addAll(Arrays.asList(pom.findMarkers(null, true, 1)));
-			}
-
-			for (IMarker marker : markers) {
-				if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
-					continue;
-				}
-				if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
-					pomMarkers.add(marker);
-				} else {
-					projectMarkers.add(marker);
-				}
-			}
-
-			List<Diagnostic> diagnostics = toDiagnosticArray(range, projectMarkers);
-			String clientUri = ResourceUtils.toClientUri(uri);
-			connection.publishDiagnostics(new PublishDiagnosticsParams(clientUri, diagnostics));
-			if (pom.exists()) {
-				diagnostics = toDiagnosticArray(range, pomMarkers);
-				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
-			}
+			publishMarkers(project, markers);
 			return true;
 		}
 		// No marker changes continue to visit
@@ -150,7 +122,6 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			return false;
 		}
 		IFile file = (IFile) resource;
-		String uri = JDTUtils.getFileURI(resource);
 		IDocument document = null;
 		IMarker[] markers = null;
 		// Check if it is a Java ...
@@ -168,9 +139,38 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			document = JsonRpcHelpers.toDocument(file);
 		}
 		if (document != null) {
+			String uri = JDTUtils.getFileURI(resource);
 			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers)));
 		}
 		return false;
+	}
+
+	private void publishMarkers(IProject project, IMarker[] markers) throws CoreException {
+		Range range = new Range(new Position(0, 0), new Position(0, 0));
+
+		List<IMarker> projectMarkers = new ArrayList<>(markers.length);
+
+		String uri = JDTUtils.getFileURI(project);
+		IFile pom = project.getFile("pom.xml");
+		List<IMarker> pomMarkers = new ArrayList<>();
+		for (IMarker marker : markers) {
+			if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+				continue;
+			}
+			if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
+				pomMarkers.add(marker);
+			} else {
+				projectMarkers.add(marker);
+			}
+		}
+		List<Diagnostic> diagnostics = toDiagnosticArray(range, projectMarkers);
+		String clientUri = ResourceUtils.toClientUri(uri);
+		connection.publishDiagnostics(new PublishDiagnosticsParams(clientUri, diagnostics));
+		if (pom.exists()) {
+			pomMarkers.addAll(Arrays.asList(pom.findMarkers(null, true, 1)));
+			diagnostics = toDiagnosticArray(range, pomMarkers);
+			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
+		}
 	}
 
 	public List<IMarker> publishDiagnostics(IProgressMonitor monitor) throws CoreException {
@@ -186,8 +186,17 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (monitor != null && monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
+			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(project)) {
+				continue;
+			}
 			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE)));
 			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.TASK_MARKER, true, IResource.DEPTH_INFINITE)));
+			IMarker[] projectMarkers = project.findMarkers(null, true, IResource.DEPTH_ONE);
+			for (IMarker marker : projectMarkers) {
+				if (marker.exists() && !CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+					markers.add(marker);
+				}
+			}
 		}
 		return markers;
 	}
@@ -196,15 +205,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		Map<IResource, List<IMarker>> map = markers.stream().collect(Collectors.groupingBy(IMarker::getResource));
 		for (Map.Entry<IResource, List<IMarker>> entry : map.entrySet()) {
 			IResource resource = entry.getKey();
-			// ignore problems caused by standalone files
-			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
-				continue;
-			}
 			if (resource instanceof IProject) {
-				String uri = JDTUtils.getFileURI(resource);
-				Range range = new Range(new Position(0, 0), new Position(0, 0));
-				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, entry.getValue());
-				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+				try {
+					IProject project = (IProject) resource;
+					publishMarkers(project, entry.getValue().toArray(new IMarker[0]));
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 				continue;
 			}
 			IFile file = resource.getAdapter(IFile.class);
@@ -223,7 +230,6 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			} else if (projectsManager.isBuildFile(file)) {
 				document = JsonRpcHelpers.toDocument(file);
 			}
-
 			if (document != null) {
 				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, entry.getValue().toArray(new IMarker[0]));
 				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));

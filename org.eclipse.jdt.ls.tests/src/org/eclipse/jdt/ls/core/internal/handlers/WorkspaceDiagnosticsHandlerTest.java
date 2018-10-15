@@ -19,6 +19,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -82,7 +84,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		when(d.getLineOffset(9)).thenReturn(1000);
 		when(d.getLineOffset(99)).thenReturn(10000);
 
-		List<Diagnostic> diags = handler.toDiagnosticsArray(d, new IMarker[]{m1, m2, m3});
+		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[]{m1, m2, m3});
 		assertEquals(3, diags.size());
 
 		Range r;
@@ -166,7 +168,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IDocument d = mock(IDocument.class);
 		when(d.getLineOffset(1)).thenReturn(90);
 
-		List<Diagnostic> diags = handler.toDiagnosticsArray(d, new IMarker[]{m1, null});
+		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[]{m1, null});
 		assertEquals(1, diags.size());
 
 		Range r;
@@ -289,6 +291,72 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
+	}
+
+	@Test
+	public void testMissingDependencies() throws Exception {
+		importProjects("maven/salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IFile pom = project.getFile("/pom.xml");
+		assertTrue(pom.exists());
+		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
+		assertNoErrors(project);
+		// edit pom.xml
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.5</version>", "<version>3.5xx</version>"));
+		waitForBackgroundJobs();
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+		testDiagnostic(allCalls);
+		// update project
+		reset(connection);
+		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		projectsManager.updateProject(project, true);
+		waitForBackgroundJobs();
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		testDiagnostic(allCalls);
+		// build workspace
+		reset(connection);
+		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		BuildWorkspaceHandler bwh = new BuildWorkspaceHandler(connection, projectsManager);
+		bwh.buildWorkspace(true, new NullProgressMonitor());
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		testDiagnostic(allCalls);
+		// publish diagnostics
+		reset(connection);
+		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		handler.publishDiagnostics(new NullProgressMonitor());
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		testDiagnostic(allCalls);
+	}
+
+	private void testDiagnostic(List<PublishDiagnosticsParams> allCalls) {
+		List<Diagnostic> projectDiags = new ArrayList<>();
+		List<Diagnostic> pomDiags = new ArrayList<>();
+		for (PublishDiagnosticsParams diag : allCalls) {
+			if (diag.getUri().endsWith("maven/salut")) {
+				projectDiags.addAll(diag.getDiagnostics());
+			} else if (diag.getUri().endsWith("pom.xml")) {
+				pomDiags.addAll(diag.getDiagnostics());
+			}
+		}
+		assertTrue("No maven/salut errors were found", projectDiags.size() > 0);
+		Optional<Diagnostic> projectDiag = projectDiags.stream().filter(p -> p.getMessage().contains("references non existing library")).findFirst();
+		assertTrue("No 'references non existing library' diagnostic", projectDiag.isPresent());
+		assertEquals(projectDiag.get().getSeverity(), DiagnosticSeverity.Error);
+		assertTrue("No pom.xml errors were found", pomDiags.size() > 0);
+		Optional<Diagnostic> pomDiag = pomDiags.stream().filter(p -> p.getMessage().startsWith("Missing artifact")).findFirst();
+		assertTrue("No 'missing artifact' diagnostic", pomDiag.isPresent());
+		assertTrue(pomDiag.get().getMessage().startsWith("Missing artifact"));
+		assertEquals(pomDiag.get().getSeverity(), DiagnosticSeverity.Error);
 	}
 
 	@Test
