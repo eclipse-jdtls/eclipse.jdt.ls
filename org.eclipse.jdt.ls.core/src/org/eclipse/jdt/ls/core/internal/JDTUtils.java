@@ -772,8 +772,7 @@ public final class JDTUtils {
 	}
 
 	public static boolean isHiddenGeneratedElement(IJavaElement element) {
-		// generated elements are tagged with javax.annotation.Generated and
-		// they need to be filtered out
+		// generated elements are annotated with @Generated and they need to be filtered out
 		if (element instanceof IAnnotatable) {
 			try {
 				IAnnotation[] annotations = ((IAnnotatable) element).getAnnotations();
@@ -792,7 +791,7 @@ public final class JDTUtils {
 	}
 
 	private static boolean isSilencedGeneratedAnnotation(IAnnotation annotation) throws JavaModelException {
-		if ("javax.annotation.Generated".equals(annotation.getElementName())) {
+		if ("javax.annotation.Generated".equals(annotation.getElementName()) || "javax.annotation.processing.Generated".equals(annotation.getElementName())) {
 			IMemberValuePair[] memberValuePairs = annotation.getMemberValuePairs();
 			for (IMemberValuePair m : memberValuePairs) {
 				if ("value".equals(m.getMemberName())

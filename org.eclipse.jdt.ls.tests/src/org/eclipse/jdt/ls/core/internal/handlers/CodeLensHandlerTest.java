@@ -157,6 +157,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testGetCodeLensSymbolsForClass() throws Exception {
 		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "true"));
 		Mockito.reset(preferenceManager);
@@ -168,7 +169,11 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = codeLensParams.getTextDocument().getUri();
 		assertFalse(uri.isEmpty());
 		List<CodeLens> lenses = handler.getCodeLensSymbols(uri, monitor);
-		assertEquals("Found " + lenses, 3, lenses.size());
+		assertEquals("Found " + lenses, 2, lenses.size());
+		List<Object> data = (List<Object>) lenses.get(0).getData();
+		assertTrue("Unexpected type " + data, data.contains(CodeLensHandler.REFERENCES_TYPE));
+		data = (List<Object>) lenses.get(1).getData();
+		assertTrue("Unexpected type " + data, data.contains(CodeLensHandler.IMPLEMENTATION_TYPE));
 	}
 
 	@Test
