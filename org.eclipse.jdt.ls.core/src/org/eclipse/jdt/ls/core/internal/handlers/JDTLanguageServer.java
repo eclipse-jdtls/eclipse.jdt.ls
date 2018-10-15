@@ -215,15 +215,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 
 		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
 		workspaceDiagnosticsHandler.addResourceChangeListener();
-
-		computeAsync((monitor) -> {
-			try {
-				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
-			}
-			return new Object();
-		});
 	}
 
 	/**
@@ -710,7 +701,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
 		logInfo(">> java/buildWorkspace (" + (forceReBuild ? "full)" : "incremental)"));
-		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm, workspaceDiagnosticsHandler);
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
 		return computeAsync((monitor) -> handler.buildWorkspace(forceReBuild, monitor));
 	}
 
