@@ -669,7 +669,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 */
 	@Override
 	public CompletableFuture<List<TextEdit>> willSaveWaitUntil(WillSaveTextDocumentParams params) {
-		logInfo(">> document/willSaveWailUntil");
+		logInfo(">> document/willSaveWaitUntil");
 		SaveActionHandler handler = new SaveActionHandler(preferenceManager);
 		return computeAsync((monitor) -> handler.willSaveWaitUntil(params, monitor));
 	}
