@@ -241,8 +241,14 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 			return diff;
 		};
 		Collections.sort(diags, comparator);
-		assertEquals(diags.toString(), 5, diags.size());
-		assertTrue(diags.get(4).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+		assertEquals(diags.toString(), 2, diags.size());
+		assertTrue(diags.get(1).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
+		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
+		diags = pomDiags.get().getDiagnostics();
+		Collections.sort(diags, comparator);
+		assertEquals(diags.toString(), 3, diags.size());
+		assertTrue(diags.get(2).getMessage().startsWith("Project build error: "));
 	}
 
 	@Test
@@ -356,6 +362,10 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<Diagnostic> pomDiag = pomDiags.stream().filter(p -> p.getMessage().startsWith("Missing artifact")).findFirst();
 		assertTrue("No 'missing artifact' diagnostic", pomDiag.isPresent());
 		assertTrue(pomDiag.get().getMessage().startsWith("Missing artifact"));
+		assertEquals(pomDiag.get().getRange().getStart().getLine(), 19);
+		assertEquals(pomDiag.get().getRange().getStart().getCharacter(), 3);
+		assertEquals(pomDiag.get().getRange().getEnd().getLine(), 19);
+		assertEquals(pomDiag.get().getRange().getEnd().getCharacter(), 14);
 		assertEquals(pomDiag.get().getSeverity(), DiagnosticSeverity.Error);
 	}
 
