@@ -113,7 +113,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			}
 			IProject project = (IProject) resource;
 			// report problems for other projects
-			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_ONE);
+			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_ZERO);
 			publishMarkers(project, markers);
 			return true;
 		}
@@ -167,8 +167,10 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		String clientUri = ResourceUtils.toClientUri(uri);
 		connection.publishDiagnostics(new PublishDiagnosticsParams(clientUri, diagnostics));
 		if (pom.exists()) {
-			pomMarkers.addAll(Arrays.asList(pom.findMarkers(null, true, 1)));
-			diagnostics = toDiagnosticArray(range, pomMarkers);
+			IDocument document = JsonRpcHelpers.toDocument(pom);
+			diagnostics = toDiagnosticsArray(document, pom.findMarkers(null, true, IResource.DEPTH_ZERO));
+			List<Diagnostic> diagnosicts2 = toDiagnosticArray(range, pomMarkers);
+			diagnostics.addAll(diagnosicts2);
 			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
 		}
 	}
@@ -189,11 +191,17 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(project)) {
 				continue;
 			}
-			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, true, IResource.DEPTH_INFINITE)));
-			markers.addAll(Arrays.asList(project.findMarkers(IJavaModelMarker.TASK_MARKER, true, IResource.DEPTH_INFINITE)));
-			IMarker[] projectMarkers = project.findMarkers(null, true, IResource.DEPTH_ONE);
-			for (IMarker marker : projectMarkers) {
-				if (marker.exists() && !CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+			IMarker[] allMarkers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
+			for (IMarker marker : allMarkers) {
+				if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+					continue;
+				}
+				if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(marker.getType()) || IJavaModelMarker.TASK_MARKER.equals(marker.getType())) {
+					markers.add(marker);
+					continue;
+				}
+				IResource resource = marker.getResource();
+				if (project.equals(resource) || projectsManager.isBuildFile(resource)) {
 					markers.add(marker);
 				}
 			}
