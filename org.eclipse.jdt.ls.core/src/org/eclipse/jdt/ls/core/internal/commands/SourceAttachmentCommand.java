@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ClasspathContainerInitializer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathAttribute;
@@ -52,8 +53,10 @@ public class SourceAttachmentCommand {
 			IPackageFragmentRoot root = getPackageFragmentRoot(request.classFileUri);
 			return resolveSourceAttachment(root, monitor);
 		} catch (JsonSyntaxException ex1) {
+			JavaLanguageServerPlugin.logException("Converting the source attachment parameter ", ex1);
 			return new SourceAttachmentResult("Invalid parameter to resolve source attachment.", null);
-		} catch (Exception ex2) {
+		} catch (CoreException ex2) {
+			JavaLanguageServerPlugin.logException("Resolving the source attachment ", ex2);
 			return new SourceAttachmentResult(ex2.getMessage(), null);
 		}
 	}
@@ -68,8 +71,10 @@ public class SourceAttachmentCommand {
 			IPackageFragmentRoot root = getPackageFragmentRoot(request.classFileUri);
 			return updateSourceAttachment(root, request.attributes, monitor);
 		} catch (JsonSyntaxException ex1) {
+			JavaLanguageServerPlugin.logException("Converting the source attachment parameter ", ex1);
 			return new SourceAttachmentResult("Invalid parameter to update source attachment.", null);
-		} catch (Exception ex2) {
+		} catch (CoreException ex2) {
+			JavaLanguageServerPlugin.logException("Updating the source attachment ", ex2);
 			return new SourceAttachmentResult(ex2.getMessage(), null);
 		}
 	}
@@ -78,7 +83,7 @@ public class SourceAttachmentCommand {
 		ClasspathEntryWrapper entryWrapper = null;
 		try {
 			entryWrapper = getClasspathEntry(root);
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			return new SourceAttachmentResult(e.getMessage(), null);
 		}
 
@@ -123,15 +128,15 @@ public class SourceAttachmentCommand {
 		return new SourceAttachmentResult(null, null);
 	}
 
-	private static IPackageFragmentRoot getPackageFragmentRoot(String classFileUri) throws Exception {
+	private static IPackageFragmentRoot getPackageFragmentRoot(String classFileUri) throws CoreException {
 		IClassFile classFile = JDTUtils.resolveClassFile(classFileUri);
 		if (classFile == null) {
-			throw new Exception("Cannot find the class file " + classFileUri);
+			throw constructCoreException("Cannot find the class file " + classFileUri);
 		}
 
 		IPackageFragmentRoot root = getPackageFragmentRoot(classFile);
 		if (root == null) {
-			throw new Exception("Cannot find the JAR containing this class file " + classFileUri);
+			throw constructCoreException("Cannot find the JAR containing this class file " + classFileUri);
 		}
 
 		return root;
@@ -158,7 +163,7 @@ public class SourceAttachmentCommand {
 		return null;
 	}
 
-	private static ClasspathEntryWrapper getClasspathEntry(IPackageFragmentRoot root) throws Exception {
+	private static ClasspathEntryWrapper getClasspathEntry(IPackageFragmentRoot root) throws CoreException {
 		IClasspathEntry entry = null;
 		IPath containerPath = null;
 		boolean canEditEncoding = true;
@@ -166,12 +171,12 @@ public class SourceAttachmentCommand {
 			entry = JavaModelUtil.getClasspathEntry(root);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("getting ClasspathEntry from the PackageFragmentRoot ", e);
-			throw new Exception(Messages.format("Cannot find the ClasspathEntry for the JAR '{0}' of this class file", BasicElementLabels.getPathLabel(root.getPath(), true)));
+			throw constructCoreException(Messages.format("Cannot find the ClasspathEntry for the JAR '{0}' of this class file", BasicElementLabels.getPathLabel(root.getPath(), true)), e);
 		}
 
 		try {
 			if (root.getKind() != IPackageFragmentRoot.K_BINARY) {
-				throw new Exception(Messages.format("The JAR '{0}' of this class file contains non binary files which does not support the attachment.", BasicElementLabels.getPathLabel(root.getPath(), true)));
+				throw constructCoreException(Messages.format("The JAR '{0}' of this class file contains non binary files which does not support the attachment.", BasicElementLabels.getPathLabel(root.getPath(), true)));
 			}
 
 			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
@@ -180,29 +185,29 @@ public class SourceAttachmentCommand {
 				ClasspathContainerInitializer initializer = JavaCore.getClasspathContainerInitializer(containerPath.segment(0));
 				IClasspathContainer container = JavaCore.getClasspathContainer(containerPath, javaProject);
 				if (initializer == null || container == null) {
-					throw new Exception(Messages.format("The JAR of this class file belongs to container '{0}' can not be configured.", BasicElementLabels.getPathLabel(containerPath, false)));
+					throw constructCoreException(Messages.format("The JAR of this class file belongs to container '{0}' can not be configured.", BasicElementLabels.getPathLabel(containerPath, false)));
 				}
 
 				String containerName = container.getDescription();
 				IStatus status = initializer.getSourceAttachmentStatus(containerPath, javaProject);
 				if (status.getCode() == ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED) {
-					throw new Exception(Messages.format("The JAR of this class file belongs to container '{0}' which does not support the attachment of sources to its entries.", containerName));
+					throw constructCoreException(Messages.format("The JAR of this class file belongs to container '{0}' which does not support the attachment of sources to its entries.", containerName));
 				}
 
 				if (status.getCode() == ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY) {
-					throw new Exception(Messages.format("The JAR of this class file belongs to container '{0}' which does not allow modifications to source attachments on its entries.", containerName));
+					throw constructCoreException(Messages.format("The JAR of this class file belongs to container '{0}' which does not allow modifications to source attachments on its entries.", containerName));
 				}
 
 				IStatus attributeStatus = initializer.getAttributeStatus(containerPath, javaProject, IClasspathAttribute.SOURCE_ATTACHMENT_ENCODING);
 				canEditEncoding = !(attributeStatus.getCode() == ClasspathContainerInitializer.ATTRIBUTE_NOT_SUPPORTED || attributeStatus.getCode() == ClasspathContainerInitializer.ATTRIBUTE_READ_ONLY);
 				entry = JavaModelUtil.findEntryInContainer(container, root.getPath());
 				if (entry == null) {
-					throw new Exception(Messages.format("Cannot find the ClasspathEntry from container '{0}'.", containerName));
+					throw constructCoreException(Messages.format("Cannot find the ClasspathEntry from container '{0}'.", containerName));
 				}
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Exception getting the ClasspathEntry for the packageFragmentRoot ", e);
-			throw new Exception(Messages.format("Cannot find the ClasspathEntry for the JAR '{0}' of this class file", BasicElementLabels.getPathLabel(root.getPath(), true)));
+			throw constructCoreException(Messages.format("Cannot find the ClasspathEntry for the JAR '{0}' of this class file", BasicElementLabels.getPathLabel(root.getPath(), true)), e);
 		}
 
 		return new ClasspathEntryWrapper(entry, containerPath, canEditEncoding);
@@ -278,6 +283,14 @@ public class SourceAttachmentCommand {
 		}
 
 		return newElements;
+	}
+
+	private static CoreException constructCoreException(String message) {
+		return new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, message));
+	}
+
+	private static CoreException constructCoreException(String message, Exception original) {
+		return new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, message, original));
 	}
 
 	private static class UpdatedClasspathContainer implements IClasspathContainer {
