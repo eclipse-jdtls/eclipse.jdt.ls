@@ -86,6 +86,21 @@ public class SourceAttachmentCommandTest extends AbstractProjectsManagerBasedTes
 	}
 
 	@Test
+	public void testUpdateSourceAttachment_EmptySourceAttachmentPath() throws Exception {
+		SourceAttachmentAttribute attributes = new SourceAttachmentAttribute(null, null, "UTF-8");
+		SourceAttachmentRequest request = new SourceAttachmentRequest(classFileUri, attributes);
+		String arguments = new Gson().toJson(request, SourceAttachmentRequest.class);
+		SourceAttachmentResult updateResult = SourceAttachmentCommand.updateSourceAttachment(Arrays.asList(arguments), new NullProgressMonitor());
+		assertNotNull(updateResult);
+		assertNull(updateResult.errorMessage);
+
+		// Verify no source is attached to the classfile.
+		IClassFile classfile = JDTUtils.resolveClassFile(classFileUri);
+		IBuffer buffer = classfile.getBuffer();
+		assertNull(buffer);
+	}
+
+	@Test
 	public void testUpdateSourceAttachmentCall() throws Exception {
 		IResource source = project.findMember("foo-sources.jar");
 		assertNotNull(source);

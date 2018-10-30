@@ -209,11 +209,8 @@ public class SourceAttachmentCommand {
 	}
 
 	private static IClasspathEntry newClasspathEntry(IClasspathEntry entry, SourceAttachmentAttribute changedAttributes) {
-		IPath sourceAttachmentPath = entry.getSourceAttachmentPath();
-		if (StringUtils.isNotBlank(changedAttributes.sourceAttachmentPath)) {
-			sourceAttachmentPath = new Path(changedAttributes.sourceAttachmentPath);
-		}
-
+		IPath filePath = StringUtils.isNotBlank(changedAttributes.sourceAttachmentPath) ? Path.fromOSString(changedAttributes.sourceAttachmentPath).makeAbsolute() : null;
+		IPath sourceAttachmentPath = (filePath != null && filePath.segmentCount() == 0) ? null : filePath;
 		IClasspathAttribute newSourceEncodingAttribute = StringUtils.isNotBlank(changedAttributes.sourceAttachmentEncoding)
 				? JavaCore.newClasspathAttribute(IClasspathAttribute.SOURCE_ATTACHMENT_ENCODING, changedAttributes.sourceAttachmentEncoding)
 				: null;
