@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.ui.javaeditor.HighlightedPositionCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -63,7 +64,7 @@ public class SemanticHighlightingService {
 		//@formatter:off
 		final AtomicInteger i = new AtomicInteger();
 		Stream.of(SemanticHighlightings.getSemanticHighlightings())
-			.map(SemanticHighlighting::getScopes)
+			.map(SemanticHighlightingLS::getScopes)
 			.forEach(scopes -> BUILDER.put(i.getAndIncrement(), scopes));
 		//@formatter:on
 	}
@@ -114,14 +115,14 @@ public class SemanticHighlightingService {
 		public final IDocument oldState;
 		public final IDocument newState;
 		public final DocumentEvent event;
-		public final List<HighlightedPosition> oldPositions;
-		public final List<HighlightedPosition> newPositions;
+		public final List<HighlightedPositionCore> oldPositions;
+		public final List<HighlightedPositionCore> newPositions;
 
 		public HighlightedPositionDiffContext(
 				IDocument oldState,
 				DocumentEvent event,
-				Iterable<? extends HighlightedPosition> oldPositions,
-				Iterable<? extends HighlightedPosition> newPositions) {
+				Iterable<? extends HighlightedPositionCore> oldPositions,
+				Iterable<? extends HighlightedPositionCore> newPositions) {
 
 			this.oldState = oldState;
 			this.newState = event.fDocument;
@@ -135,7 +136,7 @@ public class SemanticHighlightingService {
 
 	private final Supplier<Boolean> enabled;
 	private final JavaClientConnection connection;
-	private final Map<String, List<HighlightedPosition>> cache;
+	private final Map<String, List<HighlightedPositionCore>> cache;
 	private CoreASTProvider astProvider;
 	private SemanticHighlightingDiffCalculator diffCalculator;
 
@@ -163,7 +164,7 @@ public class SemanticHighlightingService {
 
 	public List<Position> install(ICompilationUnit unit) throws JavaModelException, BadPositionCategoryException {
 		if (enabled.get()) {
-			List<HighlightedPosition> positions = calculateHighlightedPositions(unit, false);
+			List<HighlightedPositionCore> positions = calculateHighlightedPositions(unit, false);
 			String uri = JDTUtils.getFileURI(unit.getResource());
 			this.cache.put(uri, positions);
 			if (!positions.isEmpty()) {
@@ -177,11 +178,11 @@ public class SemanticHighlightingService {
 		return emptyList();
 	}
 
-	public List<HighlightedPosition> calculateHighlightedPositions(ICompilationUnit unit, boolean cache) throws JavaModelException, BadPositionCategoryException {
+	public List<HighlightedPositionCore> calculateHighlightedPositions(ICompilationUnit unit, boolean cache) throws JavaModelException, BadPositionCategoryException {
 		if (enabled.get()) {
 			IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 			ASTNode ast = getASTNode(unit);
-			List<HighlightedPosition> positions = calculateHighlightedPositions(document, ast);
+			List<HighlightedPositionCore> positions = calculateHighlightedPositions(document, ast);
 			if (cache) {
 				String uri = JDTUtils.getFileURI(unit.getResource());
 				this.cache.put(uri, positions);
@@ -191,7 +192,7 @@ public class SemanticHighlightingService {
 		return emptyList();
 	}
 
-	public List<HighlightedPosition> getHighlightedPositions(String uri) {
+	public List<HighlightedPositionCore> getHighlightedPositions(String uri) {
 		return ImmutableList.copyOf(cache.getOrDefault(uri, emptyList()));
 	}
 
@@ -207,7 +208,7 @@ public class SemanticHighlightingService {
 		}
 	}
 
-	protected List<HighlightedPosition> calculateHighlightedPositions(IDocument document, ASTNode ast) throws BadPositionCategoryException {
+	protected List<HighlightedPositionCore> calculateHighlightedPositions(IDocument document, ASTNode ast) throws BadPositionCategoryException {
 		return new SemanticHighlightingReconciler().reconciled(document, ast, false, new NullProgressMonitor());
 	}
 
@@ -219,9 +220,9 @@ public class SemanticHighlightingService {
 		return this.astProvider.getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 
-	protected List<SemanticHighlightingInformation> toInfos(IDocument document, List<HighlightedPosition> positions) {
+	protected List<SemanticHighlightingInformation> toInfos(IDocument document, List<HighlightedPositionCore> positions) {
 		Multimap<Integer, SemanticHighlightingTokens.Token> infos = HashMultimap.create();
-		for (HighlightedPosition position : positions) {
+		for (HighlightedPositionCore position : positions) {
 			int[] lineAndColumn = JsonRpcHelpers.toLine(document, position.offset);
 			if (lineAndColumn == null) {
 				JavaLanguageServerPlugin.logError("Cannot locate line and column information for the semantic highlighting position: " + position + ". Skipping it.");
@@ -230,7 +231,7 @@ public class SemanticHighlightingService {
 			int line = lineAndColumn[0];
 			int character = lineAndColumn[1];
 			int length = position.length;
-			int scope = LOOKUP_TABLE.inverse().get(position.getHighlightingScopes());
+			int scope = LOOKUP_TABLE.inverse().get(position.getHighlighting());
 			infos.put(line, new SemanticHighlightingTokens.Token(character, length, scope));
 		}
 		//@formatter:off
