@@ -97,6 +97,7 @@ public class BasicFileDetectorTest {
 			assertEquals("Found " + dirs, 1, dirs.size());// .metadata is ignored
 			assertEquals(targetLinkFolder.getAbsolutePath(), dirs.iterator().next().toString());
 		} finally {
+			targetLinkFolder.delete();
 			FileUtils.deleteDirectory(tempDirectory);
 		}
 	}
