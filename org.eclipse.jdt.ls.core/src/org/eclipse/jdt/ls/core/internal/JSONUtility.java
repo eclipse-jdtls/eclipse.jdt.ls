@@ -35,6 +35,10 @@ public class JSONUtility {
 			Gson gson = new Gson();
 			return gson.fromJson((JsonElement) object, clazz);
 		}
+		if (object instanceof String) {
+			Gson gson = new Gson();
+			return gson.fromJson((String) object, clazz);
+		}
 		if(clazz.isInstance(object)){
 			return clazz.cast(object);
 		}

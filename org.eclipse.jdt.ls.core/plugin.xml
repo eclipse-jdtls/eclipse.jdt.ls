@@ -51,7 +51,15 @@
    <extension
          point="org.eclipse.jdt.ls.core.delegateCommandHandler">
       <delegateCommandHandler class="org.eclipse.jdt.ls.core.internal.JDTDelegateCommandHandler">
-            <command id="java.edit.organizeImports"/>
+            <command
+                  id="java.edit.organizeImports">
+            </command>
+            <command
+                  id="java.project.updateSourceAttachment">
+            </command>
+            <command
+                  id="java.project.resolveSourceAttachment">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

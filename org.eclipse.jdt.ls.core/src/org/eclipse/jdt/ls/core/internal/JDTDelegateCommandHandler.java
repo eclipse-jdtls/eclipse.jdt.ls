@@ -15,6 +15,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
+import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.lsp4j.WorkspaceEdit;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
@@ -40,10 +41,15 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						// workspaceEdit on the custom command.
 						return result;
 					}
+				case "java.project.resolveSourceAttachment":
+					return SourceAttachmentCommand.resolveSourceAttachment(arguments, monitor);
+				case "java.project.updateSourceAttachment":
+					return SourceAttachmentCommand.updateSourceAttachment(arguments, monitor);
 				default:
 					break;
 			}
 		}
 		throw new UnsupportedOperationException(String.format("Java language server doesn't support the command '%s'.", commandId));
 	}
+
 }
