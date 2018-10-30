@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.jdt.internal.ui.javaeditor.HighlightedPositionCore;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
 import org.eclipse.jface.text.BadLocationException;
@@ -53,15 +54,15 @@ public class SemanticHighlightingDiffCalculator {
 
 		Map<Integer, SemanticHighlightingInformation> infosPerLine = Maps.newHashMap();
 		Multimap<Integer, SemanticHighlightingTokens.Token> tokensPerLine = HashMultimap.create();
-		Multimap<Integer, HighlightedPosition> pendingPositions = HashMultimap.create();
-		Map<LookupKey, HighlightedPosition> newPositions = Maps.newHashMap();
-		for (HighlightedPosition newPosition : context.newPositions) {
+		Multimap<Integer, HighlightedPositionCore> pendingPositions = HashMultimap.create();
+		Map<LookupKey, HighlightedPositionCore> newPositions = Maps.newHashMap();
+		for (HighlightedPositionCore newPosition : context.newPositions) {
 			LookupKey key = createKey(newState, newPosition);
 			newPositions.put(key, newPosition);
 			pendingPositions.put(key.line, newPosition);
 		}
 
-		for (HighlightedPosition oldPosition : context.oldPositions) {
+		for (HighlightedPositionCore oldPosition : context.oldPositions) {
 			int[] oldLineAndColumn = getLineAndColumn(oldState, oldPosition);
 			int originalOldLine = oldLineAndColumn[0];
 			int oldColumn = oldLineAndColumn[1];
@@ -71,15 +72,16 @@ public class SemanticHighlightingDiffCalculator {
 			// If the position is before the change (event), no need to shift the line. Otherwise we consider the line shift.
 			int adjustedOldLine = oldEnd < eventEnd ? originalOldLine : originalOldLine + lineShiftCount;
 
-			int scope = SemanticHighlightingService.getIndex(oldPosition.getHighlightingScopes());
+			@SuppressWarnings("unchecked")
+			int scope = SemanticHighlightingService.getIndex((List<String>) oldPosition.getHighlighting());
 			LookupKey key = createKey(adjustedOldLine, oldColumn, getTextAt(oldState, oldPosition), scope);
-			HighlightedPosition newPosition = newPositions.remove(key);
+			HighlightedPositionCore newPosition = newPositions.remove(key);
 			if (newPosition == null && !infosPerLine.containsKey(originalOldLine)) {
 				infosPerLine.put(originalOldLine, new SemanticHighlightingInformation(originalOldLine, null));
 			}
 		}
 
-		for (Entry<LookupKey, HighlightedPosition> entries : newPositions.entrySet()) {
+		for (Entry<LookupKey, HighlightedPositionCore> entries : newPositions.entrySet()) {
 			LookupKey lookupKey = entries.getKey();
 			int line = lookupKey.line;
 			int length = lookupKey.text.length();
@@ -92,14 +94,15 @@ public class SemanticHighlightingDiffCalculator {
 			}
 			tokensPerLine.put(line, new SemanticHighlightingTokens.Token(character, length, scope));
 			// If a line contains at least one change, we need to invalidate the entire line by consuming all pending positions.
-			Collection<HighlightedPosition> pendings = pendingPositions.removeAll(line);
+			Collection<HighlightedPositionCore> pendings = pendingPositions.removeAll(line);
 			if (pendings != null) {
-				for (HighlightedPosition pendingPosition : pendings) {
+				for (HighlightedPositionCore pendingPosition : pendings) {
 					if (pendingPosition != entries.getValue()) {
 						int[] lineAndColumn = getLineAndColumn(newState, pendingPosition);
 						int pendingCharacter = lineAndColumn[1];
 						int pendingLength = pendingPosition.length;
-						int pendingScope = SemanticHighlightingService.getIndex(pendingPosition.getHighlightingScopes());
+						@SuppressWarnings("unchecked")
+						int pendingScope = SemanticHighlightingService.getIndex((List<String>) pendingPosition.getHighlighting());
 						tokensPerLine.put(line, new SemanticHighlightingTokens.Token(pendingCharacter, pendingLength, pendingScope));
 					}
 				}
@@ -115,7 +118,7 @@ public class SemanticHighlightingDiffCalculator {
 		return FluentIterable.from(infosPerLine.values()).toSortedList(HighlightingInformationComparator.INSTANCE);
 	}
 
-	protected int[] getLineAndColumn(IDocument document, HighlightedPosition position) {
+	protected int[] getLineAndColumn(IDocument document, HighlightedPositionCore position) {
 		//@formatter:off
 		int[] lineAndColumn = JsonRpcHelpers.toLine(document, position.offset);
 		Assert.isNotNull(
@@ -148,9 +151,10 @@ public class SemanticHighlightingDiffCalculator {
 		return document.get(position.offset, position.length);
 	}
 
-	protected LookupKey createKey(IDocument document, HighlightedPosition position) throws BadLocationException {
+	protected LookupKey createKey(IDocument document, HighlightedPositionCore position) throws BadLocationException {
 		int[] lineAndColumn = getLineAndColumn(document, position);
-		int scope = SemanticHighlightingService.getIndex(position.getHighlightingScopes());
+		@SuppressWarnings("unchecked")
+		int scope = SemanticHighlightingService.getIndex((List<String>) position.getHighlighting());
 		return createKey(lineAndColumn[0], lineAndColumn[1], getTextAt(document, position), scope);
 	}
 

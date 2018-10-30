@@ -22,17 +22,18 @@ import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.BooleanLiteral;
-import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
-import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
+import org.eclipse.jdt.internal.ui.javaeditor.HighlightedPositionCore;
+import org.eclipse.jdt.internal.ui.javaeditor.PositionCollectorCore;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingCore;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingPresenterCore;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticToken;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightings.DeprecatedMemberHighlighting;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightings.VarKeywordHighlighting;
 import org.eclipse.jface.text.BadPositionCategoryException;
@@ -48,57 +49,21 @@ import com.google.common.collect.ImmutableList;
  *
  * @since 3.0
  */
-@SuppressWarnings("restriction")
 public class SemanticHighlightingReconciler {
 
 	/**
 	 * Collects positions from the AST.
 	 */
-	private class PositionCollector extends GenericVisitor {
+	private class PositionCollector extends PositionCollectorCore {
 
 		/** The semantic token */
 		private SemanticToken fToken= new SemanticToken();
 
-		/*
-		 * @see org.eclipse.jdt.internal.corext.dom.GenericVisitor#visitNode(org.eclipse.jdt.core.dom.ASTNode)
-		 */
 		@Override
-		protected boolean visitNode(ASTNode node) {
-			if ((node.getFlags() & ASTNode.MALFORMED) == ASTNode.MALFORMED) {
-				retainPositions(node.getStartPosition(), node.getLength());
-				return false;
-			}
-			return true;
-		}
-
-		/*
-		 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.BooleanLiteral)
-		 */
-		@Override
-		public boolean visit(BooleanLiteral node) {
-			return visitLiteral(node);
-		}
-
-		/*
-		 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.CharacterLiteral)
-		 */
-		@Override
-		public boolean visit(CharacterLiteral node) {
-			return visitLiteral(node);
-		}
-
-		/*
-		 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.NumberLiteral)
-		 */
-		@Override
-		public boolean visit(NumberLiteral node) {
-			return visitLiteral(node);
-		}
-
-		private boolean visitLiteral(Expression node) {
+		protected boolean visitLiteral(Expression node) {
 			fToken.update(node);
 			for (int i= 0, n= fJobSemanticHighlightings.length; i < n; i++) {
-				SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+				SemanticHighlightingCore semanticHighlighting = fJobSemanticHighlightings[i];
 				if (semanticHighlighting.consumesLiteral(fToken)) {
 					int offset= node.getStartPosition();
 					int length= node.getLength();
@@ -159,7 +124,7 @@ public class SemanticHighlightingReconciler {
 				int length= node.getLength();
 				if (offset > -1 && length > 0) {
 					for (int i= 0; i < fJobSemanticHighlightings.length; i++) {
-						SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+						SemanticHighlightingCore semanticHighlighting = fJobSemanticHighlightings[i];
 						if (semanticHighlighting instanceof VarKeywordHighlighting) {
 							addPosition(offset, length, fJobHighlightings.get(i));
 							return false;
@@ -177,7 +142,7 @@ public class SemanticHighlightingReconciler {
 		public boolean visit(SimpleName node) {
 			fToken.update(node);
 			for (int i= 0, n= fJobSemanticHighlightings.length; i < n; i++) {
-				SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+				SemanticHighlightingCore semanticHighlighting = fJobSemanticHighlightings[i];
 				if (semanticHighlighting.consumes(fToken)) {
 					int offset= node.getStartPosition();
 					int length= node.getLength();
@@ -206,7 +171,7 @@ public class SemanticHighlightingReconciler {
 			boolean isExisting= false;
 			// TODO: use binary search
 			for (int i= 0, n= fRemovedPositions.size(); i < n; i++) {
-				HighlightedPosition position= (HighlightedPosition) fRemovedPositions.get(i);
+				HighlightedPositionCore position = (HighlightedPositionCore) fRemovedPositions.get(i);
 				if (position == null) {
 					continue;
 				}
@@ -219,7 +184,7 @@ public class SemanticHighlightingReconciler {
 			}
 
 			if (!isExisting) {
-				Position position = fJobPresenter.createHighlightedPosition(offset, length, scopes);
+				Position position = fJobPresenter.createHighlightedPositionCore(offset, length, scopes);
 				fAddedPositions.add(position);
 			}
 		}
@@ -229,10 +194,11 @@ public class SemanticHighlightingReconciler {
 		 * @param offset The range offset
 		 * @param length The range length
 		 */
-		private void retainPositions(int offset, int length) {
+		@Override
+		protected void retainPositions(int offset, int length) {
 			// TODO: use binary search
 			for (int i= 0, n= fRemovedPositions.size(); i < n; i++) {
-				HighlightedPosition position= (HighlightedPosition) fRemovedPositions.get(i);
+				HighlightedPositionCore position = (HighlightedPositionCore) fRemovedPositions.get(i);
 				if (position != null && position.isContained(offset, length)) {
 					fRemovedPositions.set(i, null);
 					fNOfRemovedPositions--;
@@ -245,11 +211,11 @@ public class SemanticHighlightingReconciler {
 	private PositionCollector fCollector= new PositionCollector();
 
 	/** The semantic highlighting presenter */
-	private SemanticHighlightingPresenter fPresenter = new SemanticHighlightingPresenter();
+	private SemanticHighlightingPresenterCore fPresenter = new SemanticHighlightingPresenterCore();
 	/** Semantic highlightings */
-	private SemanticHighlighting[] fSemanticHighlightings = SemanticHighlightings.getSemanticHighlightings();
+	private SemanticHighlightingCore[] fSemanticHighlightings = SemanticHighlightings.getSemanticHighlightings();
 	/** Highlightings */
-	private List<List<String>> fHighlightings = FluentIterable.from(Arrays.asList(fSemanticHighlightings)).transform(highlighting -> (List<String>) ImmutableList.copyOf(highlighting.getScopes())).toList();
+	private List<List<String>> fHighlightings = FluentIterable.from(Arrays.asList(fSemanticHighlightings)).transform(highlighting -> (List<String>) ImmutableList.copyOf(((SemanticHighlightingLS) highlighting).getScopes())).toList();
 
 	/** Background job's added highlighted positions */
 	private List<Position> fAddedPositions= new ArrayList<>();
@@ -271,9 +237,9 @@ public class SemanticHighlightingReconciler {
 	private boolean fIsReconciling= false;
 
 	/** The semantic highlighting presenter - cache for background thread, only valid during {@link #reconciled(CompilationUnit, boolean, IProgressMonitor)} */
-	private SemanticHighlightingPresenter fJobPresenter = new SemanticHighlightingPresenter();
+	private SemanticHighlightingPresenterCore fJobPresenter = new SemanticHighlightingPresenterCore();
 	/** Semantic highlightings - cache for background thread, only valid during {@link #reconciled(CompilationUnit, boolean, IProgressMonitor)} */
-	private SemanticHighlighting[] fJobSemanticHighlightings;
+	private SemanticHighlightingCore[] fJobSemanticHighlightings;
 	/** Highlightings - cache for background thread, only valid during {@link #reconciled(CompilationUnit, boolean, IProgressMonitor)} */
 	private List<List<String>> fJobHighlightings;
 
@@ -283,7 +249,7 @@ public class SemanticHighlightingReconciler {
 	 */
 	private List<String> fJobDeprecatedMemberHighlighting;
 
-	public List<HighlightedPosition> reconciled(IDocument document, ASTNode ast, boolean forced, IProgressMonitor progressMonitor) throws BadPositionCategoryException {
+	public List<HighlightedPositionCore> reconciled(IDocument document, ASTNode ast, boolean forced, IProgressMonitor progressMonitor) throws BadPositionCategoryException {
 		// ensure at most one thread can be reconciling at any time
 		synchronized (fReconcileLock) {
 			if (fIsReconciling) {
@@ -311,7 +277,7 @@ public class SemanticHighlightingReconciler {
 			if (!fJobPresenter.isCanceled()) {
 				fJobDeprecatedMemberHighlighting= null;
 				for (int i= 0, n= fJobSemanticHighlightings.length; i < n; i++) {
-					SemanticHighlighting semanticHighlighting= fJobSemanticHighlightings[i];
+					SemanticHighlightingCore semanticHighlighting= fJobSemanticHighlightings[i];
 					if (semanticHighlighting instanceof DeprecatedMemberHighlighting) {
 						fJobDeprecatedMemberHighlighting = fJobHighlightings.get(i);
 						break;
@@ -329,9 +295,9 @@ public class SemanticHighlightingReconciler {
 			stopReconcilingPositions();
 			Position[] positions = document.getPositions(fPresenter.getPositionCategory());
 			for (Position position : positions) {
-				Preconditions.checkState(position instanceof HighlightedPosition);
+				Preconditions.checkState(position instanceof HighlightedPositionCore);
 			}
-			return FluentIterable.from(Arrays.asList(positions)).filter(HighlightedPosition.class).toList();
+			return FluentIterable.from(Arrays.asList(positions)).filter(HighlightedPositionCore.class).toList();
 		} finally {
 			fJobPresenter= null;
 			fJobSemanticHighlightings= null;
@@ -392,7 +358,8 @@ public class SemanticHighlightingReconciler {
 	 * @param removedPositions the removed positions
 	 */
 	private void updatePresentation(IDocument document, List<Position> addedPositions, List<Position> removedPositions) {
-		fJobPresenter.createUpdateRunnable(document, addedPositions, removedPositions);
+		Runnable r = fJobPresenter.createUpdateRunnableCore(document, addedPositions, removedPositions);
+		r.run();
 	}
 
 	/**

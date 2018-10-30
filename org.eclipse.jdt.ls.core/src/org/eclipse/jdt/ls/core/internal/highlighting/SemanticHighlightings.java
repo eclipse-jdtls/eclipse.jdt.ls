@@ -44,6 +44,8 @@ import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingsCore;
+import org.eclipse.jdt.internal.ui.javaeditor.SemanticToken;
 
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -54,7 +56,7 @@ import com.google.common.collect.ListMultimap;
  * @since 3.0
  */
 @SuppressWarnings("restriction")
-public class SemanticHighlightings {
+public class SemanticHighlightings extends SemanticHighlightingsCore {
 
 	private static final ImmutableListMultimap.Builder<String, String> SCOPES_BUILDER = ImmutableListMultimap.builder();
 
@@ -290,12 +292,12 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlightings
 	 */
-	private static SemanticHighlighting[] fgSemanticHighlightings;
+	private static SemanticHighlightingLS[] fgSemanticHighlightings;
 
 	/**
 	 * Semantic highlighting for static final fields.
 	 */
-	private static final class StaticFinalFieldHighlighting implements SemanticHighlighting {
+	private static final class StaticFinalFieldHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -312,7 +314,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for static fields.
 	 */
-	private static final class StaticFieldHighlighting implements SemanticHighlighting {
+	private static final class StaticFieldHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -329,7 +331,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for fields.
 	 */
-	private static final class FieldHighlighting implements SemanticHighlighting {
+	private static final class FieldHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -346,7 +348,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for auto(un)boxed expressions.
 	 */
-	private static final class AutoboxHighlighting implements SemanticHighlighting {
+	private static final class AutoboxHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -402,7 +404,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for method declarations.
 	 */
-	private static final class MethodDeclarationHighlighting implements SemanticHighlighting {
+	private static final class MethodDeclarationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -419,7 +421,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for static method invocations.
 	 */
-	private static final class StaticMethodInvocationHighlighting implements SemanticHighlighting {
+	private static final class StaticMethodInvocationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -443,7 +445,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.1
 	 */
-	private static final class AnnotationElementReferenceHighlighting implements SemanticHighlighting {
+	private static final class AnnotationElementReferenceHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -467,7 +469,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for abstract method invocations.
 	 */
-	private static final class AbstractMethodInvocationHighlighting implements SemanticHighlighting {
+	private static final class AbstractMethodInvocationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -502,7 +504,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for inherited method invocations.
 	 */
-	private static final class InheritedMethodInvocationHighlighting implements SemanticHighlighting {
+	private static final class InheritedMethodInvocationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -534,7 +536,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for inherited method invocations.
 	 */
-	private static final class MethodHighlighting implements SemanticHighlighting {
+	private static final class MethodHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -551,7 +553,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for local variable declarations.
 	 */
-	private static final class LocalVariableDeclarationHighlighting implements SemanticHighlighting {
+	private static final class LocalVariableDeclarationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -576,7 +578,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for local variables.
 	 */
-	private static final class LocalVariableHighlighting implements SemanticHighlighting {
+	private static final class LocalVariableHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -597,7 +599,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for parameter variables.
 	 */
-	private static final class ParameterVariableHighlighting implements SemanticHighlighting {
+	private static final class ParameterVariableHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -618,7 +620,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for deprecated members.
 	 */
-	/*default*/ static final class DeprecatedMemberHighlighting implements SemanticHighlighting {
+	/*default*/ static final class DeprecatedMemberHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -662,7 +664,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.1
 	 */
-	private static final class TypeVariableHighlighting implements SemanticHighlighting {
+	private static final class TypeVariableHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -690,7 +692,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.2
 	 */
-	private static final class ClassHighlighting implements SemanticHighlighting {
+	private static final class ClassHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -727,7 +729,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.2
 	 */
-	private static final class EnumHighlighting implements SemanticHighlighting {
+	private static final class EnumHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -764,7 +766,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.2
 	 */
-	private static final class InterfaceHighlighting implements SemanticHighlighting {
+	private static final class InterfaceHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -800,7 +802,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.2
 	 */
-	private static final class AnnotationHighlighting implements SemanticHighlighting {
+	private static final class AnnotationHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -837,7 +839,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.2
 	 */
-	private static final class TypeArgumentHighlighting implements SemanticHighlighting {
+	private static final class TypeArgumentHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -870,7 +872,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.4
 	 */
-	private static final class NumberHighlighting implements SemanticHighlighting {
+	private static final class NumberHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -894,7 +896,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.7
 	 */
-	private static final class AbstractClassHighlighting implements SemanticHighlighting {
+	private static final class AbstractClassHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -937,7 +939,7 @@ public class SemanticHighlightings {
 	 *
 	 * @since 3.8
 	 */
-	private static final class InheritedFieldHighlighting implements SemanticHighlighting {
+	private static final class InheritedFieldHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -969,7 +971,7 @@ public class SemanticHighlightings {
 	/**
 	 * Semantic highlighting for 'var' keyword.
 	 */
-	/*default*/ static final class VarKeywordHighlighting implements SemanticHighlighting {
+	/*default*/ static final class VarKeywordHighlighting extends SemanticHighlightingLS {
 
 		@Override
 		public List<String> getScopes() {
@@ -986,9 +988,9 @@ public class SemanticHighlightings {
 	 * @return The semantic highlightings, the order defines the precedence of
 	 *         matches, the first match wins.
 	 */
-	public static SemanticHighlighting[] getSemanticHighlightings() {
+	public static SemanticHighlightingLS[] getSemanticHighlightings() {
 		if (fgSemanticHighlightings == null) {
-			fgSemanticHighlightings = new SemanticHighlighting[] { new DeprecatedMemberHighlighting(), new AutoboxHighlighting(), new StaticFinalFieldHighlighting(), new StaticFieldHighlighting(), new InheritedFieldHighlighting(),
+			fgSemanticHighlightings = new SemanticHighlightingLS[] { new DeprecatedMemberHighlighting(), new AutoboxHighlighting(), new StaticFinalFieldHighlighting(), new StaticFieldHighlighting(), new InheritedFieldHighlighting(),
 					new FieldHighlighting(), new MethodDeclarationHighlighting(), new StaticMethodInvocationHighlighting(), new AbstractMethodInvocationHighlighting(), new AnnotationElementReferenceHighlighting(),
 					new InheritedMethodInvocationHighlighting(), new ParameterVariableHighlighting(), new LocalVariableDeclarationHighlighting(), new LocalVariableHighlighting(), new TypeVariableHighlighting(), // before type arguments!
 					new MethodHighlighting(), // before types to get ctors

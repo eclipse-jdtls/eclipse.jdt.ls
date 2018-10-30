@@ -43,12 +43,12 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.ui.javaeditor.HighlightedPositionCore;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.highlighting.HighlightedPosition;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -347,7 +347,7 @@ public class DocumentLifeCycleHandler {
 					IDocument oldState = new Document(unit.getBuffer().getContents());
 					IDocument newState = JsonRpcHelpers.toDocument(unit.getBuffer());
 					//@formatter:off
-					List<HighlightedPosition> oldPositions = diffContexts.isEmpty()
+					List<HighlightedPositionCore> oldPositions = diffContexts.isEmpty()
 						? semanticHighlightingService.getHighlightedPositions(uri)
 						: Iterables.getLast(diffContexts).newPositions;
 					//@formatter:on
@@ -355,7 +355,7 @@ public class DocumentLifeCycleHandler {
 					// This is a must. Make the document immutable.
 					// Otherwise, any consecutive `newStates` get out-of-sync due to the shared buffer from the compilation unit.
 					newState = new Document(newState.get());
-					List<HighlightedPosition> newPositions = semanticHighlightingService.calculateHighlightedPositions(unit, true);
+					List<HighlightedPositionCore> newPositions = semanticHighlightingService.calculateHighlightedPositions(unit, true);
 					DocumentEvent event = new DocumentEvent(newState, startOffset, length, text);
 					diffContexts.add(new HighlightedPositionDiffContext(oldState, event, oldPositions, newPositions));
 				} else {
