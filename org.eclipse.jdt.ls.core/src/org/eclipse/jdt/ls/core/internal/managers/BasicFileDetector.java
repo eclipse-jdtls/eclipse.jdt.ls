@@ -16,6 +16,7 @@ import static java.nio.file.FileVisitResult.TERMINATE;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.StatusFactory;
 public class BasicFileDetector {
 
 	private static final String METADATA_FOLDER = "**/.metadata";
+	private static final Set<FileVisitOption> FOLLOW_LINKS_OPTION = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
 	private List<Path> directories;
 	private Path rootDir;
 	private String fileName;
@@ -151,7 +154,7 @@ public class BasicFileDetector {
 			}
 
 		};
-		Files.walkFileTree(dir, Collections.emptySet(), maxDepth, visitor);
+		Files.walkFileTree(dir, FOLLOW_LINKS_OPTION, maxDepth, visitor);
 	}
 
 	private boolean isExcluded(Path dir) {
