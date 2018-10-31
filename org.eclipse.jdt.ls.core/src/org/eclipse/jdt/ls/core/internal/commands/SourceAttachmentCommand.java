@@ -44,7 +44,7 @@ import com.google.gson.JsonSyntaxException;
 public class SourceAttachmentCommand {
 
 	public static SourceAttachmentResult resolveSourceAttachment(List<Object> arguments, IProgressMonitor monitor) {
-		if (arguments == null || arguments.size() == 0) {
+		if (arguments == null || arguments.isEmpty()) {
 			return new SourceAttachmentResult("The parameter is missing.", null);
 		}
 
@@ -62,7 +62,7 @@ public class SourceAttachmentCommand {
 	}
 
 	public static SourceAttachmentResult updateSourceAttachment(List<Object> arguments, IProgressMonitor monitor) {
-		if (arguments == null || arguments.size() == 0) {
+		if (arguments == null || arguments.isEmpty()) {
 			return new SourceAttachmentResult("The parameter is missing.", null);
 		}
 

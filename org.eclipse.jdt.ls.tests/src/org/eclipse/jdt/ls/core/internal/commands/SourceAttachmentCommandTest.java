@@ -45,7 +45,7 @@ public class SourceAttachmentCommandTest extends AbstractProjectsManagerBasedTes
 	}
 
 	@Test
-	public void testResolveSourceAttachment_ParamterIsMissing() {
+	public void testResolveSourceAttachment_ParameterIsMissing() {
 		SourceAttachmentResult resolveResult = SourceAttachmentCommand.resolveSourceAttachment((List<Object>) null, new NullProgressMonitor());
 		assertNotNull(resolveResult);
 		assertNotNull(resolveResult.errorMessage);
