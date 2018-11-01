@@ -87,6 +87,14 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	}
 
 	@Test
+	public void testInvalidProjects() throws Exception {
+		IProject project = importMavenProject("multimodule2");
+		Set<IProject> projects = new LinkedHashSet<>();
+		new MavenBuildSupport().collectProjects(projects, project, new NullProgressMonitor());
+		assertEquals(projects.size(), 1);
+	}
+
+	@Test
 	public void testMultipleProjects() throws Exception {
 		IProject project = importMavenProject("multimodule");
 		Set<IProject> projects = new LinkedHashSet<>();
