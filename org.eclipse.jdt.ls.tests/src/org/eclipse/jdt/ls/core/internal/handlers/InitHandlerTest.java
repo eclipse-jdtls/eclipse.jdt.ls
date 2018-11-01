@@ -21,6 +21,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -37,6 +40,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -214,6 +218,36 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals(newWatchers, watchers);
+	}
+
+	@Test
+	public void testInitOnSymbolicLinkFolder() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "/projects_symbolic_link-" + new Random().nextInt(10000));
+		tempDirectory.mkdirs();
+		File targetLinkFolder = new File(tempDirectory, "simple-gradle");
+		File taregetFile = copyFiles("gradle/simple-gradle", true);
+		try {
+
+			Files.createSymbolicLink(Paths.get(targetLinkFolder.getPath()), Paths.get(taregetFile.getAbsolutePath()));
+
+			projectsManager.initializeProjects(Arrays.asList(Path.fromOSString(targetLinkFolder.getAbsolutePath())), null);
+			newEmptyProject();
+			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
+			String location = project.getLocation().toString();
+			if (Platform.OS_WIN32.equals(Platform.getOS())) {
+				assertEquals(Path.fromOSString(targetLinkFolder.getAbsolutePath()).toString(), location);
+			} else {
+				assertEquals(Path.fromOSString(taregetFile.getAbsolutePath()).toString(), location);
+			}
+		} finally {
+			targetLinkFolder.delete();
+			FileUtils.deleteDirectory(taregetFile);
+			FileUtils.deleteDirectory(tempDirectory);
+		}
 	}
 
 	private void removeExclusionPattern(IJavaProject javaProject) throws JavaModelException {

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codehaus.plexus.util.IOUtil;
+import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
@@ -199,6 +200,14 @@ public final class ResourceUtils {
 		URI uri = URI.create(uriStr);
 		if ("file".equals(uri.getScheme())) {
 			return Path.fromOSString(Paths.get(uri).toString());
+		}
+		return null;
+	}
+
+	public static IPath realFilePathFromURI(String uriStr) {
+		URI uri = URI.create(uriStr);
+		if ("file".equals(uri.getScheme())) {
+			return FileUtil.canonicalPath(Path.fromOSString(Paths.get(uri).toString()));
 		}
 		return null;
 	}

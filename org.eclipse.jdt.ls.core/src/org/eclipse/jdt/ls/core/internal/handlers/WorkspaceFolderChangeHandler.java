@@ -31,13 +31,13 @@ public class WorkspaceFolderChangeHandler {
 		final Collection<IPath> addedRootPaths = new ArrayList<>();
 		final Collection<IPath> removedRootPaths = new ArrayList<>();
 		for (WorkspaceFolder folder : params.getEvent().getAdded()) {
-			IPath rootPath = ResourceUtils.filePathFromURI(folder.getUri());
+			IPath rootPath = ResourceUtils.realFilePathFromURI(folder.getUri());
 			if (rootPath != null) {
 				addedRootPaths.add(rootPath);
 			}
 		}
 		for (WorkspaceFolder folder : params.getEvent().getRemoved()) {
-			IPath rootPath = ResourceUtils.filePathFromURI(folder.getUri());
+			IPath rootPath = ResourceUtils.realFilePathFromURI(folder.getUri());
 			if (rootPath != null) {
 				removedRootPaths.add(rootPath);
 			}
