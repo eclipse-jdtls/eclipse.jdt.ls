@@ -85,7 +85,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		}
 		projects.add(project);
 		IMavenProjectFacade projectFacade = registry.create(project, monitor);
-		if ("pom".equals(projectFacade.getPackaging())) {
+		if (projectFacade != null && "pom".equals(projectFacade.getPackaging())) {
 			List<String> modules = projectFacade.getMavenProjectModules();
 			for (String module : modules) {
 				IPath pomPath = ResourcesPlugin.getWorkspace().getRoot().getFullPath().append(module).append("pom.xml");
