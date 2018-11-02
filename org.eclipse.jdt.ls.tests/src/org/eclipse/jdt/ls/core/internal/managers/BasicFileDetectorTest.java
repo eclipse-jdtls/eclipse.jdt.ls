@@ -12,15 +12,19 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 /**
@@ -76,6 +80,26 @@ public class BasicFileDetectorTest {
 		assertEquals("Found " + dirs, 1, dirs.size());
 		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles/parent/1_1"),
 				dirs.iterator().next().toString());
+	}
+
+    @Test
+	public void testScanSymbolicLinks() throws Exception {
+		File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "/projects_symbolic_link-"
+			+ new Random().nextInt(10000));
+		tempDirectory.mkdirs();
+		File targetLinkFolder = new File(tempDirectory, "buildfiles");
+		try {
+			Files.createSymbolicLink(Paths.get(targetLinkFolder.getPath()), Paths.get("projects/buildfiles").toAbsolutePath());
+			BasicFileDetector detector = new BasicFileDetector(Paths.get(tempDirectory.getPath()), "buildfile")
+			    .includeNested(false).maxDepth(2);
+
+			Collection<Path> dirs = detector.scan(null);
+			assertEquals("Found " + dirs, 1, dirs.size());// .metadata is ignored
+			assertEquals(targetLinkFolder.getAbsolutePath(), dirs.iterator().next().toString());
+		} finally {
+			targetLinkFolder.delete();
+			FileUtils.deleteDirectory(tempDirectory);
+		}
 	}
 
 	@SafeVarargs
