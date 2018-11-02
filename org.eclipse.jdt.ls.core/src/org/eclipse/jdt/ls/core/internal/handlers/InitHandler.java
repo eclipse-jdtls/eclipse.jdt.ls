@@ -89,7 +89,7 @@ final public class InitHandler {
 		Collection<String> workspaceFolders = getInitializationOption(initializationOptions, "workspaceFolders", Collection.class);
 		if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
 			for (String uri : workspaceFolders) {
-				IPath filePath = ResourceUtils.realFilePathFromURI(uri);
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
 				if (filePath != null) {
 					rootPaths.add(filePath);
 				}
@@ -103,7 +103,7 @@ final public class InitHandler {
 				}
 			}
 			if (rootPath != null) {
-				IPath filePath = ResourceUtils.realFilePathFromURI(rootPath);
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(rootPath);
 				if (filePath != null) {
 					rootPaths.add(filePath);
 				}

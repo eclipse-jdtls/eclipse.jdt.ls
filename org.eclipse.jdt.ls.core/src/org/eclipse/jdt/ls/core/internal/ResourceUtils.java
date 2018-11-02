@@ -204,7 +204,7 @@ public final class ResourceUtils {
 		return null;
 	}
 
-	public static IPath realFilePathFromURI(String uriStr) {
+	public static IPath canonicalFilePathFromURI(String uriStr) {
 		URI uri = URI.create(uriStr);
 		if ("file".equals(uri.getScheme())) {
 			return FileUtil.canonicalPath(Path.fromOSString(Paths.get(uri).toString()));

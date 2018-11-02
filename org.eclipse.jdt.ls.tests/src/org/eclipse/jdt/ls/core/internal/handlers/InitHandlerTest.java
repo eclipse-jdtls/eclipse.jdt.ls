@@ -229,10 +229,10 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "/projects_symbolic_link-" + new Random().nextInt(10000));
 		tempDirectory.mkdirs();
 		File targetLinkFolder = new File(tempDirectory, "simple-gradle");
-		File taregetFile = copyFiles("gradle/simple-gradle", true);
+		File targetFile = copyFiles("gradle/simple-gradle", true);
 		try {
 
-			Files.createSymbolicLink(Paths.get(targetLinkFolder.getPath()), Paths.get(taregetFile.getAbsolutePath()));
+			Files.createSymbolicLink(Paths.get(targetLinkFolder.getPath()), Paths.get(targetFile.getAbsolutePath()));
 
 			projectsManager.initializeProjects(Arrays.asList(Path.fromOSString(targetLinkFolder.getAbsolutePath())), null);
 			newEmptyProject();
@@ -241,11 +241,11 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			if (Platform.OS_WIN32.equals(Platform.getOS())) {
 				assertEquals(Path.fromOSString(targetLinkFolder.getAbsolutePath()).toString(), location);
 			} else {
-				assertEquals(Path.fromOSString(taregetFile.getAbsolutePath()).toString(), location);
+				assertEquals(Path.fromOSString(targetFile.getAbsolutePath()).toString(), location);
 			}
 		} finally {
 			targetLinkFolder.delete();
-			FileUtils.deleteDirectory(taregetFile);
+			FileUtils.deleteDirectory(targetFile);
 			FileUtils.deleteDirectory(tempDirectory);
 		}
 	}
