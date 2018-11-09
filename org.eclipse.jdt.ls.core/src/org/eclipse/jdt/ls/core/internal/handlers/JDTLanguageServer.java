@@ -90,6 +90,8 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.PrepareRenameResult;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.Registration;
 import org.eclipse.lsp4j.RegistrationParams;
@@ -251,7 +253,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			toggleCapability(preferenceManager.getPreferences().isSignatureHelpEnabled(), Preferences.SIGNATURE_HELP_ID, Preferences.TEXT_DOCUMENT_SIGNATURE_HELP, SignatureHelpHandler.createOptions());
 		}
 		if (preferenceManager.getClientPreferences().isRenameDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isRenameEnabled(), Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME, null);
+			toggleCapability(preferenceManager.getPreferences().isRenameEnabled(), Preferences.RENAME_ID, Preferences.TEXT_DOCUMENT_RENAME, RenameHandler.createOptions());
 		}
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
@@ -641,6 +643,17 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> document/onTypeFormatting");
 		FormatterHandler handler = new FormatterHandler(preferenceManager);
 		return computeAsync((monitor) -> handler.onTypeFormatting(params, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#prepareRename(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 */
+	@Override
+	public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(TextDocumentPositionParams params) {
+		logInfo(">> document/prepareRename");
+
+		PrepareRenameHandler handler = new PrepareRenameHandler();
+		return computeAsync((monitor) -> handler.prepareRename(params, monitor));
 	}
 
 	/* (non-Javadoc)

@@ -20,22 +20,34 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageDeclaration;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaConventions;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.CreatePackageChange;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.text.edits.TextEdit;
 
 
@@ -44,6 +56,7 @@ public class ReorgCorrectionsSubProcessor {
 	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
+		boolean isLinked = cu.getResource().isLinked();
 
 		IJavaProject javaProject= cu.getJavaProject();
 		String sourceLevel= javaProject.getOption(JavaCore.COMPILER_SOURCE, true);
@@ -65,6 +78,9 @@ public class ReorgCorrectionsSubProcessor {
 		String newTypeName= JavaCore.removeJavaLikeExtension(cu.getElementName());
 
 
+		boolean hasOtherPublicTypeBefore = false;
+
+		boolean found = false;
 		List<AbstractTypeDeclaration> types= root.types();
 		for (int i= 0; i < types.size(); i++) {
 			AbstractTypeDeclaration curr= types.get(i);
@@ -72,20 +88,64 @@ public class ReorgCorrectionsSubProcessor {
 				if (newTypeName.equals(curr.getName().getIdentifier())) {
 					return;
 				}
+				if (!found && Modifier.isPublic(curr.getModifiers())) {
+					hasOtherPublicTypeBefore = true;
+				}
+			} else {
+				found = true;
 			}
 		}
+
 		if (!JavaConventions.validateJavaTypeName(newTypeName, sourceLevel, compliance).matches(IStatus.ERROR)) {
 			proposals.add(new CorrectMainTypeNameProposal(cu, context, currTypeName, newTypeName, IProposalRelevance.RENAME_TYPE));
 		}
+
+		if (!hasOtherPublicTypeBefore && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+			String newCUName = JavaModelUtil.getRenamedCUName(cu, currTypeName);
+			ICompilationUnit newCU = ((IPackageFragment) (cu.getParent())).getCompilationUnit(newCUName);
+			if (!newCU.exists() && !isLinked && !JavaConventions.validateCompilationUnitName(newCUName, sourceLevel, compliance).matches(IStatus.ERROR)) {
+				RenameCompilationUnitChange change = new RenameCompilationUnitChange(cu, newCUName);
+
+				// rename CU
+				String label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renamecu_description, BasicElementLabels.getResourceName(newCUName));
+				proposals.add(new CUCorrectionProposal(label, cu, change, IProposalRelevance.RENAME_CU));
+			}
+		}
+
 	}
 
 	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
+		boolean isLinked = cu.getResource().isLinked();
 
 		// correct package declaration
 		int relevance= cu.getPackageDeclarations().length == 0 ? IProposalRelevance.MISSING_PACKAGE_DECLARATION : IProposalRelevance.CORRECT_PACKAGE_DECLARATION; // bug 38357
 		proposals.add(new CorrectPackageDeclarationProposal(cu, problem, relevance));
+
+		// move to package
+		IPackageDeclaration[] packDecls = cu.getPackageDeclarations();
+		String newPackName = packDecls.length > 0 ? packDecls[0].getElementName() : ""; //$NON-NLS-1$
+
+		IPackageFragmentRoot root = JavaModelUtil.getPackageFragmentRoot(cu);
+		IPackageFragment newPack = root.getPackageFragment(newPackName);
+
+		ICompilationUnit newCU = newPack.getCompilationUnit(cu.getElementName());
+		if (!newCU.exists() && !isLinked && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+			String label;
+			if (newPack.isDefaultPackage()) {
+				label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_default_description, BasicElementLabels.getFileName(cu));
+			} else {
+				String packageLabel = JavaElementLabels.getElementLabel(newPack, JavaElementLabels.ALL_DEFAULT);
+				label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_description, new Object[] { BasicElementLabels.getFileName(cu), packageLabel });
+			}
+			CompositeChange composite = new CompositeChange(label);
+			composite.add(new CreatePackageChange(newPack));
+			composite.add(new MoveCompilationUnitChange(cu, newPack));
+
+			proposals.add(new CUCorrectionProposal(label, cu, composite, IProposalRelevance.MOVE_CU_TO_PACKAGE));
+		}
+
 	}
 
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
