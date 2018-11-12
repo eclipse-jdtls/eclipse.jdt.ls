@@ -25,6 +25,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 
 import org.apache.commons.io.FileUtils;
@@ -34,6 +35,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -43,6 +45,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.Test;
 
 import com.google.common.base.Throwables;
@@ -105,7 +108,36 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 	}
 
 	@Test
-	public void testResolveStandaloneCompilationUnit() throws CoreException {
+	public void testGetPackageNameForExternalEmptyFile() throws IOException {
+		Path empty = getTmpFile("projects/singlefile/lesson1/samples/Empty.java");
+		empty.toFile().getParentFile().mkdirs();
+		FileUtils.copyFile(Paths.get("projects", "singlefile", "lesson1", "samples", "Empty.java").toFile(), empty.toFile());
+		URI emptyUri = empty.toUri();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(emptyUri);
+		assertEquals("", JDTUtils.getPackageName(cu.getJavaProject(), emptyUri));
+
+		URI emptyUri2 = Paths.get("projects", "singlefile", "lesson1", "src", "org", "samples", "Empty2.java").toUri();
+		ICompilationUnit cu2 = JDTUtils.resolveCompilationUnit(emptyUri2);
+		assertEquals("org.samples", JDTUtils.getPackageName(cu2.getJavaProject(), emptyUri2));
+	}
+
+	@Test
+	public void testGetPackageNameForWorkspaceEmptyFile() {
+		Path root = Paths.get("projects", "singlefile", "lesson1").toAbsolutePath();
+		IPath workspaceRoot = ResourceUtils.filePathFromURI(root.toUri().toString());
+		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
+		manager.getPreferences().setRootPaths(Arrays.asList(workspaceRoot));
+		URI uri = root.resolve(Paths.get("samples", "Empty.java")).toUri();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		assertEquals("samples", JDTUtils.getPackageName(cu.getJavaProject(), uri));
+
+		URI uri2 = root.resolve(Paths.get("src", "org", "samples", "Empty2.java")).toUri();
+		ICompilationUnit cu2 = JDTUtils.resolveCompilationUnit(uri2);
+		assertEquals("org.samples", JDTUtils.getPackageName(cu2.getJavaProject(), uri2));
+	}
+
+	@Test
+	public void testResolveStandaloneCompilationUnitFromExternal() throws CoreException {
 		Path helloSrcRoot = Paths.get("projects", "eclipse", "hello", "src").toAbsolutePath();
 		URI uri = helloSrcRoot.resolve(Paths.get("java", "Foo.java")).toUri();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
@@ -127,6 +159,27 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(IType.class.isAssignableFrom(elements[0].getClass()));
 	}
 
+	@Test
+	public void testResolveStandaloneCompilationUnitFromWorkspace() throws Exception {
+		Path root = Paths.get("projects", "singlefile", "lesson1").toAbsolutePath();
+		IPath workspaceRoot = ResourceUtils.filePathFromURI(root.toUri().toString());
+		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
+		manager.getPreferences().setRootPaths(Arrays.asList(workspaceRoot));
+		URI uri = root.resolve(Paths.get("src", "org", "samples", "HelloWorld.java")).toUri();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		assertNotNull("Could not find compilation unit for " + uri, cu);
+		IProject project = cu.getResource().getProject();
+		assertEquals(ProjectUtils.getWorkspaceInvisibleProjectName(workspaceRoot), project.getName());
+		assertNotNull(project.findMember(JDTStandaloneFileUtils.WORKSPACE_LINK));
+		assertTrue(project.findMember(JDTStandaloneFileUtils.WORKSPACE_LINK).isLinked());
+		assertEquals(cu.getResource(), JDTUtils.findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI));
+		assertTrue(JDTUtils.isOnClassPath(cu));
+
+		uri = root.resolve("Test.java").toUri();
+		cu = JDTUtils.resolveCompilationUnit(uri);
+		assertNotNull(cu);
+		assertFalse(JDTUtils.isOnClassPath(cu));
+	}
 
 	@Test
 	public void testUnresolvableCompilationUnits() throws Exception {
@@ -168,7 +221,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 				try {
-					testResolveStandaloneCompilationUnit();
+					testResolveStandaloneCompilationUnitFromExternal();
 				} catch (Exception e) {
 					return StatusFactory.newErrorStatus("Failed to resolve CU", e);
 				}

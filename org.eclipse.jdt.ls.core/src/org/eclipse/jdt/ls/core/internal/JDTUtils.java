@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -27,14 +28,12 @@ import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IAnnotatable;
@@ -73,7 +72,6 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -139,7 +137,7 @@ public final class JDTUtils {
 			}
 		}
 		if (resource == null) {
-			return getFakeCompilationUnit(uri, new NullProgressMonitor());
+			return JDTStandaloneFileUtils.getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
 		//the resource is not null but no compilation unit could be created (eg. project not ready yet)
 		return null;
@@ -181,43 +179,6 @@ public final class JDTUtils {
 		return null;
 	}
 
-	static ICompilationUnit getFakeCompilationUnit(URI uri, IProgressMonitor monitor) {
-		if (uri == null || !"file".equals(uri.getScheme()) || !uri.getPath().endsWith(".java")) {
-			return null;
-		}
-		java.nio.file.Path path = Paths.get(uri);
-		//Only support existing standalone java files
-		if (!java.nio.file.Files.isReadable(path)) {
-			return null;
-		}
-
-		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
-		if (project == null || !project.isAccessible()) {
-			return null;
-		}
-		IJavaProject javaProject = JavaCore.create(project);
-
-		String packageName = getPackageName(javaProject, uri);
-		String fileName = path.getName(path.getNameCount() - 1).toString();
-		String packagePath = packageName.replace(PERIOD, PATH_SEPARATOR);
-
-		IPath filePath = new Path(SRC).append(packagePath).append(fileName);
-		final IFile file = project.getFile(filePath);
-		if (!file.isLinked()) {
-			try {
-				createFolders(file.getParent(), monitor);
-				file.createLink(uri, IResource.REPLACE, monitor);
-			} catch (CoreException e) {
-				String errMsg = "Failed to create linked resource from " + uri + " to " + project.getName();
-				JavaLanguageServerPlugin.logException(errMsg, e);
-			}
-		}
-		if (file.isLinked()) {
-			return (ICompilationUnit) JavaCore.create(file, javaProject);
-		}
-		return null;
-	}
-
 	public static void createFolders(IContainer folder, IProgressMonitor monitor) throws CoreException {
 		if (!folder.exists() && folder instanceof IFolder) {
 			IContainer parent = folder.getParent();
@@ -234,27 +195,37 @@ public final class JDTUtils {
 			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
-			if (content.isEmpty() && javaProject != null && ProjectsManager.DEFAULT_PROJECT_NAME.equals(javaProject.getProject().getName())) {
-				java.nio.file.Path path = Paths.get(uri);
-				java.nio.file.Path parent = path;
-				while (parent.getParent() != null && parent.getParent().getNameCount() > 0) {
-					parent = parent.getParent();
-					String name = parent.getName(parent.getNameCount() - 1).toString();
-					if (SRC.equals(name)) {
-						String pathStr = path.getParent().toString();
-						if (pathStr.length() > parent.toString().length()) {
-							pathStr = pathStr.substring(parent.toString().length() + 1);
-							pathStr = pathStr.replace(PATH_SEPARATOR, PERIOD);
-							return pathStr;
-						}
-					}
-				}
+			if (content.isEmpty() && javaProject != null && !JDTStandaloneFileUtils.isVisibleProject(javaProject.getProject())) {
+				return guessPackageNameFromPath(uri);
 			} else {
 				return getPackageName(javaProject, content);
 			}
 		} catch (IOException e) {
-			JavaLanguageServerPlugin.logException("Failed to read package name from "+uri, e);
+			JavaLanguageServerPlugin.logException("Failed to read package name from " + uri, e);
 		}
+
+		return "";
+	}
+
+	private static String guessPackageNameFromPath(URI uri) {
+		java.nio.file.Path javaPath = Paths.get(uri);
+		IPath containerPath = ResourceUtils.filePathFromURI(javaPath.getParent().toUri().toString());
+		IPath workspaceRoot = JDTStandaloneFileUtils.getWorkspaceRoot(containerPath);
+		if (workspaceRoot == null) {
+			List<String> segments = Arrays.asList(containerPath.segments());
+			if (segments.contains(SRC)) {
+				return String.join(PERIOD, segments.subList(segments.lastIndexOf(SRC) + 1, segments.size()));
+			}
+		} else {
+			IPath relativePath = containerPath.makeRelativeTo(workspaceRoot);
+			List<String> segments = Arrays.asList(relativePath.segments());
+			if (segments.contains(SRC)) {
+				return String.join(PERIOD, segments.subList(segments.indexOf(SRC) + 1, segments.size()));
+			} else {
+				return String.join(PERIOD, segments);
+			}
+		}
+
 		return "";
 	}
 
@@ -270,9 +241,8 @@ public final class JDTUtils {
 		parser.setSource(source);
 		CompilationUnit ast = (CompilationUnit) parser.createAST(null);
 		PackageDeclaration pkg = ast.getPackage();
-		return (pkg == null || pkg.getName() == null)?"":pkg.getName().getFullyQualifiedName();
+		return (pkg == null || pkg.getName() == null) ? "" : pkg.getName().getFullyQualifiedName();
 	}
-
 
 	/**
 	 * Given the uri returns a {@link IClassFile}.
@@ -595,7 +565,7 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String getFileURI(IResource resource) {
-		return ResourceUtils.fixURI(resource.getRawLocationURI());
+		return ResourceUtils.fixURI(resource.getRawLocationURI() != null ? resource.getRawLocationURI() : resource.getLocationURI());
 	}
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
