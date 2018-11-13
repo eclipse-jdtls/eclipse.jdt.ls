@@ -60,9 +60,11 @@ public class JDTStandaloneFileUtils {
 	public static IPath getWorkspaceRoot(IPath filePath) {
 		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
 		Collection<IPath> rootPaths = manager.getPreferences().getRootPaths();
-		for (IPath rootPath : rootPaths) {
-			if (rootPath.isPrefixOf(filePath)) {
-				return rootPath;
+		if (rootPaths != null) {
+			for (IPath rootPath : rootPaths) {
+				if (rootPath.isPrefixOf(filePath)) {
+					return rootPath;
+				}
 			}
 		}
 
