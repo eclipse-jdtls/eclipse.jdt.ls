@@ -116,9 +116,17 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(emptyUri);
 		assertEquals("", JDTUtils.getPackageName(cu.getJavaProject(), emptyUri));
 
+		URI emptyUri1 = Paths.get("projects", "singlefile", "lesson1", "src", "main", "java", "demosamples", "Empty1.java").toUri();
+		ICompilationUnit cu1 = JDTUtils.resolveCompilationUnit(emptyUri1);
+		assertEquals("demosamples", JDTUtils.getPackageName(cu1.getJavaProject(), emptyUri1));
+
 		URI emptyUri2 = Paths.get("projects", "singlefile", "lesson1", "src", "org", "samples", "Empty2.java").toUri();
 		ICompilationUnit cu2 = JDTUtils.resolveCompilationUnit(emptyUri2);
 		assertEquals("org.samples", JDTUtils.getPackageName(cu2.getJavaProject(), emptyUri2));
+
+		URI emptyUri3 = Paths.get("projects", "singlefile", "lesson1", "src", "test", "java", "testsamples", "Empty3.java").toUri();
+		ICompilationUnit cu3 = JDTUtils.resolveCompilationUnit(emptyUri3);
+		assertEquals("testsamples", JDTUtils.getPackageName(cu3.getJavaProject(), emptyUri3));
 	}
 
 	@Test
@@ -131,9 +139,17 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 		assertEquals("samples", JDTUtils.getPackageName(cu.getJavaProject(), uri));
 
+		URI uri1 = root.resolve(Paths.get("src", "main", "java", "demosamples", "Empty1.java")).toUri();
+		ICompilationUnit cu1 = JDTUtils.resolveCompilationUnit(uri1);
+		assertEquals("demosamples", JDTUtils.getPackageName(cu1.getJavaProject(), uri1));
+
 		URI uri2 = root.resolve(Paths.get("src", "org", "samples", "Empty2.java")).toUri();
 		ICompilationUnit cu2 = JDTUtils.resolveCompilationUnit(uri2);
 		assertEquals("org.samples", JDTUtils.getPackageName(cu2.getJavaProject(), uri2));
+
+		URI uri3 = root.resolve(Paths.get("src", "test", "java", "testsamples", "Empty3.java")).toUri();
+		ICompilationUnit cu3 = JDTUtils.resolveCompilationUnit(uri3);
+		assertEquals("testsamples", JDTUtils.getPackageName(cu3.getJavaProject(), uri3));
 	}
 
 	@Test

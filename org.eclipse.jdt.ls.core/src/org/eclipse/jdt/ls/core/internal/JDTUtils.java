@@ -94,6 +94,7 @@ public final class JDTUtils {
 	public static final String PERIOD = ".";
 	public static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
+	private static final String[][] SRC_PREFIXES = new String[][] { { "src", "main", "java" }, { "src", "test", "java" }, { "src" } };
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
@@ -213,20 +214,26 @@ public final class JDTUtils {
 		IPath workspaceRoot = JDTStandaloneFileUtils.getWorkspaceRoot(containerPath);
 		if (workspaceRoot == null) {
 			List<String> segments = Arrays.asList(containerPath.segments());
-			if (segments.contains(SRC)) {
-				return String.join(PERIOD, segments.subList(segments.lastIndexOf(SRC) + 1, segments.size()));
+			for (int i = 0; i < SRC_PREFIXES.length; i++) {
+				int index = Collections.lastIndexOfSubList(segments, Arrays.asList(SRC_PREFIXES[i]));
+				if (index > -1) {
+					return String.join(PERIOD, segments.subList(index + SRC_PREFIXES[i].length, segments.size()));
+				}
 			}
+
+			return "";
 		} else {
 			IPath relativePath = containerPath.makeRelativeTo(workspaceRoot);
 			List<String> segments = Arrays.asList(relativePath.segments());
-			if (segments.contains(SRC)) {
-				return String.join(PERIOD, segments.subList(segments.indexOf(SRC) + 1, segments.size()));
-			} else {
-				return String.join(PERIOD, segments);
+			for (int i = 0; i < SRC_PREFIXES.length; i++) {
+				int index = Collections.indexOfSubList(segments, Arrays.asList(SRC_PREFIXES[i]));
+				if (index > -1) {
+					return String.join(PERIOD, segments.subList(index + SRC_PREFIXES[i].length, segments.size()));
+				}
 			}
-		}
 
-		return "";
+			return String.join(PERIOD, segments);
+		}
 	}
 
 	public static String getPackageName(IJavaProject javaProject, String fileContent) {
