@@ -258,7 +258,7 @@ public class SourceAttachmentCommand {
 		List<IClasspathEntry> newEntries = updateElements(javaProject.getRawClasspath(), newEntry, (entry) -> {
 			return entry.getEntryKind() == newEntry.getEntryKind() && entry.getPath().equals(newEntry.getPath());
 		});
-		JavaLanguageServerPlugin.logInfo("Update source attachment " + newEntry.getSourceAttachmentPath().toOSString() + " to the file " + newEntry.getPath().toOSString());
+		JavaLanguageServerPlugin.logInfo("Update source attachment " + (newEntry.getSourceAttachmentPath() == null ? null : newEntry.getSourceAttachmentPath().toOSString()) + " to the file " + newEntry.getPath().toOSString());
 		javaProject.setRawClasspath(newEntries.toArray(new IClasspathEntry[0]), monitor);
 	}
 
