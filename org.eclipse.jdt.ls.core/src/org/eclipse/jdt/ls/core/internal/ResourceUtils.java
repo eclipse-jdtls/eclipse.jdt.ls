@@ -221,4 +221,17 @@ public final class ResourceUtils {
 		return false;
 	}
 
+	/**
+	 * Expand paths starting with ~/ if necessary, or return the original path.
+	 *
+	 * @param path
+	 * @return expanded or original path
+	 */
+	public static String expandPath(String path) {
+		if (path != null && path.startsWith("~" + File.separator)) {
+			return System.getProperty("user.home") + path.substring(1);
+		}
+		return path;
+	}
+
 }
