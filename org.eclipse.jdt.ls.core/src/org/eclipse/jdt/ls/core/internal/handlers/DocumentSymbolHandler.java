@@ -47,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -54,6 +55,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 
 public class DocumentSymbolHandler {
+	private static Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
 	private boolean hierarchicalDocumentSymbolSupported;
 
@@ -171,11 +173,13 @@ public class DocumentSymbolHandler {
 	}
 
 	private Range getRange(IJavaElement element) throws JavaModelException {
-		return JDTUtils.toLocation(element, FULL_RANGE).getRange();
+		Location location = JDTUtils.toLocation(element, FULL_RANGE);
+		return location == null ? DEFAULT_RANGE : location.getRange();
 	}
 
 	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
-		return JDTUtils.toLocation(element).getRange();
+		Location location = JDTUtils.toLocation(element);
+		return location == null ? DEFAULT_RANGE : location.getRange();
 	}
 
 	private boolean isDeprecated(IJavaElement element) throws JavaModelException {
