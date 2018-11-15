@@ -159,6 +159,22 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testMavenSettings() throws Exception {
+		Map<String, Object> initializationOptions = new HashMap<>();
+		String test = File.separator + "test";
+		initializationOptions.put(Preferences.MAVEN_USER_SETTINGS_KEY, "~" + test);
+		Preferences prefs = Preferences.createFrom((initializationOptions));
+		assertEquals(System.getProperty("user.home") + test, prefs.getMavenUserSettings());
+		initializationOptions.put(Preferences.MAVEN_USER_SETTINGS_KEY, null);
+		prefs = Preferences.createFrom((initializationOptions));
+		assertNull(prefs.getMavenUserSettings());
+		String tildeTest = "~test";
+		initializationOptions.put(Preferences.MAVEN_USER_SETTINGS_KEY, tildeTest);
+		prefs = Preferences.createFrom((initializationOptions));
+		assertEquals(tildeTest, prefs.getMavenUserSettings());
+	}
+
+	@Test
 	public void testJavaImportExclusions() throws Exception {
 		Map<String, Object> initializationOptions = createInitializationOptions();
 		@SuppressWarnings("unchecked")
