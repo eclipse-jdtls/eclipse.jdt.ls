@@ -17,7 +17,6 @@ import static org.eclipse.jdt.core.IJavaElement.FIELD;
 import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
-import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
 import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
@@ -148,7 +147,7 @@ public class DocumentSymbolHandler {
 			String name = getName(unit);
 			symbol.setName(name);
 			symbol.setRange(getRange(unit));
-			symbol.setSelectionRange(getSelectionRange(unit));
+			symbol.setSelectionRange(symbol.getRange());
 			symbol.setKind(mapKind(unit));
 			symbol.setDeprecated(isDeprecated(unit));
 			symbol.setDetail(getDetail(unit, name));
@@ -173,12 +172,7 @@ public class DocumentSymbolHandler {
 	}
 
 	private Range getRange(IJavaElement element) throws JavaModelException {
-		Location location = JDTUtils.toLocation(element, FULL_RANGE);
-		return location == null ? DEFAULT_RANGE : location.getRange();
-	}
-
-	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
-		Location location = JDTUtils.toLocation(element, FULL_RANGE);
+		Location location = JDTUtils.toLocation(element);
 		return location == null ? DEFAULT_RANGE : location.getRange();
 	}
 
