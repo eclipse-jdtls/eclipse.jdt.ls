@@ -104,7 +104,7 @@ public final class ProjectUtils {
 				} else if (entry.getPath().isPrefixOf(sourcePath)) {
 					parentSrcPaths.add(entry.getPath());
 				} else if (sourcePath.isPrefixOf(entry.getPath())) {
-					exclusionPatterns.add(entry.getPath());
+					exclusionPatterns.add(entry.getPath().makeRelativeTo(sourcePath).addTrailingSeparator());
 				}
 			}
 		}
@@ -117,8 +117,8 @@ public final class ProjectUtils {
 
 		if (exclusionPaths != null) {
 			for (IPath exclusion : exclusionPaths) {
-				if (sourcePath.isPrefixOf(exclusion)) {
-					exclusionPatterns.add(exclusion);
+				if (sourcePath.isPrefixOf(exclusion) && !sourcePath.equals(exclusion)) {
+					exclusionPatterns.add(exclusion.makeRelativeTo(sourcePath).addTrailingSeparator());
 				}
 			}
 		}
