@@ -80,7 +80,7 @@ public class JDTStandaloneFileUtils {
 	public static boolean isVisibleProject(IProject project) {
 		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
 		Collection<IPath> rootPaths = manager.getPreferences().getRootPaths();
-		return ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project);
+		return ResourceUtils.isContainedIn(project.getLocation(), rootPaths);
 	}
 
 	public static List<IProject> getVisibleProjects(IPath workspaceRoot) {
