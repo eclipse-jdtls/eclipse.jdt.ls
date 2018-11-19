@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -54,6 +55,8 @@ public class CodeActionHandler {
 	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
 
 	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
+
+	private SourceAssistProcessor sourceAssistProcessor = new SourceAssistProcessor();
 
 	private PreferenceManager preferenceManager;
 
@@ -77,24 +80,44 @@ public class CodeActionHandler {
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
+		List<CUCorrectionProposal> candidates = new ArrayList<>();
 		try {
-			CUCorrectionProposal[] corrections = this.quickFixProcessor.getCorrections(context, locations);
-			Arrays.sort(corrections, new CUCorrectionProposalComparator());
-			for (CUCorrectionProposal proposal : corrections) {
-				$.add(getCodeActionFromProposal(proposal, params.getContext()));
-			}
+			ArrayList<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
+			corrections.sort(new CUCorrectionProposalComparator());
+			candidates.addAll(corrections);
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
+			JavaLanguageServerPlugin.logException("Problem resolving quick fix code actions", e);
 		}
 
 		try {
-			CUCorrectionProposal[] corrections = this.quickAssistProcessor.getAssists(context, locations);
-			Arrays.sort(corrections, new CUCorrectionProposalComparator());
-			for (CUCorrectionProposal proposal : corrections) {
+			ArrayList<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(context, locations);
+			corrections.sort(new CUCorrectionProposalComparator());
+			candidates.addAll(corrections);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
+		}
+
+		ArrayList<CUCorrectionProposal> corrections = this.sourceAssistProcessor.getAssists(context, locations);
+		corrections.sort(new CUCorrectionProposalComparator());
+		candidates.addAll(corrections);
+
+		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
+			List<CUCorrectionProposal> resultList = new ArrayList<>();
+			List<String> acceptedActionKinds = params.getContext().getOnly();
+			for (CUCorrectionProposal proposal : candidates) {
+				if (acceptedActionKinds.contains(proposal.getKind())) {
+					resultList.add(proposal);
+				}
+			}
+			candidates = resultList;
+		}
+
+		try {
+			for (CUCorrectionProposal proposal : candidates) {
 				$.add(getCodeActionFromProposal(proposal, params.getContext()));
 			}
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem resolving code actions", e);
+			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
 
 		return $;

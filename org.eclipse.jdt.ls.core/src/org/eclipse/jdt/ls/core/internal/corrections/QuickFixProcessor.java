@@ -60,10 +60,10 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
+	public ArrayList<CUCorrectionProposal> getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
 			throws CoreException {
 		if (locations == null || locations.length == 0) {
-			return new CUCorrectionProposal[0];
+			return new ArrayList<>();
 		}
 
 		HashSet<Integer> handledProblems = new HashSet<>(locations.length);
@@ -75,7 +75,7 @@ public class QuickFixProcessor {
 				process(context, curr, resultingCollections);
 			}
 		}
-		return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
+		return resultingCollections;
 	}
 
 	private void process(IInvocationContext context, IProblemLocationCore problem,

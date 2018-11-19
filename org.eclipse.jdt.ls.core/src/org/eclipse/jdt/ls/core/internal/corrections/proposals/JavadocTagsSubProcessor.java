@@ -83,7 +83,7 @@ public class JavadocTagsSubProcessor {
 		private final String fComment;
 
 		private AddJavadocCommentProposal(String name, ICompilationUnit cu, int relevance, int insertPosition, String comment) {
-			super(name, CodeActionKind.Source, cu, null, relevance);
+			super(name, CodeActionKind.QuickFix, cu, null, relevance);
 			fInsertPosition= insertPosition;
 			fComment= comment;
 		}
@@ -116,7 +116,7 @@ public class JavadocTagsSubProcessor {
 		private final ASTNode fMissingNode;
 
 		public AddMissingJavadocTagProposal(String label, ICompilationUnit cu, BodyDeclaration bodyDecl, ASTNode missingNode, int relevance) {
-			super(label, CodeActionKind.Source, cu, null, relevance);
+			super(label, CodeActionKind.QuickFix, cu, null, relevance);
 			fBodyDecl= bodyDecl;
 			fMissingNode= missingNode;
 		}
@@ -211,7 +211,7 @@ public class JavadocTagsSubProcessor {
 		private final BodyDeclaration fBodyDecl;
 
 		public AddAllMissingJavadocTagsProposal(String label, ICompilationUnit cu, BodyDeclaration bodyDecl, int relevance) {
-			super(label, CodeActionKind.Source, cu, null, relevance);
+			super(label, CodeActionKind.QuickFix, cu, null, relevance);
 			fBodyDecl= bodyDecl;
 		}
 
@@ -669,7 +669,7 @@ public class JavadocTagsSubProcessor {
 		rewrite.remove(node, null);
 
 		String label= CorrectionMessages.JavadocTagsSubProcessor_removetag_description;
-		proposals.add(new ASTRewriteCorrectionProposal(label, CodeActionKind.Source, context.getCompilationUnit(), rewrite,
+		proposals.add(new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite,
 				IProposalRelevance.REMOVE_TAG));
 	}
 
@@ -691,7 +691,7 @@ public class JavadocTagsSubProcessor {
 		rewrite.replace(name, ast.newName(typeBinding.getQualifiedName()), null);
 
 		String label= CorrectionMessages.JavadocTagsSubProcessor_qualifylinktoinner_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.Source, context.getCompilationUnit(),
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(),
 				rewrite, IProposalRelevance.QUALIFY_INNER_TYPE_NAME);
 
 		proposals.add(proposal);

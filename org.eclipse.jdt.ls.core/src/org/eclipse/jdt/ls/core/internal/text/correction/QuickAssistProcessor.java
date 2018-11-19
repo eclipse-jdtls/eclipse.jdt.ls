@@ -141,7 +141,7 @@ public class QuickAssistProcessor {
 	public QuickAssistProcessor() {
 	}
 
-	public CUCorrectionProposal[] getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public ArrayList<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
@@ -196,9 +196,9 @@ public class QuickAssistProcessor {
 				getConvertVarTypeToResolvedTypeProposal(context, coveringNode, resultingCollections);
 				getConvertResolvedTypeToVarTypeProposal(context, coveringNode, resultingCollections);
 			}
-			return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
+			return resultingCollections;
 		}
-		return new CUCorrectionProposal[0];
+		return new ArrayList<>();
 	}
 
 	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
