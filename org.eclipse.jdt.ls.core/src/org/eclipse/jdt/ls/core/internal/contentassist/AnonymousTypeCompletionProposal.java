@@ -47,10 +47,10 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -160,7 +160,7 @@ public class AnonymousTypeCompletionProposal {
 			if (dummyTypeBinding == null) {
 				return null;
 			}
-			IMethodBinding[] bindings = StubUtility2.getOverridableMethods(astRoot.getAST(), dummyTypeBinding, true);
+			IMethodBinding[] bindings = StubUtility2Core.getOverridableMethods(astRoot.getAST(), dummyTypeBinding, true);
 			if (fSuperType.isInterface()) {
 				ITypeBinding[] dummySuperInterfaces = dummyTypeBinding.getInterfaces();
 				if (dummySuperInterfaces.length == 0 || dummySuperInterfaces.length == 1 && dummySuperInterfaces[0].isRawType()) {
@@ -183,9 +183,10 @@ public class AnonymousTypeCompletionProposal {
 				}
 			}
 			methodsToOverride = result.toArray(new IMethodBinding[result.size()]);
+			ASTNode focusNode = null;
 			IBinding contextBinding = null; // used to find @NonNullByDefault effective at that current context
 			if (fCompilationUnit.getJavaProject().getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true).equals(JavaCore.ENABLED)) {
-				ASTNode focusNode = NodeFinder.perform(astRoot, fReplacementOffset + dummyClassContent.length(), 0);
+				focusNode = NodeFinder.perform(astRoot, fReplacementOffset + dummyClassContent.length(), 0);
 				contextBinding = getEnclosingDeclaration(focusNode);
 			}
 			ASTRewrite rewrite = ASTRewrite.create(astRoot.getAST());
@@ -194,7 +195,7 @@ public class AnonymousTypeCompletionProposal {
 			for (int i = 0; i < methodsToOverride.length; i++) {
 				boolean snippetSupport = i == methodsToOverride.length-1 ? fSnippetSupport : false;
 				IMethodBinding curr = methodsToOverride[i];
-				MethodDeclaration stub = StubUtility2.createImplementationStub(workingCopy, rewrite, importRewrite, null, curr, dummyTypeBinding, settings, dummyTypeBinding.isInterface(), contextBinding, snippetSupport);
+				MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(workingCopy, rewrite, importRewrite, null, curr, dummyTypeBinding, settings, dummyTypeBinding.isInterface(), focusNode, snippetSupport);
 				rewriter.insertFirst(stub, null);
 			}
 			IDocument document = new Document(workingCopy.getSource());

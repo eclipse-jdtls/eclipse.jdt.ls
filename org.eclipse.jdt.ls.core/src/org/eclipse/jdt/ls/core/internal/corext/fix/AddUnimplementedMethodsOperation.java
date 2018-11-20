@@ -35,13 +35,13 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
 import org.eclipse.jdt.ls.core.internal.corext.utils.MethodsSourcePositionComparator;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
@@ -109,7 +109,7 @@ public class AddUnimplementedMethodsOperation extends CompilationUnitRewriteOper
 
 		for (int i = 0; i < unimplementedMethods.length; i++) {
 			IMethodBinding curr = unimplementedMethods[i];
-			MethodDeclaration newMethodDecl = StubUtility2.createImplementationStub(unit, rewrite, imports, context, curr, curr.getDeclaringClass(), settings, false, currentType, false);
+			MethodDeclaration newMethodDecl = StubUtility2Core.createImplementationStubCore(unit, rewrite, imports, context, curr, curr.getDeclaringClass(), settings, false, fTypeNode, false);
 			listRewrite.insertLast(newMethodDecl, createTextEditGroup(CorrectionMessages.AddUnimplementedMethodsOperation_AddMissingMethod_group, cuRewrite));
 		}
 	}
@@ -167,7 +167,7 @@ public class AddUnimplementedMethodsOperation extends CompilationUnitRewriteOper
 			return new IMethodBinding[0];
 		}
 
-		IMethodBinding[] unimplementedMethods = StubUtility2.getUnimplementedMethods(binding, implementAbstractsOfInput);
+		IMethodBinding[] unimplementedMethods = StubUtility2Core.getUnimplementedMethods(binding, implementAbstractsOfInput);
 		Arrays.sort(unimplementedMethods, new MethodsSourcePositionComparator(binding));
 		return unimplementedMethods;
 	}
