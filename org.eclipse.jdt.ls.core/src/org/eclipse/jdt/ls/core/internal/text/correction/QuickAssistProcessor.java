@@ -23,6 +23,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -141,7 +142,7 @@ public class QuickAssistProcessor {
 	public QuickAssistProcessor() {
 	}
 
-	public ArrayList<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
@@ -198,7 +199,7 @@ public class QuickAssistProcessor {
 			}
 			return resultingCollections;
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {

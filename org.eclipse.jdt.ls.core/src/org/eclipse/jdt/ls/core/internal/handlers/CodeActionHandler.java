@@ -82,7 +82,7 @@ public class CodeActionHandler {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		List<CUCorrectionProposal> candidates = new ArrayList<>();
 		try {
-			ArrayList<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
+			List<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
 			corrections.sort(new CUCorrectionProposalComparator());
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
@@ -90,14 +90,14 @@ public class CodeActionHandler {
 		}
 
 		try {
-			ArrayList<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(context, locations);
+			List<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(context, locations);
 			corrections.sort(new CUCorrectionProposalComparator());
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
 		}
 
-		ArrayList<CUCorrectionProposal> corrections = this.sourceAssistProcessor.getAssists(context, locations);
+		List<CUCorrectionProposal> corrections = this.sourceAssistProcessor.getAssists(context, locations);
 		corrections.sort(new CUCorrectionProposalComparator());
 		candidates.addAll(corrections);
 

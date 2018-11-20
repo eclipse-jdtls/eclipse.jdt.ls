@@ -11,7 +11,6 @@
 
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.eclipse.core.resources.IProject;
@@ -37,7 +36,7 @@ public class OrganizeImportsActionTest extends AbstractQuickFixTest {
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 
-		this.setIgnoredKind(Arrays.asList("quickfix.*", "refactor.*"));
+		this.setIgnoredKind("quickfix.*", "refactor.*");
 	}
 
 	public void setupJava9() throws Exception {

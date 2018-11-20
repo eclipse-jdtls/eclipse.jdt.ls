@@ -11,7 +11,6 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
-import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -36,7 +35,7 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
-		this.setIgnoredCommands(Arrays.asList("Extract to method"));
+		this.setIgnoredCommands("Extract to method");
 	}
 
 	@Test

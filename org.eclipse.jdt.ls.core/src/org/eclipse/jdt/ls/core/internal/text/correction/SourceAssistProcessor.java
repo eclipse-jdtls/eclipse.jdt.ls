@@ -1,4 +1,3 @@
-
 /*******************************************************************************
 * Copyright (c) 2017 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
@@ -13,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.text.correction;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -29,10 +29,7 @@ import org.eclipse.text.edits.TextEdit;
 
 public class SourceAssistProcessor {
 
-	public SourceAssistProcessor() {
-	}
-
-	public ArrayList<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) {
+	public List<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) {
 		ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
 
 		getOrganizeImportsProposal(context, resultingCollections);

@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -164,12 +165,12 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 	}
 
-	protected void setIgnoredCommands(List<String> ignoredCommands) {
-		this.ignoredCommands = ignoredCommands;
+	protected void setIgnoredCommands(String... ignoredCommands) {
+		this.ignoredCommands = Arrays.asList(ignoredCommands);
 	}
 
-	protected void setIgnoredKind(List<String> ignoredKind) {
-		this.ignoredKinds = ignoredKind;
+	protected void setIgnoredKind(String... ignoredKind) {
+		this.ignoredKinds = Arrays.asList(ignoredKind);
 	}
 
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
@@ -192,17 +193,14 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
 
 		if (this.ignoredKinds != null) {
-			List<Either<Command, CodeAction>> filteredList = new ArrayList<>();
-			for (Either<Command, CodeAction> codeAction : codeActions) {
-				if (codeAction.isRight()) {
-					for (String str : this.ignoredKinds) {
-						if (codeAction.getRight().getKind().matches(str)) {
-							filteredList.add(codeAction);
-							break;
-						}
+			List<Either<Command, CodeAction>> filteredList = codeActions.stream().filter(Either::isRight).filter(codeAction -> {
+				for (String str : this.ignoredKinds) {
+					if (codeAction.getRight().getKind().matches(str)) {
+						return false;
 					}
 				}
-			}
+				return true;
+			}).collect(Collectors.toList());
 			codeActions.removeAll(filteredList);
 		}
 
