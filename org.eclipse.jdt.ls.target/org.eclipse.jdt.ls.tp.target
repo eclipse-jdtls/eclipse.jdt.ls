@@ -42,7 +42,7 @@
             <repository location="http://download.eclipse.org/releases/2018-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.jboss.tools.maven.apt.feature.feature.group" version="1.5.1.201811161943"/>
+            <unit id="org.jboss.tools.maven.apt.core" version="1.5.1.201811161943"/>
             <repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.1-2018-11-16_19-54-26-H16/"/>
         </location>
     </locations>
