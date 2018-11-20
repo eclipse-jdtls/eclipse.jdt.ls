@@ -39,11 +39,11 @@ import org.eclipse.jdt.core.formatter.IndentManipulation;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -132,8 +132,8 @@ public class OverrideCompletionProposal {
 			}
 			if (methodToOverride != null) {
 				CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fJavaProject.getProject());
-				MethodDeclaration stub = StubUtility2.createImplementationStub(fCompilationUnit, rewrite, importRewrite,
-						context, methodToOverride, declaringType, settings, declaringType.isInterface(), declaringType,
+				MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(fCompilationUnit, rewrite, importRewrite,
+						context, methodToOverride, declaringType, settings, declaringType.isInterface(), node,
 						snippetStringSupport);
 				ListRewrite rewriter= rewrite.getListRewrite(node, descriptor);
 				rewriter.insertFirst(stub, null);
