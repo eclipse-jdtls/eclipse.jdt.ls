@@ -378,6 +378,9 @@ public class DocumentLifeCycleHandler {
 			return;
 		}
 		try {
+			synchronized (toReconcile) {
+				toReconcile.remove(unit);
+			}
 			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit) || unit.getResource().isDerived()) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
 			}

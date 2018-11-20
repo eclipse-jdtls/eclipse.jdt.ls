@@ -436,7 +436,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
 		logInfo(">> workspace/didChangeWatchedFiles ");
-		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client);
+		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client, this.documentLifeCycleHandler);
 		handler.didChangeWatchedFiles(params);
 	}
 

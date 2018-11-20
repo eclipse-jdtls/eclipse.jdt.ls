@@ -131,7 +131,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
 			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
 			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
-			document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			if (!cu.isWorkingCopy()) {
+				document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			}
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {
 			//all errors on that build file should be relevant
@@ -230,10 +232,12 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			String uri = JDTUtils.getFileURI(resource);
 			if (JavaCore.isJavaLikeFileName(file.getName())) {
 				ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-				try {
-					document = JsonRpcHelpers.toDocument(cu.getBuffer());
-				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException("Failed to publish diagnostics.", e);
+				if (cu.isWorkingCopy()) {
+					try {
+						document = JsonRpcHelpers.toDocument(cu.getBuffer());
+					} catch (JavaModelException e) {
+						JavaLanguageServerPlugin.logException("Failed to publish diagnostics.", e);
+					}
 				}
 			} else if (projectsManager.isBuildFile(file)) {
 				document = JsonRpcHelpers.toDocument(file);
