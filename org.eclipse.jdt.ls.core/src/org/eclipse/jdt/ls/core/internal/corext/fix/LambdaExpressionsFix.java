@@ -62,6 +62,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -77,7 +78,6 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.ls.core.internal.corext.codemanipulation.StubUtility2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.text.edits.TextEditGroup;
 
@@ -499,8 +499,8 @@ public class LambdaExpressionsFix extends CompilationUnitRewriteOperationsFixCor
 				ImportRewrite importRewrite = cuRewrite.getImportRewrite();
 				ImportRewriteContext importContext = new ContextSensitiveImportRewriteContext(lambdaExpression, importRewrite);
 
-				MethodDeclaration methodDeclaration = StubUtility2.createImplementationStub(cuRewrite.getCu(), rewrite, importRewrite, importContext, methodBinding, parameterNames, lambdaTypeBinding, settings, false,
-						lambdaExpression.resolveTypeBinding(),
+				MethodDeclaration methodDeclaration = StubUtility2Core.createImplementationStubCore(cuRewrite.getCu(), rewrite, importRewrite, importContext, methodBinding, parameterNames, lambdaTypeBinding, settings, false,
+						lambdaExpression,
 						false);
 
 				// Qualify reference to this or super
