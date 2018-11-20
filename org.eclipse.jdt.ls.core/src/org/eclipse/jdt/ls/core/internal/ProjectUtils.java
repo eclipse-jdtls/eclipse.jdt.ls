@@ -65,6 +65,10 @@ public final class ProjectUtils {
 		return hasNature(project, GradleProjectNature.ID);
 	}
 
+	public static boolean isGeneralJavaProject(IProject project) {
+		return isJavaProject(project) && !isMavenProject(project) && !isGradleProject(project);
+	}
+
 	public static String getJavaSourceLevel(IProject project) {
 		Map<String, String> options = getJavaOptions(project);
 		return options == null ? null : options.get(JavaCore.COMPILER_SOURCE);
@@ -136,13 +140,63 @@ public final class ProjectUtils {
 		return true;
 	}
 
+	public static boolean removeSourcePath(IPath sourcePath, IJavaProject project) throws JavaModelException {
+		IClasspathEntry[] existingEntries = project.getRawClasspath();
+		List<IClasspathEntry> newEntries = new ArrayList<>();
+		boolean found = false;
+		for (IClasspathEntry entry : existingEntries) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				if (entry.getPath().equals(sourcePath)) {
+					found = true;
+				} else {
+					newEntries.add(removeFilters(entry, sourcePath));
+				}
+			} else {
+				newEntries.add(entry);
+			}
+		}
+
+		if (found) {
+			project.setRawClasspath(newEntries.toArray(new IClasspathEntry[0]), project.getOutputLocation(), null);
+			return true;
+		}
+
+		return false;
+	}
+
+	public static IPath[] listSourcePaths(IJavaProject project) throws JavaModelException {
+		List<IPath> result = new ArrayList<>();
+		for (IClasspathEntry entry : project.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				result.add(entry.getPath());
+			}
+		}
+
+		return result.toArray(new IPath[0]);
+	}
+
 	public static boolean isOnSourcePath(IPath sourcePath, IJavaProject project) throws JavaModelException {
 		for (IClasspathEntry entry : project.getRawClasspath()) {
 			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE && entry.getPath().equals(sourcePath)) {
 				return true;
 			}
 		}
+
 		return false;
+	}
+
+	public static IPath findBelongedWorkspaceRoot(IPath filePath) {
+		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
+		Collection<IPath> rootPaths = manager.getPreferences().getRootPaths();
+		if (rootPaths != null) {
+			for (IPath rootPath : rootPaths) {
+				if (rootPath.isPrefixOf(filePath)) {
+					return rootPath;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	public static String getWorkspaceInvisibleProjectName(IPath workspacePath) {
@@ -192,5 +246,33 @@ public final class ProjectUtils {
 		}
 
 		return invisibleProject;
+	}
+
+	private static IClasspathEntry removeFilters(IClasspathEntry entry, IPath path) {
+		IPath[] inclusionPatterns = entry.getInclusionPatterns();
+		List<IPath> inclusionList = new ArrayList<>();
+		if (inclusionPatterns != null) {
+			for (IPath pattern : inclusionPatterns) {
+				if (!path.equals(entry.getPath().append(pattern))) {
+					inclusionList.add(pattern);
+				}
+			}
+		}
+
+		IPath[] exclusionPatterns = entry.getExclusionPatterns();
+		List<IPath> exclusionList = new ArrayList<>();
+		if (exclusionPatterns != null) {
+			for (IPath pattern : exclusionPatterns) {
+				if (!path.equals(entry.getPath().append(pattern))) {
+					exclusionList.add(pattern);
+				}
+			}
+		}
+
+		if ((inclusionPatterns == null || inclusionPatterns.length == inclusionList.size()) && (exclusionPatterns == null || exclusionPatterns.length == exclusionList.size())) {
+			return entry;
+		} else {
+			return JavaCore.newSourceEntry(entry.getPath(), inclusionList.toArray(new IPath[0]), exclusionList.toArray(new IPath[0]), entry.getOutputLocation(), entry.getExtraAttributes());
+		}
 	}
 }

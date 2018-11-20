@@ -60,6 +60,15 @@
             <command
                   id="java.project.resolveSourceAttachment">
             </command>
+            <command
+                  id="java.project.addToSourcePath">
+            </command>
+            <command
+                  id="java.project.removeFromSourcePath">
+            </command>
+            <command
+                  id="java.project.listSourcePaths">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -45,6 +46,14 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return SourceAttachmentCommand.resolveSourceAttachment(arguments, monitor);
 				case "java.project.updateSourceAttachment":
 					return SourceAttachmentCommand.updateSourceAttachment(arguments, monitor);
+				case "java.project.addToSourcePath":
+					String sourceFolder = (String) arguments.get(0);
+					return BuildPathCommand.addToSourcePath(sourceFolder);
+				case "java.project.removeFromSourcePath":
+					String sourceFolder1 = (String) arguments.get(0);
+					return BuildPathCommand.removeFromSourcePath(sourceFolder1);
+				case "java.project.listSourcePaths":
+					return BuildPathCommand.listSourcePaths();
 				default:
 					break;
 			}
