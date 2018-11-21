@@ -196,10 +196,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			List<Either<Command, CodeAction>> filteredList = codeActions.stream().filter(Either::isRight).filter(codeAction -> {
 				for (String str : this.ignoredKinds) {
 					if (codeAction.getRight().getKind().matches(str)) {
-						return false;
+						return true;
 					}
 				}
-				return true;
+				return false;
 			}).collect(Collectors.toList());
 			codeActions.removeAll(filteredList);
 		}

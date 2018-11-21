@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -83,7 +84,6 @@ public class CodeActionHandler {
 		List<CUCorrectionProposal> candidates = new ArrayList<>();
 		try {
 			List<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
-			corrections.sort(new CUCorrectionProposalComparator());
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick fix code actions", e);
@@ -91,15 +91,15 @@ public class CodeActionHandler {
 
 		try {
 			List<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(context, locations);
-			corrections.sort(new CUCorrectionProposalComparator());
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
 		}
 
 		List<CUCorrectionProposal> corrections = this.sourceAssistProcessor.getAssists(context, locations);
-		corrections.sort(new CUCorrectionProposalComparator());
 		candidates.addAll(corrections);
+
+		candidates.sort(new CUCorrectionProposalComparator());
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
 			List<CUCorrectionProposal> resultList = new ArrayList<>();
@@ -189,6 +189,12 @@ public class CodeActionHandler {
 
 		@Override
 		public int compare(CUCorrectionProposal p1, CUCorrectionProposal p2) {
+			String k1 = p1.getKind();
+			String k2 = p2.getKind();
+			if (!StringUtils.isBlank(k1) && !StringUtils.isBlank(k2) && !k1.equals(k2)) {
+				return k1.compareTo(k2);
+			}
+
 			int r1 = p1.getRelevance();
 			int r2 = p2.getRelevance();
 			int relevanceDif = r2 - r1;
