@@ -22,7 +22,9 @@ package org.eclipse.jdt.ls.core.internal.corrections;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -60,10 +62,10 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public CUCorrectionProposal[] getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
+	public List<CUCorrectionProposal> getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
 			throws CoreException {
 		if (locations == null || locations.length == 0) {
-			return new CUCorrectionProposal[0];
+			return Collections.emptyList();
 		}
 
 		HashSet<Integer> handledProblems = new HashSet<>(locations.length);
@@ -75,7 +77,7 @@ public class QuickFixProcessor {
 				process(context, curr, resultingCollections);
 			}
 		}
-		return resultingCollections.toArray(new CUCorrectionProposal[resultingCollections.size()]);
+		return resultingCollections;
 	}
 
 	private void process(IInvocationContext context, IProblemLocationCore problem,

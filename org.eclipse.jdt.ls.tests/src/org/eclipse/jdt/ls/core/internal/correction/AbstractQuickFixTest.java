@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -36,8 +37,10 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -48,6 +51,8 @@ import org.junit.Assert;
 public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 	private List<String> ignoredCommands;
+
+	private List<String> ignoredKinds = Arrays.asList(CodeActionKind.Source + ".*");
 
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
@@ -153,12 +158,19 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	protected Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
+		if (problems.length == 0) {
+			return new Range(new Position(), new Position());
+		}
 		IProblem problem = problems[0];
 		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 	}
 
-	protected void setIgnoredCommands(List<String> ignoredCommands) {
-		this.ignoredCommands = ignoredCommands;
+	protected void setIgnoredCommands(String... ignoredCommands) {
+		this.ignoredCommands = Arrays.asList(ignoredCommands);
+	}
+
+	protected void setIgnoredKind(String... ignoredKind) {
+		this.ignoredKinds = Arrays.asList(ignoredKind);
 	}
 
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
@@ -179,6 +191,19 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		parms.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
+
+		if (this.ignoredKinds != null) {
+			List<Either<Command, CodeAction>> filteredList = codeActions.stream().filter(Either::isRight).filter(codeAction -> {
+				for (String str : this.ignoredKinds) {
+					if (codeAction.getRight().getKind().matches(str)) {
+						return true;
+					}
+				}
+				return false;
+			}).collect(Collectors.toList());
+			codeActions.removeAll(filteredList);
+		}
+
 		if (this.ignoredCommands != null) {
 			List<Either<Command, CodeAction>> filteredList = new ArrayList<>();
 			for (Either<Command, CodeAction> codeAction : codeActions) {

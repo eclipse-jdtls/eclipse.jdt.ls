@@ -32,7 +32,7 @@ public class RenameNodeCorrectionProposal extends CUCorrectionProposal {
 	private int fLength;
 
 	public RenameNodeCorrectionProposal(String name, ICompilationUnit cu, int offset, int length, String newName, int relevance) {
-		super(name, CodeActionKind.Refactor, cu, null, relevance);
+		super(name, CodeActionKind.QuickFix, cu, null, relevance);
 		fOffset= offset;
 		fLength= length;
 		fNewName= newName;

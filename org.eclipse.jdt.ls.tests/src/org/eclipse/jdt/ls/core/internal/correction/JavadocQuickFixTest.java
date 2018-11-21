@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -969,7 +968,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 	public void testMissingFieldComment() throws Exception {
 		Map<String, String> original = fJProject1.getOptions(false);
 		HashMap<String, String> newOptions = new HashMap<>(original);
-		this.setIgnoredCommands(Arrays.asList("Extract.*"));
+		this.setIgnoredCommands("Extract.*");
 		// newOptions.put(JavaCore.COMPILER_PB_MISSING_JAVADOC_COMMENTS,
 		// JavaCore.ERROR);
 		// newOptions.put(JavaCore.COMPILER_PB_MISSING_JAVADOC_COMMENTS_VISIBILITY,

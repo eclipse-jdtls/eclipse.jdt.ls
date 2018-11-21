@@ -618,6 +618,55 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("public class C {\n");
 		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         int test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Create local variable 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    private int test;\n");
+		buf.append("\n");
+		buf.append("    public void foo () {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Create field 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo (int test) {\n");
+		buf.append("         test = 1;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e4 = new Expected("Create parameter 'test'", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
+		buf.append("}\n");
+		buf.append("public class E extends C {\n");
+		buf.append("    public void foo () {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e5 = new Expected("Remove assignment", buf.toString());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class C {\n");
+		buf.append("    private int test;\n");
 		buf.append("\n");
 		buf.append("    /**\n");
 		buf.append("     * @return the test\n");
@@ -638,56 +687,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("         setTest(1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class C {\n");
-		buf.append("    private int test;\n");
-		buf.append("}\n");
-		buf.append("public class E extends C {\n");
-		buf.append("    public void foo () {\n");
-		buf.append("         int test = 1;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Create local variable 'test'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class C {\n");
-		buf.append("    private int test;\n");
-		buf.append("}\n");
-		buf.append("public class E extends C {\n");
-		buf.append("    private int test;\n");
-		buf.append("\n");
-		buf.append("    public void foo () {\n");
-		buf.append("         test = 1;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e4 = new Expected("Create field 'test'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class C {\n");
-		buf.append("    private int test;\n");
-		buf.append("}\n");
-		buf.append("public class E extends C {\n");
-		buf.append("    public void foo (int test) {\n");
-		buf.append("         test = 1;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Create parameter 'test'", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class C {\n");
-		buf.append("    private int test;\n");
-		buf.append("}\n");
-		buf.append("public class E extends C {\n");
-		buf.append("    public void foo () {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e6 = new Expected("Remove assignment", buf.toString());
+		Expected e6 = new Expected("Create getter and setter for 'test'...", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}

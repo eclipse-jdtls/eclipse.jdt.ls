@@ -168,6 +168,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		parms.setRange(range);
 		CodeActionContext context = new CodeActionContext();
 		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
+		context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
 		parms.setContext(context);
 
 		return new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
