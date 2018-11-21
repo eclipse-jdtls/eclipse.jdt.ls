@@ -70,7 +70,6 @@ import org.eclipse.jdt.ls.core.internal.DidChangeWatchedFilesRegistrationOptions
 import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
-import org.eclipse.jdt.ls.core.internal.JDTStandaloneFileUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -221,7 +220,7 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
-		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> JDTStandaloneFileUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
+		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> ProjectUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
 		for (IProject project : getWorkspaceRoot().getProjects()) {
 			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project)) || workspaceProjects.contains(project.getName())) {
 				try {

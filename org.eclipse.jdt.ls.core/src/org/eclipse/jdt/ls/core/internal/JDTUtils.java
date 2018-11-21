@@ -196,7 +196,7 @@ public final class JDTUtils {
 			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
 			String content = Files.toString(file, Charsets.UTF_8);
-			if (content.isEmpty() && javaProject != null && !JDTStandaloneFileUtils.isVisibleProject(javaProject.getProject())) {
+			if (content.isEmpty() && javaProject != null && !ProjectUtils.isVisibleProject(javaProject.getProject())) {
 				return guessPackageNameFromPath(uri);
 			} else {
 				return getPackageName(javaProject, content);
@@ -211,7 +211,7 @@ public final class JDTUtils {
 	private static String guessPackageNameFromPath(URI uri) {
 		java.nio.file.Path javaPath = Paths.get(uri);
 		IPath containerPath = ResourceUtils.filePathFromURI(javaPath.getParent().toUri().toString());
-		IPath workspaceRoot = JDTStandaloneFileUtils.getWorkspaceRoot(containerPath);
+		IPath workspaceRoot = ProjectUtils.findBelongedWorkspaceRoot(containerPath);
 		if (workspaceRoot == null) {
 			List<String> segments = Arrays.asList(containerPath.segments());
 			for (int i = 0; i < SRC_PREFIXES.length; i++) {

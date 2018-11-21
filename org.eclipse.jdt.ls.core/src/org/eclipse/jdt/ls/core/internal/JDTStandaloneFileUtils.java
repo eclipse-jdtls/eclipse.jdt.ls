@@ -12,8 +12,6 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.net.URI;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,13 +29,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public class JDTStandaloneFileUtils {
 	public static final String PATH_SEPARATOR = "/";
 	public static final String PERIOD = ".";
 	public static final String SRC = "src";
-	public static final String WORKSPACE_LINK = "_";
 
 	public static ICompilationUnit getFakeCompilationUnit(URI uri, IProgressMonitor monitor) {
 		if (uri == null || !"file".equals(uri.getScheme()) || !uri.getPath().endsWith(".java")) {
@@ -49,49 +45,12 @@ public class JDTStandaloneFileUtils {
 			return null;
 		}
 
-		IPath workspaceRoot = getWorkspaceRoot(ResourceUtils.filePathFromURI(uri.toString()));
+		IPath workspaceRoot = ProjectUtils.findBelongedWorkspaceRoot(ResourceUtils.filePathFromURI(uri.toString()));
 		if (workspaceRoot != null) {
 			return getFakeCompilationUnitForInsideStandaloneFile(uri, workspaceRoot, monitor);
 		} else {
 			return getFakeCompilationUnitForExternalStandaloneFile(uri, monitor);
 		}
-	}
-
-	public static IPath getWorkspaceRoot(IPath filePath) {
-		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
-		Collection<IPath> rootPaths = manager.getPreferences().getRootPaths();
-		if (rootPaths != null) {
-			for (IPath rootPath : rootPaths) {
-				if (rootPath.isPrefixOf(filePath)) {
-					return rootPath;
-				}
-			}
-		}
-
-		return null;
-	}
-
-	public static String getWorkspaceInvisibleProjectName(IPath workspacePath) {
-		String fileName = workspacePath.toFile().getName();
-		String projectName = fileName + "_" + Integer.toHexString(workspacePath.toPortableString().hashCode());
-		return projectName;
-	}
-
-	public static boolean isVisibleProject(IProject project) {
-		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
-		Collection<IPath> rootPaths = manager.getPreferences().getRootPaths();
-		return ResourceUtils.isContainedIn(project.getLocation(), rootPaths);
-	}
-
-	public static List<IProject> getVisibleProjects(IPath workspaceRoot) {
-		List<IProject> projects = new ArrayList<>();
-		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
-			if (project.exists() && isVisibleProject(project) && workspaceRoot.isPrefixOf(project.getLocation())) {
-				projects.add(project);
-			}
-		}
-
-		return projects;
 	}
 
 	private static ICompilationUnit getFakeCompilationUnitForExternalStandaloneFile(URI uri, IProgressMonitor monitor) {
@@ -126,31 +85,18 @@ public class JDTStandaloneFileUtils {
 
 	private static ICompilationUnit getFakeCompilationUnitForInsideStandaloneFile(URI uri, IPath workspaceRoot, IProgressMonitor monitor) {
 		java.nio.file.Path path = Paths.get(uri);
-		if (!getVisibleProjects(workspaceRoot).isEmpty()) {
+		if (!ProjectUtils.getVisibleProjects(workspaceRoot).isEmpty()) {
 			return null;
 		}
 
 		// Try to resolve the CompilationUnit from the workspace root associated invisible project.
-		String invisibleProjectName = getWorkspaceInvisibleProjectName(workspaceRoot);
+		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(workspaceRoot);
 		IProject invisibleProject = ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
 		if (!invisibleProject.exists()) {
 			try {
-				JavaLanguageServerPlugin.getProjectsManager().createJavaProject(invisibleProject, null, null, "bin", monitor);
+				invisibleProject = ProjectUtils.createInvisibleProjectIfNotExist(workspaceRoot);
 				IJavaProject javaProject = JavaCore.create(invisibleProject);
-
-				// Link the workspace root to the invisible project.
-				IFolder workspaceLinkFolder = invisibleProject.getFolder(WORKSPACE_LINK);
-				if (!workspaceLinkFolder.isLinked()) {
-					try {
-						JDTUtils.createFolders(workspaceLinkFolder.getParent(), null);
-						workspaceLinkFolder.createLink(workspaceRoot.toFile().toURI(), IResource.REPLACE, null);
-					} catch (CoreException e) {
-						String errMsg = "Failed to create linked resource from " + workspaceRoot + " to the invisible project " + invisibleProject.getName() + " .";
-						JavaLanguageServerPlugin.logException(errMsg, e);
-						return null;
-					}
-				}
-
+				IFolder workspaceLinkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
 				try {
 					// Mark the containing folder of the opened file as Source Root of the invisible project.
 					String packageName = JDTUtils.getPackageName(javaProject, uri);
@@ -160,8 +106,11 @@ public class JDTStandaloneFileUtils {
 						containerRelativePath = containerPath.makeRelativeTo(workspaceRoot);
 					}
 					IPath sourcePath = containerRelativePath.isEmpty() ? workspaceLinkFolder.getFullPath() : workspaceLinkFolder.getFolder(containerRelativePath).getFullPath();
-					List<IProject> subProjects = getVisibleProjects(workspaceRoot);
-					List<IPath> subProjectPaths = subProjects.stream().map(project -> project.getLocation()).collect(Collectors.toList());
+					List<IProject> subProjects = ProjectUtils.getVisibleProjects(workspaceRoot);
+					List<IPath> subProjectPaths = subProjects.stream().map(project -> {
+						IPath relativePath = project.getLocation().makeRelativeTo(workspaceRoot);
+						return workspaceLinkFolder.getFolder(relativePath).getFullPath();
+					}).collect(Collectors.toList());
 					ProjectUtils.addSourcePath(sourcePath, subProjectPaths.toArray(new IPath[0]), javaProject);
 				} catch (JavaModelException e) {
 					String errMsg = "Failed to update classpath to the invisible project " + invisibleProject.getName() + " .";
@@ -173,6 +122,7 @@ public class JDTStandaloneFileUtils {
 				final IFile file = workspaceLinkFolder.getFile(fileRelativePath);
 				return (ICompilationUnit) JavaCore.create(file, javaProject);
 			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
 				return null;
 			}
 		}

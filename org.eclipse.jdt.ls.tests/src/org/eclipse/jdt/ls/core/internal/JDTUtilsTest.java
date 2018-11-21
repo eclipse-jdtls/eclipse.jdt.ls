@@ -185,9 +185,9 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 		assertNotNull("Could not find compilation unit for " + uri, cu);
 		IProject project = cu.getResource().getProject();
-		assertEquals(JDTStandaloneFileUtils.getWorkspaceInvisibleProjectName(workspaceRoot), project.getName());
-		assertNotNull(project.findMember(JDTStandaloneFileUtils.WORKSPACE_LINK));
-		assertTrue(project.findMember(JDTStandaloneFileUtils.WORKSPACE_LINK).isLinked());
+		assertEquals(ProjectUtils.getWorkspaceInvisibleProjectName(workspaceRoot), project.getName());
+		assertNotNull(project.findMember(ProjectUtils.WORKSPACE_LINK));
+		assertTrue(project.findMember(ProjectUtils.WORKSPACE_LINK).isLinked());
 		assertEquals(cu.getResource(), JDTUtils.findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI));
 		assertTrue(JDTUtils.isOnClassPath(cu));
 
