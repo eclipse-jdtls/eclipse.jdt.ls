@@ -24,6 +24,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.RenameOptions;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
@@ -33,6 +34,12 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
 
 public class RenameHandler {
+
+	public static RenameOptions createOptions() {
+		RenameOptions renameOptions = new RenameOptions();
+		renameOptions.setPrepareProvider(true);
+		return renameOptions;
+	}
 
 	private PreferenceManager preferenceManager;
 
@@ -78,7 +85,7 @@ public class RenameHandler {
 			create.run(monitor);
 
 			Change change = create.getChange();
-			ChangeUtil.convertChanges(change, edit);
+			ChangeUtil.convertCompositeChange(change, edit);
 		} catch (CoreException ex) {
 			JavaLanguageServerPlugin.logException("Problem with rename for " + params.getTextDocument().getUri(), ex);
 		}
