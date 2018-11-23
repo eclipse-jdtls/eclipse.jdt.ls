@@ -27,6 +27,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.RenameOptions;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
 import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
@@ -81,8 +84,12 @@ public class RenameHandler {
 			}
 			RenameRefactoring renameRefactoring = renameSupport.getRenameRefactoring();
 
-			CreateChangeOperation create = new CreateChangeOperation(new CheckConditionsOperation(renameRefactoring, CheckConditionsOperation.ALL_CONDITIONS), RefactoringStatus.FATAL);
+			CheckConditionsOperation check = new CheckConditionsOperation(renameRefactoring, CheckConditionsOperation.ALL_CONDITIONS);
+			CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
 			create.run(monitor);
+			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+				throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, check.getStatus().getMessageMatchingSeverity(RefactoringStatus.ERROR), null));
+			}
 
 			Change change = create.getChange();
 			ChangeUtil.convertCompositeChange(change, edit);

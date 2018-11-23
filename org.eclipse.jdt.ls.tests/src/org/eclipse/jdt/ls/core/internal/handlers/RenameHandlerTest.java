@@ -19,7 +19,6 @@ import static org.mockito.Mockito.when;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -43,6 +42,7 @@ import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
@@ -213,7 +213,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void testRenameTypeWhithResourceChanges() throws JavaModelException, BadLocationException {
+	public void testRenameTypeWithResourceChanges() throws JavaModelException, BadLocationException {
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
@@ -230,8 +230,6 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		StringBuilder builder = new StringBuilder();
 		Position pos = mergeCode(builder, codes);
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
-
-		IFile resource = (IFile) cu.getResource();
 
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "Newname");
 		assertNotNull(edit);
@@ -262,7 +260,42 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(expected, TextEditUtil.apply(builder.toString(), testChanges));
 	}
 
-	@Test
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameTypeWithErrors() throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		String[] codes = { "package test1;\n",
+				           "public class Newname {\n",
+				           "   }\n",
+				           "}\n" };
+		StringBuilder builder = new StringBuilder();
+		mergeCode(builder, codes);
+		ICompilationUnit cu = pack1.createCompilationUnit("Newname.java", builder.toString(), false, null);
+
+
+		String[] codes1 = { "package test1;\n",
+				           "public class E|* {\n",
+				           "   public E() {\n",
+				           "   }\n",
+				           "   public int bar() {\n", "   }\n",
+				           "   public int foo() {\n",
+				           "		this.bar();\n",
+				           "   }\n",
+				           "}\n" };
+		builder = new StringBuilder();
+		Position pos = mergeCode(builder, codes1);
+		cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
+
+		WorkspaceEdit edit = getRenameEdit(cu, pos, "Newname");
+		assertNotNull(edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> resourceChanges = edit.getDocumentChanges();
+
+		assertEquals(resourceChanges.size(), 3);
+	}
+
+	@Test(expected = ResponseErrorException.class)
 	public void testRenameSystemLibrary() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
@@ -279,9 +312,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		Position pos = mergeCode(builder, codes);
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
 
-		WorkspaceEdit edit = getRenameEdit(cu, pos, "newname");
-		assertNotNull(edit);
-		assertEquals(edit.getChanges().size(), 0);
+		getRenameEdit(cu, pos, "newname");
 	}
 
 	@Test
