@@ -34,9 +34,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
 public class PrepareRenameHandler {
 
-	public PrepareRenameHandler() {
-	}
-
 	public Either<Range, PrepareRenameResult> prepareRename(TextDocumentPositionParams params, IProgressMonitor monitor) {
 
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
