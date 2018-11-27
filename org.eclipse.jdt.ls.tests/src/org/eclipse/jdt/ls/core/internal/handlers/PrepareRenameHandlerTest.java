@@ -292,6 +292,37 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		prepareRename(cuB, pos, "parent.newpackage");
 	}
 
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameMiddleOfPackage() throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
+
+		//@formatter:off
+		String[] content = {
+			"package |*ex.amples;\n",
+			"public class A {}\n"
+		};
+		//@formatter:on
+		StringBuilder builder = new StringBuilder();
+		Position pos = mergeCode(builder, content);
+		ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+		prepareRename(cu, pos, "ex.am.ple");
+
+		//@formatter:off
+		String[] content2 = {
+			"package ex.|*amples;\n",
+			"public class A {}\n"
+		};
+		//@formatter:on
+		builder = new StringBuilder();
+		pos = mergeCode(builder, content2);
+		cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+		prepareRename(cu, pos, "ex.am.ple");
+	}
+
 	private Position mergeCode(StringBuilder builder, String[] codes) {
 		Position pos = null;
 		for (int i = 0; i < codes.length; i++) {

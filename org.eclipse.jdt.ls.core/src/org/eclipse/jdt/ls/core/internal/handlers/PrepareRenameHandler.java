@@ -58,8 +58,7 @@ public class PrepareRenameHandler {
 									context.setASTRoot(ast);
 									ASTNode node = context.getCoveredNode();
 									// Rename package is not fully supported yet.
-									if (!(node instanceof PackageDeclaration)
-										&& !(((node instanceof QualifiedName) || (node instanceof SimpleName)) && node.getParent() instanceof PackageDeclaration)) {
+									if (!isPackageDeclaration(node)) {
 										return Either.forLeft(JDTUtils.toRange(unit, loc.getOffset(), loc.getLength()));
 									}
 								}
@@ -73,5 +72,15 @@ public class PrepareRenameHandler {
 			}
 		}
 		throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
+	}
+
+	private boolean isPackageDeclaration(ASTNode node) {
+		if (node instanceof PackageDeclaration) {
+			return true;
+		}
+		if ((node instanceof QualifiedName) || (node instanceof SimpleName)) {
+			return isPackageDeclaration(node.getParent());
+		}
+		return false;
 	}
 }
