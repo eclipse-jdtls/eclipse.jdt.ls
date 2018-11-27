@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
@@ -56,8 +57,9 @@ public class PrepareRenameHandler {
 									InnovationContext context = new InnovationContext(unit, loc.getOffset(), loc.getLength());
 									context.setASTRoot(ast);
 									ASTNode node = context.getCoveredNode();
-									// Rename package is not fully support yet.
-									if (!(node instanceof PackageDeclaration) && !(node instanceof QualifiedName && node.getParent() instanceof PackageDeclaration)) {
+									// Rename package is not fully supported yet.
+									if (!(node instanceof PackageDeclaration)
+										&& !(((node instanceof QualifiedName) || (node instanceof SimpleName)) && node.getParent() instanceof PackageDeclaration)) {
 										return Either.forLeft(JDTUtils.toRange(unit, loc.getOffset(), loc.getLength()));
 									}
 								}
@@ -67,9 +69,9 @@ public class PrepareRenameHandler {
 				}
 
 			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem with compute occurrences for" + unit.getElementName() + " in prepareRename", e);
+				JavaLanguageServerPlugin.logException("Problem computing occurrences for" + unit.getElementName() + " in prepareRename", e);
 			}
 		}
-		throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Rename this element is not supported yet.", null));
+		throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
 	}
 }

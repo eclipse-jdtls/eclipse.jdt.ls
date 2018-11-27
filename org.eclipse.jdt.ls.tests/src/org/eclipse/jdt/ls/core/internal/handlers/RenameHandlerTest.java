@@ -240,7 +240,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<TextDocumentEdit, ResourceOperation> change = resourceChanges.get(2);
 		RenameFile resourceChange = (RenameFile) change.getRight();
 		assertEquals(JDTUtils.toURI(cu), resourceChange.getOldUri());
-		assertEquals(JDTUtils.toURI(cu).replace("E", "Newname"), resourceChange.getNewUri());
+		assertEquals(JDTUtils.toURI(cu).replaceFirst("(?s)E(?!.*?E)", "Newname"), resourceChange.getNewUri());
 
 		List<TextEdit> testChanges = new LinkedList<>();
 		testChanges.addAll(resourceChanges.get(0).getLeft().getEdits());
