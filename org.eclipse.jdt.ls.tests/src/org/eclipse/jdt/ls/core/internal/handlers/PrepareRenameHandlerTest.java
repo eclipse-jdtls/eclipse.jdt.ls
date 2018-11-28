@@ -323,6 +323,36 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		prepareRename(cu, pos, "ex.am.ple");
 	}
 
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameClassFile() throws JavaModelException, BadLocationException {
+		testRenameClassFile("Ex|*ception");
+	}
+
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameFQCNClassFile() throws JavaModelException, BadLocationException {
+		testRenameClassFile("java.lang.Ex|*ception");
+	}
+
+	private void testRenameClassFile(String type) throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
+
+		{
+		//@formatter:off
+		String[] content = {
+			"package ex.amples;\n",
+			"public class A extends "+type+"{}\n"
+		};
+		//@formatter:on
+		StringBuilder builder = new StringBuilder();
+		Position pos = mergeCode(builder, content);
+		ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+		prepareRename(cu, pos, "MyException");
+		}
+	}
+
 	private Position mergeCode(StringBuilder builder, String[] codes) {
 		Position pos = null;
 		for (int i = 0; i < codes.length; i++) {

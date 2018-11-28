@@ -14,11 +14,13 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
@@ -58,7 +60,7 @@ public class PrepareRenameHandler {
 									context.setASTRoot(ast);
 									ASTNode node = context.getCoveredNode();
 									// Rename package is not fully supported yet.
-									if (!isPackageDeclaration(node)) {
+									if (!isPackageDeclaration(node) && !isClassFile(node)) {
 										return Either.forLeft(JDTUtils.toRange(unit, loc.getOffset(), loc.getLength()));
 									}
 								}
@@ -74,11 +76,25 @@ public class PrepareRenameHandler {
 		throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
 	}
 
+	private boolean isClassFile(ASTNode node) {
+		if (node instanceof Name) {
+			IBinding resolvedBinding = ((Name) node).resolveBinding();
+			if (resolvedBinding instanceof ITypeBinding) {
+				ITypeBinding typeBinding = (ITypeBinding) resolvedBinding;
+				if (typeBinding.getJavaElement() != null) {
+					IJavaElement element = typeBinding.getJavaElement();
+					return element.getAncestor(IJavaElement.CLASS_FILE) != null;
+				}
+			}
+		}
+		return false;
+	}
+
 	private boolean isPackageDeclaration(ASTNode node) {
 		if (node instanceof PackageDeclaration) {
 			return true;
 		}
-		if ((node instanceof QualifiedName) || (node instanceof SimpleName)) {
+		if (node instanceof Name) {
 			return isPackageDeclaration(node.getParent());
 		}
 		return false;
