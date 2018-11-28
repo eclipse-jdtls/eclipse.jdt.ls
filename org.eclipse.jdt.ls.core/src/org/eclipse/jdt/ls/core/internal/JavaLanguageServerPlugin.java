@@ -64,6 +64,7 @@ import org.osgi.util.tracker.ServiceTracker;
 
 public class JavaLanguageServerPlugin extends Plugin {
 
+	private static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
 	public static final String MANUAL = "Manual";
 	public static final String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
 	public static final String HTTPS_NON_PROXY_HOSTS = "https.nonProxyHosts";
@@ -133,15 +134,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
-		// Set the ID to use for preference lookups
-		JavaManipulation.setPreferenceNodeId(PLUGIN_ID);
-
-		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
-		fDefaultPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, DEFAULT_MEMBER_SORT_ORDER);
-
-		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
-		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();
-		preferenceCache.install();
+		setPreferenceNodeId();
 
 		preferenceManager = new PreferenceManager();
 		digestStore = new DigestStore(getStateLocation().toFile());
@@ -154,6 +147,31 @@ public class JavaLanguageServerPlugin extends Plugin {
 		contentProviderManager = new ContentProviderManager(preferenceManager);
 		logInfo(getClass() + " is started");
 		configureProxy();
+	}
+
+	private void setPreferenceNodeId() {
+		// a hack to ensure unit tests work in Eclipse and CLI builds on Mac
+		Bundle bundle = Platform.getBundle(JDT_UI_PLUGIN);
+		if (bundle != null && bundle.getState() != Bundle.ACTIVE) {
+			// start the org.eclipse.jdt.ui plugin if it exists
+			try {
+				bundle.start();
+			} catch (BundleException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		// if preferenceNodeId is already set, we have to nullify it
+		// https://git.eclipse.org/c/jdt/eclipse.jdt.ui.git/commit/?id=4c731bc9cc7e1cfd2e67746171aede8d7719e9c1
+		JavaManipulation.setPreferenceNodeId(null);
+		// Set the ID to use for preference lookups
+		JavaManipulation.setPreferenceNodeId(IConstants.PLUGIN_ID);
+
+		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
+		fDefaultPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, DEFAULT_MEMBER_SORT_ORDER);
+
+		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
+		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();
+		preferenceCache.install();
 	}
 
 	private void configureProxy() {
