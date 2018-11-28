@@ -25,12 +25,10 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.CreateFile;
@@ -47,7 +45,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -55,9 +52,6 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private RenameHandler handler;
 
-	@Mock
-	private PreferenceManager preferenceManager;
-	@Mock
 	private ClientPreferences clientPreferences;
 
 	private IPackageFragmentRoot sourceFolder;
@@ -66,8 +60,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void setup() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
-		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
 		Preferences p = mock(Preferences.class);
 		when(preferenceManager.getPreferences()).thenReturn(p);

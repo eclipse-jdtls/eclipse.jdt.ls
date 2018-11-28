@@ -20,12 +20,9 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,20 +31,13 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Mock
-	private ClientPreferences clientPreferences;
-
-	@Mock
-	private PreferenceManager preferenceManager;
-
 	@Before
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		fJProject1.setOptions(TestOptions.getDefaultOptions());
 
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
+		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(false);
 
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 	}
