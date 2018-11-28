@@ -24,9 +24,9 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
-import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
@@ -48,6 +48,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
+import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
 
 public class CodeActionHandler {
 
@@ -161,21 +162,17 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) {
+	private static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) throws CoreException {
 		WorkspaceEdit $ = new WorkspaceEdit();
 
 		if (change instanceof TextChange) {
 			TextEditConverter converter = new TextEditConverter(unit, ((TextChange) change).getEdit());
 			String uri = JDTUtils.toURI(unit);
 			$.getChanges().put(uri, converter.convert());
+		} else if (change instanceof ResourceChange) {
+			ChangeUtil.convertResourceChange((ResourceChange) change, $);
 		} else if (change instanceof CompositeChange) {
-			for (Change c : ((CompositeChange) change).getChildren()) {
-				if (c instanceof CompilationUnitChange) {
-					TextEditConverter converter = new TextEditConverter(((CompilationUnitChange) c).getCompilationUnit(), ((TextChange) c).getEdit());
-					String uri = JDTUtils.toURI(((CompilationUnitChange) c).getCompilationUnit());
-					$.getChanges().put(uri, converter.convert());
-				}
-			}
+			ChangeUtil.convertCompositeChange(change, $);
 		}
 
 		return $;

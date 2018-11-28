@@ -20,18 +20,24 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaConventions;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jface.text.IDocument;
@@ -44,6 +50,7 @@ public class ReorgCorrectionsSubProcessor {
 	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<CUCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
+		boolean isLinked = cu.getResource().isLinked();
 
 		IJavaProject javaProject= cu.getJavaProject();
 		String sourceLevel= javaProject.getOption(JavaCore.COMPILER_SOURCE, true);
@@ -65,6 +72,9 @@ public class ReorgCorrectionsSubProcessor {
 		String newTypeName= JavaCore.removeJavaLikeExtension(cu.getElementName());
 
 
+		boolean hasOtherPublicTypeBefore = false;
+
+		boolean found = false;
 		List<AbstractTypeDeclaration> types= root.types();
 		for (int i= 0; i < types.size(); i++) {
 			AbstractTypeDeclaration curr= types.get(i);
@@ -72,11 +82,30 @@ public class ReorgCorrectionsSubProcessor {
 				if (newTypeName.equals(curr.getName().getIdentifier())) {
 					return;
 				}
+				if (!found && Modifier.isPublic(curr.getModifiers())) {
+					hasOtherPublicTypeBefore = true;
+				}
+			} else {
+				found = true;
 			}
 		}
+
 		if (!JavaConventions.validateJavaTypeName(newTypeName, sourceLevel, compliance).matches(IStatus.ERROR)) {
 			proposals.add(new CorrectMainTypeNameProposal(cu, context, currTypeName, newTypeName, IProposalRelevance.RENAME_TYPE));
 		}
+
+		if (!hasOtherPublicTypeBefore && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+			String newCUName = JavaModelUtil.getRenamedCUName(cu, currTypeName);
+			ICompilationUnit newCU = ((IPackageFragment) (cu.getParent())).getCompilationUnit(newCUName);
+			if (!newCU.exists() && !isLinked && !JavaConventions.validateCompilationUnitName(newCUName, sourceLevel, compliance).matches(IStatus.ERROR)) {
+				RenameCompilationUnitChange change = new RenameCompilationUnitChange(cu, newCUName);
+
+				// rename CU
+				String label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renamecu_description, BasicElementLabels.getResourceName(newCUName));
+				proposals.add(new CUCorrectionProposal(label, CodeActionKind.QuickFix, cu, change, IProposalRelevance.RENAME_CU));
+			}
+		}
+
 	}
 
 	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocationCore problem,

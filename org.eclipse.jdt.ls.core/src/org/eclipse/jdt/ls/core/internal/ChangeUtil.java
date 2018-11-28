@@ -39,6 +39,12 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DynamicValida
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
+import org.eclipse.lsp4j.CreateFile;
+import org.eclipse.lsp4j.CreateFileOptions;
+import org.eclipse.lsp4j.DeleteFile;
+import org.eclipse.lsp4j.DeleteFileOptions;
+import org.eclipse.lsp4j.RenameFile;
+import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -56,19 +62,19 @@ import org.eclipse.text.edits.TextEdit;
  */
 public class ChangeUtil {
 
+	private static final String TEMP_FILE_NAME = ".temp";
+
 	/**
-	 * Converts changes to resource changes if resource changes are supported by the
-	 * client otherwise converts to TextEdit changes.
+	 * Converts changes to resource operations if resource operations are supported
+	 * by the client otherwise converts to TextEdit changes.
 	 *
 	 * @param change
 	 *            changes after Refactoring operation
 	 * @param edit
 	 *            instance of workspace edit changes
-	 * @param manager
-	 *            preference manager
 	 * @throws CoreException
 	 */
-	public static void convertChanges(Change change, WorkspaceEdit edit) throws CoreException {
+	public static void convertCompositeChange(Change change, WorkspaceEdit edit) throws CoreException {
 		if (!(change instanceof CompositeChange)) {
 			return;
 		}
@@ -78,15 +84,45 @@ public class ChangeUtil {
 			if (ch instanceof DynamicValidationRefactoringChange) {
 				CompositeChange compositeChange = (CompositeChange) ch;
 				for (Change child : compositeChange.getChildren()) {
-					convertCompositeChange(child, edit);
+					doConvertCompositeChange(child, edit);
 				}
 			} else {
-				convertCompositeChange(ch, edit);
+				doConvertCompositeChange(ch, edit);
 			}
 		}
 	}
 
-	private static void convertCompositeChange(Change change, WorkspaceEdit edit) throws CoreException {
+
+	/**
+	 * Converts changes to resource operations if resource operations are supported
+	 * by the client otherwise converts to TextEdit changes.
+	 *
+	 * @param resourceChange
+	 *            resource changes after Refactoring operation
+	 * @param edit
+	 *            instance of workspace edit changes
+	 * @throws CoreException
+	 */
+	public static void convertResourceChange(ResourceChange resourceChange, WorkspaceEdit edit) throws CoreException {
+		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+			return;
+		}
+
+		List<Either<TextDocumentEdit, ResourceOperation>> changes = edit.getDocumentChanges();
+		if (changes == null) {
+			changes = new LinkedList<>();
+			edit.setDocumentChanges(changes);
+		}
+
+		// Resource change is needed and supported by client
+		if (resourceChange instanceof RenameCompilationUnitChange) {
+			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
+		} else if (resourceChange instanceof RenamePackageChange) {
+			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
+		}
+	}
+
+	private static void doConvertCompositeChange(Change change, WorkspaceEdit edit) throws CoreException {
 		Object modifiedElement = change.getModifiedElement();
 		if (!(modifiedElement instanceof IJavaElement)) {
 			return;
@@ -96,20 +132,7 @@ public class ChangeUtil {
 			convertTextChange(edit, (IJavaElement) modifiedElement, (TextChange) change);
 		} else if (change instanceof ResourceChange) {
 			ResourceChange resourceChange = (ResourceChange) change;
-			convertResourceChange(edit, resourceChange);
-		}
-	}
-
-	private static void convertResourceChange(WorkspaceEdit edit, ResourceChange resourceChange) throws CoreException {
-		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceEditResourceChangesSupported()) {
-			return;
-		}
-
-		// Resource change is needed and supported by client
-		if (resourceChange instanceof RenameCompilationUnitChange) {
-			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
-		} else if (resourceChange instanceof RenamePackageChange) {
-			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
+			convertResourceChange(resourceChange, edit);
 		}
 	}
 
@@ -134,35 +157,47 @@ public class ChangeUtil {
 			convertTextEdit(edit, cu, textEdit);
 		}
 
-		org.eclipse.lsp4j.ResourceChange rc = new org.eclipse.lsp4j.ResourceChange();
 		IPath newPackageFragment = new Path(packageChange.getNewName().replace('.', IPath.SEPARATOR));
 		IPath oldPackageFragment = new Path(packageChange.getOldName().replace('.', IPath.SEPARATOR));
 		IPath newPackagePath = pack.getResource().getLocation().removeLastSegments(oldPackageFragment.segmentCount()).append(newPackageFragment);
-		rc.setNewUri(ResourceUtils.fixURI(newPackagePath.toFile().toURI()));
+
 		if (packageChange.getRenameSubpackages()) {
-			rc.setCurrent(ResourceUtils.fixURI(pack.getResource().getRawLocationURI()));
-			edit.getResourceChanges().add(Either.forLeft(rc));
+			RenameFile renameFile = new RenameFile();
+			renameFile.setNewUri(ResourceUtils.fixURI(newPackagePath.toFile().toURI()));
+			renameFile.setOldUri(ResourceUtils.fixURI(pack.getResource().getRawLocationURI()));
+			edit.getDocumentChanges().add(Either.forRight(renameFile));
 		} else {
-			edit.getResourceChanges().add(Either.forLeft(rc));
+			CreateFile createFile = new CreateFile();
+			createFile.setUri(ResourceUtils.fixURI(newPackagePath.append(TEMP_FILE_NAME).toFile().toURI()));
+			createFile.setOptions(new CreateFileOptions(false, true));
+			edit.getDocumentChanges().add(Either.forRight(createFile));
+
 			for (ICompilationUnit unit : units) {
-				org.eclipse.lsp4j.ResourceChange cuResourceChange = new org.eclipse.lsp4j.ResourceChange();
-				cuResourceChange.setCurrent(ResourceUtils.fixURI(unit.getResource().getLocationURI()));
+				RenameFile cuResourceChange = new RenameFile();
+				cuResourceChange.setOldUri(ResourceUtils.fixURI(unit.getResource().getLocationURI()));
 				IPath newCUPath = newPackagePath.append(unit.getPath().lastSegment());
 				cuResourceChange.setNewUri(ResourceUtils.fixURI(newCUPath.toFile().toURI()));
-				edit.getResourceChanges().add(Either.forLeft(cuResourceChange));
+				edit.getDocumentChanges().add(Either.forRight(cuResourceChange));
 			}
+
+			// Workaround: https://github.com/Microsoft/language-server-protocol/issues/272
+			DeleteFile deleteFile = new DeleteFile();
+			deleteFile.setUri(ResourceUtils.fixURI(newPackagePath.append(TEMP_FILE_NAME).toFile().toURI()));
+			deleteFile.setOptions(new DeleteFileOptions(false, true));
+			edit.getDocumentChanges().add(Either.forRight(deleteFile));
+
 		}
 	}
 
 	private static void convertCUResourceChange(WorkspaceEdit edit, RenameCompilationUnitChange cuChange) {
 		ICompilationUnit modifiedCU = (ICompilationUnit) cuChange.getModifiedElement();
-		org.eclipse.lsp4j.ResourceChange rc = new org.eclipse.lsp4j.ResourceChange();
+		RenameFile rf = new RenameFile();
 		String newCUName = cuChange.getNewName();
 		IPath currentPath = modifiedCU.getResource().getLocation();
-		rc.setCurrent(ResourceUtils.fixURI(modifiedCU.getResource().getRawLocationURI()));
+		rf.setOldUri(ResourceUtils.fixURI(modifiedCU.getResource().getRawLocationURI()));
 		IPath newPath = currentPath.removeLastSegments(1).append(newCUName);
-		rc.setNewUri(ResourceUtils.fixURI(newPath.toFile().toURI()));
-		edit.getResourceChanges().add(Either.forLeft(rc));
+		rf.setNewUri(ResourceUtils.fixURI(newPath.toFile().toURI()));
+		edit.getDocumentChanges().add(Either.forRight(rf));
 	}
 
 	private static void convertTextChange(WorkspaceEdit root, IJavaElement element, TextChange textChange) {
@@ -182,13 +217,13 @@ public class ChangeUtil {
 		for (TextEdit textEdit : children) {
 			TextEditConverter converter = new TextEditConverter(unit, textEdit);
 			String uri = JDTUtils.toURI(unit);
-			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceEditResourceChangesSupported()) {
-				List<Either<org.eclipse.lsp4j.ResourceChange, TextDocumentEdit>> changes = root.getResourceChanges();
+			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+				List<Either<TextDocumentEdit, ResourceOperation>> changes = root.getDocumentChanges();
 				if (changes == null) {
 					changes = new LinkedList<>();
-					root.setResourceChanges(changes);
+					root.setDocumentChanges(changes);
 				}
-				changes.add(Either.forRight(converter.convertToTextDocumentEdit(0)));
+				changes.add(Either.forLeft(converter.convertToTextDocumentEdit(0)));
 			} else {
 				Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
 				if (changes.containsKey(uri)) {

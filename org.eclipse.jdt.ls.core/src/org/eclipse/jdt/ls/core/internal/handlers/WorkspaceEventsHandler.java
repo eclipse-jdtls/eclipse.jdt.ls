@@ -30,18 +30,22 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
+import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 public class WorkspaceEventsHandler {
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
+	private final DocumentLifeCycleHandler handler;
 
-	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection ) {
+	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection, DocumentLifeCycleHandler handler) {
 		this.pm = projects;
 		this.connection = connection;
+		this.handler = handler;
 	}
 
 	private CHANGE_TYPE toChangeType(FileChangeType vtype){
@@ -63,6 +67,7 @@ public class WorkspaceEventsHandler {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
 			if(changeType==CHANGE_TYPE.DELETED){
 				cleanUpDiagnostics(fileEvent.getUri());
+				handler.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(fileEvent.getUri())));
 			}
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if (unit != null && changeType == CHANGE_TYPE.CREATED && !unit.exists()) {
