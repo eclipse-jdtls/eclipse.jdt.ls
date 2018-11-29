@@ -157,35 +157,39 @@ public class DocumentLifeCycleHandler {
 		for (CompilationUnit astRoot : astRoots) {
 			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
 			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
-			final DiagnosticsHandler handler = new DiagnosticsHandler(connection, unit);
-			WorkingCopyOwner wcOwner = new WorkingCopyOwner() {
-
-				/* (non-Javadoc)
-				 * @see org.eclipse.jdt.core.WorkingCopyOwner#createBuffer(org.eclipse.jdt.core.ICompilationUnit)
-				 */
-				@Override
-				public IBuffer createBuffer(ICompilationUnit workingCopy) {
-					ICompilationUnit original = workingCopy.getPrimary();
-					IResource resource = original.getResource();
-					if (resource instanceof IFile) {
-						return new DocumentAdapter(workingCopy, (IFile) resource);
-					}
-					return DocumentAdapter.Null;
-				}
-
-				/* (non-Javadoc)
-				 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
-				 */
-				@Override
-				public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
-					return handler;
-				}
-
-			};
-			unit.reconcile(ICompilationUnit.NO_AST, true, wcOwner, progress.newChild(1));
+			publishDiagnostics(unit, progress.newChild(1));
 		}
 		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ", validated: " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		return Status.OK_STATUS;
+	}
+
+	private void publishDiagnostics(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
+		final DiagnosticsHandler handler = new DiagnosticsHandler(connection, unit);
+		WorkingCopyOwner wcOwner = new WorkingCopyOwner() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#createBuffer(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IBuffer createBuffer(ICompilationUnit workingCopy) {
+				ICompilationUnit original = workingCopy.getPrimary();
+				IResource resource = original.getResource();
+				if (resource instanceof IFile) {
+					return new DocumentAdapter(workingCopy, (IFile) resource);
+				}
+				return DocumentAdapter.Null;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.jdt.core.WorkingCopyOwner#getProblemRequestor(org.eclipse.jdt.core.ICompilationUnit)
+			 */
+			@Override
+			public IProblemRequestor getProblemRequestor(ICompilationUnit workingCopy) {
+				return handler;
+			}
+
+		};
+		unit.reconcile(ICompilationUnit.NO_AST, true, wcOwner, monitor);
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
@@ -383,6 +387,10 @@ public class DocumentLifeCycleHandler {
 			}
 			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit) || unit.getResource().isDerived()) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
+			} else if (unit.hasUnsavedChanges()) {
+				unit.discardWorkingCopy();
+				unit.becomeWorkingCopy(new NullProgressMonitor());
+				publishDiagnostics(unit, new NullProgressMonitor());
 			}
 			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
 				sharedASTProvider.disposeAST();
