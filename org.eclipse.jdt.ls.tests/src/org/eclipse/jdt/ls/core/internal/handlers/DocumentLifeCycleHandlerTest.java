@@ -247,6 +247,54 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	@Test
+	public void testBasicBufferLifeCycleWithoutSave() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E123 {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        return x;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu1 = pack1.createCompilationUnit("E123.java", buf.toString(), false, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
+		assertEquals(1, getCacheSize());
+		assertNewASTsCreated(1);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E123 {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        return true;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		changeDocumentFull(cu1, buf.toString(), 2);
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(true, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
+		assertEquals(1, getCacheSize());
+		assertNewASTsCreated(1);
+
+		closeDocument(cu1);
+
+		assertEquals(false, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
+		assertEquals(0, getCacheSize());
+		assertNewASTsCreated(0);
+	}
+
+	@Test
 	public void testIncrementalChangeDocument() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
