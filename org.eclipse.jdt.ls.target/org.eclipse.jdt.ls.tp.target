@@ -15,12 +15,12 @@
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="2.2.2.v20181001-2320-s"/>
-            <repository location="http://download.eclipse.org/buildship/updates/e47/snapshots/2.x/2.2.2.v20181001-2320-s"/>
+            <unit id="org.eclipse.buildship.feature.group" version="2.2.2.v20181003-1021"/>
+            <repository location="https://download.eclipse.org/buildship/updates/e47/releases/2.x/2.2.2.v20181003-1021/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.feature.feature.group" version="1.9.1.20180912-1601"/>
-	    <repository location="http://download.eclipse.org/technology/m2e/milestones/1.9/1.9.1.20180912-1601/"/>
+            <unit id="org.eclipse.m2e.feature.feature.group" version="1.10.0.20181127-2120"/>
+	    <repository location="http://download.eclipse.org/technology/m2e/milestones/1.10/1.10.0.20181127-2120/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -42,8 +42,8 @@
             <repository location="http://download.eclipse.org/releases/2018-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.jboss.tools.maven.apt.core" version="1.5.1.201811161943"/>
-            <repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.1-2018-11-16_19-54-26-H16/"/>
+            <unit id="org.jboss.tools.maven.apt.core" version="1.5.2.201811301745"/>
+            <repository location="http://download.jboss.org/jbosstools/photon/snapshots/builds/m2e-apt/2018-11-30_17-57-28-B17/all/repo/"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
