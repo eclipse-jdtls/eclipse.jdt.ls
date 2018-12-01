@@ -126,12 +126,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		IMarker[] markers = null;
 		// Check if it is a Java ...
 		if (JavaCore.isJavaLikeFileName(file.getName())) {
-			IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-			IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
-			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
-			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
 			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
+			//ignoring working copies, they're handled in the DocumentLifecycleHandler
 			if (!cu.isWorkingCopy()) {
+				IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+				IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
+				markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
+				System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
 				document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			}
 		} // or a build file
@@ -229,14 +230,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				continue;
 			}
 			IDocument document = null;
-			String uri = JDTUtils.getFileURI(resource);
+			String uri = JDTUtils.getFileURI(file);
 			if (JavaCore.isJavaLikeFileName(file.getName())) {
 				ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-				if (cu.isWorkingCopy()) {
+				//ignoring working copies, they're handled in the DocumentLifecycleHandler
+				if (!cu.isWorkingCopy()) {
 					try {
 						document = JsonRpcHelpers.toDocument(cu.getBuffer());
 					} catch (JavaModelException e) {
-						JavaLanguageServerPlugin.logException("Failed to publish diagnostics.", e);
+						JavaLanguageServerPlugin.logException("Failed to publish diagnostics for " + uri, e);
 					}
 				}
 			} else if (projectsManager.isBuildFile(file)) {
