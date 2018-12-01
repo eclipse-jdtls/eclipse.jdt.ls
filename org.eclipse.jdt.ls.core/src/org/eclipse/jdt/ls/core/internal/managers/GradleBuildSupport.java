@@ -11,12 +11,13 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
+import java.util.Optional;
 
-import org.eclipse.buildship.core.CorePlugin;
-import org.eclipse.buildship.core.util.file.FileUtils;
-import org.eclipse.buildship.core.workspace.GradleBuild;
-import org.eclipse.buildship.core.workspace.NewProjectHandler;
-import org.eclipse.buildship.core.workspace.WorkbenchShutdownEvent;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.util.file.FileUtils;
+import org.eclipse.buildship.core.internal.workspace.DefaultGradleWorkspace;
+import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -28,8 +29,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-
-import com.google.common.base.Optional;
 
 /**
  * @author Fred Bricon
@@ -50,9 +49,10 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for "+project.getName());
-		Optional<GradleBuild> build = CorePlugin.gradleWorkspaceManager().getGradleBuild(project);
-		if (build.isPresent()){
-			build.get().synchronize(NewProjectHandler.IMPORT_AND_MERGE);
+		DefaultGradleWorkspace gradleWorkspace = (DefaultGradleWorkspace) CorePlugin.internalGradleWorkspace();
+		Optional<GradleBuild> build = gradleWorkspace.getBuild(project);
+		if (build.isPresent()) {
+			build.get().synchronize(monitor);
 		}
 	}
 
