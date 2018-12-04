@@ -66,16 +66,20 @@
          id="importers"
          point="org.eclipse.jdt.ls.core.importers">
          <importer
-         	id = "gradleProjectImporter"
-         	order ="300"
-         	class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+            id = "gradleProjectImporter"
+            order ="300"
+            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
          <importer
-         	id = "mavenProjectImporter"
-         	order = "400"
-         	class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
+            id = "mavenProjectImporter"
+            order = "400"
+            class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
          <importer
-         	id = "eclipseProjectImporter"
-         	order = "1000"
-         	class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>       	
+            id = "eclipseProjectImporter"
+            order = "1000"
+            class = "org.eclipse.jdt.ls.core.internal.managers.EclipseProjectImporter"/>
+         <importer
+            id="invisibleProjectImporter"
+            order="1500"
+            class="org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter" />
    </extension>
 </plugin>

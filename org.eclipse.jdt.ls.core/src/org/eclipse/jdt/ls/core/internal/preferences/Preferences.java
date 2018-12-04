@@ -267,6 +267,7 @@ public class Preferences {
 	private String formatterUrl;
 	private String formatterProfileName;
 	private Collection<IPath> rootPaths;
+	private Collection<IPath> triggerFiles;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
@@ -689,6 +690,15 @@ public class Preferences {
 
 	public Collection<IPath> getRootPaths() {
 		return rootPaths;
+	}
+
+	public Preferences setTriggerFiles(Collection<IPath> triggerFiles) {
+		this.triggerFiles = triggerFiles;
+		return this;
+	}
+
+	public Collection<IPath> getTriggerFiles() {
+		return triggerFiles;
 	}
 
 	public boolean isJavaFormatOnTypeEnabled() {
