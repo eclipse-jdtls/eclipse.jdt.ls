@@ -19,13 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eclipse.buildship.core.CorePlugin;
-import org.eclipse.buildship.core.configuration.BuildConfiguration;
-import org.eclipse.buildship.core.preferences.PersistentModel;
-import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper;
-import org.eclipse.buildship.core.util.gradle.GradleDistributionWrapper.DistributionType;
-import org.eclipse.buildship.core.workspace.GradleBuild;
-import org.eclipse.buildship.core.workspace.NewProjectHandler;
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.GradleCore;
+import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.SynchronizationResult;
+import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -34,10 +33,6 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.gradle.tooling.GradleConnector;
-
-import com.gradleware.tooling.toolingclient.GradleDistribution;
-import com.gradleware.tooling.toolingmodel.repository.FetchStrategy;
 
 /**
  * @author Fred Bricon
@@ -85,9 +80,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 		int projectSize = directories.size();
-		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize + 1);
 		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
+		subMonitor.worked(1);
 		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
 		subMonitor.done();
 	}
@@ -102,7 +98,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
 		GradleDistribution distribution = DEFAULT_DISTRIBUTION;
 		if (Files.exists(rootFolder.resolve("gradlew"))) {
-			distribution = GradleDistributionWrapper.from(DistributionType.WRAPPER, null).toGradleDistribution();
+			distribution = GradleDistribution.fromBuild();
 		} else {
 			File gradleHomeFile = getGradleHomeFile();
 			if (gradleHomeFile != null) {
@@ -145,12 +141,23 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 		}
 		if (shouldSynchronize) {
-			boolean overrideWorkspaceSettings = getGradleHomeFile() != null;
+			File gradleUserHome = getGradleHomeFile();
+			boolean overrideWorkspaceConfiguration = gradleUserHome != null;
 			GradleDistribution distribution = getGradleDistribution(rootFolder);
-			BuildConfiguration configuration = CorePlugin.configurationManager().createBuildConfiguration(location, overrideWorkspaceSettings, distribution, null, false, false, false);
-			GradleBuild build = CorePlugin.gradleWorkspaceManager().getGradleBuild(configuration);
-			build.getModelProvider().fetchEclipseGradleProjects(FetchStrategy.LOAD_IF_NOT_CACHED, GradleConnector.newCancellationTokenSource().token(), monitor);
-			build.synchronize(NewProjectHandler.IMPORT_AND_MERGE);
+			String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
+			File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+			// @formatter:off
+			BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(location)
+					.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
+					.gradleDistribution(distribution)
+					.javaHome(javaHome)
+					.gradleUserHome(gradleUserHome)
+					.build();
+			// @formatter:on
+			SynchronizationResult result = GradleCore.getWorkspace().createBuild(build).synchronize(monitor);
+			if (!result.getStatus().isOK()) {
+				JavaLanguageServerPlugin.log(result.getStatus());
+			}
 		}
 	}
 
