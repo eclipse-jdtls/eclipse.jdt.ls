@@ -66,7 +66,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 		IPath rootPath = ResourceUtils.filePathFromURI(rootFolder.toPath().toUri().toString());
 		Optional<IPath> triggerJavaFile = triggerFiles.stream().filter(triggerFile -> rootPath.isPrefixOf(triggerFile)).findFirst();
-		if (triggerJavaFile.isEmpty()) {
+		if (!triggerJavaFile.isPresent()) {
 			return;
 		}
 
