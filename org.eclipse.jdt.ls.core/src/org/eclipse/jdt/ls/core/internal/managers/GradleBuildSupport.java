@@ -14,9 +14,9 @@ import java.io.File;
 import java.util.Optional;
 
 import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
-import org.eclipse.buildship.core.internal.workspace.DefaultGradleWorkspace;
 import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -49,8 +49,7 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for "+project.getName());
-		DefaultGradleWorkspace gradleWorkspace = (DefaultGradleWorkspace) CorePlugin.internalGradleWorkspace();
-		Optional<GradleBuild> build = gradleWorkspace.getBuild(project);
+		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
 		if (build.isPresent()) {
 			build.get().synchronize(monitor);
 		}
