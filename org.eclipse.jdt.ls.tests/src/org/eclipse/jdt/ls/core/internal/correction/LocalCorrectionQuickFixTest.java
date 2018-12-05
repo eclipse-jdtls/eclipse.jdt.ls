@@ -1605,7 +1605,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 	public void testRemoveUnreachableCodeStmt() throws Exception {
 		Hashtable<String, String> hashtable = JavaCore.getOptions();
 		hashtable.put(JavaCore.COMPILER_PB_UNNECESSARY_ELSE, JavaCore.IGNORE);
-		JavaCore.setOptions(hashtable);
+		fJProject1.setOptions(hashtable);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
