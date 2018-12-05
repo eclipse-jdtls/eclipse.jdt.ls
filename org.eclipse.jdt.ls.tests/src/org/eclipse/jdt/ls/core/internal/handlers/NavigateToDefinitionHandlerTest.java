@@ -38,12 +38,14 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	private NavigateToDefinitionHandler handler;
 	private IProject project;
+	private IProject defaultProject;
 
 	@Before
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
+		defaultProject = linkFilesToDefaultProject("singlefile/Single.java").getProject();
 	}
 
 	@Test
@@ -70,6 +72,16 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	@Test
 	public void testDisassembledSource() throws Exception {
 		testClass("javax.tools.Tool", 6, 44);
+	}
+
+	@Test
+	public void testJdkClasses() throws Exception {
+		// because for test, we are using fake rt.jar(rtstubs.jar), the issue of issue https://bugs.eclipse.org/bugs/show_bug.cgi?id=541573 will
+		// never occur in test cases
+		String uri = ClassFileUtil.getURI(defaultProject, "Single");
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		handler.definition(new TextDocumentPositionParams(identifier, new Position(1, 31)), monitor);
+		testClass("org.apache.commons.lang3.stringutils", 6579, 20);
 	}
 
 	private void testClass(String className, int line, int column) throws JavaModelException {
