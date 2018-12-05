@@ -32,8 +32,8 @@
             <repository location="http://download.eclipse.org/eclipse/updates/4.10-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
-           <repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastStableBuild/artifact/build/p2-repository/"/>
+           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.6.0.v20181130-0905"/>
+           <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
