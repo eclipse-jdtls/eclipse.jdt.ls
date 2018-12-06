@@ -14,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -24,6 +25,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -51,6 +53,9 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testMultipleLineRange() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
+		Hashtable<String, String> options = JavaCore.getOptions();
+		options.put(JavaCore.COMPILER_PB_DEAD_CODE, JavaCore.WARNING);
+		javaProject.setOptions(options);
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
@@ -69,7 +74,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
 		IProblem[] problems = astRoot.getProblems();
 		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems));
-		assertEquals(diagnostics.size(), 1);
+		assertEquals(1, diagnostics.size());
 		Range range = diagnostics.get(0).getRange();
 		assertNotEquals(range.getStart().getLine(), range.getEnd().getLine());
 	}
