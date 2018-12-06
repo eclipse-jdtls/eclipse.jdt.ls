@@ -28,8 +28,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -218,8 +220,9 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
+		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> ProjectUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
 		for (IProject project : getWorkspaceRoot().getProjects()) {
-			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project))) {
+			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project)) || workspaceProjects.contains(project.getName())) {
 				try {
 					project.getDescription();
 				} catch (CoreException e) {
@@ -352,42 +355,57 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+		return createJavaProject(project, null, "src", "bin", monitor);
+	}
+
+	public IProject createJavaProject(IProject project, IPath projectLocation, String src, String bin, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		if (project.exists()) {
 			return project;
 		}
-		JavaLanguageServerPlugin.logInfo("Creating the default Java project");
+		JavaLanguageServerPlugin.logInfo("Creating the Java project " + project.getName());
 		//Create project
-		project.create(monitor);
+		IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(project.getName());
+		if (projectLocation != null) {
+			description.setLocation(projectLocation);
+		}
+		project.create(description, monitor);
 		project.open(monitor);
 
 		//Turn into Java project
-		IProjectDescription description = project.getDescription();
+		description = project.getDescription();
 		description.setNatureIds(new String[] { JavaCore.NATURE_ID });
 		project.setDescription(description, monitor);
 		IJavaProject javaProject = JavaCore.create(project);
 
 		//Add build output folder
-		IFolder output = project.getFolder("bin");
-		if (!output.exists()) {
-			output.create(true, true, monitor);
+		if (StringUtils.isNotBlank(bin)) {
+			IFolder output = project.getFolder(bin);
+			if (!output.exists()) {
+				output.create(true, true, monitor);
+			}
+			javaProject.setOutputLocation(output.getFullPath(), monitor);
 		}
-		javaProject.setOutputLocation(output.getFullPath(), monitor);
 
+		List<IClasspathEntry> classpaths = new ArrayList<>();
 		//Add source folder
-		IFolder source = project.getFolder("src");
-		if (!source.exists()) {
-			source.create(true, true, monitor);
+		if (StringUtils.isNotBlank(src)) {
+			IFolder source = project.getFolder(src);
+			if (!source.exists()) {
+				source.create(true, true, monitor);
+			}
+			IPackageFragmentRoot root = javaProject.getPackageFragmentRoot(source);
+			IClasspathEntry srcClasspath = JavaCore.newSourceEntry(root.getPath());
+			classpaths.add(srcClasspath);
 		}
-		IPackageFragmentRoot root = javaProject.getPackageFragmentRoot(source);
-		IClasspathEntry src = JavaCore.newSourceEntry(root.getPath());
 
 		//Find default JVM
 		IClasspathEntry jre = JavaRuntime.getDefaultJREContainerEntry();
+		classpaths.add(jre);
 
 		//Add JVM to project class path
-		javaProject.setRawClasspath(new IClasspathEntry[] { jre, src }, monitor);
+		javaProject.setRawClasspath(classpaths.toArray(new IClasspathEntry[0]), monitor);
 
-		JavaLanguageServerPlugin.logInfo("Finished creating the default Java project");
+		JavaLanguageServerPlugin.logInfo("Finished creating the Java project " + project.getName());
 		return project;
 	}
 
@@ -609,5 +627,4 @@ public class ProjectsManager implements ISaveParticipant {
 		}
 		return null;
 	}
-
 }

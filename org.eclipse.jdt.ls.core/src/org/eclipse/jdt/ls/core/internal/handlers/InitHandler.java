@@ -121,6 +121,19 @@ final public class InitHandler {
 			preferenceManager.update(prefs);
 		}
 		preferenceManager.getPreferences().setRootPaths(rootPaths);
+
+		Collection<IPath> triggerPaths = new ArrayList<>();
+		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
+		if (triggerFiles != null) {
+			for (String uri : triggerFiles) {
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
+				if (filePath != null) {
+					triggerPaths.add(filePath);
+				}
+			}
+		}
+		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
+
 		triggerInitialization(rootPaths);
 		Integer processId = param.getProcessId();
 		if (processId != null) {
