@@ -172,6 +172,22 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Should find empty hover for " + payload, "", hover.getContents().getLeft().get(0).getLeft());
 	}
 
+	@Test
+	public void testMissingUnit() throws Exception {
+		URI uri = Paths.get("projects", "maven", "salut", "src", "main", "java", "java", "Missing.java").toUri();
+		String payload = createHoverRequest(uri, 0, 0);
+		TextDocumentPositionParams position = getParams(payload);
+
+		//when
+		Hover hover = handler.hover(position, monitor);
+
+		//then
+		assertNotNull(hover);
+		assertNotNull(hover.getContents());
+		assertEquals(1, hover.getContents().getLeft().size());
+		assertEquals("Should find empty hover for " + payload, "", hover.getContents().getLeft().get(0).getLeft());
+	}
+
 	String createHoverRequest(String file, int line, int kar) {
 		URI uri = project.getFile(file).getRawLocationURI();
 		return createHoverRequest(uri, line, kar);

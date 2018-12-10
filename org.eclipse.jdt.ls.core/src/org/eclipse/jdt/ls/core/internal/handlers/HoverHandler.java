@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -36,6 +37,8 @@ public class HoverHandler {
 		List<Either<String, MarkedString>> content = null;
 		if (unit != null && !monitor.isCanceled()) {
 			content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), monitor);
+		} else {
+			content = Collections.singletonList(Either.forLeft(""));
 		}
 		Hover $ = new Hover();
 		$.setContents(content);
