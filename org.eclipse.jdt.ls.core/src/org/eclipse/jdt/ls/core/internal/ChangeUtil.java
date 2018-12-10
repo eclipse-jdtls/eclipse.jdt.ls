@@ -290,4 +290,19 @@ public class ChangeUtil {
 		}
 	}
 
+	/**
+	 * @return <code>true</code> if a {@link WorkspaceEdit} contains any actual
+	 *         changes, <code>false</code> otherwise.
+	 */
+	public static boolean hasChanges(WorkspaceEdit edit) {
+		if (edit == null || edit.getChanges() == null || edit.getChanges().isEmpty()) {
+			return false;
+		}
+		//@formatter:off
+		return edit.getChanges().values().stream()
+										  .filter(changes -> changes != null && !changes.isEmpty())
+										  .findFirst()
+										  .isPresent();
+		//@formatter:on
+	}
 }

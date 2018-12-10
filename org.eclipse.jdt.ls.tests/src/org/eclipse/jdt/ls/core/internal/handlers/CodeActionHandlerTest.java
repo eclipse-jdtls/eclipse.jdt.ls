@@ -104,7 +104,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(2, codeActions.size());
+		Assert.assertEquals(1, codeActions.size());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
@@ -127,7 +127,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 			params.setContext(context);
 			List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 			Assert.assertNotNull(codeActions);
-			Assert.assertEquals(1, codeActions.size());
+			Assert.assertEquals(0, codeActions.size());
 		} finally {
 			cu.discardWorkingCopy();
 		}
@@ -162,6 +162,34 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(1, edits.size());
 		Assert.assertEquals("", edits.get(0).getNewText());
 		Assert.assertEquals(range, edits.get(0).getRange());
+	}
+
+	@Test
+	public void test_noUnnecessaryCodeActions() throws Exception{
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Foo.java",
+				"package org.sample;\n"+
+				"\n"+
+				"public class Foo {\n"+
+				"	private String foo;\n"+
+				"	public String getFoo() {\n"+
+				"	  return foo;\n"+
+				"	}\n"+
+				"   \n"+
+				"	public void setFoo(String newFoo) {\n"+
+				"	  foo = newFoo;\n"+
+				"	}\n"+
+				"}\n");
+		//@formatter:on
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = getRange(unit, "String foo;");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Collections.emptyList()));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertEquals(0, codeActions.size());
 	}
 
 	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {

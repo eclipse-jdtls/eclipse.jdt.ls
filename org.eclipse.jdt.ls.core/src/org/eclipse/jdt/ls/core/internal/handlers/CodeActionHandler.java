@@ -11,10 +11,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -115,7 +115,10 @@ public class CodeActionHandler {
 
 		try {
 			for (CUCorrectionProposal proposal : candidates) {
-				$.add(getCodeActionFromProposal(proposal, params.getContext()));
+				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
+				if (codeActionFromProposal.isPresent()) {
+					$.add(codeActionFromProposal.get());
+				}
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
@@ -124,20 +127,26 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private Either<Command, CodeAction> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 		ICompilationUnit unit = proposal.getCompilationUnit();
-		Command command = new Command(name, COMMAND_ID_APPLY_EDIT, Arrays.asList(convertChangeToWorkspaceEdit(unit, proposal.getChange())));
+		WorkspaceEdit edit = convertChangeToWorkspaceEdit(unit, proposal.getChange());
+		if (!ChangeUtil.hasChanges(edit)) {
+			return Optional.empty();
+		}
+
+		Command command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			codeAction.setCommand(command);
 			codeAction.setDiagnostics(context.getDiagnostics());
-			return Either.forRight(codeAction);
+			return Optional.of(Either.forRight(codeAction));
 		} else {
-			return Either.forLeft(command);
+			return Optional.of(Either.forLeft(command));
 		}
 	}
+
 
 	private IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
 		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
