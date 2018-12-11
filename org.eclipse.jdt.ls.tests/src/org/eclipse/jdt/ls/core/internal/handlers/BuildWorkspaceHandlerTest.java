@@ -17,6 +17,7 @@ import static org.mockito.Mockito.mock;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -25,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +42,13 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		handler = new BuildWorkspaceHandler(javaClient, projectsManager);
 		importProjects("maven/salut2");
 		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut2");
+	}
+
+	@Override
+	@After
+	public void cleanUp() throws Exception {
+		super.cleanUp();
+		preferences.setMaxBuildCount(1);
 	}
 
 	@Test
@@ -71,5 +80,28 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		monitor.setCanceled(true);
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		assertEquals(result, BuildWorkspaceStatus.CANCELLED);
+	}
+
+	@Test
+	public void testParallelBuildForEclipseProjects() throws Exception
+	{
+		preferences.setMaxBuildCount(4);
+
+		List<IProject> projects = importProjects("eclipse/multi");
+		assertEquals(3, projects.size());
+
+		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
+		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
+	}
+
+	@Test
+	public void testParallelBuildSupport() throws Exception {
+		preferences.setMaxBuildCount(4);
+
+		List<IProject> projects = importProjects("maven/multimodule");
+		assertEquals(6, projects.size());
+
+		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
+		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
 	}
 }
