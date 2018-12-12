@@ -9,7 +9,7 @@
 *     Microsoft Corporation - initial API and implementation
 *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.corext.codemanipulation;
+package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -100,22 +100,22 @@ public class GenerateGetterSetterOperation {
 			int flags = field.getFlags();
 			if (!Flags.isEnum(flags)) {
 				if (GetterSetterUtil.getGetter(field) == null) {
-					insertMethod(field, listRewriter, GENERATE_KIND.GETTER);
+					insertMethod(field, listRewriter, AccessorKind.GETTER);
 				}
 
 				if (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null) {
-					insertMethod(field, listRewriter, GENERATE_KIND.SETTER);
+					insertMethod(field, listRewriter, AccessorKind.SETTER);
 				}
 			}
 		}
 	}
 
-	private void insertMethod(IField field, ListRewrite rewrite, GENERATE_KIND kind) throws CoreException {
+	private void insertMethod(IField field, ListRewrite rewrite, AccessorKind kind) throws CoreException {
 		IType type = field.getDeclaringType();
 		String delimiter = StubUtility.getLineDelimiterUsed(type);
 		int flags = generateVisibility | (field.getFlags() & Flags.AccStatic);
 		String stub;
-		if (kind == GENERATE_KIND.GETTER) {
+		if (kind == AccessorKind.GETTER) {
 			String name = GetterSetterUtil.getGetterName(field, null);
 			stub = GetterSetterUtil.getGetterStub(field, name, generateComments, flags);
 		} else {
@@ -128,7 +128,7 @@ public class GenerateGetterSetterOperation {
 		rewrite.insertLast(declaration, null);
 	}
 
-	enum GENERATE_KIND {
+	enum AccessorKind {
 		GETTER, SETTER
 	}
 }
