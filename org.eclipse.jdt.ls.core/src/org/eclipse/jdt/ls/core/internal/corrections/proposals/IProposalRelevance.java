@@ -202,6 +202,7 @@ public interface IProposalRelevance {
 	public static final int CREATE_CONSTANT= 4;
 
 	public static final int CHANGE_CLASS_TO_INTERFACE= 3;
+	public static final int GENERATE_GETTER_AND_SETTER = 3;
 	public static final int GENERATE_HASHCODE_AND_EQUALS= 3;
 	public static final int SIMILAR_TYPE= 3;
 	public static final int EXTRACT_LOCAL_ALL_ERROR= 3;

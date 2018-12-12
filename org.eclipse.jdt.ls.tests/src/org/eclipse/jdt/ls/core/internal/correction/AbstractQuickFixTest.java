@@ -17,9 +17,12 @@ import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -82,26 +85,41 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertCodeActions(cu, expected.toArray(new Expected[expected.size()]));
 	}
 
-	protected void assertCodeActions(ICompilationUnit cu, Expected... expected) throws Exception {
+	protected void assertCodeActions(ICompilationUnit cu, Expected... expecteds) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
-		if (codeActions.size() != expected.length) {
+		if (codeActions.size() < expecteds.length) {
 			String res = "";
 			for (Either<Command, CodeAction> command : codeActions) {
 				res += " '" + getCommand(command).getTitle() + "'";
 			}
-			assertEquals("Number of code actions: " + res, expected.length, codeActions.size());
+			assertEquals("Number of code actions: " + res, expecteds.length, codeActions.size());
+		}
+
+		Map<String, Expected> expectedActions = new HashMap<>();
+		for (Expected expected : expecteds) {
+			for (Either<Command, CodeAction> command : codeActions) {
+				if (Objects.equals(getCommand(command).getTitle(), expected.name)) {
+					expectedActions.put(expected.name, expected);
+					break;
+				}
+			}
+			assertEquals("Should prompt code action: " + expected.name, expectedActions.containsKey(expected.name), true);
 		}
 
 		int k = 0;
 		String aStr = "", eStr = "", testContent = "";
 		for (Either<Command, CodeAction> c : codeActions) {
-			String actual = evaluateCodeActionCommand(c);
-			Expected e = expected[k++];
-			if (!e.name.equals(getCommand(c).getTitle()) || !e.content.equals(actual)) {
-				aStr += '\n' + getCommand(c).getTitle() + '\n' + actual;
-				eStr += '\n' + e.name + '\n' + e.content;
+			String title = getCommand(c).getTitle();
+			if (expectedActions.containsKey(title)) {
+				String actual = evaluateCodeActionCommand(c);
+				Expected e = expectedActions.get(title);
+				if (!Objects.equals(e.content, actual)) {
+					aStr += '\n' + title + '\n' + actual;
+					eStr += '\n' + e.name + '\n' + e.content;
+				}
+				testContent += generateTest(actual, getCommand(c).getTitle(), k);
+				k++;
 			}
-			testContent += generateTest(actual, getCommand(c).getTitle(), k);
 		}
 		if (aStr.length() > 0) {
 			aStr += '\n' + testContent;
