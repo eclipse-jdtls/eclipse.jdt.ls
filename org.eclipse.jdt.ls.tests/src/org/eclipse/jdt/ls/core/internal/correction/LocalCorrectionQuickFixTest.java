@@ -11,6 +11,8 @@
 
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import static org.mockito.Mockito.when;
+
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -19,6 +21,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -140,6 +143,13 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Expected e2 = new Expected("Create getter and setter for 'count'...", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnusedPrivateFieldWithResourceOperationSupport() throws Exception {
+		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		testUnusedPrivateField();
 	}
 
 	@Test
