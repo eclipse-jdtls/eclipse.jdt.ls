@@ -295,14 +295,22 @@ public class ChangeUtil {
 	 *         changes, <code>false</code> otherwise.
 	 */
 	public static boolean hasChanges(WorkspaceEdit edit) {
-		if (edit == null || edit.getChanges() == null || edit.getChanges().isEmpty()) {
+		if (edit == null) {
 			return false;
 		}
+		if (edit.getDocumentChanges() != null && !edit.getDocumentChanges().isEmpty()) {
+			return true;
+		}
+		boolean hasChanges = false;
 		//@formatter:off
-		return edit.getChanges().values().stream()
-										  .filter(changes -> changes != null && !changes.isEmpty())
-										  .findFirst()
-										  .isPresent();
+		if ((edit.getChanges() != null && !edit.getChanges().isEmpty())) {
+			hasChanges = edit.getChanges().values().stream()
+					.filter(changes -> changes != null && !changes.isEmpty())
+					.findFirst()
+					.isPresent();
+		}
 		//@formatter:on
+		return hasChanges;
 	}
+
 }
