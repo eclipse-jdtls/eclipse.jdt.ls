@@ -98,7 +98,7 @@ public class GenerateGetterSetterOperation {
 		IField[] fields = type.getFields();
 		for (IField field : fields) {
 			int flags = field.getFlags();
-			if (!Flags.isEnum(flags)) {
+			if (!Flags.isEnum(flags) && !Flags.isStatic(flags)) {
 				if (GetterSetterUtil.getGetter(field) == null) {
 					insertMethod(field, listRewriter, AccessorKind.GETTER);
 				}
