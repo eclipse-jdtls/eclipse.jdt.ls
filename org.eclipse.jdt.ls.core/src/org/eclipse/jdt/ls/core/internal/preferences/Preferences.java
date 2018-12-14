@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -107,6 +109,11 @@ public class Preferences {
 	 * Preference key to enable/disable the 'auto build'.
 	 */
 	public static final String AUTOBUILD_ENABLED_KEY = "java.autobuild.enabled";
+
+	/**
+	 * Preference key to set max concurrent build count.
+	 */
+	public static final String JAVA_MAX_CONCURRENT_BUILDS = "java.maxConcurrentBuilds";
 
 	/**
 	 * Preference key to exclude directories when importing projects.
@@ -269,6 +276,8 @@ public class Preferences {
 	private Collection<IPath> rootPaths;
 	private Collection<IPath> triggerFiles;
 
+	private int parallelBuildsCount;
+
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules/**");
@@ -357,6 +366,7 @@ public class Preferences {
 		formatterUrl = null;
 		formatterProfileName = null;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
+		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 	}
 
 	/**
@@ -443,6 +453,11 @@ public class Preferences {
 
 		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
 		prefs.setImportOrder(javaImportOrder);
+
+		int maxConcurrentBuilds = getInt(configuration, JAVA_MAX_CONCURRENT_BUILDS, PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT);
+		maxConcurrentBuilds = maxConcurrentBuilds >= 1 ? maxConcurrentBuilds : 1;
+		prefs.setMaxBuildCount(maxConcurrentBuilds);
+
 		return prefs;
 	}
 
@@ -575,6 +590,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMaxBuildCount(int maxConcurrentBuilds) {
+		this.parallelBuildsCount = maxConcurrentBuilds;
+		return this;
+	}
+
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
 	}
@@ -674,6 +694,10 @@ public class Preferences {
 
 	public String[] getImportOrder() {
 		return this.importOrder == null ? new String[0] : this.importOrder.toArray(new String[importOrder.size()]);
+	}
+
+	public int getMaxConcurrentBuilds() {
+		return parallelBuildsCount;
 	}
 
 	public Map<String, Object> asMap() {
