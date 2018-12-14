@@ -555,4 +555,19 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 		IType classC = b.getType("C");
 		assertNull(runOperation(classC));
 	}
+
+	@Test
+	public void testNoGeneratorForStatic() throws Exception {
+		fClassA.createField("static String field1;", null, false, new NullProgressMonitor());
+		runAndApplyOperation(fClassA);
+
+		/* @formatter:off */
+		String expected= "public class A {\r\n" +
+						"\r\n" +
+						"	static String field1;\r\n" +
+						"}";
+		/* @formatter:on */
+
+		compareSource(expected, fClassA.getSource());
+	}
 }
