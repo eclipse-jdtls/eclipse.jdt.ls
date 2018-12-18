@@ -101,6 +101,7 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsCleanUp;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsFix;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
@@ -453,7 +454,7 @@ public class QuickAssistProcessor {
 			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
 
 			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractMethodRefactoring, relevance);
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, extractMethodRefactoring, relevance);
 			proposal.setLinkedProposalModel(linkedProposalModel);
 			proposals.add(proposal);
 		}
@@ -538,7 +539,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractTempRefactoring, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -565,7 +566,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_LOCAL;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractTempRefactoringSelectedOnly, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoringSelectedOnly, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -591,7 +592,7 @@ public class QuickAssistProcessor {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_CONSTANT;
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorExtract, cu, extractConstRefactoring, relevance) {
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, extractConstRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;

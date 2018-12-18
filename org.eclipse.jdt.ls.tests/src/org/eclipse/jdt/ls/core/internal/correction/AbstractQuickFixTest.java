@@ -13,18 +13,20 @@ package org.eclipse.jdt.ls.core.internal.correction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -63,25 +65,18 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 		for (Either<Command, CodeAction> c : codeActions) {
-			String actual = evaluateCodeActionCommand(c);
-			if (expected.content.equals(actual)) {
-				assertEquals(expected.name, getCommand(c).getTitle());
+			if (Objects.equals(expected.name, getTitle(c))) {
+				expected.assertEquivalent(c);
 				return;
 			}
 		}
-		String res = "";
-		for (Either<Command, CodeAction> command : codeActions) {
-			if (res.length() > 0) {
-				res += '\n';
-			}
-			res += getCommand(command).getTitle();
-		}
-		assertEquals("Not found.", expected.name, res);
+		String allCommands = codeActions.stream().map(a -> getTitle(a)).collect(Collectors.joining("\n"));
+		fail(expected.name + " not found in " + allCommands);
 	}
 
 	protected void assertCodeActionNotExists(ICompilationUnit cu, String label) throws Exception {
 		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu);
-		assertFalse("'" + label + "' should not be added to the code actions", codeActionCommands.stream().filter(ca -> getCommand(ca).getTitle().equals(label)).findAny().isPresent());
+		assertFalse("'" + label + "' should not be added to the code actions", codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent());
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Collection<Expected> expected) throws Exception {
@@ -91,36 +86,31 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expecteds) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 		if (codeActions.size() < expecteds.length) {
-			String res = "";
-			for (Either<Command, CodeAction> command : codeActions) {
-				res += " '" + getCommand(command).getTitle() + "'";
-			}
+			String res = codeActions.stream().map(a -> ("'" + getTitle(a) + "'")).collect(Collectors.joining(","));
 			assertEquals("Number of code actions: " + res, expecteds.length, codeActions.size());
 		}
 
-		Map<String, Expected> expectedActions = new HashMap<>();
+		Map<String, Expected> expectedActions = Stream.of(expecteds).collect(Collectors.toMap(Expected::getName, Function.identity()));
+		Map<String, Either<Command, CodeAction>> actualActions = codeActions.stream().collect(Collectors.toMap(this::getTitle, Function.identity()));
+
 		for (Expected expected : expecteds) {
-			for (Either<Command, CodeAction> command : codeActions) {
-				if (Objects.equals(getCommand(command).getTitle(), expected.name)) {
-					expectedActions.put(expected.name, expected);
-					break;
-				}
-			}
-			assertEquals("Should prompt code action: " + expected.name, expectedActions.containsKey(expected.name), true);
+			Either<Command, CodeAction> action = actualActions.get(expected.name);
+			assertNotNull("Should prompt code action: " + expected.name, action);
+			expected.assertEquivalent(action);
 		}
 
 		int k = 0;
 		String aStr = "", eStr = "", testContent = "";
 		for (Either<Command, CodeAction> c : codeActions) {
-			String title = getCommand(c).getTitle();
-			if (expectedActions.containsKey(title)) {
+			String title = getTitle(c);
+			Expected e = expectedActions.get(title);
+			if (e != null) {
 				String actual = evaluateCodeActionCommand(c);
-				Expected e = expectedActions.get(title);
 				if (!Objects.equals(e.content, actual)) {
 					aStr += '\n' + title + '\n' + actual;
 					eStr += '\n' + e.name + '\n' + e.content;
 				}
-				testContent += generateTest(actual, getCommand(c).getTitle(), k);
+				testContent += generateTest(actual, getTitle(c), k);
 				k++;
 			}
 		}
@@ -171,10 +161,35 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	public class Expected {
 		String name;
 		String content;
+		String kind;
+		private static final String ALL_KINDS = "*";
 
 		public Expected(String name, String content) {
+			this(name, content, ALL_KINDS);
+		}
+
+		public Expected(String name, String content, String kind) {
 			this.content = content;
 			this.name = name;
+			this.kind = kind;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * Checks if the action has the same title as this. If it has, then assert that
+		 * that action is equivalent to this in kind and content.
+		 */
+		public void assertEquivalent(Either<Command, CodeAction> action) throws Exception {
+			String title = getTitle(action);
+			assertEquals("Unexpected command :", name, title);
+			if (!ALL_KINDS.equals(kind) && action.isRight()) {
+				assertEquals(title + " has the wrong kind ", kind, action.getRight().getKind());
+			}
+			String actionContent = evaluateCodeActionCommand(action);
+			assertEquals(title + " has the wrong content ", content, actionContent);
 		}
 	}
 
@@ -229,7 +244,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			List<Either<Command, CodeAction>> filteredList = new ArrayList<>();
 			for (Either<Command, CodeAction> codeAction : codeActions) {
 				for (String str : this.ignoredCommands) {
-					if (getCommand(codeAction).getTitle().matches(str)) {
+					if (getTitle(codeAction).matches(str)) {
 						filteredList.add(codeAction);
 						break;
 					}
@@ -283,6 +298,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 	public Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
+	}
+
+	public String getTitle(Either<Command, CodeAction> codeAction) {
+		return getCommand(codeAction).getTitle();
 	}
 
 }

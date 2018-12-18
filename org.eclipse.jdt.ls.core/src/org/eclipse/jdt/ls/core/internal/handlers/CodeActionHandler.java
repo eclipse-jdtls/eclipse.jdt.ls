@@ -116,7 +116,7 @@ public class CodeActionHandler {
 		try {
 			for (CUCorrectionProposal proposal : candidates) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
-				if (codeActionFromProposal.isPresent()) {
+				if (codeActionFromProposal.isPresent() && !$.contains(codeActionFromProposal.get())) {
 					$.add(codeActionFromProposal.get());
 				}
 			}

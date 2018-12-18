@@ -2437,8 +2437,8 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("public class Message {\n");
-		buf.append("    public Object z;\n");
+		buf.append("public class Message {\n\n");
+		buf.append("    public static Object z;\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Create field 'z' in type 'Message'", buf.toString());
 
