@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -35,8 +36,6 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.TextEdit;
 
 public class SourceAssistProcessor {
-	public static final String SOURCE_ACTION_GENERATE_KIND = CodeActionKind.Source + ".generate";
-	public static final String SOURCE_ACTION_GENERATE_ACCESSORS_KIND = SOURCE_ACTION_GENERATE_KIND + ".accessors";
 
 	public List<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) {
 		ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
@@ -77,7 +76,7 @@ public class SourceAssistProcessor {
 		}
 
 		ICompilationUnit unit = context.getCompilationUnit();
-		CUCorrectionProposal proposal = new CUCorrectionProposal(ActionMessages.GenerateGetterSetterAction_label, SOURCE_ACTION_GENERATE_ACCESSORS_KIND, unit, null, IProposalRelevance.GENERATE_GETTER_AND_SETTER) {
+		CUCorrectionProposal proposal = new CUCorrectionProposal(ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, unit, null, IProposalRelevance.GENERATE_GETTER_AND_SETTER) {
 
 			@Override
 			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {

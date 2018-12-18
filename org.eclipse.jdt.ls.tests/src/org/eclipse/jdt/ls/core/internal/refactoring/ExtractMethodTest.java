@@ -17,6 +17,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.junit.Before;
@@ -24,7 +25,6 @@ import org.junit.Test;
 
 public class ExtractMethodTest extends AbstractSelectionTest {
 
-	private static final String REFACTORING_FOLDDER = "testresources/refactoring/extractmethod";
 	private IJavaProject fJProject1;
 
 	private IPackageFragmentRoot fSourceFolder;
@@ -71,7 +71,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -114,7 +114,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -159,7 +159,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -214,7 +214,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("}\n");
 
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -251,7 +251,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("}\n");
 
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -300,7 +300,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -350,7 +350,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -390,7 +390,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -436,7 +436,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -484,7 +484,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -520,7 +520,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -562,7 +562,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -610,7 +610,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 
-		Expected e1 = new Expected("Extract to method", buf.toString());
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
 	}
 
@@ -685,7 +685,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("\n");
 		buf.append("    public static void extracted() {}\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Extract to method", buf.toString());
+		Expected e2 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 
 		assertCodeActions(cu, e1, e2);
 	}
