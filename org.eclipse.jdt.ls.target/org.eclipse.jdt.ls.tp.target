@@ -19,7 +19,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="1.10.0.20181127-2120"/>
-	    <repository location="http://download.eclipse.org/technology/m2e/milestones/1.10/1.10.0.20181127-2120/"/>
+	    <repository location="http://download.eclipse.org/technology/m2e/releases/1.10/1.10.0.20181127-2120/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -29,7 +29,7 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/eclipse/updates/4.10-I-builds/"/>
+            <repository location="http://download.eclipse.org/releases/2018-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.6.0.v20181130-0905"/>
