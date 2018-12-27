@@ -102,6 +102,28 @@ public class BasicFileDetectorTest {
 		}
 	}
 
+	@Test
+	public void testScanCircleSymbolicLinks() throws Exception {
+		File targetLinkFolder = new File(Paths.get("projects/buildfiles").toString(), "circle_symbolic_link-"
+			+ new Random().nextInt(10000));
+		try {
+			Path targetLinkPath = Paths.get(targetLinkFolder.getPath());
+			Files.createSymbolicLink(targetLinkPath, Paths.get("projects/buildfiles").toAbsolutePath());
+			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles"), "buildfile");
+
+			Collection<Path> dirs = detector.scan(null);
+			assertEquals("Found " + dirs, 6, dirs.size());
+
+			List<String> missingDirs = separatorsToSystem(list("projects/buildfiles", "projects/buildfiles/parent/1_0/0_2_0",
+					"projects/buildfiles/parent/1_0/0_2_1", "projects/buildfiles/parent/1_1",
+					"projects/buildfiles/parent/1_1/1_2_0", "projects/buildfiles/parent/1_1/1_2_1"));
+			dirs.stream().map(Path::toString).forEach(missingDirs::remove);
+			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+		} finally {
+			targetLinkFolder.delete();
+		}
+	}
+
 	@SafeVarargs
 	private final <E> List<E> list(E... elements) {
 		return new ArrayList<>(Arrays.asList(elements));
