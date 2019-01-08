@@ -120,9 +120,9 @@ SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar"
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-set DOWNLOAD_URL="https://repo.maven.apache.org/maven2/io/takari/maven-wrapper/0.4.0/maven-wrapper-0.4.0.jar"
+set DOWNLOAD_URL="https://repo.maven.apache.org/maven2/io/takari/maven-wrapper/0.4.2/maven-wrapper-0.4.2.jar"
 FOR /F "tokens=1,2 delims==" %%A IN (%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.properties) DO (
-	IF "%%A"=="wrapperUrl" SET DOWNLOAD_URL=%%B 
+    IF "%%A"=="wrapperUrl" SET DOWNLOAD_URL=%%B
 )
 
 @REM Extension to allow automatically downloading the maven-wrapper.jar from Maven-central
@@ -131,8 +131,8 @@ if exist %WRAPPER_JAR% (
     echo Found %WRAPPER_JAR%
 ) else (
     echo Couldn't find %WRAPPER_JAR%, downloading it ...
-	echo Downloading from: %DOWNLOAD_URL%
-    powershell -Command "(New-Object Net.WebClient).DownloadFile('%DOWNLOAD_URL%', '%WRAPPER_JAR%')"
+    echo Downloading from: %DOWNLOAD_URL%
+    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('%DOWNLOAD_URL%', '%WRAPPER_JAR%')"
     echo Finished downloading %WRAPPER_JAR%
 )
 @REM End of extension
