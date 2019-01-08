@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -348,7 +349,10 @@ public class CompletionProposalReplacementProvider {
 			try {
 				TextEdit edit =  this.importRewrite.rewriteImports(new NullProgressMonitor());
 				TextEditConverter converter = new TextEditConverter(this.compilationUnit, edit);
-				additionalEdits.addAll(converter.convert());
+				List<org.eclipse.lsp4j.TextEdit> edits = converter.convert();
+				if (ChangeUtil.hasChanges(edits)) {
+					additionalEdits.addAll(edits);
+				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Error adding imports",e);
 			}
