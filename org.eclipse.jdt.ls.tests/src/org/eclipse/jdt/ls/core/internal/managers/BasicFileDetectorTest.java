@@ -102,6 +102,32 @@ public class BasicFileDetectorTest {
 		}
 	}
 
+	@Test
+	public void testScanCircularSymbolicLinks() throws Exception {
+		File originDirectory = new File("projects/buildfiles");
+		File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "/circular_symbolic_link_ws-"+
+			+ new Random().nextInt(10000));
+		File circularSymbolicLink = new File(tempDirectory, "circular_symbolic_link");
+		try {
+			FileUtils.copyDirectory(originDirectory, tempDirectory);
+			Path targetLinkPath = Paths.get(circularSymbolicLink.getPath());
+			Files.createSymbolicLink(targetLinkPath, Paths.get(tempDirectory.getAbsolutePath()));
+			BasicFileDetector detector = new BasicFileDetector(Paths.get(tempDirectory.getPath()), "buildfile");
+
+			Collection<Path> dirs = detector.scan(null);
+			assertEquals("Found " + dirs, 6, dirs.size());
+
+			List<String> missingDirs = separatorsToSystem(list("", "parent/1_0/0_2_0",
+					"parent/1_0/0_2_1", "parent/1_1",
+					"parent/1_1/1_2_0", "parent/1_1/1_2_1"));
+			dirs.stream().map(dir -> tempDirectory.toPath().relativize(dir).toString()).forEach(missingDirs::remove);
+			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+		} finally {
+			circularSymbolicLink.delete();
+			FileUtils.deleteDirectory(tempDirectory);
+		}
+	}
+
 	@SafeVarargs
 	private final <E> List<E> list(E... elements) {
 		return new ArrayList<>(Arrays.asList(elements));
