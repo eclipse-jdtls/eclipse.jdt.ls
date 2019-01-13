@@ -181,7 +181,9 @@ public class ClientPreferences {
 
 	public boolean isResourceOperationSupported() {
 		//@formatter:off
-		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getWorkspaceEdit() != null
+		return capabilities.getWorkspace() != null
+				&& capabilities.getWorkspace().getWorkspaceEdit() != null
+				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations() != null
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Create)
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Rename)
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Delete);

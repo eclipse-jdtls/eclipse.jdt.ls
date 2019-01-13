@@ -66,6 +66,7 @@ import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
+import org.eclipse.lsp4j.WorkspaceEditCapabilities;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
@@ -264,6 +265,16 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			FileUtils.deleteDirectory(targetFile);
 			FileUtils.deleteDirectory(tempDirectory);
 		}
+	}
+
+	@Test
+	public void testMissingResourceOperations() throws Exception {
+		ClientCapabilities capabilities = new ClientCapabilities();
+		WorkspaceClientCapabilities worspaceCapabilities = new WorkspaceClientCapabilities();
+		worspaceCapabilities.setWorkspaceEdit(new WorkspaceEditCapabilities());
+		capabilities.setWorkspace(worspaceCapabilities);
+		ClientPreferences preferences = new ClientPreferences(capabilities);
+		assertFalse(preferences.isResourceOperationSupported());
 	}
 
 	private void removeExclusionPattern(IJavaProject javaProject) throws JavaModelException {
