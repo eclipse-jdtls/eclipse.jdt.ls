@@ -121,7 +121,7 @@ public final class ProjectUtils {
 		}
 
 		if (!parentSrcPaths.isEmpty()) {
-			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, Messages
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, Messages
 					.format("Cannot add the folder ''{0}'' to the source path because it''s parent folder is already in the source path of the project ''{1}''.", new String[] { sourcePath.toOSString(), project.getProject().getName() })));
 		}
 
@@ -239,7 +239,7 @@ public final class ProjectUtils {
 					workspaceLinkFolder.createLink(workspaceRoot.toFile().toURI(), IResource.REPLACE, null);
 				} catch (CoreException e) {
 					invisibleProject.delete(true, null);
-					throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID,
+					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,
 							Messages.format("Failed to create linked resource from ''{0}'' to the invisible project ''{1}''.", new String[] { workspaceRoot.toString(), invisibleProjectName }), e));
 				}
 			}

@@ -221,7 +221,7 @@ public class HoverInfoProvider {
 		private static final long serialVersionUID = 1L;
 
 		public HoverException() {
-			super(new Status(IStatus.OK, JavaLanguageServerPlugin.PLUGIN_ID, ""));
+			super(new Status(IStatus.OK, IConstants.PLUGIN_ID, ""));
 		}
 
 		@Override

@@ -192,7 +192,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 					@Override
 					public void handleException(Throwable ex) {
-						IStatus status = new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.OK, "Error in JDT Core during launching debug server", ex); //$NON-NLS-1$
+						IStatus status = new Status(IStatus.ERROR, IConstants.PLUGIN_ID, IStatus.OK, "Error in JDT Core during launching debug server", ex); //$NON-NLS-1$
 						JavaLanguageServerPlugin.log(status);
 					}
 				});

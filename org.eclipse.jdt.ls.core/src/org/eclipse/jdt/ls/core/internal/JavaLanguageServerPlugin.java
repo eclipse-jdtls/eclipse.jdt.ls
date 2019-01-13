@@ -140,7 +140,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		digestStore = new DigestStore(getStateLocation().toFile());
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
-			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
+			ResourcesPlugin.getWorkspace().addSaveParticipant(IConstants.PLUGIN_ID, projectsManager);
 		} catch (CoreException e) {
 			logException(e.getMessage(), e);
 		}
@@ -313,7 +313,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		logInfo(getClass() + " is stopping:");
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
-		ResourcesPlugin.getWorkspace().removeSaveParticipant(PLUGIN_ID);
+		ResourcesPlugin.getWorkspace().removeSaveParticipant(IConstants.PLUGIN_ID);
 		projectsManager = null;
 		contentProviderManager = null;
 		languageServer = null;

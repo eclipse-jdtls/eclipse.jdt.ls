@@ -24,6 +24,6 @@ public final class StatusFactory {
 	}
 
 	public static IStatus newErrorStatus(String message, Throwable exception) {
-		return new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, message, exception);
+		return new Status(IStatus.ERROR, IConstants.PLUGIN_ID, message, exception);
 	}
 }
