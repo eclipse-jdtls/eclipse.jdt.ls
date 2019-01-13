@@ -64,7 +64,7 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
@@ -918,7 +918,7 @@ public class ModifierCorrectionSubProcessor {
 				}
 				return edit;
 			} catch (BadLocationException e) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.ERROR, e.getMessage(), e));
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, IStatus.ERROR, e.getMessage(), e));
 			}
 		}
 	}

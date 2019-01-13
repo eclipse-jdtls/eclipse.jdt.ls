@@ -56,6 +56,7 @@ import org.eclipse.jdt.core.util.IInnerClassesAttribute;
 import org.eclipse.jdt.core.util.IInnerClassesAttributeEntry;
 import org.eclipse.jdt.core.util.IMethodInfo;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -244,7 +245,7 @@ public final class SerialVersionHashOperation extends AbstractSerialVersionOpera
 				name = name.substring(packStart + 1);
 			}
 		} else {
-			throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, CorrectionMessages.SerialVersionHashOperation_error_classnotfound));
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, CorrectionMessages.SerialVersionHashOperation_error_classnotfound));
 		}
 
 		name += ".class"; //$NON-NLS-1$

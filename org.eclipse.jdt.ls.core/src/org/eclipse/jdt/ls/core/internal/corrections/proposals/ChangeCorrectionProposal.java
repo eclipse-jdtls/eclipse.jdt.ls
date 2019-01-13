@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.IUndoManager;
 import org.eclipse.ltk.core.refactoring.NullChange;
@@ -71,7 +71,7 @@ public class ChangeCorrectionProposal {
 				change.initializeValidationData(new NullProgressMonitor());
 				RefactoringStatus valid= change.isValid(new NullProgressMonitor());
 				if (valid.hasFatalError()) {
-					IStatus status = new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.ERROR,
+					IStatus status = new Status(IStatus.ERROR,  IConstants.PLUGIN_ID, IStatus.ERROR,
 							valid.getMessageMatchingSeverity(RefactoringStatus.FATAL), null);
 					throw new CoreException(status);
 				} else {

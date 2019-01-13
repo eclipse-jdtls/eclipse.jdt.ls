@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -55,7 +56,7 @@ public class OrganizeImportsCommand {
 			final String fileUri = (String) arguments.get(0);
 			final IPath rootPath = ResourceUtils.filePathFromURI(fileUri);
 			if (rootPath == null) {
-				throw new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, "URI is not found"));
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "URI is not found"));
 			}
 			final IWorkspaceRoot wsroot = ResourcesPlugin.getWorkspace().getRoot();
 			IResource resource = wsroot.getFileForLocation(rootPath);

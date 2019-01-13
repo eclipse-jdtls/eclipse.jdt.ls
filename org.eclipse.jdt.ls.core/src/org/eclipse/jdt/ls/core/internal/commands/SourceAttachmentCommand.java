@@ -35,6 +35,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.manipulation.Messages;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -286,11 +287,11 @@ public class SourceAttachmentCommand {
 	}
 
 	private static CoreException constructCoreException(String message) {
-		return new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, message));
+		return new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, message));
 	}
 
 	private static CoreException constructCoreException(String message, Exception original) {
-		return new CoreException(new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, message, original));
+		return new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, message, original));
 	}
 
 	private static class UpdatedClasspathContainer implements IClasspathContainer {
