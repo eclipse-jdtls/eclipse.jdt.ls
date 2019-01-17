@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.31.0 (January 16th, 2018)](https://github.com/eclipse/eclipse.jdt.ls/milestone/48?closed=1)
+## [0.31.0 (January 17th, 2018)](https://github.com/eclipse/eclipse.jdt.ls/milestone/48?closed=1)
 * bug fix - fixed regression with "Add parentheses around cast" code action. See [#907](https://github.com/eclipse/eclipse.jdt.ls/issues/907).
 * bug fix - ignore circular links during project import. See [#911](https://github.com/eclipse/eclipse.jdt.ls/pull/911).
 * build - fixed build failing to download the Maven wrapper on Windows. See [#789](https://github.com/eclipse/eclipse.jdt.ls/issues/789).
