@@ -37,6 +37,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 public class GradleBuildSupport implements IBuildSupport {
 
 	public static final String GRADLE_SUFFIX = ".gradle";
+	public static final String GRADLE_PROPERTIES = "gradle.properties";
 
 	@Override
 	public boolean applies(IProject project) {
@@ -57,7 +58,8 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		if (resource != null && resource.getType() == IResource.FILE && resource.getName().endsWith(GRADLE_SUFFIX) && resource.getProject() != null && ProjectUtils.isGradleProject(resource.getProject())) {
+		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES)) && resource.getProject() != null
+				&& ProjectUtils.isGradleProject(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
 					return true;
