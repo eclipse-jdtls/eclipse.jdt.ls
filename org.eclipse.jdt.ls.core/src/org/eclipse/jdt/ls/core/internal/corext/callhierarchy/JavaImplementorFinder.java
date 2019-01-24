@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class JavaImplementorFinder implements IImplementorFinder {
 	@Override
@@ -34,7 +34,7 @@ public class JavaImplementorFinder implements IImplementorFinder {
 
             return result;
         } catch (JavaModelException e) {
-            JavaPlugin.log(e);
+			JavaLanguageServerPlugin.log(e);
         }
 
         return null;
@@ -52,7 +52,7 @@ public class JavaImplementorFinder implements IImplementorFinder {
 
             return result;
         } catch (JavaModelException e) {
-            JavaPlugin.log(e);
+			JavaLanguageServerPlugin.log(e);
         }
 
         return null;
