@@ -34,10 +34,8 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.StringMatcher;
-import org.eclipse.jface.preference.IPreferenceStore;
 
 public class CallHierarchy {
     private static final String PREF_USE_IMPLEMENTORS= "PREF_USE_IMPLEMENTORS"; //$NON-NLS-1$
@@ -58,15 +56,7 @@ public class CallHierarchy {
     }
 
     public boolean isSearchUsingImplementorsEnabled() {
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-
-        return settings.getBoolean(PREF_USE_IMPLEMENTORS);
-    }
-
-    public void setSearchUsingImplementorsEnabled(boolean enabled) {
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-
-        settings.setValue(PREF_USE_IMPLEMENTORS, enabled);
+		return true;
     }
 
     public Collection<IJavaElement> getImplementingMethods(IMethod method) {
@@ -196,33 +186,6 @@ public class CallHierarchy {
         return false;
     }
 
-    public boolean isFilterEnabled() {
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-        return settings.getBoolean(PREF_USE_FILTERS);
-    }
-
-    public void setFilterEnabled(boolean filterEnabled) {
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-        settings.setValue(PREF_USE_FILTERS, filterEnabled);
-    }
-
-    /**
-     * Returns the current filters as a string.
-     * @return returns the filters
-     */
-    public String getFilters() {
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-
-        return settings.getString(PREF_FILTERS_LIST);
-    }
-
-    public void setFilters(String filters) {
-        fFilters = null;
-
-        IPreferenceStore settings = JavaPlugin.getDefault().getPreferenceStore();
-        settings.setValue(PREF_FILTERS_LIST, filters);
-    }
-
     /**
      * Returns filters for packages which should not be included in the search results.
      *
@@ -230,21 +193,7 @@ public class CallHierarchy {
      */
     private StringMatcher[] getIgnoreFilters() {
         if (fFilters == null) {
-            String filterString = null;
-
-            if (isFilterEnabled()) {
-                filterString = getFilters();
-
-                if (filterString == null) {
-                    filterString = DEFAULT_IGNORE_FILTERS;
-                }
-            }
-
-            if (filterString != null) {
-                fFilters = parseList(filterString);
-            } else {
-                fFilters = null;
-            }
+			fFilters = parseList(DEFAULT_IGNORE_FILTERS);
         }
 
         return fFilters;
@@ -290,7 +239,7 @@ public class CallHierarchy {
 				return (CompilationUnit) parser.createAST(null);
 	    	}
         } catch (JavaModelException e) {
-            JavaPlugin.log(e);
+			JavaLanguageServerPlugin.logException(e);
         }
         return null;
     }
