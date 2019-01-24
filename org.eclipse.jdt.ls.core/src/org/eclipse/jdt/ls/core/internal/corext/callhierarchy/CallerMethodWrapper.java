@@ -35,7 +35,7 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.SearchUtils;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class CallerMethodWrapper extends MethodWrapper {
 	/**
@@ -153,7 +153,7 @@ public class CallerMethodWrapper extends MethodWrapper {
 			return searchRequestor.getCallers();
 
 		} catch (CoreException e) {
-			JavaPlugin.log(e);
+			JavaLanguageServerPlugin.log(e);
 			return new HashMap<>(0);
 		}
 	}

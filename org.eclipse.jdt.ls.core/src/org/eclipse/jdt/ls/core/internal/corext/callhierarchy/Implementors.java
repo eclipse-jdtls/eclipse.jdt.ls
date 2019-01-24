@@ -21,7 +21,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -73,7 +73,7 @@ public class Implementors {
                     }
                 }
             } catch (JavaModelException e) {
-                JavaPlugin.log(e);
+				JavaLanguageServerPlugin.log(e);
             }
         }
 

@@ -41,7 +41,7 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 class CalleeAnalyzerVisitor extends HierarchicalASTVisitor {
     private final CallSearchResultCollector fSearchResults;
@@ -62,7 +62,7 @@ class CalleeAnalyzerVisitor extends HierarchicalASTVisitor {
             this.fMethodStartPosition = sourceRange.getOffset();
             this.fMethodEndPosition = fMethodStartPosition + sourceRange.getLength();
         } catch (JavaModelException jme) {
-            JavaPlugin.log(jme);
+			JavaLanguageServerPlugin.log(jme);
         }
     }
 
@@ -268,7 +268,7 @@ class CalleeAnalyzerVisitor extends HierarchicalASTVisitor {
 				fSearchResults.addMember(fMember, referencedMember, position, position + node.getLength(), number < 1 ? 1 : number);
             }
         } catch (JavaModelException jme) {
-            JavaPlugin.log(jme);
+			JavaLanguageServerPlugin.log(jme);
         }
     }
 
