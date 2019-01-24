@@ -35,6 +35,8 @@ import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.contentassist.StringMatcher;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 public class CallHierarchy {
@@ -124,7 +126,7 @@ public class CallHierarchy {
 						addRoot(member, roots, callers);
 					}
 				} catch (JavaModelException e) {
-					JavaPlugin.log(e);
+					JavaLanguageServerPlugin.log(e);
 				}
 			} else {
 				addRoot(member, roots, callers);

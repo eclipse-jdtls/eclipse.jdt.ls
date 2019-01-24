@@ -17,7 +17,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 
@@ -93,7 +93,7 @@ public class CallLocation implements IAdaptable {
             try {
                 fLineNumber= document.getLineOfOffset(fStart) + 1;
             } catch (BadLocationException e) {
-                JavaPlugin.log(e);
+				JavaLanguageServerPlugin.logException(e);
             }
         }
     }
@@ -112,7 +112,7 @@ public class CallLocation implements IAdaptable {
                 buffer = openable.getBuffer();
             }
         } catch (JavaModelException e) {
-            JavaPlugin.log(e);
+			JavaLanguageServerPlugin.log(e);
         }
         return buffer;
     }
