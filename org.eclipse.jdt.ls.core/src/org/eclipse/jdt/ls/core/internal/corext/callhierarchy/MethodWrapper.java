@@ -24,8 +24,6 @@ import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
-import org.eclipse.jdt.internal.ui.callhierarchy.MethodWrapperWorkbenchAdapter;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 /**
  * This class represents the general parts of a method call (either to or from a
@@ -70,8 +68,6 @@ public abstract class MethodWrapper extends PlatformObject {
 	public <T> T getAdapter(Class<T> adapter) {
 		if (adapter == IJavaElement.class) {
 	        return (T) getMember();
-	    } else if (adapter == IWorkbenchAdapter.class){
-	    	return (T) new MethodWrapperWorkbenchAdapter(this);
 	    } else {
 	    	return null;
 	    }
@@ -144,11 +140,6 @@ public abstract class MethodWrapper extends PlatformObject {
 
         if (oth == null) {
             return false;
-        }
-
-        if (oth instanceof MethodWrapperWorkbenchAdapter) {
-            //Note: A MethodWrapper is equal to a referring MethodWrapperWorkbenchAdapter and vice versa (bug 101677).
-        	oth= ((MethodWrapperWorkbenchAdapter) oth).getMethodWrapper();
         }
 
         if (oth.getClass() != getClass()) {
