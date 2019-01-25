@@ -32,13 +32,13 @@
             <repository location="http://download.eclipse.org/releases/2018-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.6.0.v20181130-0905"/>
-           <repository location="http://download.eclipse.org/lsp4j/updates/releases/"/>
+           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.7.0.v20190128-1442"/>
+           <repository location="https://github.com/kittaakos/lsp4j-call-hierarchy/raw/master/p2/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/releases/2018-12/"/>
+            <repository location="http://download.eclipse.org/modeling/tmf/xtext/updates/milestones"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>

@@ -201,6 +201,7 @@ public class ClientPreferences {
 				&& capabilities.getTextDocument().getDocumentSymbol() != null
 				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport() != null
 				&& capabilities.getTextDocument().getDocumentSymbol().getHierarchicalDocumentSymbolSupport().booleanValue();
+		//@formatter:on
 	}
 
 	public boolean isSemanticHighlightingSupported() {
@@ -213,8 +214,8 @@ public class ClientPreferences {
 
 	/**
 	 * {@code true} if the client has explicitly set the
-	 * {@code textDocument.documentSymbol.hierarchicalDocumentSymbolSupport} to
-	 * {@code true} when initializing the LS. Otherwise, {@code false}.
+	 * {@code textDocument.codeAction.codeActionLiteralSupport.codeActionKind.valueSet}
+	 * value. Otherwise, {@code false}.
 	 */
 	public boolean isSupportedCodeActionKind(String kind) {
 		//@formatter:off
@@ -226,4 +227,9 @@ public class ClientPreferences {
 				.stream().filter(k -> kind.startsWith(k)).findAny().isPresent();
 		//@formatter:on
 	}
+
+	public boolean isCallHierarchyDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCallHierarchy());
+	}
+
 }

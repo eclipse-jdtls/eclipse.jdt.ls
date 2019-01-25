@@ -152,7 +152,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testSyntheticMember_hierarchical_noSourceAttached() throws Exception {
 		String className = "foo.bar";
 		List<? extends DocumentSymbol> symbols = asStream(internalGetHierarchicalSymbols(noSourceProject, monitor, className)).collect(Collectors.toList());
-		assertHasHierarchicalSymbol("bar()", "bar", SymbolKind.Method, symbols);
+		assertHasHierarchicalSymbol("bar()", "bar", SymbolKind.Constructor, symbols);
 		assertHasHierarchicalSymbol("add(int...) : int", "bar", SymbolKind.Method, symbols);
 	}
 

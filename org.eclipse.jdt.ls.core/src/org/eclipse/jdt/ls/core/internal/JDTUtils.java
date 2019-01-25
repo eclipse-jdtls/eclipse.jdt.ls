@@ -11,6 +11,9 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.core.resources.IResource.DEPTH_ONE;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
+import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ROOT_VARIABLE;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +33,7 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -37,6 +41,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
@@ -47,10 +52,12 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
@@ -72,6 +79,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -81,6 +89,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SymbolKind;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -273,14 +282,109 @@ public final class JDTUtils {
 		return (pkg == null || pkg.getName() == null)?"":pkg.getName().getFullyQualifiedName();
 	}
 
+	/**
+	 * Returns with the human readable name of the element. For types with type
+	 * arguments, it is {@code Comparable<T>} instead of {@code Comparable}. First,
+	 * this method tries to retrieve the
+	 * {@link JavaElementLabels#getElementLabel(IJavaElement, long) label} of the
+	 * element, then falls back to {@link IJavaElement#getElementName() element
+	 * name}. Returns {@code null} if the argument does not have a name.
+	 */
+	public static String getName(IJavaElement element) {
+		Assert.isNotNull(element, "element");
+		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT);
+		return name == null ? element.getElementName() : name;
+	}
 
 	/**
-	 * Given the uri returns a {@link IClassFile}.
-	 * May return null if it can not resolve the uri to a
-	 * library.
+	 * Returns with the details of the document symbol. This is usually the type
+	 * information of a member. For methods, this is the type information of the
+	 * return type. Can return with an empty string, but never {@code null}.
+	 *
+	 * @see JDTUtils#getName(IJavaElement)
+	 */
+	public static String getDetail(IJavaElement element) {
+		Assert.isNotNull(element, "element");
+		String name = getName(element);
+		String nameWithDetails = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
+		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
+			return nameWithDetails.substring(name.length());
+		}
+		return "";
+	}
+
+	/**
+	 * Returns with the document symbol {@code SymbolKind kind} for the Java
+	 * element.
+	 */
+	public static SymbolKind getSymbolKind(IJavaElement element) {
+		switch (element.getElementType()) {
+			case IJavaElement.ANNOTATION:
+				return SymbolKind.Property; // TODO: find a better mapping
+			case IJavaElement.CLASS_FILE:
+			case IJavaElement.COMPILATION_UNIT:
+				return SymbolKind.File;
+			case IJavaElement.FIELD:
+				return SymbolKind.Field;
+			case IJavaElement.IMPORT_CONTAINER:
+			case IJavaElement.IMPORT_DECLARATION:
+				return SymbolKind.Module;
+			case IJavaElement.INITIALIZER:
+				return SymbolKind.Constructor;
+			case IJavaElement.LOCAL_VARIABLE:
+			case IJavaElement.TYPE_PARAMETER:
+				return SymbolKind.Variable;
+			case IJavaElement.METHOD:
+				try {
+					// TODO handle `IInitializer`. What should be the `SymbolKind`?
+					if (element instanceof IMethod) {
+						if (((IMethod) element).isConstructor()) {
+							return SymbolKind.Constructor;
+						}
+					}
+					return SymbolKind.Method;
+				} catch (JavaModelException e) {
+					return SymbolKind.Method;
+				}
+			case IJavaElement.PACKAGE_DECLARATION:
+				return SymbolKind.Package;
+			case IJavaElement.TYPE:
+				try {
+					IType type = (IType) element;
+					if (type.isEnum()) {
+						return SymbolKind.Enum;
+					} else if (type.isInterface()) {
+						return SymbolKind.Interface;
+					} else {
+						return SymbolKind.Class;
+					}
+				} catch (JavaModelException e) {
+					return SymbolKind.Class;
+				}
+		}
+		return SymbolKind.String;
+	}
+
+	/**
+	 * {@code true} if the element is deprecated. Otherwise, {@code false}.
+	 */
+	public static boolean isDeprecated(IJavaElement element) throws JavaModelException {
+		Assert.isNotNull(element, "element");
+		if (element instanceof ITypeRoot) {
+			return Flags.isDeprecated(((ITypeRoot) element).findPrimaryType().getFlags());
+		} else if (element instanceof IMember) {
+			return Flags.isDeprecated(((IMember) element).getFlags());
+		}
+		return false;
+	}
+
+	/**
+	 * Given the uri returns a {@link IClassFile}. May return null if it can not
+	 * resolve the uri to a library.
 	 *
 	 * @see #toLocation(IClassFile, int, int)
-	 * @param uri with 'jdt' scheme
+	 * @param uri
+	 *            with 'jdt' scheme
 	 * @return class file
 	 */
 	public static IClassFile resolveClassFile(String uriString){
@@ -355,6 +459,13 @@ public final class JDTUtils {
 		};
 
 		/* default */ abstract ISourceRange getRange(IJavaElement element) throws JavaModelException;
+
+		/**
+		 * Sugar for {@link JDTUtils#toLocation(IJavaElement, LocationType)}.
+		 */
+		public Location toLocation(IJavaElement element) throws JavaModelException {
+			return JDTUtils.toLocation(element, this);
+		}
 	}
 
 	/**
