@@ -42,7 +42,7 @@ public class CallHierarchy {
     private static final String PREF_USE_FILTERS = "PREF_USE_FILTERS"; //$NON-NLS-1$
     private static final String PREF_FILTERS_LIST = "PREF_FILTERS_LIST"; //$NON-NLS-1$
 
-    private static final String DEFAULT_IGNORE_FILTERS = "java.*,javax.*"; //$NON-NLS-1$
+	private static final String DEFAULT_IGNORE_FILTERS = ""; //$NON-NLS-1$
     private static CallHierarchy fgInstance;
     private IJavaSearchScope fSearchScope;
     private StringMatcher[] fFilters;

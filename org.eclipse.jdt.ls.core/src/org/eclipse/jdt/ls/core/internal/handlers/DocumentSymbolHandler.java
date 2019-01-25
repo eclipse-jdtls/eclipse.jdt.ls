@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -275,7 +276,17 @@ public class DocumentSymbolHandler {
 		case IJavaElement.TYPE_PARAMETER:
 			return SymbolKind.TypeParameter;
 		case IJavaElement.METHOD:
-			return SymbolKind.Method;
+			try {
+				// TODO handle `IInitializer`. What should be the `SymbolKind`?
+				if (element instanceof IMethod) {
+					if (((IMethod) element).isConstructor()) {
+						return SymbolKind.Constructor;
+					}
+				}
+				return SymbolKind.Method;
+			} catch (JavaModelException e) {
+				return SymbolKind.Method;
+			}
 		case IJavaElement.PACKAGE_DECLARATION:
 			return SymbolKind.Package;
 		}

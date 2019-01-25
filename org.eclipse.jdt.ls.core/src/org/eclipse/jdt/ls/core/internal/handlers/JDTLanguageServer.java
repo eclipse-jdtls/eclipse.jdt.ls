@@ -74,6 +74,8 @@ import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.CallHierarchyItem;
+import org.eclipse.lsp4j.CallHierarchyParams;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionOptions;
@@ -117,6 +119,7 @@ import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
+import org.eclipse.lsp4j.ResolveCallHierarchyItemParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -902,6 +905,24 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params) {
 		logInfo(">> java/searchSymbols");
 		return computeAsyncWithClientProgress((monitor) -> WorkspaceSymbolHandler.search(params.getQuery(), params.maxResults, params.projectName, params.sourceOnly, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#callHierarchy(org.eclipse.lsp4j.CallHierarchyParams)
+	 */
+	@Override
+	public CompletableFuture<CallHierarchyItem> callHierarchy(CallHierarchyParams params) {
+		logInfo(">> textDocumentt/callHierarchy");
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchy(params, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#resolveCallHierarchy(org.eclipse.lsp4j.ResolveCallHierarchyItemParams)
+	 */
+	@Override
+	public CompletableFuture<CallHierarchyItem> resolveCallHierarchy(ResolveCallHierarchyItemParams params) {
+		logInfo(">> callHierarchy/resolve");
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyResolveHandler().resolve(params, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

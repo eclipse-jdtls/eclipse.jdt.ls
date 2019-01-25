@@ -51,6 +51,7 @@ Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.
  org.eclipse.jdt.ls.core.internal.corrections.proposals;x-internal:=true,
  org.eclipse.jdt.ls.core.internal.handlers;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.highlighting;x-friends:="org.eclipse.jdt.ls.tests",
+ org.eclipse.jdt.ls.core.internal.hover;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.javadoc;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.lsp;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.managers;x-friends:="org.eclipse.jdt.ls.tests",

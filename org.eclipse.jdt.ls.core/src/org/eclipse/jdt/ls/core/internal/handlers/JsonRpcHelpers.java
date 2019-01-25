@@ -17,10 +17,13 @@ import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IOpenable;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -33,6 +36,40 @@ final public class JsonRpcHelpers {
 
 	/**
 	 * Convert line, column to a document offset.
+	 *
+	 * @param openable
+	 * @param line
+	 * @param column
+	 * @return
+	 */
+	public static int toOffset(IOpenable openable, int line, int column) {
+		if (openable != null) {
+			boolean mustClose = false;
+			try {
+				if (!openable.isOpen()) {
+					openable.open(new NullProgressMonitor());
+					mustClose = openable.isOpen();
+				}
+				IBuffer buffer = openable.getBuffer();
+				return toOffset(toDocument(buffer), line, column);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.log(e);
+			} finally {
+				if (mustClose) {
+					try {
+						openable.close();
+					} catch (JavaModelException e) {
+						JavaLanguageServerPlugin.logException("Error when closing openable: " + openable, e);
+					}
+				}
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Convert line, column to a document offset.
+	 *
 	 * @param buffer
 	 * @param line
 	 * @param column
@@ -71,6 +108,41 @@ final public class JsonRpcHelpers {
 	 */
 	public static int[] toLine(IBuffer buffer, int offset){
 		return toLine(toDocument(buffer), offset);
+	}
+
+	/**
+	 * Converts an offset to line number and column in an openable. If the
+	 * {@code openable} argument is {@link IOpenable#isOpen() <b>not</b> open}, this
+	 * method tries to
+	 * {@link IOpenable#open(org.eclipse.core.runtime.IProgressMonitor) open} it.
+	 *
+	 * @param buffer
+	 * @param line
+	 * @param column
+	 * @return
+	 */
+	public static int[] toLine(IOpenable openable, int offset) {
+		Assert.isNotNull(openable, "openable");
+		boolean mustClose = false;
+		try {
+			if (!openable.isOpen()) {
+				openable.open(new NullProgressMonitor());
+				mustClose = openable.isOpen();
+			}
+			IBuffer buffer = openable.getBuffer();
+			return toLine(toDocument(buffer), offset);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+			return null;
+		} finally {
+			if (mustClose) {
+				try {
+					openable.close();
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException("Error when closing openable: " + openable, e);
+				}
+			}
+		}
 	}
 
 	/**
