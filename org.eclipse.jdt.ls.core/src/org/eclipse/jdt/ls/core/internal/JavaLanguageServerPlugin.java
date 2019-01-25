@@ -76,6 +76,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.util.tracker.ServiceTracker;
 
+import com.google.common.base.Throwables;
+
 public class JavaLanguageServerPlugin extends Plugin {
 
 	private static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
@@ -374,6 +376,16 @@ public class JavaLanguageServerPlugin extends Plugin {
 	public static void logInfo(String message) {
 		if (context != null) {
 			log(new Status(IStatus.INFO, context.getBundle().getSymbolicName(), message));
+		}
+	}
+
+	public static void logException(Throwable ex) {
+		if (context != null) {
+			String message = ex.getMessage();
+			if (message == null) {
+				message = Throwables.getStackTraceAsString(ex);
+			}
+			logException(message, ex);
 		}
 	}
 
