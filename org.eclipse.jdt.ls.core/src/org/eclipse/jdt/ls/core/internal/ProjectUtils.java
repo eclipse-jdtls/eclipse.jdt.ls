@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,22 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +36,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
@@ -39,7 +52,12 @@ import org.eclipse.m2e.core.internal.IMavenConstants;
  */
 @SuppressWarnings("restriction")
 public final class ProjectUtils {
+
 	public static final String WORKSPACE_LINK = "_";
+
+	private static final String JAR_SUFFIX = ".jar";
+
+	private static final String SOURCE_JAR_SUFFIX = "-sources.jar";
 
 	private ProjectUtils() {
 		//No instanciation
@@ -275,4 +293,80 @@ public final class ProjectUtils {
 			return JavaCore.newSourceEntry(entry.getPath(), inclusionList.toArray(new IPath[0]), exclusionList.toArray(new IPath[0]), entry.getOutputLocation(), entry.getExtraAttributes());
 		}
 	}
+
+	public static void updateBinaries(IJavaProject javaProject, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
+		updateBinaries(javaProject, Collections.singleton(libFolderPath), monitor);
+	}
+
+	public static void updateBinaries(IJavaProject javaProject, Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
+		Set<Path> binaries = collectBinaries(libFolderPaths, monitor);
+		if (monitor.isCanceled()) {
+			return;
+		}
+		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
+		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
+
+		for (Path file : binaries) {
+			if (monitor.isCanceled()) {
+				return;
+			}
+			IPath newLibPath = new org.eclipse.core.runtime.Path(file.toString());
+			IPath sourcePath = detectSources(file);
+			IClasspathEntry newEntry = JavaCore.newLibraryEntry(newLibPath, sourcePath, null);
+			JavaLanguageServerPlugin.logInfo("Adding " + newLibPath + " to the classpath");
+			newEntries.add(newEntry);
+		}
+		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
+		if (!rawClasspath.equals(newClasspath)) {
+			javaProject.setRawClasspath(newClasspath, monitor);
+		}
+	}
+
+	private static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) {
+		Set<Path> binaries = new LinkedHashSet<>();
+		FileVisitor<? super Path> jarDetector = new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				if (monitor.isCanceled()) {
+					return FileVisitResult.TERMINATE;
+				}
+				if (isBinary(file)) {
+					binaries.add(file);
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+		};
+		for (IPath libFolderPath : libFolderPaths) {
+			String path = libFolderPath.toOSString();
+			try {
+				Path libFolder = Paths.get(path);
+				if (!Files.isDirectory(libFolder)) {
+					continue;
+				}
+				Files.walkFileTree(Paths.get(path), jarDetector);
+			} catch (IOException e) {
+				new CoreException(StatusFactory.newErrorStatus("Unable to analyze " + path, e));
+			}
+		}
+		return binaries;
+	}
+
+	private static boolean isBinary(Path file) {
+		String fileName = file.getFileName().toString();
+		return (fileName.endsWith(JAR_SUFFIX)
+				//skip source jar files
+				//more robust approach would be to check if jar contains .class files or not
+				&& !fileName.endsWith(SOURCE_JAR_SUFFIX));
+	}
+
+	private static IPath detectSources(Path file) {
+		String filename = file.getFileName().toString();
+		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
+		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
+		Path sourcePath = file.getParent().resolve(sourceName);
+		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
+	}
+
+
 }
