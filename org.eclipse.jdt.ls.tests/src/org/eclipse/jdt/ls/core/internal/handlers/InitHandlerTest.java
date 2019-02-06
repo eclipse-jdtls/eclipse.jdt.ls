@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IProject;
@@ -188,6 +189,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
 		importProjects(Arrays.asList("maven/salut", "gradle/simple-gradle"));
 		newEmptyProject();
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
@@ -198,8 +200,8 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
 			}
 		});
-		assertEquals(watchers.size(), 5);
-		assertEquals(watchers.get(0).getGlobPattern(), ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/TestProject/src/**");
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 5, watchers.size());
+		assertEquals(watchers.get(0).getGlobPattern(), getWorkingProjectDirectory().getAbsolutePath() + "/TestProject/src/**");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
 		String location = project.getLocation().toString();
 		assertEquals(watchers.get(1).getGlobPattern(), location + "/src/main/java/**");
@@ -235,6 +237,10 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals(newWatchers, watchers);
+	}
+
+	private String toString(List<FileSystemWatcher> watchers) {
+		return watchers.stream().map(FileSystemWatcher::getGlobPattern).collect(Collectors.joining("\n"));
 	}
 
 	@Test

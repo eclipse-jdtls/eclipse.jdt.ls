@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
@@ -113,5 +114,13 @@ public class MavenBuildSupport implements IBuildSupport {
 
 	public void setShouldCollectProjects(boolean shouldCollectProjects) {
 		this.shouldCollectProjects = shouldCollectProjects;
+	}
+
+	@Override
+	public boolean fileChanged(IResource resource, CHANGE_TYPE changeType, IProgressMonitor monitor) throws CoreException {
+		if (resource == null || !applies(resource.getProject())) {
+			return false;
+		}
+		return IBuildSupport.super.fileChanged(resource, changeType, monitor) || isBuildFile(resource);
 	}
 }

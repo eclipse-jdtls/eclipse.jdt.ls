@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -270,31 +271,31 @@ public class ProjectsManager implements ISaveParticipant {
 				// ignore
 			}
 		}
+
 		try {
-			if (changeType == CHANGE_TYPE.DELETED) {
-				resource = resource.getParent();
-			}
-			if (resource != null) {
-				resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-			}
-			if (isBuildFile(resource)) {
-				FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
-				switch (status) {
-					case automatic:
-						// do not force the build, because it's not started by user and should be done only if build file has changed
-						updateProject(resource.getProject(), false);
-						break;
-					case disabled:
-						break;
-					default:
-						if (client != null) {
-							String cmd = "java.projectConfiguration.status";
-							TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
-							ActionableNotification updateProjectConfigurationNotification = new ActionableNotification().withSeverity(MessageType.Info)
-									.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Never", cmd, asList(uri, FeatureStatus.disabled)),
-											new Command("Now", cmd, asList(uri, FeatureStatus.interactive)), new Command("Always", cmd, asList(uri, FeatureStatus.automatic))));
-							client.sendActionableNotification(updateProjectConfigurationNotification);
-						}
+			Optional<IBuildSupport> bs = getBuildSupport(resource.getProject());
+			if (bs.isPresent()) {
+				IBuildSupport buildSupport = bs.get();
+				boolean requireConfigurationUpdate = buildSupport.fileChanged(resource, changeType, new NullProgressMonitor());
+				if (requireConfigurationUpdate) {
+					FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
+					switch (status) {
+						case automatic:
+							// do not force the build, because it's not started by user and should be done only if build file has changed
+							updateProject(resource.getProject(), false);
+							break;
+						case disabled:
+							break;
+						default:
+							if (client != null) {
+								String cmd = "java.projectConfiguration.status";
+								TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
+								ActionableNotification updateProjectConfigurationNotification = new ActionableNotification().withSeverity(MessageType.Info)
+										.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Never", cmd, asList(uri, FeatureStatus.disabled)),
+												new Command("Now", cmd, asList(uri, FeatureStatus.interactive)), new Command("Always", cmd, asList(uri, FeatureStatus.automatic))));
+								client.sendActionableNotification(updateProjectConfigurationNotification);
+							}
+					}
 				}
 			}
 		} catch (CoreException e) {
@@ -453,7 +454,7 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	private Stream<IBuildSupport> buildSupports() {
-		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport());
+		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport(), new InvisibleProjectBuildSupport(), new DefaultProjectBuildSupport(this), new EclipseBuildSupport());
 	}
 
 	public void setConnection(JavaLanguageClient client) {
@@ -578,6 +579,14 @@ public class ProjectsManager implements ISaveParticipant {
 								}
 							}
 						}
+						if (!ProjectUtils.isVisibleProject(project)) {
+							//watch lib folder for invisible projects
+							IPath realFolderPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocation();
+							if (realFolderPath != null) {
+								IPath libFolderPath = realFolderPath.append(InvisibleProjectBuildSupport.LIB_FOLDER);
+								sources.add(libFolderPath.toString() + "/**");
+							}
+						}
 					}
 				}
 			} catch (JavaModelException e) {
@@ -608,7 +617,7 @@ public class ProjectsManager implements ISaveParticipant {
 			}
 			return fileWatchers;
 		}
-		return null;
+		return Collections.emptyList();
 	}
 
 	public File findFile(String formatterUrl) {
