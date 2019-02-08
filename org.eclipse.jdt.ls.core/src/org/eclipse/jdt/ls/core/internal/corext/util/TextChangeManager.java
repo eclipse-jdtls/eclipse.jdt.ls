@@ -18,10 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.ltk.core.refactoring.TextChange;
-
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.ltk.core.refactoring.TextChange;
 
 
 /**

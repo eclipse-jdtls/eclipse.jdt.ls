@@ -11,7 +11,6 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;

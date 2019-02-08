@@ -67,8 +67,6 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
-import org.eclipse.jdt.ls.core.internal.DidChangeWatchedFilesRegistrationOptions;
-import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -83,6 +81,8 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
+import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
@@ -604,7 +604,7 @@ public class ProjectsManager implements ISaveParticipant {
 				}
 			}
 			for (String pattern : sources) {
-				FileSystemWatcher watcher = new FileSystemWatcher(pattern, FileSystemWatcher.WATCH_KIND_DEFAULT);
+				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
 			if (!sources.equals(watchers)) {

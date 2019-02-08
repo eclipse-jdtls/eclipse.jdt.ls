@@ -29,7 +29,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
-import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;

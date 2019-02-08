@@ -15,11 +15,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-
 import org.eclipse.lsp4j.Position;
 import org.junit.Test;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 /**
  * JSONUtilityTest
