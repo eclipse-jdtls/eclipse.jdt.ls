@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import java.util.Hashtable;
+
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;

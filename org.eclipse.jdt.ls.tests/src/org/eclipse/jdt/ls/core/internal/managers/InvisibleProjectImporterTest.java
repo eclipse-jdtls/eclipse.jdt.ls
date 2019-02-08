@@ -25,10 +25,10 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.FileSystemWatcher;
 import org.junit.Test;
 
 public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedTest {

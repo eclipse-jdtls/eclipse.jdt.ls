@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.osgi.util.NLS;
 
 /**
