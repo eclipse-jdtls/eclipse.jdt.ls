@@ -52,6 +52,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
@@ -757,6 +759,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
 		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+	}
+
+	@Override
+	public CompletableFuture<OverridableMethodsResponse> overridableMethods(CodeActionParams params) {
+		logInfo(">> java/overridableMethods");
+		return computeAsync((monitor) -> OverrideMethodsHandler.getOverridableMethods(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params) {
+		logInfo(">> java/addOverridableMethods");
+		return computeAsync((montior) -> OverrideMethodsHandler.addOverridableMethods(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

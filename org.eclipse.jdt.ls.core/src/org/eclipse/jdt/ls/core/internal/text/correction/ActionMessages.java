@@ -20,6 +20,7 @@ public final class ActionMessages extends NLS {
 		// Do not instantiate
 	}
 
+	public static String OverrideMethodsAction_label;
 	public static String GenerateGetterSetterAction_label;
 
 	static {

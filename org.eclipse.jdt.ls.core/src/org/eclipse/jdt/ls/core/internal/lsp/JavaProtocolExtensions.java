@@ -13,7 +13,11 @@ package org.eclipse.jdt.ls.core.internal.lsp;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
+import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
@@ -39,4 +43,10 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild);
+
+	@JsonRequest
+	CompletableFuture<OverridableMethodsResponse> overridableMethods(CodeActionParams params);
+
+	@JsonRequest
+	CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params);
 }

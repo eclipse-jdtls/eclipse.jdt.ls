@@ -58,12 +58,13 @@ public class CodeActionHandler {
 
 	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
 
-	private SourceAssistProcessor sourceAssistProcessor = new SourceAssistProcessor();
+	private SourceAssistProcessor sourceAssistProcessor;
 
 	private PreferenceManager preferenceManager;
 
 	public CodeActionHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
 	}
 
 	/**
@@ -97,9 +98,6 @@ public class CodeActionHandler {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
 		}
 
-		List<CUCorrectionProposal> corrections = this.sourceAssistProcessor.getAssists(context, locations);
-		candidates.addAll(corrections);
-
 		candidates.sort(new CUCorrectionProposalComparator());
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
@@ -123,6 +121,9 @@ public class CodeActionHandler {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
+
+		// Add the source actions.
+		$.addAll(sourceAssistProcessor.getSourceActionCommands(params, context, locations));
 
 		return $;
 	}
