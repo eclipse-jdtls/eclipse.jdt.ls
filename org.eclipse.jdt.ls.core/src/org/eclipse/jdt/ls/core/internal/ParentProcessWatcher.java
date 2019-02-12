@@ -65,13 +65,32 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		} else {
 			command = "ps -p " + pid;
 		}
+		Process process = null;
+		boolean finished = false;
 		try {
-			Process process = Runtime.getRuntime().exec(command);
-			int processResult = process.waitFor();
-			return processResult == 0;
+			process = Runtime.getRuntime().exec(command);
+			finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS);
+			if (!finished) {
+				process.destroy();
+				finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS); // wait for the process to stop
+			}
+			return !finished || process.exitValue() == 0;
 		} catch (IOException | InterruptedException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return true;
+		} finally {
+			if (process != null) {
+				if (!finished) {
+					process.destroyForcibly();
+				}
+				// Terminating or destroying the Process doesn't close the process handle on Windows.
+				// It is only closed when the Process object is garbage collected (in its finalize() method).
+				// On Windows, when the Java LS is idle, we need to explicitly request a GC,
+				// to prevent an accumulation of zombie processes, as finalize() will be called.
+				if (Platform.OS_WIN32.equals(Platform.getOS())) {
+					System.gc();
+				}
+			}
 		}
 	}
 
