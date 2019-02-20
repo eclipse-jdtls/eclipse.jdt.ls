@@ -322,7 +322,7 @@ public final class ProjectUtils {
 		}
 	}
 
-	private static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) {
+	private static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
 		FileVisitor<? super Path> jarDetector = new SimpleFileVisitor<Path>() {
 			@Override
@@ -346,7 +346,7 @@ public final class ProjectUtils {
 				}
 				Files.walkFileTree(Paths.get(path), jarDetector);
 			} catch (IOException e) {
-				new CoreException(StatusFactory.newErrorStatus("Unable to analyze " + path, e));
+				throw new CoreException(StatusFactory.newErrorStatus("Unable to analyze " + path, e));
 			}
 		}
 		return binaries;
