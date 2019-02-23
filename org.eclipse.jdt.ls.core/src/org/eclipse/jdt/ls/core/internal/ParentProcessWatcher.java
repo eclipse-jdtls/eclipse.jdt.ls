@@ -20,6 +20,8 @@ import java.util.function.Function;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 
+import com.google.common.io.Closeables;
+
 /**
  * Watches the parent process PID and invokes exit if it is no longer available.
  * This implementation waits for periods of inactivity to start querying the PIDs.
@@ -27,7 +29,8 @@ import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 public final class ParentProcessWatcher implements Runnable, Function<MessageConsumer, MessageConsumer>{
 
 	private static final long INACTIVITY_DELAY_SECS = 30 *1000;
-	private static final int POLL_DELAY_SECS = 2;
+	private static final boolean isJava1x = System.getProperty("java.version").startsWith("1.");
+	private static final int POLL_DELAY_SECS = 10;
 	private volatile long lastActivityTime;
 	private final LanguageServer server;
 	private ScheduledFuture<?> task;
@@ -88,6 +91,16 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 				// On Windows, when the Java LS is idle, we need to explicitly request a GC,
 				// to prevent an accumulation of zombie processes, as finalize() will be called.
 				if (Platform.OS_WIN32.equals(Platform.getOS())) {
+					// Java >= 9 doesn't close the handle when the process is garbage collected
+					// We need to close the opened streams
+					if (!isJava1x) {
+						Closeables.closeQuietly(process.getInputStream());
+						Closeables.closeQuietly(process.getErrorStream());
+						try {
+							Closeables.close(process.getOutputStream(), false);
+						} catch (IOException e) {
+						}
+					}
 					System.gc();
 				}
 			}
