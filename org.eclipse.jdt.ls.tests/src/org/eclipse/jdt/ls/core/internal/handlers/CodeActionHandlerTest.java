@@ -108,7 +108,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(codeActions.size() >= 1);
+		Assert.assertFalse(codeActions.isEmpty());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
@@ -192,8 +192,8 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Collections.emptyList()));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No need of organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
-		Assert.assertFalse("No need of generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
+		Assert.assertFalse("No need for organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
+		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
 	}
 
 	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {

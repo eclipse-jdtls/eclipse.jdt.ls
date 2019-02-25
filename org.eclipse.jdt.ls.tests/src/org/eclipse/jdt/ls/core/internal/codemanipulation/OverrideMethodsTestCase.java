@@ -167,7 +167,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 
 	@Test
 	public void testBug119171() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("import java.util.Properties;\n");
 		buf.append("public interface F {\n");
@@ -175,14 +175,14 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 		buf.append("}\n");
 		fPackageP.createCompilationUnit("F.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("public class Properties {\n");
 		buf.append("    public int get() {return 0;}\n");
 		buf.append("}\n");
 		fPackageP.createCompilationUnit("Properties.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("public class Test5 implements F {\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        Properties p= new Properties();\n");
@@ -203,7 +203,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 
 	@Test
 	public void testBug297183() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("interface Shape {\r\n");
 		buf.append("  int getX();\r\n");
@@ -213,7 +213,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 		buf.append("}\r\n");
 		fPackageP.createCompilationUnit("Shape.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package p;\n");
 		buf.append("interface Circle extends Shape {\r\n");
 		buf.append("  int getR();\r\n");
@@ -221,7 +221,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 		buf.append("\r\n");
 		fPackageP.createCompilationUnit("Circle.java", buf.toString(), false, null);
 
-		buf = new StringBuffer();
+		buf = new StringBuilder();
 		buf.append("package P;\n");
 		buf.append("public class DefaultCircle implements Circle {\n");
 		buf.append("}\n");
@@ -242,7 +242,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 
 	@Test
 	public void testBug480682() throws Exception {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append("public class Test480682 extends Base {\n");
 		buf.append("}\n");
 		buf.append("abstract class Base implements I {\n");
@@ -269,7 +269,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 	}
 
 	private List<OverridableMethod> getOverridableMethods(IType type) {
-		return OverrideMethodsOperation.getOverridableMethods(type);
+		return OverrideMethodsOperation.listOverridableMethods(type);
 	}
 
 	private void addAndApplyOverridableMethods(IType type, List<OverridableMethod> overridableMethods) throws ValidateEditException, CoreException {
@@ -317,7 +317,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 		int nImports = imports.length;
 		int nExpected = expected.length;
 		if (nExpected != nImports) {
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			buf.append(nExpected).append(" imports expected, is ").append(nImports).append("\n");
 			buf.append("expected:\n");
 			for (int i = 0; i < expected.length; i++) {

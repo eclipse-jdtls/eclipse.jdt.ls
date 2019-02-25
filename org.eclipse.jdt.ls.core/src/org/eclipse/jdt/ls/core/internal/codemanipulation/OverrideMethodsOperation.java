@@ -52,7 +52,7 @@ import org.eclipse.text.edits.TextEdit;
 
 public class OverrideMethodsOperation {
 
-	public static List<OverridableMethod> getOverridableMethods(IType type) {
+	public static List<OverridableMethod> listOverridableMethods(IType type) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return Collections.emptyList();
 		}

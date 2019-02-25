@@ -45,7 +45,7 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild);
 
 	@JsonRequest
-	CompletableFuture<OverridableMethodsResponse> overridableMethods(CodeActionParams params);
+	CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params);
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params);

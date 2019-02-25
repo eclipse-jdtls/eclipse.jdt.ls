@@ -30,10 +30,10 @@ import org.eclipse.text.edits.TextEdit;
 
 public class OverrideMethodsHandler {
 
-	public static OverridableMethodsResponse getOverridableMethods(CodeActionParams params) {
+	public static OverridableMethodsResponse listOverridableMethods(CodeActionParams params) {
 		IType type = getSelectionType(params);
 		String typeName = type == null ? "" : type.getTypeQualifiedName();
-		List<OverridableMethod> methods = OverrideMethodsOperation.getOverridableMethods(type);
+		List<OverridableMethod> methods = OverrideMethodsOperation.listOverridableMethods(type);
 		return new OverridableMethodsResponse(typeName, methods);
 	}
 

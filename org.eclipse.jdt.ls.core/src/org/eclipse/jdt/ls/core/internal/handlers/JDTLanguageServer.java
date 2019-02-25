@@ -762,9 +762,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<OverridableMethodsResponse> overridableMethods(CodeActionParams params) {
-		logInfo(">> java/overridableMethods");
-		return computeAsync((monitor) -> OverrideMethodsHandler.getOverridableMethods(params));
+	public CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params) {
+		logInfo(">> java/listOverridableMethods");
+		return computeAsync((monitor) -> OverrideMethodsHandler.listOverridableMethods(params));
 	}
 
 	@Override
