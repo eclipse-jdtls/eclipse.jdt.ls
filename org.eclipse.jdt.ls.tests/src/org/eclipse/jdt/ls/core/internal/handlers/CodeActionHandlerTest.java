@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -21,6 +22,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.lsp4j.CodeAction;
@@ -80,10 +82,11 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(3, codeActions.size());
+		Assert.assertEquals(4, codeActions.size());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		Assert.assertEquals(codeActions.get(3).getRight().getKind(), JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -105,7 +108,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(1, codeActions.size());
+		Assert.assertFalse(codeActions.isEmpty());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
@@ -128,7 +131,6 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 			params.setContext(context);
 			List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 			Assert.assertNotNull(codeActions);
-			Assert.assertEquals(0, codeActions.size());
 		} finally {
 			cu.discardWorkingCopy();
 		}
@@ -190,7 +192,8 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Collections.emptyList()));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(0, codeActions.size());
+		Assert.assertFalse("No need for organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
+		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
 	}
 
 	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
@@ -216,4 +219,14 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return $;
 	}
 
+	private boolean containsKind(List<Either<Command, CodeAction>> codeActions, String kind) {
+		for (Either<Command, CodeAction> action : codeActions) {
+			String actionKind = action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand();
+			if (Objects.equals(actionKind, kind)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

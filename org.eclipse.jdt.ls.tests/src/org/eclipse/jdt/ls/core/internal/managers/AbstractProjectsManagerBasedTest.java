@@ -150,6 +150,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isSemanticHighlightingSupported()).thenReturn(true);
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
+		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 

@@ -32,6 +32,11 @@ public interface JavaCodeActionKind {
 	public static final String SOURCE_GENERATE_ACCESSORS = SOURCE_GENERATE + ".accessors";
 
 	/**
+	 * Override/Implement methods kind
+	 */
+	public static final String SOURCE_OVERRIDE_METHODS = CodeActionKind.Source + ".overrideMethods";
+
+	/**
 	 * Extract to method kind
 	 */
 	public static final String REFACTOR_EXTRACT_METHOD = CodeActionKind.RefactorExtract + ".function";// using `.function` instead of `.method` to match existing keybindings
