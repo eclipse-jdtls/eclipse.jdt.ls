@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -109,10 +110,10 @@ public class SourceAttachmentCommand {
 			return new SourceAttachmentResult(e.getMessage(), null);
 		}
 
-		IClasspathEntry newClasspathEntry = newClasspathEntry(entryWrapper.original, changedAttributes);
+		IJavaProject javaProject = root.getJavaProject();
+		IClasspathEntry newClasspathEntry = newClasspathEntry(entryWrapper.original, changedAttributes, javaProject.getProject());
 		if (newClasspathEntry != null && !entryWrapper.original.equals(newClasspathEntry)) {
 			try {
-				IJavaProject javaProject = root.getJavaProject();
 				if (entryWrapper.containerPath != null) {
 					updateContainerClasspath(javaProject, entryWrapper.containerPath, newClasspathEntry);
 				} else if (entryWrapper.original.getReferencingEntry() != null) {
@@ -214,9 +215,15 @@ public class SourceAttachmentCommand {
 		return new ClasspathEntryWrapper(entry, containerPath, canEditEncoding);
 	}
 
-	private static IClasspathEntry newClasspathEntry(IClasspathEntry entry, SourceAttachmentAttribute changedAttributes) {
-		IPath filePath = StringUtils.isNotBlank(changedAttributes.sourceAttachmentPath) ? Path.fromOSString(changedAttributes.sourceAttachmentPath).makeAbsolute() : null;
-		IPath sourceAttachmentPath = (filePath != null && filePath.segmentCount() == 0) ? null : filePath;
+	private static IClasspathEntry newClasspathEntry(IClasspathEntry entry, SourceAttachmentAttribute changedAttributes, IProject project) {
+		IPath sourceFilePath = StringUtils.isNotBlank(changedAttributes.sourceAttachmentPath) ? Path.fromOSString(changedAttributes.sourceAttachmentPath).makeAbsolute() : null;
+		IPath projectLocation = project.getLocation();
+		if (sourceFilePath != null && projectLocation.isPrefixOf(sourceFilePath)) {
+			IPath relativeFilePath = sourceFilePath.makeRelativeTo(projectLocation);
+			sourceFilePath = project.findMember(relativeFilePath).getFullPath();
+		}
+
+		IPath sourceAttachmentPath = (sourceFilePath == null || sourceFilePath.isEmpty()) ? null : sourceFilePath;
 		IClasspathAttribute newSourceEncodingAttribute = StringUtils.isNotBlank(changedAttributes.sourceAttachmentEncoding)
 				? JavaCore.newClasspathAttribute(IClasspathAttribute.SOURCE_ATTACHMENT_ENCODING, changedAttributes.sourceAttachmentEncoding)
 				: null;
