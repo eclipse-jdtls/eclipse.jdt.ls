@@ -52,6 +52,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
@@ -770,7 +772,19 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params) {
 		logInfo(">> java/addOverridableMethods");
-		return computeAsync((montior) -> OverrideMethodsHandler.addOverridableMethods(params));
+		return computeAsync((monitor) -> OverrideMethodsHandler.addOverridableMethods(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckHashCodeEqualsResponse> checkHashCodeEqualsStatus(CodeActionParams params) {
+		logInfo(">> java/checkHashCodeEqualsStatus");
+		return computeAsync((monitor) -> HashCodeEqualsHandler.checkHashCodeEqualsStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
+		logInfo(">> java/generateHashCodeEquals");
+		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

@@ -203,6 +203,12 @@ public class Preferences {
 	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
 	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
+	/**
+	 * A named preference that defines whether to use Objects.hash and
+	 * Objects.equals methods to generate the hashCode and equals.
+	 */
+	public static final String JAVA_CODEGENERATION_USEJAVA7HASHEQUALS = "java.codeGeneration.useJava7HashEquals";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -261,6 +267,7 @@ public class Preferences {
 	private boolean completionOverwrite;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
+	private boolean codeGenUseJ7HashEquals;
 	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
@@ -358,6 +365,7 @@ public class Preferences {
 		completionOverwrite = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
+		codeGenUseJ7HashEquals = false;
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
@@ -422,6 +430,9 @@ public class Preferences {
 
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
+
+		boolean useJ7HashEquals = getBoolean(configuration, JAVA_CODEGENERATION_USEJAVA7HASHEQUALS, false);
+		prefs.setCodeGenUseJ7HashEquals(useJ7HashEquals);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -572,6 +583,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setCodeGenUseJ7HashEquals(boolean codeGenUseJ7HashEquals) {
+		this.codeGenUseJ7HashEquals = codeGenUseJ7HashEquals;
+		return this;
+	}
+
 	public Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
 		this.updateBuildConfigurationStatus = status;
 		return this;
@@ -680,6 +696,10 @@ public class Preferences {
 
 	public boolean isGuessMethodArguments() {
 		return guessMethodArguments;
+	}
+
+	public boolean isCodeGenUseJ7HashEquals() {
+		return codeGenUseJ7HashEquals;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

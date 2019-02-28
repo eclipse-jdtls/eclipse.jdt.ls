@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal.text.correction;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
@@ -26,8 +28,13 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -36,7 +43,9 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
@@ -55,7 +64,7 @@ public class SourceAssistProcessor {
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	public static final String COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT = "java.action.overrideMethodsPrompt";
-
+	public static final String COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT = "java.action.hashCodeEqualsPrompt";
 
 	private PreferenceManager preferenceManager;
 
@@ -65,8 +74,8 @@ public class SourceAssistProcessor {
 
 	public List<Either<Command, CodeAction>> getSourceActionCommands(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
-
 		ICompilationUnit cu = context.getCompilationUnit();
+		IType type = getSelectionType(context);
 
 		// Organize Imports
 		TextEdit organizeImportsEdit = getOrganizeImportsProposal(context);
@@ -81,11 +90,17 @@ public class SourceAssistProcessor {
 		}
 
 		// Generate Getter and Setter
-		TextEdit getterSetterEdit = getGetterSetterProposal(context);
+		TextEdit getterSetterEdit = getGetterSetterProposal(context, type);
 		Optional<Either<Command, CodeAction>> getterSetter = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label,
 				JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS,
 				getterSetterEdit);
 		addSourceActionCommand($, params.getContext(), getterSetter);
+
+		// Generate hashCode() and equals()
+		if (supportsHashCodeEquals(context, type)) {
+			Optional<Either<Command, CodeAction>> hashCodeEquals = getHashCodeEqualsAction(params);
+			addSourceActionCommand($, params.getContext(), hashCodeEquals);
+		}
 
 		return $;
 	}
@@ -136,8 +151,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private TextEdit getGetterSetterProposal(IInvocationContext context) {
-		final IType type = getSelectionType(context);
+	private TextEdit getGetterSetterProposal(IInvocationContext context, IType type) {
 		try {
 			if (!GenerateGetterSetterOperation.supportsGetterSetter(type)) {
 				return null;
@@ -155,6 +169,54 @@ public class SourceAssistProcessor {
 		}
 
 		return null;
+	}
+
+	private boolean supportsHashCodeEquals(IInvocationContext context, IType type) {
+		try {
+			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
+				return false;
+			}
+
+			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
+			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
+			if (typeBinding == null) {
+				return false;
+			}
+
+			IVariableBinding[] fields = typeBinding.getDeclaredFields();
+			List<IVariableBinding> validFields = new ArrayList<>();
+			for (IVariableBinding field : fields) {
+				if (!Modifier.isStatic(field.getModifiers())) {
+					validFields.add(field);
+				}
+			}
+
+			if (validFields.isEmpty()) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params) {
+		if (!preferenceManager.getClientPreferences().isHashCodeEqualsPromptSupported()) {
+			return Optional.empty();
+		}
+
+		Command command = new Command(ActionMessages.GenerateHashCodeEqualsAction_label, COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT, Collections.singletonList(params));
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS)) {
+			CodeAction codeAction = new CodeAction(ActionMessages.GenerateHashCodeEqualsAction_label);
+			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+			codeAction.setCommand(command);
+			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			return Optional.of(Either.forRight(codeAction));
+		} else {
+			return Optional.of(Either.forLeft(command));
+		}
 	}
 
 	private Optional<Either<Command, CodeAction>> convertToWorkspaceEditAction(CodeActionContext context, ICompilationUnit cu, String name, String kind, TextEdit edit) {
@@ -212,5 +274,28 @@ public class SourceAssistProcessor {
 		}
 
 		return unit.findPrimaryType();
+	}
+
+	public static IType getSelectionType(CodeActionParams params) {
+		InnovationContext context = getInnovationContext(params);
+		if (context == null) {
+			return null;
+		}
+
+		return getSelectionType(context);
+	}
+
+	public static InnovationContext getInnovationContext(CodeActionParams params) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null) {
+			return null;
+		}
+
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		context.setASTRoot(astRoot);
+		return context;
 	}
 }

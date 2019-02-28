@@ -169,6 +169,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("overrideMethodsPromptSupport", "false").toString());
 	}
 
+	public boolean isHashCodeEqualsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("hashCodeEqualsPromptSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null
