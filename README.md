@@ -17,7 +17,6 @@ Features
 * Code completion
 * Javadoc hovers
 * Code actions / refactoring
-* Javadoc hovers
 * Code outline
 * Code navigation
 * Code lens (references/implementations)
