@@ -45,6 +45,7 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 	@Override
 	public void run() {
 		if (!parentProcessStillRunning()) {
+			JavaLanguageServerPlugin.logInfo("Parent process stopped running, forcing server exit");
 			task.cancel(true);
 			server.exit();
 		}
@@ -76,6 +77,11 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 			if (!finished) {
 				process.destroy();
 				finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS); // wait for the process to stop
+			}
+			if (Platform.OS_WIN32.equals(Platform.getOS()) && finished && process.exitValue() > 1) {
+				// the tasklist command should return 0 (parent process exists) or 1 (parent process doesn't exist)
+				JavaLanguageServerPlugin.logInfo("The tasklist command: '" + command + "' returns " + process.exitValue());
+				return true;
 			}
 			return !finished || process.exitValue() == 0;
 		} catch (IOException | InterruptedException e) {
