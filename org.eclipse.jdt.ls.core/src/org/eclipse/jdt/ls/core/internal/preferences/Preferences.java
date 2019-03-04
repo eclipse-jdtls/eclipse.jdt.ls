@@ -205,9 +205,24 @@ public class Preferences {
 
 	/**
 	 * A named preference that defines whether to use Objects.hash and
-	 * Objects.equals methods to generate the hashCode and equals.
+	 * Objects.equals methods when generating the hashCode and equals methods.
 	 */
-	public static final String JAVA_CODEGENERATION_USEJAVA7HASHEQUALS = "java.codeGeneration.useJava7HashEquals";
+	public static final String JAVA_HASHCODEEQUALSTEMPLATE_USEJAVA7OBJECTS = "java.hashCodeEqualsTemplate.useJava7Objects";
+	/**
+	 * A named preference that defines whether to use 'instanceof' to compare types
+	 * when generating the hashCode and equals methods.
+	 */
+	public static final String JAVA_HASHCODEEQUALSTEMPLATE_USEINSTANCEOF = "java.hashCodeEqualsTemplate.useInstanceof";
+	/**
+	 * A named preference that defines whether to use blocks in 'if' statements when
+	 * generating the hashCode and equals methods.
+	 */
+	public static final String JAVA_HASHCODEEQUALSTEMPLATE_USEBLOCKS = "java.hashCodeEqualsTemplate.useBlocks";
+	/**
+	 * A named preference that defines whether to generate method comments when
+	 * generating the hashCode and equals methods.
+	 */
+	public static final String JAVA_HASHCODEEQUALSTEMPLATE_GENERATECOMMENTS = "java.hashCodeEqualsTemplate.generateComments";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -267,7 +282,10 @@ public class Preferences {
 	private boolean completionOverwrite;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
-	private boolean codeGenUseJ7HashEquals;
+	private boolean hashCodeEqualsTemplateUseJava7Objects;
+	private boolean hashCodeEqualsTemplateUseInstanceof;
+	private boolean hashCodeEqualsTemplateUseBlocks;
+	private boolean hashCodeEqualsTemplateGenerateComments;
 	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
@@ -365,7 +383,10 @@ public class Preferences {
 		completionOverwrite = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
-		codeGenUseJ7HashEquals = false;
+		hashCodeEqualsTemplateUseJava7Objects = false;
+		hashCodeEqualsTemplateUseInstanceof = false;
+		hashCodeEqualsTemplateUseBlocks = false;
+		hashCodeEqualsTemplateGenerateComments = false;
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
@@ -431,8 +452,17 @@ public class Preferences {
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
 
-		boolean useJ7HashEquals = getBoolean(configuration, JAVA_CODEGENERATION_USEJAVA7HASHEQUALS, false);
-		prefs.setCodeGenUseJ7HashEquals(useJ7HashEquals);
+		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_HASHCODEEQUALSTEMPLATE_USEJAVA7OBJECTS, false);
+		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
+
+		boolean hashCodeEqualsTemplateUseInstanceOf = getBoolean(configuration, JAVA_HASHCODEEQUALSTEMPLATE_USEINSTANCEOF, false);
+		prefs.setHashCodeEqualsTemplateUseInstanceof(hashCodeEqualsTemplateUseInstanceOf);
+
+		boolean hashCodeEqualsTemplateUseBlocks = getBoolean(configuration, JAVA_HASHCODEEQUALSTEMPLATE_USEBLOCKS, false);
+		prefs.setHashCodeEqualsTemplateUseBlocks(hashCodeEqualsTemplateUseBlocks);
+
+		boolean hashCodeEqualsTemplateGenerateComments = getBoolean(configuration, JAVA_HASHCODEEQUALSTEMPLATE_GENERATECOMMENTS, false);
+		prefs.setHashCodeEqualsTemplateGenerateComments(hashCodeEqualsTemplateGenerateComments);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -583,8 +613,23 @@ public class Preferences {
 		return this;
 	}
 
-	public Preferences setCodeGenUseJ7HashEquals(boolean codeGenUseJ7HashEquals) {
-		this.codeGenUseJ7HashEquals = codeGenUseJ7HashEquals;
+	public Preferences setHashCodeEqualsTemplateUseJava7Objects(boolean hashCodeEqualsTemplateUseJ7Objects) {
+		this.hashCodeEqualsTemplateUseJava7Objects = hashCodeEqualsTemplateUseJ7Objects;
+		return this;
+	}
+
+	public Preferences setHashCodeEqualsTemplateUseInstanceof(boolean hashCodeEqualsTemplateUseInstanceof) {
+		this.hashCodeEqualsTemplateUseInstanceof = hashCodeEqualsTemplateUseInstanceof;
+		return this;
+	}
+
+	public Preferences setHashCodeEqualsTemplateUseBlocks(boolean hashCodeEqualsTemplateUseBlocks) {
+		this.hashCodeEqualsTemplateUseBlocks = hashCodeEqualsTemplateUseBlocks;
+		return this;
+	}
+
+	public Preferences setHashCodeEqualsTemplateGenerateComments(boolean hashCodeEqualsTemplateGenerateComments) {
+		this.hashCodeEqualsTemplateGenerateComments = hashCodeEqualsTemplateGenerateComments;
 		return this;
 	}
 
@@ -698,8 +743,20 @@ public class Preferences {
 		return guessMethodArguments;
 	}
 
-	public boolean isCodeGenUseJ7HashEquals() {
-		return codeGenUseJ7HashEquals;
+	public boolean isHashCodeEqualsTemplateUseJava7Objects() {
+		return hashCodeEqualsTemplateUseJava7Objects;
+	}
+
+	public boolean isHashCodeEqualsTemplateUseInstanceof() {
+		return hashCodeEqualsTemplateUseInstanceof;
+	}
+
+	public boolean isHashCodeEqualsTemplateUseBlocks() {
+		return hashCodeEqualsTemplateUseBlocks;
+	}
+
+	public boolean isHashCodeEqualsTemplateGenerateComments() {
+		return hashCodeEqualsTemplateGenerateComments;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

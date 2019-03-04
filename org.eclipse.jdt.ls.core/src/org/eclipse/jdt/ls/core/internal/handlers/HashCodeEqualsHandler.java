@@ -39,8 +39,6 @@ import org.eclipse.text.edits.TextEdit;
 public class HashCodeEqualsHandler {
 	private static final String METHODNAME_HASH_CODE = "hashCode";
 	private static final String METHODNAME_EQUALS = "equals";
-	private static final boolean useBlocks = false;
-	private static final boolean useInstanceOf = false;
 
 	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(CodeActionParams params) {
 		IType type = SourceAssistProcessor.getSelectionType(params);
@@ -85,8 +83,11 @@ public class HashCodeEqualsHandler {
 
 	public static WorkspaceEdit generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
 		IType type = SourceAssistProcessor.getSelectionType(params.context);
-		boolean useJ7HashEquals = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCodeGenUseJ7HashEquals();
-		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJ7HashEquals);
+		boolean useJava7Objects = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isHashCodeEqualsTemplateUseJava7Objects();
+		boolean useInstanceof = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isHashCodeEqualsTemplateUseInstanceof();
+		boolean useBlocks = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isHashCodeEqualsTemplateUseBlocks();
+		boolean generateComments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isHashCodeEqualsTemplateGenerateComments();
+		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
 		if (edit == null) {
 			return null;
 		}
@@ -94,12 +95,12 @@ public class HashCodeEqualsHandler {
 		return SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	public static TextEdit generateHashCodeEqualsTextEdit(GenerateHashCodeEqualsParams params, boolean useJ7HashEquals) {
+	public static TextEdit generateHashCodeEqualsTextEdit(GenerateHashCodeEqualsParams params, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
 		IType type = SourceAssistProcessor.getSelectionType(params.context);
-		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJ7HashEquals);
+		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
 	}
 
-	public static TextEdit generateHashCodeEqualsTextEdit(IType type, VariableField[] fields, boolean regenerate, boolean useJ7HashEquals) {
+	public static TextEdit generateHashCodeEqualsTextEdit(IType type, VariableField[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
 		if (type == null) {
 			return null;
 		}
@@ -114,9 +115,9 @@ public class HashCodeEqualsHandler {
 
 			IVariableBinding[] variableBindings = convertToVariableBindings(typeBinding, fields);
 			CodeGenerationSettings codeGenSettings = new CodeGenerationSettings();
-			codeGenSettings.createComments = false;
+			codeGenSettings.createComments = generateComments;
 			codeGenSettings.overrideAnnotation = true;
-			GenerateHashCodeEqualsOperation operation = new GenerateHashCodeEqualsOperation(typeBinding, variableBindings, astRoot, null, codeGenSettings, useInstanceOf, useJ7HashEquals, regenerate, false, false);
+			GenerateHashCodeEqualsOperation operation = new GenerateHashCodeEqualsOperation(typeBinding, variableBindings, astRoot, null, codeGenSettings, useInstanceof, useJava7Objects, regenerate, false, false);
 			operation.setUseBlocksForThen(useBlocks);
 			operation.run(null);
 			return operation.getResultingEdit();
