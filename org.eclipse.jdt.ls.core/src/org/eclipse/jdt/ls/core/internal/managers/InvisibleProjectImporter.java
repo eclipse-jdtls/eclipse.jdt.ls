@@ -10,11 +10,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFolder;
@@ -71,7 +78,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		String packageName = getPackageName(triggerJavaFile.get());
+		String packageName = getPackageName(triggerJavaFile.get(), rootPath);
 		IPath sourceDirectory = inferSourceDirectory(triggerJavaFile.get().toFile().toPath(), packageName);
 		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)) {
 			return;
@@ -110,14 +117,64 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		// do nothing
 	}
 
-	private String getPackageName(IPath javaFile) {
+	private String getPackageName(IPath javaFile, IPath workspaceRoot) {
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			return "";
 		}
 
 		IJavaProject javaProject = JavaCore.create(project);
-		return JDTUtils.getPackageName(javaProject, javaFile.toFile().toURI());
+		return getPackageName(javaFile, workspaceRoot, javaProject);
+	}
+
+	public static String getPackageName(IPath javaFile, IPath workspaceRoot, IJavaProject javaProject) {
+		File nioFile = javaFile.toFile();
+		try {
+			String content = com.google.common.io.Files.toString(nioFile, StandardCharsets.UTF_8);
+			if (StringUtils.isBlank(content)) {
+				File found = findNearbyNonEmptyFile(nioFile);
+				if (found == null) {
+					return inferPackageNameFromPath(javaFile, workspaceRoot);
+				}
+
+				nioFile = found;
+			}
+		} catch (IOException e) {
+		}
+
+		return JDTUtils.getPackageName(javaProject, nioFile.toURI());
+	}
+
+	private static File findNearbyNonEmptyFile(File nioFile) throws IOException {
+		java.nio.file.Path directory = nioFile.getParentFile().toPath();
+		try (Stream<java.nio.file.Path> walk = Files.walk(directory, 1)) {
+			Optional<java.nio.file.Path> found = walk.filter(Files::isRegularFile).filter(file -> {
+				try {
+					return file.toString().endsWith(".java") && !Objects.equals(nioFile.getName(), file.toFile().getName()) && Files.size(file) > 0;
+				} catch (IOException e) {
+					return false;
+				}
+			}).findFirst();
+
+			if (found.isPresent()) {
+				return found.get().toFile();
+			}
+		} catch (IOException e) {
+		}
+
+		return null;
+	}
+
+	private static String inferPackageNameFromPath(IPath javaFile, IPath workspaceRoot) {
+		IPath parentPath = javaFile.removeTrailingSeparator().removeLastSegments(1);
+		List<String> segments = Arrays.asList(parentPath.segments());
+		int index = segments.lastIndexOf(JDTUtils.SRC);
+		if (index > -1) {
+			return String.join(JDTUtils.PERIOD, segments.subList(index + 1, segments.size()));
+		}
+
+		IPath relativePath = parentPath.makeRelativeTo(workspaceRoot);
+		return String.join(JDTUtils.PERIOD, relativePath.segments());
 	}
 
 	private IPath inferSourceDirectory(java.nio.file.Path filePath, String packageName) {

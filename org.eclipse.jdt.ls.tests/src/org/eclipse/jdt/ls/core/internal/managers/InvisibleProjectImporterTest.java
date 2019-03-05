@@ -79,4 +79,51 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertTrue("Unexpected lib glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
 	}
 
+	@Test
+	public void getPackageNameFromRelativePathOfEmptyFile() throws Exception {
+		File projectFolder = copyFiles("singlefile", true);
+		IProject invisibleProject = importRootFolder(projectFolder, "lesson1/Test.java");
+		assertTrue(invisibleProject.exists());
+
+		IPath workspaceRoot = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath javaFile = workspaceRoot.append("lesson1/Test.java");
+		String packageName = InvisibleProjectImporter.getPackageName(javaFile, workspaceRoot, JavaCore.create(invisibleProject));
+		assertEquals("lesson1", packageName);
+	}
+
+	@Test
+	public void getPackageNameFromNearbyNonEmptyFile() throws Exception {
+		File projectFolder = copyFiles("singlefile", true);
+		IProject invisibleProject = importRootFolder(projectFolder, "lesson1/samples/Empty.java");
+		assertTrue(invisibleProject.exists());
+
+		IPath workspaceRoot = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath javaFile = workspaceRoot.append("lesson1/samples/Empty.java");
+		String packageName = InvisibleProjectImporter.getPackageName(javaFile, workspaceRoot, JavaCore.create(invisibleProject));
+		assertEquals("samples", packageName);
+	}
+
+	@Test
+	public void getPackageNameInSrcEmptyFile() throws Exception {
+		File projectFolder = copyFiles("singlefile", true);
+		IProject invisibleProject = importRootFolder(projectFolder, "lesson1/src/main/java/demosamples/Empty1.java");
+		assertTrue(invisibleProject.exists());
+
+		IPath workspaceRoot = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath javaFile = workspaceRoot.append("lesson1/src/main/java/demosamples/Empty1.java");
+		String packageName = InvisibleProjectImporter.getPackageName(javaFile, workspaceRoot, JavaCore.create(invisibleProject));
+		assertEquals("main.java.demosamples", packageName);
+	}
+
+	@Test
+	public void getPackageName() throws Exception {
+		File projectFolder = copyFiles("singlefile", true);
+		IProject invisibleProject = importRootFolder(projectFolder, "Single.java");
+		assertTrue(invisibleProject.exists());
+
+		IPath workspaceRoot = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath javaFile = workspaceRoot.append("Single.java");
+		String packageName = InvisibleProjectImporter.getPackageName(javaFile, workspaceRoot, JavaCore.create(invisibleProject));
+		assertEquals("", packageName);
+	}
 }
