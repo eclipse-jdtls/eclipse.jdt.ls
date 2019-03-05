@@ -68,7 +68,7 @@ public class SignatureHelpHandler {
 					for (int i = 0; i < infos.size(); i++) {
 						if (infos.get(i).getParameters().size() >= currentParameter + 1) {
 							help.setActiveSignature(i);
-							help.setActiveParameter(currentParameter);
+							help.setActiveParameter(currentParameter < 0 ? 0 : currentParameter);
 							break;
 						}
 					}
