@@ -196,7 +196,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
 	}
 
-	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
+	public static Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
 		String str= unit.getSource();
 		int start = str.lastIndexOf(search);
 		return JDTUtils.toRange(unit, start, search.length());
@@ -219,7 +219,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return $;
 	}
 
-	private boolean containsKind(List<Either<Command, CodeAction>> codeActions, String kind) {
+	public static boolean containsKind(List<Either<Command, CodeAction>> codeActions, String kind) {
 		for (Either<Command, CodeAction> action : codeActions) {
 			String actionKind = action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand();
 			if (Objects.equals(actionKind, kind)) {

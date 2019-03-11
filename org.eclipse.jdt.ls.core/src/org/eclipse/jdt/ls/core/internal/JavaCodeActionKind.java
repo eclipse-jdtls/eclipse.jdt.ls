@@ -32,6 +32,11 @@ public interface JavaCodeActionKind {
 	public static final String SOURCE_GENERATE_ACCESSORS = SOURCE_GENERATE + ".accessors";
 
 	/**
+	 * Generate hashCode/equals kind
+	 */
+	public static final String SOURCE_GENERATE_HASHCODE_EQUALS = SOURCE_GENERATE + ".hashCodeEquals";
+
+	/**
 	 * Override/Implement methods kind
 	 */
 	public static final String SOURCE_OVERRIDE_METHODS = CodeActionKind.Source + ".overrideMethods";
