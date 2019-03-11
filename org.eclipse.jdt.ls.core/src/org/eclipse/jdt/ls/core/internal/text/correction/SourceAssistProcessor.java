@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,6 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
@@ -166,9 +166,8 @@ public class SourceAssistProcessor {
 			return operation.createTextEdit(null);
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Resolve Getter and Setter source action", e);
+			return null;
 		}
-
-		return null;
 	}
 
 	private boolean supportsHashCodeEquals(IInvocationContext context, IType type) {
@@ -176,37 +175,19 @@ public class SourceAssistProcessor {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
 				return false;
 			}
-
 			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
 			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
-			if (typeBinding == null) {
-				return false;
-			}
-
-			IVariableBinding[] fields = typeBinding.getDeclaredFields();
-			List<IVariableBinding> validFields = new ArrayList<>();
-			for (IVariableBinding field : fields) {
-				if (!Modifier.isStatic(field.getModifiers())) {
-					validFields.add(field);
-				}
-			}
-
-			if (validFields.isEmpty()) {
-				return false;
-			}
+			return (typeBinding == null) ? false : Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> !Modifier.isStatic(f.getModifiers())).findAny().isPresent();
 		} catch (JavaModelException e) {
 			return false;
 		}
-
-		return true;
 	}
 
 	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params) {
 		if (!preferenceManager.getClientPreferences().isHashCodeEqualsPromptSupported()) {
 			return Optional.empty();
 		}
-
 		Command command = new Command(ActionMessages.GenerateHashCodeEqualsAction_label, COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT, Collections.singletonList(params));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateHashCodeEqualsAction_label);
@@ -278,11 +259,7 @@ public class SourceAssistProcessor {
 
 	public static IType getSelectionType(CodeActionParams params) {
 		InnovationContext context = getInnovationContext(params);
-		if (context == null) {
-			return null;
-		}
-
-		return getSelectionType(context);
+		return (context == null) ? null : getSelectionType(context);
 	}
 
 	public static InnovationContext getInnovationContext(CodeActionParams params) {
@@ -290,7 +267,6 @@ public class SourceAssistProcessor {
 		if (unit == null) {
 			return null;
 		}
-
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);

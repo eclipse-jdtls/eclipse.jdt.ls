@@ -203,25 +203,13 @@ public class Preferences {
 	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
 	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
-	/**
-	 * A named preference that defines whether to use Objects.hash and
-	 * Objects.equals methods when generating the hashCode and equals methods.
-	 */
+	// A named preference that defines whether to use Objects.hash and Objects.equals methods when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS = "java.codeGeneration.hashCodeEquals.useJava7Objects";
-	/**
-	 * A named preference that defines whether to use 'instanceof' to compare types
-	 * when generating the hashCode and equals methods.
-	 */
+	// A named preference that defines whether to use 'instanceof' to compare types when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF = "java.codeGeneration.hashCodeEquals.useInstanceof";
-	/**
-	 * A named preference that defines whether to use blocks in 'if' statements when
-	 * generating the hashCode and equals methods.
-	 */
+	// A named preference that defines whether to use blocks in 'if' statements when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEBLOCKS = "java.codeGeneration.hashCodeEquals.useBlocks";
-	/**
-	 * A named preference that defines whether to generate method comments when
-	 * generating the hashCode and equals methods.
-	 */
+	// A named preference that defines whether to generate method comments when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_GENERATECOMMENTS = "java.codeGeneration.hashCodeEquals.generateComments";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
@@ -454,13 +442,10 @@ public class Preferences {
 
 		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, false);
 		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
-
 		boolean hashCodeEqualsTemplateUseInstanceof = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF, false);
 		prefs.setHashCodeEqualsTemplateUseInstanceof(hashCodeEqualsTemplateUseInstanceof);
-
 		boolean hashCodeEqualsTemplateUseBlocks = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEBLOCKS, false);
 		prefs.setHashCodeEqualsTemplateUseBlocks(hashCodeEqualsTemplateUseBlocks);
-
 		boolean hashCodeEqualsTemplateGenerateComments = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_GENERATECOMMENTS, false);
 		prefs.setHashCodeEqualsTemplateGenerateComments(hashCodeEqualsTemplateGenerateComments);
 
