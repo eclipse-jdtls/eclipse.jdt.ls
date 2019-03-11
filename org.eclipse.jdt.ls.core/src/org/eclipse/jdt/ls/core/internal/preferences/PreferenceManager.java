@@ -35,7 +35,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
-import org.eclipse.jdt.internal.core.builder.JavaBuilder;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
@@ -218,7 +217,6 @@ public class PreferenceManager {
 		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
 		pref.put(MavenPreferenceConstants.P_BUILDER_USE_NULL_SCHEDULING_RULE, stringValue);
 		pref = InstanceScope.INSTANCE.getNode(JavaCore.PLUGIN_ID);
-		pref.put(JavaBuilder.PREF_NULL_SCHEDULING_RULE, stringValue);
 	}
 
 	/**
