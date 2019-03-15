@@ -197,6 +197,9 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
 		}
+		if (!preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			capabilities.setFoldingRangeProvider(Boolean.TRUE);
+		}
 		if (!preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			capabilities.setImplementationProvider(Boolean.TRUE);
 		}

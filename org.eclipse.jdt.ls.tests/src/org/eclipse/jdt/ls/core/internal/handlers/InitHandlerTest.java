@@ -153,11 +153,12 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(mockCapabilies.isHoverDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isReferencesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(mockCapabilies.isFoldgingRangeDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isCompletionDynamicRegistered()).thenReturn(Boolean.TRUE);
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
-		verify(client, times(8)).registerCapability(any());
+		verify(client, times(9)).registerCapability(any());
 	}
 
 	@Test

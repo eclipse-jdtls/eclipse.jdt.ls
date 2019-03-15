@@ -89,6 +89,8 @@ import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.ExecuteCommandParams;
+import org.eclipse.lsp4j.FoldingRange;
+import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -210,6 +212,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
 		}
+		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			registerCapability(Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE);
+		}
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
 		}
@@ -265,6 +270,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
 			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
+		}
+		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			toggleCapability(preferenceManager.getPreferences().isFoldingRangeEnabled(), Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE, null);
 		}
 	}
 
@@ -761,6 +769,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
 		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#foldingRange(org.eclipse.lsp4j.FoldingRangeRequestParams)
+	 */
+	@Override
+	public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+		logInfo(">> document/foldingRange");
+		return computeAsyncWithClientProgress((monitor) -> new FoldingRangeHandler().foldingRange(params, monitor));
 	}
 
 	@Override
