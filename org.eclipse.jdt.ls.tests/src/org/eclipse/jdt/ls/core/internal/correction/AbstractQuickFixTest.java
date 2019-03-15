@@ -83,8 +83,21 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertCodeActions(cu, expected.toArray(new Expected[expected.size()]));
 	}
 
+	protected void assertCodeActions(ICompilationUnit cu, Range range, Collection<Expected> expected) throws Exception {
+		assertCodeActions(cu, range, expected.toArray(new Expected[expected.size()]));
+	}
+
 	protected void assertCodeActions(ICompilationUnit cu, Expected... expecteds) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
+		assertCodeActions(codeActions, expecteds);
+	}
+
+	protected void assertCodeActions(ICompilationUnit cu, Range range, Expected... expecteds) throws Exception {
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		assertCodeActions(codeActions, expecteds);
+	}
+
+	protected void assertCodeActions(List<Either<Command, CodeAction>> codeActions, Expected... expecteds) throws Exception {
 		if (codeActions.size() < expecteds.length) {
 			String res = codeActions.stream().map(a -> ("'" + getTitle(a) + "'")).collect(Collectors.joining(","));
 			assertEquals("Number of code actions: " + res, expecteds.length, codeActions.size());
@@ -215,6 +228,13 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		IProblem[] problems = astRoot.getProblems();
 
 		Range range = getRange(cu, problems);
+		return evaluateCodeActions(cu, range);
+	}
+
+	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu, Range range) throws JavaModelException {
+
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+		IProblem[] problems = astRoot.getProblems();
 
 		CodeActionParams parms = new CodeActionParams();
 

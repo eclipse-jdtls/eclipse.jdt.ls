@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -21,16 +20,13 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.lsp4j.CodeAction;
-import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,7 +63,7 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS));
@@ -83,7 +79,7 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("The operation is not applicable to class without any non-static fields", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS));
@@ -99,7 +95,7 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS));
@@ -117,18 +113,9 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("The operation is not applicable to enums", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS));
-	}
-
-	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, String search) throws JavaModelException {
-		CodeActionParams params = new CodeActionParams();
-		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = CodeActionHandlerTest.getRange(unit, search);
-		params.setRange(range);
-		params.setContext(new CodeActionContext(Collections.emptyList()));
-		return params;
 	}
 }
