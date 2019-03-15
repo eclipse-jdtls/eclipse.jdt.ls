@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
@@ -43,7 +44,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = HashCodeEqualsActionTest.constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
@@ -68,7 +69,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = HashCodeEqualsActionTest.constructCodeActionParams(unit, "String name");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
@@ -523,7 +524,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 
 	private void generateHashCodeEquals(ICompilationUnit unit, String hoverOnText, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments)
 			throws ValidateEditException, CoreException {
-		CodeActionParams params = HashCodeEqualsActionTest.constructCodeActionParams(unit, hoverOnText);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, hoverOnText);
 		CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
 		GenerateHashCodeEqualsParams genParams = new GenerateHashCodeEqualsParams();
 		genParams.context = params;

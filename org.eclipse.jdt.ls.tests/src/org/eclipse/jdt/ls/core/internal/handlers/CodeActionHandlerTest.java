@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
@@ -77,7 +78,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, "java.sql");
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
@@ -103,7 +104,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, "some str");
+		final Range range = CodeActionUtil.getRange(unit, "some str");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
@@ -149,7 +150,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, ";");
+		final Range range = CodeActionUtil.getRange(unit, ";");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
@@ -187,19 +188,13 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, "String foo;");
+		final Range range = CodeActionUtil.getRange(unit, "String foo;");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Collections.emptyList()));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("No need for organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
 		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
-	}
-
-	public static Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
-		String str= unit.getSource();
-		int start = str.lastIndexOf(search);
-		return JDTUtils.toRange(unit, start, search.length());
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
