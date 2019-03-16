@@ -297,7 +297,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
 			InputStream in = connectionFactory.getInputStream();
 			OutputStream out = connectionFactory.getOutputStream();
-			Function<MessageConsumer, MessageConsumer> wrapper = new ParentProcessWatcher(this.languageServer);
+			Function<MessageConsumer, MessageConsumer> wrapper;
+			if ("false".equals(System.getProperty("watchParentProcess"))) {
+				wrapper = it -> it;
+			} else {
+				wrapper = new ParentProcessWatcher(this.languageServer);
+			}
 			launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, in, out, executorService, wrapper);
 		}
 		protocol.connectClient(launcher.getRemoteProxy());
