@@ -71,6 +71,9 @@ public class NavigateToDefinitionHandler {
 	}
 
 	private static Location fixLocation(IJavaElement element, Location location, IJavaProject javaProject) {
+		if (location == null) {
+			return null;
+		}
 		if (!javaProject.equals(element.getJavaProject()) && element.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			// see issue at: https://github.com/eclipse/eclipse.jdt.ls/issues/842 and https://bugs.eclipse.org/bugs/show_bug.cgi?id=541573
 			// for jdk classes, jdt will reuse the java model by altering project to share the model between projects
