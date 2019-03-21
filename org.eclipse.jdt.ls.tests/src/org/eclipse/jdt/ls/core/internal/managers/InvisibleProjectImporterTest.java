@@ -25,8 +25,10 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.junit.Test;
@@ -125,5 +127,20 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		IPath javaFile = workspaceRoot.append("Single.java");
 		String packageName = InvisibleProjectImporter.getPackageName(javaFile, workspaceRoot, JavaCore.create(invisibleProject));
 		assertEquals("", packageName);
+	}
+
+	@Test
+	public void testPreviewFeaturesEnabledByDefault() throws Exception {
+		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
+		try {
+			TestVMType.setTestJREAsDefault("12");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java12", "foo/bar/Foo.java");
+			assertTrue(invisibleProject.exists());
+			assertNoErrors(invisibleProject);
+			IJavaProject javaProject = JavaCore.create(invisibleProject);
+			assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		} finally {
+			TestVMType.setTestJREAsDefault(defaultJVM);
+		}
 	}
 }

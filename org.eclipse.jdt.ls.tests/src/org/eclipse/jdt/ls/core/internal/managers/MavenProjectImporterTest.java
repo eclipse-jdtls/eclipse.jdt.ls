@@ -34,6 +34,8 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -222,6 +224,17 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IProject project = importMavenProject("salut-java11");
 		assertIsJavaProject(project);
 		assertEquals("11", getJavaSourceLevel(project));
+		assertNoErrors(project);
+	}
+
+	@Test
+	public void testJava12Project() throws Exception {
+		IProject project = importMavenProject("salut-java12");
+		assertIsJavaProject(project);
+		assertEquals("12", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 

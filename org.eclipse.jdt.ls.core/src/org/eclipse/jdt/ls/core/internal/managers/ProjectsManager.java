@@ -377,6 +377,9 @@ public class ProjectsManager implements ISaveParticipant {
 		description.setNatureIds(new String[] { JavaCore.NATURE_ID });
 		project.setDescription(description, monitor);
 		IJavaProject javaProject = JavaCore.create(project);
+		//Enable Java 12+ preview features by default and stfu about it
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
 
 		//Add build output folder
 		if (StringUtils.isNotBlank(bin)) {

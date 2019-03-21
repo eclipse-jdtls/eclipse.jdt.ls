@@ -31,6 +31,8 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -174,5 +176,16 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertIsJavaProject(project);
 		assertEquals("11", getJavaSourceLevel(project));
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testJava12Project() throws Exception {
+		IProject project = importGradleProject("gradle-12");
+		assertIsJavaProject(project);
+		assertEquals("12", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		//Buildship/Gradle don't automatically execute the eclipseJdt task, so the default config is unchanged
+		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(JavaCore.WARNING, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
 	}
 }
