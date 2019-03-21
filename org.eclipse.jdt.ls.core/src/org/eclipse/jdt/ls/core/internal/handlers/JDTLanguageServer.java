@@ -777,7 +777,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
 		logInfo(">> document/foldingRange");
-		return computeAsyncWithClientProgress((monitor) -> new FoldingRangeHandler().foldingRange(params, monitor));
+		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return new FoldingRangeHandler().foldingRange(params, monitor);
+		});
 	}
 
 	@Override
