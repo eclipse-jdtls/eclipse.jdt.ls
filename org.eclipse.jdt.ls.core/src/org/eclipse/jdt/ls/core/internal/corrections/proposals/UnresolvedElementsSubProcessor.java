@@ -64,6 +64,7 @@ import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchExpression;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
@@ -173,8 +174,15 @@ public class UnresolvedElementsSubProcessor {
 					typeKind= TypeKinds.REF_TYPES;
 					suggestVariableProposals= false;
 				}
-			} else if (locationInParent == SwitchCase.EXPRESSION_PROPERTY) {
-				ITypeBinding switchExp= ((SwitchStatement) node.getParent().getParent()).getExpression().resolveTypeBinding();
+
+			} else if (locationInParent == SwitchCase.EXPRESSION_PROPERTY || locationInParent == SwitchCase.EXPRESSIONS2_PROPERTY) {
+				ASTNode caseParent = node.getParent().getParent();
+				ITypeBinding switchExp = null;
+				if (caseParent instanceof SwitchStatement) {
+					switchExp = ((SwitchStatement) caseParent).getExpression().resolveTypeBinding();
+				} else if (caseParent instanceof SwitchExpression) {
+					switchExp = ((SwitchExpression) caseParent).getExpression().resolveTypeBinding();
+				}
 				if (switchExp != null && switchExp.isEnum()) {
 					binding= switchExp;
 				}

@@ -32,7 +32,6 @@ import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
@@ -98,27 +97,16 @@ public class JDTLanguageServerTest {
 		IVMInstall oldVm = JavaRuntime.getDefaultVMInstall();
 		assertNotNull(oldVm);
 		try {
-			IVMInstall vm = null;
-			IVMInstallType type = JavaRuntime.getVMInstallType(TestVMType.VMTYPE_ID);
-			IVMInstall[] installs = type.getVMInstalls();
-			for (IVMInstall install : installs) {
-				if (!install.equals(oldVm)) {
-					vm = install;
-					break;
-				}
-			}
-			assertNotNull(vm);
-			assertNotEquals(vm, oldVm);
 			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
 			prefManager.getPreferences().setJavaHome(javaHome);
 			boolean changed = server.configureVM();
 			IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
 			assertTrue("A VM hasn't been changed", changed);
-			assertEquals(vm, defaultVM);
 			assertNotEquals(oldVm, defaultVM);
+			assertEquals("9", defaultVM.getId());
 		} finally {
 			prefManager.getPreferences().setJavaHome(oldJavaHome);
-			TestVMType.setTestJREAsDefault();
+			TestVMType.setTestJREAsDefault("1.8");
 		}
 	}
 

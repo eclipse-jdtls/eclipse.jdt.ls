@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Hashtable;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
@@ -25,6 +26,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.AbstractVMInstall;
 import org.eclipse.jdt.launching.AbstractVMInstallType;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -40,21 +42,24 @@ public class TestVMType extends AbstractVMInstallType {
 	private static final String FAKE_JDK = "/fakejdk";
 	private static final String RTSTUBS_JAR = "rtstubs.jar";
 
-	public static void setTestJREAsDefault() throws CoreException {
+	public static void setTestJREAsDefault(String vmId) throws CoreException {
 		IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(VMTYPE_ID);
-		IVMInstall testVMInstall = vmInstallType.findVMInstall("1.8");
+		IVMInstall testVMInstall = vmInstallType.findVMInstall(vmId);
 		if (!testVMInstall.equals(JavaRuntime.getDefaultVMInstall())) {
 			// set the 1.8 test JRE as the new default JRE
 			JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
+			Hashtable<String, String> options = JavaCore.getOptions();
+			JavaCore.setComplianceOptions(vmId, options);
+			JavaCore.setOptions(options);
 		}
 		JDTUtils.setCompatibleVMs(VMTYPE_ID);
 	}
 
 	public TestVMType() {
-		createVMInstall("1.8");
-		createVMInstall("9");
-		createVMInstall("10");
-		createVMInstall("11");
+		File[] jdks = getFakeJDKsLocation().listFiles(File::isDirectory);
+		for (File jdk : jdks) {
+			createVMInstall(jdk.getName());
+		}
 	}
 
 	@Override
