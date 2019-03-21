@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -36,6 +37,9 @@ import org.eclipse.lsp4j.FoldingRangeKind;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
 
 public class FoldingRangeHandler {
+
+	private static final Pattern REGION_START_PATTERN = Pattern.compile("^//\\s*#?region|^//\\s+<editor-fold.*>");
+	private static final Pattern REGION_END_PATTERN = Pattern.compile("^//\\s*#?endregion|^//\\s+</editor-fold>");
 
 	private static IScanner fScanner;
 
@@ -75,17 +79,29 @@ public class FoldingRangeHandler {
 
 			int start = shift;
 			int token = scanner.getNextToken();
+			Stack<Integer> regionStarts = new Stack<>();
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				start = scanner.getCurrentTokenStartPosition();
 				switch (token) {
 					case ITerminalSymbols.TokenNameCOMMENT_JAVADOC:
-					case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
+					case ITerminalSymbols.TokenNameCOMMENT_BLOCK:
 						int end = scanner.getCurrentTokenEndPosition();
 						FoldingRange commentFoldingRange = new FoldingRange(scanner.getLineNumber(start) - 1, scanner.getLineNumber(end) - 1);
 						commentFoldingRange.setKind(FoldingRangeKind.Comment);
 						foldingRanges.add(commentFoldingRange);
 						break;
-					}
+					case ITerminalSymbols.TokenNameCOMMENT_LINE:
+						String currentSource = String.valueOf(scanner.getCurrentTokenSource());
+						if (REGION_START_PATTERN.matcher(currentSource).lookingAt()) {
+							regionStarts.push(start);
+						} else if (REGION_END_PATTERN.matcher(currentSource).lookingAt()) {
+							if (regionStarts.size() > 0) {
+								FoldingRange regionFolding = new FoldingRange(scanner.getLineNumber(regionStarts.pop()) - 1, scanner.getLineNumber(start) - 1);
+								regionFolding.setKind(FoldingRangeKind.Region);
+								foldingRanges.add(regionFolding);
+							}
+						}
+						break;
 					default:
 						break;
 				}
@@ -93,7 +109,9 @@ public class FoldingRangeHandler {
 			}
 
 			computeTypeRootRanges(foldingRanges, unit, scanner);
-		} catch (CoreException | InvalidInputException e) {
+		} catch (CoreException |
+
+				InvalidInputException e) {
 			JavaLanguageServerPlugin.logException("Problem with folding range for " + unit.getPath().toPortableString(), e);
 			monitor.setCanceled(true);
 		}
