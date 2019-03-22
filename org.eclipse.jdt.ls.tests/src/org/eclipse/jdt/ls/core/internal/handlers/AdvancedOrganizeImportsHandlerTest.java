@@ -51,10 +51,16 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 				, true, null);
 		//@formatter:on
 
-		TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (importChoices, ranges) -> {
+		TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (importChoices, ranges, defaultSelections) -> {
 			assertEquals(1, importChoices.length);
 			assertEquals(1, ranges.length);
 			assertEquals(2, importChoices[0].length);
+			assertEquals("p1.C", importChoices[0][0].qualifiedName);
+			assertEquals("p2.C", importChoices[0][1].qualifiedName);
+			assertEquals(3, ranges[0].getStart().getLine());
+			assertEquals(1, ranges[0].getStart().getCharacter());
+			assertEquals(3, ranges[0].getEnd().getLine());
+			assertEquals(2, ranges[0].getEnd().getCharacter());
 			return new ImportChoice[] { importChoices[0][0] };
 		});
 		assertNotNull(edit);

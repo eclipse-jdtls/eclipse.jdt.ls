@@ -142,15 +142,12 @@ public class SourceAssistProcessor {
 
 	private Optional<Either<Command, CodeAction>> getOrganizeImportsAction(CodeActionParams params) {
 		Command command = new Command(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description, COMMAND_ID_ACTION_ORGANIZEIMPORTS, Collections.singletonList(params));
-		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.SourceOrganizeImports)) {
-			CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
-			codeAction.setKind(CodeActionKind.SourceOrganizeImports);
-			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
-			return Optional.of(Either.forRight(codeAction));
-		} else {
-			return Optional.of(Either.forLeft(command));
-		}
+		CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
+		codeAction.setKind(CodeActionKind.SourceOrganizeImports);
+		codeAction.setCommand(command);
+		codeAction.setDiagnostics(Collections.EMPTY_LIST);
+		return Optional.of(Either.forRight(codeAction));
+
 	}
 
 	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params) {

@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -42,7 +41,7 @@ import com.google.gson.JsonSyntaxException;
 
 public class OrganizeImportsHandler {
 
-	public static TextEdit organizeImports(ICompilationUnit unit, BiFunction<ImportChoice[][], Range[], ImportChoice[]> chooseImport) {
+	public static TextEdit organizeImports(ICompilationUnit unit, IChooseImportHandler chooseImportHandler) {
 		if (unit == null) {
 			return null;
 		}
@@ -65,7 +64,9 @@ public class OrganizeImportsHandler {
 					}
 				}).toArray(Range[]::new);
 
-				ImportChoice[] chosens = chooseImport.apply(clientImportChoices, clientRanges);
+				// TODO Based on the context, recommend a default type to import for the code with multiple ambiguous imports.
+				ImportChoice[] defaultSelections = new ImportChoice[0];
+				ImportChoice[] chosens = chooseImportHandler.chooseImports(clientImportChoices, clientRanges, defaultSelections);
 				if (chosens == null) {
 					return null;
 				}
@@ -94,8 +95,8 @@ public class OrganizeImportsHandler {
 			return null;
 		}
 
-		TextEdit edit = organizeImports(unit, (importChoices, ranges) -> {
-			Object commandResult = connection.executeClientCommand("java.action.organizeImports.chooseImport", importChoices, ranges, uri);
+		TextEdit edit = organizeImports(unit, (importChoices, ranges, defaultSelections) -> {
+			Object commandResult = connection.executeClientCommand("java.action.organizeImports.chooseImport", importChoices, ranges, uri, defaultSelections);
 			return toModel(commandResult, ImportChoice[].class);
 		});
 		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
@@ -133,5 +134,21 @@ public class OrganizeImportsHandler {
 			qualifiedName = typeMatch.getFullyQualifiedName();
 			id = typeMatch.getFullyQualifiedName() + "@" + typeMatch.hashCode();
 		}
+	}
+
+	public static interface IChooseImportHandler {
+		/**
+		 * Selects imports from a list of choices.
+		 *
+		 * @param importChoices
+		 *            From each list of choices, a specific type has to be selected
+		 * @param ranges
+		 *            The position ranges for the code with ambiguous imports
+		 * @param defaultSelections
+		 *            The default selection for each list of choices. It could be empty
+		 *            or have the same length as importChoices array.
+		 * @return <code>null</code> to cancel the operation, or the selected imports.
+		 */
+		public ImportChoice[] chooseImports(ImportChoice[][] importChoices, Range[] ranges, ImportChoice[] defaultSelections);
 	}
 }
