@@ -23,6 +23,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportChoice;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
@@ -51,17 +52,17 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 				, true, null);
 		//@formatter:on
 
-		TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (importChoices, ranges, defaultSelections) -> {
-			assertEquals(1, importChoices.length);
-			assertEquals(1, ranges.length);
-			assertEquals(2, importChoices[0].length);
-			assertEquals("p1.C", importChoices[0][0].qualifiedName);
-			assertEquals("p2.C", importChoices[0][1].qualifiedName);
-			assertEquals(3, ranges[0].getStart().getLine());
-			assertEquals(1, ranges[0].getStart().getCharacter());
-			assertEquals(3, ranges[0].getEnd().getLine());
-			assertEquals(2, ranges[0].getEnd().getCharacter());
-			return new ImportChoice[] { importChoices[0][0] };
+		TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
+			assertEquals(1, selections.length);
+			ImportSelection selection = selections[0];
+			assertEquals(2, selection.candidates.length);
+			assertEquals("p1.C", selection.candidates[0].qualifiedName);
+			assertEquals("p2.C", selection.candidates[1].qualifiedName);
+			assertEquals(3, selection.range.getStart().getLine());
+			assertEquals(1, selection.range.getStart().getCharacter());
+			assertEquals(3, selection.range.getEnd().getLine());
+			assertEquals(2, selection.range.getEnd().getCharacter());
+			return new ImportChoice[] { selection.candidates[0] };
 		});
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(unit, edit, true, null);

@@ -11,9 +11,12 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -23,7 +26,6 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
-import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation.IChooseImportQuery;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
@@ -41,42 +43,38 @@ import com.google.gson.JsonSyntaxException;
 
 public class OrganizeImportsHandler {
 
-	public static TextEdit organizeImports(ICompilationUnit unit, IChooseImportHandler chooseImportHandler) {
+	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportChoice[]> chooseImports) {
 		if (unit == null) {
 			return null;
 		}
 
 		RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
 		CompilationUnit astRoot = astParser.parse(unit, true);
-		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, new IChooseImportQuery() {
-
-			@Override
-			public TypeNameMatch[] chooseImports(TypeNameMatch[][] openChoices, ISourceRange[] ranges) {
-				ImportChoice[][] clientImportChoices = Stream.of(openChoices).map((choices) -> {
-					return Stream.of(choices).map((choice) -> new ImportChoice(choice)).toArray(ImportChoice[]::new);
-				}).toArray(ImportChoice[][]::new);
-
-				Range[] clientRanges = Stream.of(ranges).map((range) -> {
-					try {
-						return JDTUtils.toRange(unit, range.getOffset(), range.getLength());
-					} catch (JavaModelException e) {
-						return JDTUtils.newRange();
-					}
-				}).toArray(Range[]::new);
-
-				// TODO Based on the context, recommend a default type to import for the code with multiple ambiguous imports.
-				ImportChoice[] defaultSelections = new ImportChoice[0];
-				ImportChoice[] chosens = chooseImportHandler.chooseImports(clientImportChoices, clientRanges, defaultSelections);
-				if (chosens == null) {
-					return null;
+		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, (TypeNameMatch[][] openChoices, ISourceRange[] ranges) -> {
+			List<ImportSelection> selections = new ArrayList<>();
+			for (int i = 0; i < openChoices.length; i++) {
+				ImportChoice[] choices = Stream.of(openChoices[i]).map((choice) -> new ImportChoice(choice)).toArray(ImportChoice[]::new);
+				Range range = null;
+				try {
+					range = JDTUtils.toRange(unit, ranges[i].getOffset(), ranges[i].getLength());
+				} catch (JavaModelException e) {
+					range = JDTUtils.newRange();
 				}
-
-				Map<String, TypeNameMatch> typeMaps = new HashMap<>();
-				Stream.of(openChoices).flatMap(x -> Arrays.stream(x)).forEach(x -> {
-					typeMaps.put(x.getFullyQualifiedName() + "@" + x.hashCode(), x);
-				});
-				return Stream.of(chosens).filter(chosen -> chosen != null && typeMaps.containsKey(chosen.id)).map(chosen -> typeMaps.get(chosen.id)).toArray(TypeNameMatch[]::new);
+				// TODO Based on the context, recommend a default type to import for the code with multiple ambiguous imports.
+				int defaultSelection = 0;
+				selections.add(new ImportSelection(choices, range, defaultSelection));
 			}
+
+			ImportChoice[] chosens = chooseImports.apply(selections.toArray(new ImportSelection[0]));
+			if (chosens == null) {
+				return null;
+			}
+
+			Map<String, TypeNameMatch> typeMaps = new HashMap<>();
+			Stream.of(openChoices).flatMap(x -> Arrays.stream(x)).forEach(x -> {
+				typeMaps.put(x.getFullyQualifiedName() + "@" + x.hashCode(), x);
+			});
+			return Stream.of(chosens).filter(chosen -> chosen != null && typeMaps.containsKey(chosen.id)).map(chosen -> typeMaps.get(chosen.id)).toArray(TypeNameMatch[]::new);
 		});
 
 		try {
@@ -95,8 +93,8 @@ public class OrganizeImportsHandler {
 			return null;
 		}
 
-		TextEdit edit = organizeImports(unit, (importChoices, ranges, defaultSelections) -> {
-			Object commandResult = connection.executeClientCommand("java.action.organizeImports.chooseImport", importChoices, ranges, uri, defaultSelections);
+		TextEdit edit = organizeImports(unit, (selections) -> {
+			Object commandResult = connection.executeClientCommand("java.action.organizeImports.chooseImports", uri, selections);
 			return toModel(commandResult, ImportChoice[].class);
 		});
 		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
@@ -124,7 +122,6 @@ public class OrganizeImportsHandler {
 
 	public static class ImportChoice {
 		public String qualifiedName;
-		public String type;
 		public String id;
 
 		public ImportChoice() {
@@ -136,19 +133,19 @@ public class OrganizeImportsHandler {
 		}
 	}
 
-	public static interface IChooseImportHandler {
-		/**
-		 * Selects imports from a list of choices.
-		 *
-		 * @param importChoices
-		 *            From each list of choices, a specific type has to be selected
-		 * @param ranges
-		 *            The position ranges for the code with ambiguous imports
-		 * @param defaultSelections
-		 *            The default selection for each list of choices. It could be empty
-		 *            or have the same length as importChoices array.
-		 * @return <code>null</code> to cancel the operation, or the selected imports.
-		 */
-		public ImportChoice[] chooseImports(ImportChoice[][] importChoices, Range[] ranges, ImportChoice[] defaultSelections);
+	public static class ImportSelection {
+		public ImportChoice[] candidates;
+		public Range range;
+		public int defaultSelection = 0;
+
+		public ImportSelection(ImportChoice[] candidates, Range range, int defaultSelection) {
+			this.candidates = candidates;
+			this.range = range;
+			this.defaultSelection = defaultSelection;
+		}
+
+		public ImportSelection(ImportChoice[] candidates, Range range) {
+			this(candidates, range, 0);
+		}
 	}
 }
