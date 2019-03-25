@@ -74,7 +74,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		assertTrue(foldingRanges.size() == 7);
 		assertHasFoldingRange(7, 15, FoldingRangeKind.Region, foldingRanges);
-		assertHasFoldingRange(17, 24, FoldingRangeKind.Region, foldingRanges);
+		assertHasFoldingRange(17, 23, FoldingRangeKind.Region, foldingRanges);
 		assertHasFoldingRange(18, 20, FoldingRangeKind.Region, foldingRanges);
 	}
 
