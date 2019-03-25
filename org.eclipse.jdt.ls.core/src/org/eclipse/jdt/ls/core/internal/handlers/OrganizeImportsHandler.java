@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -39,11 +40,11 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
-public class OrganizeImportsHandler {
+public final class OrganizeImportsHandler {
+	public static final String CLIENT_COMMAND_ID_CHOOSEIMPORTS = "java.action.organizeImports.chooseImports";
 
-	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportChoice[]> chooseImports) {
+	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports) {
 		if (unit == null) {
 			return null;
 		}
@@ -53,7 +54,7 @@ public class OrganizeImportsHandler {
 		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, (TypeNameMatch[][] openChoices, ISourceRange[] ranges) -> {
 			List<ImportSelection> selections = new ArrayList<>();
 			for (int i = 0; i < openChoices.length; i++) {
-				ImportChoice[] choices = Stream.of(openChoices[i]).map((choice) -> new ImportChoice(choice)).toArray(ImportChoice[]::new);
+				ImportCandidate[] candidates = Stream.of(openChoices[i]).map((choice) -> new ImportCandidate(choice)).toArray(ImportCandidate[]::new);
 				Range range = null;
 				try {
 					range = JDTUtils.toRange(unit, ranges[i].getOffset(), ranges[i].getLength());
@@ -62,10 +63,10 @@ public class OrganizeImportsHandler {
 				}
 				// TODO Based on the context, recommend a default type to import for the code with multiple ambiguous imports.
 				int defaultSelection = 0;
-				selections.add(new ImportSelection(choices, range, defaultSelection));
+				selections.add(new ImportSelection(candidates, range, defaultSelection));
 			}
 
-			ImportChoice[] chosens = chooseImports.apply(selections.toArray(new ImportSelection[0]));
+			ImportCandidate[] chosens = chooseImports.apply(selections.toArray(new ImportSelection[0]));
 			if (chosens == null) {
 				return null;
 			}
@@ -80,7 +81,7 @@ public class OrganizeImportsHandler {
 		try {
 			return op.createTextEdit(null);
 		} catch (OperationCanceledException | CoreException e) {
-			JavaLanguageServerPlugin.logException("Resolve organize imports source action", e);
+			JavaLanguageServerPlugin.logException("Failed to resolve organize imports source action", e);
 		}
 
 		return null;
@@ -94,57 +95,38 @@ public class OrganizeImportsHandler {
 		}
 
 		TextEdit edit = organizeImports(unit, (selections) -> {
-			Object commandResult = connection.executeClientCommand("java.action.organizeImports.chooseImports", uri, selections);
-			return toModel(commandResult, ImportChoice[].class);
+			Object commandResult = connection.executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, uri, selections);
+			String json = commandResult == null ? null : new Gson().toJson(commandResult);
+			return JSONUtility.toModel(json, ImportCandidate[].class);
 		});
 		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
 	}
 
-	private static <T> T toModel(Object obj, Class<T> clazz) {
-		try {
-			if (obj == null) {
-				return null;
-			}
-
-			if (clazz.isInstance(obj)) {
-				return clazz.cast(obj);
-			}
-
-			final Gson GSON = new Gson();
-			String json = GSON.toJson(obj);
-			return GSON.fromJson(json, clazz);
-		} catch (JsonSyntaxException ex) {
-			JavaLanguageServerPlugin.logException("Failed to cast the value to " + clazz, ex);
-		}
-
-		return null;
-	}
-
-	public static class ImportChoice {
-		public String qualifiedName;
+	public static class ImportCandidate {
+		public String fullyQualifiedName;
 		public String id;
 
-		public ImportChoice() {
+		public ImportCandidate() {
 		}
 
-		public ImportChoice(TypeNameMatch typeMatch) {
-			qualifiedName = typeMatch.getFullyQualifiedName();
+		public ImportCandidate(TypeNameMatch typeMatch) {
+			fullyQualifiedName = typeMatch.getFullyQualifiedName();
 			id = typeMatch.getFullyQualifiedName() + "@" + typeMatch.hashCode();
 		}
 	}
 
 	public static class ImportSelection {
-		public ImportChoice[] candidates;
+		public ImportCandidate[] candidates;
 		public Range range;
 		public int defaultSelection = 0;
 
-		public ImportSelection(ImportChoice[] candidates, Range range, int defaultSelection) {
+		public ImportSelection(ImportCandidate[] candidates, Range range, int defaultSelection) {
 			this.candidates = candidates;
 			this.range = range;
 			this.defaultSelection = defaultSelection;
 		}
 
-		public ImportSelection(ImportChoice[] candidates, Range range) {
+		public ImportSelection(ImportCandidate[] candidates, Range range) {
 			this(candidates, range, 0);
 		}
 	}
