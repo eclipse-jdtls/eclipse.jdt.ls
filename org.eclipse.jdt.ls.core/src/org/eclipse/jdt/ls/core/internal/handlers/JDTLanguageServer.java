@@ -807,6 +807,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params));
 	}
 
+	@Override
+	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
+		logInfo(">> java/organizeImports");
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params));
+	}
+
 	public void sendStatus(ServiceStatus serverStatus, String status) {
 		if (client != null) {
 			client.sendStatus(serverStatus, status);

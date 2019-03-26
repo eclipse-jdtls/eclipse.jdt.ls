@@ -65,6 +65,7 @@ public class SourceAssistProcessor {
 
 	public static final String COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT = "java.action.overrideMethodsPrompt";
 	public static final String COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT = "java.action.hashCodeEqualsPrompt";
+	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
 
 	private PreferenceManager preferenceManager;
 
@@ -78,10 +79,15 @@ public class SourceAssistProcessor {
 		IType type = getSelectionType(context);
 
 		// Organize Imports
-		TextEdit organizeImportsEdit = getOrganizeImportsProposal(context);
-		Optional<Either<Command, CodeAction>> organizeImports = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
-				CodeActionKind.SourceOrganizeImports, organizeImportsEdit);
-		addSourceActionCommand($, params.getContext(), organizeImports);
+		if (preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported()) {
+			Optional<Either<Command, CodeAction>> organizeImports = getOrganizeImportsAction(params);
+			addSourceActionCommand($, params.getContext(), organizeImports);
+		} else {
+			TextEdit organizeImportsEdit = getOrganizeImportsProposal(context);
+			Optional<Either<Command, CodeAction>> organizeImports = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
+					CodeActionKind.SourceOrganizeImports, organizeImportsEdit);
+			addSourceActionCommand($, params.getContext(), organizeImports);
+		}
 
 		if (!UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
 			// Override/Implement Methods
@@ -132,6 +138,16 @@ public class SourceAssistProcessor {
 		}
 
 		return null;
+	}
+
+	private Optional<Either<Command, CodeAction>> getOrganizeImportsAction(CodeActionParams params) {
+		Command command = new Command(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description, COMMAND_ID_ACTION_ORGANIZEIMPORTS, Collections.singletonList(params));
+		CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
+		codeAction.setKind(CodeActionKind.SourceOrganizeImports);
+		codeAction.setCommand(command);
+		codeAction.setDiagnostics(Collections.EMPTY_LIST);
+		return Optional.of(Either.forRight(codeAction));
+
 	}
 
 	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params) {
