@@ -12,8 +12,11 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -36,6 +39,9 @@ import org.eclipse.lsp4j.FoldingRangeKind;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
 
 public class FoldingRangeHandler {
+
+	private static final Pattern REGION_START_PATTERN = Pattern.compile("^//\\s*#?region|^//\\s+<editor-fold.*>");
+	private static final Pattern REGION_END_PATTERN = Pattern.compile("^//\\s*#?endregion|^//\\s+</editor-fold>");
 
 	private static IScanner fScanner;
 
@@ -75,17 +81,29 @@ public class FoldingRangeHandler {
 
 			int start = shift;
 			int token = scanner.getNextToken();
+			Stack<Integer> regionStarts = new Stack<>();
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				start = scanner.getCurrentTokenStartPosition();
 				switch (token) {
 					case ITerminalSymbols.TokenNameCOMMENT_JAVADOC:
-					case ITerminalSymbols.TokenNameCOMMENT_BLOCK: {
+					case ITerminalSymbols.TokenNameCOMMENT_BLOCK:
 						int end = scanner.getCurrentTokenEndPosition();
 						FoldingRange commentFoldingRange = new FoldingRange(scanner.getLineNumber(start) - 1, scanner.getLineNumber(end) - 1);
 						commentFoldingRange.setKind(FoldingRangeKind.Comment);
 						foldingRanges.add(commentFoldingRange);
 						break;
-					}
+					case ITerminalSymbols.TokenNameCOMMENT_LINE:
+						String currentSource = String.valueOf(scanner.getCurrentTokenSource());
+						if (REGION_START_PATTERN.matcher(currentSource).lookingAt()) {
+							regionStarts.push(start);
+						} else if (REGION_END_PATTERN.matcher(currentSource).lookingAt()) {
+							if (regionStarts.size() > 0) {
+								FoldingRange regionFolding = new FoldingRange(scanner.getLineNumber(regionStarts.pop()) - 1, scanner.getLineNumber(start) - 1);
+								regionFolding.setKind(FoldingRangeKind.Region);
+								foldingRanges.add(regionFolding);
+							}
+						}
+						break;
 					default:
 						break;
 				}
@@ -93,7 +111,9 @@ public class FoldingRangeHandler {
 			}
 
 			computeTypeRootRanges(foldingRanges, unit, scanner);
-		} catch (CoreException | InvalidInputException e) {
+		} catch (CoreException |
+
+				InvalidInputException e) {
 			JavaLanguageServerPlugin.logException("Problem with folding range for " + unit.getPath().toPortableString(), e);
 			monitor.setCanceled(true);
 		}
@@ -136,29 +156,61 @@ public class FoldingRangeHandler {
 
 		int start = shift;
 		int token = scanner.getNextToken();
-		Stack<Integer> lparens = null;
+		Stack<Integer> leftParens = null;
+		int prevCaseLine = -1;
+		Map<Integer, Integer> candidates = new HashMap<>();
 		while (token != ITerminalSymbols.TokenNameEOF) {
 			start = scanner.getCurrentTokenStartPosition();
 			switch (token) {
 				case ITerminalSymbols.TokenNameLBRACE:
-					if (lparens == null) {
+					if (leftParens == null) {
 						// Start of method body
-						lparens = new Stack<>();
+						leftParens = new Stack<>();
 					} else {
-						lparens.push(start);
+						int startLine = scanner.getLineNumber(start) - 1;
+						// Start & end overlap, adjust the previous one for visibility:
+						if (candidates.containsKey(startLine)) {
+							int originalStartLine = candidates.remove(startLine);
+							if (originalStartLine < startLine - 1) {
+								candidates.put(startLine - 1, originalStartLine);
+							}
+						}
+						leftParens.push(startLine);
 					}
 					break;
 				case ITerminalSymbols.TokenNameRBRACE:
-					int end = scanner.getCurrentTokenEndPosition();
-					if (lparens != null && lparens.size() > 0) {
-						int startPos = lparens.pop();
-						foldingRanges.add(new FoldingRange(scanner.getLineNumber(startPos) - 1, scanner.getLineNumber(end) - 1));
+					int endPos = scanner.getCurrentTokenEndPosition();
+					if (leftParens != null && leftParens.size() > 0) {
+						int endLine = scanner.getLineNumber(endPos) - 1;
+						int startLine = leftParens.pop();
+						if (startLine < endLine) {
+							candidates.put(endLine, startLine);
+						}
+						// Assume the last switch case:
+						if (startLine < prevCaseLine) {
+							if (endLine - 1 > prevCaseLine) {
+								candidates.put(endLine - 1, prevCaseLine);
+							}
+							prevCaseLine = -1;
+						}
 					}
+					break;
+				case ITerminalSymbols.TokenNamecase:
+				case ITerminalSymbols.TokenNamedefault:
+					int currentLine = scanner.getLineNumber(start) - 1;
+					if (prevCaseLine != -1 && currentLine - 1 >= prevCaseLine) {
+						candidates.put(scanner.getLineNumber(start) - 2, prevCaseLine);
+					}
+					prevCaseLine = currentLine;
 					break;
 				default:
 					break;
 			}
 			token = scanner.getNextToken();
+		}
+
+		for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {
+			foldingRanges.add(new FoldingRange(entry.getValue(), entry.getKey()));
 		}
 	}
 }

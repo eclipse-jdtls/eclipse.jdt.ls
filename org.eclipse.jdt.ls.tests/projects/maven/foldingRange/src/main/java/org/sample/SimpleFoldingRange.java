@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * TestFoldingRange
  */
-public class TestFoldingRange {
+public class SimpleFoldingRange {
 
     /**
      * @param v1
