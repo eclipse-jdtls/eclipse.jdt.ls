@@ -12,7 +12,9 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
@@ -154,29 +156,61 @@ public class FoldingRangeHandler {
 
 		int start = shift;
 		int token = scanner.getNextToken();
-		Stack<Integer> lparens = null;
+		Stack<Integer> leftParens = null;
+		int prevCaseLine = -1;
+		Map<Integer, Integer> candidates = new HashMap<>();
 		while (token != ITerminalSymbols.TokenNameEOF) {
 			start = scanner.getCurrentTokenStartPosition();
 			switch (token) {
 				case ITerminalSymbols.TokenNameLBRACE:
-					if (lparens == null) {
+					if (leftParens == null) {
 						// Start of method body
-						lparens = new Stack<>();
+						leftParens = new Stack<>();
 					} else {
-						lparens.push(start);
+						int startLine = scanner.getLineNumber(start) - 1;
+						// Start & end overlap, adjust the previous one for visibility:
+						if (candidates.containsKey(startLine)) {
+							int originalStartLine = candidates.remove(startLine);
+							if (originalStartLine < startLine - 1) {
+								candidates.put(startLine - 1, originalStartLine);
+							}
+						}
+						leftParens.push(startLine);
 					}
 					break;
 				case ITerminalSymbols.TokenNameRBRACE:
-					int end = scanner.getCurrentTokenEndPosition();
-					if (lparens != null && lparens.size() > 0) {
-						int startPos = lparens.pop();
-						foldingRanges.add(new FoldingRange(scanner.getLineNumber(startPos) - 1, scanner.getLineNumber(end) - 1));
+					int endPos = scanner.getCurrentTokenEndPosition();
+					if (leftParens != null && leftParens.size() > 0) {
+						int endLine = scanner.getLineNumber(endPos) - 1;
+						int startLine = leftParens.pop();
+						if (startLine < endLine) {
+							candidates.put(endLine, startLine);
+						}
+						// Assume the last switch case:
+						if (startLine < prevCaseLine) {
+							if (endLine - 1 > prevCaseLine) {
+								candidates.put(endLine - 1, prevCaseLine);
+							}
+							prevCaseLine = -1;
+						}
 					}
+					break;
+				case ITerminalSymbols.TokenNamecase:
+				case ITerminalSymbols.TokenNamedefault:
+					int currentLine = scanner.getLineNumber(start) - 1;
+					if (prevCaseLine != -1 && currentLine - 1 >= prevCaseLine) {
+						candidates.put(scanner.getLineNumber(start) - 2, prevCaseLine);
+					}
+					prevCaseLine = currentLine;
 					break;
 				default:
 					break;
 			}
 			token = scanner.getNextToken();
+		}
+
+		for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {
+			foldingRanges.add(new FoldingRange(entry.getValue(), entry.getKey()));
 		}
 	}
 }

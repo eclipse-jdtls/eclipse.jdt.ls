@@ -47,7 +47,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testTypes() throws Exception {
-		String className = "org.sample.TestFoldingRange";
+		String className = "org.sample.SimpleFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		assertTrue(foldingRanges.size() == 7);
 		assertHasFoldingRange(2, 3, FoldingRangeKind.Imports, foldingRanges);
@@ -60,7 +60,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testErrorTypes() throws Exception {
-		String className = "org.sample.TestUnmatchFoldingRange";
+		String className = "org.sample.UnmatchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		assertTrue(foldingRanges.size() == 3);
 		assertHasFoldingRange(2, 12, null, foldingRanges);
@@ -76,6 +76,37 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertHasFoldingRange(7, 15, FoldingRangeKind.Region, foldingRanges);
 		assertHasFoldingRange(17, 23, FoldingRangeKind.Region, foldingRanges);
 		assertHasFoldingRange(18, 20, FoldingRangeKind.Region, foldingRanges);
+	}
+
+	@Test
+	public void testStatementFoldingRanges() throws Exception {
+		String className = "org.sample.StatementFoldingRange";
+		List<FoldingRange> foldingRanges = getFoldingRanges(className);
+		assertTrue(foldingRanges.size() == 18);
+		assertHasFoldingRange(2, 4, FoldingRangeKind.Comment, foldingRanges);
+		assertHasFoldingRange(5, 53, null, foldingRanges);
+		assertHasFoldingRange(7, 52, null, foldingRanges);
+
+		// First switch statement
+		assertHasFoldingRange(10, 23, null, foldingRanges);
+		assertHasFoldingRange(11, 18, null, foldingRanges);
+		assertHasFoldingRange(19, 20, null, foldingRanges);
+		assertHasFoldingRange(21, 22, null, foldingRanges);
+
+		// Try catch:
+		assertHasFoldingRange(12, 13, null, foldingRanges);
+		assertHasFoldingRange(14, 16, null, foldingRanges);
+
+		// If statement:
+		assertHasFoldingRange(26, 27, null, foldingRanges);
+		assertHasFoldingRange(28, 29, null, foldingRanges);
+		assertHasFoldingRange(30, 32, null, foldingRanges);
+
+		// Second switch statement:
+		assertHasFoldingRange(36, 51, null, foldingRanges);
+		assertHasFoldingRange(37, 40, null, foldingRanges);
+		assertHasFoldingRange(41, 47, null, foldingRanges);
+		assertHasFoldingRange(48, 50, null, foldingRanges);
 	}
 
 	private void testClass(String className) throws CoreException {

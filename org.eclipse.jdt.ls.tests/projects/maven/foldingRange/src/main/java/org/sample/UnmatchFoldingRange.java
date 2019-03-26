@@ -1,6 +1,6 @@
 package org.sample;
 
-public class TestUnmatchFoldingRange {
+public class UnmatchFoldingRange {
     void foo() {
         if (true) 
             if  {
