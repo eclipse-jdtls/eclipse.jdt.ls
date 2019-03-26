@@ -61,9 +61,8 @@ public final class OrganizeImportsHandler {
 				} catch (JavaModelException e) {
 					range = JDTUtils.newRange();
 				}
-				// TODO Based on the context, recommend a default type to import for the code with multiple ambiguous imports.
-				int defaultSelection = 0;
-				selections.add(new ImportSelection(candidates, range, defaultSelection));
+				// TODO Sort the ambiguous candidates based on a relevance score.
+				selections.add(new ImportSelection(candidates, range));
 			}
 
 			ImportCandidate[] chosens = chooseImports.apply(selections.toArray(new ImportSelection[0]));
@@ -118,16 +117,10 @@ public final class OrganizeImportsHandler {
 	public static class ImportSelection {
 		public ImportCandidate[] candidates;
 		public Range range;
-		public int defaultSelection = 0;
-
-		public ImportSelection(ImportCandidate[] candidates, Range range, int defaultSelection) {
-			this.candidates = candidates;
-			this.range = range;
-			this.defaultSelection = defaultSelection;
-		}
 
 		public ImportSelection(ImportCandidate[] candidates, Range range) {
-			this(candidates, range, 0);
+			this.candidates = candidates;
+			this.range = range;
 		}
 	}
 }
