@@ -2,7 +2,7 @@
 
 ## [0.36.0 (March 29th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/53?closed=1)
 * enhancement - added "imports" folding support. See [#555](https://github.com/redhat-developer/vscode-java/issues/555).
-* enhancement - added UI to manage anbiguous imports. See [#673](https://github.com/redhat-developer/vscode-java/issues/673).
+* enhancement - added UI to manage ambiguous imports. See [#673](https://github.com/redhat-developer/vscode-java/issues/673).
 * enhancement - added `Convert to static import` code actions. See [#796](https://github.com/redhat-developer/vscode-java/issues/796).
 * enhancement - eliminated CPU usage when idling on Windows. See [#843](https://github.com/redhat-developer/vscode-java/pull/843).
 * enhancement - added Java 12 support. See [#671](https://github.com/redhat-developer/vscode-java/issues/671).
