@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
-import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,24 +27,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
-import org.eclipse.jdt.internal.launching.StandardVMType;
-import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
-import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -137,6 +131,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
+	private JVMConfigurator jvmConfigurator;
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
@@ -149,6 +144,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
+		this.jvmConfigurator = new JVMConfigurator();
+		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 	}
 
 	public void connectClient(JavaLanguageClient client) {
@@ -296,6 +293,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
 			try {
+				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
 				if (workspaceDiagnosticsHandler != null) {
 					workspaceDiagnosticsHandler.removeResourceChangeListener();
 					workspaceDiagnosticsHandler = null;
@@ -371,7 +369,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
 		try {
-			jvmChanged = configureVM();
+			jvmChanged = jvmConfigurator.configureDefaultVM(preferenceManager.getPreferences());
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
@@ -390,49 +388,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">>New configuration: " + settings);
 	}
 
-	public boolean configureVM() throws CoreException {
-		String javaHome = preferenceManager.getPreferences().getJavaHome();
-		if (javaHome != null) {
-			File jvmHome = new File(javaHome);
-			if (jvmHome.isDirectory()) {
-				IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
-				File location = defaultVM.getInstallLocation();
-				if (!location.equals(jvmHome)) {
-					IVMInstall vm = findVM(jvmHome);
-					if (vm == null) {
-						IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
-						long unique = System.currentTimeMillis();
-						while (installType.findVMInstall(String.valueOf(unique)) != null) {
-							unique++;
-						}
-						String vmId = String.valueOf(unique);
-						VMStandin vmStandin = new VMStandin(installType, vmId);
-						String name = StringUtils.defaultIfBlank(jvmHome.getName(), "JRE");
-						vmStandin.setName(name);
-						vmStandin.setInstallLocation(jvmHome);
-						vm = vmStandin.convertToRealVM();
-					}
-					JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
-					JDTUtils.setCompatibleVMs(vm.getId());
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
-	private IVMInstall findVM(File jvmHome) {
-		IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
-		for (IVMInstallType type : types) {
-			IVMInstall[] installs = type.getVMInstalls();
-			for (IVMInstall install : installs) {
-				if (jvmHome.equals(install.getInstallLocation())) {
-					return install;
-				}
-			}
-		}
-		return null;
-	}
 
 	private void toggleCapability(boolean enabled, String id, String capability, Object options) {
 		if (enabled) {

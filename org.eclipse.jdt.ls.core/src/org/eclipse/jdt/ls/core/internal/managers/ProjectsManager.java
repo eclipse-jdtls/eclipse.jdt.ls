@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static java.util.Arrays.asList;
+import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSettings;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.io.File;
@@ -376,10 +377,9 @@ public class ProjectsManager implements ISaveParticipant {
 		description = project.getDescription();
 		description.setNatureIds(new String[] { JavaCore.NATURE_ID });
 		project.setDescription(description, monitor);
+
 		IJavaProject javaProject = JavaCore.create(project);
-		//Enable Java 12+ preview features by default and stfu about it
-		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		configureJVMSettings(javaProject);
 
 		//Add build output folder
 		if (StringUtils.isNotBlank(bin)) {
@@ -639,4 +639,5 @@ public class ProjectsManager implements ISaveParticipant {
 		}
 		return null;
 	}
+
 }
