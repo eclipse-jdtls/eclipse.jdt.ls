@@ -11,6 +11,9 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IProject;
@@ -88,7 +91,20 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 
 	@Override
 	public void defaultVMInstallChanged(IVMInstall previous, IVMInstall current) {
-		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+		if (Objects.equals(previous, current)) {
+			return;
+		}
+
+		//Reset global compliance settings
+		Hashtable<String, String> options = JavaCore.getOptions();
+		AbstractVMInstall jvm = (AbstractVMInstall) current;
+		long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+		String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
+		JavaCore.setComplianceOptions(compliance, options);
+		JavaCore.setOptions(options);
+
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		for (IProject project : projects) {
 			if (!ProjectUtils.isVisibleProject(project) && ProjectUtils.isJavaProject(project)) {
 				IJavaProject javaProject = JavaCore.create(project);
 				configureJVMSettings(javaProject, current);
@@ -116,12 +132,15 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		if (javaProject == null) {
 			return;
 		}
-		long javaVersion = 0;
+		long jdkLevel = 0;
 		if (vmInstall instanceof AbstractVMInstall) {
 			AbstractVMInstall jvm = (AbstractVMInstall) vmInstall;
-			javaVersion = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+			jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+			String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
+			Map<String, String> options = javaProject.getOptions(false);
+			JavaCore.setComplianceOptions(compliance, options);
 		}
-		if (javaVersion > ClassFileConstants.JDK11) {
+		if (jdkLevel > ClassFileConstants.JDK11) {
 			//Enable Java 12+ preview features by default and stfu about it
 			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
 			javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);

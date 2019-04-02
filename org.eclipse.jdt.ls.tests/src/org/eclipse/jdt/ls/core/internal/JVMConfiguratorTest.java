@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
@@ -23,7 +24,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallChangedListener;
 import org.eclipse.jdt.launching.JavaRuntime;
-import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +36,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author Fred Bricon
  */
 @RunWith(MockitoJUnitRunner.class)
-public class JVMConfiguratorTest extends AbstractProjectsManagerBasedTest {
+public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
 	private IVMInstall originalVm;
 
@@ -62,30 +63,35 @@ public class JVMConfiguratorTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("9", newDefaultVM.getId());
 	}
 
+	@Test
 	public void testPreviewFeatureSettings() throws Exception {
-
 		IVMInstallChangedListener jvmConfigurator = new JVMConfigurator();
 		try {
 			JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 			IJavaProject defaultProject = newDefaultProject();
-			IJavaProject randomProject = newEmptyProject();
+			IProject invisibleProject = copyAndImportFolder("singlefile/java12", "foo/bar/Foo.java");
+			IJavaProject randomProject = JavaCore.create(invisibleProject);
 
-			assertEquals(JavaCore.DISABLED, defaultProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
-			assertEquals(JavaCore.DISABLED, randomProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
+			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
 
 			TestVMType.setTestJREAsDefault("12");
 
-			assertEquals(JavaCore.ENABLED, defaultProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
-			assertEquals(JavaCore.ENABLED, randomProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+			assertComplianceAndPreviewSupport(defaultProject, "12", true);
+			assertComplianceAndPreviewSupport(randomProject, "12", true);
 
 			TestVMType.setTestJREAsDefault("1.8");
 
-			assertEquals(JavaCore.DISABLED, defaultProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
-			assertEquals(JavaCore.DISABLED, randomProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
+			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
 
 		} finally {
 			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
 		}
+	}
 
+	private void assertComplianceAndPreviewSupport(IJavaProject javaProject, String compliance, boolean previewEnabled) {
+		assertEquals(previewEnabled ? JavaCore.ENABLED : JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(compliance, javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true));
 	}
 }
