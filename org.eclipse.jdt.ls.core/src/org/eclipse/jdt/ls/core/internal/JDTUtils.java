@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.core.resources.IResource.DEPTH_ONE;
+import static org.eclipse.core.resources.IResource.DEPTH_ZERO;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,16 +134,16 @@ public final class JDTUtils {
 			if(!ProjectUtils.isJavaProject(resource.getProject())){
 				return null;
 			}
-			IJavaElement element = JavaCore.create(resource);
-			if (element instanceof ICompilationUnit) {
-				return (ICompilationUnit)element;
+			if (resource.getFileExtension() != null) {
+				String name = resource.getName();
+				if (org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name)) {
+					return JavaCore.createCompilationUnitFrom(resource);
+				}
 			}
-		}
-		if (resource == null) {
+			return null;
+		} else {
 			return getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
-		//the resource is not null but no compilation unit could be created (eg. project not ready yet)
-		return null;
 	}
 
 	/**
@@ -850,5 +851,22 @@ public final class JDTUtils {
 				}
 			}
 		}
+	}
+
+	public static IResource getFileOrFolder(String uriString) {
+		IFile file = findFile(uriString); // This may return IFile even when uriString really describes a IContainer
+		IContainer parent = file == null ? null : file.getParent();
+		if (parent == null) {
+			return file;
+		}
+		try {
+			parent.refreshLocal(DEPTH_ZERO, null);
+		} catch (CoreException e) {
+			// Ignore
+		}
+		if (parent.findMember(file.getName()) instanceof IFolder) {
+			return findFolder(uriString);
+		}
+		return file;
 	}
 }
