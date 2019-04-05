@@ -34,6 +34,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -129,7 +130,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		if (JavaCore.isJavaLikeFileName(file.getName())) {
 			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
 			// Clear the diagnostics for the resource not on the classpath
-			if (cu.getJavaProject() == null || !cu.getJavaProject().isOnClasspath(cu)) {
+			IJavaProject javaProject = cu.getJavaProject();
+			if (javaProject == null || !javaProject.isOnClasspath(cu)) {
 				String uri = JDTUtils.getFileURI(resource);
 				this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 				return false;

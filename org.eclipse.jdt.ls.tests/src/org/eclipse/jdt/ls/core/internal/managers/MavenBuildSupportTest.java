@@ -28,7 +28,9 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
@@ -41,6 +43,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.BinaryType;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -172,6 +175,17 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 			source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
 		}
 		assertNotNull(source);
+	}
+
+	@Test
+	public void testBatchImport() throws Exception {
+		IProject project = importMavenProject("batch");
+		waitForBackgroundJobs();
+		assertTrue(ProjectUtils.isMavenProject(project));
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		assertEquals(root.getProjects().length, 14);
+		project = root.getProject("batchchild");
+		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
 	protected void testNonStandardCompilerId(String projectName) throws Exception {
