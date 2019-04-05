@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
@@ -63,7 +64,7 @@ public class WorkspaceEventsHandler {
 	}
 
 	void didChangeWatchedFiles(DidChangeWatchedFilesParams param){
-		List<FileEvent> changes = param.getChanges();
+		List<FileEvent> changes = param.getChanges().stream().distinct().collect(Collectors.toList());
 		for (FileEvent fileEvent : changes) {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
 			if(changeType==CHANGE_TYPE.DELETED){

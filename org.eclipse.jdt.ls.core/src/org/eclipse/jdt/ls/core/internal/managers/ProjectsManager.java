@@ -43,7 +43,6 @@ import org.eclipse.core.resources.ISaveParticipant;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -93,6 +92,18 @@ public class ProjectsManager implements ISaveParticipant {
 	private static final Set<String> watchers = new HashSet<>();
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
+	//@formatter:off
+	private static final String[] basicWatchers = new String[] {
+			"**/*.java",
+			"**/pom.xml",
+			"**/*.gradle",
+			"**/gradle.properties",
+			"**/.project",
+			"**/.classpath",
+			"**/settings/*.prefs",
+			"**/src/**"
+	};
+	//@formatter:on
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
@@ -114,19 +125,13 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		// Run as a Java runnable to trigger any build while importing
-		JavaCore.run(new IWorkspaceRunnable() {
-			@Override
-			public void run(IProgressMonitor monitor) throws CoreException {
-				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-				deleteInvalidProjects(rootPaths, subMonitor.split(10));
-				GradleBuildSupport.cleanGradleModels(subMonitor.split(10));
-				createJavaProject(getDefaultProject(), subMonitor.split(10));
-				cleanupResources(getDefaultProject());
-				importProjects(rootPaths, subMonitor.split(70));
-				subMonitor.done();
-			}
-		}, monitor);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+		deleteInvalidProjects(rootPaths, subMonitor.split(10));
+		GradleBuildSupport.cleanGradleModels(subMonitor.split(10));
+		createJavaProject(getDefaultProject(), subMonitor.split(10));
+		cleanupResources(getDefaultProject());
+		importProjects(rootPaths, subMonitor.split(70));
+		subMonitor.done();
 	}
 
 	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException {
@@ -570,7 +575,7 @@ public class ProjectsManager implements ISaveParticipant {
 						for (IClasspathEntry entry : classpath) {
 							if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 								IPath path = entry.getPath();
-								if (path != null) {
+								if (path != null && !path.toString().contains("/src/") && !path.toString().endsWith("/src")) {
 									IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
 									if (folder.exists() && !folder.isDerived()) {
 										IPath location = folder.getLocation();
@@ -606,10 +611,14 @@ public class ProjectsManager implements ISaveParticipant {
 					sources.add(file.getAbsolutePath());
 				}
 			}
+			for (String pattern : basicWatchers) {
+				sources.add(pattern);
+			}
 			for (String pattern : sources) {
 				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
+
 			if (!sources.equals(watchers)) {
 				logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);

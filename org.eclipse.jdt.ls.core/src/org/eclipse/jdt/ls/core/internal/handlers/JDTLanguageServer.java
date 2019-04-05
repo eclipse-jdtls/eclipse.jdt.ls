@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -43,7 +44,6 @@ import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -181,7 +181,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
-		JobHelpers.waitForInitializeJobs();
+		try {
+			Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
+		} catch (OperationCanceledException | InterruptedException e) {
+			logException(e.getMessage(), e);
+		}
+		logInfo(">> initialization job finished");
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
 			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
 		}
@@ -221,13 +226,21 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
-
-		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
-		workspaceDiagnosticsHandler.addResourceChangeListener();
-
+		try {
+			IJobManager jobManager = Job.getJobManager();
+			jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, null);
+			jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, null);
+			logInfo(">> build jobs finished");
+		} catch (OperationCanceledException | InterruptedException e) {
+			logException(e.getMessage(), e);
+		}
 		computeAsync((monitor) -> {
 			try {
+				workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
 				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+				workspaceDiagnosticsHandler.addResourceChangeListener();
+				pm.registerWatchers();
+				logInfo(">> watchers registered");
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
 			}
@@ -383,7 +396,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
-		pm.registerWatchers();
 		FormatterManager.configureFormatter(preferenceManager, pm);
 		logInfo(">>New configuration: " + settings);
 	}
