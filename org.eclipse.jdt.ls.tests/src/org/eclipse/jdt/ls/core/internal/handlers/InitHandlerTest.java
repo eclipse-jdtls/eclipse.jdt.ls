@@ -201,16 +201,17 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
 			}
 		});
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 5, watchers.size());
-		assertEquals(watchers.get(0).getGlobPattern(), getWorkingProjectDirectory().getAbsolutePath() + "/TestProject/src/**");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 8, watchers.size());
+		assertEquals(watchers.get(0).getGlobPattern(), "**/*.gradle");
+		assertEquals(watchers.get(1).getGlobPattern(), "**/*.java");
+		assertEquals(watchers.get(2).getGlobPattern(), "**/.classpath");
+		assertEquals(watchers.get(3).getGlobPattern(), "**/.project");
+		assertEquals(watchers.get(4).getGlobPattern(), "**/gradle.properties");
+		assertEquals(watchers.get(5).getGlobPattern(), "**/pom.xml");
+		assertEquals(watchers.get(6).getGlobPattern(), "**/settings/*.prefs");
+		assertEquals(watchers.get(7).getGlobPattern(), "**/src/**");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		String location = project.getLocation().toString();
-		assertEquals(watchers.get(1).getGlobPattern(), location + "/src/main/java/**");
-		assertEquals(watchers.get(2).getGlobPattern(), location + "/src/test/java/**");
-		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
-		location = project.getLocation().toString();
-		assertEquals(watchers.get(3).getGlobPattern(), location + "/src/main/java/**");
-		assertEquals(watchers.get(4).getGlobPattern(), location + "/src/main/resources/**");
 		IJavaProject javaProject = JavaCore.create(project);
 		// for test purposes only
 		removeExclusionPattern(javaProject);
