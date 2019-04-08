@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -23,7 +24,11 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -34,12 +39,21 @@ import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.MavenUpdateRequest;
+import org.eclipse.m2e.jdt.IClasspathManager;
+import org.eclipse.m2e.jdt.MavenJdtPlugin;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 /**
  * @author Fred Bricon
  *
  */
 public class MavenBuildSupport implements IBuildSupport {
+
+	private static final int MAX_TIME_MILLIS = 3000;
+	private static Cache<String, Boolean> downloadRequestsCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterWrite(1, TimeUnit.HOURS).build();
+
 	private IProjectConfigurationManager configurationManager;
 	private ProjectRegistryManager projectManager;
 	private DigestStore digestStore;
@@ -123,4 +137,37 @@ public class MavenBuildSupport implements IBuildSupport {
 		}
 		return IBuildSupport.super.fileChanged(resource, changeType, monitor) || isBuildFile(resource);
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.IBuildSupport#getSource(org.eclipse.jdt.core.IClassFile, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+		if (classFile == null) {
+			return;
+		}
+		IJavaElement element = classFile;
+		while (element.getParent() != null) {
+			element = element.getParent();
+			if (element instanceof IPackageFragmentRoot) {
+				final IPackageFragmentRoot fragment = (IPackageFragmentRoot) element;
+				IPath attachmentPath = fragment.getSourceAttachmentPath();
+				if (attachmentPath != null && !attachmentPath.isEmpty() && attachmentPath.toFile().exists()) {
+					break;
+				}
+				if (fragment.isArchive()) {
+					IPath path = fragment.getPath();
+					Boolean downloaded = downloadRequestsCache.getIfPresent(path.toString());
+					if (downloaded == null) {
+						downloadRequestsCache.put(path.toString(), true);
+						IClasspathManager buildpathManager = MavenJdtPlugin.getDefault().getBuildpathManager();
+						buildpathManager.scheduleDownload(fragment, true, true);
+						JobHelpers.waitForDownloadSourcesJobs(MAX_TIME_MILLIS);
+					}
+					break;
+				}
+			}
+		}
+	}
+
 }

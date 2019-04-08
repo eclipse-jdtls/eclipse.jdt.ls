@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 
 /**
@@ -74,6 +75,18 @@ public interface IBuildSupport {
 		if (resource != null) {
 			resource.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 		}
+	}
+
+	/**
+	 * Discover the source for classFile and attach it to the project it belongs to.
+	 *
+	 * @param classFile
+	 *            - a class file
+	 * @param monitor
+	 *            - a progress monitor
+	 * @throws CoreException
+	 */
+	default void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 	}
 
 }

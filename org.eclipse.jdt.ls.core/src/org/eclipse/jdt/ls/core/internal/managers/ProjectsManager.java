@@ -452,7 +452,7 @@ public class ProjectsManager implements ISaveParticipant {
 		return job;
 	}
 
-	private Optional<IBuildSupport> getBuildSupport(IProject project) {
+	public Optional<IBuildSupport> getBuildSupport(IProject project) {
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}
 
