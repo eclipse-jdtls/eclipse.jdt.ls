@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -21,6 +22,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
@@ -35,8 +38,10 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
+import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -103,6 +108,16 @@ public class HoverInfoProvider {
 			}
 			boolean resolved = isResolved(curr, monitor);
 			if (resolved) {
+				IBuffer buffer = curr.getOpenable().getBuffer();
+				if (buffer == null && curr instanceof BinaryMember) {
+					IClassFile classFile = ((BinaryMember) curr).getClassFile();
+					if (classFile != null) {
+						Optional<IBuildSupport> bs = JavaLanguageServerPlugin.getProjectsManager().getBuildSupport(curr.getJavaProject().getProject());
+						if (bs.isPresent()) {
+							bs.get().discoverSource(classFile, monitor);
+						}
+					}
+				}
 				MarkedString signature = computeSignature(curr);
 				if (signature != null) {
 					res.add(Either.forRight(signature));

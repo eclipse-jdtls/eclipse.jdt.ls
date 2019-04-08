@@ -65,6 +65,10 @@ public class Preferences {
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
 	/**
+	 * Preference key to enable/disable downloading Maven source artifacts.
+	 */
+	public static final String MAVEN_DOWNLOAD_SOURCES = "java.maven.downloadSources";
+	/**
 	 * Preference key to enable/disable reference code lenses.
 	 */
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
@@ -265,6 +269,7 @@ public class Preferences {
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
 	private boolean importMavenEnabled;
+	private boolean mavenDownloadSources;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean javaFormatOnTypeEnabled;
@@ -366,6 +371,7 @@ public class Preferences {
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
 		importMavenEnabled = true;
+		mavenDownloadSources = false;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
@@ -415,6 +421,8 @@ public class Preferences {
 		prefs.setImportGradleEnabled(importGradleEnabled);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
+		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
+		prefs.setMavenDownloadSources(downloadSources);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
@@ -560,6 +568,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenDownloadSources(boolean enabled) {
+		this.mavenDownloadSources = enabled;
+		return this;
+	}
+
 	private Preferences setSignatureHelpEnabled(boolean enabled) {
 		this.signatureHelpEnabled = enabled;
 		return this;
@@ -699,6 +712,10 @@ public class Preferences {
 
 	public boolean isImportMavenEnabled() {
 		return importMavenEnabled;
+	}
+
+	public boolean isMavenDownloadSources() {
+		return mavenDownloadSources;
 	}
 
 	public boolean isImplementationsCodeLensEnabled() {
