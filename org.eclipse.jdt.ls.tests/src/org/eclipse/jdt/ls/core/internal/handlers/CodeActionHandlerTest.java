@@ -83,11 +83,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(4, codeActions.size());
+		Assert.assertTrue(codeActions.size() >= 3);
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
-		Assert.assertEquals(codeActions.get(3).getRight().getKind(), JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
