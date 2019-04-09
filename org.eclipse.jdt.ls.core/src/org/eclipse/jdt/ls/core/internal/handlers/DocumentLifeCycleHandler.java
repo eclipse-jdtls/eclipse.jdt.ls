@@ -80,12 +80,14 @@ import com.google.common.collect.Iterables;
 public class DocumentLifeCycleHandler {
 
 	public static final String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
+	public static final String PUBLISH_DIAGNOSTICS_JOBS = "DocumentLifeCyclePublishDiagnosticsJobs";
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 	private ProjectsManager projectsManager;
 
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
+	private WorkspaceJob publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 	private SemanticHighlightingService semanticHighlightingService;
 
@@ -111,6 +113,21 @@ public class DocumentLifeCycleHandler {
 				}
 			};
 			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
+			this.publishDiagnosticsJob = new WorkspaceJob("Publish Diagnostics") {
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					return publishDiagnostics(monitor);
+				}
+
+				/* (non-Javadoc)
+				 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+				 */
+				@Override
+				public boolean belongsTo(Object family) {
+					return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
+				}
+			};
+			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		}
 	}
 
@@ -125,6 +142,9 @@ public class DocumentLifeCycleHandler {
 		}
 		if (validationTimer != null) {
 			validationTimer.cancel();
+			if (publishDiagnosticsJob != null) {
+				publishDiagnosticsJob.cancel();
+			}
 			validationTimer.schedule(delay);
 		} else {
 			performValidation(new NullProgressMonitor());
@@ -147,19 +167,52 @@ public class DocumentLifeCycleHandler {
 		for (ICompilationUnit cu : cusToReconcile) {
 			cu.reconcile(ICompilationUnit.NO_AST, true, null, progress.newChild(1));
 		}
+		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
+		if (monitor.isCanceled()) {
+			return Status.CANCEL_STATUS;
+		}
+		if (publishDiagnosticsJob != null) {
+			publishDiagnosticsJob.cancel();
+			try {
+				publishDiagnosticsJob.join();
+			} catch (InterruptedException e) {
+				// ignore
+			}
+			publishDiagnosticsJob.schedule(400);
+		} else {
+			return publishDiagnostics(new NullProgressMonitor());
+		}
+		return Status.OK_STATUS;
+	}
+
+	private IStatus publishDiagnostics(IProgressMonitor monitor) throws JavaModelException {
+		long start = System.currentTimeMillis();
+		if (monitor.isCanceled()) {
+			return Status.CANCEL_STATUS;
+		}
 		this.sharedASTProvider.disposeAST();
 		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
+		SubMonitor progress = SubMonitor.convert(monitor, toValidate.size() + 1);
 		List<CompilationUnit> astRoots = new ArrayList<>();
+		if (monitor.isCanceled()) {
+			return Status.CANCEL_STATUS;
+		}
 		for (ICompilationUnit rootToValidate : toValidate) {
 			CompilationUnit astRoot = this.sharedASTProvider.getAST(rootToValidate, CoreASTProvider.WAIT_YES, monitor);
 			astRoots.add(astRoot);
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
 		}
 		for (CompilationUnit astRoot : astRoots) {
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
 			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
 			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
 			publishDiagnostics(unit, progress.newChild(1));
 		}
-		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ", validated: " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
+		JavaLanguageServerPlugin.logInfo("Validated " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		return Status.OK_STATUS;
 	}
 
