@@ -212,10 +212,19 @@ public class Preferences {
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS = "java.codeGeneration.hashCodeEquals.useJava7Objects";
 	// A named preference that defines whether to use 'instanceof' to compare types when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF = "java.codeGeneration.hashCodeEquals.useInstanceof";
-	// A named preference that defines whether to use blocks in 'if' statements when generating the hashCode and equals methods.
-	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEBLOCKS = "java.codeGeneration.hashCodeEquals.useBlocks";
-	// A named preference that defines whether to generate method comments when generating the hashCode and equals methods.
-	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_GENERATECOMMENTS = "java.codeGeneration.hashCodeEquals.generateComments";
+	// A named preference that defines whether to use blocks in 'if' statements when generating the methods.
+	public static final String JAVA_CODEGENERATION_USEBLOCKS = "java.codeGeneration.useBlocks";
+	// A named preference that defines whether to generate method comments when generating the methods.
+	public static final String JAVA_CODEGENERATION_GENERATECOMMENTS = "java.codeGeneration.generateComments";
+
+	/**
+	 * The preferences for generating toString method.
+	 */
+	public static final String JAVA_CODEGENERATION_TOSTRING_TEMPLATE = "java.codeGeneration.toString.template";
+	public static final String JAVA_CODEGENERATION_TOSTRING_CODESTYLE = "java.codeGeneration.toString.codeStyle";
+	public static final String JAVA_CODEGENERATION_TOSTRING_SKIPNULLVALUES = "java.codeGeneration.toString.skipNullValues";
+	public static final String JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS = "java.codeGeneration.toString.listArrayContents";
+	public static final String JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS = "java.codeGeneration.toString.limitElements";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -280,8 +289,13 @@ public class Preferences {
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
 	private boolean hashCodeEqualsTemplateUseInstanceof;
-	private boolean hashCodeEqualsTemplateUseBlocks;
-	private boolean hashCodeEqualsTemplateGenerateComments;
+	private boolean codeGenerationTemplateUseBlocks;
+	private boolean codeGenerationTemplateGenerateComments;
+	private String generateToStringTemplate;
+	private String generateToStringCodeStyle;
+	private boolean generateToStringSkipNullValues;
+	private boolean generateToStringListArrayContents;
+	private int generateToStringLimitElements;
 	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
@@ -382,8 +396,11 @@ public class Preferences {
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
 		hashCodeEqualsTemplateUseInstanceof = false;
-		hashCodeEqualsTemplateUseBlocks = false;
-		hashCodeEqualsTemplateGenerateComments = false;
+		codeGenerationTemplateUseBlocks = false;
+		codeGenerationTemplateGenerateComments = false;
+		generateToStringSkipNullValues = false;
+		generateToStringListArrayContents = true;
+		generateToStringLimitElements = 0;
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
@@ -456,10 +473,22 @@ public class Preferences {
 		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
 		boolean hashCodeEqualsTemplateUseInstanceof = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF, false);
 		prefs.setHashCodeEqualsTemplateUseInstanceof(hashCodeEqualsTemplateUseInstanceof);
-		boolean hashCodeEqualsTemplateUseBlocks = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEBLOCKS, false);
-		prefs.setHashCodeEqualsTemplateUseBlocks(hashCodeEqualsTemplateUseBlocks);
-		boolean hashCodeEqualsTemplateGenerateComments = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_GENERATECOMMENTS, false);
-		prefs.setHashCodeEqualsTemplateGenerateComments(hashCodeEqualsTemplateGenerateComments);
+		boolean codeGenerationTemplateUseBlocks = getBoolean(configuration, JAVA_CODEGENERATION_USEBLOCKS, false);
+		prefs.setCodeGenerationTemplateUseBlocks(codeGenerationTemplateUseBlocks);
+		boolean codeGenerationTemplateGenerateComments = getBoolean(configuration, JAVA_CODEGENERATION_GENERATECOMMENTS, false);
+		prefs.setCodeGenerationTemplateGenerateComments(codeGenerationTemplateGenerateComments);
+
+		String generateToStringTemplate = getString(configuration, JAVA_CODEGENERATION_TOSTRING_TEMPLATE);
+		prefs.setGenerateToStringTemplate(generateToStringTemplate);
+		String generateToStringCodeStyle = getString(configuration, JAVA_CODEGENERATION_TOSTRING_CODESTYLE, "STRING_CONCATENATION");
+		prefs.setGenerateToStringCodeStyle(generateToStringCodeStyle);
+
+		boolean generateToStringSkipNullValues = getBoolean(configuration, JAVA_CODEGENERATION_TOSTRING_SKIPNULLVALUES, false);
+		prefs.setGenerateToStringSkipNullValues(generateToStringSkipNullValues);
+		boolean generateToStringListArrayContents = getBoolean(configuration, JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS, true);
+		prefs.setGenerateToStringListArrayContents(generateToStringListArrayContents);
+		int generateToStringLimitElements = getInt(configuration, JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS, 0);
+		prefs.setGenerateToStringLimitElements(generateToStringLimitElements);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -625,13 +654,38 @@ public class Preferences {
 		return this;
 	}
 
-	public Preferences setHashCodeEqualsTemplateUseBlocks(boolean hashCodeEqualsTemplateUseBlocks) {
-		this.hashCodeEqualsTemplateUseBlocks = hashCodeEqualsTemplateUseBlocks;
+	public Preferences setCodeGenerationTemplateUseBlocks(boolean codeGenerationTemplateUseBlocks) {
+		this.codeGenerationTemplateUseBlocks = codeGenerationTemplateUseBlocks;
 		return this;
 	}
 
-	public Preferences setHashCodeEqualsTemplateGenerateComments(boolean hashCodeEqualsTemplateGenerateComments) {
-		this.hashCodeEqualsTemplateGenerateComments = hashCodeEqualsTemplateGenerateComments;
+	public Preferences setCodeGenerationTemplateGenerateComments(boolean codeGenerationTemplateGenerateComments) {
+		this.codeGenerationTemplateGenerateComments = codeGenerationTemplateGenerateComments;
+		return this;
+	}
+
+	public Preferences setGenerateToStringTemplate(String generateToStringTemplate) {
+		this.generateToStringTemplate = generateToStringTemplate;
+		return this;
+	}
+
+	public Preferences setGenerateToStringCodeStyle(String generateToStringCodeStyle) {
+		this.generateToStringCodeStyle = generateToStringCodeStyle;
+		return this;
+	}
+
+	public Preferences setGenerateToStringSkipNullValues(boolean generateToStringSkipNullValues) {
+		this.generateToStringSkipNullValues = generateToStringSkipNullValues;
+		return this;
+	}
+
+	public Preferences setGenerateToStringListArrayContents(boolean generateToStringListArrayContents) {
+		this.generateToStringListArrayContents = generateToStringListArrayContents;
+		return this;
+	}
+
+	public Preferences setGenerateToStringLimitElements(int generateToStringLimitElements) {
+		this.generateToStringLimitElements = generateToStringLimitElements;
 		return this;
 	}
 
@@ -757,12 +811,32 @@ public class Preferences {
 		return hashCodeEqualsTemplateUseInstanceof;
 	}
 
-	public boolean isHashCodeEqualsTemplateUseBlocks() {
-		return hashCodeEqualsTemplateUseBlocks;
+	public boolean isCodeGenerationTemplateUseBlocks() {
+		return codeGenerationTemplateUseBlocks;
 	}
 
-	public boolean isHashCodeEqualsTemplateGenerateComments() {
-		return hashCodeEqualsTemplateGenerateComments;
+	public boolean isCodeGenerationTemplateGenerateComments() {
+		return codeGenerationTemplateGenerateComments;
+	}
+
+	public String getGenerateToStringTemplate() {
+		return generateToStringTemplate;
+	}
+
+	public String getGenerateToStringCodeStyle() {
+		return generateToStringCodeStyle;
+	}
+
+	public boolean isGenerateToStringSkipNullValues() {
+		return generateToStringSkipNullValues;
+	}
+
+	public boolean isGenerateToStringListArrayContents() {
+		return generateToStringListArrayContents;
+	}
+
+	public int getGenerateToStringLimitElements() {
+		return generateToStringLimitElements;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {

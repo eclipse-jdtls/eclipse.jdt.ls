@@ -66,6 +66,7 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT = "java.action.overrideMethodsPrompt";
 	public static final String COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT = "java.action.hashCodeEqualsPrompt";
 	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
+	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
 
 	private PreferenceManager preferenceManager;
 
@@ -106,6 +107,12 @@ public class SourceAssistProcessor {
 		if (supportsHashCodeEquals(context, type)) {
 			Optional<Either<Command, CodeAction>> hashCodeEquals = getHashCodeEqualsAction(params);
 			addSourceActionCommand($, params.getContext(), hashCodeEquals);
+		}
+
+		// Generate toString()
+		if (supportsGenerateToString(type)) {
+			Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
+			addSourceActionCommand($, params.getContext(), generateToStringCommand);
 		}
 
 		return $;
@@ -216,6 +223,34 @@ public class SourceAssistProcessor {
 		}
 	}
 
+	private boolean supportsGenerateToString(IType type) {
+		try {
+			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			// do nothing.
+		}
+
+		return true;
+	}
+
+	private Optional<Either<Command, CodeAction>> getGenerateToStringAction(CodeActionParams params) {
+		if (!preferenceManager.getClientPreferences().isGenerateToStringPromptSupported()) {
+			return Optional.empty();
+		}
+		Command command = new Command(ActionMessages.GenerateToStringAction_label, COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT, Collections.singletonList(params));
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_TO_STRING)) {
+			CodeAction codeAction = new CodeAction(ActionMessages.GenerateToStringAction_label);
+			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
+			codeAction.setCommand(command);
+			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			return Optional.of(Either.forRight(codeAction));
+		} else {
+			return Optional.of(Either.forLeft(command));
+		}
+	}
+
 	private Optional<Either<Command, CodeAction>> convertToWorkspaceEditAction(CodeActionContext context, ICompilationUnit cu, String name, String kind, TextEdit edit) {
 		WorkspaceEdit workspaceEdit = convertToWorkspaceEdit(cu, edit);
 		if (!ChangeUtil.hasChanges(workspaceEdit)) {
@@ -289,5 +324,9 @@ public class SourceAssistProcessor {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		context.setASTRoot(astRoot);
 		return context;
+	}
+
+	public static ICompilationUnit getCompilationUnit(CodeActionParams params) {
+		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 }

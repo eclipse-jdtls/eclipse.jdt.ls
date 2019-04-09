@@ -37,6 +37,11 @@ public interface JavaCodeActionKind {
 	public static final String SOURCE_GENERATE_HASHCODE_EQUALS = SOURCE_GENERATE + ".hashCodeEquals";
 
 	/**
+	 * Generate toString kind
+	 */
+	public static final String SOURCE_GENERATE_TO_STRING = SOURCE_GENERATE + ".toString";
+
+	/**
 	 * Override/Implement methods kind
 	 */
 	public static final String SOURCE_OVERRIDE_METHODS = CodeActionKind.Source + ".overrideMethods";

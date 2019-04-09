@@ -46,6 +46,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
@@ -761,6 +763,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
 		logInfo(">> java/generateHashCodeEquals");
 		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckToStringResponse> checkToStringStatus(CodeActionParams params) {
+		logInfo(">> java/checkToStringStatus");
+		return computeAsync((monitor) -> GenerateToStringHandler.checkToStringStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateToString(GenerateToStringParams params) {
+		logInfo(">> java/generateToString");
+		return computeAsync((monitor) -> GenerateToStringHandler.generateToString(params));
 	}
 
 	@Override

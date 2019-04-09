@@ -152,6 +152,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
 		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
 		when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 
