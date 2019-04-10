@@ -155,6 +155,8 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		settings.limitElements = true;
 		settings.limitValue = 10;
 		settings.customBuilderSettings = new CustomBuilderSettings();
+		settings.is50orHigher = true;
+		settings.is60orHigher = true;
 		generateToString(unit, "String name", settings);
 
 		/* @formatter:off */
@@ -175,20 +177,20 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 				"	@Override\r\n" +
 				"	public String toString() {\r\n" +
 				"		final int maxLen = 10;\r\n" +
-				"		StringBuffer buffer = new StringBuffer();\r\n" +
-				"		buffer.append(\"B [\");\r\n" +
+				"		StringBuilder builder = new StringBuilder();\r\n" +
+				"		builder.append(\"B [\");\r\n" +
 				"		if (aList != null) {\r\n" +
-				"			buffer.append(\"aList=\").append(aList.subList(0, Math.min(aList.size(), maxLen))).append(\", \");\r\n" +
+				"			builder.append(\"aList=\").append(aList.subList(0, Math.min(aList.size(), maxLen))).append(\", \");\r\n" +
 				"		}\r\n" +
 				"		if (arrays != null) {\r\n" +
-				"			buffer.append(\"arrays=\").append(arrays).append(\", \");\r\n" +
+				"			builder.append(\"arrays=\").append(arrays).append(\", \");\r\n" +
 				"		}\r\n" +
-				"		buffer.append(\"id=\").append(id).append(\", \");\r\n" +
+				"		builder.append(\"id=\").append(id).append(\", \");\r\n" +
 				"		if (name != null) {\r\n" +
-				"			buffer.append(\"name=\").append(name);\r\n" +
+				"			builder.append(\"name=\").append(name);\r\n" +
 				"		}\r\n" +
-				"		buffer.append(\"]\");\r\n" +
-				"		return buffer.toString();\r\n" +
+				"		builder.append(\"]\");\r\n" +
+				"		return builder.toString();\r\n" +
 				"	}\r\n" +
 				"}";
 		/* @formatter:on */

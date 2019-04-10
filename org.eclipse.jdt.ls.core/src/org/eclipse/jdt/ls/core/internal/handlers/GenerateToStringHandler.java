@@ -15,7 +15,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -26,6 +28,7 @@ import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStr
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -66,6 +69,10 @@ public class GenerateToStringHandler {
 	}
 
 	public static WorkspaceEdit generateToString(GenerateToStringParams params) {
+		ICompilationUnit unit = SourceAssistProcessor.getCompilationUnit(params.context);
+		if (unit == null) {
+			return null;
+		}
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
 		settings.overrideAnnotation = true;
@@ -78,8 +85,13 @@ public class GenerateToStringHandler {
 		settings.limitElements = preferences.getGenerateToStringLimitElements() > 0;
 		settings.limitValue = Math.max(preferences.getGenerateToStringLimitElements(), 0);
 		settings.customBuilderSettings = new CustomBuilderSettings();
+		if (unit.getJavaProject() != null) {
+			String version = unit.getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true);
+			settings.is50orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_5);
+			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
+		}
 		TextEdit edit = generateToString(params, settings);
-		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(SourceAssistProcessor.getCompilationUnit(params.context), edit);
+		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
 	}
 
 	public static TextEdit generateToString(GenerateToStringParams params, ToStringGenerationSettingsCore settings) {
