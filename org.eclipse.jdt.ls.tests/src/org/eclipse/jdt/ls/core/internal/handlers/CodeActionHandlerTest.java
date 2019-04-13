@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -200,7 +201,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return server.codeAction(params).join();
 	}
 
-	public Command getCommand(Either<Command, CodeAction> codeAction) {
+	public static Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
 	}
 
@@ -222,5 +223,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 
 		return false;
+	}
+
+	public static Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String kind) {
+		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).findFirst();
+		return any.isPresent() ? any.get() : null;
 	}
 }

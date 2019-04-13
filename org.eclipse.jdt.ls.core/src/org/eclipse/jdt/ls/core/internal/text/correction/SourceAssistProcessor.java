@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -42,11 +43,14 @@ import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
+import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -111,8 +115,21 @@ public class SourceAssistProcessor {
 
 		// Generate toString()
 		if (supportsGenerateToString(type)) {
-			Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
-			addSourceActionCommand($, params.getContext(), generateToStringCommand);
+			boolean nonStaticFields = true;
+			try {
+				nonStaticFields = hasFields(type, false);
+			} catch (JavaModelException e) {
+				// do nothing.
+			}
+			if (nonStaticFields) {
+				Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
+				addSourceActionCommand($, params.getContext(), generateToStringCommand);
+			} else {
+				TextEdit toStringEdit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0]);
+				Optional<Either<Command, CodeAction>> generateToStringCommand = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
+						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, toStringEdit);
+				addSourceActionCommand($, params.getContext(), generateToStringCommand);
+			}
 		}
 
 		return $;
@@ -225,7 +242,7 @@ public class SourceAssistProcessor {
 
 	private boolean supportsGenerateToString(IType type) {
 		try {
-			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
+			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return false;
 			}
 		} catch (JavaModelException e) {
@@ -267,6 +284,16 @@ public class SourceAssistProcessor {
 		} else {
 			return Optional.of(Either.forLeft(command));
 		}
+	}
+
+	private boolean hasFields(IType type, boolean includeStatic) throws JavaModelException {
+		for (IField field : type.getFields()) {
+			if (includeStatic || !JdtFlags.isStatic(field)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public static WorkspaceEdit convertToWorkspaceEdit(ICompilationUnit cu, TextEdit edit) {

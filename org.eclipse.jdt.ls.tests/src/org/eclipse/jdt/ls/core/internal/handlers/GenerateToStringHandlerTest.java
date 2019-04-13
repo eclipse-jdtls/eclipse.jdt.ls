@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
@@ -29,7 +30,6 @@ import org.eclipse.jdt.internal.corext.util.ValidateEditException;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
-import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
@@ -104,7 +104,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		settings.customArrayToString = true;
 		settings.limitElements = false;
 		settings.customBuilderSettings = new CustomBuilderSettings();
-		generateToString(unit, "String name", settings);
+		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
 		String expected = "package p;\r\n" +
@@ -157,7 +157,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		settings.customBuilderSettings = new CustomBuilderSettings();
 		settings.is50orHigher = true;
 		settings.is60orHigher = true;
-		generateToString(unit, "String name", settings);
+		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
 		String expected = "package p;\r\n" +
@@ -198,14 +198,10 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		compareSource(expected, unit.getSource());
 	}
 
-	private void generateToString(ICompilationUnit unit, String hoverOnText, ToStringGenerationSettingsCore settings) throws ValidateEditException, CoreException {
-		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, hoverOnText);
-		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(params);
-		GenerateToStringParams genParams = new GenerateToStringParams();
-		genParams.context = params;
-		genParams.fields = response.fields;
-		TextEdit edit = GenerateToStringHandler.generateToString(genParams, settings);
+	private void generateToString(IType type, ToStringGenerationSettingsCore settings) throws ValidateEditException, CoreException {
+		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(type);
+		TextEdit edit = GenerateToStringHandler.generateToString(type, response.fields, settings);
 		assertNotNull(edit);
-		JavaModelUtil.applyEdit(unit, edit, true, null);
+		JavaModelUtil.applyEdit(type.getCompilationUnit(), edit, true, null);
 	}
 }

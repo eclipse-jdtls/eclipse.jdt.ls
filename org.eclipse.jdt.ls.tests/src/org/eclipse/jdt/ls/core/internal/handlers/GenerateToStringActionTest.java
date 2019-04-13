@@ -24,6 +24,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -66,7 +67,31 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING));
+		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
+		Assert.assertNotNull(toStringAction);
+		Command toStringCommand = CodeActionHandlerTest.getCommand(toStringAction);
+		Assert.assertNotNull(toStringCommand);
+		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT, toStringCommand.getCommand());
+	}
+
+	@Test
+	public void testGenerateToStringEnabled_emptyFields() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	private static String name;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
+		Assert.assertNotNull(toStringAction);
+		Command toStringCommand = CodeActionHandlerTest.getCommand(toStringAction);
+		Assert.assertNotNull(toStringCommand);
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, toStringCommand.getCommand());
 	}
 
 	@Test

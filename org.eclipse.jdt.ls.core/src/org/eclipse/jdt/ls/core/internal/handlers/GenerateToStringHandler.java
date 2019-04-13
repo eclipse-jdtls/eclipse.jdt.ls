@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -69,10 +68,20 @@ public class GenerateToStringHandler {
 	}
 
 	public static WorkspaceEdit generateToString(GenerateToStringParams params) {
-		ICompilationUnit unit = SourceAssistProcessor.getCompilationUnit(params.context);
-		if (unit == null) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context);
+		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
+
+		TextEdit edit = generateToString(type, params.fields);
+		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
+	}
+
+	public static TextEdit generateToString(IType type, LspVariableBinding[] fields) {
+		if (type == null || type.getCompilationUnit() == null) {
+			return null;
+		}
+
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
 		settings.overrideAnnotation = true;
@@ -85,22 +94,13 @@ public class GenerateToStringHandler {
 		settings.limitElements = preferences.getGenerateToStringLimitElements() > 0;
 		settings.limitValue = Math.max(preferences.getGenerateToStringLimitElements(), 0);
 		settings.customBuilderSettings = new CustomBuilderSettings();
-		if (unit.getJavaProject() != null) {
-			String version = unit.getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true);
+		if (type.getCompilationUnit().getJavaProject() != null) {
+			String version = type.getCompilationUnit().getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true);
 			settings.is50orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_5);
 			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
 		}
-		TextEdit edit = generateToString(params, settings);
-		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
-	}
 
-	public static TextEdit generateToString(GenerateToStringParams params, ToStringGenerationSettingsCore settings) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
-		if (type == null) {
-			return null;
-		}
-
-		return generateToString(type, params.fields, settings);
+		return generateToString(type, fields, settings);
 	}
 
 	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings) {
@@ -125,6 +125,10 @@ public class GenerateToStringHandler {
 	}
 
 	private static int getToStringStyle(String codeStyle) {
+		if (StringUtils.isBlank(codeStyle)) {
+			return GenerateToStringOperation.STRING_CONCATENATION;
+		}
+
 		switch (codeStyle) {
 			case "STRING_CONCATENATION":
 				return GenerateToStringOperation.STRING_CONCATENATION;
