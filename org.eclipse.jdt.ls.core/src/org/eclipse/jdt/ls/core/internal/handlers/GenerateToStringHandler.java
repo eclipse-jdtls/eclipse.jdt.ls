@@ -58,7 +58,7 @@ public class GenerateToStringHandler {
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
 				response.fields = JdtDomModels.getDeclaredFields(typeBinding, false);
-				response.existed = Stream.of(typeBinding.getDeclaredMethods()).anyMatch(method -> method.getName().equals(METHODNAME_TOSTRING) && method.getParameterTypes().length == 0);
+				response.exists = Stream.of(typeBinding.getDeclaredMethods()).anyMatch(method -> method.getName().equals(METHODNAME_TOSTRING) && method.getParameterTypes().length == 0);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to check toString status", e);
@@ -146,7 +146,7 @@ public class GenerateToStringHandler {
 	public static class CheckToStringResponse {
 		public String type;
 		public LspVariableBinding[] fields;
-		public boolean existed;
+		public boolean exists;
 	}
 
 	public static class GenerateToStringParams {

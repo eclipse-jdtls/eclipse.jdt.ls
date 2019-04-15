@@ -52,7 +52,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
 		assertEquals(2, response.fields.length);
-		assertFalse(response.existed);
+		assertFalse(response.exists);
 	}
 
 	@Test
@@ -75,7 +75,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
 		assertEquals(2, response.fields.length);
-		assertTrue(response.existed);
+		assertTrue(response.exists);
 	}
 
 	@Test
