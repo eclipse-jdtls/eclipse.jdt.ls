@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -83,11 +84,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(4, codeActions.size());
+		Assert.assertTrue(codeActions.size() >= 3);
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
-		Assert.assertEquals(codeActions.get(3).getRight().getKind(), JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -201,7 +201,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return server.codeAction(params).join();
 	}
 
-	public Command getCommand(Either<Command, CodeAction> codeAction) {
+	public static Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
 	}
 
@@ -223,5 +223,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 
 		return false;
+	}
+
+	public static Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String kind) {
+		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).findFirst();
+		return any.isPresent() ? any.get() : null;
 	}
 }

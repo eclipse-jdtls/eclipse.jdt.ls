@@ -12,11 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IType;
@@ -25,13 +21,13 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
-import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.GenerateHashCodeEqualsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -58,7 +54,7 @@ public class HashCodeEqualsHandler {
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
-				response.fields = Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> !Modifier.isStatic(f.getModifiers())).map(f -> new VariableField(f)).toArray(VariableField[]::new);
+				response.fields = JdtDomModels.getDeclaredFields(typeBinding, false);
 				response.existingMethods = findExistingMethods(typeBinding);
 			}
 		} catch (JavaModelException e) {
@@ -72,8 +68,8 @@ public class HashCodeEqualsHandler {
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		boolean useJava7Objects = preferences.isHashCodeEqualsTemplateUseJava7Objects();
 		boolean useInstanceof = preferences.isHashCodeEqualsTemplateUseInstanceof();
-		boolean useBlocks = preferences.isHashCodeEqualsTemplateUseBlocks();
-		boolean generateComments = preferences.isHashCodeEqualsTemplateGenerateComments();
+		boolean useBlocks = preferences.isCodeGenerationTemplateUseBlocks();
+		boolean generateComments = preferences.isCodeGenerationTemplateGenerateComments();
 		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
@@ -83,7 +79,7 @@ public class HashCodeEqualsHandler {
 		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
 	}
 
-	public static TextEdit generateHashCodeEqualsTextEdit(IType type, VariableField[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
+	public static TextEdit generateHashCodeEqualsTextEdit(IType type, LspVariableBinding[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
 		if (type == null) {
 			return null;
 		}
@@ -92,7 +88,7 @@ public class HashCodeEqualsHandler {
 			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
-				IVariableBinding[] variableBindings = convertToVariableBindings(typeBinding, fields);
+				IVariableBinding[] variableBindings = JdtDomModels.convertToVariableBindings(typeBinding, fields);
 				CodeGenerationSettings codeGenSettings = new CodeGenerationSettings();
 				codeGenSettings.createComments = generateComments;
 				codeGenSettings.overrideAnnotation = true;
@@ -126,31 +122,15 @@ public class HashCodeEqualsHandler {
 		return existingMethods.toArray(new String[0]);
 	}
 
-	private static IVariableBinding[] convertToVariableBindings(ITypeBinding typeBinding, VariableField[] fields) {
-		Set<String> bindingKeys = Stream.of(fields).map((field) -> field.bindingKey).collect(Collectors.toSet());
-		return Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> bindingKeys.contains(f.getKey())).toArray(IVariableBinding[]::new);
-	}
-
-	public static class VariableField {
-		public String bindingKey;
-		public String name;
-		public String type;
-		public VariableField(IVariableBinding binding) {
-			this.bindingKey = binding.getKey();
-			this.name = binding.getName();
-			this.type = binding.getType().getName();
-		}
-	}
-
 	public static class CheckHashCodeEqualsResponse {
 		public String type;
-		public VariableField[] fields;
+		public LspVariableBinding[] fields;
 		public String[] existingMethods;
 	}
 
 	public static class GenerateHashCodeEqualsParams {
 		public CodeActionParams context;
-		public VariableField[] fields;
+		public LspVariableBinding[] fields;
 		public boolean regenerate;
 	}
 }
