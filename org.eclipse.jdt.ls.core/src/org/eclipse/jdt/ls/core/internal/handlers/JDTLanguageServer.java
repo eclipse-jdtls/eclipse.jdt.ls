@@ -31,7 +31,9 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
@@ -226,26 +228,30 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
-		try {
-			IJobManager jobManager = Job.getJobManager();
-			jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, null);
-			jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, null);
-			logInfo(">> build jobs finished");
-		} catch (OperationCanceledException | InterruptedException e) {
-			logException(e.getMessage(), e);
-		}
-		computeAsync((monitor) -> {
-			try {
-				workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
-				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-				workspaceDiagnosticsHandler.addResourceChangeListener();
-				pm.registerWatchers();
-				logInfo(">> watchers registered");
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
+		Job initializeWorkspace = new Job("Initialize workspace") {
+
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
+				try {
+					IJobManager jobManager = Job.getJobManager();
+					jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, null);
+					jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, null);
+					logInfo(">> build jobs finished");
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm);
+					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+					workspaceDiagnosticsHandler.addResourceChangeListener();
+					pm.registerWatchers();
+					logInfo(">> watchers registered");
+				} catch (OperationCanceledException | InterruptedException | CoreException e) {
+					logException(e.getMessage(), e);
+					return Status.CANCEL_STATUS;
+				}
+				return Status.OK_STATUS;
 			}
-			return new Object();
-		});
+		};
+		initializeWorkspace.setPriority(Job.BUILD);
+		initializeWorkspace.setSystem(true);
+		initializeWorkspace.schedule();
 	}
 
 	/**
