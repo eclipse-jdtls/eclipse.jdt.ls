@@ -318,6 +318,7 @@ public final class ProjectUtils {
 		}
 		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
 		if (!rawClasspath.equals(newClasspath)) {
+			javaProject.setRawClasspath(new IClasspathEntry[0], monitor);
 			javaProject.setRawClasspath(newClasspath, monitor);
 		}
 	}
