@@ -34,7 +34,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -46,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
@@ -235,16 +235,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				try {
-					IJobManager jobManager = Job.getJobManager();
-					jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, null);
-					jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, null);
+					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm);
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					pm.registerWatchers();
 					logInfo(">> watchers registered");
-				} catch (OperationCanceledException | InterruptedException | CoreException e) {
+				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
 					return Status.CANCEL_STATUS;
 				}
