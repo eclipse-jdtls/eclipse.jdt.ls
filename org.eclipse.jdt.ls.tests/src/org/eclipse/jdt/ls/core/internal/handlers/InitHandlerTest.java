@@ -202,14 +202,14 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals("Unexpected watchers:\n" + toString(watchers), 8, watchers.size());
-		assertEquals(watchers.get(0).getGlobPattern(), "**/*.gradle");
-		assertEquals(watchers.get(1).getGlobPattern(), "**/*.java");
-		assertEquals(watchers.get(2).getGlobPattern(), "**/.classpath");
-		assertEquals(watchers.get(3).getGlobPattern(), "**/.project");
-		assertEquals(watchers.get(4).getGlobPattern(), "**/gradle.properties");
-		assertEquals(watchers.get(5).getGlobPattern(), "**/pom.xml");
-		assertEquals(watchers.get(6).getGlobPattern(), "**/settings/*.prefs");
-		assertEquals(watchers.get(7).getGlobPattern(), "**/src/**");
+		assertEquals("**/*.gradle", watchers.get(0).getGlobPattern());
+		assertEquals("**/*.java", watchers.get(1).getGlobPattern());
+		assertEquals("**/.classpath", watchers.get(2).getGlobPattern());
+		assertEquals("**/.project", watchers.get(3).getGlobPattern());
+		assertEquals("**/.settings/*.prefs", watchers.get(4).getGlobPattern());
+		assertEquals("**/gradle.properties", watchers.get(5).getGlobPattern());
+		assertEquals("**/pom.xml", watchers.get(6).getGlobPattern());
+		assertEquals("**/src/**", watchers.get(7).getGlobPattern());
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		String location = project.getLocation().toString();
 		IJavaProject javaProject = JavaCore.create(project);

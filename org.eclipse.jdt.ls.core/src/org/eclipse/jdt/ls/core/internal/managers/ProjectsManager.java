@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static java.util.Arrays.asList;
 import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSettings;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
+import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +55,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -89,20 +92,20 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 public class ProjectsManager implements ISaveParticipant {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
-	private static final Set<String> watchers = new HashSet<>();
+	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
 	//@formatter:off
-	private static final String[] basicWatchers = new String[] {
+	private static final List<String> basicWatchers = Arrays.asList(
 			"**/*.java",
 			"**/pom.xml",
 			"**/*.gradle",
 			"**/gradle.properties",
 			"**/.project",
 			"**/.classpath",
-			"**/settings/*.prefs",
+			"**/.settings/*.prefs",
 			"**/src/**"
-	};
+	);
 	//@formatter:on
 
 	public enum CHANGE_TYPE {
@@ -562,7 +565,7 @@ public class ProjectsManager implements ISaveParticipant {
 	public List<FileSystemWatcher> registerWatchers() {
 		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
-			Set<String> sources = new HashSet<>();
+			Set<IPath> sources = new HashSet<>();
 			try {
 				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 				for (IProject project : projects) {
@@ -579,8 +582,8 @@ public class ProjectsManager implements ISaveParticipant {
 									IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
 									if (folder.exists() && !folder.isDerived()) {
 										IPath location = folder.getLocation();
-										if (location != null) {
-											sources.add(location.toString() + "/**");
+										if (location != null && !isContainedIn(location, sources)) {
+											sources.add(location);
 										}
 									}
 
@@ -592,7 +595,9 @@ public class ProjectsManager implements ISaveParticipant {
 							IPath realFolderPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocation();
 							if (realFolderPath != null) {
 								IPath libFolderPath = realFolderPath.append(InvisibleProjectBuildSupport.LIB_FOLDER);
-								sources.add(libFolderPath.toString() + "/**");
+								if (!isContainedIn(libFolderPath, sources)) {
+									sources.add(libFolderPath);
+								}
 							}
 						}
 					}
@@ -608,24 +613,27 @@ public class ProjectsManager implements ISaveParticipant {
 					file = findFile(formatterUrl);
 				}
 				if (file != null && file.isFile()) {
-					sources.add(file.getAbsolutePath());
+					IPath formatterPath = new Path(file.getAbsolutePath());
+					if (!isContainedIn(formatterPath, sources)) {
+						sources.add(formatterPath);
+					}
 				}
 			}
-			for (String pattern : basicWatchers) {
-				sources.add(pattern);
-			}
-			for (String pattern : sources) {
+			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
+			patterns.addAll(sources.stream().map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
+
+			for (String pattern : patterns) {
 				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
 
-			if (!sources.equals(watchers)) {
+			if (!patterns.equals(watchers)) {
 				logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);
 				JavaLanguageServerPlugin.getInstance().unregisterCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES);
 				JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES, didChangeWatchedFilesRegistrationOptions);
 				watchers.clear();
-				watchers.addAll(sources);
+				watchers.addAll(patterns);
 			}
 			return fileWatchers;
 		}

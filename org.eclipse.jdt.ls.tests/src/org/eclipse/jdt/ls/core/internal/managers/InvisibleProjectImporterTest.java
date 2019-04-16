@@ -56,12 +56,37 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 	}
 
 	@Test
+	public void automaticJarDetectionLibUnderSource() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		File projectFolder = createSourceFolderWithLibs("automaticJarDetectionLibUnderSource");
+
+		IProject invisibleProject = importRootFolder(projectFolder, "Test.java");
+		assertNoErrors(invisibleProject);
+
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IClasspathEntry[] classpath = javaProject.getRawClasspath();
+		assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+		assertEquals("foo.jar", classpath[2].getPath().lastSegment());
+		assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
+
+		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+		watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
+		assertEquals(9, watchers.size());
+		String srcGlobPattern = watchers.get(7).getGlobPattern();
+		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
+		String libGlobPattern = watchers.get(8).getGlobPattern();
+		assertTrue("Unexpected project glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/**"));
+	}
+
 	public void automaticJarDetection() throws Exception {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 
-		File projectFolder = createSourceFolderWithLibs("automaticJarDetection");
+		File projectFolder = createSourceFolderWithLibs("automaticJarDetection", "src", true);
 
 		IProject invisibleProject = importRootFolder(projectFolder, "Test.java");
 		assertNoErrors(invisibleProject);
