@@ -177,6 +177,9 @@ public class ProgressReporterManager extends ProgressProvider {
 		@Override
 		protected String formatMessage(String task) {
 			String message = this.taskName == null || this.taskName.length() == 0 ? "" : ("- " + this.taskName);
+			if (task != null && task.length() > 0) {
+				message = message + " - " + task;
+			}
 			return String.format("%.0f%% Starting Java Language Server %s", ((double) progress / totalWork) * 100, message);
 		}
 
