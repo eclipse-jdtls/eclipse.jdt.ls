@@ -213,6 +213,9 @@ public final class ResourceUtils {
 	}
 
 	public static boolean isContainedIn(IPath location, Collection<IPath> paths) {
+		if (location == null || paths == null || paths.isEmpty()) {
+			return false;
+		}
 		for (IPath path : paths) {
 			if (path.isPrefixOf(location)) {
 				return true;
@@ -232,6 +235,29 @@ public final class ResourceUtils {
 			return System.getProperty("user.home") + path.substring(1);
 		}
 		return path;
+	}
+
+	/**
+	 * Convert an {@link IPath} to a glob pattern (i.e. ending with /**)
+	 *
+	 * @param path
+	 *            the path to convert
+	 * @return a glob pattern prefixed with the path
+	 */
+	public static String toGlobPattern(IPath path) {
+		if (path == null) {
+			return null;
+		}
+		String globPattern = path.toPortableString();
+		if (path.getDevice() != null) {
+			//This seems pretty hack-ish: need to remove device as it seems to break
+			// file detection, at least on vscode
+			globPattern = globPattern.replace(path.getDevice(), "**");
+		}
+		if (!globPattern.endsWith("/")) {
+			globPattern += "/";
+		}
+		return globPattern + "**";
 	}
 
 }

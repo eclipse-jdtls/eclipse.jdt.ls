@@ -58,9 +58,19 @@ public abstract class AbstractInvisibleProjectBasedTest extends AbstractProjects
 	}
 
 	protected File createSourceFolderWithLibs(String name, boolean addLibs) throws Exception {
+		return createSourceFolderWithLibs(name, null, addLibs);
+	}
+
+	protected File createSourceFolderWithLibs(String name, String srcDir, boolean addLibs) throws Exception {
 		java.nio.file.Path projectPath = Files.createTempDirectory(name);
 		File projectFolder = projectPath.toFile();
-		FileUtils.copyDirectory(new File(getSourceProjectDirectory(), "eclipse/source-attachment/src"), projectFolder);
+		File sourceFolder;
+		if (org.apache.commons.lang3.StringUtils.isBlank(srcDir)) {
+			sourceFolder = projectFolder;
+		} else {
+			sourceFolder = new File(projectFolder, srcDir);
+		}
+		FileUtils.copyDirectory(new File(getSourceProjectDirectory(), "eclipse/source-attachment/src"), sourceFolder);
 		if (addLibs) {
 			addLibs(projectPath);
 		}
