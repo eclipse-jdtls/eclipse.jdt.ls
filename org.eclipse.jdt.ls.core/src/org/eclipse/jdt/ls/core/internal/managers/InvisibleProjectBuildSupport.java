@@ -27,14 +27,7 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 
 	static final String LIB_FOLDER = "lib";
 
-	private UpdateClasspathJob updateClasspathJob;
-
 	public InvisibleProjectBuildSupport() {
-		this(UpdateClasspathJob.getInstance());
-	}
-
-	public InvisibleProjectBuildSupport(UpdateClasspathJob updateClasspathJob) {
-		this.updateClasspathJob = updateClasspathJob;
 	}
 
 	@Override
@@ -53,7 +46,7 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 		if (realFolderPath != null) {
 			IPath libFolderPath = realFolderPath.append(LIB_FOLDER);
 			if (libFolderPath.isPrefixOf(resource.getLocation())) {
-				updateClasspathJob.updateClasspath(JavaCore.create(invisibleProject), libFolderPath);
+				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(invisibleProject), libFolderPath);
 			}
 		}
 		return false;

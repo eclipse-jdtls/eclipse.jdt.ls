@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codehaus.plexus.util.StringUtils;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -590,6 +591,16 @@ public class ProjectsManager implements ISaveParticipant {
 										}
 									}
 
+								}
+							}
+							if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
+								IPath path = entry.getPath();
+								IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
+								if (resource != null && !resource.isDerived()) {
+									IPath location = resource.getLocation();
+									if (location != null && !isContainedIn(location, sources)) {
+										sources.add(location);
+									}
 								}
 							}
 						}

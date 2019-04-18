@@ -26,5 +26,6 @@ public class ResourceUtilsTest {
 		assertEquals("/foo/bar/**", toGlobPattern(Path.forPosix("/foo/bar/")));
 		assertEquals("**/foo/bar/**", toGlobPattern(Path.forWindows("c:/foo/bar/")));
 		assertEquals("**/foo/bar/**", toGlobPattern(Path.forWindows("c:\\foo\\bar")));
+		assertEquals("/foo/bar/foo.jar", toGlobPattern(Path.forPosix("/foo/bar/foo.jar")));
 	}
 }
