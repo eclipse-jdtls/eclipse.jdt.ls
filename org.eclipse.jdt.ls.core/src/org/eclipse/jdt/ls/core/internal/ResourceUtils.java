@@ -254,10 +254,13 @@ public final class ResourceUtils {
 			// file detection, at least on vscode
 			globPattern = globPattern.replace(path.getDevice(), "**");
 		}
-		if (!globPattern.endsWith("/")) {
-			globPattern += "/";
+		if (!globPattern.endsWith(".jar") && !globPattern.endsWith(".zip")) {
+			if (!globPattern.endsWith("/")) {
+				globPattern += "/";
+			}
+			globPattern += "**";
 		}
-		return globPattern + "**";
+		return globPattern;
 	}
 
 }
