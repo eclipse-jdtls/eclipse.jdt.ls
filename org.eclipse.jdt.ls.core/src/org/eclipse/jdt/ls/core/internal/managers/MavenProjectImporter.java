@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -31,6 +32,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
@@ -174,7 +176,12 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		while (iterator.hasNext()) {
 			IProject project = iterator.next();
 			project.open(monitor);
-			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			if (Platform.OS_WIN32.equals(Platform.getOS())) {
+				project.refreshLocal(IResource.DEPTH_ONE, monitor);
+				((Workspace) ResourcesPlugin.getWorkspace()).getRefreshManager().refresh(project);
+			} else {
+				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			}
 			if (!needsMavenUpdate(project, lastWorkspaceStateSaved)) {
 				iterator.remove();
 			}
