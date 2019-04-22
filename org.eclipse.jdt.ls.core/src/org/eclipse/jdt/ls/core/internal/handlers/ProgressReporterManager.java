@@ -160,7 +160,8 @@ public class ProgressReporterManager extends ProgressProvider {
 			progressReport.setTotalWork(totalWork);
 			progressReport.setWorkDone(progress);
 			progressReport.setComplete(isDone());
-			progressReport.setStatus(formatMessage(task));
+			String subTask = subTaskName == null ? "" : " - " + subTaskName;
+			progressReport.setStatus(formatMessage(task + subTask));
 			client.sendProgressReport(progressReport);
 		}
 
