@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -50,7 +51,7 @@ public class ImplementationsHandler {
 			if (typeRoot != null) {
 				elementToSearch = JDTUtils.findElementAtSelection(typeRoot, param.getPosition().getLine(), param.getPosition().getCharacter(), this.preferenceManager, monitor);
 			}
-			if (elementToSearch == null) {
+			if (!(elementToSearch instanceof IType || elementToSearch instanceof IMethod)) {
 				return Collections.emptyList();
 			}
 			int offset = getOffset(param, typeRoot);

@@ -151,4 +151,17 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		return implementations;
 	}
 
+	@Test
+	public void testInvalidElement() {
+		URI uri = project.getFile("src/org/sample/Foo4.java").getRawLocationURI();
+		String fileURI = ResourceUtils.fixURI(uri);
+
+		TextDocumentPositionParams param = new TextDocumentPositionParams();
+		param.setPosition(new Position(3, 34)); //Position over T
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<? extends Location> implementations = handler.findImplementations(param, monitor);
+		assertNotNull("findImplementations should not return null", implementations);
+		assertEquals(implementations.toString(), 0, implementations.size());
+	}
+
 }
