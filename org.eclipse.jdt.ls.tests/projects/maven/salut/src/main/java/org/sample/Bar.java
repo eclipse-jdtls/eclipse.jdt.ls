@@ -18,4 +18,11 @@ public class Bar {
 		
 		void bar() {}
 	}
+	
+	public static final String EMPTY = "";
+	
+	
+	public enum Foo {
+		Bar, Zoo
+	}
 }
