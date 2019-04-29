@@ -460,7 +460,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		// Check completion item
 		assertEquals("SECONDS", secondsFieldItem.getInsertText());
 		assertEquals("SECONDS : TimeUnit", secondsFieldItem.getLabel());
-		assertEquals(CompletionItemKind.Field, secondsFieldItem.getKind());
+		assertEquals(CompletionItemKind.EnumMember, secondsFieldItem.getKind());
 		assertEquals("999999210", secondsFieldItem.getSortText());
 		assertNull(secondsFieldItem.getTextEdit());
 
@@ -521,7 +521,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("put", ci.getInsertText());
-		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -556,7 +556,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("put", ci.getInsertText());
-		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -606,7 +606,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(ci);
 
 			assertEquals("test", ci.getInsertText());
-			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals(CompletionItemKind.Method, ci.getKind());
 			assertEquals("999999163", ci.getSortText());
 			assertNull(ci.getTextEdit());
 
@@ -641,7 +641,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(ci);
 
 			assertEquals("test", ci.getInsertText());
-			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals(CompletionItemKind.Method, ci.getKind());
 			assertEquals("999999163", ci.getSortText());
 			assertNull(ci.getTextEdit());
 
@@ -677,7 +677,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(ci);
 
 			assertEquals("test", ci.getInsertText());
-			assertEquals(CompletionItemKind.Function, ci.getKind());
+			assertEquals(CompletionItemKind.Method, ci.getKind());
 			assertEquals("999999163", ci.getSortText());
 			assertNull(ci.getTextEdit());
 
@@ -780,7 +780,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
-		assertEquals(CompletionItemKind.Class, item.getKind());
+		assertEquals(CompletionItemKind.Interface, item.getKind());
 		assertEquals("Map", item.getInsertText());
 		assertNull(item.getAdditionalTextEdits());
 		assertNull(item.getTextEdit());
@@ -1282,7 +1282,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("getStrField", ci.getInsertText());
-		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999979", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -1317,7 +1317,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("isBoolField", ci.getInsertText());
-		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999979", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -1351,7 +1351,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("setStrField", ci.getInsertText());
-		assertEquals(CompletionItemKind.Function, ci.getKind());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999979", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -2043,7 +2043,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 					"    public void foo(int x) {\n" + // conflicting method, no static import possible
 					"    }\n" +
 					"}\n");
-				//@formatter:on
+		//@formatter:on
 
 		int[] loc = findCompletionLocation(unit, "/* */fo");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
@@ -2115,6 +2115,49 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("toString() : String", ci.getLabel());
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNull(resolvedItem.getAdditionalTextEdits());
+	}
+
+	@Test
+	public void testCompletion_Enum() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+   "   enum Zenum{A,B}\n"
+			+	"	void test() {\n\n"
+			+	"      Zenu\n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "   Zenu");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Enum, item.getKind());
+		assertEquals("Zenum", item.getInsertText());
+	}
+
+	@Test
+	public void testCompletion_Constant() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		char c = java.io.File.pathSeparatorC \n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "pathSeparatorC");
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Constant, item.getKind());
+		assertEquals("pathSeparatorChar", item.getInsertText());
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {

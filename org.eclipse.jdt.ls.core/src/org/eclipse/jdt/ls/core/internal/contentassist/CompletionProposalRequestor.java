@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -50,12 +51,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	// @formatter:off
 	public static final Set<CompletionItemKind> SUPPORTED_KINDS = ImmutableSet.of(CompletionItemKind.Constructor,
 																				CompletionItemKind.Class,
+																				CompletionItemKind.Constant,
+																				CompletionItemKind.Interface,
+																				CompletionItemKind.Enum,
+																				CompletionItemKind.EnumMember,
 																				CompletionItemKind.Module,
 																				CompletionItemKind.Field,
 																				CompletionItemKind.Keyword,
 																				CompletionItemKind.Reference,
 																				CompletionItemKind.Variable,
-																				CompletionItemKind.Function,
+																				CompletionItemKind.Method,
 																				CompletionItemKind.Text);
 	// @formatter:on
 
@@ -116,7 +121,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
-		$.setKind(mapKind(proposal.getKind()));
+		$.setKind(mapKind(proposal));
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
 		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(unit));
@@ -137,22 +142,38 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 
-	private CompletionItemKind mapKind(final int kind) {
+	private CompletionItemKind mapKind(final CompletionProposal proposal) {
 		//When a new CompletionItemKind is added, don't forget to update SUPPORTED_KINDS
+		int kind = proposal.getKind();
+		int flags = proposal.getFlags();
 		switch (kind) {
 		case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 		case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			return CompletionItemKind.Constructor;
 		case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
 		case CompletionProposal.TYPE_REF:
+			if (Flags.isInterface(flags)) {
+				return CompletionItemKind.Interface;
+			} else if (Flags.isEnum(flags)) {
+				return CompletionItemKind.Enum;
+			}
 			return CompletionItemKind.Class;
 		case CompletionProposal.FIELD_IMPORT:
 		case CompletionProposal.METHOD_IMPORT:
 		case CompletionProposal.METHOD_NAME_REFERENCE:
 		case CompletionProposal.PACKAGE_REF:
 		case CompletionProposal.TYPE_IMPORT:
+		case CompletionProposal.MODULE_DECLARATION:
+		case CompletionProposal.MODULE_REF:
 			return CompletionItemKind.Module;
 		case CompletionProposal.FIELD_REF:
+			if (Flags.isEnum(flags)) {
+				return CompletionItemKind.EnumMember;
+			}
+			if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
+				return CompletionItemKind.Constant;
+			}
+			return CompletionItemKind.Field;
 		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
 			return CompletionItemKind.Field;
 		case CompletionProposal.KEYWORD:
@@ -166,7 +187,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.METHOD_REF:
 		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-			return CompletionItemKind.Function;
+			return CompletionItemKind.Method;
 			//text
 		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
 		case CompletionProposal.JAVADOC_BLOCK_TAG:
