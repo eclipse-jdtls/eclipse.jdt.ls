@@ -128,6 +128,62 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("println\\(\\w+ \\w+\\) : void"));
 	}
 
+	@Test
+	public void testSignatureHelp_invalid() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("   public int bar(String s) { if (  }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		SignatureHelp help = getSignatureHelp(cu, 2, 34);
+		assertNotNull(help);
+		assertTrue(help.getSignatures().size() == 0);
+	}
+
+	// See https://github.com/eclipse/eclipse.jdt.ls/pull/1015#issuecomment-487997215
+	@Test
+	public void testSignatureHelp_parameters() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("   public boolean bar() {\n");
+		buf.append("     foo(\"\",)\n");
+		buf.append("     return true;\n");
+		buf.append("   }\n");
+		buf.append("   public void foo(String s) {}\n");
+		buf.append("   public void foo(String s, boolean bar) {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		SignatureHelp help = getSignatureHelp(cu, 3, 12);
+		assertNotNull(help);
+		assertTrue(help.getSignatures().size() == 2);
+		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(String s, boolean bar) : void");
+	}
+
+	@Test
+	public void testSignatureHelp_javadoc() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("/**\n");
+		buf.append(" * @see String#substring()\n");
+		buf.append(" */\n");
+		buf.append("   public int test() {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		SignatureHelp help = getSignatureHelp(cu, 3, 25);
+		assertNotNull(help);
+		assertTrue(help.getSignatures().size() == 2);
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("substring\\(\\w+ \\w+\\) : String"));
+	}
+
 	private SignatureHelp getSignatureHelp(ICompilationUnit cu, int line, int character) {
 		String payload = createSignatureHelpRequest(cu, line, character);
 		TextDocumentPositionParams position = getParams(payload);
