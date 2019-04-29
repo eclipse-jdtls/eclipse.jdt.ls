@@ -557,7 +557,7 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 	}
 
 	@Test
-	public void testNoGeneratorForStatic() throws Exception {
+	public void testGeneratorForStatic() throws Exception {
 		fClassA.createField("static String field1;", null, false, new NullProgressMonitor());
 		runAndApplyOperation(fClassA);
 
@@ -565,6 +565,20 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 		String expected= "public class A {\r\n" +
 						"\r\n" +
 						"	static String field1;\r\n" +
+						"\r\n" +
+						"	/**\r\n" +
+						"	 * @return Returns the field1.\r\n" +
+						"	 */\r\n" +
+						"	public static String getField1() {\r\n" +
+						"		return field1;\r\n" +
+						"	}\r\n" +
+						"\r\n" +
+						"	/**\r\n" +
+						"	 * @param field1 The field1 to set.\r\n" +
+						"	 */\r\n" +
+						"	public static void setField1(String field1) {\r\n" +
+						"		A.field1 = field1;\r\n" +
+						"	}\r\n" +
 						"}";
 		/* @formatter:on */
 

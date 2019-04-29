@@ -153,6 +153,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
 		when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
 		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
+		when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 
