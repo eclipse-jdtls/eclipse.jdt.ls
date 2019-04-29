@@ -193,7 +193,9 @@ public class SourceAssistProcessor {
 	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type) {
 		try {
 			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type);
-			if (accessors == null || accessors.length < 2 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
+			if (accessors == null || accessors.length == 0) {
+				return Optional.empty();
+			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
 				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot());
 				TextEdit edit = operation.createTextEdit(null, accessors);
 				return convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, edit);
