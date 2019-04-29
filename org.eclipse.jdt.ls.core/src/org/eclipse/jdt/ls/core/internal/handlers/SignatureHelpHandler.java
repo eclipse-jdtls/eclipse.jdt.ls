@@ -18,6 +18,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.MethodRef;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.SignatureHelpRequestor;
@@ -53,7 +60,7 @@ public class SignatureHelpHandler {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
 			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), position.getPosition().getLine(), position.getPosition().getCharacter());
 			int[] contextInfomation = getContextInfomation(unit.getBuffer(), offset);
-			if (contextInfomation[0] == -1) {
+			if (!isValid(unit, contextInfomation, monitor)) {
 				return help;
 			}
 			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, contextInfomation[0] + 1);
@@ -78,6 +85,15 @@ public class SignatureHelpHandler {
 			JavaLanguageServerPlugin.logException("Find signatureHelp failure ", ex);
 		}
 		return help;
+	}
+
+	private boolean isValid(ICompilationUnit unit, int[] contextInfomation, IProgressMonitor monitor) {
+		if (contextInfomation[0] == -1) {
+			return false;
+		}
+		CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+		ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
+		return node instanceof MethodInvocation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block);
 	}
 
 	/*
