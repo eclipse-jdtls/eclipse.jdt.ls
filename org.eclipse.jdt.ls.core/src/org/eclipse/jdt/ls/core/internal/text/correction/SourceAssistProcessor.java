@@ -27,10 +27,10 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -71,6 +72,7 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT = "java.action.hashCodeEqualsPrompt";
 	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
 	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
+	public static final String COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT = "java.action.generateAccessorsPrompt";
 
 	private PreferenceManager preferenceManager;
 
@@ -101,10 +103,7 @@ public class SourceAssistProcessor {
 		}
 
 		// Generate Getter and Setter
-		TextEdit getterSetterEdit = getGetterSetterProposal(context, type);
-		Optional<Either<Command, CodeAction>> getterSetter = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label,
-				JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS,
-				getterSetterEdit);
+		Optional<Either<Command, CodeAction>> getterSetter = getGetterSetterAction(params, context, type);
 		addSourceActionCommand($, params.getContext(), getterSetter);
 
 		// Generate hashCode() and equals()
@@ -191,22 +190,30 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private TextEdit getGetterSetterProposal(IInvocationContext context, IType type) {
+	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type) {
 		try {
-			if (!GenerateGetterSetterOperation.supportsGetterSetter(type)) {
-				return null;
+			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type);
+			if (accessors == null || accessors.length == 0) {
+				return Optional.empty();
+			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
+				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot());
+				TextEdit edit = operation.createTextEdit(null, accessors);
+				return convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, edit);
+			} else {
+				Command command = new Command(ActionMessages.GenerateGetterSetterAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(params));
+				if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS)) {
+					CodeAction codeAction = new CodeAction(ActionMessages.GenerateGetterSetterAction_ellipsisLabel);
+					codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
+					codeAction.setCommand(command);
+					codeAction.setDiagnostics(Collections.EMPTY_LIST);
+					return Optional.of(Either.forRight(codeAction));
+				} else {
+					return Optional.of(Either.forLeft(command));
+				}
 			}
-		} catch (JavaModelException e) {
-			return null;
-		}
-
-		CompilationUnit astRoot = context.getASTRoot();
-		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, astRoot);
-		try {
-			return operation.createTextEdit(null);
 		} catch (OperationCanceledException | CoreException e) {
-			JavaLanguageServerPlugin.logException("Resolve Getter and Setter source action", e);
-			return null;
+			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
+			return Optional.empty();
 		}
 	}
 
@@ -317,8 +324,8 @@ public class SourceAssistProcessor {
 
 		ITypeBinding typeBinding = null;
 		while (node != null && !(node instanceof CompilationUnit)) {
-			if (node instanceof TypeDeclaration) {
-				typeBinding = ((TypeDeclaration) node).resolveBinding();
+			if (node instanceof AbstractTypeDeclaration) {
+				typeBinding = ((AbstractTypeDeclaration) node).resolveBinding();
 				break;
 			} else if (node instanceof AnonymousClassDeclaration) { // Anonymous
 				typeBinding = ((AnonymousClassDeclaration) node).resolveBinding();

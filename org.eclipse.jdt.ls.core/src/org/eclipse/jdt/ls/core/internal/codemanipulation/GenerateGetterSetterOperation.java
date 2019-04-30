@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018 Microsoft Corporation and others.
+* Copyright (c) 2018-2019 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License v1.0
 * which accompanies this distribution, and is available at
@@ -10,6 +10,9 @@
 *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -59,8 +62,35 @@ public class GenerateGetterSetterOperation {
 		return true;
 	}
 
-	public TextEdit createTextEdit(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+	public static AccessorField[] getUnimplementedAccessors(IType type) throws JavaModelException {
 		if (!supportsGetterSetter(type)) {
+			return new AccessorField[0];
+		}
+
+		List<AccessorField> unimplemented = new ArrayList<>();
+		IField[] fields = type.getFields();
+		for (IField field : fields) {
+			int flags = field.getFlags();
+			if (!Flags.isEnum(flags)) {
+				boolean isStatic = Flags.isStatic(flags);
+				boolean generateGetter = (GetterSetterUtil.getGetter(field) == null);
+				boolean generateSetter = (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null);
+				if (generateGetter || generateSetter) {
+					unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, generateSetter));
+				}
+			}
+		}
+
+		return unimplemented.toArray(new AccessorField[0]);
+	}
+
+	public TextEdit createTextEdit(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		AccessorField[] accessors = getUnimplementedAccessors(type);
+		return createTextEdit(monitor, accessors);
+	}
+
+	public TextEdit createTextEdit(IProgressMonitor monitor, AccessorField[] accessors) throws OperationCanceledException, CoreException {
+		if (accessors == null || accessors.length == 0) {
 			return null;
 		}
 
@@ -90,23 +120,25 @@ public class GenerateGetterSetterOperation {
 			return null;
 		}
 
-		generateGetterSetterMethods(listRewriter);
+		for (AccessorField accessor : accessors) {
+			generateGetterSetterMethods(listRewriter, accessor);
+		}
+
 		return astRewrite.rewriteAST();
 	}
 
-	private void generateGetterSetterMethods(ListRewrite listRewriter) throws OperationCanceledException, CoreException {
-		IField[] fields = type.getFields();
-		for (IField field : fields) {
-			int flags = field.getFlags();
-			if (!Flags.isEnum(flags) && !Flags.isStatic(flags)) {
-				if (GetterSetterUtil.getGetter(field) == null) {
-					insertMethod(field, listRewriter, AccessorKind.GETTER);
-				}
+	private void generateGetterSetterMethods(ListRewrite listRewriter, AccessorField accessor) throws OperationCanceledException, CoreException {
+		IField field = type.getField(accessor.fieldName);
+		if (field == null) {
+			return;
+		}
 
-				if (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null) {
-					insertMethod(field, listRewriter, AccessorKind.SETTER);
-				}
-			}
+		if (accessor.generateGetter && GetterSetterUtil.getGetter(field) == null) {
+			insertMethod(field, listRewriter, AccessorKind.GETTER);
+		}
+
+		if (accessor.generateSetter && GetterSetterUtil.getSetter(field) == null) {
+			insertMethod(field, listRewriter, AccessorKind.SETTER);
 		}
 	}
 
@@ -130,5 +162,19 @@ public class GenerateGetterSetterOperation {
 
 	enum AccessorKind {
 		GETTER, SETTER
+	}
+
+	public static class AccessorField {
+		public String fieldName;
+		public boolean isStatic;
+		public boolean generateGetter;
+		public boolean generateSetter;
+
+		public AccessorField(String fieldName, boolean isStatic, boolean generateGetter, boolean generateSetter) {
+			this.fieldName = fieldName;
+			this.isStatic = isStatic;
+			this.generateGetter = generateGetter;
+			this.generateSetter = generateSetter;
+		}
 	}
 }

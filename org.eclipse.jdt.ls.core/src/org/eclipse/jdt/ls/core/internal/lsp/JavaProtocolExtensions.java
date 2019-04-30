@@ -13,6 +13,8 @@ package org.eclipse.jdt.ls.core.internal.lsp;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -68,4 +70,10 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> generateToString(GenerateToStringParams params);
+
+	@JsonRequest
+	CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(CodeActionParams params);
+
+	@JsonRequest
+	CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params);
 }

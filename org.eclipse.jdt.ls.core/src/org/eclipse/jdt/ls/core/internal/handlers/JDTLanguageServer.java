@@ -48,6 +48,8 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -799,6 +801,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
 		logInfo(">> java/organizeImports");
 		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params));
+	}
+
+	@Override
+	public CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(CodeActionParams params) {
+		logInfo(">> java/resolveUnimplementedAccessors");
+		return computeAsync((monitor) -> GenerateAccessorsHandler.getUnimplementedAccessors(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params) {
+		logInfo(">> java/generateAccessors");
+		return computeAsync((monitor) -> GenerateAccessorsHandler.generateAccessors(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {
