@@ -86,7 +86,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        c.setTest(c.getTest() + 1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -144,7 +144,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        c.setTest(c.getTest() + (1 + 2));\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -203,7 +203,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        c.setTest(c.getTest() - (1 + 2));\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -262,7 +262,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        c.setTest(c.getTest() * (1 + 2));\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -413,7 +413,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        new A().setT(5);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 't'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 't'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
