@@ -60,7 +60,8 @@ public class SignatureHelpHandler {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
 			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), position.getPosition().getLine(), position.getPosition().getCharacter());
 			int[] contextInfomation = getContextInfomation(unit.getBuffer(), offset);
-			if (!isValid(unit, contextInfomation, monitor)) {
+			ASTNode node = getNode(unit, contextInfomation, monitor);
+			if (node == null) {
 				return help;
 			}
 			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, contextInfomation[0] + 1);
@@ -68,12 +69,22 @@ public class SignatureHelpHandler {
 			if (offset > -1 && !monitor.isCanceled()) {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
 				help = collector.getSignatureHelp(monitor);
-
-				if (help != null) {
+				if (help != null && help.getSignatures().size() > 0) {
+					int size = -1;
 					int currentParameter = contextInfomation[1];
+					if (node instanceof MethodInvocation) {
+						try {
+							size = ((MethodInvocation) node).arguments().size();
+						} catch (UnsupportedOperationException e) {
+							// ignore
+						}
+					} else if (node instanceof MethodRef) {
+						size = ((MethodRef) node).parameters().size();
+					}
+					size = Math.max(currentParameter + 1, size);
 					List<SignatureInformation> infos = help.getSignatures();
 					for (int i = 0; i < infos.size(); i++) {
-						if (infos.get(i).getParameters().size() >= currentParameter + 1) {
+						if (infos.get(i).getParameters().size() >= size) {
 							help.setActiveSignature(i);
 							help.setActiveParameter(currentParameter < 0 ? 0 : currentParameter);
 							break;
@@ -87,13 +98,15 @@ public class SignatureHelpHandler {
 		return help;
 	}
 
-	private boolean isValid(ICompilationUnit unit, int[] contextInfomation, IProgressMonitor monitor) {
-		if (contextInfomation[0] == -1) {
-			return false;
+	private ASTNode getNode(ICompilationUnit unit, int[] contextInfomation, IProgressMonitor monitor) {
+		if (contextInfomation[0] != -1) {
+			CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+			ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
+			if (node instanceof MethodInvocation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block)) {
+				return node;
+			}
 		}
-		CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
-		ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
-		return node instanceof MethodInvocation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block);
+		return null;
 	}
 
 	/*
