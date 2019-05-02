@@ -279,6 +279,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		Launcher<JavaLanguageClient> launcher;
 		ExecutorService executorService = Executors.newCachedThreadPool();
 		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
+		Function<MessageConsumer, MessageConsumer> wrapper = getWrapper();
 		if (JDTEnvironmentUtils.inSocketStreamDebugMode()) {
 			String host = JDTEnvironmentUtils.getClientHost();
 			Integer port = JDTEnvironmentUtils.getClientPort();
@@ -288,8 +289,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 				AsynchronousSocketChannel socketChannel = serverSocket.accept().get();
 				InputStream in = Channels.newInputStream(socketChannel);
 				OutputStream out = Channels.newOutputStream(socketChannel);
-				Function<MessageConsumer, MessageConsumer> messageConsumer = it -> it;
-				launcher = Launcher.createIoLauncher(protocol, JavaLanguageClient.class, in, out, executorService, messageConsumer);
+				launcher = Launcher.createIoLauncher(protocol, JavaLanguageClient.class, in, out, executorService, wrapper);
 			} catch (InterruptedException | ExecutionException e) {
 				throw new RuntimeException("Error when opening a socket channel at " + host + ":" + port + ".", e);
 			}
@@ -297,16 +297,29 @@ public class JavaLanguageServerPlugin extends Plugin {
 			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
 			InputStream in = connectionFactory.getInputStream();
 			OutputStream out = connectionFactory.getOutputStream();
-			Function<MessageConsumer, MessageConsumer> wrapper;
-			if ("false".equals(System.getProperty("watchParentProcess"))) {
-				wrapper = it -> it;
-			} else {
-				wrapper = new ParentProcessWatcher(this.languageServer);
-			}
 			launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, in, out, executorService, wrapper);
 		}
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
+	}
+
+	private Function<MessageConsumer, MessageConsumer> getWrapper() {
+		Function<MessageConsumer, MessageConsumer> wrapper;
+		int pollDelaySecs = ParentProcessWatcher.POLL_DELAY_SECS;
+		String watchParentProcess = System.getProperty("watchParentProcess");
+		if (watchParentProcess != null) {
+			try {
+				pollDelaySecs = Integer.parseInt(watchParentProcess);
+			} catch (Exception e) {
+				logException(e.getMessage(), e);
+			}
+		}
+		if (pollDelaySecs <= 0) {
+			wrapper = it -> it;
+		} else {
+			wrapper = new ParentProcessWatcher(this.languageServer, pollDelaySecs);
+		}
+		return wrapper;
 	}
 
 	/*
@@ -377,18 +390,18 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 * @return
 	 */
 	public static ProjectsManager getProjectsManager() {
-		return pluginInstance.projectsManager;
+		return pluginInstance == null ? null : pluginInstance.projectsManager;
 	}
 
 	public static DigestStore getDigestStore() {
-		return pluginInstance.digestStore;
+		return pluginInstance == null ? null : pluginInstance.digestStore;
 	}
 
 	/**
 	 * @return
 	 */
 	public static ContentProviderManager getContentProviderManager() {
-		return pluginInstance.contentProviderManager;
+		return pluginInstance == null ? null : pluginInstance.contentProviderManager;
 	}
 
 	/**
@@ -478,4 +491,5 @@ public class JavaLanguageServerPlugin extends Plugin {
 			pluginInstance.preferenceManager = preferenceManager;
 		}
 	}
+
 }

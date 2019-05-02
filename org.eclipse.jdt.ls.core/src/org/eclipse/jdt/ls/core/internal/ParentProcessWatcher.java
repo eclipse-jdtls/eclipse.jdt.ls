@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 
 import com.google.common.io.Closeables;
@@ -30,16 +31,21 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 
 	private static final long INACTIVITY_DELAY_SECS = 30 *1000;
 	private static final boolean isJava1x = System.getProperty("java.version").startsWith("1.");
-	private static final int POLL_DELAY_SECS = 10;
+	public static final int POLL_DELAY_SECS = 10;
 	private volatile long lastActivityTime;
 	private final LanguageServer server;
 	private ScheduledFuture<?> task;
 	private ScheduledExecutorService service;
+	private String command;
 
 	public ParentProcessWatcher(LanguageServer server ) {
+		this(server, POLL_DELAY_SECS);
+	}
+
+	public ParentProcessWatcher(LanguageServer server, int pollDelaySecs) {
 		this.server = server;
 		service = Executors.newScheduledThreadPool(1);
-		task =  service.scheduleWithFixedDelay(this, POLL_DELAY_SECS, POLL_DELAY_SECS, TimeUnit.SECONDS);
+		task = service.scheduleWithFixedDelay(this, pollDelaySecs, pollDelaySecs, TimeUnit.SECONDS);
 	}
 
 	@Override
@@ -47,6 +53,7 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		if (!parentProcessStillRunning()) {
 			JavaLanguageServerPlugin.logInfo("Parent process stopped running, forcing server exit");
 			task.cancel(true);
+			ProjectsManager.saveWorkspace();
 			server.exit();
 		}
 	}
@@ -63,12 +70,7 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		if (pid == 0 || lastActivityTime > (System.currentTimeMillis() - INACTIVITY_DELAY_SECS)) {
 			return true;
 		}
-		String command;
-		if (Platform.OS_WIN32.equals(Platform.getOS())) {
-			command = "cmd /c \"tasklist /FI \"PID eq " + pid + "\" | findstr " + pid + "\"";
-		} else {
-			command = "ps -p " + pid;
-		}
+		String command = getCommand(pid);
 		Process process = null;
 		boolean finished = false;
 		try {
@@ -111,6 +113,17 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 				}
 			}
 		}
+	}
+
+	private String getCommand(long pid) {
+		if (command == null) {
+			if (Platform.OS_WIN32.equals(Platform.getOS())) {
+				command = "cmd /c \"tasklist /FI \"PID eq " + pid + "\" | findstr " + pid + "\"";
+			} else {
+				command = "ps -p " + pid;
+			}
+		}
+		return command;
 	}
 
 	@Override

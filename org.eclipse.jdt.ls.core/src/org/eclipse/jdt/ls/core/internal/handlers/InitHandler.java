@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -241,7 +242,6 @@ final public class InitHandler {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 				try {
-					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
@@ -264,9 +264,33 @@ final public class InitHandler {
 			}
 
 		};
-		job.setPriority(Job.BUILD);
-		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
-		job.schedule();
+		Job refresh = new Job("Refreshing...") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				IJobManager jobManager = Job.getJobManager();
+				try {
+					jobManager.join(ResourcesPlugin.FAMILY_AUTO_REFRESH, monitor);
+					jobManager.join(ResourcesPlugin.FAMILY_MANUAL_BUILD, monitor);
+					jobManager.join(ResourcesPlugin.FAMILY_AUTO_BUILD, monitor);
+				} catch (OperationCanceledException | InterruptedException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+				job.setPriority(Job.BUILD);
+				job.setRule(ResourcesPlugin.getWorkspace().getRoot());
+				job.schedule();
+				return Status.OK_STATUS;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+			 */
+			@Override
+			public boolean belongsTo(Object family) {
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
+			}
+		};
+		refresh.schedule();
 	}
 
 	private Map<?, ?> getInitializationOptions(InitializeParams params) {

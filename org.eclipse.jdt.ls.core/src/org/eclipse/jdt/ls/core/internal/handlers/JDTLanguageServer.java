@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -239,11 +238,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				try {
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
+					if (JavaLanguageServerPlugin.getInstance() == null) {
+						return Status.CANCEL_STATUS;
+					}
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm);
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					pm.registerWatchers();
 					logInfo(">> watchers registered");
+					ProjectsManager.saveWorkspace();
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
 					return Status.CANCEL_STATUS;
@@ -313,18 +316,21 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
-			try {
-				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
-				if (workspaceDiagnosticsHandler != null) {
-					workspaceDiagnosticsHandler.removeResourceChangeListener();
-					workspaceDiagnosticsHandler = null;
-				}
-				ResourcesPlugin.getWorkspace().save(true, monitor);
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
-			}
+			removeListeners();
+			ProjectsManager.saveWorkspace();
 			return new Object();
 		});
+	}
+
+	private void removeListeners() {
+		if (jvmConfigurator != null) {
+			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
+			jvmConfigurator = null;
+		}
+		if (workspaceDiagnosticsHandler != null) {
+			workspaceDiagnosticsHandler.removeResourceChangeListener();
+			workspaceDiagnosticsHandler = null;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -333,6 +339,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void exit() {
 		logInfo(">> exit");
+		removeListeners();
 		JavaLanguageServerPlugin.getLanguageServer().exit();
 		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 			logInfo("Forcing exit after 1 min.");

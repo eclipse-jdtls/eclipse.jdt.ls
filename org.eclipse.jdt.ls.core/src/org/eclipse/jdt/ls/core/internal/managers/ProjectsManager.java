@@ -671,4 +671,15 @@ public class ProjectsManager implements ISaveParticipant {
 		return null;
 	}
 
+	public static void saveWorkspace() {
+		try {
+			JavaLanguageServerPlugin.logInfo("Saving workspace");
+			long start = System.currentTimeMillis();
+			ResourcesPlugin.getWorkspace().save(true, null);
+			JavaLanguageServerPlugin.logInfo("Workspace saved. Took " + (System.currentTimeMillis() - start) + " ms");
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
 }
