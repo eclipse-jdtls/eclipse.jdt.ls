@@ -42,9 +42,11 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodReference;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -52,6 +54,7 @@ import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.WhileStatement;
@@ -596,6 +599,37 @@ public class LocalCorrectionsSubProcessor {
 	private static void addRemoveProposal(IInvocationContext context, ASTRewrite rewrite, String label, Collection<CUCorrectionProposal> proposals) {
 		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, 10);
 		proposals.add(proposal);
+	}
+
+	public static void addConstructorFromSuperclassProposal(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode == null) {
+			return;
+		}
+
+		TypeDeclaration typeDeclaration = null;
+		if (selectedNode.getLocationInParent() == TypeDeclaration.NAME_PROPERTY) {
+			typeDeclaration = (TypeDeclaration) selectedNode.getParent();
+		} else {
+			BodyDeclaration declaration = ASTResolving.findParentBodyDeclaration(selectedNode);
+			if (declaration instanceof Initializer && problem.getProblemId() == IProblem.UnhandledExceptionInDefaultConstructor) {
+				addUncaughtExceptionProposals(context, problem, proposals);
+			}
+			return;
+		}
+
+		ITypeBinding binding = typeDeclaration.resolveBinding();
+		if (binding == null || binding.getSuperclass() == null) {
+			return;
+		}
+		ICompilationUnit cu = context.getCompilationUnit();
+		IMethodBinding[] methods = binding.getSuperclass().getDeclaredMethods();
+		for (int i = 0; i < methods.length; i++) {
+			IMethodBinding curr = methods[i];
+			if (curr.isConstructor() && !Modifier.isPrivate(curr.getModifiers())) {
+				proposals.add(new ConstructorFromSuperclassProposal(cu, typeDeclaration, curr, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS));
+			}
+		}
 	}
 
 }
