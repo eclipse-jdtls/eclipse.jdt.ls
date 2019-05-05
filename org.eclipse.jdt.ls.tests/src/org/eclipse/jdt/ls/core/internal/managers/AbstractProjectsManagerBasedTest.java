@@ -116,6 +116,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		Platform.addLogListener(logListener);
 		preferences = new Preferences();
 		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
+		preferences.setCodeGenerationTemplateGenerateComments(true);
 		if (preferenceManager == null) {
 			preferenceManager = mock(PreferenceManager.class);
 		}
