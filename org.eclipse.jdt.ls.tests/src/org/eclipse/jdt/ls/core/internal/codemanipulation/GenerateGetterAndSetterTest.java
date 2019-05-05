@@ -33,13 +33,21 @@ import org.junit.Test;
 public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 
 	private void runAndApplyOperation(IType type) throws OperationCanceledException, CoreException, MalformedTreeException, BadLocationException {
-		TextEdit edit = runOperation(type);
+		runAndApplyOperation(type, true);
+	}
+
+	private TextEdit runOperation(IType type) throws OperationCanceledException, CoreException {
+		return runOperation(type, true);
+	}
+
+	private void runAndApplyOperation(IType type, boolean generateComments) throws OperationCanceledException, CoreException, MalformedTreeException, BadLocationException {
+		TextEdit edit = runOperation(type, generateComments);
 		ICompilationUnit unit = type.getCompilationUnit();
 		JavaModelUtil.applyEdit(unit, edit, true, null);
 	}
 
-	private TextEdit runOperation(IType type) throws OperationCanceledException, CoreException {
-		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null);
+	private TextEdit runOperation(IType type, boolean generateComments) throws OperationCanceledException, CoreException {
+		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments);
 		return operation.createTextEdit(null);
 	}
 
@@ -578,6 +586,29 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 						"	 */\r\n" +
 						"	public static void setField1(String field1) {\r\n" +
 						"		A.field1 = field1;\r\n" +
+						"	}\r\n" +
+						"}";
+		/* @formatter:on */
+
+		compareSource(expected, fClassA.getSource());
+	}
+
+	@Test
+	public void testWithoutGeneratingComments() throws Exception {
+		IField field1 = fClassA.createField("String field1;", null, false, new NullProgressMonitor());
+		runAndApplyOperation(fClassA, false);
+
+		/* @formatter:off */
+		String expected= "public class A {\r\n" +
+						"\r\n" +
+						"	String field1;\r\n" +
+						"\r\n" +
+						"	public String getField1() {\r\n" +
+						"		return field1;\r\n" +
+						"	}\r\n" +
+						"\r\n" +
+						"	public void setField1(String field1) {\r\n" +
+						"		this.field1 = field1;\r\n" +
 						"	}\r\n" +
 						"}";
 		/* @formatter:on */

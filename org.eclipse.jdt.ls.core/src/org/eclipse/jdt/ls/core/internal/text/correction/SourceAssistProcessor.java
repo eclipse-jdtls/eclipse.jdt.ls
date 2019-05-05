@@ -196,7 +196,7 @@ public class SourceAssistProcessor {
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
-				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot());
+				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments());
 				TextEdit edit = operation.createTextEdit(null, accessors);
 				return convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, edit);
 			} else {

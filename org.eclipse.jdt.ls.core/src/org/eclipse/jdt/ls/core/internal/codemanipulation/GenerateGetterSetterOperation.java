@@ -43,15 +43,16 @@ import org.eclipse.text.edits.TextEdit;
 
 public class GenerateGetterSetterOperation {
 	private final static int generateVisibility = Modifier.PUBLIC;
-	private final static boolean generateComments = true;
 
 	private final IType type;
 	private CompilationUnit astRoot;
+	private boolean generateComments = true;
 
-	public GenerateGetterSetterOperation(IType type, CompilationUnit astRoot) {
+	public GenerateGetterSetterOperation(IType type, CompilationUnit astRoot, boolean generateComments) {
 		Assert.isNotNull(type);
 		this.type = type;
 		this.astRoot = astRoot;
+		this.generateComments = generateComments;
 	}
 
 	public static boolean supportsGetterSetter(IType type) throws JavaModelException {

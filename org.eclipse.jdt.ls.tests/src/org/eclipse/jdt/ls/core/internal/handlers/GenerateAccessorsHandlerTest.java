@@ -144,7 +144,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 
 	private void generateAccessors(IType type) throws ValidateEditException, CoreException {
 		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(type);
-		TextEdit edit = GenerateAccessorsHandler.generateAccessors(type, accessors);
+		TextEdit edit = GenerateAccessorsHandler.generateAccessors(type, accessors, true);
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(type.getCompilationUnit(), edit, true, null);
 	}

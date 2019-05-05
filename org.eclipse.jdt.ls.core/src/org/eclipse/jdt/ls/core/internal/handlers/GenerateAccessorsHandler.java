@@ -18,6 +18,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -44,17 +45,18 @@ public class GenerateAccessorsHandler {
 			return null;
 		}
 
-		TextEdit edit = generateAccessors(type, params.accessors);
+		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+		TextEdit edit = generateAccessors(type, params.accessors, preferences.isCodeGenerationTemplateGenerateComments());
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	public static TextEdit generateAccessors(IType type, AccessorField[] accessors) {
+	public static TextEdit generateAccessors(IType type, AccessorField[] accessors, boolean generateComments) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
 
 		try {
-			GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null);
+			GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments);
 			return operation.createTextEdit(null, accessors);
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to generate the accessors.", e);
