@@ -298,12 +298,11 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addUninitializedLocalVariableProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnhandledExceptionInDefaultConstructor:
-			// case IProblem.UndefinedConstructorInDefaultConstructor:
-			// case IProblem.NotVisibleConstructorInDefaultConstructor:
-			// LocalCorrectionsSubProcessor.addConstructorFromSuperclassProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnhandledExceptionInDefaultConstructor:
+			case IProblem.UndefinedConstructorInDefaultConstructor:
+			case IProblem.NotVisibleConstructorInDefaultConstructor:
+				LocalCorrectionsSubProcessor.addConstructorFromSuperclassProposal(context, problem, proposals);
+				break;
 			case IProblem.UnusedPrivateMethod:
 			case IProblem.UnusedPrivateConstructor:
 			case IProblem.UnusedPrivateType:
