@@ -117,6 +117,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefac
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -161,8 +162,8 @@ public class QuickAssistProcessor {
 			//			getRenameLocalProposals(context, coveringNode, locations, resultingCollections);
 			//			getRenameRefactoringProposal(context, coveringNode, locations, resultingCollections);
 			//			getAssignToVariableProposals(context, coveringNode, locations, resultingCollections);
-			//			getAssignParamToFieldProposals(context, coveringNode, resultingCollections);
-			//			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
+			getAssignParamToFieldProposals(context, coveringNode, resultingCollections);
+			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
 
@@ -209,6 +210,89 @@ public class QuickAssistProcessor {
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+		node = ASTNodes.getNormalizedNode(node);
+		ASTNode parent = node.getParent();
+		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
+			return false;
+		}
+		SingleVariableDeclaration paramDecl = (SingleVariableDeclaration) parent;
+		IVariableBinding binding = paramDecl.resolveBinding();
+
+		MethodDeclaration methodDecl = (MethodDeclaration) parent.getParent();
+		if (binding == null || methodDecl.getBody() == null) {
+			return false;
+		}
+		ITypeBinding typeBinding = binding.getType();
+		if (typeBinding == null) {
+			return false;
+		}
+
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		ITypeBinding parentType = Bindings.getBindingOfParentType(node);
+		if (parentType != null) {
+			if (parentType.isInterface()) {
+				return false;
+			}
+			// assign to existing fields
+			CompilationUnit root = context.getASTRoot();
+			IVariableBinding[] declaredFields = parentType.getDeclaredFields();
+			boolean isStaticContext = ASTResolving.isInStaticContext(node);
+			for (int i = 0; i < declaredFields.length; i++) {
+				IVariableBinding curr = declaredFields[i];
+				if (isStaticContext == Modifier.isStatic(curr.getModifiers()) && typeBinding.isAssignmentCompatible(curr.getType())) {
+					ASTNode fieldDeclFrag = root.findDeclaringNode(curr);
+					if (fieldDeclFrag instanceof VariableDeclarationFragment) {
+						VariableDeclarationFragment fragment = (VariableDeclarationFragment) fieldDeclFrag;
+						if (fragment.getInitializer() == null) {
+							resultingCollections.add(new AssignToVariableAssistProposal(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD));
+						}
+					}
+				}
+			}
+		}
+
+		AssignToVariableAssistProposal fieldProposal = new AssignToVariableAssistProposal(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD);
+		resultingCollections.add(fieldProposal);
+		return true;
+	}
+
+	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+		node = ASTNodes.getNormalizedNode(node);
+		ASTNode parent = node.getParent();
+		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
+			return false;
+		}
+		MethodDeclaration methodDecl = (MethodDeclaration) parent.getParent();
+		if (methodDecl.getBody() == null) {
+			return false;
+		}
+		List<SingleVariableDeclaration> parameters = methodDecl.parameters();
+		if (parameters.size() <= 1) {
+			return false;
+		}
+		ITypeBinding parentType = Bindings.getBindingOfParentType(node);
+		if (parentType == null || parentType.isInterface()) {
+			return false;
+		}
+		for (SingleVariableDeclaration param : parameters) {
+			IVariableBinding binding = param.resolveBinding();
+			if (binding == null || binding.getType() == null) {
+				return false;
+			}
+		}
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		AssignToVariableAssistProposal fieldProposal = new AssignToVariableAssistProposal(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS);
+		resultingCollections.add(fieldProposal);
+		return true;
 	}
 
 	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {

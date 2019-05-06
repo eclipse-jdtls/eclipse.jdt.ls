@@ -23,9 +23,13 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 public class CodeActionUtil {
 
 	public static Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
+		return getRange(unit, search, search.length());
+	}
+
+	public static Range getRange(ICompilationUnit unit, String search, int length) throws JavaModelException {
 		String str = unit.getSource();
 		int start = str.lastIndexOf(search);
-		return JDTUtils.toRange(unit, start, search.length());
+		return JDTUtils.toRange(unit, start, length);
 	}
 
 	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, String search) throws JavaModelException {
