@@ -61,6 +61,15 @@ public class Preferences {
 	 */
 	public static final String IMPORT_GRADLE_ENABLED = "java.import.gradle.enabled";
 	/**
+	 * Preference key to enable/disable gradle wrapper.
+	 */
+	public static final String GRADLE_WRAPPER_ENABLED = "java.import.gradle.wrapper.enabled";
+	/**
+	 * Preference key for gradle version to use when the gradle wrapper is not used.
+	 */
+	public static final String GRADLE_VERSION = "java.import.gradle.version";
+
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -277,6 +286,8 @@ public class Preferences {
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
+	private boolean gradleWrapperEnabled;
+	private String gradleVersion;
 	private boolean importMavenEnabled;
 	private boolean mavenDownloadSources;
 	private boolean implementationsCodeLensEnabled;
@@ -384,6 +395,8 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
+		gradleWrapperEnabled = true;
+		gradleVersion = null;
 		importMavenEnabled = true;
 		mavenDownloadSources = false;
 		referencesCodeLensEnabled = true;
@@ -436,6 +449,10 @@ public class Preferences {
 
 		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
 		prefs.setImportGradleEnabled(importGradleEnabled);
+		boolean gradleWrapperEnabled = getBoolean(configuration, GRADLE_WRAPPER_ENABLED, true);
+		prefs.setGradleWrapperEnabled(gradleWrapperEnabled);
+		String gradleVersion = getString(configuration, GRADLE_VERSION);
+		prefs.setGradleVersion(gradleVersion);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
@@ -540,6 +557,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setGradleVersion(String gradleVersion) {
+		this.gradleVersion = (gradleVersion == null || gradleVersion.isEmpty()) ? null : gradleVersion;
+		return this;
+	}
+
 	public Preferences setFormatterUrl(String formatterUrl) {
 		this.formatterUrl = formatterUrl;
 		return this;
@@ -589,6 +611,11 @@ public class Preferences {
 
 	public Preferences setImportGradleEnabled(boolean enabled) {
 		this.importGradleEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setGradleWrapperEnabled(boolean enabled) {
+		this.gradleWrapperEnabled = enabled;
 		return this;
 	}
 
@@ -744,6 +771,10 @@ public class Preferences {
 		return javaHome;
 	}
 
+	public String getGradleVersion() {
+		return gradleVersion;
+	}
+
 	public String getFormatterUrl() {
 		return formatterUrl;
 	}
@@ -762,6 +793,10 @@ public class Preferences {
 
 	public boolean isImportGradleEnabled() {
 		return importGradleEnabled;
+	}
+
+	public boolean isGradleWrapperEnabled() {
+		return gradleWrapperEnabled;
 	}
 
 	public boolean isImportMavenEnabled() {

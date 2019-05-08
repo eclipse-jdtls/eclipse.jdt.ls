@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.buildship.core.FixedVersionGradleDistribution;
+import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -93,7 +96,35 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testDisableGradle() throws Exception {
+	public void testDisableGradleWrapper() throws Exception {
+		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGradleWrapperEnabled();
+		String gradleVersion = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion();
+		File file = new File(getSourceProjectDirectory(), "gradle/simple-gradle");
+		assertTrue(file.isDirectory());
+		try {
+			GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			assertTrue(distribution instanceof WrapperGradleDistribution);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(false);
+			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			assertTrue(distribution instanceof WrapperGradleDistribution);
+			String requiredVersion = "5.2.1";
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
+			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			assertTrue(distribution instanceof FixedVersionGradleDistribution);
+			assertEquals(((FixedVersionGradleDistribution) distribution).getVersion(), requiredVersion);
+			List<IProject> projects = importProjects("eclipse/eclipsegradle");
+			assertEquals(2, projects.size());//default + 1 eclipse projects
+			IProject eclipse = WorkspaceHelper.getProject("eclipsegradle");
+			assertNotNull(eclipse);
+			assertTrue(eclipse.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(enabled);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(gradleVersion);
+		}
+	}
+
+	@Test
+	public void testDisableImportGradle() throws Exception {
 		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleEnabled();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(false);
