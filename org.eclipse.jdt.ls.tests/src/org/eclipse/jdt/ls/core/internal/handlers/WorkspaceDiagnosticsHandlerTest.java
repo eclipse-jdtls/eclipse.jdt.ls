@@ -394,7 +394,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<profiles>", compilerPlugin + "\n<profiles>"));
 
-		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+		waitForBackgroundJobs();
 
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
