@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.Document;
@@ -75,6 +77,20 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Document doc = new Document();
 		doc.set(cu.getSource());
 		assertEquals(TextEditUtil.apply(doc, result), buf.toString());
+	}
+
+	@Test
+	public void testMissingFormatterUrl() throws Exception {
+		String formatterUrl = preferences.getFormatterUrl();
+		try {
+			preferences.setFormatterUrl("xxxx");
+			URI srcUri = project.getFile("src/java/Foo4.java").getRawLocationURI();
+			projectsManager.fileChanged(srcUri.toString(), CHANGE_TYPE.CHANGED);
+		} catch (Exception e) {
+			fail("Missing formatter url");
+		} finally {
+			preferences.setFormatterUrl(formatterUrl);
+		}
 	}
 
 }

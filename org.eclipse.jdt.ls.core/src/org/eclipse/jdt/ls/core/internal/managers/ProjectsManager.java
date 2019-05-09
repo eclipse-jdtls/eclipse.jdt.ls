@@ -272,13 +272,15 @@ public class ProjectsManager implements ISaveParticipant {
 		if (formatterUrl != null) {
 			try {
 				URL url = getUrl(formatterUrl);
-				URI formatterUri = url.toURI();
-				URI uri = JDTUtils.toURI(uriString);
-				if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
-					if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
-						registerWatchers();
+				if (url != null) {
+					URI formatterUri = url.toURI();
+					URI uri = JDTUtils.toURI(uriString);
+					if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+						if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
+							registerWatchers();
+						}
+						FormatterManager.configureFormatter(preferenceManager, this);
 					}
-					FormatterManager.configureFormatter(preferenceManager, this);
 				}
 			} catch (URISyntaxException e) {
 				// ignore
