@@ -52,7 +52,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
@@ -472,7 +471,13 @@ public class DocumentLifeCycleHandler {
 		unit = checkPackageDeclaration(uri, unit);
 		if (unit.isWorkingCopy()) {
 			try {
-				projectsManager.fileChanged(uri, CHANGE_TYPE.CHANGED);
+				if (unit.getUnderlyingResource() != null && unit.getUnderlyingResource().exists()) {
+					try {
+						unit.getUnderlyingResource().refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException("Error while refreshing resource. URI: " + uri, e);
+					}
+				}
 				unit.discardWorkingCopy();
 				unit.becomeWorkingCopy(new NullProgressMonitor());
 			} catch (JavaModelException e) {
