@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -673,6 +674,49 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		problems = astRoot.getProblems();
 		assertEquals("Unexpected number of errors", 1, problems.length);
+	}
+
+	@Test
+	public void testCloseMissingResource() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E123 {\n");
+		buf.append("    public boolean foo() {\n");
+		buf.append("        return x;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu1 = pack1.createCompilationUnit("E123.java", buf.toString(), false, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
+		assertEquals(1, getCacheSize());
+		assertNewASTsCreated(1);
+
+		StringBuilder buf2 = new StringBuilder();
+		buf2.append("package test1;\n");
+		buf2.append("public class E123 {\n");
+		buf2.append("    public boolean foo() {\n");
+		buf2.append("        return true;\n");
+		buf2.append("    }\n");
+		buf2.append("}\n");
+		changeDocumentFull(cu1, buf2.toString(), 2);
+		File file = cu1.getResource().getRawLocation().toFile();
+		boolean deleted = file.delete();
+		assertTrue(file.getAbsolutePath() + " hasn't been deleted", deleted);
+		closeDocument(cu1);
+
+		assertEquals(false, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
+		assertEquals(0, getCacheSize());
+		assertNewASTsCreated(0);
 	}
 
 	private File createTempFile(File parent, String fileName, String content) throws IOException {

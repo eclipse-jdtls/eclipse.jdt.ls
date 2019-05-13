@@ -439,7 +439,7 @@ public class DocumentLifeCycleHandler {
 			}
 			if (JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit) || unit.getResource().isDerived()) {
 				new DiagnosticsHandler(connection, unit).clearDiagnostics();
-			} else if (unit.hasUnsavedChanges()) {
+			} else if (hasUnsavedChanges(unit)) {
 				unit.discardWorkingCopy();
 				unit.becomeWorkingCopy(new NullProgressMonitor());
 				publishDiagnostics(unit, new NullProgressMonitor());
@@ -458,6 +458,14 @@ public class DocumentLifeCycleHandler {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Error while handling document close. URI: " + uri, e);
 		}
+	}
+
+	private boolean hasUnsavedChanges(ICompilationUnit unit) throws CoreException {
+		if (!unit.hasUnsavedChanges()) {
+			return false;
+		}
+		unit.getResource().refreshLocal(IResource.DEPTH_ZERO, null);
+		return unit.getResource().exists();
 	}
 
 	public void handleSaved(DidSaveTextDocumentParams params) {
