@@ -184,6 +184,40 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSignatureHelp_constructor() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("   public void bar() {\n");
+		buf.append("     new RuntimeException()\n");
+		buf.append("   }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 26);
+		assertNotNull(help);
+		assertEquals(help.getSignatures().size(), 4);
+		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "RuntimeException()");
+	}
+
+	@Test
+	public void testSignatureHelp_constructorParameters() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("   public void bar() {\n");
+		buf.append("     new RuntimeException(\"t\", )\n");
+		buf.append("   }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 31);
+		assertNotNull(help);
+		assertEquals(help.getSignatures().size(), 4);
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("RuntimeException\\(String \\w+, Throwable \\w+\\)"));
+	}
+
+	@Test
 	public void testSignatureHelp_javadoc() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
