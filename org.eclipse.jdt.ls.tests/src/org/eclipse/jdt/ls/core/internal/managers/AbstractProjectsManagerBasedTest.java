@@ -155,6 +155,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
 		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
 		when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateConstructorsPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 

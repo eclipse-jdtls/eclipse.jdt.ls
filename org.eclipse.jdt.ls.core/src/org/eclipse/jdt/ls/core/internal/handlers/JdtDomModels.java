@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
@@ -31,6 +32,18 @@ public class JdtDomModels {
 			this.bindingKey = binding.getKey();
 			this.name = binding.getName();
 			this.type = binding.getType().getName();
+		}
+	}
+
+	public static class LspMethodBinding {
+		public String bindingKey;
+		public String name;
+		public String[] parameters;
+
+		public LspMethodBinding(IMethodBinding binding) {
+			this.bindingKey = binding.getKey();
+			this.name = binding.getName();
+			this.parameters = Stream.of(binding.getParameterTypes()).map(type -> type.getName()).toArray(String[]::new);
 		}
 	}
 
