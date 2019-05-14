@@ -50,6 +50,8 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -811,6 +813,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params) {
 		logInfo(">> java/generateAccessors");
 		return computeAsync((monitor) -> GenerateAccessorsHandler.generateAccessors(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckConstructorResponse> checkConstructorStatus(CodeActionParams params) {
+		logInfo(">> java/checkConstructorStatus");
+		return computeAsync((monitor) -> GenerateConstructorsHandler.checkConstructorStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateConstructors(GenerateConstructorsParams params) {
+		logInfo(">> java/generateConstructors");
+		return computeAsync((monitor) -> GenerateConstructorsHandler.generateConstructors(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

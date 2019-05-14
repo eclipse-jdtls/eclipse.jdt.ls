@@ -189,6 +189,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedGenerateAccessorsSupport", "false").toString());
 	}
 
+	public boolean isGenerateConstructorsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateConstructorsPromptSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

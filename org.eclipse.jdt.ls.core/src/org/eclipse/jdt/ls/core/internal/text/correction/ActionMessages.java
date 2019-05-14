@@ -25,6 +25,8 @@ public final class ActionMessages extends NLS {
 	public static String GenerateGetterSetterAction_ellipsisLabel;
 	public static String GenerateHashCodeEqualsAction_label;
 	public static String GenerateToStringAction_label;
+	public static String GenerateConstructorsAction_label;
+	public static String GenerateConstructorsAction_ellipsisLabel;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, ActionMessages.class);

@@ -50,6 +50,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -73,6 +75,7 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
 	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT = "java.action.generateAccessorsPrompt";
+	public static final String COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT = "java.action.generateConstructorsPrompt";
 
 	private PreferenceManager preferenceManager;
 
@@ -130,6 +133,10 @@ public class SourceAssistProcessor {
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
 			}
 		}
+
+		// Generate Constructors
+		Optional<Either<Command, CodeAction>> generateConstructors = getGenerateConstructorsAction(params, context, type);
+		addSourceActionCommand($, params.getContext(), generateConstructors);
 
 		return $;
 	}
@@ -273,6 +280,37 @@ public class SourceAssistProcessor {
 		} else {
 			return Optional.of(Either.forLeft(command));
 		}
+	}
+
+	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type) {
+		try {
+			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
+				return Optional.empty();
+			}
+		} catch (JavaModelException e) {
+			return Optional.empty();
+		}
+
+		if (preferenceManager.getClientPreferences().isGenerateConstructorsPromptSupported()) {
+			CheckConstructorResponse status = GenerateConstructorsHandler.checkConstructorStatus(type);
+			if (status.constructors.length == 1 && status.fields.length == 0) {
+				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields);
+				return convertToWorkspaceEditAction(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, edit);
+			}
+
+			Command command = new Command(ActionMessages.GenerateConstructorsAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, Collections.singletonList(params));
+			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS)) {
+				CodeAction codeAction = new CodeAction(ActionMessages.GenerateConstructorsAction_ellipsisLabel);
+				codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+				codeAction.setCommand(command);
+				codeAction.setDiagnostics(Collections.EMPTY_LIST);
+				return Optional.of(Either.forRight(codeAction));
+			} else {
+				return Optional.of(Either.forLeft(command));
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	private Optional<Either<Command, CodeAction>> convertToWorkspaceEditAction(CodeActionContext context, ICompilationUnit cu, String name, String kind, TextEdit edit) {
