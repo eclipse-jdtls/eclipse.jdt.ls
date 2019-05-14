@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
@@ -73,13 +74,11 @@ public class SignatureHelpHandler {
 					int size = -1;
 					int currentParameter = contextInfomation[1];
 					if (node instanceof MethodInvocation) {
-						try {
-							size = ((MethodInvocation) node).arguments().size();
-						} catch (UnsupportedOperationException e) {
-							// ignore
-						}
+						size = ((MethodInvocation) node).arguments().size();
 					} else if (node instanceof MethodRef) {
 						size = ((MethodRef) node).parameters().size();
+					} else if (node instanceof ClassInstanceCreation) {
+						size = ((ClassInstanceCreation) node).arguments().size();
 					}
 					size = Math.max(currentParameter + 1, size);
 					List<SignatureInformation> infos = help.getSignatures();
@@ -102,7 +101,7 @@ public class SignatureHelpHandler {
 		if (contextInfomation[0] != -1) {
 			CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 			ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
-			if (node instanceof MethodInvocation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block)) {
+			if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block)) {
 				return node;
 			}
 		}
