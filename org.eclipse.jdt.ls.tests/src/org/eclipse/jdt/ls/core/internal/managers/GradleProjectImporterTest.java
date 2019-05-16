@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.util.Properties;
 
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.LocalGradleDistribution;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
@@ -106,11 +108,15 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(distribution instanceof WrapperGradleDistribution);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(false);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
-			assertTrue(distribution instanceof WrapperGradleDistribution);
+			if (GradleProjectImporter.getGradleHomeFile() != null) {
+				assertEquals(distribution.getClass(), LocalGradleDistribution.class);
+			} else {
+				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
+			}
 			String requiredVersion = "5.2.1";
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
-			assertTrue(distribution instanceof FixedVersionGradleDistribution);
+			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
 			assertEquals(((FixedVersionGradleDistribution) distribution).getVersion(), requiredVersion);
 			List<IProject> projects = importProjects("eclipse/eclipsegradle");
 			assertEquals(2, projects.size());//default + 1 eclipse projects
