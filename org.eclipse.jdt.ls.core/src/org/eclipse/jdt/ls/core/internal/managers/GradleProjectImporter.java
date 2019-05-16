@@ -46,7 +46,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
-	protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild();
+	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
 	public static final String IMPORTING_GRADLE_PROJECTS = "Importing Gradle project(s)";
 
