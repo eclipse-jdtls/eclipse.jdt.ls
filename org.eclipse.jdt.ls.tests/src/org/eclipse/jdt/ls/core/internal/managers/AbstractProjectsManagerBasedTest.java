@@ -156,6 +156,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
 		when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
 		when(clientPreferences.isGenerateConstructorsPromptSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateDelegateMethodsPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 
