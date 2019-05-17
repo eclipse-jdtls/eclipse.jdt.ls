@@ -264,8 +264,6 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	public boolean equals(Object obj) {\r\n" +
 				"		if (this == obj)\r\n" +
 				"			return true;\r\n" +
-				"		if (obj == null)\r\n" +
-				"			return false;\r\n" +
 				"		if (!(obj instanceof B))\r\n" +
 				"			return false;\r\n" +
 				"		B other = (B) obj;\r\n" +
