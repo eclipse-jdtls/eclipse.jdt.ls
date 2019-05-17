@@ -52,6 +52,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -76,6 +77,7 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT = "java.action.generateAccessorsPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT = "java.action.generateConstructorsPrompt";
+	public static final String COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT = "java.action.generateDelegateMethodsPrompt";
 
 	private PreferenceManager preferenceManager;
 
@@ -137,6 +139,10 @@ public class SourceAssistProcessor {
 		// Generate Constructors
 		Optional<Either<Command, CodeAction>> generateConstructors = getGenerateConstructorsAction(params, context, type);
 		addSourceActionCommand($, params.getContext(), generateConstructors);
+
+		// Generate Delegate Methods
+		Optional<Either<Command, CodeAction>> generateDelegateMethods = getGenerateDelegateMethodsAction(params, context, type);
+		addSourceActionCommand($, params.getContext(), generateDelegateMethods);
 
 		return $;
 	}
@@ -311,6 +317,27 @@ public class SourceAssistProcessor {
 		}
 
 		return Optional.empty();
+	}
+
+	private Optional<Either<Command, CodeAction>> getGenerateDelegateMethodsAction(CodeActionParams params, IInvocationContext context, IType type) {
+		try {
+			if (!preferenceManager.getClientPreferences().isGenerateDelegateMethodsPromptSupported() || !GenerateDelegateMethodsHandler.supportsGenerateDelegateMethods(type)) {
+				return Optional.empty();
+			}
+		} catch (JavaModelException e) {
+			return Optional.empty();
+		}
+
+		Command command = new Command(ActionMessages.GenerateDelegateMethodsAction_label, COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT, Collections.singletonList(params));
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS)) {
+			CodeAction codeAction = new CodeAction(ActionMessages.GenerateDelegateMethodsAction_label);
+			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
+			codeAction.setCommand(command);
+			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			return Optional.of(Either.forRight(codeAction));
+		} else {
+			return Optional.of(Either.forLeft(command));
+		}
 	}
 
 	private Optional<Either<Command, CodeAction>> convertToWorkspaceEditAction(CodeActionContext context, ICompilationUnit cu, String name, String kind, TextEdit edit) {

@@ -17,6 +17,8 @@ import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOpe
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.CheckDelegateMethodsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -84,4 +86,10 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> generateConstructors(GenerateConstructorsParams params);
+
+	@JsonRequest
+	CompletableFuture<CheckDelegateMethodsResponse> checkDelegateMethodsStatus(CodeActionParams params);
+
+	@JsonRequest
+	CompletableFuture<WorkspaceEdit> generateDelegateMethods(GenerateDelegateMethodsParams params);
 }
