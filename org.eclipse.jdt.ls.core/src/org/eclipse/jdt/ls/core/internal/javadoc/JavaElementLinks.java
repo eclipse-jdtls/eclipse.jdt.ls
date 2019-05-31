@@ -82,6 +82,8 @@ public class JavaElementLinks {
 
 	private static final char LINK_BRACKET_REPLACEMENT = '\u2603';
 
+	public static final String JAVADOC_SCHEME = "eclipse-javadoc"; //$NON-NLS-1$
+
 	/**
 	 * The link is composed of a number of segments, separated by LINK_SEPARATOR:
 	 * <p>
