@@ -179,10 +179,18 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> getOrganizeImportsAction(CodeActionParams params) {
-		Command command = new Command(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description, COMMAND_ID_ACTION_ORGANIZEIMPORTS, Collections.singletonList(params));
 		CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
 		codeAction.setKind(CodeActionKind.SourceOrganizeImports);
-		codeAction.setCommand(command);
+		if (preferenceManager.getClientPreferences().isWorkspaceApplyEditSupported()) {
+			final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+			final IInvocationContext context = getInnovationContext(params);
+			final TextEdit edit = getOrganizeImportsProposal(context);
+			final WorkspaceEdit workspaceEdit = convertToWorkspaceEdit(unit, edit);
+			codeAction.setEdit(workspaceEdit);
+		} else {
+			Command command = new Command(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description, COMMAND_ID_ACTION_ORGANIZEIMPORTS, Collections.singletonList(params));
+			codeAction.setCommand(command);
+		}
 		codeAction.setDiagnostics(Collections.EMPTY_LIST);
 		return Optional.of(Either.forRight(codeAction));
 

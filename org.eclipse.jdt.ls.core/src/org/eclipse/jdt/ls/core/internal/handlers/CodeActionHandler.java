@@ -168,8 +168,12 @@ public class CodeActionHandler {
 			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
-			codeAction.setCommand(command);
 			codeAction.setDiagnostics(context.getDiagnostics());
+			if (preferenceManager.getClientPreferences().isWorkspaceApplyEditSupported()) {
+				codeAction.setEdit(edit);
+			} else {
+				codeAction.setCommand(command);
+			}
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
