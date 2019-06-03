@@ -24,15 +24,22 @@ import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
+import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 
@@ -125,11 +132,53 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
 		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(unit));
-		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID,String.valueOf(response.getId()));
-		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID,String.valueOf(index));
+		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
+		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(index));
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
+		if (proposal.getKind() == CompletionProposal.FIELD_REF) {
+			try {
+				IField field = JDTUtils.resolveField(proposal, unit.getJavaProject());
+				Region nameRegion = null;
+				if (field != null) {
+					ITypeRoot typeRoot = field.getTypeRoot();
+					ISourceRange nameRange = ((ISourceReference) field).getNameRange();
+					if (SourceRange.isAvailable(nameRange)) {
+						nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
+					}
+					String constantValue = JDTUtils.getConstantValue(field, typeRoot, nameRegion);
+					if (constantValue != null) {
+						String label = $.getLabel();
+						$.setLabel(label + " = " + constantValue);
+						data.put(CompletionResolveHandler.DATA_FIELD_CONSTANT_VALUE, constantValue);
+					}
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		}
+		if (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.ANNOTATION_ATTRIBUTE_REF) {
+			try {
+				IMethod method = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
+				Region nameRegion = null;
+				if (method != null) {
+					ITypeRoot typeRoot = method.getTypeRoot();
+					ISourceRange nameRange = ((ISourceReference) method).getNameRange();
+					if (SourceRange.isAvailable(nameRange)) {
+						nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
+					}
+					String defaultValue = JDTUtils.getAnnotationMemberDefaultValue(method, typeRoot, nameRegion);
+					if (defaultValue != null) {
+						String label = $.getLabel();
+						$.setLabel(label + " (Default: " + defaultValue + ")");
+						data.put(CompletionResolveHandler.DATA_METHOD_DEFAULT_VALUE, defaultValue);
+					}
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		}
 		return $;
 	}
 
