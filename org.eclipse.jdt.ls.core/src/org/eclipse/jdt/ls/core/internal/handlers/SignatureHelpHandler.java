@@ -16,13 +16,14 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
-import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -35,6 +36,7 @@ import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.SignatureHelpRequestor;
@@ -78,40 +80,70 @@ public class SignatureHelpHandler {
 			if (offset > -1 && !monitor.isCanceled()) {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
 				help = collector.getSignatureHelp(monitor);
-				if (help != null && help.getSignatures().size() > 0) {
-					int size = getArgumentsSize(node);
+				if (!monitor.isCanceled() && help != null) {
+					SignatureHelp help2 = null;
+					SignatureHelpRequestor collector2 = null;
+					if (contextInfomation[0] + 1 != offset) {
+						collector2 = new SignatureHelpRequestor(unit, offset);
+						unit.codeComplete(offset, collector2, monitor);
+						help2 = collector2.getSignatureHelp(monitor);
+					}
 					int currentParameter = contextInfomation[1];
-					char[] signature = getSignature(node);
-					size = Math.max(currentParameter + 1, size);
+					int size = currentParameter + 1;
 					List<SignatureInformation> infos = help.getSignatures();
-					if (signature != null) {
-						for (int i = 0; i < infos.size(); i++) {
-							if (infos.get(i).getParameters().size() >= size) {
-								CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-								char[][] signatureTypes = Signature.getParameterTypes(signature);
-								char[][] infoTypes = Signature.getParameterTypes(SignatureUtil.fix83600(proposal.getSignature()));
-								if (Arrays.deepEquals(signatureTypes, infoTypes)) {
-									help.setActiveSignature(i);
-									help.setActiveParameter(currentParameter < 0 ? 0 : currentParameter);
-								}
-								if (size > 0) {
-									if (infoTypes.length - 1 == signatureTypes.length) {
-										infoTypes = arrayClone(infoTypes, infoTypes.length - 1);
-									}
-									if (Arrays.deepEquals(signatureTypes, infoTypes)) {
+					int activeParameter = currentParameter < 0 ? 0 : currentParameter;
+					if (node != null) {
+						if (help2 != null) {
+							for (int i = 0; i < infos.size(); i++) {
+								if (infos.get(i).getParameters().size() >= size) {
+									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+									IMethod m = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
+									if (isSameParameters(m, help2, collector2, unit.getJavaProject())) {
 										help.setActiveSignature(i);
-										help.setActiveParameter(currentParameter < 0 ? 0 : currentParameter);
+										help.setActiveParameter(activeParameter);
 										break;
 									}
 								}
 							}
 						}
-					} else {
-						for (int i = 0; i < infos.size(); i++) {
-							if (infos.get(i).getParameters().size() >= size) {
-								help.setActiveSignature(i);
-								help.setActiveParameter(currentParameter < 0 ? 0 : currentParameter);
-								break;
+						if (!monitor.isCanceled() && help.getActiveSignature() == null && (help2 == null || help2.getSignatures().size() <= 0)) {
+							IMethod method = getMethod(node);
+							if (method != null) {
+								for (int i = 0; i < infos.size(); i++) {
+									if (infos.get(i).getParameters().size() >= size) {
+										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+										IMethod m = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
+										if (isSameParameters(method, m)) {
+											help.setActiveSignature(i);
+											help.setActiveParameter(activeParameter);
+											break;
+										}
+									}
+								}
+							}
+						}
+						if (!monitor.isCanceled() && help.getActiveSignature() == null) {
+							for (int i = 0; i < infos.size(); i++) {
+								CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+								if (Flags.isVarargs(proposal.getFlags())) {
+									help.setActiveSignature(i);
+									char[][] infoTypes = Signature.getParameterTypes(SignatureUtil.fix83600(proposal.getSignature()));
+									if (infoTypes.length <= activeParameter) {
+										help.setActiveParameter(infoTypes.length - 1);
+									} else {
+										help.setActiveParameter(activeParameter);
+									}
+									break;
+								}
+							}
+						}
+						if (!monitor.isCanceled() && help.getActiveSignature() == null && node instanceof Block) {
+							for (int i = 0; i < infos.size(); i++) {
+								if (infos.get(i).getParameters().size() >= activeParameter) {
+									help.setActiveSignature(i);
+									help.setActiveParameter(activeParameter);
+									break;
+								}
 							}
 						}
 					}
@@ -123,18 +155,41 @@ public class SignatureHelpHandler {
 		return help;
 	}
 
-	private static char[][] arrayClone(char[][] src, int length) {
-		if (src.length < 1) {
-			return src;
+	private boolean isSameParameters(IMethod m, SignatureHelp help, SignatureHelpRequestor collector, IJavaProject javaProject) throws JavaModelException {
+		if (m == null || help == null || javaProject == null) {
+			return false;
 		}
-		char[][] dest = new char[src.length - 1][];
-		for (int i = 0; i < src.length - 1; i++) {
-			dest[i] = src[i].clone();
+		List<SignatureInformation> infos = help.getSignatures();
+		for (int i = 0; i < infos.size(); i++) {
+			CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+			IMethod method = JDTUtils.resolveMethod(proposal, javaProject);
+			if (isSameParameters(method, m)) {
+				return true;
+			}
 		}
-		return dest;
+		return false;
 	}
 
-	private char[] getSignature(ASTNode node) throws JavaModelException {
+	private boolean isSameParameters(IMethod method1, IMethod method2) {
+		if (method1 == null || method2 == null) {
+			return false;
+		}
+		String[] params1 = method1.getParameterTypes();
+		String[] params2 = method2.getParameterTypes();
+		if (params2.length == params1.length) {
+			for (int i = 0; i < params2.length; i++) {
+				String t1 = Signature.getSimpleName(Signature.toString(params2[i]));
+				String t2 = Signature.getSimpleName(Signature.toString(params1[i]));
+				if (!t1.equals(t2)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private IMethod getMethod(ASTNode node) throws JavaModelException {
 		IBinding binding;
 		if (node instanceof MethodInvocation) {
 			binding = ((MethodInvocation) node).resolveMethodBinding();
@@ -149,99 +204,49 @@ public class SignatureHelpHandler {
 			IJavaElement javaElement = binding.getJavaElement();
 			if (javaElement instanceof IMethod) {
 				IMethod method = (IMethod) javaElement;
-				String signature = resolveMethodSignature(method);
-				if (signature != null) {
-					return signature.replaceAll("/", ".").toCharArray();
-				} else {
-					return method.getSignature().replaceAll("/", ".").toCharArray();
-				}
+				return method;
 			}
 		}
 		return null;
-	}
-
-	// Code copied from org.eclipse.jdt.internal.debug.ui.actions.ToggleBreakpointAdapter.resolveMethodSignature(IMethod)
-	private static String resolveMethodSignature(IMethod method) throws JavaModelException {
-		String signature = method.getSignature();
-		String[] parameterTypes = Signature.getParameterTypes(signature);
-		int length = parameterTypes.length;
-		String[] resolvedParameterTypes = new String[length];
-		for (int i = 0; i < length; i++) {
-			resolvedParameterTypes[i] = resolveTypeSignature(method, parameterTypes[i]);
-			if (resolvedParameterTypes[i] == null) {
-				resolvedParameterTypes[i] = resolveTypeSignature(method, parameterTypes[i].replaceAll("/", "."));
-				if (resolvedParameterTypes[i] == null) {
-					return null;
-				}
-			}
-		}
-		String resolvedReturnType = resolveTypeSignature(method, Signature.getReturnType(signature));
-		if (resolvedReturnType == null) {
-			return null;
-		}
-		return Signature.createMethodSignature(resolvedParameterTypes, resolvedReturnType);
-	}
-
-	// Code copied from org.eclipse.jdt.internal.debug.ui.actions.ToggleBreakpointAdapter.resolveTypeSignature(IMethod, String)
-	private static String resolveTypeSignature(IMethod method, String typeSignature) throws JavaModelException {
-		int count = Signature.getArrayCount(typeSignature);
-		String elementTypeSignature = Signature.getElementType(typeSignature);
-		if (elementTypeSignature.length() == 1) {
-			// no need to resolve primitive types
-			return typeSignature;
-		}
-		String elementTypeName = Signature.toString(elementTypeSignature);
-		IType type = method.getDeclaringType();
-		String[][] resolvedElementTypeNames = type.resolveType(elementTypeName);
-		if (resolvedElementTypeNames == null || resolvedElementTypeNames.length != 1) {
-			// check if type parameter
-			ITypeParameter typeParameter = method.getTypeParameter(elementTypeName);
-			if (!typeParameter.exists()) {
-				typeParameter = type.getTypeParameter(elementTypeName);
-			}
-			if (typeParameter.exists()) {
-				String[] bounds = typeParameter.getBounds();
-				if (bounds.length == 0) {
-					return "Ljava/lang/Object;"; //$NON-NLS-1$
-				}
-				String bound = Signature.createTypeSignature(bounds[0], false);
-				return Signature.createArraySignature(resolveTypeSignature(method, bound), count);
-			}
-			// the type name cannot be resolved
-			return null;
-		}
-
-		String[] types = resolvedElementTypeNames[0];
-		types[1] = types[1].replace('.', '$');
-
-		String resolvedElementTypeName = Signature.toQualifiedName(types);
-		String resolvedElementTypeSignature = "";
-		if (types[0].equals("")) {
-			resolvedElementTypeName = resolvedElementTypeName.substring(1);
-			resolvedElementTypeSignature = Signature.createTypeSignature(resolvedElementTypeName, true);
-		} else {
-			resolvedElementTypeSignature = Signature.createTypeSignature(resolvedElementTypeName, true).replace('.', '/');
-		}
-
-		return Signature.createArraySignature(resolvedElementTypeSignature, count);
-	}
-	private int getArgumentsSize(ASTNode node) {
-		if (node instanceof MethodInvocation) {
-			return ((MethodInvocation) node).arguments().size();
-		} else if (node instanceof MethodRef) {
-			return ((MethodRef) node).parameters().size();
-		} else if (node instanceof ClassInstanceCreation) {
-			return ((ClassInstanceCreation) node).arguments().size();
-		}
-		return -1;
 	}
 
 	private ASTNode getNode(ICompilationUnit unit, int[] contextInfomation, IProgressMonitor monitor) {
 		if (contextInfomation[0] != -1) {
 			CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 			ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
-			if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef || (contextInfomation[1] > 0 && node instanceof Block)) {
+			if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef) {
 				return node;
+			}
+			if (node instanceof Block) {
+				try {
+					int pos = contextInfomation[0];
+					IBuffer buffer = unit.getBuffer();
+					while (pos >= 0) {
+						char ch = buffer.getChar(pos);
+						if (ch == '(' || Character.isWhitespace(ch)) {
+							pos--;
+						} else {
+							break;
+						}
+					}
+					int end = pos + 1;
+					while (pos >= 0) {
+						char ch = buffer.getChar(pos);
+						if (Character.isJavaIdentifierPart(ch)) {
+							pos--;
+						} else {
+							break;
+						}
+					}
+					int start = pos + 1;
+					String name = unit.getSource().substring(start, end);
+					IStatus status = JavaConventionsUtil.validateMethodName(name, unit);
+					if (status.isOK()) {
+						return node;
+					}
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 			}
 		}
 		return null;
@@ -260,6 +265,10 @@ public class SignatureHelpHandler {
 
 		for (int i = offset - 1; i >= 0 && ((offset - i) < SEARCH_BOUND); i--) {
 			char c = buffer.getChar(i);
+			if (c == '{' || c == '}') {
+				result[0] = result[1] = -1;
+				return result;
+			}
 			if (c == ')') {
 				depth++;
 			}
@@ -276,7 +285,14 @@ public class SignatureHelpHandler {
 		}
 		// Assuming user are typing current parameter:
 		if (result[0] + 1 != offset) {
-			result[1]++;
+			int i = 1;
+			while (result[0] + i < offset) {
+				if (!Character.isWhitespace(buffer.getChar(result[0] + i))) {
+					result[1]++;
+					break;
+				}
+				i++;
+			}
 		}
 		return result;
 	}
