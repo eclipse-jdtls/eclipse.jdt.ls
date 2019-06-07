@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.core.resources.IResource.DEPTH_ONE;
+import static org.eclipse.core.resources.IResource.DEPTH_ZERO;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,31 +35,54 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.SourceRange;
+import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IAnnotationBinding;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMemberValuePairBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.LambdaExpression;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -66,18 +90,26 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabelComposer;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -133,16 +165,16 @@ public final class JDTUtils {
 			if(!ProjectUtils.isJavaProject(resource.getProject())){
 				return null;
 			}
-			IJavaElement element = JavaCore.create(resource);
-			if (element instanceof ICompilationUnit) {
-				return (ICompilationUnit)element;
+			if (resource.getFileExtension() != null) {
+				String name = resource.getName();
+				if (org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name)) {
+					return JavaCore.createCompilationUnitFrom(resource);
+				}
 			}
-		}
-		if (resource == null) {
+			return null;
+		} else {
 			return getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
-		//the resource is not null but no compilation unit could be created (eg. project not ready yet)
-		return null;
 	}
 
 	/**
@@ -399,7 +431,7 @@ public final class JDTUtils {
 		return null;
 	}
 
-	private static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
+	public static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
 		ISourceRange nameRange = null;
 		if (element instanceof IMember) {
 			IMember member = (IMember) element;
@@ -595,7 +627,7 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String getFileURI(IResource resource) {
-		return ResourceUtils.fixURI(resource.getRawLocationURI());
+		return ResourceUtils.fixURI(resource.getRawLocationURI() == null ? resource.getLocationURI() : resource.getRawLocationURI());
 	}
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
@@ -851,4 +883,433 @@ public final class JDTUtils {
 			}
 		}
 	}
+
+	public static IResource getFileOrFolder(String uriString) {
+		IFile file = findFile(uriString); // This may return IFile even when uriString really describes a IContainer
+		IContainer parent = file == null ? null : file.getParent();
+		if (parent == null) {
+			return file;
+		}
+		try {
+			parent.refreshLocal(DEPTH_ZERO, null);
+		} catch (CoreException e) {
+			// Ignore
+		}
+		if (parent.findMember(file.getName()) instanceof IFolder) {
+			return findFolder(uriString);
+		}
+		return file;
+	}
+
+	/* adapted from org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover */
+
+	/**
+	 * Returns the constant value for the given field.
+	 *
+	 * @param field
+	 *            the field
+	 * @param typeRoot
+	 *            the editor input element
+	 * @param region
+	 *            the hover region in the editor
+	 * @return the constant value for the given field or <code>null</code> if none
+	 *
+	 */
+	public static String getConstantValue(IField field, ITypeRoot typeRoot, IRegion region) {
+		if (field == null || !isStaticFinal(field)) {
+			return null;
+		}
+
+		Object constantValue;
+		ASTNode node = getHoveredASTNode(typeRoot, region);
+		if (node != null) {
+			constantValue = getVariableBindingConstValue(node, field);
+		} else {
+			constantValue = computeFieldConstantFromTypeAST(field, null);
+		}
+		if (constantValue == null) {
+			return null;
+		}
+
+		if (constantValue instanceof String) {
+			return ASTNodes.getEscapedStringLiteral((String) constantValue);
+		} else if (constantValue instanceof Character) {
+			return '\'' + constantValue.toString() + '\'';
+		} else {
+			return constantValue.toString(); // getHexConstantValue(constantValue);
+		}
+	}
+
+	/**
+	 * Tells whether the given field is static final.
+	 *
+	 * @param field
+	 *            the member to test
+	 * @return <code>true</code> if static final
+	 *
+	 */
+	public static boolean isStaticFinal(IField field) {
+		try {
+			return JdtFlags.isFinal(field) && JdtFlags.isStatic(field);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+			return false;
+		}
+	}
+
+	private static ASTNode getHoveredASTNode(ITypeRoot typeRoot, IRegion region) {
+		if (typeRoot == null || region == null) {
+			return null;
+		}
+
+		CompilationUnit unit = SharedASTProviderCore.getAST(typeRoot, SharedASTProviderCore.WAIT_ACTIVE_ONLY, null);
+		if (unit == null) {
+			return null;
+		}
+
+		return NodeFinder.perform(unit, region.getOffset(), region.getLength());
+	}
+
+	private static Object getVariableBindingConstValue(ASTNode node, IField field) {
+		if (node != null && node.getNodeType() == ASTNode.SIMPLE_NAME) {
+			IBinding binding = ((SimpleName) node).resolveBinding();
+			if (binding != null && binding.getKind() == IBinding.VARIABLE) {
+				IVariableBinding variableBinding = (IVariableBinding) binding;
+				if (field.equals(variableBinding.getJavaElement())) {
+					return variableBinding.getConstantValue();
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Retrieve a constant initializer value of a field by (AST) parsing field's
+	 * type.
+	 *
+	 * @param constantField
+	 *            the constant field
+	 * @param monitor
+	 *            the progress monitor or null
+	 * @return the constant value of the field, or <code>null</code> if it could not
+	 *         be computed (or if the progress was cancelled).
+	 *
+	 */
+	public static Object computeFieldConstantFromTypeAST(IField constantField, IProgressMonitor monitor) {
+		if (monitor != null && monitor.isCanceled()) {
+			return null;
+		}
+
+		CompilationUnit ast = SharedASTProviderCore.getAST(constantField.getTypeRoot(), SharedASTProviderCore.WAIT_NO, monitor);
+		if (ast != null) {
+			try {
+				if (constantField.isEnumConstant()) {
+					return null;
+				}
+
+				VariableDeclarationFragment fieldDecl = org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil.getFieldDeclarationFragmentNode(constantField, ast);
+				if (fieldDecl == null) {
+					return null;
+				}
+				Expression initializer = fieldDecl.getInitializer();
+				if (initializer == null) {
+					return null;
+				}
+				return initializer.resolveConstantExpressionValue();
+			} catch (JavaModelException e) {
+				// ignore the exception and try the next method
+			}
+		}
+
+		if (monitor != null && monitor.isCanceled()) {
+			return null;
+		}
+
+		ASTParser p = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		p.setProject(constantField.getJavaProject());
+		IBinding[] createBindings;
+		try {
+			createBindings = p.createBindings(new IJavaElement[] { constantField }, monitor);
+		} catch (OperationCanceledException e) {
+			return null;
+		}
+
+		IVariableBinding variableBinding = (IVariableBinding) createBindings[0];
+		if (variableBinding != null) {
+			return variableBinding.getConstantValue();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the default value of the given annotation type method.
+	 *
+	 * @param method
+	 *            the method
+	 * @param typeRoot
+	 *            the editor input element
+	 * @param hoverRegion
+	 *            the hover region in the editor
+	 * @return the default value of the given annotation type method or
+	 *         <code>null</code> if none
+	 * @throws JavaModelException
+	 *             if an exception occurs while accessing its default value
+	 */
+	public static String getAnnotationMemberDefaultValue(IMethod method, ITypeRoot typeRoot, IRegion hoverRegion) throws JavaModelException {
+		IMemberValuePair memberValuePair = method.getDefaultValue();
+		if (memberValuePair == null) {
+			return null;
+		}
+
+		Object defaultValue = memberValuePair.getValue();
+		boolean isEmptyArray = defaultValue instanceof Object[] && ((Object[]) defaultValue).length == 0;
+		int valueKind = memberValuePair.getValueKind();
+
+		if (valueKind == IMemberValuePair.K_UNKNOWN && !isEmptyArray) {
+			IBinding binding = getHoveredNodeBinding(method, typeRoot, hoverRegion);
+			if (binding instanceof IMethodBinding) {
+				Object value = ((IMethodBinding) binding).getDefaultValue();
+				StringBuilder buf = new StringBuilder();
+				try {
+					addValue(buf, value, false);
+				} catch (URISyntaxException e) {
+					// should not happen as links are not added
+				}
+				return buf.toString();
+			}
+
+		} else if (defaultValue != null) {
+			IAnnotation parentAnnotation = (IAnnotation) method.getAncestor(IJavaElement.ANNOTATION);
+			StringBuilder buf = new StringBuilder();
+			new JavaElementLabelComposer(buf).appendAnnotationValue(parentAnnotation, defaultValue, valueKind, JavaElementLabels.LABEL_FLAGS);
+			return buf.toString();
+		}
+
+		return null;
+	}
+
+	private static void addValue(StringBuilder buf, Object value, boolean addLinks) throws URISyntaxException {
+		// Note: To be bug-compatible with Javadoc from Java 5/6/7, we currently don't escape HTML tags in String-valued annotations.
+		if (value instanceof ITypeBinding) {
+			ITypeBinding typeBinding = (ITypeBinding) value;
+			IJavaElement type = typeBinding.getJavaElement();
+			if (type == null || !addLinks) {
+				buf.append(typeBinding.getName());
+			} else {
+				String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, type);
+				String name = type.getElementName();
+				addLink(buf, uri, name);
+			}
+			buf.append(".class"); //$NON-NLS-1$
+
+		} else if (value instanceof IVariableBinding) { // only enum constants
+			IVariableBinding variableBinding = (IVariableBinding) value;
+			IJavaElement variable = variableBinding.getJavaElement();
+			if (variable == null || !addLinks) {
+				buf.append(variableBinding.getName());
+			} else {
+				String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, variable);
+				String name = variable.getElementName();
+				addLink(buf, uri, name);
+			}
+
+		} else if (value instanceof IAnnotationBinding) {
+			IAnnotationBinding annotationBinding = (IAnnotationBinding) value;
+			addAnnotation(buf, annotationBinding, addLinks);
+
+		} else if (value instanceof String) {
+			buf.append(ASTNodes.getEscapedStringLiteral((String) value));
+
+		} else if (value instanceof Character) {
+			buf.append(ASTNodes.getEscapedCharacterLiteral(((Character) value).charValue()));
+
+		} else if (value instanceof Object[]) {
+			Object[] values = (Object[]) value;
+			buf.append('{');
+			for (int i = 0; i < values.length; i++) {
+				if (i > 0) {
+					buf.append(JavaElementLabels.COMMA_STRING);
+				}
+				addValue(buf, values[i], addLinks);
+			}
+			buf.append('}');
+
+		} else { // primitive types (except char) or null
+			buf.append(String.valueOf(value));
+		}
+	}
+
+	private static StringBuilder addLink(StringBuilder buf, String uri, String label) {
+		return buf.append(JavaElementLinks.createLink(uri, label));
+	}
+
+	private static void addAnnotation(StringBuilder buf, IAnnotationBinding annotation, boolean addLinks) throws URISyntaxException {
+		IJavaElement javaElement = annotation.getAnnotationType().getJavaElement();
+		buf.append('@');
+		if (javaElement == null || !addLinks) {
+			buf.append(annotation.getName());
+		} else {
+			String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, javaElement);
+			addLink(buf, uri, annotation.getName());
+		}
+
+		IMemberValuePairBinding[] mvPairs = annotation.getDeclaredMemberValuePairs();
+		if (mvPairs.length > 0) {
+			buf.append('(');
+			for (int j = 0; j < mvPairs.length; j++) {
+				if (j > 0) {
+					buf.append(JavaElementLabels.COMMA_STRING);
+				}
+				IMemberValuePairBinding mvPair = mvPairs[j];
+				if (addLinks) {
+					String memberURI = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, mvPair.getMethodBinding().getJavaElement());
+					addLink(buf, memberURI, mvPair.getName());
+				} else {
+					buf.append(mvPair.getName());
+				}
+				buf.append('=');
+				addValue(buf, mvPair.getValue(), addLinks);
+			}
+			buf.append(')');
+		}
+	}
+
+	private static IBinding getHoveredNodeBinding(IJavaElement element, ITypeRoot typeRoot, IRegion region) {
+		if (typeRoot == null || region == null) {
+			return null;
+		}
+		IBinding binding;
+		ASTNode node = getHoveredASTNode(typeRoot, region);
+		if (node == null) {
+			ASTParser p = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+			p.setProject(element.getJavaProject());
+			p.setBindingsRecovery(true);
+			try {
+				binding = p.createBindings(new IJavaElement[] { element }, null)[0];
+			} catch (OperationCanceledException e) {
+				return null;
+			}
+		} else {
+			binding = resolveBinding(node);
+		}
+		return binding;
+	}
+
+	private static IBinding resolveBinding(ASTNode node) {
+		if (node instanceof SimpleName) {
+			SimpleName simpleName = (SimpleName) node;
+			// workaround for https://bugs.eclipse.org/62605 (constructor name resolves to type, not method)
+			ASTNode normalized = ASTNodes.getNormalizedNode(simpleName);
+			if (normalized.getLocationInParent() == ClassInstanceCreation.TYPE_PROPERTY) {
+				ClassInstanceCreation cic = (ClassInstanceCreation) normalized.getParent();
+				IMethodBinding constructorBinding = cic.resolveConstructorBinding();
+				if (constructorBinding == null) {
+					return null;
+				}
+				ITypeBinding declaringClass = constructorBinding.getDeclaringClass();
+				if (!declaringClass.isAnonymous()) {
+					return constructorBinding;
+				}
+				ITypeBinding superTypeDeclaration = declaringClass.getSuperclass().getTypeDeclaration();
+				return resolveSuperclassConstructor(superTypeDeclaration, constructorBinding);
+			}
+			return simpleName.resolveBinding();
+
+		} else if (node instanceof SuperConstructorInvocation) {
+			return ((SuperConstructorInvocation) node).resolveConstructorBinding();
+		} else if (node instanceof ConstructorInvocation) {
+			return ((ConstructorInvocation) node).resolveConstructorBinding();
+		} else if (node instanceof LambdaExpression) {
+			return ((LambdaExpression) node).resolveMethodBinding();
+		} else {
+			return null;
+		}
+	}
+
+	private static IBinding resolveSuperclassConstructor(ITypeBinding superClassDeclaration, IMethodBinding constructor) {
+		IMethodBinding[] methods = superClassDeclaration.getDeclaredMethods();
+		for (int i = 0; i < methods.length; i++) {
+			IMethodBinding method = methods[i];
+			if (method.isConstructor() && constructor.isSubsignature(method)) {
+				return method;
+			}
+		}
+		return null;
+	}
+
+	/* adapted from org.eclipse.jdt.internal.ui.text.java.FieldProposalInfo.resolveMember */
+	/**
+	 * Resolves the field described by the receiver and returns it if found. Returns
+	 * <code>null</code> if no corresponding member can be found.
+	 *
+	 * @param proposal
+	 *            - completion proposal
+	 * @param javaProject
+	 *            - Java project
+	 *
+	 * @return the resolved field or <code>null</code> if none is found
+	 * @throws JavaModelException
+	 *             if accessing the java model fails
+	 */
+	public static IField resolveField(CompletionProposal proposal, IJavaProject javaProject) throws JavaModelException {
+		char[] declarationSignature = proposal.getDeclarationSignature();
+		// for synthetic fields on arrays, declaration signatures may be null
+		// TODO remove when https://bugs.eclipse.org/bugs/show_bug.cgi?id=84690 gets fixed
+		if (declarationSignature == null) {
+			return null;
+		}
+		String typeName = SignatureUtil.stripSignatureToFQN(String.valueOf(declarationSignature));
+		IType type = javaProject.findType(typeName);
+		if (type != null) {
+			String name = String.valueOf(proposal.getName());
+			IField field = type.getField(name);
+			if (field.exists()) {
+				return field;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Resolves the method described by the receiver and returns it if found.
+	 * Returns <code>null</code> if no corresponding member can be found.
+	 *
+	 * @param proposal
+	 *            - completion proposal
+	 * @param javaProject
+	 *            - Java project
+	 *
+	 * @return the resolved method or <code>null</code> if none is found
+	 * @throws JavaModelException
+	 *             if accessing the java model fails
+	 */
+
+	public static IMethod resolveMethod(CompletionProposal proposal, IJavaProject javaProject) throws JavaModelException {
+		char[] declarationSignature = proposal.getDeclarationSignature();
+		String typeName = SignatureUtil.stripSignatureToFQN(String.valueOf(declarationSignature));
+		IType type = javaProject.findType(typeName);
+		if (type != null) {
+			String name = String.valueOf(proposal.getName());
+			if (proposal.getKind() == CompletionProposal.ANNOTATION_ATTRIBUTE_REF) {
+				IMethod method = type.getMethod(name, CharOperation.NO_STRINGS);
+				if (method.exists()) {
+					return method;
+				} else {
+					return null;
+				}
+			}
+			String[] parameters = Signature.getParameterTypes(String.valueOf(SignatureUtil.fix83600(proposal.getSignature())));
+			for (int i = 0; i < parameters.length; i++) {
+				parameters[i] = SignatureUtil.getLowerBound(parameters[i]);
+			}
+			boolean isConstructor = proposal.isConstructor();
+
+			return JavaModelUtil.findMethod(name, parameters, isConstructor, type);
+		}
+
+		return null;
+	}
+
 }

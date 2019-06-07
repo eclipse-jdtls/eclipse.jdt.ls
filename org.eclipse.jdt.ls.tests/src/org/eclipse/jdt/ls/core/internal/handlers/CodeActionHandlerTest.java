@@ -14,13 +14,17 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.lsp4j.CodeAction;
@@ -75,13 +79,14 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, "java.sql");
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(3, codeActions.size());
+		Assert.assertTrue(codeActions.size() >= 3);
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
@@ -99,12 +104,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, "some str");
+		final Range range = CodeActionUtil.getRange(unit, "some str");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertEquals(2, codeActions.size());
+		Assert.assertFalse(codeActions.isEmpty());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
@@ -127,7 +132,6 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 			params.setContext(context);
 			List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 			Assert.assertNotNull(codeActions);
-			Assert.assertEquals(1, codeActions.size());
 		} finally {
 			cu.discardWorkingCopy();
 		}
@@ -146,7 +150,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, ";");
+		final Range range = CodeActionUtil.getRange(unit, ";");
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
@@ -164,17 +168,40 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(range, edits.get(0).getRange());
 	}
 
-	private Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
-		String str= unit.getSource();
-		int start = str.lastIndexOf(search);
-		return JDTUtils.toRange(unit, start, search.length());
+	@Test
+	public void test_noUnnecessaryCodeActions() throws Exception{
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Foo.java",
+				"package org.sample;\n"+
+				"\n"+
+				"public class Foo {\n"+
+				"	private String foo;\n"+
+				"	public String getFoo() {\n"+
+				"	  return foo;\n"+
+				"	}\n"+
+				"   \n"+
+				"	public void setFoo(String newFoo) {\n"+
+				"	  foo = newFoo;\n"+
+				"	}\n"+
+				"}\n");
+		//@formatter:on
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "String foo;");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Collections.emptyList()));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse("No need for organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
+		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
 		return server.codeAction(params).join();
 	}
 
-	public Command getCommand(Either<Command, CodeAction> codeAction) {
+	public static Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
 	}
 
@@ -187,4 +214,19 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return $;
 	}
 
+	public static boolean containsKind(List<Either<Command, CodeAction>> codeActions, String kind) {
+		for (Either<Command, CodeAction> action : codeActions) {
+			String actionKind = action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand();
+			if (Objects.equals(actionKind, kind)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String kind) {
+		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).findFirst();
+		return any.isPresent() ? any.get() : null;
+	}
 }

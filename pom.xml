@@ -6,12 +6,12 @@
 	<groupId>org.eclipse.jdt.ls</groupId>
 	<artifactId>parent</artifactId>
 	<name>${base.name} :: Parent</name>
-	<version>0.30.0-SNAPSHOT</version>
+	<version>0.41.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<base.name>JDT Language Server</base.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<tycho-version>1.2.0</tycho-version>
+		<tycho-version>1.4.0</tycho-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/eclipse/eclipse.jdt.ls.git</tycho.scmUrl>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>

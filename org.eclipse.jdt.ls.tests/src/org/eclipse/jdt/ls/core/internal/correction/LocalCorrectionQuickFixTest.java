@@ -11,6 +11,8 @@
 
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import static org.mockito.Mockito.when;
+
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -19,6 +21,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -137,9 +140,16 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this.count = count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'count'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'count'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testUnusedPrivateFieldWithResourceOperationSupport() throws Exception {
+		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		testUnusedPrivateField();
 	}
 
 	@Test
@@ -178,7 +188,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this.color = color;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'color'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'color'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -224,7 +234,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this.count = count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'count'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'count'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -1605,7 +1615,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 	public void testRemoveUnreachableCodeStmt() throws Exception {
 		Hashtable<String, String> hashtable = JavaCore.getOptions();
 		hashtable.put(JavaCore.COMPILER_PB_UNNECESSARY_ELSE, JavaCore.IGNORE);
-		JavaCore.setOptions(hashtable);
+		fJProject1.setOptions(hashtable);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();

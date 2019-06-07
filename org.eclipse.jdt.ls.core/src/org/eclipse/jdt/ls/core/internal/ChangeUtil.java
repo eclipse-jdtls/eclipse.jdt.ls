@@ -43,6 +43,8 @@ import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.CreateFileOptions;
 import org.eclipse.lsp4j.DeleteFile;
 import org.eclipse.lsp4j.DeleteFileOptions;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
@@ -63,6 +65,7 @@ import org.eclipse.text.edits.TextEdit;
 public class ChangeUtil {
 
 	private static final String TEMP_FILE_NAME = ".temp";
+	private static final Range ZERO_RANGE = new Range(new Position(), new Position());
 
 	/**
 	 * Converts changes to resource operations if resource operations are supported
@@ -288,6 +291,45 @@ public class ChangeUtil {
 				rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, pkg, null);
 			}
 		}
+	}
+
+	/**
+	 * @return <code>true</code> if a {@link WorkspaceEdit} contains any actual
+	 *         changes, <code>false</code> otherwise.
+	 */
+	public static boolean hasChanges(WorkspaceEdit edit) {
+		if (edit == null) {
+			return false;
+		}
+		if (edit.getDocumentChanges() != null && !edit.getDocumentChanges().isEmpty()) {
+			return true;
+		}
+		boolean hasChanges = false;
+		//@formatter:off
+		if ((edit.getChanges() != null && !edit.getChanges().isEmpty())) {
+			hasChanges = edit.getChanges().values().stream()
+					.filter(changes -> changes != null && !changes.isEmpty() && hasChanges(changes))
+					.findFirst()
+					.isPresent();
+		}
+		//@formatter:on
+		return hasChanges;
+	}
+
+	/**
+	 * @return <code>true</code> if a list of {@link org.eclipse.lsp4j.TextEdit}
+	 *         contains any actual changes, <code>false</code> otherwise.
+	 */
+	public static boolean hasChanges(List<org.eclipse.lsp4j.TextEdit> edits) {
+		if (edits == null) {
+			return false;
+		}
+		//@formatter:off
+		return edits.stream()
+				.filter(edit -> (!edit.getRange().equals(ZERO_RANGE) || !"".equals(edit.getNewText())))
+				.findFirst()
+				.isPresent();
+		//@formatter:on
 	}
 
 }

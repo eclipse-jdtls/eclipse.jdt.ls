@@ -140,7 +140,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		digestStore = new DigestStore(getStateLocation().toFile());
 		projectsManager = new ProjectsManager(preferenceManager);
 		try {
-			ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, projectsManager);
+			ResourcesPlugin.getWorkspace().addSaveParticipant(IConstants.PLUGIN_ID, projectsManager);
 		} catch (CoreException e) {
 			logException(e.getMessage(), e);
 		}
@@ -297,7 +297,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
 			InputStream in = connectionFactory.getInputStream();
 			OutputStream out = connectionFactory.getOutputStream();
-			Function<MessageConsumer, MessageConsumer> wrapper = new ParentProcessWatcher(this.languageServer);
+			Function<MessageConsumer, MessageConsumer> wrapper;
+			if ("false".equals(System.getProperty("watchParentProcess"))) {
+				wrapper = it -> it;
+			} else {
+				wrapper = new ParentProcessWatcher(this.languageServer);
+			}
 			launcher = Launcher.createLauncher(protocol, JavaLanguageClient.class, in, out, executorService, wrapper);
 		}
 		protocol.connectClient(launcher.getRemoteProxy());
@@ -313,7 +318,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		logInfo(getClass() + " is stopping:");
 		JavaLanguageServerPlugin.pluginInstance = null;
 		JavaLanguageServerPlugin.context = null;
-		ResourcesPlugin.getWorkspace().removeSaveParticipant(PLUGIN_ID);
+		ResourcesPlugin.getWorkspace().removeSaveParticipant(IConstants.PLUGIN_ID);
 		projectsManager = null;
 		contentProviderManager = null;
 		languageServer = null;

@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -127,14 +129,19 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		// Check if it is a Java ...
 		if (JavaCore.isJavaLikeFileName(file.getName())) {
 			ICompilationUnit cu = (ICompilationUnit) JavaCore.create(file);
-			//ignoring working copies, they're handled in the DocumentLifecycleHandler
-			if (!cu.isWorkingCopy()) {
-				IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-				IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
-				markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
-				System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
-				document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			// Clear the diagnostics for the resource not on the classpath
+			IJavaProject javaProject = cu.getJavaProject();
+			if (javaProject == null || !javaProject.isOnClasspath(cu)) {
+				String uri = JDTUtils.getFileURI(resource);
+				this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
+				return false;
 			}
+
+			IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+			IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
+			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
+			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
+			document = JsonRpcHelpers.toDocument(cu.getBuffer());
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {
 			//all errors on that build file should be relevant

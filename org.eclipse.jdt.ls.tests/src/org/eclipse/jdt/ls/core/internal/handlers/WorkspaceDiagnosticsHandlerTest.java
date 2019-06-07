@@ -213,12 +213,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		diags = pomDiags.get().getDiagnostics();
 		Collections.sort(diags, comparator);
-		assertEquals(diags.toString(), 3, diags.size());
-		assertTrue(diags.get(0).getMessage()
-				.startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:resources:default-resources:process-resources)"));
-		assertTrue(diags.get(1).getMessage()
-				.startsWith("For artifact {org.apache.commons:commons-lang3:null:jar}: The version cannot be empty. (org.apache.maven.plugins:maven-resources-plugin:2.6:testResources:default-testResources:process-test-resources)"));
-		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(2).getMessage());
+		assertEquals(diags.toString(), 1, diags.size());
+		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(0).getMessage());
 	}
 
 	@Test
@@ -241,14 +237,14 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 			return diff;
 		};
 		Collections.sort(diags, comparator);
-		assertEquals(diags.toString(), 2, diags.size());
-		assertTrue(diags.get(1).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+		assertEquals(diags.toString(), 3, diags.size());
+		assertTrue(diags.get(2).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		diags = pomDiags.get().getDiagnostics();
 		Collections.sort(diags, comparator);
-		assertEquals(diags.toString(), 3, diags.size());
-		assertTrue(diags.get(2).getMessage().startsWith("Project build error: "));
+		assertEquals(diags.toString(), 1, diags.size());
+		assertTrue(diags.get(0).getMessage().startsWith("Project build error: "));
 	}
 
 	@Test
@@ -394,7 +390,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<profiles>", compilerPlugin + "\n<profiles>"));
 
-		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+		waitForBackgroundJobs();
 
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());

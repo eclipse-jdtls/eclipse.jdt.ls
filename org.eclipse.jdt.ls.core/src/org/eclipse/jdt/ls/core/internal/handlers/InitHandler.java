@@ -121,6 +121,19 @@ final public class InitHandler {
 			preferenceManager.update(prefs);
 		}
 		preferenceManager.getPreferences().setRootPaths(rootPaths);
+
+		Collection<IPath> triggerPaths = new ArrayList<>();
+		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
+		if (triggerFiles != null) {
+			for (String uri : triggerFiles) {
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
+				if (filePath != null) {
+					triggerPaths.add(filePath);
+				}
+			}
+		}
+		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
+
 		triggerInitialization(rootPaths);
 		Integer processId = param.getProcessId();
 		if (processId != null) {
@@ -183,6 +196,9 @@ final public class InitHandler {
 		}
 		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			capabilities.setFoldingRangeProvider(Boolean.TRUE);
 		}
 		if (!preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			capabilities.setImplementationProvider(Boolean.TRUE);

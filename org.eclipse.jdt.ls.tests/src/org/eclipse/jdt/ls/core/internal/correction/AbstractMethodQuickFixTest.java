@@ -67,7 +67,7 @@ public class AbstractMethodQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e3 = new Expected("Remove method body", buf.toString());
 
-		assertCodeActions(cu, e1, e2, e2, e3);
+		assertCodeActions(cu, e1, e2, e3);
 	}
 
 	@Test
@@ -184,7 +184,7 @@ public class AbstractMethodQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	public void testAbstarctMethodInEnum2() throws Exception {
+	public void testAbstractMethodInEnum2() throws Exception {
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test;\n");

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IProject;
@@ -45,7 +46,6 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.ls.core.internal.FileSystemWatcher;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -58,6 +58,7 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
+import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
@@ -66,6 +67,7 @@ import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
+import org.eclipse.lsp4j.WorkspaceEditCapabilities;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
@@ -151,11 +153,12 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(mockCapabilies.isHoverDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isReferencesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(mockCapabilies.isFoldgingRangeDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isCompletionDynamicRegistered()).thenReturn(Boolean.TRUE);
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
-		verify(client, times(8)).registerCapability(any());
+		verify(client, times(9)).registerCapability(any());
 	}
 
 	@Test
@@ -187,6 +190,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
 		importProjects(Arrays.asList("maven/salut", "gradle/simple-gradle"));
 		newEmptyProject();
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
@@ -197,16 +201,17 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
 			}
 		});
-		assertEquals(watchers.size(), 5);
-		assertEquals(watchers.get(0).getGlobPattern(), ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + "/TestProject/src/**");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 8, watchers.size());
+		assertEquals("**/*.gradle", watchers.get(0).getGlobPattern());
+		assertEquals("**/*.java", watchers.get(1).getGlobPattern());
+		assertEquals("**/.classpath", watchers.get(2).getGlobPattern());
+		assertEquals("**/.project", watchers.get(3).getGlobPattern());
+		assertEquals("**/.settings/*.prefs", watchers.get(4).getGlobPattern());
+		assertEquals("**/gradle.properties", watchers.get(5).getGlobPattern());
+		assertEquals("**/pom.xml", watchers.get(6).getGlobPattern());
+		assertEquals("**/src/**", watchers.get(7).getGlobPattern());
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		String location = project.getLocation().toString();
-		assertEquals(watchers.get(1).getGlobPattern(), location + "/src/main/java/**");
-		assertEquals(watchers.get(2).getGlobPattern(), location + "/src/test/java/**");
-		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
-		location = project.getLocation().toString();
-		assertEquals(watchers.get(3).getGlobPattern(), location + "/src/main/java/**");
-		assertEquals(watchers.get(4).getGlobPattern(), location + "/src/main/resources/**");
 		IJavaProject javaProject = JavaCore.create(project);
 		// for test purposes only
 		removeExclusionPattern(javaProject);
@@ -234,6 +239,10 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals(newWatchers, watchers);
+	}
+
+	private String toString(List<FileSystemWatcher> watchers) {
+		return watchers.stream().map(FileSystemWatcher::getGlobPattern).collect(Collectors.joining("\n"));
 	}
 
 	@Test
@@ -264,6 +273,16 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			FileUtils.deleteDirectory(targetFile);
 			FileUtils.deleteDirectory(tempDirectory);
 		}
+	}
+
+	@Test
+	public void testMissingResourceOperations() throws Exception {
+		ClientCapabilities capabilities = new ClientCapabilities();
+		WorkspaceClientCapabilities worspaceCapabilities = new WorkspaceClientCapabilities();
+		worspaceCapabilities.setWorkspaceEdit(new WorkspaceEditCapabilities());
+		capabilities.setWorkspace(worspaceCapabilities);
+		ClientPreferences preferences = new ClientPreferences(capabilities);
+		assertFalse(preferences.isResourceOperationSupported());
 	}
 
 	private void removeExclusionPattern(IJavaProject javaProject) throws JavaModelException {

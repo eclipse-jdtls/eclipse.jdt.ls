@@ -22,7 +22,7 @@ public class StatusFactoryTest {
 		IStatus error = StatusFactory.newErrorStatus("foo");
 		assertEquals("foo", error.getMessage());
 		assertEquals(IStatus.ERROR, error.getSeverity());
-		assertEquals(JavaLanguageServerPlugin.PLUGIN_ID, error.getPlugin());
+		assertEquals(IConstants.PLUGIN_ID, error.getPlugin());
 	}
 
 	@Test

@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IParent;
@@ -230,31 +231,51 @@ public class DocumentSymbolHandler {
 
 	public static SymbolKind mapKind(IJavaElement element) {
 		switch (element.getElementType()) {
+			case IJavaElement.TYPE:
+				try {
+					IType type = (IType)element;
+					if (type.isInterface()) {
+						return SymbolKind.Interface;
+					}
+					else if (type.isEnum()) {
+						return SymbolKind.Enum;
+					}
+				} catch (JavaModelException ignore) {
+				}
+				return SymbolKind.Class;
 		case IJavaElement.ANNOTATION:
 			return SymbolKind.Property; // TODO: find a better mapping
 		case IJavaElement.CLASS_FILE:
 		case IJavaElement.COMPILATION_UNIT:
 			return SymbolKind.File;
 		case IJavaElement.FIELD:
+			IField field = (IField) element;
+				try {
+					if (field.isEnumConstant()) {
+						return SymbolKind.EnumMember;
+					}
+					int flags = field.getFlags();
+					if (Flags.isStatic(flags) && Flags.isFinal(flags)) {
+						return SymbolKind.Constant;
+					}
+				} catch (JavaModelException ignore) {
+				}
 			return SymbolKind.Field;
 		case IJavaElement.IMPORT_CONTAINER:
 		case IJavaElement.IMPORT_DECLARATION:
+			//should we return SymbolKind.Namespace?
+		case IJavaElement.JAVA_MODULE:
 			return SymbolKind.Module;
 		case IJavaElement.INITIALIZER:
 			return SymbolKind.Constructor;
 		case IJavaElement.LOCAL_VARIABLE:
-		case IJavaElement.TYPE_PARAMETER:
 			return SymbolKind.Variable;
+		case IJavaElement.TYPE_PARAMETER:
+			return SymbolKind.TypeParameter;
 		case IJavaElement.METHOD:
 			return SymbolKind.Method;
 		case IJavaElement.PACKAGE_DECLARATION:
 			return SymbolKind.Package;
-		case IJavaElement.TYPE:
-			try {
-				return (((IType)element).isInterface() ? SymbolKind.Interface : SymbolKind.Class);
-			} catch (JavaModelException e) {
-				return SymbolKind.Class;
-			}
 		}
 		return SymbolKind.String;
 	}

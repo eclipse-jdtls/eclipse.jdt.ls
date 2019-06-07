@@ -16,8 +16,10 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLow
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -50,12 +52,14 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	private final ICompilationUnit unit;
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
+	private Map<SignatureInformation, CompletionProposal> infoProposals;
 
 	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset) {
 		this.unit = aUnit;
 		response = new CompletionResponse();
 		response.setOffset(offset);
 		setRequireExtendedContext(true);
+		infoProposals = new HashMap<>();
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
@@ -66,7 +70,10 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		List<SignatureInformation> infos = new ArrayList<>();
 		for (int i = 0; i < proposals.size(); i++) {
 			if (!monitor.isCanceled()) {
-				infos.add(this.toSignatureInformation(proposals.get(i)));
+				CompletionProposal proposal = proposals.get(i);
+				SignatureInformation signatureInformation = this.toSignatureInformation(proposal);
+				infoProposals.put(signatureInformation, proposal);
+				infos.add(signatureInformation);
 			} else {
 				return signatureHelp;
 			}
@@ -213,5 +220,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 			//meh
 		}
 		return null;
+	}
+
+	public Map<SignatureInformation, CompletionProposal> getInfoProposals() {
+		return infoProposals;
 	}
 }

@@ -15,20 +15,36 @@ import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.core.BinaryType;
+import org.eclipse.jdt.ls.core.internal.DependencyUtil;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
@@ -140,6 +156,36 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 		assertIsJavaProject(project);
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testDownloadSources() throws Exception {
+		File file = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5");
+		FileUtils.deleteDirectory(file.getParentFile());
+		IProject project = importMavenProject("salut");
+		waitForBackgroundJobs();
+		assertTrue(!file.exists());
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+		IClassFile classFile = ((BinaryType) type).getClassFile();
+		assertNull(classFile.getBuffer());
+		String source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+		if (source == null) {
+			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
+			source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+		}
+		assertNotNull(source);
+	}
+
+	@Test
+	public void testBatchImport() throws Exception {
+		IProject project = importMavenProject("batch");
+		waitForBackgroundJobs();
+		assertTrue(ProjectUtils.isMavenProject(project));
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		assertEquals(root.getProjects().length, 14);
+		project = root.getProject("batchchild");
+		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
 	protected void testNonStandardCompilerId(String projectName) throws Exception {

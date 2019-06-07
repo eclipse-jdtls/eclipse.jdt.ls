@@ -52,7 +52,7 @@ public class ConvertVarQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
-		Either<Command, CodeAction> codeAction = codeActions.stream().filter(c -> getCommand(c).getTitle().matches("Change type of 'name' to 'String'")).findFirst().orElse(null);
+		Either<Command, CodeAction> codeAction = codeActions.stream().filter(c -> getTitle(c).matches("Change type of 'name' to 'String'")).findFirst().orElse(null);
 		assertNotNull(codeAction);
 	}
 
@@ -68,7 +68,7 @@ public class ConvertVarQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> commands = evaluateCodeActions(cu);
-		Either<Command, CodeAction> codeAction = commands.stream().filter(c -> getCommand(c).getTitle().matches("Change type of 'name' to 'var'")).findFirst().orElse(null);
+		Either<Command, CodeAction> codeAction = commands.stream().filter(c -> getTitle(c).matches("Change type of 'name' to 'var'")).findFirst().orElse(null);
 		assertNotNull(codeAction);
 	}
 

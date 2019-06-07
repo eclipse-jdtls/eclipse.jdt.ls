@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 
 /**
  * @author Fred Bricon
@@ -37,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 public class GradleBuildSupport implements IBuildSupport {
 
 	public static final String GRADLE_SUFFIX = ".gradle";
+	public static final String GRADLE_PROPERTIES = "gradle.properties";
 
 	@Override
 	public boolean applies(IProject project) {
@@ -57,7 +59,8 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		if (resource != null && resource.getType() == IResource.FILE && resource.getName().endsWith(GRADLE_SUFFIX) && resource.getProject() != null && ProjectUtils.isGradleProject(resource.getProject())) {
+		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
+				&& ProjectUtils.isGradleProject(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
 					return true;
@@ -88,6 +91,14 @@ public class GradleBuildSupport implements IBuildSupport {
 				}
 			}
 		}
+	}
+
+	@Override
+	public boolean fileChanged(IResource resource, CHANGE_TYPE changeType, IProgressMonitor monitor) throws CoreException {
+		if (resource == null || !applies(resource.getProject())) {
+			return false;
+		}
+		return IBuildSupport.super.fileChanged(resource, changeType, monitor) || isBuildFile(resource);
 	}
 
 	/**

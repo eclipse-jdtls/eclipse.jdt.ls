@@ -135,6 +135,11 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertHasSymbol("foo()", "MyInterface", SymbolKind.Method, symbols);
 		assertHasSymbol("MyClass", "Bar", SymbolKind.Class, symbols);
 		assertHasSymbol("bar()", "MyClass", SymbolKind.Method, symbols);
+		assertHasSymbol("Foo", "Bar", SymbolKind.Enum, symbols);
+		assertHasSymbol("Bar", "Foo", SymbolKind.EnumMember, symbols);
+		assertHasSymbol("Zoo", "Foo", SymbolKind.EnumMember, symbols);
+		assertHasSymbol("EMPTY", "Bar", SymbolKind.Constant, symbols);
+
 	}
 
 	@Test

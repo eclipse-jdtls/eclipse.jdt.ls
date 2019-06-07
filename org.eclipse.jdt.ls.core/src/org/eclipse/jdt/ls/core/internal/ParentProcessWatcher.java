@@ -20,6 +20,8 @@ import java.util.function.Function;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 
+import com.google.common.io.Closeables;
+
 /**
  * Watches the parent process PID and invokes exit if it is no longer available.
  * This implementation waits for periods of inactivity to start querying the PIDs.
@@ -27,7 +29,8 @@ import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 public final class ParentProcessWatcher implements Runnable, Function<MessageConsumer, MessageConsumer>{
 
 	private static final long INACTIVITY_DELAY_SECS = 30 *1000;
-	private static final int POLL_DELAY_SECS = 2;
+	private static final boolean isJava1x = System.getProperty("java.version").startsWith("1.");
+	private static final int POLL_DELAY_SECS = 10;
 	private volatile long lastActivityTime;
 	private final LanguageServer server;
 	private ScheduledFuture<?> task;
@@ -42,6 +45,7 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 	@Override
 	public void run() {
 		if (!parentProcessStillRunning()) {
+			JavaLanguageServerPlugin.logInfo("Parent process stopped running, forcing server exit");
 			task.cancel(true);
 			server.exit();
 		}
@@ -65,13 +69,47 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		} else {
 			command = "ps -p " + pid;
 		}
+		Process process = null;
+		boolean finished = false;
 		try {
-			Process process = Runtime.getRuntime().exec(command);
-			int processResult = process.waitFor();
-			return processResult == 0;
+			process = Runtime.getRuntime().exec(command);
+			finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS);
+			if (!finished) {
+				process.destroy();
+				finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS); // wait for the process to stop
+			}
+			if (Platform.OS_WIN32.equals(Platform.getOS()) && finished && process.exitValue() > 1) {
+				// the tasklist command should return 0 (parent process exists) or 1 (parent process doesn't exist)
+				JavaLanguageServerPlugin.logInfo("The tasklist command: '" + command + "' returns " + process.exitValue());
+				return true;
+			}
+			return !finished || process.exitValue() == 0;
 		} catch (IOException | InterruptedException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return true;
+		} finally {
+			if (process != null) {
+				if (!finished) {
+					process.destroyForcibly();
+				}
+				// Terminating or destroying the Process doesn't close the process handle on Windows.
+				// It is only closed when the Process object is garbage collected (in its finalize() method).
+				// On Windows, when the Java LS is idle, we need to explicitly request a GC,
+				// to prevent an accumulation of zombie processes, as finalize() will be called.
+				if (Platform.OS_WIN32.equals(Platform.getOS())) {
+					// Java >= 9 doesn't close the handle when the process is garbage collected
+					// We need to close the opened streams
+					if (!isJava1x) {
+						Closeables.closeQuietly(process.getInputStream());
+						Closeables.closeQuietly(process.getErrorStream());
+						try {
+							Closeables.close(process.getOutputStream(), false);
+						} catch (IOException e) {
+						}
+					}
+					System.gc();
+				}
+			}
 		}
 	}
 

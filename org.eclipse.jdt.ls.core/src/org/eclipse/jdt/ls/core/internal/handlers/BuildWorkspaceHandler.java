@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -96,8 +97,16 @@ public class BuildWorkspaceHandler {
 		StringBuilder builder = new StringBuilder();
 		String message = marker.getAttribute(IMarker.MESSAGE, "<no message>");
 		String code = String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0));
-		builder.append("message: " + message + ";");
-		builder.append("code: " + code);
+		builder.append(" message: ").append(message).append(";");
+		builder.append(" code: ").append(code).append(";");
+		IResource resource = marker.getResource();
+		if (resource != null) {
+			builder.append(" resource: ").append(resource.getLocation()).append(";");
+		}
+		int line = marker.getAttribute(IMarker.LINE_NUMBER, -1);
+		if (line > 0) {
+			builder.append(" line: ").append(line);
+		}
 		return builder.toString();
 	}
 }

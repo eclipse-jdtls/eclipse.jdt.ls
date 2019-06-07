@@ -15,6 +15,7 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.FileVisitResult.TERMINATE;
 
 import java.io.IOException;
+import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -151,6 +152,16 @@ public class BasicFileDetector {
 					return includeNested?CONTINUE:SKIP_SUBTREE;
 				}
 				return CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+				Objects.requireNonNull(file);
+    			if (exc instanceof FileSystemLoopException) {
+        			return CONTINUE;
+    			} else {
+        			throw exc;
+    			}
 			}
 
 		};

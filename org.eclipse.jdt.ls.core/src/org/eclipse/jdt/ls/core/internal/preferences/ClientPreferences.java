@@ -141,6 +141,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getDocumentHighlight());
 	}
 
+	public boolean isFoldgingRangeDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getFoldingRange());
+	}
+
 	public boolean isImplementationDynamicRegistered() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getImplementation());
 	}
@@ -165,6 +169,34 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("classFileContentsSupport", "false").toString());
 	}
 
+	public boolean isOverrideMethodsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("overrideMethodsPromptSupport", "false").toString());
+	}
+
+	public boolean isHashCodeEqualsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("hashCodeEqualsPromptSupport", "false").toString());
+	}
+
+	public boolean isAdvancedOrganizeImportsSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedOrganizeImportsSupport", "false").toString());
+	}
+
+	public boolean isGenerateToStringPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateToStringPromptSupport", "false").toString());
+	}
+
+	public boolean isAdvancedGenerateAccessorsSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedGenerateAccessorsSupport", "false").toString());
+	}
+
+	public boolean isGenerateConstructorsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateConstructorsPromptSupport", "false").toString());
+	}
+
+	public boolean isGenerateDelegateMethodsPromptSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateDelegateMethodsPromptSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null
@@ -181,7 +213,9 @@ public class ClientPreferences {
 
 	public boolean isResourceOperationSupported() {
 		//@formatter:off
-		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getWorkspaceEdit() != null
+		return capabilities.getWorkspace() != null
+				&& capabilities.getWorkspace().getWorkspaceEdit() != null
+				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations() != null
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Create)
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Rename)
 				&& capabilities.getWorkspace().getWorkspaceEdit().getResourceOperations().contains(ResourceOperationKind.Delete);
@@ -220,7 +254,8 @@ public class ClientPreferences {
 				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport() != null
 				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind() != null
 				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind().getValueSet() != null
-				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind().getValueSet().contains(kind);
+				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport().getCodeActionKind().getValueSet()
+				.stream().filter(k -> kind.startsWith(k)).findAny().isPresent();
 		//@formatter:on
 	}
 }

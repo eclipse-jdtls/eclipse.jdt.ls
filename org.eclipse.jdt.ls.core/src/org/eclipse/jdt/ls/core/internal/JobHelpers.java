@@ -40,6 +40,7 @@ public final class JobHelpers {
 	}
 
 	private static final int POLLING_DELAY = 10;
+	public static final int MAX_TIME_MILLIS = 300000;
 
 	public static void waitForJobsToComplete() {
 		try {
@@ -135,11 +136,19 @@ public final class JobHelpers {
 	}
 
 	private static void waitForBuildJobs() {
-		waitForJobs(BuildJobMatcher.INSTANCE, 300000);
+		waitForBuildJobs(MAX_TIME_MILLIS);
+	}
+
+	public static void waitForBuildJobs(int maxTimeMilis) {
+		waitForJobs(BuildJobMatcher.INSTANCE, maxTimeMilis);
 	}
 
 	public static void waitForInitializeJobs() {
-		waitForJobs(InitializeJobMatcher.INSTANCE, 300000);
+		waitForJobs(InitializeJobMatcher.INSTANCE, MAX_TIME_MILLIS);
+	}
+
+	public static void waitForDownloadSourcesJobs(int maxTimeMillis) {
+		waitForJobs(DownloadSourcesJobMatcher.INSTANCE, maxTimeMillis);
 	}
 
 	public static void waitForJobs(IJobMatcher matcher, int maxWaitMillis) {
@@ -198,6 +207,17 @@ public final class JobHelpers {
 		@Override
 		public boolean matches(Job job) {
 			return job.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS);
+		}
+
+	}
+
+	static class DownloadSourcesJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new DownloadSourcesJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return ("org.eclipse.m2e.jdt.internal.DownloadSourcesJob".equals(job.getClass().getName()));
 		}
 
 	}

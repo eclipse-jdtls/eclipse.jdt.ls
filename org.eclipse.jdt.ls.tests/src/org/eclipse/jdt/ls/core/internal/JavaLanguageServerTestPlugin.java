@@ -28,7 +28,7 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		TestVMType.setTestJREAsDefault();
+		TestVMType.setTestJREAsDefault("1.8");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
 	}
 

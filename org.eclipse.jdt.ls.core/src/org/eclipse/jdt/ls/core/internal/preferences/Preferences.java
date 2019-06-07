@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 
@@ -21,13 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.MessageType;
 
@@ -60,9 +61,22 @@ public class Preferences {
 	 */
 	public static final String IMPORT_GRADLE_ENABLED = "java.import.gradle.enabled";
 	/**
+	 * Preference key to enable/disable gradle wrapper.
+	 */
+	public static final String GRADLE_WRAPPER_ENABLED = "java.import.gradle.wrapper.enabled";
+	/**
+	 * Preference key for gradle version to use when the gradle wrapper is not used.
+	 */
+	public static final String GRADLE_VERSION = "java.import.gradle.version";
+
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
+	/**
+	 * Preference key to enable/disable downloading Maven source artifacts.
+	 */
+	public static final String MAVEN_DOWNLOAD_SOURCES = "java.maven.downloadSources";
 	/**
 	 * Preference key to enable/disable reference code lenses.
 	 */
@@ -109,6 +123,11 @@ public class Preferences {
 	public static final String AUTOBUILD_ENABLED_KEY = "java.autobuild.enabled";
 
 	/**
+	 * Preference key to set max concurrent build count.
+	 */
+	public static final String JAVA_MAX_CONCURRENT_BUILDS = "java.maxConcurrentBuilds";
+
+	/**
 	 * Preference key to exclude directories when importing projects.
 	 */
 	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
@@ -133,6 +152,11 @@ public class Preferences {
 	 * Preference key to enable/disable the 'completion'.
 	 */
 	public static final String COMPLETION_ENABLED_KEY = "java.completion.enabled";
+
+	/**
+	 * Preference key to enable/disable the 'foldingRange'.
+	 */
+	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
 
 	/**
 	 * A named preference that holds the favorite static members.
@@ -197,6 +221,24 @@ public class Preferences {
 	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
 	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
+	// A named preference that defines whether to use Objects.hash and Objects.equals methods when generating the hashCode and equals methods.
+	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS = "java.codeGeneration.hashCodeEquals.useJava7Objects";
+	// A named preference that defines whether to use 'instanceof' to compare types when generating the hashCode and equals methods.
+	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF = "java.codeGeneration.hashCodeEquals.useInstanceof";
+	// A named preference that defines whether to use blocks in 'if' statements when generating the methods.
+	public static final String JAVA_CODEGENERATION_USEBLOCKS = "java.codeGeneration.useBlocks";
+	// A named preference that defines whether to generate method comments when generating the methods.
+	public static final String JAVA_CODEGENERATION_GENERATECOMMENTS = "java.codeGeneration.generateComments";
+
+	/**
+	 * The preferences for generating toString method.
+	 */
+	public static final String JAVA_CODEGENERATION_TOSTRING_TEMPLATE = "java.codeGeneration.toString.template";
+	public static final String JAVA_CODEGENERATION_TOSTRING_CODESTYLE = "java.codeGeneration.toString.codeStyle";
+	public static final String JAVA_CODEGENERATION_TOSTRING_SKIPNULLVALUES = "java.codeGeneration.toString.skipNullValues";
+	public static final String JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS = "java.codeGeneration.toString.listArrayContents";
+	public static final String JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS = "java.codeGeneration.toString.limitElements";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -214,6 +256,7 @@ public class Preferences {
 	public static final String HOVER = "textDocument/hover";
 	public static final String REFERENCES = "textDocument/references";
 	public static final String DOCUMENT_HIGHLIGHT = "textDocument/documentHighlight";
+	public static final String FOLDINGRANGE = "textDocument/foldingRange";
 	public static final String WORKSPACE_CHANGE_FOLDERS = "workspace/didChangeWorkspaceFolders";
 	public static final String IMPLEMENTATION = "textDocument/implementation";
 
@@ -233,6 +276,7 @@ public class Preferences {
 	public static final String HOVER_ID = UUID.randomUUID().toString();
 	public static final String REFERENCES_ID = UUID.randomUUID().toString();
 	public static final String DOCUMENT_HIGHLIGHT_ID = UUID.randomUUID().toString();
+	public static final String FOLDINGRANGE_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_CHANGE_FOLDERS_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
@@ -242,7 +286,10 @@ public class Preferences {
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
+	private boolean gradleWrapperEnabled;
+	private String gradleVersion;
 	private boolean importMavenEnabled;
+	private boolean mavenDownloadSources;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean javaFormatOnTypeEnabled;
@@ -253,8 +300,18 @@ public class Preferences {
 	private boolean autobuildEnabled;
 	private boolean completionEnabled;
 	private boolean completionOverwrite;
+	private boolean foldingRangeEnabled;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
+	private boolean hashCodeEqualsTemplateUseJava7Objects;
+	private boolean hashCodeEqualsTemplateUseInstanceof;
+	private boolean codeGenerationTemplateUseBlocks;
+	private boolean codeGenerationTemplateGenerateComments;
+	private String generateToStringTemplate;
+	private String generateToStringCodeStyle;
+	private boolean generateToStringSkipNullValues;
+	private boolean generateToStringListArrayContents;
+	private int generateToStringLimitElements;
 	private List<String> preferredContentProviderIds;
 
 	private String mavenUserSettings;
@@ -267,6 +324,9 @@ public class Preferences {
 	private String formatterUrl;
 	private String formatterProfileName;
 	private Collection<IPath> rootPaths;
+	private Collection<IPath> triggerFiles;
+
+	private int parallelBuildsCount;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
@@ -335,7 +395,10 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
+		gradleWrapperEnabled = true;
+		gradleVersion = null;
 		importMavenEnabled = true;
+		mavenDownloadSources = false;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
@@ -347,8 +410,16 @@ public class Preferences {
 		autobuildEnabled = true;
 		completionEnabled = true;
 		completionOverwrite = true;
+		foldingRangeEnabled = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
+		hashCodeEqualsTemplateUseJava7Objects = false;
+		hashCodeEqualsTemplateUseInstanceof = false;
+		codeGenerationTemplateUseBlocks = false;
+		codeGenerationTemplateGenerateComments = false;
+		generateToStringSkipNullValues = false;
+		generateToStringListArrayContents = true;
+		generateToStringLimitElements = 0;
 		preferredContentProviderIds = null;
 		javaImportExclusions = JAVA_IMPORT_EXCLUSIONS_DEFAULT;
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
@@ -356,6 +427,7 @@ public class Preferences {
 		formatterUrl = null;
 		formatterProfileName = null;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
+		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 	}
 
 	/**
@@ -377,8 +449,14 @@ public class Preferences {
 
 		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
 		prefs.setImportGradleEnabled(importGradleEnabled);
+		boolean gradleWrapperEnabled = getBoolean(configuration, GRADLE_WRAPPER_ENABLED, true);
+		prefs.setGradleWrapperEnabled(gradleWrapperEnabled);
+		String gradleVersion = getString(configuration, GRADLE_VERSION);
+		prefs.setGradleVersion(gradleVersion);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
+		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
+		prefs.setMavenDownloadSources(downloadSources);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
@@ -410,8 +488,32 @@ public class Preferences {
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
 
+		boolean foldingRangeEnable = getBoolean(configuration, FOLDINGRANGE_ENABLED_KEY, true);
+		prefs.setFoldingRangeEnabled(foldingRangeEnable);
+
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
+
+		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, false);
+		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
+		boolean hashCodeEqualsTemplateUseInstanceof = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF, false);
+		prefs.setHashCodeEqualsTemplateUseInstanceof(hashCodeEqualsTemplateUseInstanceof);
+		boolean codeGenerationTemplateUseBlocks = getBoolean(configuration, JAVA_CODEGENERATION_USEBLOCKS, false);
+		prefs.setCodeGenerationTemplateUseBlocks(codeGenerationTemplateUseBlocks);
+		boolean codeGenerationTemplateGenerateComments = getBoolean(configuration, JAVA_CODEGENERATION_GENERATECOMMENTS, false);
+		prefs.setCodeGenerationTemplateGenerateComments(codeGenerationTemplateGenerateComments);
+
+		String generateToStringTemplate = getString(configuration, JAVA_CODEGENERATION_TOSTRING_TEMPLATE);
+		prefs.setGenerateToStringTemplate(generateToStringTemplate);
+		String generateToStringCodeStyle = getString(configuration, JAVA_CODEGENERATION_TOSTRING_CODESTYLE, "STRING_CONCATENATION");
+		prefs.setGenerateToStringCodeStyle(generateToStringCodeStyle);
+
+		boolean generateToStringSkipNullValues = getBoolean(configuration, JAVA_CODEGENERATION_TOSTRING_SKIPNULLVALUES, false);
+		prefs.setGenerateToStringSkipNullValues(generateToStringSkipNullValues);
+		boolean generateToStringListArrayContents = getBoolean(configuration, JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS, true);
+		prefs.setGenerateToStringListArrayContents(generateToStringListArrayContents);
+		int generateToStringLimitElements = getInt(configuration, JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS, 0);
+		prefs.setGenerateToStringLimitElements(generateToStringLimitElements);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
 		prefs.setJavaImportExclusions(javaImportExclusions);
@@ -442,11 +544,21 @@ public class Preferences {
 
 		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
 		prefs.setImportOrder(javaImportOrder);
+
+		int maxConcurrentBuilds = getInt(configuration, JAVA_MAX_CONCURRENT_BUILDS, PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT);
+		maxConcurrentBuilds = maxConcurrentBuilds >= 1 ? maxConcurrentBuilds : 1;
+		prefs.setMaxBuildCount(maxConcurrentBuilds);
+
 		return prefs;
 	}
 
 	public Preferences setJavaHome(String javaHome) {
 		this.javaHome = javaHome;
+		return this;
+	}
+
+	public Preferences setGradleVersion(String gradleVersion) {
+		this.gradleVersion = (gradleVersion == null || gradleVersion.isEmpty()) ? null : gradleVersion;
 		return this;
 	}
 
@@ -502,8 +614,18 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setGradleWrapperEnabled(boolean enabled) {
+		this.gradleWrapperEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setImportMavenEnabled(boolean enabled) {
 		this.importMavenEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setMavenDownloadSources(boolean enabled) {
+		this.mavenDownloadSources = enabled;
 		return this;
 	}
 
@@ -542,6 +664,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setFoldingRangeEnabled(boolean enabled) {
+		this.foldingRangeEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setGuessMethodArguments(boolean guessMethodArguments) {
 		this.guessMethodArguments = guessMethodArguments;
 		return this;
@@ -557,6 +684,51 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setHashCodeEqualsTemplateUseJava7Objects(boolean hashCodeEqualsTemplateUseJ7Objects) {
+		this.hashCodeEqualsTemplateUseJava7Objects = hashCodeEqualsTemplateUseJ7Objects;
+		return this;
+	}
+
+	public Preferences setHashCodeEqualsTemplateUseInstanceof(boolean hashCodeEqualsTemplateUseInstanceof) {
+		this.hashCodeEqualsTemplateUseInstanceof = hashCodeEqualsTemplateUseInstanceof;
+		return this;
+	}
+
+	public Preferences setCodeGenerationTemplateUseBlocks(boolean codeGenerationTemplateUseBlocks) {
+		this.codeGenerationTemplateUseBlocks = codeGenerationTemplateUseBlocks;
+		return this;
+	}
+
+	public Preferences setCodeGenerationTemplateGenerateComments(boolean codeGenerationTemplateGenerateComments) {
+		this.codeGenerationTemplateGenerateComments = codeGenerationTemplateGenerateComments;
+		return this;
+	}
+
+	public Preferences setGenerateToStringTemplate(String generateToStringTemplate) {
+		this.generateToStringTemplate = generateToStringTemplate;
+		return this;
+	}
+
+	public Preferences setGenerateToStringCodeStyle(String generateToStringCodeStyle) {
+		this.generateToStringCodeStyle = generateToStringCodeStyle;
+		return this;
+	}
+
+	public Preferences setGenerateToStringSkipNullValues(boolean generateToStringSkipNullValues) {
+		this.generateToStringSkipNullValues = generateToStringSkipNullValues;
+		return this;
+	}
+
+	public Preferences setGenerateToStringListArrayContents(boolean generateToStringListArrayContents) {
+		this.generateToStringListArrayContents = generateToStringListArrayContents;
+		return this;
+	}
+
+	public Preferences setGenerateToStringLimitElements(int generateToStringLimitElements) {
+		this.generateToStringLimitElements = generateToStringLimitElements;
+		return this;
+	}
+
 	public Preferences setUpdateBuildConfigurationStatus(FeatureStatus status) {
 		this.updateBuildConfigurationStatus = status;
 		return this;
@@ -569,8 +741,13 @@ public class Preferences {
 
 	public Preferences setImportOrder(List<String> importOrder) {
 		this.importOrder = (importOrder == null || importOrder.size() == 0) ? JAVA_IMPORT_ORDER_DEFAULT : importOrder;
-		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(JavaLanguageServerPlugin.PLUGIN_ID);
+		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		pref.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, String.join(";", importOrder));
+		return this;
+	}
+
+	public Preferences setMaxBuildCount(int maxConcurrentBuilds) {
+		this.parallelBuildsCount = maxConcurrentBuilds;
 		return this;
 	}
 
@@ -594,6 +771,10 @@ public class Preferences {
 		return javaHome;
 	}
 
+	public String getGradleVersion() {
+		return gradleVersion;
+	}
+
 	public String getFormatterUrl() {
 		return formatterUrl;
 	}
@@ -614,8 +795,16 @@ public class Preferences {
 		return importGradleEnabled;
 	}
 
+	public boolean isGradleWrapperEnabled() {
+		return gradleWrapperEnabled;
+	}
+
 	public boolean isImportMavenEnabled() {
 		return importMavenEnabled;
+	}
+
+	public boolean isMavenDownloadSources() {
+		return mavenDownloadSources;
 	}
 
 	public boolean isImplementationsCodeLensEnabled() {
@@ -658,8 +847,48 @@ public class Preferences {
 		return completionOverwrite;
 	}
 
+	public boolean isFoldingRangeEnabled() {
+		return foldingRangeEnabled;
+	}
+
 	public boolean isGuessMethodArguments() {
 		return guessMethodArguments;
+	}
+
+	public boolean isHashCodeEqualsTemplateUseJava7Objects() {
+		return hashCodeEqualsTemplateUseJava7Objects;
+	}
+
+	public boolean isHashCodeEqualsTemplateUseInstanceof() {
+		return hashCodeEqualsTemplateUseInstanceof;
+	}
+
+	public boolean isCodeGenerationTemplateUseBlocks() {
+		return codeGenerationTemplateUseBlocks;
+	}
+
+	public boolean isCodeGenerationTemplateGenerateComments() {
+		return codeGenerationTemplateGenerateComments;
+	}
+
+	public String getGenerateToStringTemplate() {
+		return generateToStringTemplate;
+	}
+
+	public String getGenerateToStringCodeStyle() {
+		return generateToStringCodeStyle;
+	}
+
+	public boolean isGenerateToStringSkipNullValues() {
+		return generateToStringSkipNullValues;
+	}
+
+	public boolean isGenerateToStringListArrayContents() {
+		return generateToStringListArrayContents;
+	}
+
+	public int getGenerateToStringLimitElements() {
+		return generateToStringLimitElements;
 	}
 
 	public Preferences setMavenUserSettings(String mavenUserSettings) {
@@ -673,6 +902,10 @@ public class Preferences {
 
 	public String[] getImportOrder() {
 		return this.importOrder == null ? new String[0] : this.importOrder.toArray(new String[importOrder.size()]);
+	}
+
+	public int getMaxConcurrentBuilds() {
+		return parallelBuildsCount;
 	}
 
 	public Map<String, Object> asMap() {
@@ -689,6 +922,15 @@ public class Preferences {
 
 	public Collection<IPath> getRootPaths() {
 		return rootPaths;
+	}
+
+	public Preferences setTriggerFiles(Collection<IPath> triggerFiles) {
+		this.triggerFiles = triggerFiles;
+		return this;
+	}
+
+	public Collection<IPath> getTriggerFiles() {
+		return triggerFiles;
 	}
 
 	public boolean isJavaFormatOnTypeEnabled() {

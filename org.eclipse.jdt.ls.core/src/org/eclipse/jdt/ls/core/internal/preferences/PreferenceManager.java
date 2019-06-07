@@ -20,6 +20,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
@@ -174,6 +177,8 @@ public class PreferenceManager {
 				preferences.setMavenUserSettings(oldMavenSettings);
 			}
 		}
+
+		updateParallelBuild(this.preferences.getMaxConcurrentBuilds());
 		// TODO serialize preferences
 	}
 
@@ -192,6 +197,26 @@ public class PreferenceManager {
 			};
 			SafeRunner.run(job);
 		}
+	}
+
+	private void updateParallelBuild(int maxConcurrentBuilds) {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceDescription description = workspace.getDescription();
+		if (description.getMaxConcurrentBuilds() == maxConcurrentBuilds) {
+			return;
+		}
+
+		description.setMaxConcurrentBuilds(maxConcurrentBuilds);
+		try {
+			workspace.setDescription(description);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problems setting maxConcurrentBuilds from workspace.", e);
+		}
+
+		String stringValue = maxConcurrentBuilds != 1 ? Boolean.TRUE.toString() : Boolean.FALSE.toString();
+		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
+		pref.put(MavenPreferenceConstants.P_BUILDER_USE_NULL_SCHEDULING_RULE, stringValue);
+		pref = InstanceScope.INSTANCE.getNode(JavaCore.PLUGIN_ID);
 	}
 
 	/**

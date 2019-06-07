@@ -8,8 +8,8 @@ and can be used with any editor that supports the protocol, to offer good suppor
 
 * [Eclipse LSP4J](https://github.com/eclipse/lsp4j), the Java binding for the Language Server Protocol,
 * [Eclipse JDT](http://www.eclipse.org/jdt/), which provides Java support (code completion, references, diagnostics...),
-* [M2Eclipse](http://www.eclipse.org/m2e/) which provides Maven support,
-* [Buildship](https://github.com/eclipse/buildship) which provides Gradle support.
+* [M2Eclipse](http://www.eclipse.org/m2e/), which provides Maven support,
+* [Buildship](https://github.com/eclipse/buildship), which provides Gradle support.
 
 Features
 --------------
@@ -17,7 +17,6 @@ Features
 * Code completion
 * Javadoc hovers
 * Code actions / refactoring
-* Javadoc hovers
 * Code outline
 * Code navigation
 * Code lens (references/implementations)

@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -222,6 +223,8 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		IFile iFile = project.getFile("/src/org/eclipse/testIsFolder/Test.java");
 		URI uriFile = iFile.getLocationURI();
 		assertTrue(JDTUtils.isFolder(uriFolder.toString()));
+		assertEquals(JDTUtils.getFileOrFolder(uriFolder.toString()).getType(), IResource.FOLDER);
+		assertEquals(JDTUtils.getFileOrFolder(uriFile.toString()).getType(), IResource.FILE);
 		assertFalse(JDTUtils.isFolder(uriFile.toString()));
 		assertNotNull(JDTUtils.findFile(uriFile.toString()));
 		assertNotNull(JDTUtils.findFolder(uriFolder.toString()));

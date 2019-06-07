@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -109,12 +109,14 @@ public abstract class AbstractProjectsManagerBasedTest {
 	});
 
 	@Before
-	public void initProjectManager() throws CoreException {
+	public void initProjectManager() throws Exception {
 		clientRequests.clear();
 
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
 		preferences = new Preferences();
+		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
+		preferences.setCodeGenerationTemplateGenerateComments(true);
 		if (preferenceManager == null) {
 			preferenceManager = mock(PreferenceManager.class);
 		}
@@ -149,13 +151,19 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(clientPreferences.isSemanticHighlightingSupported()).thenReturn(true);
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
+		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
+		when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
+		when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateConstructorsPromptSupported()).thenReturn(true);
+		when(clientPreferences.isGenerateDelegateMethodsPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 
 	protected IJavaProject newEmptyProject() throws Exception {
 		IProject testProject = ResourcesPlugin.getWorkspace().getRoot().getProject(TEST_PROJECT_NAME);
 		assertEquals(false, testProject.exists());
-		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
+		projectsManager.createJavaProject(testProject, new Path(getWorkingProjectDirectory().getAbsolutePath()).append(TEST_PROJECT_NAME), "src", "bin", new NullProgressMonitor());
 		waitForBackgroundJobs();
 		return JavaCore.create(testProject);
 	}

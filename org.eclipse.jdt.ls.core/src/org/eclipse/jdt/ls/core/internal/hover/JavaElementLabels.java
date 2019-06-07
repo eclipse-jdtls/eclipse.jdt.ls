@@ -327,6 +327,9 @@ public final class JavaElementLabels {
 	 */
 	public final static String DEFAULT_PACKAGE= "(default package)";
 
+	public static final long LABEL_FLAGS = ALL_FULLY_QUALIFIED | M_PRE_RETURNTYPE | M_PARAMETER_ANNOTATIONS | M_PARAMETER_TYPES | M_PARAMETER_NAMES | M_EXCEPTIONS | F_PRE_TYPE_SIGNATURE | M_PRE_TYPE_PARAMETERS | T_TYPE_PARAMETERS
+			| USE_RESOLVED;
+
 	private JavaElementLabels() {
 	}
 

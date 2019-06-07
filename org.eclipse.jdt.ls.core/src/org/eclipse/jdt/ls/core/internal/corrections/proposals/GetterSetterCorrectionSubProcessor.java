@@ -51,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabili
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Change;
 
@@ -83,8 +84,10 @@ public class GetterSetterCorrectionSubProcessor {
 		public static Change getRefactoringChange(IField field) {
 			SelfEncapsulateFieldRefactoring refactoring;
 			try {
+				Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 				refactoring = new SelfEncapsulateFieldRefactoring(field);
 
+				refactoring.setGenerateJavadoc(preferences.isCodeGenerationTemplateGenerateComments());
 				refactoring.setVisibility(Flags.AccPublic);
 				refactoring.setConsiderVisibility(false);//private field references are just searched in local file
 				refactoring.checkInitialConditions(new NullProgressMonitor());

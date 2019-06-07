@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -28,6 +29,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -163,6 +165,16 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		when(p.toString()).thenReturn(name);
 		when(root.getProject(name)).thenReturn(p);
 		return p;
+	}
+
+	@Test
+	public void testPreviewFeaturesDisabledByDefault() throws Exception {
+		String name = "java12";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+		assertTrue(errors.stream().findAny().filter(e -> ResourceUtils.getMessage(e).contains("is a preview feature and disabled by default")).isPresent());
 	}
 
 	@After

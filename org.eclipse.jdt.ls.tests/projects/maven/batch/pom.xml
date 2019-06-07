@@ -1,0 +1,22 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>foo.bar</groupId>
+	<artifactId>batch</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<modules>
+		<module>batch1</module>
+		<module>batch2</module>
+		<module>batch3</module>
+		<module>batch4</module>
+		<module>batch5</module>
+		<module>batch6</module>
+		<module>batch7</module>
+		<module>batch8</module>
+		<module>batch9</module>
+		<module>batch10</module>
+		<module>batch11</module>
+	</modules>
+</project>

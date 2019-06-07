@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -24,6 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.buildship.core.FixedVersionGradleDistribution;
+import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.LocalGradleDistribution;
+import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -31,6 +36,8 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -91,7 +98,39 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testDisableGradle() throws Exception {
+	public void testDisableGradleWrapper() throws Exception {
+		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGradleWrapperEnabled();
+		String gradleVersion = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion();
+		File file = new File(getSourceProjectDirectory(), "gradle/simple-gradle");
+		assertTrue(file.isDirectory());
+		try {
+			GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			assertTrue(distribution instanceof WrapperGradleDistribution);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(false);
+			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			if (GradleProjectImporter.getGradleHomeFile() != null) {
+				assertEquals(distribution.getClass(), LocalGradleDistribution.class);
+			} else {
+				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
+			}
+			String requiredVersion = "5.2.1";
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
+			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
+			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
+			assertEquals(((FixedVersionGradleDistribution) distribution).getVersion(), requiredVersion);
+			List<IProject> projects = importProjects("eclipse/eclipsegradle");
+			assertEquals(2, projects.size());//default + 1 eclipse projects
+			IProject eclipse = WorkspaceHelper.getProject("eclipsegradle");
+			assertNotNull(eclipse);
+			assertTrue(eclipse.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(enabled);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(gradleVersion);
+		}
+	}
+
+	@Test
+	public void testDisableImportGradle() throws Exception {
 		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleEnabled();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(false);
@@ -158,10 +197,32 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void testGradlePropertiesFile() throws Exception {
+		IProject project = importSimpleJavaProject();
+		IFile file = project.getFile("/bin/gradle.properties");
+		assertFalse(projectsManager.isBuildFile(file));
+		importProjects("gradle/gradle-withoutjava");
+		project = getProject("gradle-withoutjava");
+		file = project.getFile("/gradle.properties");
+		assertTrue(projectsManager.isBuildFile(file));
+	}
+
+	@Test
 	public void testJava11Project() throws Exception {
 		IProject project = importGradleProject("gradle-11");
 		assertIsJavaProject(project);
 		assertEquals("11", getJavaSourceLevel(project));
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testJava12Project() throws Exception {
+		IProject project = importGradleProject("gradle-12");
+		assertIsJavaProject(project);
+		assertEquals("12", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		//Buildship/Gradle don't automatically execute the eclipseJdt task, so the default config is unchanged
+		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(JavaCore.WARNING, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
 	}
 }

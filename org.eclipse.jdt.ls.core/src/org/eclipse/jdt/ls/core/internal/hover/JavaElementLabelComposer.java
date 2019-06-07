@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -453,7 +454,7 @@ public class JavaElementLabelComposer {
 		fBuilder.append(')');
 	}
 
-	private void appendAnnotationValue(IAnnotation annotation, Object value, int valueKind, long flags) throws JavaModelException {
+	public void appendAnnotationValue(IAnnotation annotation, Object value, int valueKind, long flags) throws JavaModelException {
 		// Note: To be bug-compatible with Javadoc from Java 5/6/7, we currently don't escape HTML tags in String-valued annotations.
 		if (value instanceof Object[]) {
 			fBuilder.append('{');

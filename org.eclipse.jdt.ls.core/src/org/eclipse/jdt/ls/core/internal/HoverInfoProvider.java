@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -21,13 +22,20 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -35,9 +43,14 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.core.BinaryMember;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
+import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -103,6 +116,16 @@ public class HoverInfoProvider {
 			}
 			boolean resolved = isResolved(curr, monitor);
 			if (resolved) {
+				IBuffer buffer = curr.getOpenable().getBuffer();
+				if (buffer == null && curr instanceof BinaryMember) {
+					IClassFile classFile = ((BinaryMember) curr).getClassFile();
+					if (classFile != null) {
+						Optional<IBuildSupport> bs = JavaLanguageServerPlugin.getProjectsManager().getBuildSupport(curr.getJavaProject().getProject());
+						if (bs.isPresent()) {
+							bs.get().discoverSource(classFile, monitor);
+						}
+					}
+				}
 				MarkedString signature = computeSignature(curr);
 				if (signature != null) {
 					res.add(Either.forRight(signature));
@@ -173,32 +196,75 @@ public class HoverInfoProvider {
 		} else {
 			elementLabel = JavaElementLabels.getElementLabel(element,COMMON_SIGNATURE_FLAGS);
 		}
-
+		if (element instanceof IField) {
+			IField field = (IField) element;
+			IRegion region = null;
+			try {
+				ISourceRange nameRange = JDTUtils.getNameRange(field);
+				if (SourceRange.isAvailable(nameRange)) {
+					region = new Region(nameRange.getOffset(), nameRange.getLength());
+				}
+			} catch (JavaModelException e) {
+				// ignore
+			}
+			String constantValue = JDTUtils.getConstantValue(field, field.getTypeRoot(), region);
+			if (constantValue != null) {
+				elementLabel = elementLabel + " = " + constantValue;
+			}
+		}
 		return new MarkedString(LANGUAGE_ID, elementLabel);
 	}
 
+	private static String getDefaultValue(IMethod method) {
+		if (method != null) {
+			IRegion region = null;
+			try {
+				ISourceRange nameRange = JDTUtils.getNameRange(method);
+				if (SourceRange.isAvailable(nameRange)) {
+					region = new Region(nameRange.getOffset(), nameRange.getLength());
+				}
+			} catch (JavaModelException e) {
+				// ignore
+			}
+			try {
+				return JDTUtils.getAnnotationMemberDefaultValue(method, method.getTypeRoot(), region);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		return null;
+	}
 
 	public static MarkedString computeJavadoc(IJavaElement element) throws CoreException {
-		IMember member;
+		IMember member = null;
+		String result = null;
 		if (element instanceof ITypeParameter) {
 			member= ((ITypeParameter) element).getDeclaringMember();
 		} else if (element instanceof IMember) {
 			member= (IMember) element;
 		} else if (element instanceof IPackageFragment) {
 			Reader r = JavadocContentAccess2.getMarkdownContentReader(element);
-			if(r == null ) {
-				return null;
+			if (r != null) {
+				result = getString(r);
 			}
-			return new MarkedString(LANGUAGE_ID, getString(r));
-		} else {
-			return null;
 		}
-
-		Reader r = JavadocContentAccess2.getMarkdownContentReader(member);
-		if(r == null ) {
-			return null;
+		if (member != null) {
+			Reader r = JavadocContentAccess2.getMarkdownContentReader(member);
+			if (r != null) {
+				result = getString(r);
+			}
+			if (member instanceof IMethod) {
+				String defaultValue = getDefaultValue((IMethod) member);
+				if (defaultValue != null) {
+					if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+						result = (result == null ? CompletionResolveHandler.EMPTY_STRING : result) + "\n" + CompletionResolveHandler.DEFAULT + defaultValue;
+					} else {
+						result = (result == null ? CompletionResolveHandler.EMPTY_STRING : result) + CompletionResolveHandler.DEFAULT + defaultValue;
+					}
+				}
+			}
 		}
-		return new MarkedString(LANGUAGE_ID, getString(r));
+		return new MarkedString(LANGUAGE_ID, result);
 	}
 
 	/**
@@ -221,7 +287,7 @@ public class HoverInfoProvider {
 		private static final long serialVersionUID = 1L;
 
 		public HoverException() {
-			super(new Status(IStatus.OK, JavaLanguageServerPlugin.PLUGIN_ID, ""));
+			super(new Status(IStatus.OK, IConstants.PLUGIN_ID, ""));
 		}
 
 		@Override

@@ -11,7 +11,6 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,6 +27,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -154,7 +154,7 @@ public class WorkspaceExecuteCommandHandler {
 
 			@Override
 			public void handleException(Throwable ex) {
-				IStatus status = new Status(IStatus.ERROR, JavaLanguageServerPlugin.PLUGIN_ID, IStatus.OK, "Error in calling delegate command handler", ex);
+				IStatus status = new Status(IStatus.ERROR, IConstants.PLUGIN_ID, IStatus.OK, "Error in calling delegate command handler", ex);
 				JavaLanguageServerPlugin.log(status);
 				if (ex instanceof ResponseErrorException) {
 					throw (ResponseErrorException) ex;

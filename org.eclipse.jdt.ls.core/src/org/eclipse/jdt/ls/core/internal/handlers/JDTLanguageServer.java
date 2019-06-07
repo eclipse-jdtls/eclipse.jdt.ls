@@ -13,7 +13,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
-import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,30 +27,39 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
-import org.eclipse.jdt.internal.launching.StandardVMType;
-import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
-import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.CheckDelegateMethodsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
+import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
@@ -85,6 +93,8 @@ import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.ExecuteCommandParams;
+import org.eclipse.lsp4j.FoldingRange;
+import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -131,6 +141,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
+	private JVMConfigurator jvmConfigurator;
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
@@ -143,6 +154,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
+		this.jvmConfigurator = new JVMConfigurator();
+		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 	}
 
 	public void connectClient(JavaLanguageClient client) {
@@ -178,7 +191,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
-		JobHelpers.waitForInitializeJobs();
+		try {
+			Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
+		} catch (OperationCanceledException | InterruptedException e) {
+			logException(e.getMessage(), e);
+		}
+		logInfo(">> initialization job finished");
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
 			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
 		}
@@ -206,6 +224,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
 		}
+		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			registerCapability(Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE);
+		}
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
 		}
@@ -215,18 +236,28 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
+		Job initializeWorkspace = new Job("Initialize workspace") {
 
-		workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(this.client, pm);
-		workspaceDiagnosticsHandler.addResourceChangeListener();
-
-		computeAsync((monitor) -> {
-			try {
-				workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
+				try {
+					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+					logInfo(">> build jobs finished");
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm);
+					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+					workspaceDiagnosticsHandler.addResourceChangeListener();
+					pm.registerWatchers();
+					logInfo(">> watchers registered");
+				} catch (OperationCanceledException | CoreException e) {
+					logException(e.getMessage(), e);
+					return Status.CANCEL_STATUS;
+				}
+				return Status.OK_STATUS;
 			}
-			return new Object();
-		});
+		};
+		initializeWorkspace.setPriority(Job.BUILD);
+		initializeWorkspace.setSystem(true);
+		initializeWorkspace.schedule();
 	}
 
 	/**
@@ -262,6 +293,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
 			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
 		}
+		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
+			toggleCapability(preferenceManager.getPreferences().isFoldingRangeEnabled(), Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE, null);
+		}
 	}
 
 	private CodeActionOptions getCodeActionOptions() {
@@ -284,6 +318,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
 			try {
+				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
 				if (workspaceDiagnosticsHandler != null) {
 					workspaceDiagnosticsHandler.removeResourceChangeListener();
 					workspaceDiagnosticsHandler = null;
@@ -359,7 +394,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
 		try {
-			jvmChanged = configureVM();
+			jvmChanged = jvmConfigurator.configureDefaultVM(preferenceManager.getPreferences());
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
@@ -373,54 +408,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
-		pm.registerWatchers();
 		FormatterManager.configureFormatter(preferenceManager, pm);
 		logInfo(">>New configuration: " + settings);
 	}
 
-	public boolean configureVM() throws CoreException {
-		String javaHome = preferenceManager.getPreferences().getJavaHome();
-		if (javaHome != null) {
-			File jvmHome = new File(javaHome);
-			if (jvmHome.isDirectory()) {
-				IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
-				File location = defaultVM.getInstallLocation();
-				if (!location.equals(jvmHome)) {
-					IVMInstall vm = findVM(jvmHome);
-					if (vm == null) {
-						IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
-						long unique = System.currentTimeMillis();
-						while (installType.findVMInstall(String.valueOf(unique)) != null) {
-							unique++;
-						}
-						String vmId = String.valueOf(unique);
-						VMStandin vmStandin = new VMStandin(installType, vmId);
-						String name = StringUtils.defaultIfBlank(jvmHome.getName(), "JRE");
-						vmStandin.setName(name);
-						vmStandin.setInstallLocation(jvmHome);
-						vm = vmStandin.convertToRealVM();
-					}
-					JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
-					JDTUtils.setCompatibleVMs(vm.getId());
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
-	private IVMInstall findVM(File jvmHome) {
-		IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
-		for (IVMInstallType type : types) {
-			IVMInstall[] installs = type.getVMInstalls();
-			for (IVMInstall install : installs) {
-				if (jvmHome.equals(install.getInstallLocation())) {
-					return install;
-				}
-			}
-		}
-		return null;
-	}
 
 	private void toggleCapability(boolean enabled, String id, String capability, Object options) {
 		if (enabled) {
@@ -757,6 +749,96 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
 		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#foldingRange(org.eclipse.lsp4j.FoldingRangeRequestParams)
+	 */
+	@Override
+	public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+		logInfo(">> document/foldingRange");
+		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return new FoldingRangeHandler().foldingRange(params, monitor);
+		});
+	}
+
+	@Override
+	public CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params) {
+		logInfo(">> java/listOverridableMethods");
+		return computeAsync((monitor) -> OverrideMethodsHandler.listOverridableMethods(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params) {
+		logInfo(">> java/addOverridableMethods");
+		return computeAsync((monitor) -> OverrideMethodsHandler.addOverridableMethods(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckHashCodeEqualsResponse> checkHashCodeEqualsStatus(CodeActionParams params) {
+		logInfo(">> java/checkHashCodeEqualsStatus");
+		return computeAsync((monitor) -> HashCodeEqualsHandler.checkHashCodeEqualsStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
+		logInfo(">> java/generateHashCodeEquals");
+		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckToStringResponse> checkToStringStatus(CodeActionParams params) {
+		logInfo(">> java/checkToStringStatus");
+		return computeAsync((monitor) -> GenerateToStringHandler.checkToStringStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateToString(GenerateToStringParams params) {
+		logInfo(">> java/generateToString");
+		return computeAsync((monitor) -> GenerateToStringHandler.generateToString(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
+		logInfo(">> java/organizeImports");
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params));
+	}
+
+	@Override
+	public CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(CodeActionParams params) {
+		logInfo(">> java/resolveUnimplementedAccessors");
+		return computeAsync((monitor) -> GenerateAccessorsHandler.getUnimplementedAccessors(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params) {
+		logInfo(">> java/generateAccessors");
+		return computeAsync((monitor) -> GenerateAccessorsHandler.generateAccessors(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckConstructorsResponse> checkConstructorsStatus(CodeActionParams params) {
+		logInfo(">> java/checkConstructorsStatus");
+		return computeAsync((monitor) -> GenerateConstructorsHandler.checkConstructorsStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateConstructors(GenerateConstructorsParams params) {
+		logInfo(">> java/generateConstructors");
+		return computeAsync((monitor) -> GenerateConstructorsHandler.generateConstructors(params));
+	}
+
+	@Override
+	public CompletableFuture<CheckDelegateMethodsResponse> checkDelegateMethodsStatus(CodeActionParams params) {
+		logInfo(">> java/checkDelegateMethodsStatus");
+		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.checkDelegateMethodsStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> generateDelegateMethods(GenerateDelegateMethodsParams params) {
+		logInfo(">> java/generateDelegateMethods");
+		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.generateDelegateMethods(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

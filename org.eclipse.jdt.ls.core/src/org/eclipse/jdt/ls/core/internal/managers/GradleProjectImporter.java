@@ -23,8 +23,10 @@ import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.SynchronizationResult;
+import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
+import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -44,7 +46,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
-	protected static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.fromBuild();
+	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
 	public static final String IMPORTING_GRADLE_PROJECTS = "Importing Gradle project(s)";
 
@@ -96,16 +98,30 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
-		GradleDistribution distribution = DEFAULT_DISTRIBUTION;
-		if (Files.exists(rootFolder.resolve("gradlew"))) {
-			distribution = GradleDistribution.fromBuild();
-		} else {
-			File gradleHomeFile = getGradleHomeFile();
-			if (gradleHomeFile != null) {
-				distribution = GradleDistribution.forLocalInstallation(gradleHomeFile);
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGradleWrapperEnabled() && Files.exists(rootFolder.resolve("gradlew"))) {
+			return GradleDistribution.fromBuild();
+		}
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion() != null) {
+			List<GradleVersion> versions = CorePlugin.publishedGradleVersions().getVersions();
+			GradleVersion gradleVersion = null;
+			String versionString = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion();
+			GradleVersion requiredVersion = GradleVersion.version(versionString);
+			for (GradleVersion version : versions) {
+				if (version.compareTo(requiredVersion) == 0) {
+					gradleVersion = version;
+				}
+			}
+			if (gradleVersion != null) {
+				return GradleDistribution.forVersion(gradleVersion.getVersion());
+			} else {
+				JavaLanguageServerPlugin.logInfo("Invalid gradle version" + versionString);
 			}
 		}
-		return distribution;
+		File gradleHomeFile = getGradleHomeFile();
+		if (gradleHomeFile != null) {
+			return GradleDistribution.forLocalInstallation(gradleHomeFile);
+		}
+		return DEFAULT_DISTRIBUTION;
 	}
 
 	public static File getGradleHomeFile() {
@@ -142,8 +158,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 		if (shouldSynchronize) {
 			File gradleUserHome = getGradleHomeFile();
-			boolean overrideWorkspaceConfiguration = gradleUserHome != null;
 			GradleDistribution distribution = getGradleDistribution(rootFolder);
+			boolean overrideWorkspaceConfiguration = gradleUserHome != null || !(distribution instanceof WrapperGradleDistribution);
 			String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
 			File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
 			// @formatter:off

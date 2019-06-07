@@ -582,7 +582,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("         c.setTest(1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -687,7 +687,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("         setTest(1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Create getter and setter for 'test'...", buf.toString());
+		Expected e6 = new Expected("Create getter and setter for 'test'", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}
