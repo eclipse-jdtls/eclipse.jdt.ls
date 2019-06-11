@@ -260,7 +260,7 @@ final public class InitHandler {
 			 */
 			@Override
 			public boolean belongsTo(Object family) {
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || roots.equals(family);
 			}
 
 		};

@@ -155,7 +155,7 @@ public class ProjectsManager implements ISaveParticipant {
 
 			@Override
 			public boolean belongsTo(Object family) {
-				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family);
+				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family) || addedRootPaths.equals(family);
 			}
 
 			@Override
@@ -165,6 +165,11 @@ public class ProjectsManager implements ISaveParticipant {
 				try {
 					long start = System.currentTimeMillis();
 					IProject[] projects = getWorkspaceRoot().getProjects();
+					for (Job initOrUpdateJob : Job.getJobManager().find(removedRootPaths)) {
+						if (initOrUpdateJob != null) {
+							initOrUpdateJob.cancel();
+						}
+					}
 					for (IProject project : projects) {
 						if (ResourceUtils.isContainedIn(project.getLocation(), removedRootPaths)) {
 							try {
