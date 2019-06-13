@@ -181,7 +181,14 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
 		InitHandler handler = new InitHandler(pm, preferenceManager, client);
-		return CompletableFuture.completedFuture(handler.initialize(params));
+		InitializeResult result = handler.initialize(params);
+		try {
+			jvmConfigurator.configureDefaultVM(preferenceManager.getPreferences());
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+
+		return CompletableFuture.completedFuture(result);
 	}
 
 	/*
