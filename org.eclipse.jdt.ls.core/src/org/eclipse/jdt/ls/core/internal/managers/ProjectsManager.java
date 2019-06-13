@@ -138,7 +138,7 @@ public class ProjectsManager implements ISaveParticipant {
 		subMonitor.done();
 	}
 
-	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException {
+	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
@@ -151,6 +151,9 @@ public class ProjectsManager implements ISaveParticipant {
 
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
+		if (removedRootPaths != null && removedRootPaths.size() > 0) {
+			Job.getJobManager().cancel(removedRootPaths);
+		}
 		WorkspaceJob job = new WorkspaceJob("Updating workspace folders") {
 
 			@Override
@@ -165,11 +168,6 @@ public class ProjectsManager implements ISaveParticipant {
 				try {
 					long start = System.currentTimeMillis();
 					IProject[] projects = getWorkspaceRoot().getProjects();
-					for (Job initOrUpdateJob : Job.getJobManager().find(removedRootPaths)) {
-						if (initOrUpdateJob != null) {
-							initOrUpdateJob.cancel();
-						}
-					}
 					for (IProject project : projects) {
 						if (ResourceUtils.isContainedIn(project.getLocation(), removedRootPaths)) {
 							try {

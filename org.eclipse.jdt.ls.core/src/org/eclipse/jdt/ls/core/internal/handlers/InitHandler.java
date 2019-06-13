@@ -248,6 +248,7 @@ final public class InitHandler {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
+					return Status.CANCEL_STATUS;
 				} catch (Exception e) {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());

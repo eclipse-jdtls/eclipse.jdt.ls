@@ -16,16 +16,29 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.lsp4j.InitializeParams;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -36,6 +49,25 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	private JavaLanguageClient client = mock(JavaLanguageClient.class);
 	private JavaClientConnection javaClient = new JavaClientConnection(client);
+	private JDTLanguageServer server;
+
+	@Before
+	public void setup() throws Exception {
+		server = new JDTLanguageServer(projectsManager, preferenceManager);
+		server.connectClient(client);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+	}
+
+	@After
+	public void tearDown() {
+		server.disconnectClient();
+		JavaLanguageServerPlugin.getInstance().setProtocol(null);
+		try {
+			projectsManager.setAutoBuilding(true);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
 
 	@Test
 	public void testCreateDefaultProject() throws Exception {
@@ -62,6 +94,38 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 		waitForBackgroundJobs();
 		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), BuildWorkspaceStatus.SUCCEED, result);
+	}
+
+	@Test
+	public void testCancelInitJob() throws Exception {
+		Collection<IPath> rootPaths = new ArrayList<>();
+		File workspaceDir = copyFiles("maven/salut", true);
+		String rootPathURI = workspaceDir.toURI().toString();
+		rootPaths.add(ResourceUtils.canonicalFilePathFromURI(rootPathURI));
+		InitializeParams params = new InitializeParams();
+		params.setRootUri(rootPathURI);
+		server.initialize(params);
+		Job[] initWorkspaceJobs = Job.getJobManager().find(rootPaths);
+		assertEquals(1, initWorkspaceJobs.length);
+		Job initWorkspaceJob = initWorkspaceJobs[0];
+		assertNotNull(initWorkspaceJob);
+		projectsManager.updateWorkspaceFolders(Collections.emptySet(), rootPaths);
+		waitForBackgroundJobs();
+		assertTrue("the init job hasn't been cancelled, status is: " + initWorkspaceJob.getResult().getSeverity(), initWorkspaceJob.getResult().matches(IStatus.CANCEL));
+	}
+
+	@Test
+	public void testCancelUpdateJob() throws Exception {
+		File workspaceDir = copyFiles("maven/salut", true);
+		Collection<IPath> addedRootPaths = Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString()));
+		projectsManager.updateWorkspaceFolders(addedRootPaths, Collections.emptySet());
+		Job[] updateWorkspaceJobs = Job.getJobManager().find(addedRootPaths);
+		assertEquals(1, updateWorkspaceJobs.length);
+		Job updateWorkspaceJob = updateWorkspaceJobs[0];
+		assertNotNull(updateWorkspaceJob);
+		projectsManager.updateWorkspaceFolders(Collections.emptySet(), addedRootPaths);
+		waitForBackgroundJobs();
+		assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
 	}
 
 }
