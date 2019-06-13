@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -259,9 +260,15 @@ final public class InitHandler {
 			/* (non-Javadoc)
 			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
 			 */
+			@SuppressWarnings("unchecked")
 			@Override
 			public boolean belongsTo(Object family) {
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || roots.equals(family);
+				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
+				boolean equalToRootpaths = false;
+				if (family instanceof Collection<?>) {
+					equalToRootpaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				}
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootpaths;
 			}
 
 		};

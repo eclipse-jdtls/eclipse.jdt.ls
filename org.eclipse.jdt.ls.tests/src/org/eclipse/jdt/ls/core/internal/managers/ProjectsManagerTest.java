@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -98,10 +97,9 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testCancelInitJob() throws Exception {
-		Collection<IPath> rootPaths = new ArrayList<>();
 		File workspaceDir = copyFiles("maven/salut", true);
 		String rootPathURI = workspaceDir.toURI().toString();
-		rootPaths.add(ResourceUtils.canonicalFilePathFromURI(rootPathURI));
+		Collection<IPath> rootPaths = Collections.singleton(ResourceUtils.canonicalFilePathFromURI(rootPathURI));
 		InitializeParams params = new InitializeParams();
 		params.setRootUri(rootPathURI);
 		server.initialize(params);
