@@ -454,7 +454,7 @@ public class JavaElementLabelComposer {
 		fBuilder.append(')');
 	}
 
-	private void appendAnnotationValue(IAnnotation annotation, Object value, int valueKind, long flags) throws JavaModelException {
+	public void appendAnnotationValue(IAnnotation annotation, Object value, int valueKind, long flags) throws JavaModelException {
 		// Note: To be bug-compatible with Javadoc from Java 5/6/7, we currently don't escape HTML tags in String-valued annotations.
 		if (value instanceof Object[]) {
 			fBuilder.append('{');

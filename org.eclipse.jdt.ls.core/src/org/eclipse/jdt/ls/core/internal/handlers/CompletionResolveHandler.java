@@ -54,6 +54,9 @@ import com.google.common.util.concurrent.UncheckedTimeoutException;
 @SuppressWarnings("restriction")
 public class CompletionResolveHandler {
 
+	public static final String EMPTY_STRING = "";
+	public static final String DEFAULT = "Default: ";
+	private static final String VALUE = "Value: ";
 	private final PreferenceManager manager;
 
 	public CompletionResolveHandler(PreferenceManager manager) {
@@ -66,6 +69,8 @@ public class CompletionResolveHandler {
 	public static final String DATA_FIELD_NAME = "name";
 	public static final String DATA_FIELD_REQUEST_ID = "rid";
 	public static final String DATA_FIELD_PROPOSAL_ID = "pid";
+	public static final String DATA_FIELD_CONSTANT_VALUE = "constant_value";
+	public static final String DATA_METHOD_DEFAULT_VALUE = "default_value";
 
 	public CompletionItem resolve(CompletionItem param, IProgressMonitor monitor) {
 
@@ -151,6 +156,22 @@ public class CompletionResolveHandler {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
 						monitor.setCanceled(true);
 					}
+					String constantValue = data.get(DATA_FIELD_CONSTANT_VALUE);
+					if (constantValue != null) {
+						if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + "\n\n" + VALUE + constantValue;
+						} else {
+							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + VALUE + constantValue;
+						}
+					}
+					String defaultValue = data.get(DATA_METHOD_DEFAULT_VALUE);
+					if (defaultValue != null) {
+						if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + "\n\n" + DEFAULT + defaultValue;
+						} else {
+							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + DEFAULT + defaultValue;
+						}
+					}
 					if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 						MarkupContent markupContent = new MarkupContent();
 						markupContent.setKind(MarkupKind.MARKDOWN);
@@ -170,4 +191,5 @@ public class CompletionResolveHandler {
 		}
 		return param;
 	}
+
 }
