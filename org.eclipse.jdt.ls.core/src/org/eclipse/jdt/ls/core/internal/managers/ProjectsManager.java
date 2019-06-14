@@ -164,11 +164,11 @@ public class ProjectsManager implements ISaveParticipant {
 			@Override
 			public boolean belongsTo(Object family) {
 				Collection<IPath> addedRootPathsSet = addedRootPaths.stream().collect(Collectors.toSet());
-				boolean equalToRootpaths = false;
+				boolean equalToRootPaths = false;
 				if (family instanceof Collection<?>) {
-					equalToRootpaths = addedRootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+					equalToRootPaths = addedRootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
 				}
-				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family) || equalToRootpaths;
+				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family) || equalToRootPaths;
 			}
 
 			@Override

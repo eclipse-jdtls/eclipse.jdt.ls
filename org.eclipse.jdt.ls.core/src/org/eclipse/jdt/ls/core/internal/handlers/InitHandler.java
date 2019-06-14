@@ -264,11 +264,11 @@ final public class InitHandler {
 			@Override
 			public boolean belongsTo(Object family) {
 				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
-				boolean equalToRootpaths = false;
+				boolean equalToRootPaths = false;
 				if (family instanceof Collection<?>) {
-					equalToRootpaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
 				}
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootpaths;
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
 			}
 
 		};

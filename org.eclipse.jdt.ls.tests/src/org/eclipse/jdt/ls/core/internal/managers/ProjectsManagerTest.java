@@ -49,9 +49,11 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	private JavaLanguageClient client = mock(JavaLanguageClient.class);
 	private JavaClientConnection javaClient = new JavaClientConnection(client);
 	private JDTLanguageServer server;
+	private boolean autoBuild;
 
 	@Before
 	public void setup() throws Exception {
+		autoBuild = preferenceManager.getPreferences().isAutobuildEnabled();
 		server = new JDTLanguageServer(projectsManager, preferenceManager);
 		server.connectClient(client);
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
@@ -62,7 +64,8 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		server.disconnectClient();
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		try {
-			projectsManager.setAutoBuilding(true);
+			projectsManager.setAutoBuilding(autoBuild);
+			preferenceManager.getPreferences().setAutobuildEnabled(autoBuild);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
