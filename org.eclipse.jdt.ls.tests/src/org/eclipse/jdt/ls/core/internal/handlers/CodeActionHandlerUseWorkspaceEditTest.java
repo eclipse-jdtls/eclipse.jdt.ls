@@ -122,28 +122,6 @@ public class CodeActionHandlerUseWorkspaceEditTest extends AbstractCompilationUn
 	}
 
 	@Test
-	public void testCodeAction_exception() throws JavaModelException {
-		URI uri = project.getFile("nopackage/Test.java").getRawLocationURI();
-		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-		try {
-			cu.becomeWorkingCopy(new NullProgressMonitor());
-			CodeActionParams params = new CodeActionParams();
-			params.setTextDocument(new TextDocumentIdentifier(uri.toString()));
-			final Range range = new Range();
-			range.setStart(new Position(0, 17));
-			range.setEnd(new Position(0, 17));
-			params.setRange(range);
-			CodeActionContext context = new CodeActionContext();
-			context.setDiagnostics(Collections.emptyList());
-			params.setContext(context);
-			List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
-			Assert.assertNotNull(codeActions);
-		} finally {
-			cu.discardWorkingCopy();
-		}
-	}
-
-	@Test
 	@Ignore
 	public void testCodeAction_superfluousSemicolon() throws Exception{
 		ICompilationUnit unit = getWorkingCopy(
@@ -163,7 +141,7 @@ public class CodeActionHandlerUseWorkspaceEditTest extends AbstractCompilationUn
 		Assert.assertNotNull(codeActions);
 		Assert.assertEquals(1, codeActions.size());
 		Assert.assertEquals(codeActions.get(0), CodeActionKind.QuickFix);
-		Command c = getCommand(codeActions.get(0));
+		Command c = CodeActionHandlerTest.getCommand(codeActions.get(0));
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 		Assert.assertNotNull(c.getArguments());
 		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
@@ -174,41 +152,8 @@ public class CodeActionHandlerUseWorkspaceEditTest extends AbstractCompilationUn
 		Assert.assertEquals(range, edits.get(0).getRange());
 	}
 
-	@Test
-	public void test_noUnnecessaryCodeActions() throws Exception{
-		//@formatter:off
-		ICompilationUnit unit = getWorkingCopy(
-				"src/org/sample/Foo.java",
-				"package org.sample;\n"+
-				"\n"+
-				"public class Foo {\n"+
-				"	private String foo;\n"+
-				"	public String getFoo() {\n"+
-				"	  return foo;\n"+
-				"	}\n"+
-				"   \n"+
-				"	public void setFoo(String newFoo) {\n"+
-				"	  foo = newFoo;\n"+
-				"	}\n"+
-				"}\n");
-		//@formatter:on
-		CodeActionParams params = new CodeActionParams();
-		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = CodeActionUtil.getRange(unit, "String foo;");
-		params.setRange(range);
-		params.setContext(new CodeActionContext(Collections.emptyList()));
-		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No need for organize imports action", containsKind(codeActions, CodeActionKind.SourceOrganizeImports));
-		Assert.assertFalse("No need for generate getter and setter action", containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
-	}
-
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
 		return server.codeAction(params).join();
-	}
-
-	public static Command getCommand(Either<Command, CodeAction> codeAction) {
-		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){
@@ -218,17 +163,6 @@ public class CodeActionHandlerUseWorkspaceEditTest extends AbstractCompilationUn
 		$.setSeverity(DiagnosticSeverity.Error);
 		$.setMessage("Test Diagnostic");
 		return $;
-	}
-
-	public static boolean containsKind(List<Either<Command, CodeAction>> codeActions, String kind) {
-		for (Either<Command, CodeAction> action : codeActions) {
-			String actionKind = action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand();
-			if (Objects.equals(actionKind, kind)) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
