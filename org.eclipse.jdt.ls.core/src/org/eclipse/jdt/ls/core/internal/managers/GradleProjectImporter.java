@@ -151,30 +151,32 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		for (IProject project : projects) {
 			File projectDir = project.getLocation() == null ? null : project.getLocation().toFile();
 			if (location.equals(projectDir)) {
-				//
 				shouldSynchronize = checkGradlePersistence(shouldSynchronize, project, projectDir);
 				break;
 			}
 		}
 		if (shouldSynchronize) {
-			File gradleUserHome = getGradleHomeFile();
-			GradleDistribution distribution = getGradleDistribution(rootFolder);
-			boolean overrideWorkspaceConfiguration = gradleUserHome != null || !(distribution instanceof WrapperGradleDistribution);
-			String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
-			File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
-			// @formatter:off
-			BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(location)
-					.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
-					.gradleDistribution(distribution)
-					.javaHome(javaHome)
-					.gradleUserHome(gradleUserHome)
-					.build();
-			// @formatter:on
+			BuildConfiguration build = getBuildConfiguration(rootFolder);
 			SynchronizationResult result = GradleCore.getWorkspace().createBuild(build).synchronize(monitor);
 			if (!result.getStatus().isOK()) {
 				JavaLanguageServerPlugin.log(result.getStatus());
 			}
 		}
+	}
+
+	public BuildConfiguration getBuildConfiguration(Path rootFolder) {
+		GradleDistribution distribution = getGradleDistribution(rootFolder);
+		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution);
+		String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
+		File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		// @formatter:off
+		BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(rootFolder.toFile())
+				.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
+				.gradleDistribution(distribution)
+				.javaHome(javaHome)
+				.build();
+		// @formatter:on
+		return build;
 	}
 
 	public static boolean shouldSynchronize(File location) {
