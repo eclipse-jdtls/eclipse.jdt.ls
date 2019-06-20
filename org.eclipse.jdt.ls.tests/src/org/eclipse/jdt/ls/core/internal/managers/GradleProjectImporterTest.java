@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.LocalGradleDistribution;
@@ -181,6 +182,38 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		} finally {
 			if (file != null) {
 				file.delete();
+			}
+		}
+	}
+
+	@Test
+	public void testGradleUserHome() throws Exception {
+		Map<String, String> env = new HashMap<>();
+		Properties sysprops = new Properties();
+		File file = null;
+		File projectFile = null;
+		try {
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			File rootFile = root.getLocation().toFile();
+			file = new File(rootFile, "fakeGradleHome");
+			sysprops.setProperty(GradleProjectImporter.GRADLE_HOME, file.getAbsolutePath());
+			boolean overrideWorkspaceSettings = GradleProjectImporter.getGradleHomeFile(env, sysprops) != null;
+			assertFalse(overrideWorkspaceSettings);
+			file.mkdir();
+			file.deleteOnExit();
+			overrideWorkspaceSettings = GradleProjectImporter.getGradleHomeFile(env, sysprops) != null;
+			assertTrue(overrideWorkspaceSettings);
+			projectFile = new File(rootFile, "fakeProject");
+			projectFile.mkdir();
+			projectFile.deleteOnExit();
+			BuildConfiguration build = new GradleProjectImporter().getBuildConfiguration(file.toPath());
+			assertFalse(build.getGradleUserHome().isPresent());
+		} finally {
+			if (file != null) {
+				file.delete();
+			}
+			if (projectFile != null) {
+				projectFile.delete();
 			}
 		}
 	}
