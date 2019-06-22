@@ -16,8 +16,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.internal.corext.fix.CleanUpOptions;
-import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
+import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
+import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 /**
@@ -49,7 +49,7 @@ public interface ICleanUp {
 	 * @param options
 	 *            the options to use
 	 */
-	void setOptions(CleanUpOptions options);
+	void setOptions(CleanUpOptionsCore options);
 
 	/**
 	 * Human readable description for each step this clean up will execute.
