@@ -19,13 +19,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.internal.corext.fix.CleanUpOptions;
-import org.eclipse.jdt.internal.corext.fix.ICleanUpFixCore;
+import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
+import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 public abstract class AbstractCleanUp implements ICleanUp {
 
-	private CleanUpOptions fOptions;
+	private CleanUpOptionsCore fOptions;
 
 	protected AbstractCleanUp() {
 	}
@@ -39,7 +39,7 @@ public abstract class AbstractCleanUp implements ICleanUp {
 	 * @since 3.5
 	 */
 	@Override
-	public void setOptions(CleanUpOptions options) {
+	public void setOptions(CleanUpOptionsCore options) {
 		Assert.isLegal(options != null);
 		fOptions = options;
 	}

@@ -17,10 +17,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
-import org.eclipse.jdt.internal.corext.fix.CleanUpOptions;
 
-public class MapCleanUpOptions extends CleanUpOptions {
+public class MapCleanUpOptions extends CleanUpOptionsCore {
 
 	private final Map<String, String> fOptions;
 
@@ -53,7 +53,7 @@ public class MapCleanUpOptions extends CleanUpOptions {
 	 * @param options
 	 *            the options to add to this options
 	 */
-	public void addAll(CleanUpOptions options) {
+	public void addAll(CleanUpOptionsCore options) {
 		if (options instanceof MapCleanUpOptions) {
 			fOptions.putAll(((MapCleanUpOptions) options).getMap());
 		} else {
