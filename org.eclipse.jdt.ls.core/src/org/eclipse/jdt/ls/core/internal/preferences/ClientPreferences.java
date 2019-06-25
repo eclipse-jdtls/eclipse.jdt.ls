@@ -197,6 +197,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateDelegateMethodsPromptSupport", "false").toString());
 	}
 
+	public boolean isAdvancedExtractRefactoringSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedExtractRefactoringSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

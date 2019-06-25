@@ -56,6 +56,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
@@ -839,6 +841,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<WorkspaceEdit> generateDelegateMethods(GenerateDelegateMethodsParams params) {
 		logInfo(">> java/generateDelegateMethods");
 		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.generateDelegateMethods(params));
+	}
+
+	@Override
+	public CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params) {
+		logInfo(">> java/getRefactorEdit");
+		return computeAsync((monitor) -> GetRefactorEditHandler.getEditsForRefactor(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

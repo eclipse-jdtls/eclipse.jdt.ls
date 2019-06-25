@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -81,6 +82,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -119,8 +121,9 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.SelectionAwareSourceRangeComputer;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.ltk.core.refactoring.Change;
-import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -133,7 +136,7 @@ import org.eclipse.text.edits.TextEditGroup;
 /**
  * Extracts a method in a compilation unit based on a text selection range.
  */
-public class ExtractMethodRefactoring extends Refactoring {
+public class ExtractMethodRefactoring extends ExtractRefactoring {
 
 	private static final String ATTRIBUTE_VISIBILITY = "visibility"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_DESTINATION = "destination"; //$NON-NLS-1$
@@ -163,6 +166,8 @@ public class ExtractMethodRefactoring extends Refactoring {
 	// either of type TypeDeclaration or AnonymousClassDeclaration
 	private ASTNode[] fDestinations;
 	private LinkedProposalModelCore fLinkedProposalModel;
+	private ITrackedNodePosition fNewMethodPosition = null;
+	private Map fFormatterOptions;
 
 	private static final String EMPTY = ""; //$NON-NLS-1$
 
@@ -263,12 +268,17 @@ public class ExtractMethodRefactoring extends Refactoring {
 	 *            selection end
 	 */
 	public ExtractMethodRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength) {
+		this(unit, selectionStart, selectionLength, null);
+	}
+
+	public ExtractMethodRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength, Map formatterOptions) {
 		fCUnit = unit;
 		fRoot = null;
 		fMethodName = "extracted"; //$NON-NLS-1$
 		fSelectionStart = selectionStart;
 		fSelectionLength = selectionLength;
 		fVisibility = -1;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractMethodRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
@@ -288,7 +298,11 @@ public class ExtractMethodRefactoring extends Refactoring {
 	 *            length
 	 */
 	public ExtractMethodRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength) {
-		this((ICompilationUnit) astRoot.getTypeRoot(), selectionStart, selectionLength);
+		this(astRoot, selectionStart, selectionLength, null);
+	}
+
+	public ExtractMethodRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength, Map formatterOptions) {
+		this((ICompilationUnit) astRoot.getTypeRoot(), selectionStart, selectionLength, formatterOptions);
 		fRoot = astRoot;
 	}
 
@@ -533,6 +547,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			result.addTextEditGroup(substituteDesc);
 
 			MethodDeclaration mm = createNewMethod(selectedNodes, fCUnit.findRecommendedLineSeparator(), substituteDesc);
+			fNewMethodPosition = fRewriter.track(mm.getName());
 
 			if (fLinkedProposalModel != null) {
 				LinkedProposalPositionGroupCore typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
@@ -572,7 +587,13 @@ public class ExtractMethodRefactoring extends Refactoring {
 				root.addChild(edit);
 				result.addTextEditGroup(new TextEditGroup(RefactoringCoreMessages.ExtractMethodRefactoring_organize_imports, new TextEdit[] { edit }));
 			}
-			root.addChild(fRewriter.rewriteAST());
+			try {
+				Map formatter = this.fFormatterOptions == null ? fCUnit.getJavaProject().getOptions(true) : this.fFormatterOptions;
+				IDocument document = new Document(fCUnit.getSource());
+				root.addChild(fRewriter.rewriteAST(document, formatter));
+			} catch (JavaModelException e) {
+				root.addChild(fRewriter.rewriteAST());
+			}
 			return result;
 		} finally {
 			pm.done();
@@ -1408,5 +1429,10 @@ public class ExtractMethodRefactoring extends Refactoring {
 		fThrowRuntimeExceptions = Boolean.valueOf(exceptions).booleanValue();
 
 		return new RefactoringStatus();
+	}
+
+	@Override
+	public ITrackedNodePosition getExtractedNodePosition() {
+		return fNewMethodPosition;
 	}
 }
