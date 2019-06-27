@@ -88,6 +88,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -109,7 +110,6 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
-import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
@@ -124,12 +124,12 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
-import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -140,10 +140,11 @@ import org.eclipse.text.edits.TextEditGroup;
  * Extract Local Variable (from selected expression inside method or
  * initializer).
  */
-public class ExtractTempRefactoring extends Refactoring {
+public class ExtractTempRefactoring extends ExtractRefactoring {
 
 	private static final String ATTRIBUTE_REPLACE = "replace"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_FINAL = "final"; //$NON-NLS-1$
+	private ITrackedNodePosition fNewVariablePosition = null;
 
 	private static final class ForStatementChecker extends ASTVisitor {
 
@@ -376,6 +377,8 @@ public class ExtractTempRefactoring extends Refactoring {
 
 	private LinkedProposalModelCore fLinkedProposalModel;
 
+	private Map fFormatterOptions;
+
 	private static final String KEY_NAME = "name"; //$NON-NLS-1$
 	private static final String KEY_TYPE = "type"; //$NON-NLS-1$
 
@@ -390,6 +393,10 @@ public class ExtractTempRefactoring extends Refactoring {
 	 *            length of selection
 	 */
 	public ExtractTempRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength) {
+		this(unit, selectionStart, selectionLength, null);
+	}
+
+	public ExtractTempRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		fSelectionStart = selectionStart;
@@ -403,9 +410,14 @@ public class ExtractTempRefactoring extends Refactoring {
 
 		fLinkedProposalModel = null;
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractTempRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength) {
+		this(astRoot, selectionStart, selectionLength, null);
+	}
+
+	public ExtractTempRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		Assert.isTrue(astRoot.getTypeRoot() instanceof ICompilationUnit);
@@ -421,6 +433,7 @@ public class ExtractTempRefactoring extends Refactoring {
 
 		fLinkedProposalModel = null;
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractTempRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
@@ -517,6 +530,7 @@ public class ExtractTempRefactoring extends Refactoring {
 			pm.beginTask(RefactoringCoreMessages.ExtractTempRefactoring_checking_preconditions, 4);
 
 			fCURewrite = new CompilationUnitRewrite(fCu, fCompilationUnitNode);
+			fCURewrite.setFormatterOptions(fFormatterOptions);
 			fCURewrite.getASTRewrite().setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
 
 			doCreateChange(new SubProgressMonitor(pm, 2));
@@ -751,7 +765,8 @@ public class ExtractTempRefactoring extends Refactoring {
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCURewrite.getASTRewrite();
 			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
-			nameGroup.addPosition(rewrite.track(vdf.getName()), true);
+			fNewVariablePosition = rewrite.track(vdf.getName());
+			nameGroup.addPosition(fNewVariablePosition, true);
 
 			String[] nameSuggestions = guessTempNames();
 			if (nameSuggestions.length > 0 && !nameSuggestions[0].equals(fTempName)) {
@@ -762,6 +777,11 @@ public class ExtractTempRefactoring extends Refactoring {
 			}
 		}
 		return vds;
+	}
+
+	@Override
+	public ITrackedNodePosition getExtractedNodePosition() {
+		return fNewVariablePosition;
 	}
 
 	private void insertAt(ASTNode target, Statement declaration) {

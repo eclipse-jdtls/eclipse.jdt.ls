@@ -85,7 +85,7 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 		initCodeTemplates();
 	}
 
-	protected void compareSource(String expected, String actual) throws IOException {
+	public static void compareSource(String expected, String actual) throws IOException {
 		if (actual == null || expected == null) {
 			if (actual == expected) {
 				return;
