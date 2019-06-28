@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -248,6 +249,7 @@ final public class InitHandler {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
+					return Status.CANCEL_STATUS;
 				} catch (Exception e) {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());
@@ -258,9 +260,15 @@ final public class InitHandler {
 			/* (non-Javadoc)
 			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
 			 */
+			@SuppressWarnings("unchecked")
 			@Override
 			public boolean belongsTo(Object family) {
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
+				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
+				boolean equalToRootPaths = false;
+				if (family instanceof Collection<?>) {
+					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				}
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
 			}
 
 		};

@@ -68,4 +68,8 @@ public class RefactoringCorrectionProposal extends LinkedCorrectionProposal {
 		}
 		return super.getAdditionalProposalInfo(monitor);
 	}
+
+	public Refactoring getRefactoring() {
+		return fRefactoring;
+	}
 }

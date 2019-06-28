@@ -58,6 +58,7 @@ import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -81,7 +82,6 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
-import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -94,17 +94,17 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.ltk.core.refactoring.Change;
-import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusEntry;
 import org.eclipse.text.edits.TextEditGroup;
 
-public class ExtractConstantRefactoring extends Refactoring {
+public class ExtractConstantRefactoring extends ExtractRefactoring {
 
 	private static final String ATTRIBUTE_REPLACE = "replace"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_QUALIFY = "qualify"; //$NON-NLS-1$
@@ -145,6 +145,9 @@ public class ExtractConstantRefactoring extends Refactoring {
 	private LinkedProposalModelCore fLinkedProposalModel;
 	private boolean fCheckResultForCompileProblems;
 
+	private ITrackedNodePosition fNewConstantPosition = null;
+	private Map fFormatterOptions;
+
 	/**
 	 * Creates a new extract constant refactoring
 	 *
@@ -156,6 +159,10 @@ public class ExtractConstantRefactoring extends Refactoring {
 	 *            length
 	 */
 	public ExtractConstantRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength) {
+		this(unit, selectionStart, selectionLength, null);
+	}
+
+	public ExtractConstantRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		fSelectionStart = selectionStart;
@@ -165,9 +172,14 @@ public class ExtractConstantRefactoring extends Refactoring {
 		fLinkedProposalModel = null;
 		fConstantName = ""; //$NON-NLS-1$
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractConstantRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength) {
+		this(astRoot, selectionStart, selectionLength, null);
+	}
+
+	public ExtractConstantRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		Assert.isTrue(astRoot.getTypeRoot() instanceof ICompilationUnit);
@@ -175,10 +187,11 @@ public class ExtractConstantRefactoring extends Refactoring {
 		fSelectionStart = selectionStart;
 		fSelectionLength = selectionLength;
 		fCu = (ICompilationUnit) astRoot.getTypeRoot();
-		fCuRewrite = new CompilationUnitRewrite(fCu, astRoot);
+		fCuRewrite = new CompilationUnitRewrite(null, fCu, astRoot, formatterOptions);
 		fLinkedProposalModel = null;
 		fConstantName = ""; //$NON-NLS-1$
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractConstantRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
@@ -287,7 +300,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 
 			if (fCuRewrite == null) {
 				CompilationUnit cuNode = RefactoringASTParser.parseWithASTProvider(fCu, true, new SubProgressMonitor(pm, 3));
-				fCuRewrite = new CompilationUnitRewrite(fCu, cuNode);
+				fCuRewrite = new CompilationUnitRewrite(null, fCu, cuNode, fFormatterOptions);
 			} else {
 				pm.worked(3);
 			}
@@ -547,7 +560,8 @@ public class ExtractConstantRefactoring extends Refactoring {
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCuRewrite.getASTRewrite();
 			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
-			nameGroup.addPosition(rewrite.track(variableDeclarationFragment.getName()), true);
+			fNewConstantPosition = rewrite.track(variableDeclarationFragment.getName());
+			nameGroup.addPosition(fNewConstantPosition, true);
 
 			String[] nameSuggestions = guessConstantNames();
 			if (nameSuggestions.length > 0 && !nameSuggestions[0].equals(fConstantName)) {
@@ -965,5 +979,10 @@ public class ExtractConstantRefactoring extends Refactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_QUALIFY));
 		}
 		return new RefactoringStatus();
+	}
+
+	@Override
+	public ITrackedNodePosition getExtractedNodePosition() {
+		return fNewConstantPosition;
 	}
 }

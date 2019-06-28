@@ -11,7 +11,7 @@
 <booleanAttribute key="clearConfig" value="false"/>
 <booleanAttribute key="clearws" value="true"/>
 <booleanAttribute key="clearwslog" value="false"/>
-<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream"/>
+<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.remote.server"/>
 <booleanAttribute key="default" value="false"/>
 <stringAttribute key="deselected_workspace_plugins" value="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ui"/>
 <stringAttribute key="featureDefaultLocation" value="workspace"/>
@@ -20,8 +20,7 @@
 <stringAttribute key="location" value="${workspace_loc}/../runtime-JDT-LS"/>
 <mapAttribute key="org.eclipse.debug.core.environmentVariables">
 <mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
-<mapEntry key="CLIENT_PORT" value="5036"/>
-<mapEntry key="socket.stream.debug" value="true"/>
+<mapEntry key="CLIENT_PORT" value="3333"/>
 </mapAttribute>
 <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
 <listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>

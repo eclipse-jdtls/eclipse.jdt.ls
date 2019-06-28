@@ -30,13 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
-import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
@@ -83,7 +80,6 @@ import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
@@ -93,6 +89,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
@@ -102,18 +99,13 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
-import org.eclipse.jdt.internal.corext.fix.CleanUpOptions;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsCleanUp;
 import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsFix;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
@@ -121,11 +113,11 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAs
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.eclipse.ltk.core.refactoring.Refactoring;
+import org.eclipse.lsp4j.CodeActionParams;
 
 /**
   */
@@ -148,10 +140,13 @@ public class QuickAssistProcessor {
 	public static final String CONVERT_TO_MESSAGE_FORMAT_ID = "org.eclipse.jdt.ls.correction.convertToMessageFormat.assist"; //$NON-NLS-1$;
 	public static final String EXTRACT_METHOD_INPLACE_ID = "org.eclipse.jdt.ls.correction.extractMethodInplace.assist"; //$NON-NLS-1$;
 
-	public QuickAssistProcessor() {
+	private PreferenceManager preferenceManager;
+
+	public QuickAssistProcessor(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
 	}
 
-	public List<CUCorrectionProposal> getAssists(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<CUCorrectionProposal> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
@@ -182,8 +177,8 @@ public class QuickAssistProcessor {
 				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
 				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
-				getExtractVariableProposal(context, problemsAtLocation, resultingCollections);
-				getExtractMethodProposal(context, coveringNode, problemsAtLocation, resultingCollections);
+				getExtractVariableProposal(params, context, problemsAtLocation, resultingCollections);
+				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, resultingCollections);
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
@@ -503,53 +498,23 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static int getIndex(int offset, List<Statement> statements) {
-		for (int i = 0; i < statements.size(); i++) {
-			Statement s = statements.get(i);
-			if (offset <= s.getStartPosition()) {
-				return i;
-			}
-			if (offset < s.getStartPosition() + s.getLength()) {
-				return -1;
-			}
-		}
-		return statements.size();
-	}
-
-	private static boolean getExtractMethodProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
-		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
+	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (proposals == null) {
 			return false;
 		}
-		if (coveringNode instanceof Block) {
-			List<Statement> statements = ((Block) coveringNode).statements();
-			int startIndex = getIndex(context.getSelectionOffset(), statements);
-			if (startIndex == -1) {
-				return false;
-			}
-			int endIndex = getIndex(context.getSelectionOffset() + context.getSelectionLength(), statements);
-			if (endIndex == -1 || endIndex <= startIndex) {
-				return false;
-			}
+
+		CUCorrectionProposal proposal = null;
+		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			proposal = ExtractProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation);
+		} else {
+			proposal = ExtractProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
 		}
 
-		if (proposals == null) {
-			return true;
+		if (proposal == null) {
+			return false;
 		}
 
-		final ICompilationUnit cu = context.getCompilationUnit();
-		final ExtractMethodRefactoring extractMethodRefactoring = new ExtractMethodRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-		String uniqueMethodName = getUniqueMethodName(coveringNode, "extracted");
-		extractMethodRefactoring.setMethodName(uniqueMethodName);
-		if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
-			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
-			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
-
-			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, extractMethodRefactoring, relevance);
-			proposal.setLinkedProposalModel(linkedProposalModel);
-			proposals.add(proposal);
-		}
+		proposals.add(proposal);
 		return true;
 	}
 
@@ -584,117 +549,31 @@ public class QuickAssistProcessor {
 		}
 
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
-		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
 		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUp(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
 		resultingCollections.add(proposal);
 		return true;
 	}
 
-	private static boolean getExtractVariableProposal(IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
-
-		ASTNode node = context.getCoveredNode();
-
-		if (!(node instanceof Expression)) {
-			if (context.getSelectionLength() != 0) {
-				return false;
-			}
-			node = context.getCoveringNode();
-			if (!(node instanceof Expression)) {
-				return false;
-			}
-		}
-		final Expression expression = (Expression) node;
-
-		ITypeBinding binding = expression.resolveTypeBinding();
-		if (binding == null || Bindings.isVoidType(binding)) {
+	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (proposals == null) {
 			return false;
 		}
-		if (proposals == null) {
-			return true;
+
+		List<CUCorrectionProposal> newProposals = null;
+		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			newProposals = ExtractProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation);
+		} else {
+			newProposals = ExtractProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation);
 		}
 
-		final ICompilationUnit cu = context.getCompilationUnit();
-		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			extractTempRefactoring.setReplaceAllOccurrences(true);
-			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
-			extractTempRefactoring.setLinkedProposalModel(linkedProposalModel);
-			extractTempRefactoring.setCheckResultForCompileProblems(false);
-
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
-			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoring, relevance) {
-				@Override
-				protected void init(Refactoring refactoring) throws CoreException {
-					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
-					etr.setTempName(etr.guessTempName()); // expensive
-				}
-			};
-			proposal.setLinkedProposalModel(linkedProposalModel);
-			proposals.add(proposal);
+		if (newProposals == null || newProposals.isEmpty()) {
+			return false;
 		}
 
-		ExtractTempRefactoring extractTempRefactoringSelectedOnly = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
-		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
-			extractTempRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
-			extractTempRefactoringSelectedOnly.setCheckResultForCompileProblems(false);
-
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_LOCAL;
-			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoringSelectedOnly, relevance) {
-				@Override
-				protected void init(Refactoring refactoring) throws CoreException {
-					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
-					etr.setTempName(etr.guessTempName()); // expensive
-				}
-			};
-			proposal.setLinkedProposalModel(linkedProposalModel);
-			proposals.add(proposal);
-		}
-
-		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-		if (extractConstRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
-			extractConstRefactoring.setLinkedProposalModel(linkedProposalModel);
-			extractConstRefactoring.setCheckResultForCompileProblems(false);
-
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT;
-			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, extractConstRefactoring, relevance) {
-				@Override
-				protected void init(Refactoring refactoring) throws CoreException {
-					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;
-					etr.setConstantName(etr.guessConstantName()); // expensive
-				}
-			};
-			proposal.setLinkedProposalModel(linkedProposalModel);
-			proposals.add(proposal);
-		}
-		return false;
+		proposals.addAll(newProposals);
+		return true;
 	}
 
 	/**
@@ -945,42 +824,6 @@ public class QuickAssistProcessor {
 			}
 		}
 		return newNames;
-	}
-
-	private static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
-		while (astNode != null && !(astNode instanceof TypeDeclaration || astNode instanceof AnonymousClassDeclaration)) {
-			astNode = astNode.getParent();
-		}
-		if (astNode instanceof TypeDeclaration) {
-			ITypeBinding typeBinding = ((TypeDeclaration) astNode).resolveBinding();
-			if (typeBinding == null) {
-				return suggestedName;
-			}
-			IType type = (IType) typeBinding.getJavaElement();
-			if (type == null) {
-				return suggestedName;
-			}
-			IMethod[] methods = type.getMethods();
-
-			int suggestedPostfix = 2;
-			String resultName = suggestedName;
-			while (suggestedPostfix < 1000) {
-				if (!hasMethod(methods, resultName)) {
-					return resultName;
-				}
-				resultName = suggestedName + suggestedPostfix++;
-			}
-		}
-		return suggestedName;
-	}
-
-	private static boolean hasMethod(IMethod[] methods, String name) {
-		for (IMethod method : methods) {
-			if (name.equals(method.getElementName())) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private static String createName(String candidate, List<String> excludedNames) {
