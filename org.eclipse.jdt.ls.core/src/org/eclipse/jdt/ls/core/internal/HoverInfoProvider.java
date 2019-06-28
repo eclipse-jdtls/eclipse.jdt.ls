@@ -264,7 +264,7 @@ public class HoverInfoProvider {
 				}
 			}
 		}
-		return new MarkedString(LANGUAGE_ID, result);
+		return result != null ? new MarkedString(LANGUAGE_ID, result) : null;
 	}
 
 	/**
