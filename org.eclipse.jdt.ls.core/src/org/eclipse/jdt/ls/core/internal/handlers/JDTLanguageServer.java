@@ -102,6 +102,7 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
@@ -514,12 +515,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.definition(position, monitor);
+			return Either.forLeft(handler.definition(position, monitor));
 		});
 	}
 
@@ -527,12 +528,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> typeDefinition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
 		logInfo(">> document/typeDefinition");
 		NavigateToTypeDefinitionHandler handler = new NavigateToTypeDefinitionHandler();
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.typeDefinition(position, monitor);
+			return Either.forLeft((handler.typeDefinition(position, monitor)));
 		});
 	}
 
@@ -748,9 +749,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
-		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+		return computeAsyncWithClientProgress((monitor) -> {
+			ImplementationsHandler handler = new ImplementationsHandler(preferenceManager);
+			return Either.forLeft(handler.findImplementations(position, monitor));
+		});
 	}
 
 	/* (non-Javadoc)
