@@ -45,6 +45,8 @@ public class WorkspaceExecuteCommandHandler {
 
 	private static final String COMMAND = "command";
 
+	private static final String STATIC = "static";
+
 	private static final String CLASS = "class";
 
 	private static final String ID = "id";
@@ -53,7 +55,9 @@ public class WorkspaceExecuteCommandHandler {
 
 		private final IConfigurationElement fConfigurationElement;
 
-		private Set<String> fCommandIds;
+		private Set<String> fStaticCommandIds = new HashSet<>();;
+		private Set<String> fNonStaticCommandIds = new HashSet<>();
+		private Set<String> fAllCommands = new HashSet<>();
 
 		private IDelegateCommandHandler fDelegateCommandHandlerInstance;
 
@@ -61,12 +65,31 @@ public class WorkspaceExecuteCommandHandler {
 			fConfigurationElement = element;
 
 			IConfigurationElement[] children = fConfigurationElement.getChildren(COMMAND);
-			fCommandIds = Stream.of(children).map(c -> c.getAttribute(ID)).collect(Collectors.toSet());
+			Stream.of(children).forEach(c -> {
+				String id = c.getAttribute(ID);
+				if (Boolean.valueOf(c.getAttribute(STATIC))) {
+					fStaticCommandIds.add(id);
+				} else {
+					fNonStaticCommandIds.add(id);
+				}
+				fAllCommands.add(id);
+			});
 			fDelegateCommandHandlerInstance = null;
+
+			JavaLanguageServerPlugin.logInfo("Static Commands: " + fStaticCommandIds);
+			JavaLanguageServerPlugin.logInfo("Non-Static Commands: " + fNonStaticCommandIds);
 		}
 
-		public Set<String> getCommands() {
-			return fCommandIds;
+		public Set<String> getStaticCommands() {
+			return fStaticCommandIds;
+		}
+
+		public Set<String> getNonStaticCommands() {
+			return fNonStaticCommandIds;
+		}
+
+		public Set<String> getAllCommands() {
+			return fAllCommands;
 		}
 
 		public synchronized IDelegateCommandHandler getDelegateCommandHandler() {
@@ -99,14 +122,33 @@ public class WorkspaceExecuteCommandHandler {
 		return fgContributedCommandHandlers;
 	}
 
-	public static Set<String> getCommands() {
+	public static Set<String> getStaticCommands() {
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
-			commands.addAll(handler.getCommands());
+			commands.addAll(handler.getStaticCommands());
 		}
 		return commands;
 	}
+
+	public static Set<String> getNonStaticCommands() {
+		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Set<String> commands = new HashSet<>();
+		for (DelegateCommandHandlerDescriptor handler : handlers) {
+			commands.addAll(handler.getNonStaticCommands());
+		}
+		return commands;
+	}
+
+	public static Set<String> getAllCommands() {
+		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Set<String> commands = new HashSet<>();
+		for (DelegateCommandHandlerDescriptor handler : handlers) {
+			commands.addAll(handler.getAllCommands());
+		}
+		return commands;
+	}
+
 	/**
 	 * Execute workspace command and invoke language server delegate command
 	 * handler for matching command
@@ -125,7 +167,7 @@ public class WorkspaceExecuteCommandHandler {
 
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 
-		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
+		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getAllCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
 
 		if (candidates.size() > 1) {
 			Exception ex = new IllegalStateException(String.format("Found multiple delegateCommandHandlers (%s) matching command %s", candidates, params.getCommand()));

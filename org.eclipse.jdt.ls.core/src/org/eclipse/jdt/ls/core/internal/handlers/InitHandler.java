@@ -174,8 +174,16 @@ final public class InitHandler {
 			capabilities.setCodeActionProvider(Boolean.TRUE);
 		}
 		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
-			Set<String> commands = WorkspaceExecuteCommandHandler.getCommands();
-			capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
+			Set<String> commands = WorkspaceExecuteCommandHandler.getAllCommands();
+			if (!commands.isEmpty()) {
+				capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
+			}
+		} else {
+			// Send static command at the startup - they remain registered all the time
+			Set<String> staticCommands = WorkspaceExecuteCommandHandler.getStaticCommands();
+			if (!staticCommands.isEmpty()) {
+				capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(staticCommands)));
+			}
 		}
 		if (!preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);

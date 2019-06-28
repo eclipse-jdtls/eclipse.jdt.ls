@@ -290,7 +290,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
-					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getNonStaticCommands())));
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
 			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
