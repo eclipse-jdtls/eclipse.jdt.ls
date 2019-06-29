@@ -38,6 +38,15 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
 public class WorkspaceExecuteCommandHandler {
 
+	private static WorkspaceExecuteCommandHandler instance = null;
+
+	public static WorkspaceExecuteCommandHandler getInstance() {
+		if (instance == null) {
+			instance = new WorkspaceExecuteCommandHandler();
+		}
+		return instance;
+	}
+
 	/**
 	 * Extension point ID for the delegate command handler.
 	 */
@@ -112,9 +121,13 @@ public class WorkspaceExecuteCommandHandler {
 		}
 	}
 
-	private static Set<DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
+	private Set<DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
 
-	private static synchronized Set<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
+	private WorkspaceExecuteCommandHandler() {
+
+	}
+
+	private synchronized Set<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
 		if (fgContributedCommandHandlers == null) {
 			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
 			fgContributedCommandHandlers = Stream.of(elements).map(e -> new DelegateCommandHandlerDescriptor(e)).collect(Collectors.toSet());
@@ -122,7 +135,7 @@ public class WorkspaceExecuteCommandHandler {
 		return fgContributedCommandHandlers;
 	}
 
-	public static Set<String> getStaticCommands() {
+	public Set<String> getStaticCommands() {
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
@@ -131,7 +144,7 @@ public class WorkspaceExecuteCommandHandler {
 		return commands;
 	}
 
-	public static Set<String> getNonStaticCommands() {
+	public Set<String> getNonStaticCommands() {
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
@@ -140,7 +153,7 @@ public class WorkspaceExecuteCommandHandler {
 		return commands;
 	}
 
-	public static Set<String> getAllCommands() {
+	public Set<String> getAllCommands() {
 		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {

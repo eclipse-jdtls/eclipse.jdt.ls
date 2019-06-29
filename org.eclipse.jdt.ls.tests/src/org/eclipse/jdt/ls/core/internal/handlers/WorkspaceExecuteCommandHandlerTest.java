@@ -31,7 +31,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 
 	@Test
 	public void testExecuteCommand() {
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		WorkspaceExecuteCommandHandler handler = WorkspaceExecuteCommandHandler.getInstance();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("testcommand1");
 		params.setArguments(Arrays.asList("hello", "world"));
@@ -48,7 +48,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 		expectedEx.expect(ResponseErrorException.class);
 		expectedEx.expectMessage("No delegateCommandHandler for testcommand.not.existing");
 
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		WorkspaceExecuteCommandHandler handler = WorkspaceExecuteCommandHandler.getInstance();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("testcommand.not.existing");
 		params.setArguments(Arrays.asList("hello", "world"));
@@ -80,7 +80,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 
 		});
 
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		WorkspaceExecuteCommandHandler handler = WorkspaceExecuteCommandHandler.getInstance();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("dup");
 		handler.executeCommand(params, monitor);
@@ -91,7 +91,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 		expectedEx.expect(ResponseErrorException.class);
 		expectedEx.expectMessage("Unsupported");
 
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		WorkspaceExecuteCommandHandler handler = WorkspaceExecuteCommandHandler.getInstance();
 		ExecuteCommandParams params = new ExecuteCommandParams();
 		params.setCommand("testcommand.throwexception");
 		handler.executeCommand(params, monitor);
@@ -102,7 +102,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 		expectedEx.expect(ResponseErrorException.class);
 		expectedEx.expectMessage("The workspace/executeCommand has empty params or command");
 
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
+		WorkspaceExecuteCommandHandler handler = WorkspaceExecuteCommandHandler.getInstance();
 		ExecuteCommandParams params = null;
 		handler.executeCommand(params, monitor);
 	}
