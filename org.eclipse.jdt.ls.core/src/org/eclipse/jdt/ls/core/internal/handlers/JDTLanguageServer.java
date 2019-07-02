@@ -144,6 +144,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 	private JVMConfigurator jvmConfigurator;
+	private WorkspaceExecuteCommandHandler commandHandler;
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
@@ -154,10 +155,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
+		this(projects, preferenceManager, WorkspaceExecuteCommandHandler.getInstance());
+	}
+
+	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
 		this.jvmConfigurator = new JVMConfigurator();
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
+		this.commandHandler = commandHandler;
 	}
 
 	public void connectClient(JavaLanguageClient client) {
@@ -182,7 +188,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
-		InitHandler handler = new InitHandler(pm, preferenceManager, client);
+		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -290,7 +296,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
-					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+					new ExecuteCommandOptions(new ArrayList<>(commandHandler.getNonStaticCommands())));
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
 			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
@@ -440,9 +446,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		logInfo(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		return computeAsync((monitor) -> {
-			return handler.executeCommand(params, monitor);
+			return commandHandler.executeCommand(params, monitor);
 		});
 	}
 
