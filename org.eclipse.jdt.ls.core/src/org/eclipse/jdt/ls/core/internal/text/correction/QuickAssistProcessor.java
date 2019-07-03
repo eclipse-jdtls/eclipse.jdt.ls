@@ -179,6 +179,7 @@ public class QuickAssistProcessor {
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
 				getExtractVariableProposal(params, context, problemsAtLocation, resultingCollections);
 				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, resultingCollections);
+				getExtractFieldProposal(params, context, problemsAtLocation, resultingCollections);
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
@@ -508,6 +509,26 @@ public class QuickAssistProcessor {
 			proposal = ExtractProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation);
 		} else {
 			proposal = ExtractProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
+		}
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
+	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (proposals == null) {
+			return false;
+		}
+
+		CUCorrectionProposal proposal = null;
+		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, true);
+		} else {
+			proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, false);
 		}
 
 		if (proposal == null) {
