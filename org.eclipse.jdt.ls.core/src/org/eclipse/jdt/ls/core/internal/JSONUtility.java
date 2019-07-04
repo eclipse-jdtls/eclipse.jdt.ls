@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat Inc. and others.
+ * Copyright (c) 2018-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,6 +31,9 @@ public class JSONUtility {
 		if(clazz == null ){
 			throw new IllegalArgumentException("Class can not be null");
 		}
+		if (clazz.isInstance(object)) {
+			return clazz.cast(object);
+		}
 		if(object instanceof JsonElement){
 			Gson gson = new Gson();
 			return gson.fromJson((JsonElement) object, clazz);
@@ -38,9 +41,6 @@ public class JSONUtility {
 		if (object instanceof String) {
 			Gson gson = new Gson();
 			return gson.fromJson((String) object, clazz);
-		}
-		if(clazz.isInstance(object)){
-			return clazz.cast(object);
 		}
 		return null;
 	}

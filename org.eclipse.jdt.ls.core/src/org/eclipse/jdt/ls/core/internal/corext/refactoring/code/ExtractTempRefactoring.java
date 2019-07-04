@@ -88,7 +88,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -130,6 +129,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -140,11 +140,10 @@ import org.eclipse.text.edits.TextEditGroup;
  * Extract Local Variable (from selected expression inside method or
  * initializer).
  */
-public class ExtractTempRefactoring extends ExtractRefactoring {
+public class ExtractTempRefactoring extends Refactoring {
 
 	private static final String ATTRIBUTE_REPLACE = "replace"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_FINAL = "final"; //$NON-NLS-1$
-	private ITrackedNodePosition fNewVariablePosition = null;
 
 	private static final class ForStatementChecker extends ASTVisitor {
 
@@ -765,8 +764,7 @@ public class ExtractTempRefactoring extends ExtractRefactoring {
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCURewrite.getASTRewrite();
 			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
-			fNewVariablePosition = rewrite.track(vdf.getName());
-			nameGroup.addPosition(fNewVariablePosition, true);
+			nameGroup.addPosition(rewrite.track(vdf.getName()), true);
 
 			String[] nameSuggestions = guessTempNames();
 			if (nameSuggestions.length > 0 && !nameSuggestions[0].equals(fTempName)) {
@@ -777,11 +775,6 @@ public class ExtractTempRefactoring extends ExtractRefactoring {
 			}
 		}
 		return vds;
-	}
-
-	@Override
-	public ITrackedNodePosition getExtractedNodePosition() {
-		return fNewVariablePosition;
 	}
 
 	private void insertAt(ASTNode target, Statement declaration) {

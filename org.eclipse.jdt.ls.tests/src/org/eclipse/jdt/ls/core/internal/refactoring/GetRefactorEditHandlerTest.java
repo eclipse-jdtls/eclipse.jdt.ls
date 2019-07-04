@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -25,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
+import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility.InitializeScope;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.junit.Assert;
@@ -108,6 +110,44 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("	void m(int i){\n");
 		buf.append("		int j = 0;\n");
 		buf.append("        int x= /*]*/j/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		AbstractSourceTestCase.compareSource(buf.toString(), actual);
+
+		Assert.assertNotNull(refactorEdit.command);
+		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		Assert.assertNotNull(refactorEdit.command.getArguments());
+		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+	}
+
+	@Test
+	public void testExtractField() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		int x= /*]*/0/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_FIELD_COMMAND, Arrays.asList(InitializeScope.CURRENT_METHOD.getName()), params);
+		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
+		Assert.assertNotNull(refactorEdit);
+		Assert.assertNotNull(refactorEdit.edit);
+		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	private int i;\n\n");
+		buf.append("    void m(int i){\n");
+		buf.append("		this.i = 0;\n");
+		buf.append("        int x= /*]*/this.i/*[*/;\n");
 		buf.append("	}\n");
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);

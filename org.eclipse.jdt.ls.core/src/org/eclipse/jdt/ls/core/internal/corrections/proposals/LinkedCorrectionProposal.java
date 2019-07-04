@@ -53,7 +53,7 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 		fLinkedProposalModel = null;
 	}
 
-	protected LinkedProposalModelCore getLinkedProposalModel() {
+	public LinkedProposalModelCore getLinkedProposalModel() {
 		if (fLinkedProposalModel == null) {
 			fLinkedProposalModel = new LinkedProposalModelCore();
 		}

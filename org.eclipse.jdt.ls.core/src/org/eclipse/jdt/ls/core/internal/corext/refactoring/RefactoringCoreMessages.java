@@ -693,6 +693,20 @@ public final class RefactoringCoreMessages extends NLS {
 
 	public static String ExtractTempRefactoring_select_expression;
 
+	public static String ExtractFieldRefactoring_name;
+
+	public static String ExtractFieldRefactoring_interface_methods;
+
+	public static String ExtractFieldRefactoring_cannot_extract;
+
+	public static String ExtractFieldRefactoring_uses_type_declared_locally;
+
+	public static String ExtractFieldRefactoring_creating_change;
+
+	public static String ExtractFieldRefactoring_initialize_field;
+
+	public static String ExtractFieldRefactoring_replace;
+
 	public static String FlowAnalyzer_execution_flow;
 
 	public static String HierarchyRefactoring_add_member;
