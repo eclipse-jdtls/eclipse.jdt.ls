@@ -1,12 +1,20 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Referenced the origin implementation:
+ * org.eclipse.jdt.internal.corext.refactoring.code.ExtractTempRefactoring
+ * org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring
  *
  * Contributors:
- *     Microsoft Corporation - initial API and implementation
+ *     IBM Corporation - initial API and implementation
+ *     Microsoft Corporation - create the new refactoring implementation
  *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.code;
@@ -508,7 +516,6 @@ public class ExtractFieldRefactoring extends Refactoring {
 		return false;
 	}
 
-	// return List<IVariableBinding>
 	private static List<IVariableBinding> getForInitializedVariables(VariableDeclarationExpression variableDeclarations) {
 		List<IVariableBinding> forInitializerVariables = new ArrayList<>(1);
 		for (Iterator<VariableDeclarationFragment> iter = variableDeclarations.fragments().iterator(); iter.hasNext();) {

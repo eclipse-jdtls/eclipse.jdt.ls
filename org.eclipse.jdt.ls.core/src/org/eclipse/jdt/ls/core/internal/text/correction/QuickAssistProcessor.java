@@ -524,12 +524,7 @@ public class QuickAssistProcessor {
 			return false;
 		}
 
-		CUCorrectionProposal proposal = null;
-		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, true);
-		} else {
-			proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, false);
-		}
+		CUCorrectionProposal proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
 
 		if (proposal == null) {
 			return false;

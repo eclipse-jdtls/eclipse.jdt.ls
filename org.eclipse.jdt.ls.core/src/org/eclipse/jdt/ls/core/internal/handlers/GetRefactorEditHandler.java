@@ -60,10 +60,10 @@ public class GetRefactorEditHandler {
 			} else if (ExtractProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
 				proposal = (RefactoringCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
 			} else if (ExtractProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
-				String initializeIn = (params.commandArguments != null && params.commandArguments.size() > 0) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
 				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			} else if (ExtractProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
-				String initializeIn = (params.commandArguments != null && params.commandArguments.size() > 0) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
 				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			}
 
