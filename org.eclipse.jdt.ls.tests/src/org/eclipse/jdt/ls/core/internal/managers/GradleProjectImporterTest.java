@@ -10,26 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.eclipse.buildship.core.BuildConfiguration;
-import org.eclipse.buildship.core.FixedVersionGradleDistribution;
-import org.eclipse.buildship.core.GradleDistribution;
-import org.eclipse.buildship.core.LocalGradleDistribution;
-import org.eclipse.buildship.core.WrapperGradleDistribution;
+import com.google.common.collect.ImmutableList;
+import org.eclipse.buildship.core.*;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -46,6 +28,17 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
+import static org.junit.Assert.*;
 
 /**
  * @author Fred Bricon
@@ -187,12 +180,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testGradleUserHome() throws Exception {
+	public void testGradleUserHome() {
 		Map<String, String> env = new HashMap<>();
 		Properties sysprops = new Properties();
 		File file = null;
 		File projectFile = null;
 		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleHome(null);
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			File rootFile = root.getLocation().toFile();
 			file = new File(rootFile, "fakeGradleHome");
@@ -206,7 +200,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			projectFile = new File(rootFile, "fakeProject");
 			projectFile.mkdir();
 			projectFile.deleteOnExit();
-			BuildConfiguration build = new GradleProjectImporter().getBuildConfiguration(file.toPath());
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(file.toPath());
 			assertFalse(build.getGradleUserHome().isPresent());
 		} finally {
 			if (file != null) {
@@ -238,6 +232,59 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		project = getProject("gradle-withoutjava");
 		file = project.getFile("/gradle.properties");
 		assertTrue(projectsManager.isBuildFile(file));
+	}
+
+	@Test
+	public void testGradleHomePreference() {
+		String home = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleHome();
+		Map<String, String> env = new HashMap<>();
+		Properties sysprops = new Properties();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleHome(null);
+			assertNull(GradleProjectImporter.getGradleHomeFile(env, sysprops));
+
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleHome("/gradle/home");
+			assertEquals(new File("/gradle/home"), GradleProjectImporter.getGradleHomeFile(env, sysprops));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleHome(home);
+		}
+	}
+
+	@Test
+	public void testGradleArguments() {
+		List<String> arguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments();
+		try {
+			Path rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile().toPath();
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertTrue(build.getArguments().isEmpty());
+
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
+					.setGradleArguments(ImmutableList.of("-Pproperty=value", "--stacktrace"));
+			build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertEquals(2, build.getArguments().size());
+			assertTrue(build.getArguments().contains("-Pproperty=value"));
+			assertTrue(build.getArguments().contains("--stacktrace"));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
+		}
+	}
+
+	@Test
+	public void testGradleJvmArguments() {
+		List<String> jvmArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments();
+		try {
+			Path rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile().toPath();
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertTrue(build.getJvmArguments().isEmpty());
+
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
+					.setGradleJvmArguments(ImmutableList.of("-Djavax.net.ssl.trustStore=truststore.jks"));
+			build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertEquals(1, build.getJvmArguments().size());
+			assertTrue(build.getJvmArguments().contains("-Djavax.net.ssl.trustStore=truststore.jks"));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleJvmArguments(jvmArguments);
+		}
 	}
 
 	@Test

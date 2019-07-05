@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="test mockito">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/mockito" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/mockito" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/mockito" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/mockito" recursive="false" type="SOURCES" />
+  </library>
+</component>

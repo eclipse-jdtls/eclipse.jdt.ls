@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="org.eclipse.jdt.ls.tests" />
+        <module name="org.eclipse.jdt.ls.core" />
+        <module name="org.eclipse.jdt.ls.tp" />
+      </profile>
+      <profile name="Annotation profile for JDT Language Server :: Parent" enabled="true">
+        <sourceOutputDir name="../target/generated-sources/annotations" />
+        <sourceTestOutputDir name="../target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="org.eclipse.jdt.ls.product" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="8">
+      <module name="org.eclipse.jdt.ls.core" target="1.8" />
+      <module name="org.eclipse.jdt.ls.product" target="1.5" />
+      <module name="org.eclipse.jdt.ls.tests" target="1.8" />
+      <module name="org.eclipse.jdt.ls.tp" target="1.8" />
+      <module name="parent" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xlint:deprecation" />
+  </component>
+</project>

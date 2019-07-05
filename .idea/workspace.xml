@@ -1,0 +1,1152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="2202b4cf-2b60-4fd3-aad7-eb07c194f164" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.java" beforeDir="false" afterPath="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporterTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/classes/" />
+    <ignored path="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/target/" />
+    <ignored path="$PROJECT_DIR$/org.eclipse.jdt.ls.core/target/" />
+    <ignored path="$PROJECT_DIR$/org.eclipse.jdt.ls.product/target/" />
+    <ignored path="$PROJECT_DIR$/target/" />
+    <ignored path="$PROJECT_DIR$/org.eclipse.jdt.ls.target/target/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="isMigrated" value="true" />
+  </component>
+  <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file pinned="false" current-in-tab="true">
+              <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/workspace/DefaultModelProvider.class">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state>
+                    <folding>
+                      <element signature="e#0#5989#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
+  </component>
+  <component name="ErrorTreeViewConfiguration">
+    <option name="hideWarnings" value="true" />
+    <option name="HIDE_WARNINGS" value="true" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporterTest.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="547">
+              <caret line="263" column="79" lean-forward="true" selection-start-line="263" selection-start-column="79" selection-end-line="263" selection-end-column="79" />
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="528">
+              <caret line="133" column="40" selection-start-line="133" selection-start-column="23" selection-end-line="133" selection-end-column="40" />
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/preferences/Preferences.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="298">
+              <caret line="66" column="7" selection-start-line="66" selection-start-column="7" selection-end-line="66" selection-end-column="7" />
+              <folding>
+                <element signature="e#26870#26871#0" expanded="true" />
+                <element signature="e#26907#26908#0" expanded="true" />
+                <element signature="e#32647#32648#0" expanded="true" />
+                <element signature="e#32688#32689#0" expanded="true" />
+                <element signature="e#32749#32750#0" expanded="true" />
+                <element signature="e#32793#32794#0" expanded="true" />
+                <element signature="e#32843#32844#0" expanded="true" />
+                <element signature="e#32877#32878#0" expanded="true" />
+                <element signature="e#32932#32933#0" expanded="true" />
+                <element signature="e#32998#32999#0" expanded="true" />
+                <element signature="e#33030#33031#0" expanded="true" />
+                <element signature="e#33052#33053#0" expanded="true" />
+                <element signature="e#33089#33090#0" expanded="true" />
+                <element signature="e#33116#33117#0" expanded="true" />
+                <element signature="e#33161#33162#0" expanded="true" />
+                <element signature="e#33236#33237#0" expanded="true" />
+                <element signature="e#33399#33400#0" expanded="true" />
+                <element signature="e#33423#33424#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="121">
+              <caret line="9" column="30" selection-start-line="9" selection-start-column="30" selection-end-line="9" selection-end-column="30" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>junit</find>
+      <find>test</find>
+      <find>eclipse-test-pl</find>
+      <find>tycho-version</find>
+      <find>surefire</find>
+      <find>target-platform</find>
+      <find>0.41.0</find>
+      <find>mockito</find>
+      <find>hamcrest</find>
+      <find>lsp4j</find>
+      <find>dist</find>
+      <find>0.41.0-SNAPSHOT</find>
+      <find>0.41.0-palantir-SNAPSHOT</find>
+      <find>&lt;groupId&gt;org.eclipse.jdt.ls&lt;/groupId&gt;</find>
+      <find>0.41.0-palantir_</find>
+      <find>Synchronize project</find>
+      <find>initialize\(</find>
+      <find>Gradle</find>
+      <find>gradleArguments</find>
+      <find>language/status</find>
+      <find>document/didChange</find>
+      <find>logInfo</find>
+      <find>collectMavenProjectInfo</find>
+      <find>getMavenProjectInfo</find>
+      <find>target</find>
+      <find>maven-compiler-plugin</find>
+      <find>GRADLE_</find>
+      <find>GRADLE_WRAPPER_ENABLED</find>
+      <find>wrapper</find>
+      <find>maven-compiler</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>0.41.0-palantir-SNAPSHOT</replace>
+      <replace>0.41.0-palantir_SNAPSHOT</replace>
+      <replace>&lt;groupId&gt;com.palantir.langserver.eclipse.jdt.ls&lt;/groupId&gt;</replace>
+      <replace>0.41.0-</replace>
+      <replace>jar</replace>
+      <replace>logDebug(&quot;&gt;&gt;</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/META-INF/MANIFEST.MF" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/highlighting/SemanticHighlightingTest.java" />
+        <option value="$PROJECT_DIR$/.editorconfig" />
+        <option value="$PROJECT_DIR$/.circleci/settings.xml" />
+        <option value="$PROJECT_DIR$/.circleci/config.yml" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/ClassFileUtil.java" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.core/pom.xml" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.product/pom.xml" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/preferences/Preferences.java" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/handlers/JDTLanguageServer.java" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/JavaLanguageServerPlugin.java" />
+        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.java" />
+        <option value="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporterTest.java" />
+      </list>
+    </option>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="failureBehavior" value="FAST" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="downloadSourcesAutomatically" value="true" />
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="MavenProjectNavigator">
+    <treeState>
+      <expand>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="JDT Language Server :: Core" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+        </path>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="JDT Language Server :: Core" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+          <item name="Lifecycle" type="58874e2:MavenProjectsStructure$LifecycleNode" />
+        </path>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="JDT Language Server :: Tests" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+        </path>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="JDT Language Server :: Tests" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+          <item name="Lifecycle" type="58874e2:MavenProjectsStructure$LifecycleNode" />
+        </path>
+      </expand>
+      <select />
+    </treeState>
+  </component>
+  <component name="MavenRunner">
+    <option name="skipTests" value="true" />
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="892" />
+    <option name="y" value="23" />
+    <option name="width" value="1668" />
+    <option name="height" value="1417" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.buildship.core-3.1.0.v20190501-0830.jar" type="ab9368bb:PsiFileNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.buildship.core-3.1.0.v20190501-0830.jar" type="ab9368bb:PsiFileNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.buildship.core-3.1.0.v20190501-0830.jar" type="ab9368bb:PsiFileNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.equinox.common-3.10.500.v20190621-0852.jar" type="ab9368bb:PsiFileNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.equinox.common-3.10.500.v20190621-0852.jar" type="ab9368bb:PsiFileNode" />
+              <item name="eclipse" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.equinox.common-3.10.500.v20190621-0852.jar" type="ab9368bb:PsiFileNode" />
+              <item name="eclipse" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.equinox.common-3.10.500.v20190621-0852.jar" type="ab9368bb:PsiFileNode" />
+              <item name="eclipse" type="462c0819:PsiDirectoryNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="runtime" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="META-INF" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+              <item name="managers" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+              <item name="preferences" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.product" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.core.resources-3.13.500.v20190624-0953.jar" type="ab9368bb:PsiFileNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.core.resources-3.13.500.v20190624-0953.jar" type="ab9368bb:PsiFileNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.core.resources-3.13.500.v20190624-0953.jar" type="ab9368bb:PsiFileNode" />
+              <item name="core" type="462c0819:PsiDirectoryNode" />
+              <item name="resources" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core-0.41.0-SNAPSHOT.jar" type="ab9368bb:PsiFileNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core-0.41.0-SNAPSHOT.jar" type="ab9368bb:PsiFileNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="lib" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.core-0.41.0-SNAPSHOT.jar" type="ab9368bb:PsiFileNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+              <item name="managers" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="ls" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="ls" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="eclipse.jdt.ls" type="462c0819:PsiDirectoryNode" />
+              <item name="org.eclipse.jdt.ls.tests" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="ls" type="462c0819:PsiDirectoryNode" />
+              <item name="internal" type="462c0819:PsiDirectoryNode" />
+              <item name="managers" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="parent" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="PackagesPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="editor.config.ad.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2806867" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.importing" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/mockito" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="JUnit.GradleProjectImporterTest.testGradleArguments">
+    <configuration name="DiagnosticHandlerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="org.eclipse.jdt.ls.tests" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.eclipse.jdt.ls.core.internal.handlers.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.eclipse.jdt.ls.core.internal.handlers" />
+      <option name="MAIN_CLASS_NAME" value="org.eclipse.jdt.ls.core.internal.handlers.DiagnosticHandlerTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="EclipseBuildSupportTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="org.eclipse.jdt.ls.tests" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.eclipse.jdt.ls.core.internal.managers.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.eclipse.jdt.ls.core.internal.managers" />
+      <option name="MAIN_CLASS_NAME" value="org.eclipse.jdt.ls.core.internal.managers.EclipseBuildSupportTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="GradleProjectImporterTest.testGradleArguments" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="org.eclipse.jdt.ls.tests" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.eclipse.jdt.ls.core.internal.managers.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.eclipse.jdt.ls.core.internal.managers" />
+      <option name="MAIN_CLASS_NAME" value="org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporterTest" />
+      <option name="METHOD_NAME" value="testGradleArguments" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SemanticHighlightingTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="org.eclipse.jdt.ls.tests" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.eclipse.jdt.ls.core.internal.highlighting.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.eclipse.jdt.ls.core.internal.highlighting" />
+      <option name="MAIN_CLASS_NAME" value="org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WorkspaceExecuteCommandHandlerTest.testExecuteCommandMorethanOneCommand" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="org.eclipse.jdt.ls.tests" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.eclipse.jdt.ls.core.internal.handlers.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="org.eclipse.jdt.ls.core.internal.handlers" />
+      <option name="MAIN_CLASS_NAME" value="org.eclipse.jdt.ls.core.internal.handlers.WorkspaceExecuteCommandHandlerTest" />
+      <option name="METHOD_NAME" value="testExecuteCommandMorethanOneCommand" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Unnamed" type="osgi.bnd.run" factoryName="Test Launcher (JUnit)" nameIsGenerated="true">
+      <option name="bndRunFile" value="$PROJECT_DIR$/launch/jdt.ls.remote.launch" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="osgi.bnd.run" factoryName="Test Launcher (JUnit)">
+      <option name="bndRunFile" value="$PROJECT_DIR$/launch/jdt.ls.remote.launch" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Bnd OSGi.Unnamed" />
+      <item itemvalue="JUnit.DiagnosticHandlerTest" />
+      <item itemvalue="JUnit.EclipseBuildSupportTest" />
+      <item itemvalue="JUnit.SemanticHighlightingTest" />
+      <item itemvalue="JUnit.WorkspaceExecuteCommandHandlerTest.testExecuteCommandMorethanOneCommand" />
+      <item itemvalue="JUnit.GradleProjectImporterTest.testGradleArguments" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.GradleProjectImporterTest.testGradleArguments" />
+        <item itemvalue="JUnit.EclipseBuildSupportTest" />
+        <item itemvalue="JUnit.SemanticHighlightingTest" />
+        <item itemvalue="JUnit.DiagnosticHandlerTest" />
+        <item itemvalue="JUnit.WorkspaceExecuteCommandHandlerTest.testExecuteCommandMorethanOneCommand" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2202b4cf-2b60-4fd3-aad7-eb07c194f164" name="Default Changelist" comment="" />
+      <created>1562086423473</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1562086423473</updated>
+      <workItem from="1562086426884" duration="2857000" />
+      <workItem from="1562089390886" duration="723000" />
+      <workItem from="1562090138557" duration="127000" />
+      <workItem from="1562090279191" duration="5003000" />
+      <workItem from="1562153288758" duration="1485000" />
+      <workItem from="1562188498344" duration="408000" />
+      <workItem from="1562188921168" duration="22190000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TestHistory">
+    <history-entry file="SemanticHighlightingTest - 2019.07.02 at 19h 34m 43s.xml">
+      <configuration name="SemanticHighlightingTest" configurationId="JUnit" />
+    </history-entry>
+    <history-entry file="EclipseBuildSupportTest - 2019.07.02 at 19h 35m 11s.xml">
+      <configuration name="EclipseBuildSupportTest" configurationId="JUnit" />
+    </history-entry>
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="32793000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="57" y="23" width="2503" height="1417" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.17797643" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Designer" order="2" />
+      <window_info id="Image Layers" order="3" />
+      <window_info id="Capture Tool" order="4" />
+      <window_info id="UI Designer" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32830188" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.46943396" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
+      <window_info anchor="bottom" id="CheckStyle" order="9" />
+      <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" weight="0.32981133" />
+      <window_info anchor="bottom" id="Messages" order="11" weight="0.38867924" />
+      <window_info anchor="bottom" id="Java Enterprise" order="12" />
+      <window_info anchor="bottom" id="Database Changes" order="13" />
+      <window_info anchor="bottom" id="Version Control" order="14" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Maven" order="3" weight="0.21292157" />
+      <window_info anchor="right" id="Palette" order="4" />
+      <window_info anchor="right" id="Capture Analysis" order="5" />
+      <window_info anchor="right" id="CDI" order="6" />
+      <window_info anchor="right" id="SciView" order="7" />
+      <window_info anchor="right" id="Database" order="8" />
+      <window_info anchor="right" id="Palette&#9;" order="9" />
+      <window_info anchor="right" id="Theme Preview" order="10" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/WorkspaceHelper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="39" column="27" selection-start-line="39" selection-start-column="27" selection-end-line="39" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/handlers/GenerateToStringHandlerTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="38" column="71" selection-start-line="38" selection-start-column="71" selection-end-line="38" selection-end-column="71" />
+          <folding>
+            <element signature="method#testGenerateToStringStatus#0;class#GenerateToStringHandlerTest#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="663">
+          <caret line="39" column="38" selection-start-line="39" selection-start-column="33" selection-end-line="39" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.editorconfig">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="51">
+          <caret line="3" column="15" selection-start-line="3" selection-start-column="15" selection-end-line="3" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.circleci/settings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="41" column="11" selection-start-line="41" selection-start-column="11" selection-end-line="41" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.circleci/config.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="445">
+          <caret line="69" selection-start-line="69" selection-end-line="69" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/handlers/FoldingRangeHandlerTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="565">
+          <caret line="119" column="37" selection-start-line="119" selection-start-column="37" selection-end-line="119" selection-end-column="37" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" column="24" selection-start-line="7" selection-start-column="24" selection-end-line="7" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/ClassFileUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="89">
+          <caret line="35" column="90" selection-start-line="35" selection-start-column="90" selection-end-line="35" selection-end-column="90" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/configuration/DefaultBuildConfigurationProperties.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="283">
+          <caret line="27" column="11" selection-start-line="27" selection-start-column="11" selection-end-line="27" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/com.google.guava-21.0.0.v20170206-1425.jar!/com/google/common/cache/LoadingCache.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="17" column="6" selection-start-line="17" selection-start-column="6" selection-end-line="17" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/configuration/GradleArguments.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="319">
+          <caret line="92" column="31" lean-forward="true" selection-start-line="92" selection-start-column="31" selection-end-line="92" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/workspace/DefaultGradleWorkspace.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="562">
+          <caret line="60" column="23" selection-start-line="60" selection-start-column="23" selection-end-line="60" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/workspace/ImportRootProjectOperation.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="215">
+          <caret line="29" column="19" selection-start-line="29" selection-start-column="19" selection-end-line="29" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/configuration/ConfigurationManager.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="18" column="23" selection-start-line="18" selection-start-column="23" selection-end-line="18" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/configuration/DefaultBuildConfiguration.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1241">
+          <caret line="86" column="30" lean-forward="true" selection-start-line="86" selection-start-column="30" selection-end-line="86" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/configuration/DefaultConfigurationManager.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="283">
+          <caret line="38" column="41" selection-start-line="38" selection-start-column="41" selection-end-line="38" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/JSONUtility.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="26" column="24" selection-start-line="26" selection-start-column="24" selection-end-line="26" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/handlers/InitHandler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="657">
+          <caret line="123" column="50" selection-start-line="123" selection-start-column="50" selection-end-line="123" selection-end-column="50" />
+          <folding>
+            <element signature="e#5272#5302#1" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/workspace/DefaultModelProvider.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#0#5989#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/handlers/MapFlattener.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="51" column="5" selection-start-line="51" selection-start-column="5" selection-end-line="51" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/META-INF/MANIFEST.MF">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/plugin.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="791">
+          <caret line="73" selection-start-line="73" selection-end-line="79" selection-end-column="88" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.equinox.common-3.10.500.v20190621-0852.jar!/org/eclipse/core/runtime/IProgressMonitor.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="7" column="17" selection-start-line="7" selection-start-column="17" selection-end-line="7" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/internal/DefaultGradleBuild.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="436">
+          <caret line="57" selection-start-line="57" selection-end-line="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.product/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="428">
+          <caret line="197" selection-start-line="197" selection-end-line="197" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/BuildConfiguration.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="587">
+          <caret line="168" column="60" selection-start-line="168" selection-start-column="60" selection-end-line="168" selection-end-column="60" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/GradleBuild.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="12" column="35" selection-start-line="12" selection-start-column="35" selection-end-line="12" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/GradleWorkspace.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="13" column="13" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/GradleCore.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="13" column="19" selection-start-line="13" selection-start-column="19" selection-end-line="13" selection-end-column="19" />
+          <folding>
+            <element signature="e#313#314#0" expanded="true" />
+            <element signature="e#372#373#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.buildship.core-3.1.0.v20190501-0830.jar!/org/eclipse/buildship/core/GradleDistribution.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="16" column="42" selection-start-line="16" selection-start-column="42" selection-end-line="16" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.lsp4j-0.7.2.v20190528-0933.jar!/org/eclipse/lsp4j/ExecuteCommandParams.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="303">
+          <caret line="43" column="9" selection-start-line="43" selection-start-column="9" selection-end-line="43" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/JavaClientConnection.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="193">
+          <caret line="70" column="18" selection-start-line="70" selection-start-column="18" selection-end-line="70" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/handlers/ProgressReporterManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="39" column="11" selection-start-line="39" selection-start-column="11" selection-end-line="39" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.core.jobs-3.10.500.v20190620-1426.jar!/org/eclipse/core/runtime/jobs/Job.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="442">
+          <caret line="29" column="36" selection-start-line="29" selection-start-column="36" selection-end-line="29" selection-end-column="36" />
+          <folding>
+            <element signature="e#1178#1179#0" expanded="true" />
+            <element signature="e#1208#1209#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.core.jobs-3.10.500.v20190620-1426.jar!/org/eclipse/core/runtime/jobs/IJobManager.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="570">
+          <caret line="47" column="9" selection-start-line="47" selection-start-column="9" selection-end-line="47" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.equinox.common-3.10.500.v20190621-0852.jar!/org/eclipse/core/runtime/IStatus.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="12" column="9" selection-start-line="12" selection-start-column="9" selection-end-line="12" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/handlers/JDTLanguageServer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="366">
+          <caret line="178" selection-start-line="178" selection-end-line="178" />
+          <folding>
+            <element signature="e#7709#7710#0" expanded="true" />
+            <element signature="e#7739#7740#0" expanded="true" />
+            <element signature="e#17527#17528#0" expanded="true" />
+            <element signature="e#17545#17546#0" expanded="true" />
+            <element signature="e#17702#17703#0" expanded="true" />
+            <element signature="e#17720#17721#0" expanded="true" />
+            <element signature="e#17789#17790#0" expanded="true" />
+            <element signature="e#17807#17808#0" expanded="true" />
+            <element signature="e#18739#18769#1" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/AbstractGradleBasedTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="28" column="29" selection-start-line="28" selection-start-column="29" selection-end-line="28" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/org.eclipse.core.resources-3.13.500.v20190624-0953.jar!/org/eclipse/core/resources/IProject.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="15" column="17" selection-start-line="15" selection-start-column="17" selection-end-line="15" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/InvisibleProjectBuildSupport.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="25" column="13" selection-start-line="25" selection-start-column="13" selection-end-line="25" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/MavenProjectImporter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1084">
+          <caret line="108" column="58" selection-start-line="108" selection-start-column="39" selection-end-line="108" selection-end-column="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/ProjectsManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="433">
+          <caret line="93" column="13" selection-start-line="93" selection-start-column="13" selection-end-line="93" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/InvisibleProjectImporter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1425">
+          <caret line="43" column="13" selection-start-line="43" selection-start-column="13" selection-end-line="43" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/JavaLanguageServerPlugin.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="288">
+          <caret line="436" column="28" selection-start-line="436" selection-start-column="28" selection-end-line="436" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/preferences/PreferenceManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-107">
+          <caret line="64" column="13" selection-start-line="64" selection-start-column="13" selection-end-line="64" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/preferences/Preferences.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="298">
+          <caret line="66" column="7" selection-start-line="66" selection-start-column="7" selection-end-line="66" selection-end-column="7" />
+          <folding>
+            <element signature="e#26870#26871#0" expanded="true" />
+            <element signature="e#26907#26908#0" expanded="true" />
+            <element signature="e#32647#32648#0" expanded="true" />
+            <element signature="e#32688#32689#0" expanded="true" />
+            <element signature="e#32749#32750#0" expanded="true" />
+            <element signature="e#32793#32794#0" expanded="true" />
+            <element signature="e#32843#32844#0" expanded="true" />
+            <element signature="e#32877#32878#0" expanded="true" />
+            <element signature="e#32932#32933#0" expanded="true" />
+            <element signature="e#32998#32999#0" expanded="true" />
+            <element signature="e#33030#33031#0" expanded="true" />
+            <element signature="e#33052#33053#0" expanded="true" />
+            <element signature="e#33089#33090#0" expanded="true" />
+            <element signature="e#33116#33117#0" expanded="true" />
+            <element signature="e#33161#33162#0" expanded="true" />
+            <element signature="e#33236#33237#0" expanded="true" />
+            <element signature="e#33399#33400#0" expanded="true" />
+            <element signature="e#33423#33424#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="121">
+          <caret line="9" column="30" selection-start-line="9" selection-start-column="30" selection-end-line="9" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/lib/org.eclipse.jdt.ls.core-0.41.0-SNAPSHOT.jar!/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-175">
+          <caret line="42" column="11" selection-start-line="42" selection-start-column="11" selection-end-line="42" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="133" column="40" selection-start-line="133" selection-start-column="23" selection-end-line="133" selection-end-column="40" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/managers/GradleProjectImporterTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="547">
+          <caret line="263" column="79" lean-forward="true" selection-start-line="263" selection-start-column="79" selection-end-line="263" selection-end-column="79" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.40611354" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>OSGi (org.eclipse.jdt.ls.core)|OSGi</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.40611354" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <last-edited>ECLIPSE</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2806867" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>1.8</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.40611354" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>tests|ls</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2806867" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <last-edited>test org.eclipse.m2e.maven.runtime-1.12.0</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2806867" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+  <component name="mavenExecuteGoalHistory">
+    <option value="" />
+  </component>
+</project>

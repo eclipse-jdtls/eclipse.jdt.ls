@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="core org.eclipse.jdt.compiler.tool-1.2.600">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.jdt.compiler.tool-1.2.600.v20190322-0450-lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/org.eclipse.jdt.ls.core/lib/org.eclipse.jdt.compiler.tool-1.2.600.v20190322-0450-lib" recursive="false" />
+  </library>
+</component>
