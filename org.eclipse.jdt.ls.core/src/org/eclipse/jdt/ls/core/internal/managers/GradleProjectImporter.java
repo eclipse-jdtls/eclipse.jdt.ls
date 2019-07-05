@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	public static File getGradleHomeFile(Map<String, String> env, Properties sysprops) {
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleHome() != null) {
+			return new File(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleHome());
+		}
 		String gradleHome = env.get(GRADLE_HOME);
 		if (gradleHome == null || !new File(gradleHome).isDirectory()) {
 			gradleHome = sysprops.getProperty(GRADLE_HOME);
@@ -164,16 +168,20 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 	}
 
-	public BuildConfiguration getBuildConfiguration(Path rootFolder) {
+	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
 		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution);
 		String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
 		File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		List<String> gradleArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments() : new ArrayList<>();
+		List<String> gradleJvmArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments() : new ArrayList<>();
 		// @formatter:off
 		BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(rootFolder.toFile())
 				.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
 				.gradleDistribution(distribution)
 				.javaHome(javaHome)
+				.arguments(gradleArguments)
+				.jvmArguments(gradleJvmArguments)
 				.build();
 		// @formatter:on
 		return build;
