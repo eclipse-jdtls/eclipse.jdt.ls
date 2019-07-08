@@ -54,6 +54,7 @@ import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
+import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -212,12 +213,14 @@ public class ChangeUtil {
 		convertTextEdit(root, compilationUnit, textEdits);
 	}
 
-	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit textEdits) {
-		TextEdit[] children = textEdits.getChildren();
-		if (children.length == 0) {
-			return;
+	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit) {
+		TextEdit[] textEdits;
+		if (edit instanceof MultiTextEdit) {
+			textEdits = edit.getChildren();
+		} else {
+			textEdits = new TextEdit[] { edit };
 		}
-		for (TextEdit textEdit : children) {
+		for (TextEdit textEdit : textEdits) {
 			TextEditConverter converter = new TextEditConverter(unit, textEdit);
 			String uri = JDTUtils.toURI(unit);
 			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
