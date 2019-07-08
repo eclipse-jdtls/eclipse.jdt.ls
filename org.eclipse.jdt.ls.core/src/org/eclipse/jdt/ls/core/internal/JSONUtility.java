@@ -31,12 +31,12 @@ public class JSONUtility {
 		if(clazz == null ){
 			throw new IllegalArgumentException("Class can not be null");
 		}
-		if (clazz.isInstance(object)) {
-			return clazz.cast(object);
-		}
 		if(object instanceof JsonElement){
 			Gson gson = new Gson();
 			return gson.fromJson((JsonElement) object, clazz);
+		}
+		if (clazz.isInstance(object)) {
+			return clazz.cast(object);
 		}
 		if (object instanceof String) {
 			Gson gson = new Gson();
