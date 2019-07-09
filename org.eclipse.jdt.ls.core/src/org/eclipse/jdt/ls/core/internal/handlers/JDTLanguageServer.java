@@ -109,6 +109,8 @@ import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.Registration;
 import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
+import org.eclipse.lsp4j.SelectionRange;
+import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -242,6 +244,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			registerCapability(Preferences.IMPLEMENTATION_ID, Preferences.IMPLEMENTATION);
 		}
+		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
+			registerCapability(Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE);
+		}
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
@@ -304,6 +309,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
 			toggleCapability(preferenceManager.getPreferences().isFoldingRangeEnabled(), Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE, null);
+		}
+		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
+			toggleCapability(preferenceManager.getPreferences().isSelectionRangeEnabled(), Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE, null);
 		}
 	}
 
@@ -771,6 +779,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsyncWithClientProgress((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return new FoldingRangeHandler().foldingRange(params, monitor);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<SelectionRange>> selectionRange(SelectionRangeParams params) {
+		logInfo(">> document/selectionRange");
+		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return new SelectionRangeHandler().selectionRange(params, monitor);
 		});
 	}
 
