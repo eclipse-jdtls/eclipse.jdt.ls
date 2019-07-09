@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -56,6 +58,7 @@ import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationCapabilities;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
+import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
 import org.eclipse.lsp4j.FileSystemWatcher;
@@ -90,9 +93,12 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Mock
 	private JavaLanguageClient client;
 
+	@Mock
+	private WorkspaceExecuteCommandHandler commandHandler;
+
 	@Before
 	public void setup() throws Exception {
-		server = new JDTLanguageServer(projectsManager, preferenceManager);
+		server = new JDTLanguageServer(projectsManager, preferenceManager, commandHandler);
 		server.connectClient(client);
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
@@ -110,6 +116,9 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testExecuteCommandProvider() throws Exception {
+		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.FALSE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
@@ -125,6 +134,43 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getExecuteCommandProvider());
+	}
+
+	@Test
+	public void testStaticCommandWithDynamicRegistration() throws Exception {
+		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
+		when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
+		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		InitializeResult result = initialize(true);
+
+		ExecuteCommandOptions commandProvider = result.getCapabilities().getExecuteCommandProvider();
+		assertNotNull(commandProvider);
+		assertTrue(commandProvider.getCommands().contains("cmd1"));
+		assertTrue(commandProvider.getCommands().contains("cmd2"));
+		assertFalse(commandProvider.getCommands().contains("cmd3"));
+		assertFalse(commandProvider.getCommands().contains("cmd4"));
+	}
+
+	@Test
+	public void testStaticCommandWithoutDynamicRegistration() throws Exception {
+		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
+		when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
+		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.FALSE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		InitializeResult result = initialize(true);
+
+		ExecuteCommandOptions commandProvider = result.getCapabilities().getExecuteCommandProvider();
+		assertNotNull(commandProvider);
+		assertTrue(commandProvider.getCommands().containsAll(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
 	}
 
 	@Test
@@ -335,5 +381,6 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		CompletableFuture<InitializeResult> result = server.initialize(params);
 		return result.get();
 	}
+
 }
 

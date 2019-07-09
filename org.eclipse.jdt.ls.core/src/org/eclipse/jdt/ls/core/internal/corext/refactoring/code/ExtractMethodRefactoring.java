@@ -82,7 +82,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -124,6 +123,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubPro
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -136,7 +136,7 @@ import org.eclipse.text.edits.TextEditGroup;
 /**
  * Extracts a method in a compilation unit based on a text selection range.
  */
-public class ExtractMethodRefactoring extends ExtractRefactoring {
+public class ExtractMethodRefactoring extends Refactoring {
 
 	private static final String ATTRIBUTE_VISIBILITY = "visibility"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_DESTINATION = "destination"; //$NON-NLS-1$
@@ -166,7 +166,6 @@ public class ExtractMethodRefactoring extends ExtractRefactoring {
 	// either of type TypeDeclaration or AnonymousClassDeclaration
 	private ASTNode[] fDestinations;
 	private LinkedProposalModelCore fLinkedProposalModel;
-	private ITrackedNodePosition fNewMethodPosition = null;
 	private Map fFormatterOptions;
 
 	private static final String EMPTY = ""; //$NON-NLS-1$
@@ -547,7 +546,6 @@ public class ExtractMethodRefactoring extends ExtractRefactoring {
 			result.addTextEditGroup(substituteDesc);
 
 			MethodDeclaration mm = createNewMethod(selectedNodes, fCUnit.findRecommendedLineSeparator(), substituteDesc);
-			fNewMethodPosition = fRewriter.track(mm.getName());
 
 			if (fLinkedProposalModel != null) {
 				LinkedProposalPositionGroupCore typeGroup = fLinkedProposalModel.getPositionGroup(KEY_TYPE, true);
@@ -1429,10 +1427,5 @@ public class ExtractMethodRefactoring extends ExtractRefactoring {
 		fThrowRuntimeExceptions = Boolean.valueOf(exceptions).booleanValue();
 
 		return new RefactoringStatus();
-	}
-
-	@Override
-	public ITrackedNodePosition getExtractedNodePosition() {
-		return fNewMethodPosition;
 	}
 }

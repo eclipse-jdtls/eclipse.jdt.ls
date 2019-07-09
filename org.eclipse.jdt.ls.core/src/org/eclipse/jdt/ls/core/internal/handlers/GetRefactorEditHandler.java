@@ -12,14 +12,18 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractRefactoring;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
@@ -55,6 +59,12 @@ public class GetRefactorEditHandler {
 				proposal = (RefactoringCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
 			} else if (ExtractProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
 				proposal = (RefactoringCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
+			} else if (ExtractProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
+				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+			} else if (ExtractProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
+				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			}
 
 			if (proposal == null) {
@@ -63,13 +73,17 @@ public class GetRefactorEditHandler {
 
 			Change change = proposal.getChange();
 			WorkspaceEdit edit = CodeActionHandler.convertChangeToWorkspaceEdit(unit, change);
-			ExtractRefactoring extractRefactoring = (ExtractRefactoring) proposal.getRefactoring();
+			LinkedProposalModelCore linkedProposalModel = proposal.getLinkedProposalModel();
 			Command additionalCommand = null;
-			if (extractRefactoring.getExtractedNodePosition() != null) {
-				int offset = extractRefactoring.getExtractedNodePosition().getStartPosition();
-				int length = extractRefactoring.getExtractedNodePosition().getLength();
-				RenamePosition renamePosition = new RenamePosition(JDTUtils.toURI(unit), offset, length);
-				additionalCommand = new Command("Rename", RENAME_COMMAND, Arrays.asList(renamePosition));
+			if (linkedProposalModel != null) {
+				LinkedProposalPositionGroupCore linkedPositionGroup = linkedProposalModel.getPositionGroup("name", false);
+				PositionInformation highlightPosition = getFirstTrackedNodePosition(linkedPositionGroup);
+				if (highlightPosition != null) {
+					int offset = highlightPosition.getOffset();
+					int length = highlightPosition.getLength();
+					RenamePosition renamePosition = new RenamePosition(JDTUtils.toURI(unit), offset, length);
+					additionalCommand = new Command("Rename", RENAME_COMMAND, Arrays.asList(renamePosition));
+				}
 			}
 
 			return new RefactorWorkspaceEdit(edit, additionalCommand);
@@ -78,6 +92,19 @@ public class GetRefactorEditHandler {
 		}
 
 		return null;
+	}
+
+	private static PositionInformation getFirstTrackedNodePosition(LinkedProposalPositionGroupCore positionGroup) {
+		if (positionGroup == null) {
+			return null;
+		}
+
+		PositionInformation[] positions = positionGroup.getPositions();
+		if (positions == null || positions.length == 0) {
+			return null;
+		}
+
+		return positions[0];
 	}
 
 	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
@@ -135,16 +162,21 @@ public class GetRefactorEditHandler {
 
 	public static class GetRefactorEditParams {
 		public String command;
+		public List<Object> commandArguments;
 		public CodeActionParams context;
 		public FormattingOptions options;
 
 		public GetRefactorEditParams(String command, CodeActionParams context) {
-			this.command = command;
-			this.context = context;
+			this(command, null, context);
 		}
 
-		public GetRefactorEditParams(String command, CodeActionParams context, FormattingOptions options) {
+		public GetRefactorEditParams(String command, List<Object> commandArguments, CodeActionParams context) {
+			this(command, commandArguments, context, null);
+		}
+
+		public GetRefactorEditParams(String command, List<Object> commandArguments, CodeActionParams context, FormattingOptions options) {
 			this.command = command;
+			this.commandArguments = commandArguments;
 			this.context = context;
 			this.options = options;
 		}

@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -125,7 +127,10 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelp help = getSignatureHelp(cu, 2, 50);
 		assertNotNull(help);
 		assertTrue(help.getSignatures().size() >= 10);
-		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("println\\(\\w+ \\w+\\) : void"));
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("println() : void"));
+		SignatureHelp help2 = getSignatureHelp(cu, 2, 49);
+		assertEquals(help.getSignatures().size(), help2.getSignatures().size());
+		assertEquals(help.getActiveSignature(), help2.getActiveSignature());
 	}
 
 	@Test
@@ -250,6 +255,89 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		assertEquals(2, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("substring\\(\\w+ \\w+\\) : String"));
+	}
+
+	@Test
+	public void testSignatureHelp_varargs() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Arrays;\n");
+		buf.append("public class E {\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		Arrays.asList(1,2,3);\n");
+		buf.append("		demo(\"1\", \"2\",\"3\" )\n");
+		buf.append("	}\n");
+		buf.append("	public static void demo (String s, String... s2) {\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 4, 21);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().startsWith("asList(T... "));
+		help = getSignatureHelp(cu, 5, 19);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("demo(String s, String... s2) : void"));
+	}
+
+	@Test
+	public void testSignatureHelp_varargs2() throws JavaModelException {
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("test1.Varargs");
+		ICompilationUnit cu = type.getCompilationUnit();
+		SignatureHelp help = getSignatureHelp(cu, 4, 16);
+		assertNotNull(help);
+		assertEquals(2, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("run(Class<?> clazz, String... args) : void"));
+	}
+
+	@Test
+	public void testSignatureHelp_lambda() throws JavaModelException {
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("test1.SignatureHelp");
+		ICompilationUnit cu = type.getCompilationUnit();
+		SignatureHelp help = getSignatureHelp(cu, 8, 14);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("test(Function<String,String> f) : void"));
+	}
+
+	@Test
+	public void testSignatureHelp_parameterTypes() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		 new RuntimeException(new Exception(),)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 40);
+		assertNotNull(help);
+		assertEquals(4, help.getSignatures().size());
+		assertNull(help.getActiveParameter());
+	}
+
+	@Test
+	public void testSignatureHelp_parameterObject() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		 Object foo = new Object();\n");
+		buf.append("		 System.err.println(foo);\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 4, 23);
+		assertNotNull(help);
+		assertEquals(10, help.getSignatures().size());
+		assertNotNull(help.getActiveParameter());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("println\\(Object \\w+\\) : void"));
 	}
 
 	private SignatureHelp getSignatureHelp(ICompilationUnit cu, int line, int character) {

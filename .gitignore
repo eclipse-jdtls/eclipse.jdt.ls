@@ -4,3 +4,5 @@ target/
 bin/
 **/lib/
 maven-wrapper.jar
+*.iml
+.idea
