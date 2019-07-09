@@ -37,8 +37,8 @@
             <repository location="http://download.eclipse.org/releases/2019-06/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.7.2.v20190528-0935"/>
-           <repository location="http://download.eclipse.org/lsp4j/updates/releases/0.7.2"/>
+            <repository location="https://github.com/akaroml/lsp4j-latest/raw/master/p2/"/>
+            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.8.0.v20190701-0317"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
