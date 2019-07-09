@@ -149,6 +149,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getImplementation());
 	}
 
+	public boolean isSelectionRangeDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getSelectionRange());
+	}
+
 	public boolean isWillSaveRegistered() {
 		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSave());
 	}

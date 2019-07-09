@@ -159,6 +159,11 @@ public class Preferences {
 	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
 
 	/**
+	 * Preference key to enable/disable the selection range.
+	 */
+	public static final String SELECTIONRANGE_ENABLED_KEY = "java.selectionRange.enabled";
+
+	/**
 	 * A named preference that holds the favorite static members.
 	 * <p>
 	 * Value is of type <code>String</code>: list of favorites.
@@ -259,6 +264,7 @@ public class Preferences {
 	public static final String FOLDINGRANGE = "textDocument/foldingRange";
 	public static final String WORKSPACE_CHANGE_FOLDERS = "workspace/didChangeWorkspaceFolders";
 	public static final String IMPLEMENTATION = "textDocument/implementation";
+	public static final String SELECTION_RANGE = "textDocument/selectionRange";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_ON_TYPE_ID = UUID.randomUUID().toString();
@@ -280,6 +286,7 @@ public class Preferences {
 	public static final String WORKSPACE_CHANGE_FOLDERS_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
+	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -301,6 +308,7 @@ public class Preferences {
 	private boolean completionEnabled;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
+	private boolean selectionRangeEnabled;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
@@ -411,6 +419,7 @@ public class Preferences {
 		completionEnabled = true;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
+		selectionRangeEnabled = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
@@ -490,6 +499,9 @@ public class Preferences {
 
 		boolean foldingRangeEnable = getBoolean(configuration, FOLDINGRANGE_ENABLED_KEY, true);
 		prefs.setFoldingRangeEnabled(foldingRangeEnable);
+
+		boolean selectionRangeEnabled = getBoolean(configuration, SELECTIONRANGE_ENABLED_KEY, true);
+		prefs.setSelectionRangeEnabled(selectionRangeEnabled);
 
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
@@ -666,6 +678,11 @@ public class Preferences {
 
 	public Preferences setFoldingRangeEnabled(boolean enabled) {
 		this.foldingRangeEnabled = enabled;
+		return this;
+	}
+
+	public Preferences setSelectionRangeEnabled(boolean enabled) {
+		this.selectionRangeEnabled = enabled;
 		return this;
 	}
 
@@ -849,6 +866,10 @@ public class Preferences {
 
 	public boolean isFoldingRangeEnabled() {
 		return foldingRangeEnabled;
+	}
+
+	public boolean isSelectionRangeEnabled() {
+		return selectionRangeEnabled;
 	}
 
 	public boolean isGuessMethodArguments() {
