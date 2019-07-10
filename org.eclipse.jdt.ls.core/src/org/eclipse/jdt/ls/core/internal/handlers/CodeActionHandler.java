@@ -132,34 +132,13 @@ public class CodeActionHandler {
 	}
 
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
-		if (proposal instanceof CUCorrectionProposal) {
-			return getCodeActionFromProposal((CUCorrectionProposal) proposal, context);
-		} else {
-			// Unhandled proposals:
-			// 			  SelfEncapsulateFieldProposal
-			//            ReorgCorrectionsSubProcessor.getWrongTypeNameProposals
-			// GetterSetter
-			// Failed Cases:
-			//			  GetterSetterQuickFixTest.testCreateFieldUsingSef:418->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter:90->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_2:149->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_3:208->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_4:267->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField:145->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField1:193->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField2:239->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  LocalCorrectionQuickFixTest.testUnusedPrivateFieldWithResourceOperationSupport:152->testUnusedPrivateField:145->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  ModifierCorrectionsQuickFixTest.testInvisibleFieldRequestedInSamePackage1:587->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  ModifierCorrectionsQuickFixTest.testInvisibleFieldRequestedInSamePackage2:692->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
-			//			  ProjectsManagerTest.testCancelUpdateJob:129 NullPointer
-
-			// TODO: convert ChangeCorrectionProposal to codeAction
-			return null;
-		}
-	}
-	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
-		ICompilationUnit unit = proposal.getCompilationUnit();
+
+		ICompilationUnit unit = null;
+		if (proposal instanceof CUCorrectionProposal) {
+			unit = ((CUCorrectionProposal) proposal).getCompilationUnit();
+		}
+
 		Command command;
 		if (proposal instanceof CUCorrectionCommandProposal) {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
@@ -169,11 +148,11 @@ public class CodeActionHandler {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-
 			command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			codeAction.setCommand(command);
