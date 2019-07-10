@@ -1,4 +1,4 @@
-package java;
+package org.sample;
 
 /**
  * This is the test data for SelectionRangeHandlerTest. To ask for a selection range, we need to specify a position.

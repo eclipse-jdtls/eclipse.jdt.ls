@@ -44,7 +44,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testJavadoc() throws CoreException {
-		SelectionRange range = getSelectionRange("java.Foo4", new Position(9, 31));
+		SelectionRange range = getSelectionRange("org.sample.Foo4", new Position(9, 31));
 		assertTrue(validateSelectionRange(range, new Range(new Position(9, 4), new Position(9, 40)), // text element
 				new Range(new Position(9, 4), new Position(9, 40)), // tag element
 				new Range(new Position(8, 1), new Position(10, 4)), // javadoc
@@ -55,21 +55,21 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Test
 	public void testComments() throws CoreException {
 		// line comment
-		SelectionRange range = getSelectionRange("java.Foo4", new Position(12, 57));
+		SelectionRange range = getSelectionRange("org.sample.Foo4", new Position(12, 57));
 		assertTrue(validateSelectionRange(range, new Range(new Position(12, 43), new Position(12, 66)), // line comment
 				new Range(new Position(11, 8), new Position(16, 2)), // block
 				new Range(new Position(8, 1), new Position(16, 2)), // method declaration
 				TYPE_DECL_RANGE, COMP_UNIT_RAGE));
 
 		// block comment
-		range = getSelectionRange("java.Foo4", new Position(14, 17));
+		range = getSelectionRange("org.sample.Foo4", new Position(14, 17));
 		assertTrue(validateSelectionRange(range, new Range(new Position(14, 2), new Position(14, 29)), // block comment
 				new Range(new Position(11, 8), new Position(16, 2)), // block
 				new Range(new Position(8, 1), new Position(16, 2)), // method declaration
 				TYPE_DECL_RANGE, COMP_UNIT_RAGE));
 
 		// block comment in param list
-		range = getSelectionRange("java.Foo4", new Position(18, 42));
+		range = getSelectionRange("org.sample.Foo4", new Position(18, 42));
 		assertTrue(validateSelectionRange(range, new Range(new Position(18, 27), new Position(18, 68)), // block comment
 				new Range(new Position(18, 1), new Position(30, 2)), // method declaration
 				TYPE_DECL_RANGE, COMP_UNIT_RAGE));
@@ -77,7 +77,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testStringLiteral() throws CoreException {
-		SelectionRange range = getSelectionRange("java.Foo4", new Position(12, 30));
+		SelectionRange range = getSelectionRange("org.sample.Foo4", new Position(12, 30));
 		assertTrue(validateSelectionRange(range, new Range(new Position(12, 21), new Position(12, 40)), // string literal
 				new Range(new Position(12, 2), new Position(12, 41)), // method invocation
 				new Range(new Position(12, 2), new Position(12, 42)), // expression statement
@@ -88,7 +88,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testParamList() throws CoreException {
-		SelectionRange range = getSelectionRange("java.Foo4", new Position(18, 24));
+		SelectionRange range = getSelectionRange("org.sample.Foo4", new Position(18, 24));
 		assertTrue(validateSelectionRange(range, new Range(new Position(18, 21), new Position(18, 27)), // simple name
 				new Range(new Position(18, 17), new Position(18, 27)), // single variable declaration
 				new Range(new Position(18, 1), new Position(30, 2)), // method declaration
@@ -98,7 +98,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSwitch() throws CoreException {
-		SelectionRange range = getSelectionRange("java.Foo4", new Position(22, 27));
+		SelectionRange range = getSelectionRange("org.sample.Foo4", new Position(22, 27));
 		assertTrue(validateSelectionRange(range, new Range(new Position(22, 24), new Position(22, 30)), // simple name
 				new Range(new Position(22, 5), new Position(22, 31)), // method invocation
 				new Range(new Position(22, 5), new Position(22, 32)), // expression statement
