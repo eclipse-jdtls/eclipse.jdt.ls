@@ -16,17 +16,15 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
+import org.eclipse.jdt.core.manipulation.ICUCorrectionProposal;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ltk.core.refactoring.Change;
-import org.eclipse.ltk.core.refactoring.DocumentChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
-import org.eclipse.ltk.core.refactoring.TextFileChange;
-import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
+
+
 
 /**
  * A proposal for quick fixes and quick assists that work on a single compilation unit. Either a
@@ -37,9 +35,9 @@ import org.eclipse.text.edits.TextEdit;
  * The proposal takes care of the preview of the changes as proposal information.
  * </p>
  */
-public class CUCorrectionProposal extends ChangeCorrectionProposal  {
+public class CUCorrectionProposal extends ChangeCorrectionProposal implements ICUCorrectionProposal {
 
-	private ICompilationUnit fCompilationUnit;
+	private CUCorrectionProposalCore fProposalCore;
 
 	/**
 	 * Constructs a correction proposal working on a compilation unit with a given
@@ -59,12 +57,12 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	 * @param relevance
 	 *            the relevance of this proposal
 	 */
-	public CUCorrectionProposal(String name, String kind, ICompilationUnit cu, Change change, int relevance) {
+	public CUCorrectionProposal(String name, String kind, ICompilationUnit cu, TextChange change, int relevance) {
 		super(name, kind, change, relevance);
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
 		}
-		fCompilationUnit = cu;
+		fProposalCore = new CUCorrectionProposalCore(name, cu, change, relevance);
 	}
 
 	/**
@@ -84,18 +82,8 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	}
 
 	@Override
-	public String getAdditionalProposalInfo(IProgressMonitor monitor) throws CoreException {
-		StringBuffer buf= new StringBuffer();
-		TextChange change = getTextChange();
-		change.setKeepPreviewEdits(true);
-		IDocument previewDocument = change.getPreviewDocument(monitor);
-		TextEdit rootEdit = change.getPreviewEdit(change.getEdit());
-
-		EditAnnotator ea = new EditAnnotator(buf, previewDocument);
-		rootEdit.accept(ea);
-		ea.unchangedUntil(previewDocument.getLength()); // Final pre-existing
-		// region
-		return buf.toString();
+	public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
+		return fProposalCore.getAdditionalProposalInfo(monitor);
 	}
 
 	@Override
@@ -104,41 +92,21 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	}
 
 	/**
-	 * Creates the text change for this proposal.
-	 * This method is only called once and only when no text change has been passed in
-	 * {@link #CUCorrectionProposal(String, ICompilationUnit, TextChange, int, Image)}.
+	 * Creates the text change for this proposal. This method is only called once
+	 * and only when no text change has been passed in
+	 * {@link #CUCorrectionProposal(String, ICompilationUnit, TextChange, int)}.
 	 *
 	 * @return the created text change
-	 * @throws CoreException if the creation of the text change failed
+	 * @throws CoreException
+	 *             if the creation of the text change failed
 	 */
 	protected TextChange createTextChange() throws CoreException {
-		ICompilationUnit cu= getCompilationUnit();
-		String name= getName();
-		TextChange change;
-		if (!cu.getResource().exists()) {
-			String source;
-			try {
-				source= cu.getSource();
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.log(e.getStatus());
-				source= new String(); // empty
-			}
-			Document document= new Document(source);
-			change= new DocumentChange(name, document);
-		} else {
-			CompilationUnitChange cuChange = new CompilationUnitChange(name, cu);
-			cuChange.setSaveMode(TextFileChange.LEAVE_DIRTY);
-			change= cuChange;
-		}
-		TextEdit rootEdit= new MultiTextEdit();
-		change.setEdit(rootEdit);
-
+		TextChange change = fProposalCore.getNewChange();
 		// initialize text change
 		IDocument document= change.getCurrentDocument(new NullProgressMonitor());
-		addEdits(document, rootEdit);
+		addEdits(document, change.getEdit());
 		return change;
 	}
-
 
 	@Override
 	protected final Change createChange() throws CoreException {
@@ -151,6 +119,7 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	 * @return the text change that is invoked when the change is applied
 	 * @throws CoreException if accessing the change failed
 	 */
+	@Override
 	public final TextChange getTextChange() throws CoreException {
 		return (TextChange) getChange();
 	}
@@ -161,7 +130,7 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	 * @return the compilation unit on which the change works
 	 */
 	public final ICompilationUnit getCompilationUnit() {
-		return fCompilationUnit;
+		return fProposalCore.getCompilationUnit();
 	}
 
 	/**

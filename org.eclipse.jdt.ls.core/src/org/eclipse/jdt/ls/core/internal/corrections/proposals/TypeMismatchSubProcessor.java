@@ -75,7 +75,7 @@ public class TypeMismatchSubProcessor {
 	}
 
 	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) throws CoreException {
+			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -227,7 +227,7 @@ public class TypeMismatchSubProcessor {
 
 	public static void addChangeSenderTypeProposals(IInvocationContext context, Expression nodeToCast,
 			ITypeBinding castTypeBinding, boolean isAssignedNode, int relevance,
-			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
+			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
 		IBinding callerBinding= Bindings.resolveExpressionBinding(nodeToCast, false);
 
 		ICompilationUnit cu= context.getCompilationUnit();
@@ -300,7 +300,7 @@ public class TypeMismatchSubProcessor {
 	}
 
 	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
+			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (selectedNode == null) {
@@ -350,7 +350,7 @@ public class TypeMismatchSubProcessor {
 	}
 
 	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) throws JavaModelException {
+			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof MethodDeclaration)) {
@@ -419,7 +419,7 @@ public class TypeMismatchSubProcessor {
 	}
 
 	public static void addTypeMismatchInForEachProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (selectedNode == null || selectedNode.getLocationInParent() != EnhancedForStatement.EXPRESSION_PROPERTY) {

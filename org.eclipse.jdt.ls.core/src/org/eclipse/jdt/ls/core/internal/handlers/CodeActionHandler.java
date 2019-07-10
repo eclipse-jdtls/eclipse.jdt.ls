@@ -34,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
@@ -85,9 +86,9 @@ public class CodeActionHandler {
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
-		List<CUCorrectionProposal> candidates = new ArrayList<>();
+		List<ChangeCorrectionProposal> candidates = new ArrayList<>();
 		try {
-			List<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
+			List<ChangeCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick fix code actions", e);
@@ -103,9 +104,9 @@ public class CodeActionHandler {
 		candidates.sort(new CUCorrectionProposalComparator());
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
-			List<CUCorrectionProposal> resultList = new ArrayList<>();
+			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
 			List<String> acceptedActionKinds = params.getContext().getOnly();
-			for (CUCorrectionProposal proposal : candidates) {
+			for (ChangeCorrectionProposal proposal : candidates) {
 				if (acceptedActionKinds.contains(proposal.getKind())) {
 					resultList.add(proposal);
 				}
@@ -114,7 +115,7 @@ public class CodeActionHandler {
 		}
 
 		try {
-			for (CUCorrectionProposal proposal : candidates) {
+			for (ChangeCorrectionProposal proposal : candidates) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
 				if (codeActionFromProposal.isPresent() && !$.contains(codeActionFromProposal.get())) {
 					$.add(codeActionFromProposal.get());
@@ -130,6 +131,32 @@ public class CodeActionHandler {
 		return $;
 	}
 
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+		if (proposal instanceof CUCorrectionProposal) {
+			return getCodeActionFromProposal((CUCorrectionProposal) proposal, context);
+		} else {
+			// Unhandled proposals:
+			// 			  SelfEncapsulateFieldProposal
+			//            ReorgCorrectionsSubProcessor.getWrongTypeNameProposals
+			// GetterSetter
+			// Failed Cases:
+			//			  GetterSetterQuickFixTest.testCreateFieldUsingSef:418->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter:90->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_2:149->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_3:208->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  GetterSetterQuickFixTest.testInvisibleFieldToGetterSetter_4:267->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField:145->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField1:193->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  LocalCorrectionQuickFixTest.testUnusedPrivateField2:239->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  LocalCorrectionQuickFixTest.testUnusedPrivateFieldWithResourceOperationSupport:152->testUnusedPrivateField:145->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  ModifierCorrectionsQuickFixTest.testInvisibleFieldRequestedInSamePackage1:587->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  ModifierCorrectionsQuickFixTest.testInvisibleFieldRequestedInSamePackage2:692->AbstractQuickFixTest.assertCodeActions:91->AbstractQuickFixTest.evaluateCodeActions:231->AbstractQuickFixTest.evaluateCodeActions:249 » NullPointer
+			//			  ProjectsManagerTest.testCancelUpdateJob:129 NullPointer
+
+			// TODO: convert ChangeCorrectionProposal to codeAction
+			return null;
+		}
+	}
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 		ICompilationUnit unit = proposal.getCompilationUnit();
@@ -201,10 +228,10 @@ public class CodeActionHandler {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 
-	private static class CUCorrectionProposalComparator implements Comparator<CUCorrectionProposal> {
+	private static class CUCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
 
 		@Override
-		public int compare(CUCorrectionProposal p1, CUCorrectionProposal p2) {
+		public int compare(ChangeCorrectionProposal p1, ChangeCorrectionProposal p2) {
 			String k1 = p1.getKind();
 			String k2 = p2.getKind();
 			if (!StringUtils.isBlank(k1) && !StringUtils.isBlank(k2) && !k1.equals(k2)) {

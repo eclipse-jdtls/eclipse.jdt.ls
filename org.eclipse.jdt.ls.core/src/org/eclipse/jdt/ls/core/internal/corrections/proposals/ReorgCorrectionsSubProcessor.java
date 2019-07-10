@@ -48,7 +48,7 @@ import org.eclipse.text.edits.TextEdit;
 public class ReorgCorrectionsSubProcessor {
 
 	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 		boolean isLinked = cu.getResource().isLinked();
 
@@ -102,14 +102,14 @@ public class ReorgCorrectionsSubProcessor {
 
 				// rename CU
 				String label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renamecu_description, BasicElementLabels.getResourceName(newCUName));
-				proposals.add(new CUCorrectionProposal(label, CodeActionKind.QuickFix, cu, change, IProposalRelevance.RENAME_CU));
+				proposals.add(new ChangeCorrectionProposal(label, CodeActionKind.QuickFix, change, IProposalRelevance.RENAME_CU));
 			}
 		}
 
 	}
 
 	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) throws CoreException {
+			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		// correct package declaration
@@ -118,7 +118,7 @@ public class ReorgCorrectionsSubProcessor {
 	}
 
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) {
 		IProposableFix fix= UnusedCodeFix.createRemoveUnusedImportFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			try {

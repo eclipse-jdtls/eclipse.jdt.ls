@@ -13,23 +13,19 @@
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.IUndoManager;
-import org.eclipse.ltk.core.refactoring.NullChange;
 import org.eclipse.ltk.core.refactoring.RefactoringCore;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 
-public class ChangeCorrectionProposal {
-	private Change fChange;
-	private String fName;
+public class ChangeCorrectionProposal extends ChangeCorrectionProposalCore {
 	private String fKind;
-	private int fRelevance;
 
 	/**
 	 * Constructs a change correction proposal.
@@ -40,17 +36,8 @@ public class ChangeCorrectionProposal {
 	 * @param relevance the relevance of this proposal
 	 */
 	public ChangeCorrectionProposal(String name, String kind, Change change, int relevance) {
-		if (name == null) {
-			throw new IllegalArgumentException("Name must not be null"); //$NON-NLS-1$
-		}
-		fName= name;
+		super(name, change, relevance);
 		fKind = kind;
-		fChange= change;
-		fRelevance= relevance;
-	}
-
-	public void apply() throws CoreException {
-		performChange();
 	}
 
 	/**
@@ -61,6 +48,7 @@ public class ChangeCorrectionProposal {
 	 * @throws CoreException
 	 *             when the invocation of the change failed
 	 */
+	@Override
 	protected void performChange() throws CoreException {
 
 		Change change= null;
@@ -99,38 +87,6 @@ public class ChangeCorrectionProposal {
 		}
 	}
 
-	public String getAdditionalProposalInfo(IProgressMonitor monitor) throws CoreException {
-		StringBuffer buf= new StringBuffer();
-		buf.append("<p>"); //$NON-NLS-1$
-		try {
-			Change change= getChange();
-			if (change != null) {
-				String name= change.getName();
-				if (name.length() == 0) {
-					return null;
-				}
-				buf.append(name);
-			} else {
-				return null;
-			}
-		} catch (CoreException e) {
-			buf.append("Unexpected error when accessing this proposal:<p><pre>"); //$NON-NLS-1$
-			buf.append(e.getLocalizedMessage());
-			buf.append("</pre>"); //$NON-NLS-1$
-		}
-		buf.append("</p>"); //$NON-NLS-1$
-		return buf.toString();
-	}
-
-	/**
-	 * Returns the name of the proposal.
-	 *
-	 * @return the name of the proposal
-	 */
-	public String getName() {
-		return fName;
-	}
-
 	/**
 	 * Returns the kind of the proposal.
 	 *
@@ -139,63 +95,4 @@ public class ChangeCorrectionProposal {
 	public String getKind() {
 		return fKind;
 	}
-
-	/**
-	 * Returns the change that will be executed when the proposal is applied.
-	 * This method calls {@link #createChange()} to compute the change.
-	 *
-	 * @return the change for this proposal, can be <code>null</code> in rare cases if creation of
-	 *         the change failed
-	 * @throws CoreException when the change could not be created
-	 */
-	public final Change getChange() throws CoreException {
-		synchronized (this) {
-			if (fChange == null) {
-				fChange = createChange();
-			}
-		}
-		return fChange;
-	}
-
-	/**
-	 * Creates the change for this proposal.
-	 * This method is only called once and only when no change has been passed in
-	 * {@link #ChangeCorrectionProposal(String, Change, int, Image)}.
-	 *
-	 * Subclasses may override.
-	 *
-	 * @return the created change
-	 * @throws CoreException if the creation of the change failed
-	 */
-	protected Change createChange() throws CoreException {
-		return new NullChange();
-	}
-
-	/**
-	 * Sets the display name.
-	 *
-	 * @param name the name to set
-	 */
-	public void setDisplayName(String name) {
-		if (name == null) {
-			throw new IllegalArgumentException("Name must not be null"); //$NON-NLS-1$
-		}
-		fName= name;
-	}
-
-	public int getRelevance() {
-		return fRelevance;
-	}
-
-	/**
-	 * Sets the relevance.
-	 *
-	 * @param relevance the relevance to set
-	 *
-	 * @see #getRelevance()
-	 */
-	public void setRelevance(int relevance) {
-		fRelevance= relevance;
-	}
-
 }

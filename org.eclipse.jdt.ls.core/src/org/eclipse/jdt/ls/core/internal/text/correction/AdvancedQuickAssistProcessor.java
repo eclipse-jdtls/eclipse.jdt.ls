@@ -33,7 +33,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -888,7 +888,7 @@ public class AdvancedQuickAssistProcessor {
 	//		return parenthesizedExpression;
 	//	}
 	//
-	public static boolean getSplitAndConditionProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	public static boolean getSplitAndConditionProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		Operator andOperator = InfixExpression.Operator.CONDITIONAL_AND;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {
@@ -1081,7 +1081,7 @@ public class AdvancedQuickAssistProcessor {
 	//		return true;
 	//	}
 	//
-	public static boolean getSplitOrConditionProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	public static boolean getSplitOrConditionProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		Operator orOperator = InfixExpression.Operator.CONDITIONAL_OR;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {

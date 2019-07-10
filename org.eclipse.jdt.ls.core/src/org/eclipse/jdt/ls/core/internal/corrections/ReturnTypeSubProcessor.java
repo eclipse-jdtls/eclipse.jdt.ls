@@ -49,7 +49,7 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
@@ -115,7 +115,7 @@ public class ReturnTypeSubProcessor {
 
 	}
 
-	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -186,7 +186,7 @@ public class ReturnTypeSubProcessor {
 
 
 
-	public static void addMissingReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addMissingReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -260,7 +260,7 @@ public class ReturnTypeSubProcessor {
 		}
 	}
 
-	public static void addMissingReturnStatementProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addMissingReturnStatementProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -304,7 +304,7 @@ public class ReturnTypeSubProcessor {
 		}
 	}
 
-	public static void addMethodReturnsVoidProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) throws JavaModelException {
+	public static void addMethodReturnsVoidProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof ReturnStatement)) {

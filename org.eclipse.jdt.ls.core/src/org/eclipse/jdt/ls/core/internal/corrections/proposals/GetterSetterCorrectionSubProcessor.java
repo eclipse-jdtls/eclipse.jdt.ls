@@ -75,10 +75,10 @@ public class GetterSetterCorrectionSubProcessor {
 		}
 	}
 
-	public static class SelfEncapsulateFieldProposal extends CUCorrectionProposal { // public for tests
+	public static class SelfEncapsulateFieldProposal extends ChangeCorrectionProposal { // public for tests
 
 		public SelfEncapsulateFieldProposal(int relevance, IField field) {
-			super(getDescription(field), CodeActionKind.Refactor, field.getCompilationUnit(), getRefactoringChange(field), relevance);
+			super(getDescription(field), CodeActionKind.Refactor, getRefactoringChange(field), relevance);
 		}
 
 		public static Change getRefactoringChange(IField field) {
@@ -126,7 +126,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            the resulting proposals
 	 * @return <code>true</code> if the quick assist is applicable at this offset
 	 */
-	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
+	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) {
 		if (locations != null) {
 			for (int i = 0; i < locations.length; i++) {
 				int problemId = locations[i].getProblemId();
@@ -141,11 +141,11 @@ public class GetterSetterCorrectionSubProcessor {
 		return addGetterSetterProposal(context, coveringNode, resultingCollections, IProposalRelevance.GETTER_SETTER_QUICK_ASSIST);
 	}
 
-	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocationCore location, Collection<CUCorrectionProposal> proposals, int relevance) {
+	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocationCore location, Collection<ChangeCorrectionProposal> proposals, int relevance) {
 		addGetterSetterProposal(context, location.getCoveringNode(context.getASTRoot()), proposals, relevance);
 	}
 
-	private static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, Collection<CUCorrectionProposal> proposals, int relevance) {
+	private static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> proposals, int relevance) {
 		if (!(coveringNode instanceof SimpleName)) {
 			return false;
 		}
@@ -164,14 +164,14 @@ public class GetterSetterCorrectionSubProcessor {
 			return true;
 		}
 
-		CUCorrectionProposal proposal = getProposal(context.getCompilationUnit(), sn, variableBinding, relevance);
+		ChangeCorrectionProposal proposal = getProposal(context.getCompilationUnit(), sn, variableBinding, relevance);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
 		return true;
 	}
 
-	private static CUCorrectionProposal getProposal(ICompilationUnit cu, SimpleName sn, IVariableBinding variableBinding, int relevance) {
+	private static ChangeCorrectionProposal getProposal(ICompilationUnit cu, SimpleName sn, IVariableBinding variableBinding, int relevance) {
 		Expression accessNode = sn;
 		Expression qualifier = null;
 		boolean useSuper = false;
@@ -206,7 +206,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            relevance of this proposal
 	 * @return the proposal if available or null
 	 */
-	private static CUCorrectionProposal addGetterProposal(ProposalParameter context, int relevance) {
+	private static ChangeCorrectionProposal addGetterProposal(ProposalParameter context, int relevance) {
 		IMethodBinding method = findGetter(context);
 		if (method != null) {
 			Expression mi = createMethodInvocation(context, method, null);
@@ -280,7 +280,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            relevance of this proposal
 	 * @return the proposal if available or null
 	 */
-	private static CUCorrectionProposal addSetterProposal(ProposalParameter context, int relevance) {
+	private static ChangeCorrectionProposal addSetterProposal(ProposalParameter context, int relevance) {
 		boolean isBoolean = isBoolean(context);
 		String setterName = GetterSetterUtil.getSetterName(context.variableBinding, context.compilationUnit.getJavaProject(), null, isBoolean);
 		ITypeBinding declaringType = context.variableBinding.getDeclaringClass();

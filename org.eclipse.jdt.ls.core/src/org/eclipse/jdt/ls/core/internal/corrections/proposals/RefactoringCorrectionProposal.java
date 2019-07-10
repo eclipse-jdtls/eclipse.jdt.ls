@@ -62,7 +62,7 @@ public class RefactoringCorrectionProposal extends LinkedCorrectionProposal {
 	 * @since 3.6
 	 */
 	@Override
-	public String getAdditionalProposalInfo(IProgressMonitor monitor) throws CoreException {
+	public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
 		if (fRefactoringStatus != null && fRefactoringStatus.hasFatalError()) {
 			return fRefactoringStatus.getEntryWithHighestSeverity().getMessage();
 		}
