@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -24,6 +25,7 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SelectionRange;
@@ -32,13 +34,13 @@ import org.eclipse.lsp4j.SelectionRangeParams;
 public class SelectionRangeHandler {
 
 	public List<SelectionRange> selectionRange(SelectionRangeParams params, IProgressMonitor monitor) {
-		if (params.getPositions() == null || params.getPositions().size() <= 0) {
-			return null;
+		if (params.getPositions() == null || params.getPositions().isEmpty()) {
+			return Collections.emptyList();
 		}
 
 		ITypeRoot root = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
 		if (root == null) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		CompilationUnit ast = CoreASTProvider.getInstance().getAST(root, CoreASTProvider.WAIT_YES, monitor);
@@ -86,7 +88,7 @@ public class SelectionRangeHandler {
 					$.add(selectionRange);
 				}
 			} catch (JavaModelException e) {
-				e.printStackTrace();
+				JavaLanguageServerPlugin.logException("Failed to calculate selection range", e);
 			}
 		}
 
