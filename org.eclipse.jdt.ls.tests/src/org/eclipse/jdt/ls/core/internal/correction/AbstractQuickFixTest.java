@@ -299,7 +299,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return evaluateChanges(uri, edits);
 	}
 
-	private String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
+	protected String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
 		Iterator<Entry<String, List<TextEdit>>> editEntries = changes.entrySet().iterator();
 		Entry<String, List<TextEdit>> entry = editEntries.next();
 		assertNotNull("No edits generated", entry);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
@@ -56,7 +57,7 @@ public class CodeActionHandler {
 
 	private QuickFixProcessor quickFixProcessor = new QuickFixProcessor();
 
-	private QuickAssistProcessor quickAssistProcessor = new QuickAssistProcessor();
+	private QuickAssistProcessor quickAssistProcessor;
 
 	private SourceAssistProcessor sourceAssistProcessor;
 
@@ -65,6 +66,7 @@ public class CodeActionHandler {
 	public CodeActionHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
 		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
+		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
 	}
 
 	/**
@@ -92,7 +94,7 @@ public class CodeActionHandler {
 		}
 
 		try {
-			List<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(context, locations);
+			List<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(params, context, locations);
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
@@ -131,12 +133,19 @@ public class CodeActionHandler {
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 		ICompilationUnit unit = proposal.getCompilationUnit();
-		WorkspaceEdit edit = convertChangeToWorkspaceEdit(unit, proposal.getChange());
-		if (!ChangeUtil.hasChanges(edit)) {
-			return Optional.empty();
+		Command command;
+		if (proposal instanceof CUCorrectionCommandProposal) {
+			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
+			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
+		} else {
+			WorkspaceEdit edit = convertChangeToWorkspaceEdit(unit, proposal.getChange());
+			if (!ChangeUtil.hasChanges(edit)) {
+				return Optional.empty();
+			}
+
+			command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 		}
 
-		Command command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
@@ -149,7 +158,7 @@ public class CodeActionHandler {
 	}
 
 
-	private IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
+	public static IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
 		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
 			Diagnostic diagnostic = diagnostics.get(i);
@@ -162,7 +171,7 @@ public class CodeActionHandler {
 		return locations;
 	}
 
-	private int getProblemId(Diagnostic diagnostic) {
+	private static int getProblemId(Diagnostic diagnostic) {
 		int $ = 0;
 		try {
 			$ = Integer.parseInt(diagnostic.getCode());
@@ -172,7 +181,7 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) throws CoreException {
+	public static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) throws CoreException {
 		WorkspaceEdit $ = new WorkspaceEdit();
 
 		if (change instanceof TextChange) {
@@ -188,7 +197,7 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private static CompilationUnit getASTRoot(ICompilationUnit unit) {
+	public static CompilationUnit getASTRoot(ICompilationUnit unit) {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 

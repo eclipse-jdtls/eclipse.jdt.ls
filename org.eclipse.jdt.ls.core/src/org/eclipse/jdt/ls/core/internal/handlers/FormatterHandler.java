@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -138,7 +138,7 @@ public class FormatterHandler {
 		return null;
 	}
 
-	private static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
+	public static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
 		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
 
 		Map<String, String> customOptions = options.entrySet().stream().filter(map -> chekIfValueIsNotNull(map.getValue())).collect(toMap(e -> e.getKey(), e -> getOptionValue(e.getValue())));

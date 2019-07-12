@@ -81,7 +81,6 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
-import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -94,6 +93,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.ltk.core.refactoring.Change;
@@ -145,6 +145,8 @@ public class ExtractConstantRefactoring extends Refactoring {
 	private LinkedProposalModelCore fLinkedProposalModel;
 	private boolean fCheckResultForCompileProblems;
 
+	private Map fFormatterOptions;
+
 	/**
 	 * Creates a new extract constant refactoring
 	 *
@@ -156,6 +158,10 @@ public class ExtractConstantRefactoring extends Refactoring {
 	 *            length
 	 */
 	public ExtractConstantRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength) {
+		this(unit, selectionStart, selectionLength, null);
+	}
+
+	public ExtractConstantRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		fSelectionStart = selectionStart;
@@ -165,9 +171,14 @@ public class ExtractConstantRefactoring extends Refactoring {
 		fLinkedProposalModel = null;
 		fConstantName = ""; //$NON-NLS-1$
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractConstantRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength) {
+		this(astRoot, selectionStart, selectionLength, null);
+	}
+
+	public ExtractConstantRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		Assert.isTrue(astRoot.getTypeRoot() instanceof ICompilationUnit);
@@ -175,10 +186,11 @@ public class ExtractConstantRefactoring extends Refactoring {
 		fSelectionStart = selectionStart;
 		fSelectionLength = selectionLength;
 		fCu = (ICompilationUnit) astRoot.getTypeRoot();
-		fCuRewrite = new CompilationUnitRewrite(fCu, astRoot);
+		fCuRewrite = new CompilationUnitRewrite(null, fCu, astRoot, formatterOptions);
 		fLinkedProposalModel = null;
 		fConstantName = ""; //$NON-NLS-1$
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractConstantRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
@@ -287,7 +299,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 
 			if (fCuRewrite == null) {
 				CompilationUnit cuNode = RefactoringASTParser.parseWithASTProvider(fCu, true, new SubProgressMonitor(pm, 3));
-				fCuRewrite = new CompilationUnitRewrite(fCu, cuNode);
+				fCuRewrite = new CompilationUnitRewrite(null, fCu, cuNode, fFormatterOptions);
 			} else {
 				pm.worked(3);
 			}

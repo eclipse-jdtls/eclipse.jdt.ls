@@ -33,9 +33,14 @@ public class CodeActionUtil {
 	}
 
 	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, String search) throws JavaModelException {
+		final Range range = getRange(unit, search);
+		return constructCodeActionParams(unit, range);
+
+	}
+
+	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, Range range) {
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		final Range range = getRange(unit, search);
 		params.setRange(range);
 		params.setContext(new CodeActionContext(Collections.emptyList()));
 		return params;

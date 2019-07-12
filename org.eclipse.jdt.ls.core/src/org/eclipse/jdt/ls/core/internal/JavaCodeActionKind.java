@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat Inc. and others.
+ * Copyright (c) 2018-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -71,4 +71,8 @@ public interface JavaCodeActionKind {
 	 */
 	public static final String REFACTOR_EXTRACT_VARIABLE = CodeActionKind.RefactorExtract + ".variable";
 
+	/**
+	 * Extract to field kind
+	 */
+	public static final String REFACTOR_EXTRACT_FIELD = CodeActionKind.RefactorExtract + ".field";
 }

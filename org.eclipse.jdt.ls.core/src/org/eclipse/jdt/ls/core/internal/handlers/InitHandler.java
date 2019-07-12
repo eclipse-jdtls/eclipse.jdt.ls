@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -67,10 +68,13 @@ final public class InitHandler {
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 
-	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection) {
+	private WorkspaceExecuteCommandHandler commandHandler;
+
+	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection, WorkspaceExecuteCommandHandler commandHandler) {
 		this.projectsManager = manager;
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
+		this.commandHandler = commandHandler;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -173,8 +177,16 @@ final public class InitHandler {
 			capabilities.setCodeActionProvider(Boolean.TRUE);
 		}
 		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
-			Set<String> commands = WorkspaceExecuteCommandHandler.getCommands();
-			capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
+			Set<String> commands = commandHandler.getAllCommands();
+			if (!commands.isEmpty()) {
+				capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(commands)));
+			}
+		} else {
+			// Send static command at the startup - they remain registered all the time
+			Set<String> staticCommands = commandHandler.getStaticCommands();
+			if (!staticCommands.isEmpty()) {
+				capabilities.setExecuteCommandProvider(new ExecuteCommandOptions(new ArrayList<>(staticCommands)));
+			}
 		}
 		if (!preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
@@ -202,6 +214,9 @@ final public class InitHandler {
 		}
 		if (!preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			capabilities.setImplementationProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
+			capabilities.setSelectionRangeProvider(Boolean.TRUE);
 		}
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);
@@ -248,6 +263,7 @@ final public class InitHandler {
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
+					return Status.CANCEL_STATUS;
 				} catch (Exception e) {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());
@@ -258,9 +274,15 @@ final public class InitHandler {
 			/* (non-Javadoc)
 			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
 			 */
+			@SuppressWarnings("unchecked")
 			@Override
 			public boolean belongsTo(Object family) {
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family);
+				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
+				boolean equalToRootPaths = false;
+				if (family instanceof Collection<?>) {
+					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				}
+				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
 			}
 
 		};

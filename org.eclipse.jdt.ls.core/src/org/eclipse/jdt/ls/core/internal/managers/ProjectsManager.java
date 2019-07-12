@@ -81,6 +81,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
+import org.eclipse.jdt.ls.core.internal.handlers.InitHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
@@ -138,7 +139,7 @@ public class ProjectsManager implements ISaveParticipant {
 		subMonitor.done();
 	}
 
-	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException {
+	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
@@ -151,11 +152,23 @@ public class ProjectsManager implements ISaveParticipant {
 
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
+		Job[] removedJobs = Job.getJobManager().find(removedRootPaths);
+		for (Job removedJob : removedJobs) {
+			if (removedJob.belongsTo(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY) || removedJob.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS)) {
+				removedJob.cancel();
+			}
+		}
 		WorkspaceJob job = new WorkspaceJob("Updating workspace folders") {
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public boolean belongsTo(Object family) {
-				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family);
+				Collection<IPath> addedRootPathsSet = addedRootPaths.stream().collect(Collectors.toSet());
+				boolean equalToRootPaths = false;
+				if (family instanceof Collection<?>) {
+					equalToRootPaths = addedRootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				}
+				return IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family) || equalToRootPaths;
 			}
 
 			@Override

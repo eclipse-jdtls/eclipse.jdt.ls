@@ -81,6 +81,13 @@
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="static" type="boolean">
+            <annotation>
+               <documentation>
+                  Static commands are registered at the JDT LS initialization and are independent of the LS configuration settings
+               </documentation>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 

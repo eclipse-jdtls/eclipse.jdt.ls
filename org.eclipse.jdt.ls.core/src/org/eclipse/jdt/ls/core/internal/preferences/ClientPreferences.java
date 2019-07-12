@@ -149,6 +149,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getImplementation());
 	}
 
+	public boolean isSelectionRangeDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getSelectionRange());
+	}
+
 	public boolean isWillSaveRegistered() {
 		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSave());
 	}
@@ -195,6 +199,10 @@ public class ClientPreferences {
 
 	public boolean isGenerateDelegateMethodsPromptSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("generateDelegateMethodsPromptSupport", "false").toString());
+	}
+
+	public boolean isAdvancedExtractRefactoringSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedExtractRefactoringSupport", "false").toString());
 	}
 
 	public boolean isSupportsCompletionDocumentationMarkdown() {

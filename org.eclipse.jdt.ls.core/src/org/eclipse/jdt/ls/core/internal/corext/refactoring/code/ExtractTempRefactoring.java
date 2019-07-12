@@ -109,7 +109,6 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
-import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
@@ -124,6 +123,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
@@ -376,6 +376,8 @@ public class ExtractTempRefactoring extends Refactoring {
 
 	private LinkedProposalModelCore fLinkedProposalModel;
 
+	private Map fFormatterOptions;
+
 	private static final String KEY_NAME = "name"; //$NON-NLS-1$
 	private static final String KEY_TYPE = "type"; //$NON-NLS-1$
 
@@ -390,6 +392,10 @@ public class ExtractTempRefactoring extends Refactoring {
 	 *            length of selection
 	 */
 	public ExtractTempRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength) {
+		this(unit, selectionStart, selectionLength, null);
+	}
+
+	public ExtractTempRefactoring(ICompilationUnit unit, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		fSelectionStart = selectionStart;
@@ -403,9 +409,14 @@ public class ExtractTempRefactoring extends Refactoring {
 
 		fLinkedProposalModel = null;
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractTempRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength) {
+		this(astRoot, selectionStart, selectionLength, null);
+	}
+
+	public ExtractTempRefactoring(CompilationUnit astRoot, int selectionStart, int selectionLength, Map formatterOptions) {
 		Assert.isTrue(selectionStart >= 0);
 		Assert.isTrue(selectionLength >= 0);
 		Assert.isTrue(astRoot.getTypeRoot() instanceof ICompilationUnit);
@@ -421,6 +432,7 @@ public class ExtractTempRefactoring extends Refactoring {
 
 		fLinkedProposalModel = null;
 		fCheckResultForCompileProblems = true;
+		fFormatterOptions = formatterOptions;
 	}
 
 	public ExtractTempRefactoring(JavaRefactoringArguments arguments, RefactoringStatus status) {
@@ -517,6 +529,7 @@ public class ExtractTempRefactoring extends Refactoring {
 			pm.beginTask(RefactoringCoreMessages.ExtractTempRefactoring_checking_preconditions, 4);
 
 			fCURewrite = new CompilationUnitRewrite(fCu, fCompilationUnitNode);
+			fCURewrite.setFormatterOptions(fFormatterOptions);
 			fCURewrite.getASTRewrite().setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
 
 			doCreateChange(new SubProgressMonitor(pm, 2));
