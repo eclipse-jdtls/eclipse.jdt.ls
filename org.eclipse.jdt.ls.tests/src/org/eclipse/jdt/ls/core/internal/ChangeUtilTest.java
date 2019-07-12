@@ -87,7 +87,7 @@ public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 		String newName = "ENew.java";
 		RenameCompilationUnitChange change = new RenameCompilationUnitChange(cu, newName);
 		String oldUri = JDTUtils.toURI(cu);
-		String newUri = ResourceUtils.fixURI(URI.create(oldUri).resolve("..").resolve(newName));
+		String newUri = ResourceUtils.fixURI(URI.create(oldUri).resolve(newName));
 
 		WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
 
