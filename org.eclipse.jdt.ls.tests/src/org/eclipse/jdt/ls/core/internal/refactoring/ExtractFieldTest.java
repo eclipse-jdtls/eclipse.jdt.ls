@@ -34,7 +34,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefa
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
-import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility.InitializeScope;
+import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility.InitializeScope;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;

@@ -25,8 +25,8 @@ import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
-import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
-import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility.InitializeScope;
+import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
+import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility.InitializeScope;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
@@ -63,7 +63,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
-		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
@@ -100,7 +100,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
-		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
@@ -137,7 +137,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
-		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_FIELD_COMMAND, Arrays.asList(InitializeScope.CURRENT_METHOD.getName()), params);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, Arrays.asList(InitializeScope.CURRENT_METHOD.getName()), params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
@@ -175,7 +175,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
-		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_CONSTANT_COMMAND, params);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
@@ -222,7 +222,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
-		GetRefactorEditParams editParams = new GetRefactorEditParams(ExtractProposalUtility.EXTRACT_METHOD_COMMAND, params);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);

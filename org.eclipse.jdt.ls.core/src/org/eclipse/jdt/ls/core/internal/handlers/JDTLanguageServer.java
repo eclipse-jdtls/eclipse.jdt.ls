@@ -60,6 +60,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefac
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
@@ -873,6 +875,18 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params) {
 		logInfo(">> java/getRefactorEdit");
 		return computeAsync((monitor) -> GetRefactorEditHandler.getEditsForRefactor(params));
+	}
+
+	@Override
+	public CompletableFuture<PackageDestinationsResponse> getPackageDestinations(String[] documentUris) {
+		logInfo(">> java/getPackageDestinations");
+		return computeAsync((monitor) -> MoveHandler.getPackageDestinations(documentUris));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> moveFile(MoveFileParams params) {
+		logInfo(">> java/moveFile");
+		return computeAsync((monitor) -> MoveHandler.moveFile(params));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

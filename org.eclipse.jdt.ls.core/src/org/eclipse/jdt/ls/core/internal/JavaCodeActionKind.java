@@ -75,4 +75,9 @@ public interface JavaCodeActionKind {
 	 * Extract to field kind
 	 */
 	public static final String REFACTOR_EXTRACT_FIELD = CodeActionKind.RefactorExtract + ".field";
+
+	/**
+	 * Move kind
+	 */
+	public static final String REFACTOR_MOVE = CodeActionKind.Refactor + ".move";
 }

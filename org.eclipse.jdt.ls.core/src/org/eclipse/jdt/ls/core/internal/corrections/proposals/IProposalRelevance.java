@@ -94,6 +94,7 @@ public interface IProposalRelevance {
 	public static final int RETURN_ALLOCATED_OBJECT_MATCH= 7;
 	public static final int CREATE_LOCAL= 7;
 
+	public static final int MOVE_REFACTORING = 6;
 	public static final int REMOVE_SEMICOLON= 6;
 	public static final int CREATE_METHOD_IN_SUPER= 6;
 	public static final int QUALIFY_LHS= 6;
