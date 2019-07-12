@@ -67,6 +67,14 @@ public class ChangeUtil {
 	private static final String TEMP_FILE_NAME = ".temp";
 	private static final Range ZERO_RANGE = new Range(new Position(), new Position());
 
+	/**
+	 * Converts Change to WorkspaceEdit for further consumption.
+	 *
+	 * @param change
+	 *            {@link Change} to convert
+	 * @return {@link WorkspaceEdit} converted from the change
+	 * @throws CoreException
+	 */
 	public static WorkspaceEdit convertToWorkspaceEdit(Change change) throws CoreException {
 		WorkspaceEdit edit = new WorkspaceEdit();
 		if (change instanceof CompositeChange) {
