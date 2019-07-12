@@ -45,7 +45,6 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.ltk.core.refactoring.Change;
 
 public class CodeActionHandler {
 
@@ -134,7 +133,7 @@ public class CodeActionHandler {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			WorkspaceEdit edit = convertChangeToWorkspaceEdit(unit, proposal.getChange());
+			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
@@ -174,23 +173,6 @@ public class CodeActionHandler {
 			// return 0
 		}
 		return $;
-	}
-
-	public static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) throws CoreException {
-		//		WorkspaceEdit $ = new WorkspaceEdit();
-		//
-		//		if (change instanceof TextChange) {
-		//			TextEditConverter converter = new TextEditConverter(unit, ((TextChange) change).getEdit());
-		//			String uri = JDTUtils.toURI(unit);
-		//			$.getChanges().put(uri, converter.convert());
-		//		} else if (change instanceof ResourceChange) {
-		//			ChangeUtil.convertResourceChange((ResourceChange) change, $);
-		//		} else if (change instanceof CompositeChange) {
-		//			ChangeUtil.convertCompositeChange(change, $);
-		//		}
-		//
-		//		return $;
-		return ChangeUtil.convertToWorkspaceEdit(change);
 	}
 
 	public static CompilationUnit getASTRoot(ICompilationUnit unit) {

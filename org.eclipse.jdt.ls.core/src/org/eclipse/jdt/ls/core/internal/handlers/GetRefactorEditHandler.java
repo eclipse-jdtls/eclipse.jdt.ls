@@ -22,6 +22,7 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -72,7 +73,7 @@ public class GetRefactorEditHandler {
 			}
 
 			Change change = proposal.getChange();
-			WorkspaceEdit edit = CodeActionHandler.convertChangeToWorkspaceEdit(unit, change);
+			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
 			LinkedProposalModelCore linkedProposalModel = proposal.getLinkedProposalModel();
 			Command additionalCommand = null;
 			if (linkedProposalModel != null) {
