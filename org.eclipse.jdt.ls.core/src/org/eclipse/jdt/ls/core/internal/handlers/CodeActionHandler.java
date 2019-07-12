@@ -29,7 +29,6 @@ import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
@@ -47,9 +46,6 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.Change;
-import org.eclipse.ltk.core.refactoring.CompositeChange;
-import org.eclipse.ltk.core.refactoring.TextChange;
-import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
 
 public class CodeActionHandler {
 
@@ -157,7 +153,6 @@ public class CodeActionHandler {
 		}
 	}
 
-
 	public static IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
 		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
@@ -182,19 +177,20 @@ public class CodeActionHandler {
 	}
 
 	public static WorkspaceEdit convertChangeToWorkspaceEdit(ICompilationUnit unit, Change change) throws CoreException {
-		WorkspaceEdit $ = new WorkspaceEdit();
-
-		if (change instanceof TextChange) {
-			TextEditConverter converter = new TextEditConverter(unit, ((TextChange) change).getEdit());
-			String uri = JDTUtils.toURI(unit);
-			$.getChanges().put(uri, converter.convert());
-		} else if (change instanceof ResourceChange) {
-			ChangeUtil.convertResourceChange((ResourceChange) change, $);
-		} else if (change instanceof CompositeChange) {
-			ChangeUtil.convertCompositeChange(change, $);
-		}
-
-		return $;
+		//		WorkspaceEdit $ = new WorkspaceEdit();
+		//
+		//		if (change instanceof TextChange) {
+		//			TextEditConverter converter = new TextEditConverter(unit, ((TextChange) change).getEdit());
+		//			String uri = JDTUtils.toURI(unit);
+		//			$.getChanges().put(uri, converter.convert());
+		//		} else if (change instanceof ResourceChange) {
+		//			ChangeUtil.convertResourceChange((ResourceChange) change, $);
+		//		} else if (change instanceof CompositeChange) {
+		//			ChangeUtil.convertCompositeChange(change, $);
+		//		}
+		//
+		//		return $;
+		return ChangeUtil.convertToWorkspaceEdit(change);
 	}
 
 	public static CompilationUnit getASTRoot(ICompilationUnit unit) {

@@ -92,7 +92,7 @@ public class RenameHandler {
 			}
 
 			Change change = create.getChange();
-			ChangeUtil.convertCompositeChange(change, edit);
+			return ChangeUtil.convertToWorkspaceEdit(change);
 		} catch (CoreException ex) {
 			JavaLanguageServerPlugin.logException("Problem with rename for " + params.getTextDocument().getUri(), ex);
 		}

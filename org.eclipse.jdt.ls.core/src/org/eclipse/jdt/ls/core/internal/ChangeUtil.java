@@ -35,7 +35,6 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
@@ -68,34 +67,38 @@ public class ChangeUtil {
 	private static final String TEMP_FILE_NAME = ".temp";
 	private static final Range ZERO_RANGE = new Range(new Position(), new Position());
 
-	/**
-	 * Converts changes to resource operations if resource operations are supported
-	 * by the client otherwise converts to TextEdit changes.
-	 *
-	 * @param change
-	 *            changes after Refactoring operation
-	 * @param edit
-	 *            instance of workspace edit changes
-	 * @throws CoreException
-	 */
-	public static void convertCompositeChange(Change change, WorkspaceEdit edit) throws CoreException {
-		if (!(change instanceof CompositeChange)) {
+	public static WorkspaceEdit convertToWorkspaceEdit(Change change) throws CoreException {
+		WorkspaceEdit edit = new WorkspaceEdit();
+		if (change instanceof CompositeChange) {
+			convertCompositeChange((CompositeChange) change, edit);
+		} else {
+			convertSingleChange(change, edit);
+		}
+		return edit;
+	}
+
+	private static void convertSingleChange(Change change, WorkspaceEdit edit) throws CoreException {
+		if (change instanceof CompositeChange) {
 			return;
 		}
 
-		Change[] changes = ((CompositeChange) change).getChildren();
-		for (Change ch : changes) {
-			if (ch instanceof DynamicValidationRefactoringChange) {
-				CompositeChange compositeChange = (CompositeChange) ch;
-				for (Change child : compositeChange.getChildren()) {
-					doConvertCompositeChange(child, edit);
-				}
-			} else {
-				doConvertCompositeChange(ch, edit);
-			}
+		if (change instanceof TextChange) {
+			convertTextChange((TextChange) change, edit);
+		} else if (change instanceof ResourceChange) {
+			convertResourceChange((ResourceChange) change, edit);
 		}
 	}
 
+	private static void convertCompositeChange(CompositeChange change, WorkspaceEdit edit) throws CoreException {
+		Change[] changes = change.getChildren();
+		for (Change ch : changes) {
+			if (ch instanceof CompositeChange) {
+				convertCompositeChange((CompositeChange) ch, edit);
+			} else {
+				convertSingleChange(ch, edit);
+			}
+		}
+	}
 
 	/**
 	 * Converts changes to resource operations if resource operations are supported
@@ -107,7 +110,7 @@ public class ChangeUtil {
 	 *            instance of workspace edit changes
 	 * @throws CoreException
 	 */
-	public static void convertResourceChange(ResourceChange resourceChange, WorkspaceEdit edit) throws CoreException {
+	private static void convertResourceChange(ResourceChange resourceChange, WorkspaceEdit edit) throws CoreException {
 		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 			return;
 		}
@@ -123,20 +126,6 @@ public class ChangeUtil {
 			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
 		} else if (resourceChange instanceof RenamePackageChange) {
 			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
-		}
-	}
-
-	private static void doConvertCompositeChange(Change change, WorkspaceEdit edit) throws CoreException {
-		Object modifiedElement = change.getModifiedElement();
-		if (!(modifiedElement instanceof IJavaElement)) {
-			return;
-		}
-
-		if (change instanceof TextChange) {
-			convertTextChange(edit, (IJavaElement) modifiedElement, (TextChange) change);
-		} else if (change instanceof ResourceChange) {
-			ResourceChange resourceChange = (ResourceChange) change;
-			convertResourceChange(resourceChange, edit);
 		}
 	}
 
@@ -204,13 +193,18 @@ public class ChangeUtil {
 		edit.getDocumentChanges().add(Either.forRight(rf));
 	}
 
-	private static void convertTextChange(WorkspaceEdit root, IJavaElement element, TextChange textChange) {
+	private static void convertTextChange(TextChange textChange, WorkspaceEdit rootEdit) {
+		Object modifiedElement = textChange.getModifiedElement();
+		if (!(modifiedElement instanceof IJavaElement)) {
+			return;
+		}
+
 		TextEdit textEdits = textChange.getEdit();
 		if (textEdits == null) {
 			return;
 		}
-		ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
-		convertTextEdit(root, compilationUnit, textEdits);
+		ICompilationUnit compilationUnit = (ICompilationUnit) ((IJavaElement) modifiedElement).getAncestor(IJavaElement.COMPILATION_UNIT);
+		convertTextEdit(rootEdit, compilationUnit, textEdits);
 	}
 
 	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit) {
