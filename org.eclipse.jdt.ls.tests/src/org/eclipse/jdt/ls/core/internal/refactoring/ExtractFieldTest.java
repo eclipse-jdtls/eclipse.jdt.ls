@@ -28,12 +28,12 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility.InitializeScope;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -568,7 +568,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 		assertTrue("precondition was supposed to pass but was " + checkInputResult.toString(), checkInputResult.isOK());
 
 		Change change = refactoring.createChange(new NullProgressMonitor());
-		WorkspaceEdit edit = CodeActionHandler.convertChangeToWorkspaceEdit(cu, change);
+		WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
 		assertNotNull(change);
 		String actual = evaluateChanges(edit.getChanges());
 		assertEquals(expected, actual);
