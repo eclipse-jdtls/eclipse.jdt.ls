@@ -52,7 +52,7 @@ public class FixCorrectionProposal extends LinkedCorrectionProposal {
 	}
 
 	@Override
-	public String getAdditionalProposalInfo(IProgressMonitor monitor) throws CoreException {
+	public String getAdditionalProposalInfo(IProgressMonitor monitor) {
 		StringBuffer result = new StringBuffer();
 
 		IStatus status = getFixStatus();

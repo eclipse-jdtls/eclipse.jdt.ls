@@ -93,7 +93,7 @@ import org.eclipse.lsp4j.CodeActionKind;
 
 public class LocalCorrectionsSubProcessor {
 
-	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu = context.getCompilationUnit();
 
 		CompilationUnit astRoot = context.getASTRoot();
@@ -371,7 +371,7 @@ public class LocalCorrectionsSubProcessor {
 		return false;
 	}
 
-	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode == null) {
 			return;
@@ -380,7 +380,7 @@ public class LocalCorrectionsSubProcessor {
 		QuickAssistProcessor.getCatchClauseToThrowsProposals(context, selectedNode, proposals);
 	}
 
-	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		IProposableFix fix = UnimplementedCodeFix.createAddUnimplementedMethodsFix(context.getASTRoot(), problem);
 
 		if (fix != null) {
@@ -394,7 +394,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		int problemId = problem.getProblemId();
 
 		UnusedCodeFix fix = UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, false);
@@ -430,7 +430,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		CompilationUnit root = context.getASTRoot();
 		ASTNode selectedNode = problem.getCoveringNode(root);
 		if (selectedNode == null) {
@@ -537,7 +537,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	private static void addRemoveProposal(IInvocationContext context, ASTNode selectedNode, Collection<CUCorrectionProposal> proposals) {
+	private static void addRemoveProposal(IInvocationContext context, ASTNode selectedNode, Collection<ChangeCorrectionProposal> proposals) {
 		ASTRewrite rewrite = ASTRewrite.create(selectedNode.getAST());
 		rewrite.remove(selectedNode, null);
 
@@ -545,7 +545,7 @@ public class LocalCorrectionsSubProcessor {
 		addRemoveProposal(context, rewrite, label, proposals);
 	}
 
-	private static void addRemoveIncludingConditionProposal(IInvocationContext context, ASTNode toRemove, ASTNode replacement, Collection<CUCorrectionProposal> proposals) {
+	private static void addRemoveIncludingConditionProposal(IInvocationContext context, ASTNode toRemove, ASTNode replacement, Collection<ChangeCorrectionProposal> proposals) {
 		String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_including_condition_description;
 		AST ast = toRemove.getAST();
 		ASTRewrite rewrite = ASTRewrite.create(ast);
@@ -596,12 +596,12 @@ public class LocalCorrectionsSubProcessor {
 		proposals.add(proposal);
 	}
 
-	private static void addRemoveProposal(IInvocationContext context, ASTRewrite rewrite, String label, Collection<CUCorrectionProposal> proposals) {
+	private static void addRemoveProposal(IInvocationContext context, ASTRewrite rewrite, String label, Collection<ChangeCorrectionProposal> proposals) {
 		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, 10);
 		proposals.add(proposal);
 	}
 
-	public static void addConstructorFromSuperclassProposal(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	public static void addConstructorFromSuperclassProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode == null) {
 			return;

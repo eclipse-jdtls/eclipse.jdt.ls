@@ -327,7 +327,7 @@ public class JavadocTagsSubProcessor {
 
 	}
 
-	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (node == null) {
 			return;
@@ -372,7 +372,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getUnusedAndUndocumentedParameterOrExceptionProposals(IInvocationContext context,
-			IProblemLocationCore problem, Collection<CUCorrectionProposal> proposals) {
+			IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 		IJavaProject project= cu.getJavaProject();
 
@@ -413,7 +413,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getMissingJavadocCommentProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) throws CoreException {
+			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (node == null) {
 			return;
@@ -657,7 +657,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		while (node != null && !(node instanceof TagElement)) {
 			node= node.getParent();
@@ -674,7 +674,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getInvalidQualificationProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<CUCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (!(node instanceof Name)) {
 			return;

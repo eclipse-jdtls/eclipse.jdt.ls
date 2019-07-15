@@ -111,6 +111,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
@@ -916,7 +917,7 @@ public class QuickAssistProcessor {
 		return blockBody;
 	}
 
-	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}

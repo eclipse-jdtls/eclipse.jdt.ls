@@ -33,6 +33,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
@@ -80,9 +81,9 @@ public class CodeActionHandler {
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
-		List<CUCorrectionProposal> candidates = new ArrayList<>();
+		List<ChangeCorrectionProposal> candidates = new ArrayList<>();
 		try {
-			List<CUCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
+			List<ChangeCorrectionProposal> corrections = this.quickFixProcessor.getCorrections(context, locations);
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick fix code actions", e);
@@ -98,9 +99,9 @@ public class CodeActionHandler {
 		candidates.sort(new CUCorrectionProposalComparator());
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
-			List<CUCorrectionProposal> resultList = new ArrayList<>();
+			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
 			List<String> acceptedActionKinds = params.getContext().getOnly();
-			for (CUCorrectionProposal proposal : candidates) {
+			for (ChangeCorrectionProposal proposal : candidates) {
 				if (acceptedActionKinds.contains(proposal.getKind())) {
 					resultList.add(proposal);
 				}
@@ -109,7 +110,7 @@ public class CodeActionHandler {
 		}
 
 		try {
-			for (CUCorrectionProposal proposal : candidates) {
+			for (ChangeCorrectionProposal proposal : candidates) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
 				if (codeActionFromProposal.isPresent() && !$.contains(codeActionFromProposal.get())) {
 					$.add(codeActionFromProposal.get());
@@ -125,9 +126,14 @@ public class CodeActionHandler {
 		return $;
 	}
 
-	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CUCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
-		ICompilationUnit unit = proposal.getCompilationUnit();
+
+		ICompilationUnit unit = null;
+		if (proposal instanceof CUCorrectionProposal) {
+			unit = ((CUCorrectionProposal) proposal).getCompilationUnit();
+		}
+
 		Command command;
 		if (proposal instanceof CUCorrectionCommandProposal) {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
@@ -137,11 +143,11 @@ public class CodeActionHandler {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-
 			command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			codeAction.setCommand(command);
@@ -179,10 +185,10 @@ public class CodeActionHandler {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 
-	private static class CUCorrectionProposalComparator implements Comparator<CUCorrectionProposal> {
+	private static class CUCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
 
 		@Override
-		public int compare(CUCorrectionProposal p1, CUCorrectionProposal p2) {
+		public int compare(ChangeCorrectionProposal p1, ChangeCorrectionProposal p2) {
 			String k1 = p1.getKind();
 			String k2 = p2.getKind();
 			if (!StringUtils.isBlank(k1) && !StringUtils.isBlank(k2) && !k1.equals(k2)) {
