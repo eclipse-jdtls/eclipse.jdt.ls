@@ -169,6 +169,27 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_nojavadoc() throws Exception {
+		IJavaProject javaProject = JavaCore.create(project);
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
+		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Foo5.java"));
+		unit.becomeWorkingCopy(null);
+		try {
+			int[] loc = findCompletionLocation(unit, "nam");
+			CompletionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionList list = server.completion(position).join().getRight();
+			CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
+			assertNull(resolved.getDocumentation());
+		} catch (Exception e) {
+			fail("Unexpected exception " + e);
+		} finally {
+			unit.discardWorkingCopy();
+		}
+	}
+
 	private void changeDocument(ICompilationUnit unit, String content, int version) throws JavaModelException {
 		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
 		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
