@@ -172,13 +172,15 @@ public class CompletionResolveHandler {
 							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + DEFAULT + defaultValue;
 						}
 					}
-					if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-						MarkupContent markupContent = new MarkupContent();
-						markupContent.setKind(MarkupKind.MARKDOWN);
-						markupContent.setValue(javadoc);
-						param.setDocumentation(markupContent);
-					} else {
-						param.setDocumentation(javadoc);
+					if (javadoc != null) {
+						if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+							MarkupContent markupContent = new MarkupContent();
+							markupContent.setKind(MarkupKind.MARKDOWN);
+							markupContent.setValue(javadoc);
+							param.setDocumentation(markupContent);
+						} else {
+							param.setDocumentation(javadoc);
+						}
 					}
 				}
 			} catch (JavaModelException e) {
