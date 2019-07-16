@@ -26,13 +26,20 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -49,6 +56,8 @@ public class ExtractProposalUtility {
 	public static final String EXTRACT_VARIABLE_COMMAND = "extractVariable";
 	public static final String EXTRACT_CONSTANT_COMMAND = "extractConstant";
 	public static final String EXTRACT_METHOD_COMMAND = "extractMethod";
+	public static final String EXTRACT_FIELD_COMMAND = "extractField";
+	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
 
 	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, false);
@@ -184,6 +193,75 @@ public class ExtractProposalUtility {
 		return null;
 	}
 
+	/**
+	 * Merge the "Extract to Field" and "Convert Local Variable to Field" to a
+	 * generic "Extract to Field".
+	 */
+	public static CUCorrectionProposal getGenericExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+			throws CoreException {
+		CUCorrectionProposal proposal = getConvertVariableToFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
+		if (proposal != null) {
+			return proposal;
+		}
+
+		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
+	}
+
+	public static CUCorrectionProposal getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand) throws CoreException {
+		if (!supportsExtractVariable(context)) {
+			return null;
+		}
+
+		final ICompilationUnit cu = context.getCompilationUnit();
+		ExtractFieldRefactoring extractFieldRefactoringSelectedOnly = new ExtractFieldRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+		extractFieldRefactoringSelectedOnly.setFormatterOptions(formatterOptions);
+		if (extractFieldRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			InitializeScope scope = InitializeScope.fromName(initializeIn);
+			if (scope != null) {
+				extractFieldRefactoringSelectedOnly.setInitializeIn(scope.ordinal());
+			}
+			String label = CorrectionMessages.QuickAssistProcessor_extract_to_field_description;
+			int relevance;
+			if (context.getSelectionLength() == 0) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+			} else if (problemsAtLocation) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+			} else {
+				relevance = IProposalRelevance.EXTRACT_LOCAL;
+			}
+
+			if (returnAsCommand) {
+				List<String> scopes = new ArrayList<>();
+				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInMethod()) {
+					scopes.add(InitializeScope.CURRENT_METHOD.getName());
+				}
+
+				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInFieldDeclaration()) {
+					scopes.add(InitializeScope.FIELD_DECLARATION.getName());
+				}
+
+				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInConstructors()) {
+					scopes.add(InitializeScope.CLASS_CONSTRUCTORS.getName());
+				}
+				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
+			}
+
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+			extractFieldRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, extractFieldRefactoringSelectedOnly, relevance) {
+				@Override
+				protected void init(Refactoring refactoring) throws CoreException {
+					ExtractFieldRefactoring etr = (ExtractFieldRefactoring) refactoring;
+					etr.setFieldName(etr.guessFieldName()); // expensive
+				}
+			};
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			return proposal;
+		}
+
+		return null;
+	}
+
 	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
@@ -210,6 +288,81 @@ public class ExtractProposalUtility {
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;
 					etr.setConstantName(etr.guessConstantName()); // expensive
+				}
+			};
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			return proposal;
+		}
+
+		return null;
+	}
+
+	public static CUCorrectionProposal getConvertVariableToFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+			throws CoreException {
+		ASTNode node = context.getCoveredNode();
+		if (!(node instanceof SimpleName)) {
+			if (context.getSelectionLength() != 0) {
+				return null;
+			}
+
+			node = context.getCoveringNode();
+			if (!(node instanceof SimpleName)) {
+				return null;
+			}
+		}
+
+		SimpleName name = (SimpleName) node;
+		IBinding binding = name.resolveBinding();
+		if (!(binding instanceof IVariableBinding)) {
+			return null;
+		}
+		IVariableBinding varBinding = (IVariableBinding) binding;
+		if (varBinding.isField() || varBinding.isParameter()) {
+			return null;
+		}
+		ASTNode decl = context.getASTRoot().findDeclaringNode(varBinding);
+		if (decl == null || decl.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY) {
+			return null;
+		}
+
+		PromoteTempToFieldRefactoring refactoring = new PromoteTempToFieldRefactoring((VariableDeclaration) decl);
+		refactoring.setFormatterOptions(formatterOptions);
+		if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			InitializeScope scope = InitializeScope.fromName(initializeIn);
+			if (scope != null) {
+				refactoring.setInitializeIn(scope.ordinal());
+			}
+
+			String label = CorrectionMessages.QuickAssistProcessor_extract_to_field_description;
+
+			if (returnAsCommand) {
+				List<String> scopes = new ArrayList<>();
+				if (refactoring.canEnableSettingDeclareInMethod()) {
+					scopes.add(InitializeScope.CURRENT_METHOD.getName());
+				}
+
+				if (refactoring.canEnableSettingDeclareInFieldDeclaration()) {
+					scopes.add(InitializeScope.FIELD_DECLARATION.getName());
+				}
+
+				if (refactoring.canEnableSettingDeclareInConstructors()) {
+					scopes.add(InitializeScope.CLASS_CONSTRUCTORS.getName());
+				}
+				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, context.getCompilationUnit(), IProposalRelevance.CONVERT_LOCAL_TO_FIELD, APPLY_REFACTORING_COMMAND_ID,
+						Arrays.asList(CONVERT_VARIABLE_TO_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
+			}
+
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+			refactoring.setLinkedProposalModel(linkedProposalModel);
+
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, context.getCompilationUnit(), refactoring, IProposalRelevance.CONVERT_LOCAL_TO_FIELD) {
+				@Override
+				protected void init(Refactoring refactoring) throws CoreException {
+					PromoteTempToFieldRefactoring etr = (PromoteTempToFieldRefactoring) refactoring;
+					String[] names = etr.guessFieldNames();
+					if (names.length > 0) {
+						etr.setFieldName(names[0]); // expensive
+					}
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
@@ -303,5 +456,43 @@ public class ExtractProposalUtility {
 			}
 		}
 		return statements.size();
+	}
+
+	public enum InitializeScope {
+		//@formatter:off
+		FIELD_DECLARATION("Field declaration"),
+		CURRENT_METHOD("Current method"),
+		CLASS_CONSTRUCTORS("Class constructors");
+		//@formatter:on
+
+		private final String name;
+
+		private InitializeScope(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public static InitializeScope fromName(String name) {
+			if (name != null) {
+				for (InitializeScope scope : values()) {
+					if (scope.name.equals(name)) {
+						return scope;
+					}
+				}
+			}
+
+			return null;
+		}
+	}
+
+	public static class ExtractFieldInfo {
+		List<String> initializedScopes;
+
+		public ExtractFieldInfo(List<String> scopes) {
+			this.initializedScopes = scopes;
+		}
 	}
 }

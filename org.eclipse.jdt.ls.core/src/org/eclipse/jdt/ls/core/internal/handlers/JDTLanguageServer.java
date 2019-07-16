@@ -102,12 +102,15 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.Registration;
 import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
+import org.eclipse.lsp4j.SelectionRange;
+import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -144,6 +147,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 	private JVMConfigurator jvmConfigurator;
+	private WorkspaceExecuteCommandHandler commandHandler;
 
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
@@ -154,10 +158,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
+		this(projects, preferenceManager, WorkspaceExecuteCommandHandler.getInstance());
+	}
+
+	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
 		this.jvmConfigurator = new JVMConfigurator();
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
+		this.commandHandler = commandHandler;
 	}
 
 	public void connectClient(JavaLanguageClient client) {
@@ -182,7 +191,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
-		InitHandler handler = new InitHandler(pm, preferenceManager, client);
+		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -234,6 +243,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			registerCapability(Preferences.IMPLEMENTATION_ID, Preferences.IMPLEMENTATION);
+		}
+		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
+			registerCapability(Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE);
 		}
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
@@ -290,13 +302,16 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		}
 		if (preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isExecuteCommandEnabled(), Preferences.EXECUTE_COMMAND_ID, Preferences.WORKSPACE_EXECUTE_COMMAND,
-					new ExecuteCommandOptions(new ArrayList<>(WorkspaceExecuteCommandHandler.getCommands())));
+					new ExecuteCommandOptions(new ArrayList<>(commandHandler.getNonStaticCommands())));
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
 			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
 		}
 		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
 			toggleCapability(preferenceManager.getPreferences().isFoldingRangeEnabled(), Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE, null);
+		}
+		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
+			toggleCapability(preferenceManager.getPreferences().isSelectionRangeEnabled(), Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE, null);
 		}
 	}
 
@@ -440,9 +455,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		logInfo(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
-		WorkspaceExecuteCommandHandler handler = new WorkspaceExecuteCommandHandler();
 		return computeAsync((monitor) -> {
-			return handler.executeCommand(params, monitor);
+			return commandHandler.executeCommand(params, monitor);
 		});
 	}
 
@@ -514,12 +528,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(TextDocumentPositionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.definition(position, monitor);
+			return Either.forLeft(handler.definition(position, monitor));
 		});
 	}
 
@@ -527,12 +541,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends Location>> typeDefinition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
 		logInfo(">> document/typeDefinition");
 		NavigateToTypeDefinitionHandler handler = new NavigateToTypeDefinitionHandler();
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.typeDefinition(position, monitor);
+			return Either.forLeft((handler.typeDefinition(position, monitor)));
 		});
 	}
 
@@ -748,9 +762,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<List<? extends Location>> implementation(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(TextDocumentPositionParams position) {
 		logInfo(">> document/implementation");
-		return computeAsyncWithClientProgress((monitor) -> new ImplementationsHandler(preferenceManager).findImplementations(position, monitor));
+		return computeAsyncWithClientProgress((monitor) -> {
+			ImplementationsHandler handler = new ImplementationsHandler(preferenceManager);
+			return Either.forLeft(handler.findImplementations(position, monitor));
+		});
 	}
 
 	/* (non-Javadoc)
@@ -762,6 +779,15 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsyncWithClientProgress((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return new FoldingRangeHandler().foldingRange(params, monitor);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<SelectionRange>> selectionRange(SelectionRangeParams params) {
+		logInfo(">> document/selectionRange");
+		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return new SelectionRangeHandler().selectionRange(params, monitor);
 		});
 	}
 

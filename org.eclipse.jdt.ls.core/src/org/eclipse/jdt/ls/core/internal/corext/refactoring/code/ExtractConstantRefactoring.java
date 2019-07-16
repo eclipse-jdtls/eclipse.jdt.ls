@@ -58,7 +58,6 @@ import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ITrackedNodePosition;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -98,13 +97,14 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.Compilation
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusEntry;
 import org.eclipse.text.edits.TextEditGroup;
 
-public class ExtractConstantRefactoring extends ExtractRefactoring {
+public class ExtractConstantRefactoring extends Refactoring {
 
 	private static final String ATTRIBUTE_REPLACE = "replace"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_QUALIFY = "qualify"; //$NON-NLS-1$
@@ -145,7 +145,6 @@ public class ExtractConstantRefactoring extends ExtractRefactoring {
 	private LinkedProposalModelCore fLinkedProposalModel;
 	private boolean fCheckResultForCompileProblems;
 
-	private ITrackedNodePosition fNewConstantPosition = null;
 	private Map fFormatterOptions;
 
 	/**
@@ -560,8 +559,7 @@ public class ExtractConstantRefactoring extends ExtractRefactoring {
 		if (fLinkedProposalModel != null) {
 			ASTRewrite rewrite = fCuRewrite.getASTRewrite();
 			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
-			fNewConstantPosition = rewrite.track(variableDeclarationFragment.getName());
-			nameGroup.addPosition(fNewConstantPosition, true);
+			nameGroup.addPosition(rewrite.track(variableDeclarationFragment.getName()), true);
 
 			String[] nameSuggestions = guessConstantNames();
 			if (nameSuggestions.length > 0 && !nameSuggestions[0].equals(fConstantName)) {
@@ -979,10 +977,5 @@ public class ExtractConstantRefactoring extends ExtractRefactoring {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_QUALIFY));
 		}
 		return new RefactoringStatus();
-	}
-
-	@Override
-	public ITrackedNodePosition getExtractedNodePosition() {
-		return fNewConstantPosition;
 	}
 }

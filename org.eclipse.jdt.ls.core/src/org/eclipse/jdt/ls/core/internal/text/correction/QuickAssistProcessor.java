@@ -111,6 +111,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
@@ -179,6 +180,7 @@ public class QuickAssistProcessor {
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
 				getExtractVariableProposal(params, context, problemsAtLocation, resultingCollections);
 				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, resultingCollections);
+				getExtractFieldProposal(params, context, problemsAtLocation, resultingCollections);
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
@@ -509,6 +511,21 @@ public class QuickAssistProcessor {
 		} else {
 			proposal = ExtractProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
 		}
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
+	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (proposals == null) {
+			return false;
+		}
+
+		CUCorrectionProposal proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
 
 		if (proposal == null) {
 			return false;
@@ -900,7 +917,7 @@ public class QuickAssistProcessor {
 		return blockBody;
 	}
 
-	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}

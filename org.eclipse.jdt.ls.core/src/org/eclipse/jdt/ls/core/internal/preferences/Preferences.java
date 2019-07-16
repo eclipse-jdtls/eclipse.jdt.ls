@@ -68,7 +68,18 @@ public class Preferences {
 	 * Preference key for gradle version to use when the gradle wrapper is not used.
 	 */
 	public static final String GRADLE_VERSION = "java.import.gradle.version";
-
+	/**
+	 * Preference key for arguments to pass to Gradle
+	 */
+	public static final String GRADLE_ARGUMENTS = "java.import.gradle.arguments";
+	/**
+	 * Preference key for JVM arguments to pass to Gradle
+	 */
+	public static final String GRADLE_JVM_ARGUMENTS = "java.import.gradle.jvmArguments";
+	/**
+	 * Preference key for setting GRADLE_HOME.
+	 */
+	public static final String GRADLE_HOME = "java.import.gradle.home";
 	/**
 	 * Preference key to enable/disable maven importer.
 	 */
@@ -157,6 +168,11 @@ public class Preferences {
 	 * Preference key to enable/disable the 'foldingRange'.
 	 */
 	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
+
+	/**
+	 * Preference key to enable/disable the selection range.
+	 */
+	public static final String SELECTIONRANGE_ENABLED_KEY = "java.selectionRange.enabled";
 
 	/**
 	 * A named preference that holds the favorite static members.
@@ -259,6 +275,7 @@ public class Preferences {
 	public static final String FOLDINGRANGE = "textDocument/foldingRange";
 	public static final String WORKSPACE_CHANGE_FOLDERS = "workspace/didChangeWorkspaceFolders";
 	public static final String IMPLEMENTATION = "textDocument/implementation";
+	public static final String SELECTION_RANGE = "textDocument/selectionRange";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_ON_TYPE_ID = UUID.randomUUID().toString();
@@ -280,6 +297,7 @@ public class Preferences {
 	public static final String WORKSPACE_CHANGE_FOLDERS_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
+	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -288,6 +306,9 @@ public class Preferences {
 	private boolean importGradleEnabled;
 	private boolean gradleWrapperEnabled;
 	private String gradleVersion;
+	private List<String> gradleArguments;
+	private List<String> gradleJvmArguments;
+	private String gradleHome;
 	private boolean importMavenEnabled;
 	private boolean mavenDownloadSources;
 	private boolean implementationsCodeLensEnabled;
@@ -301,6 +322,7 @@ public class Preferences {
 	private boolean completionEnabled;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
+	private boolean selectionRangeEnabled;
 	private boolean guessMethodArguments;
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
@@ -397,6 +419,9 @@ public class Preferences {
 		importGradleEnabled = true;
 		gradleWrapperEnabled = true;
 		gradleVersion = null;
+		gradleArguments = new ArrayList<>();
+		gradleJvmArguments = new ArrayList<>();
+		gradleHome = null;
 		importMavenEnabled = true;
 		mavenDownloadSources = false;
 		referencesCodeLensEnabled = true;
@@ -411,6 +436,7 @@ public class Preferences {
 		completionEnabled = true;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
+		selectionRangeEnabled = true;
 		guessMethodArguments = false;
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
@@ -453,6 +479,12 @@ public class Preferences {
 		prefs.setGradleWrapperEnabled(gradleWrapperEnabled);
 		String gradleVersion = getString(configuration, GRADLE_VERSION);
 		prefs.setGradleVersion(gradleVersion);
+		List<String> gradleArguments = getList(configuration, GRADLE_ARGUMENTS);
+		prefs.setGradleArguments(gradleArguments);
+		List<String> gradleJvmArguments = getList(configuration, GRADLE_JVM_ARGUMENTS);
+		prefs.setGradleJvmArguments(gradleJvmArguments);
+		String gradleHome = getString(configuration, GRADLE_HOME);
+		prefs.setGradleHome(gradleHome);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
@@ -490,6 +522,9 @@ public class Preferences {
 
 		boolean foldingRangeEnable = getBoolean(configuration, FOLDINGRANGE_ENABLED_KEY, true);
 		prefs.setFoldingRangeEnabled(foldingRangeEnable);
+
+		boolean selectionRangeEnabled = getBoolean(configuration, SELECTIONRANGE_ENABLED_KEY, true);
+		prefs.setSelectionRangeEnabled(selectionRangeEnabled);
 
 		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
 		prefs.setGuessMethodArguments(guessMethodArguments);
@@ -559,6 +594,21 @@ public class Preferences {
 
 	public Preferences setGradleVersion(String gradleVersion) {
 		this.gradleVersion = (gradleVersion == null || gradleVersion.isEmpty()) ? null : gradleVersion;
+		return this;
+	}
+
+	public Preferences setGradleArguments(List<String> arguments) {
+		this.gradleArguments = arguments == null ? new ArrayList<>() : arguments;
+		return this;
+	}
+
+	public Preferences setGradleJvmArguments(List<String> jvmArguments) {
+		this.gradleJvmArguments = jvmArguments == null ? new ArrayList<>() : jvmArguments;
+		return this;
+	}
+
+	public Preferences setGradleHome(String gradleHome) {
+		this.gradleHome = gradleHome;
 		return this;
 	}
 
@@ -669,6 +719,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setSelectionRangeEnabled(boolean enabled) {
+		this.selectionRangeEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setGuessMethodArguments(boolean guessMethodArguments) {
 		this.guessMethodArguments = guessMethodArguments;
 		return this;
@@ -775,6 +830,18 @@ public class Preferences {
 		return gradleVersion;
 	}
 
+	public List<String> getGradleArguments() {
+		return gradleArguments == null ? new ArrayList<>() : gradleArguments;
+	}
+
+	public List<String> getGradleJvmArguments() {
+		return gradleJvmArguments == null ? new ArrayList<>() : gradleJvmArguments;
+	}
+
+	public String getGradleHome() {
+		return gradleHome;
+	}
+
 	public String getFormatterUrl() {
 		return formatterUrl;
 	}
@@ -849,6 +916,10 @@ public class Preferences {
 
 	public boolean isFoldingRangeEnabled() {
 		return foldingRangeEnabled;
+	}
+
+	public boolean isSelectionRangeEnabled() {
+		return selectionRangeEnabled;
 	}
 
 	public boolean isGuessMethodArguments() {
