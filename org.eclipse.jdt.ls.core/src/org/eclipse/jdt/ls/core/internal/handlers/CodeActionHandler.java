@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -100,9 +101,9 @@ public class CodeActionHandler {
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
 			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
-			List<String> acceptedActionKinds = params.getContext().getOnly();
 			for (ChangeCorrectionProposal proposal : candidates) {
-				if (acceptedActionKinds.contains(proposal.getKind())) {
+				Stream<String> acceptedActionKinds = params.getContext().getOnly().stream();
+				if (acceptedActionKinds.filter(kind -> proposal.getKind() != null && proposal.getKind().startsWith(kind)).findFirst().isPresent()) {
 					resultList.add(proposal);
 				}
 			}

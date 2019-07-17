@@ -93,6 +93,31 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCodeAction_sourceActionsOnly() throws Exception {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sql.*; \n" +
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"	}\n"+
+				"}\n");
+		//@formatter:on
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "foo()");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Collections.emptyList(), Collections.singletonList(CodeActionKind.Source)));
+		List<Either<Command, CodeAction>> sourceActions = getCodeActions(params);
+
+		Assert.assertNotNull(sourceActions);
+		Assert.assertFalse("No source actions were found", sourceActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : sourceActions) {
+			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.Source));
+		}
+	}
+
+	@Test
 	public void testCodeAction_removeUnterminatedString() throws Exception{
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",

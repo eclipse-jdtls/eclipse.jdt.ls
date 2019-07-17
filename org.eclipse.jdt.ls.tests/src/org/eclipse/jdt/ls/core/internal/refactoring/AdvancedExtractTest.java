@@ -27,6 +27,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandlerTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
 import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -45,6 +46,7 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
+		setOnly(CodeActionKind.Refactor);
 	}
 
 	@Override
