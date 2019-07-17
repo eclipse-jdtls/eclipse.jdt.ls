@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,8 +36,8 @@ public class OrganizeImportsActionTest extends AbstractQuickFixTest {
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
-
-		this.setIgnoredKind("quickfix.*", "refactor.*");
+		this.setOnly(CodeActionKind.Source);
+		this.setIgnoredKind(new String[0]);
 	}
 
 	public void setupJava9() throws Exception {

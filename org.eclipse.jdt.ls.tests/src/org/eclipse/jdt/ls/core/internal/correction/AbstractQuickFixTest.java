@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.correction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -61,6 +62,8 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	private List<String> ignoredCommands;
 
 	private List<String> ignoredKinds = Arrays.asList(CodeActionKind.Source + ".*");
+
+	private List<String> onlyKinds;
 
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
@@ -222,6 +225,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		this.ignoredKinds = Arrays.asList(ignoredKind);
 	}
 
+	protected void setOnly(String... onlyKinds) {
+		this.onlyKinds = Arrays.asList(onlyKinds);
+	}
+
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
@@ -244,9 +251,17 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		parms.setRange(range);
 		CodeActionContext context = new CodeActionContext();
 		context.setDiagnostics(DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems)));
+		context.setOnly(onlyKinds);
 		parms.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
+		if (onlyKinds != null && !onlyKinds.isEmpty()) {
+			for (Either<Command, CodeAction> codeAction : codeActions) {
+				Stream<String> acceptedActionKinds = onlyKinds.stream();
+				String kind = codeAction.getRight().getKind();
+				assertTrue(codeAction.getRight().getTitle() + " has kind " + kind + " but only " + onlyKinds + " are accepted", acceptedActionKinds.filter(k -> kind != null && kind.startsWith(k)).findFirst().isPresent());
+			}
+		}
 
 		if (this.ignoredKinds != null) {
 			List<Either<Command, CodeAction>> filteredList = codeActions.stream().filter(Either::isRight).filter(codeAction -> {

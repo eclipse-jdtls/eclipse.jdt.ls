@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -154,8 +155,9 @@ public class SourceAssistProcessor {
 
 		Either<Command, CodeAction> targetAction = target.get();
 		if (context.getOnly() != null && !context.getOnly().isEmpty()) {
-			String kind = targetAction.getLeft() == null ? targetAction.getRight().getKind() : targetAction.getLeft().getCommand();
-			if (!context.getOnly().contains(kind)) {
+			Stream<String> acceptedActionKinds = context.getOnly().stream();
+			String actionKind = targetAction.getLeft() == null ? targetAction.getRight().getKind() : targetAction.getLeft().getCommand();
+			if (!acceptedActionKinds.filter(kind -> actionKind != null && actionKind.startsWith(kind)).findFirst().isPresent()) {
 				return;
 			}
 		}

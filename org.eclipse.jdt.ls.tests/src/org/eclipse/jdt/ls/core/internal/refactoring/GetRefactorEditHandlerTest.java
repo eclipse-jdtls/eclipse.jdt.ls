@@ -27,6 +27,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefac
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility.InitializeScope;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.junit.Assert;
@@ -44,6 +45,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
+		setOnly(CodeActionKind.Refactor);
 	}
 
 	@Test
