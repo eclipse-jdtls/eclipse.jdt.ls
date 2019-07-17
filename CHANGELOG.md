@@ -10,6 +10,7 @@
 * enhancement - added additional Gradle preferences. See [#1092](https://github.com/eclipse/eclipse.jdt.ls/pull/1092).
 * enhancement - added support for "textDocument/selectionRange". See [#1100](https://github.com/eclipse/eclipse.jdt.ls/issues/1100).
 * enhancement - support non-CUCorrectionProposal for CodeActions. See [#1103](https://github.com/eclipse/eclipse.jdt.ls/issues/1103).
+* enhancement - updated m2e to 1.13 -> Use latest Execution Environment when source/target is not yet supported. See [m2e#549312](https://bugs.eclipse.org/bugs/show_bug.cgi?id=549312).
 * bug fix - fixed signature help returning the wrong active parameter. See [#1039](https://github.com/eclipse/eclipse.jdt.ls/issues/1039).
 * bug fix - use the default `GRADLE_USER_HOME` env var if possible, for Gradle wrappers and modules. See [#1072](https://github.com/eclipse/eclipse.jdt.ls/pull/1072).
 * bug fix - fixed signature help stopped working after using a lambda. See [#1086](https://github.com/eclipse/eclipse.jdt.ls/issues/1086).
