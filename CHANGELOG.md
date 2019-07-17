@@ -1,5 +1,24 @@
 # Change Log
 
+## [0.41.0 (July 19th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/59?closed=1)
+* enhancement - added code action to convert a local variable to a field. See [#772](https://github.com/eclipse/eclipse.jdt.ls/issues/772).
+* enhancement - migrated to lsp4j 0.7.2. See [#1040](https://github.com/eclipse/eclipse.jdt.ls/issues/1040).
+* enhancement - cancel init or update workspace job of removed rootPaths. See [#1064](https://github.com/eclipse/eclipse.jdt.ls/pull/1064).
+* enhancement - trigger client autorename after 'extract to variable/constant/method'. See [#1077](https://github.com/eclipse/eclipse.jdt.ls/pull/1077).
+* enhancement - prevented aggressive classpath updates when jars don't change. See [#1078](https://github.com/eclipse/eclipse.jdt.ls/pull/1078).
+* enhancement - new extension point to register static commands during JDT LS initialization . See [#1084](https://github.com/eclipse/eclipse.jdt.ls/issues/1084).
+* enhancement - added additional Gradle preferences. See [#1092](https://github.com/eclipse/eclipse.jdt.ls/pull/1092).
+* enhancement - added support for "textDocument/selectionRange". See [#1100](https://github.com/eclipse/eclipse.jdt.ls/issues/1100).
+* enhancement - support non-CUCorrectionProposal for CodeActions. See [#1103](https://github.com/eclipse/eclipse.jdt.ls/issues/1103).
+* bug fix - fixed signature help returning the wrong active parameter. See [#1039](https://github.com/eclipse/eclipse.jdt.ls/issues/1039).
+* bug fix - use the default `GRADLE_USER_HOME` env var if possible, for Gradle wrappers and modules. See [#1072](https://github.com/eclipse/eclipse.jdt.ls/pull/1072).
+* bug fix - fixed signature help stopped working after using a lambda. See [#1086](https://github.com/eclipse/eclipse.jdt.ls/issues/1086).
+* bug fix - fixed ChangeUtil for non-MultiTextEdit conversion. See [#1095](https://github.com/eclipse/eclipse.jdt.ls/pull/1095).
+* bug fix - fixed IllegalArgumentException thrown on completionItem/resolve if there's no javadoc. See [#1107](https://github.com/eclipse/eclipse.jdt.ls/issues/1107).
+* bug fix - properly filter code actions according to context.only values. See [#1112](https://github.com/eclipse/eclipse.jdt.ls/pull/1112).
+* build - added launch configurations for remote debugging. See [#1067](https://github.com/eclipse/eclipse.jdt.ls/pull/1067).
+* debt - refactor ChangeUtil: universal API converting Change to WorkspaceEdit. See [1106](https://github.com/eclipse/eclipse.jdt.ls/pull/1106).
+
 ## [0.40.0 (June 5th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/58?closed=1)
 * enhancement - added code action to generate constructors. See [#972](https://github.com/eclipse/eclipse.jdt.ls/issues/972).
 * enhancement - added code action to generate delegate methods. See [#1042](https://github.com/eclipse/eclipse.jdt.ls/issues/1042).
