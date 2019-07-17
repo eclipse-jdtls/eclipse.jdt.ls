@@ -33,6 +33,7 @@ import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -368,5 +369,13 @@ public final class ProjectUtils {
 		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
 	}
 
-
+	public static IProject findUniqueProject(IWorkspace workspace, String basename) {
+		IProject project = null;
+		String name;
+		for (int i = 1; project == null || project.exists(); i++) {
+			name = (i < 2) ? basename : basename + " (" + i + ")";
+			project = workspace.getRoot().getProject(name);
+		}
+		return project;
+	}
 }

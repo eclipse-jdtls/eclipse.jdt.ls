@@ -131,7 +131,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		IProject p0 = mockProject(root, "project", false);
 
 		//when
-		IProject p = importer.findUniqueProject(workspace, name);
+		IProject p = ProjectUtils.findUniqueProject(workspace, name);
 
 		//then
 		assertSame(p0, p);
@@ -141,7 +141,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		IProject p2 = mockProject(root, "project (2)", false);
 
 		//when
-		p = importer.findUniqueProject(workspace, name);
+		p = ProjectUtils.findUniqueProject(workspace, name);
 
 		//then
 		assertSame(p2, p);
@@ -152,7 +152,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		IProject p3 = mockProject(root, "project (3)", false);
 
 		//when
-		p = importer.findUniqueProject(workspace, name);
+		p = ProjectUtils.findUniqueProject(workspace, name);
 
 		//then
 		assertSame(p3, p);
