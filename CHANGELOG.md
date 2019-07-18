@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.41.0 (July 19th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/59?closed=1)
+## [0.41.0 (July 18th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/59?closed=1)
 * enhancement - added code action to convert a local variable to a field. See [#772](https://github.com/eclipse/eclipse.jdt.ls/issues/772).
 * enhancement - migrated to lsp4j 0.7.2. See [#1040](https://github.com/eclipse/eclipse.jdt.ls/issues/1040).
 * enhancement - cancel init or update workspace job of removed rootPaths. See [#1064](https://github.com/eclipse/eclipse.jdt.ls/pull/1064).
