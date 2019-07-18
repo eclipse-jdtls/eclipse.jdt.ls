@@ -21,11 +21,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.PotentialProgrammingProblemsFixCore;
+import org.eclipse.jdt.internal.ui.fix.PotentialProgrammingProblemsCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.ls.core.internal.corext.fix.ICleanUp;
-import org.eclipse.jdt.ls.core.internal.corext.fix.PotentialProgrammingProblemsCleanUp;
-import org.eclipse.jdt.ls.core.internal.corext.fix.PotentialProgrammingProblemsFix;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -50,7 +50,7 @@ public final class SerialVersionSubProcessor {
 			return fIsDefaultProposal;
 		}
 
-		private static ICleanUp createCleanUp(boolean isDefault) {
+		private static ICleanUpCore createCleanUp(boolean isDefault) {
 			Map<String, String> options = new Hashtable<>();
 			options.put(CleanUpConstants.ADD_MISSING_SERIAL_VERSION_ID, CleanUpOptionsCore.TRUE);
 			if (isDefault) {
@@ -58,7 +58,7 @@ public final class SerialVersionSubProcessor {
 			} else {
 				options.put(CleanUpConstants.ADD_MISSING_SERIAL_VERSION_ID_GENERATED, CleanUpOptionsCore.TRUE);
 			}
-			return new PotentialProgrammingProblemsCleanUp(options);
+			return new PotentialProgrammingProblemsCleanUpCore(options);
 		}
 
 		@Override
@@ -87,7 +87,7 @@ public final class SerialVersionSubProcessor {
 		Assert.isNotNull(location);
 		Assert.isNotNull(proposals);
 
-		IProposableFix[] fixes = PotentialProgrammingProblemsFix.createMissingSerialVersionFixes(context.getASTRoot(), location);
+		IProposableFix[] fixes = PotentialProgrammingProblemsFixCore.createMissingSerialVersionFixes(context.getASTRoot(), location);
 		if (fixes != null) {
 			proposals.add(new SerialVersionProposal(fixes[0], IProposalRelevance.MISSING_SERIAL_VERSION_DEFAULT, context, true));
 			ICompilationUnit unit = context.getCompilationUnit();
