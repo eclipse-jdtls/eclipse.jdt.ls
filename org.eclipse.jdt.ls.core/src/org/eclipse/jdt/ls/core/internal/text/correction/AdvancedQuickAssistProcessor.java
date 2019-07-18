@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2017, 2019 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,27 +15,56 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.text.correction;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AssertStatement;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
+import org.eclipse.jdt.core.dom.InstanceofExpression;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.core.dom.PrefixExpression;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecker;
+import org.eclipse.jdt.internal.core.manipulation.dom.OperatorPrecedence;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionParams;
 
 /**
  */
@@ -61,52 +90,47 @@ public class AdvancedQuickAssistProcessor {
 	//		}
 	//		return false;
 	//	}
-	//
-	//	@Override
-	//	public IJavaCompletionProposal[] getAssists(IInvocationContext context, IProblemLocation[] locations) throws CoreException {
-	//		ASTNode coveringNode = context.getCoveringNode();
-	//		if (coveringNode != null) {
-	//			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
-	//			ArrayList<ICommandAccess> resultingCollections = new ArrayList<>();
-	//
-	//			//quick assists that show up also if there is an error/warning
-	//			getReplaceConditionalWithIfElseProposals(context, coveringNode, resultingCollections);
-	//
-	//			if (QuickAssistProcessor.noErrorsAtLocation(locations)) {
-	//				getConvertToIfReturnProposals(context, coveringNode, resultingCollections);
-	//				getInverseIfProposals(context, coveringNode, resultingCollections);
-	//				getIfReturnIntoIfElseAtEndOfVoidMethodProposals(context, coveringNode, resultingCollections);
-	//				getInverseIfContinueIntoIfThenInLoopsProposals(context, coveringNode, resultingCollections);
-	//				getInverseIfIntoContinueInLoopsProposals(context, coveringNode, resultingCollections);
-	//				getInverseConditionProposals(context, coveringNode, coveredNodes, resultingCollections);
-	//				getRemoveExtraParenthesesProposals(context, coveringNode, coveredNodes, resultingCollections);
-	//				getAddParanoidalParenthesesProposals(context, coveredNodes, resultingCollections);
-	//				getAddParenthesesForExpressionProposals(context, coveringNode, resultingCollections);
-	//				getJoinAndIfStatementsProposals(context, coveringNode, resultingCollections);
-	//				getSplitAndConditionProposals(context, coveringNode, resultingCollections);
-	//				getJoinOrIfStatementsProposals(context, coveringNode, coveredNodes, resultingCollections);
-	//				getSplitOrConditionProposals(context, coveringNode, resultingCollections);
-	//				getInverseConditionalExpressionProposals(context, coveringNode, resultingCollections);
-	//				getExchangeInnerAndOuterIfConditionsProposals(context, coveringNode, resultingCollections);
-	//				getExchangeOperandsProposals(context, coveringNode, resultingCollections);
-	//				getCastAndAssignIfStatementProposals(context, coveringNode, resultingCollections);
-	//				getCombineStringProposals(context, coveringNode, resultingCollections);
-	//				getPickOutStringProposals(context, coveringNode, resultingCollections);
-	//				getReplaceIfElseWithConditionalProposals(context, coveringNode, resultingCollections);
-	//				getInverseLocalVariableProposals(context, coveringNode, resultingCollections);
-	//				getPushNegationDownProposals(context, coveringNode, resultingCollections);
-	//				getPullNegationUpProposals(context, coveredNodes, resultingCollections);
-	//				getJoinIfListInIfElseIfProposals(context, coveringNode, coveredNodes, resultingCollections);
-	//				getConvertSwitchToIfProposals(context, coveringNode, resultingCollections);
-	//				getConvertIfElseToSwitchProposals(context, coveringNode, resultingCollections);
-	//				GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, coveringNode, locations, resultingCollections);
-	//			}
-	//
-	//			return resultingCollections.toArray(new IJavaCompletionProposal[resultingCollections.size()]);
-	//		}
-	//		return null;
-	//	}
-	//
+
+	public List<CUCorrectionProposal> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+		ASTNode coveringNode = context.getCoveringNode();
+		if (coveringNode != null) {
+			ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
+			ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
+
+			if (QuickAssistProcessor.noErrorsAtLocation(locations)) {
+				//				getConvertToIfReturnProposals(context, coveringNode, resultingCollections);
+				//				getInverseIfProposals(context, coveringNode, resultingCollections);
+				//				getIfReturnIntoIfElseAtEndOfVoidMethodProposals(context, coveringNode, resultingCollections);
+				//				getInverseIfContinueIntoIfThenInLoopsProposals(context, coveringNode, resultingCollections);
+				//				getInverseIfIntoContinueInLoopsProposals(context, coveringNode, resultingCollections);
+				getInverseConditionProposals(params, context, coveringNode, coveredNodes, resultingCollections);
+				//				getRemoveExtraParenthesesProposals(context, coveringNode, coveredNodes, resultingCollections);
+				//				getAddParanoidalParenthesesProposals(context, coveredNodes, resultingCollections);
+				//				getAddParenthesesForExpressionProposals(context, coveringNode, resultingCollections);
+				//				getJoinAndIfStatementsProposals(context, coveringNode, resultingCollections);
+				//				getSplitAndConditionProposals(context, coveringNode, resultingCollections);
+				//				getJoinOrIfStatementsProposals(context, coveringNode, coveredNodes, resultingCollections);
+				//				getSplitOrConditionProposals(context, coveringNode, resultingCollections);
+				//				getInverseConditionalExpressionProposals(context, coveringNode, resultingCollections);
+				//				getExchangeInnerAndOuterIfConditionsProposals(context, coveringNode, resultingCollections);
+				//				getExchangeOperandsProposals(context, coveringNode, resultingCollections);
+				//				getCastAndAssignIfStatementProposals(context, coveringNode, resultingCollections);
+				//				getCombineStringProposals(context, coveringNode, resultingCollections);
+				//				getPickOutStringProposals(context, coveringNode, resultingCollections);
+				//				getReplaceIfElseWithConditionalProposals(context, coveringNode, resultingCollections);
+				//				getInverseLocalVariableProposals(context, coveringNode, resultingCollections);
+				//				getPushNegationDownProposals(context, coveringNode, resultingCollections);
+				//				getPullNegationUpProposals(context, coveredNodes, resultingCollections);
+				//				getJoinIfListInIfElseIfProposals(context, coveringNode, coveredNodes, resultingCollections);
+				//				getConvertSwitchToIfProposals(context, coveringNode, resultingCollections);
+				//				getConvertIfElseToSwitchProposals(context, coveringNode, resultingCollections);
+				//				GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, coveringNode, locations, resultingCollections);
+			}
+			return resultingCollections;
+		}
+		return Collections.emptyList();
+	}
+
 	//	private static boolean getConvertToIfReturnProposals(IInvocationContext context, ASTNode coveringNode, ArrayList<ICommandAccess> resultingCollections) {
 	//		if (!(coveringNode instanceof IfStatement)) {
 	//			return false;
@@ -451,203 +475,204 @@ public class AdvancedQuickAssistProcessor {
 	//		return statements;
 	//	}
 	//
-	//	private static boolean getInverseConditionProposals(IInvocationContext context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ICommandAccess> resultingCollections) {
-	//		if (coveredNodes.isEmpty()) {
-	//			return false;
-	//		}
-	//		//
-	//		final AST ast = covering.getAST();
-	//		final ASTRewrite rewrite = ASTRewrite.create(ast);
-	//		// check sub-expressions in fully covered nodes
-	//		boolean hasChanges = false;
-	//		for (Iterator<ASTNode> iter = coveredNodes.iterator(); iter.hasNext();) {
-	//			ASTNode covered = iter.next();
-	//			Expression coveredExpression = getBooleanExpression(covered);
-	//			if (coveredExpression != null) {
-	//				Expression inversedExpression = getInversedExpression(rewrite, coveredExpression);
-	//				rewrite.replace(coveredExpression, inversedExpression, null);
-	//				hasChanges = true;
-	//			}
-	//		}
-	//		//
-	//		if (!hasChanges) {
-	//			return false;
-	//		}
-	//		if (resultingCollections == null) {
-	//			return true;
-	//		}
-	//		// add correction proposal
-	//		String label = CorrectionMessages.AdvancedQuickAssistProcessor_inverseConditions_description;
-	//		Image image = JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE);
-	//		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_CONDITIONS, image);
-	//		resultingCollections.add(proposal);
-	//		return true;
-	//	}
-	//
-	//	private static Expression getInversedExpression(ASTRewrite rewrite, Expression expression) {
-	//		return getInversedExpression(rewrite, expression, null);
-	//	}
-	//
-	//	private interface SimpleNameRenameProvider {
-	//		SimpleName getRenamed(SimpleName name);
-	//	}
-	//
-	//	private static Expression getRenamedNameCopy(SimpleNameRenameProvider provider, ASTRewrite rewrite, Expression expression) {
-	//		if (provider != null) {
-	//			if (expression instanceof SimpleName) {
-	//				SimpleName name = (SimpleName) expression;
-	//				SimpleName newName = provider.getRenamed(name);
-	//				if (newName != null) {
-	//					return newName;
-	//				}
-	//			}
-	//		}
-	//		return (Expression) rewrite.createCopyTarget(expression);
-	//	}
-	//
-	//	private static Expression getInversedExpression(ASTRewrite rewrite, Expression expression, SimpleNameRenameProvider provider) {
-	//		AST ast = rewrite.getAST();
-	//		//
-	//		if (expression instanceof BooleanLiteral) {
-	//			return ast.newBooleanLiteral(!((BooleanLiteral) expression).booleanValue());
-	//		}
-	//		if (expression instanceof InfixExpression) {
-	//			InfixExpression infixExpression = (InfixExpression) expression;
-	//			InfixExpression.Operator operator = infixExpression.getOperator();
-	//			if (operator == InfixExpression.Operator.LESS) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.GREATER_EQUALS, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.GREATER) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.LESS_EQUALS, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.LESS_EQUALS) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.GREATER, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.GREATER_EQUALS) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.LESS, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.EQUALS) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.NOT_EQUALS, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.NOT_EQUALS) {
-	//				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.EQUALS, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.CONDITIONAL_AND) {
-	//				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.CONDITIONAL_OR, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.CONDITIONAL_OR) {
-	//				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.CONDITIONAL_AND, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.AND) {
-	//				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.OR, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.OR) {
-	//				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.AND, provider);
-	//			}
-	//			if (operator == InfixExpression.Operator.XOR) {
-	//				return getInversedNotExpression(rewrite, expression, ast);
-	//			}
-	//		}
-	//		if (expression instanceof PrefixExpression) {
-	//			PrefixExpression prefixExpression = (PrefixExpression) expression;
-	//			if (prefixExpression.getOperator() == PrefixExpression.Operator.NOT) {
-	//				Expression operand = prefixExpression.getOperand();
-	//				if ((operand instanceof ParenthesizedExpression) && NecessaryParenthesesChecker.canRemoveParentheses(operand, expression.getParent(), expression.getLocationInParent())) {
-	//					operand = ((ParenthesizedExpression) operand).getExpression();
-	//				}
-	//				Expression renamedNameCopy = getRenamedNameCopy(provider, rewrite, operand);
-	//				if (renamedNameCopy instanceof InfixExpression) {
-	//					InfixExpression infixExpression = (InfixExpression) renamedNameCopy;
-	//					infixExpression.setOperator(((InfixExpression) operand).getOperator());
-	//				}
-	//				return renamedNameCopy;
-	//			}
-	//		}
-	//		if (expression instanceof InstanceofExpression) {
-	//			return getInversedNotExpression(rewrite, expression, ast);
-	//		}
-	//		if (expression instanceof ParenthesizedExpression) {
-	//			ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
-	//			Expression innerExpression = parenthesizedExpression.getExpression();
-	//			while (innerExpression instanceof ParenthesizedExpression) {
-	//				innerExpression = ((ParenthesizedExpression) innerExpression).getExpression();
-	//			}
-	//			if (innerExpression instanceof InstanceofExpression) {
-	//				return getInversedExpression(rewrite, innerExpression, provider);
-	//			}
-	//			parenthesizedExpression = getParenthesizedExpression(ast, getInversedExpression(rewrite, innerExpression, provider));
-	//			return parenthesizedExpression;
-	//		}
-	//		if (expression instanceof ConditionalExpression) {
-	//			ConditionalExpression conditionalExpression = (ConditionalExpression) expression;
-	//			ConditionalExpression newExpression = ast.newConditionalExpression();
-	//			newExpression.setExpression((Expression) rewrite.createCopyTarget(conditionalExpression.getExpression()));
-	//			newExpression.setThenExpression(getInversedExpression(rewrite, conditionalExpression.getThenExpression()));
-	//			newExpression.setElseExpression(getInversedExpression(rewrite, conditionalExpression.getElseExpression()));
-	//			return newExpression;
-	//		}
-	//
-	//		PrefixExpression prefixExpression = ast.newPrefixExpression();
-	//		prefixExpression.setOperator(PrefixExpression.Operator.NOT);
-	//		Expression renamedNameCopy = getRenamedNameCopy(provider, rewrite, expression);
-	//		if (NecessaryParenthesesChecker.needsParentheses(renamedNameCopy, prefixExpression, PrefixExpression.OPERAND_PROPERTY)) {
-	//			renamedNameCopy = getParenthesizedExpression(ast, renamedNameCopy);
-	//		}
-	//		prefixExpression.setOperand(renamedNameCopy);
-	//		return prefixExpression;
-	//	}
-	//
-	//	private static Expression getInversedNotExpression(ASTRewrite rewrite, Expression expression, AST ast) {
-	//		PrefixExpression prefixExpression = ast.newPrefixExpression();
-	//		prefixExpression.setOperator(PrefixExpression.Operator.NOT);
-	//		ParenthesizedExpression parenthesizedExpression = getParenthesizedExpression(ast, (Expression) rewrite.createCopyTarget(expression));
-	//		prefixExpression.setOperand(parenthesizedExpression);
-	//		return prefixExpression;
-	//	}
-	//
-	//	private static boolean isBoolean(Expression expression) {
-	//		ITypeBinding typeBinding = expression.resolveTypeBinding();
-	//		AST ast = expression.getAST();
-	//		return typeBinding == ast.resolveWellKnownType("boolean") //$NON-NLS-1$
-	//				|| typeBinding == ast.resolveWellKnownType("java.lang.Boolean"); //$NON-NLS-1$
-	//	}
-	//
-	//	private static Expression getInversedInfixExpression(ASTRewrite rewrite, InfixExpression expression, InfixExpression.Operator newOperator, SimpleNameRenameProvider provider) {
-	//		InfixExpression newExpression = rewrite.getAST().newInfixExpression();
-	//		newExpression.setOperator(newOperator);
-	//		newExpression.setLeftOperand(getRenamedNameCopy(provider, rewrite, expression.getLeftOperand()));
-	//		newExpression.setRightOperand(getRenamedNameCopy(provider, rewrite, expression.getRightOperand()));
-	//		return newExpression;
-	//	}
-	//
-	//	private static Expression parenthesizeIfRequired(Expression operand, int newOperatorPrecedence) {
-	//		if (newOperatorPrecedence > OperatorPrecedence.getExpressionPrecedence(operand)) {
-	//			return getParenthesizedExpression(operand.getAST(), operand);
-	//		}
-	//		return operand;
-	//	}
-	//
-	//	private static Expression getInversedAndOrExpression(ASTRewrite rewrite, InfixExpression infixExpression, Operator newOperator, SimpleNameRenameProvider provider) {
-	//		InfixExpression newExpression = rewrite.getAST().newInfixExpression();
-	//		newExpression.setOperator(newOperator);
-	//
-	//		int newOperatorPrecedence = OperatorPrecedence.getOperatorPrecedence(newOperator);
-	//		//
-	//		Expression leftOperand = getInversedExpression(rewrite, infixExpression.getLeftOperand(), provider);
-	//		newExpression.setLeftOperand(parenthesizeIfRequired(leftOperand, newOperatorPrecedence));
-	//
-	//		Expression rightOperand = getInversedExpression(rewrite, infixExpression.getRightOperand(), provider);
-	//		newExpression.setRightOperand(parenthesizeIfRequired(rightOperand, newOperatorPrecedence));
-	//
-	//		List<Expression> extraOperands = infixExpression.extendedOperands();
-	//		List<Expression> newExtraOperands = newExpression.extendedOperands();
-	//		for (int i = 0; i < extraOperands.size(); i++) {
-	//			Expression extraOperand = getInversedExpression(rewrite, extraOperands.get(i), provider);
-	//			newExtraOperands.add(parenthesizeIfRequired(extraOperand, newOperatorPrecedence));
-	//		}
-	//		return newExpression;
-	//	}
-	//
+	private static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<CUCorrectionProposal> proposals) {
+		if (proposals == null) {
+			return false;
+		}
+
+		if (coveredNodes.isEmpty()) {
+			return false;
+		}
+
+		final AST ast = covering.getAST();
+		final ASTRewrite rewrite = ASTRewrite.create(ast);
+		// check sub-expressions in fully covered nodes
+		boolean hasChanges = false;
+		for (Iterator<ASTNode> iter = coveredNodes.iterator(); iter.hasNext();) {
+			ASTNode covered = iter.next();
+			Expression coveredExpression = getBooleanExpression(covered);
+			if (coveredExpression != null) {
+				Expression inversedExpression = getInversedExpression(rewrite, coveredExpression);
+				rewrite.replace(coveredExpression, inversedExpression, null);
+				hasChanges = true;
+			}
+		}
+
+		if (!hasChanges) {
+			return false;
+		}
+
+		// add correction proposal
+		String label = CorrectionMessages.AdvancedQuickAssistProcessor_inverseConditions_description;
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_CONDITIONS);
+		proposals.add(proposal);
+		return true;
+	}
+
+	private static Expression getInversedExpression(ASTRewrite rewrite, Expression expression) {
+		return getInversedExpression(rewrite, expression, null);
+	}
+
+	private interface SimpleNameRenameProvider {
+		SimpleName getRenamed(SimpleName name);
+	}
+
+	private static Expression getRenamedNameCopy(SimpleNameRenameProvider provider, ASTRewrite rewrite, Expression expression) {
+		if (provider != null) {
+			if (expression instanceof SimpleName) {
+				SimpleName name = (SimpleName) expression;
+				SimpleName newName = provider.getRenamed(name);
+				if (newName != null) {
+					return newName;
+				}
+			}
+		}
+		return (Expression) rewrite.createCopyTarget(expression);
+	}
+
+	private static Expression getInversedExpression(ASTRewrite rewrite, Expression expression, SimpleNameRenameProvider provider) {
+		AST ast = rewrite.getAST();
+
+		if (expression instanceof BooleanLiteral) {
+			return ast.newBooleanLiteral(!((BooleanLiteral) expression).booleanValue());
+		}
+		if (expression instanceof InfixExpression) {
+			InfixExpression infixExpression = (InfixExpression) expression;
+			InfixExpression.Operator operator = infixExpression.getOperator();
+			if (operator == InfixExpression.Operator.LESS) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.GREATER_EQUALS, provider);
+			}
+			if (operator == InfixExpression.Operator.GREATER) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.LESS_EQUALS, provider);
+			}
+			if (operator == InfixExpression.Operator.LESS_EQUALS) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.GREATER, provider);
+			}
+			if (operator == InfixExpression.Operator.GREATER_EQUALS) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.LESS, provider);
+			}
+			if (operator == InfixExpression.Operator.EQUALS) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.NOT_EQUALS, provider);
+			}
+			if (operator == InfixExpression.Operator.NOT_EQUALS) {
+				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.EQUALS, provider);
+			}
+			if (operator == InfixExpression.Operator.CONDITIONAL_AND) {
+				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.CONDITIONAL_OR, provider);
+			}
+			if (operator == InfixExpression.Operator.CONDITIONAL_OR) {
+				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.CONDITIONAL_AND, provider);
+			}
+			if (operator == InfixExpression.Operator.AND) {
+				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.OR, provider);
+			}
+			if (operator == InfixExpression.Operator.OR) {
+				return getInversedAndOrExpression(rewrite, infixExpression, InfixExpression.Operator.AND, provider);
+			}
+			if (operator == InfixExpression.Operator.XOR) {
+				return getInversedNotExpression(rewrite, expression, ast);
+			}
+		}
+		if (expression instanceof PrefixExpression) {
+			PrefixExpression prefixExpression = (PrefixExpression) expression;
+			if (prefixExpression.getOperator() == PrefixExpression.Operator.NOT) {
+				Expression operand = prefixExpression.getOperand();
+				if ((operand instanceof ParenthesizedExpression) && NecessaryParenthesesChecker.canRemoveParentheses(operand, expression.getParent(), expression.getLocationInParent())) {
+					operand = ((ParenthesizedExpression) operand).getExpression();
+				}
+				Expression renamedNameCopy = getRenamedNameCopy(provider, rewrite, operand);
+				if (renamedNameCopy instanceof InfixExpression) {
+					InfixExpression infixExpression = (InfixExpression) renamedNameCopy;
+					infixExpression.setOperator(((InfixExpression) operand).getOperator());
+				}
+				return renamedNameCopy;
+			}
+		}
+		if (expression instanceof InstanceofExpression) {
+			return getInversedNotExpression(rewrite, expression, ast);
+		}
+		if (expression instanceof ParenthesizedExpression) {
+			ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
+			Expression innerExpression = parenthesizedExpression.getExpression();
+			while (innerExpression instanceof ParenthesizedExpression) {
+				innerExpression = ((ParenthesizedExpression) innerExpression).getExpression();
+			}
+			if (innerExpression instanceof InstanceofExpression) {
+				return getInversedExpression(rewrite, innerExpression, provider);
+			}
+			parenthesizedExpression = getParenthesizedExpression(ast, getInversedExpression(rewrite, innerExpression, provider));
+			return parenthesizedExpression;
+		}
+		if (expression instanceof ConditionalExpression) {
+			ConditionalExpression conditionalExpression = (ConditionalExpression) expression;
+			ConditionalExpression newExpression = ast.newConditionalExpression();
+			newExpression.setExpression((Expression) rewrite.createCopyTarget(conditionalExpression.getExpression()));
+			newExpression.setThenExpression(getInversedExpression(rewrite, conditionalExpression.getThenExpression()));
+			newExpression.setElseExpression(getInversedExpression(rewrite, conditionalExpression.getElseExpression()));
+			return newExpression;
+		}
+
+		PrefixExpression prefixExpression = ast.newPrefixExpression();
+		prefixExpression.setOperator(PrefixExpression.Operator.NOT);
+		Expression renamedNameCopy = getRenamedNameCopy(provider, rewrite, expression);
+		if (NecessaryParenthesesChecker.needsParentheses(renamedNameCopy, prefixExpression, PrefixExpression.OPERAND_PROPERTY)) {
+			renamedNameCopy = getParenthesizedExpression(ast, renamedNameCopy);
+		}
+		prefixExpression.setOperand(renamedNameCopy);
+		return prefixExpression;
+	}
+
+	private static Expression getInversedNotExpression(ASTRewrite rewrite, Expression expression, AST ast) {
+		PrefixExpression prefixExpression = ast.newPrefixExpression();
+		prefixExpression.setOperator(PrefixExpression.Operator.NOT);
+		ParenthesizedExpression parenthesizedExpression = getParenthesizedExpression(ast, (Expression) rewrite.createCopyTarget(expression));
+		prefixExpression.setOperand(parenthesizedExpression);
+		return prefixExpression;
+	}
+
+	private static boolean isBoolean(Expression expression) {
+		ITypeBinding typeBinding = expression.resolveTypeBinding();
+		AST ast = expression.getAST();
+		return typeBinding == ast.resolveWellKnownType("boolean") //$NON-NLS-1$
+				|| typeBinding == ast.resolveWellKnownType("java.lang.Boolean"); //$NON-NLS-1$
+	}
+
+	private static Expression getInversedInfixExpression(ASTRewrite rewrite, InfixExpression expression, InfixExpression.Operator newOperator, SimpleNameRenameProvider provider) {
+		InfixExpression newExpression = rewrite.getAST().newInfixExpression();
+		newExpression.setOperator(newOperator);
+		newExpression.setLeftOperand(getRenamedNameCopy(provider, rewrite, expression.getLeftOperand()));
+		newExpression.setRightOperand(getRenamedNameCopy(provider, rewrite, expression.getRightOperand()));
+		return newExpression;
+	}
+
+	private static Expression parenthesizeIfRequired(Expression operand, int newOperatorPrecedence) {
+		if (newOperatorPrecedence > OperatorPrecedence.getExpressionPrecedence(operand)) {
+			return getParenthesizedExpression(operand.getAST(), operand);
+		}
+		return operand;
+	}
+
+	private static Expression getInversedAndOrExpression(ASTRewrite rewrite, InfixExpression infixExpression, Operator newOperator, SimpleNameRenameProvider provider) {
+		InfixExpression newExpression = rewrite.getAST().newInfixExpression();
+		newExpression.setOperator(newOperator);
+
+		int newOperatorPrecedence = OperatorPrecedence.getOperatorPrecedence(newOperator);
+
+		Expression leftOperand = getInversedExpression(rewrite, infixExpression.getLeftOperand(), provider);
+		newExpression.setLeftOperand(parenthesizeIfRequired(leftOperand, newOperatorPrecedence));
+
+		Expression rightOperand = getInversedExpression(rewrite, infixExpression.getRightOperand(), provider);
+		newExpression.setRightOperand(parenthesizeIfRequired(rightOperand, newOperatorPrecedence));
+
+		List<Expression> extraOperands = infixExpression.extendedOperands();
+		List<Expression> newExtraOperands = newExpression.extendedOperands();
+		for (int i = 0; i < extraOperands.size(); i++) {
+			Expression extraOperand = getInversedExpression(rewrite, extraOperands.get(i), provider);
+			newExtraOperands.add(parenthesizeIfRequired(extraOperand, newOperatorPrecedence));
+		}
+		return newExpression;
+	}
+
 	//	private static boolean getRemoveExtraParenthesesProposals(IInvocationContext context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ICommandAccess> resultingCollections) {
 	//		ArrayList<ASTNode> nodes;
 	//		if (context.getSelectionLength() == 0 && covering instanceof ParenthesizedExpression) {
@@ -872,22 +897,22 @@ public class AdvancedQuickAssistProcessor {
 	//		}
 	//		return true;
 	//	}
-	//
-	//	private static Expression getParenthesizedExpressionIfNeeded(AST ast, ASTRewrite rewrite, Expression expression, ASTNode parent, StructuralPropertyDescriptor locationInParent) {
-	//		boolean addParentheses = NecessaryParenthesesChecker.needsParentheses(expression, parent, locationInParent);
-	//		expression = (Expression) rewrite.createCopyTarget(expression);
-	//		if (addParentheses) {
-	//			return getParenthesizedExpression(ast, expression);
-	//		}
-	//		return expression;
-	//	}
-	//
-	//	private static ParenthesizedExpression getParenthesizedExpression(AST ast, Expression expression) {
-	//		ParenthesizedExpression parenthesizedExpression = ast.newParenthesizedExpression();
-	//		parenthesizedExpression.setExpression(expression);
-	//		return parenthesizedExpression;
-	//	}
-	//
+
+	private static Expression getParenthesizedExpressionIfNeeded(AST ast, ASTRewrite rewrite, Expression expression, ASTNode parent, StructuralPropertyDescriptor locationInParent) {
+		boolean addParentheses = NecessaryParenthesesChecker.needsParentheses(expression, parent, locationInParent);
+		expression = (Expression) rewrite.createCopyTarget(expression);
+		if (addParentheses) {
+			return getParenthesizedExpression(ast, expression);
+		}
+		return expression;
+	}
+
+	private static ParenthesizedExpression getParenthesizedExpression(AST ast, Expression expression) {
+		ParenthesizedExpression parenthesizedExpression = ast.newParenthesizedExpression();
+		parenthesizedExpression.setExpression(expression);
+		return parenthesizedExpression;
+	}
+
 	public static boolean getSplitAndConditionProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		Operator andOperator = InfixExpression.Operator.CONDITIONAL_AND;
 		// check that user invokes quick assist on infix expression
@@ -2155,39 +2180,39 @@ public class AdvancedQuickAssistProcessor {
 	//		resultingCollections.add(proposal);
 	//		return true;
 	//	}
-	//
-	//	private static Expression getBooleanExpression(ASTNode node) {
-	//		if (!(node instanceof Expression)) {
-	//			return null;
-	//		}
-	//
-	//		// check if the node is a location where it can be negated
-	//		StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
-	//		if (locationInParent == QualifiedName.NAME_PROPERTY) {
-	//			node = node.getParent();
-	//			locationInParent = node.getLocationInParent();
-	//		}
-	//		while (locationInParent == ParenthesizedExpression.EXPRESSION_PROPERTY) {
-	//			node = node.getParent();
-	//			locationInParent = node.getLocationInParent();
-	//		}
-	//		Expression expression = (Expression) node;
-	//		if (!isBoolean(expression)) {
-	//			return null;
-	//		}
-	//		if (expression.getParent() instanceof InfixExpression) {
-	//			return expression;
-	//		}
-	//		if (locationInParent == Assignment.RIGHT_HAND_SIDE_PROPERTY || locationInParent == IfStatement.EXPRESSION_PROPERTY || locationInParent == WhileStatement.EXPRESSION_PROPERTY || locationInParent == DoStatement.EXPRESSION_PROPERTY
-	//				|| locationInParent == ReturnStatement.EXPRESSION_PROPERTY || locationInParent == ForStatement.EXPRESSION_PROPERTY || locationInParent == AssertStatement.EXPRESSION_PROPERTY
-	//				|| locationInParent == MethodInvocation.ARGUMENTS_PROPERTY || locationInParent == ConstructorInvocation.ARGUMENTS_PROPERTY || locationInParent == SuperMethodInvocation.ARGUMENTS_PROPERTY
-	//				|| locationInParent == EnumConstantDeclaration.ARGUMENTS_PROPERTY || locationInParent == SuperConstructorInvocation.ARGUMENTS_PROPERTY || locationInParent == ClassInstanceCreation.ARGUMENTS_PROPERTY
-	//				|| locationInParent == ConditionalExpression.EXPRESSION_PROPERTY || locationInParent == PrefixExpression.OPERAND_PROPERTY) {
-	//			return expression;
-	//		}
-	//		return null;
-	//	}
-	//
+
+	private static Expression getBooleanExpression(ASTNode node) {
+		if (!(node instanceof Expression)) {
+			return null;
+		}
+
+		// check if the node is a location where it can be negated
+		StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
+		if (locationInParent == QualifiedName.NAME_PROPERTY) {
+			node = node.getParent();
+			locationInParent = node.getLocationInParent();
+		}
+		while (locationInParent == ParenthesizedExpression.EXPRESSION_PROPERTY) {
+			node = node.getParent();
+			locationInParent = node.getLocationInParent();
+		}
+		Expression expression = (Expression) node;
+		if (!isBoolean(expression)) {
+			return null;
+		}
+		if (expression.getParent() instanceof InfixExpression) {
+			return expression;
+		}
+		if (locationInParent == Assignment.RIGHT_HAND_SIDE_PROPERTY || locationInParent == IfStatement.EXPRESSION_PROPERTY || locationInParent == WhileStatement.EXPRESSION_PROPERTY || locationInParent == DoStatement.EXPRESSION_PROPERTY
+				|| locationInParent == ReturnStatement.EXPRESSION_PROPERTY || locationInParent == ForStatement.EXPRESSION_PROPERTY || locationInParent == AssertStatement.EXPRESSION_PROPERTY
+				|| locationInParent == MethodInvocation.ARGUMENTS_PROPERTY || locationInParent == ConstructorInvocation.ARGUMENTS_PROPERTY || locationInParent == SuperMethodInvocation.ARGUMENTS_PROPERTY
+				|| locationInParent == EnumConstantDeclaration.ARGUMENTS_PROPERTY || locationInParent == SuperConstructorInvocation.ARGUMENTS_PROPERTY || locationInParent == ClassInstanceCreation.ARGUMENTS_PROPERTY
+				|| locationInParent == ConditionalExpression.EXPRESSION_PROPERTY || locationInParent == PrefixExpression.OPERAND_PROPERTY) {
+			return expression;
+		}
+		return null;
+	}
+
 	//	private static boolean getPullNegationUpProposals(IInvocationContext context, ArrayList<ASTNode> coveredNodes, Collection<ICommandAccess> resultingCollections) {
 	//		if (coveredNodes.size() != 1) {
 	//			return false;

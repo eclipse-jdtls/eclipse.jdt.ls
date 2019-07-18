@@ -36,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -56,6 +57,8 @@ public class CodeActionHandler {
 
 	private QuickAssistProcessor quickAssistProcessor;
 
+	private AdvancedQuickAssistProcessor advancedQuickAssistProcessor;
+
 	private SourceAssistProcessor sourceAssistProcessor;
 
 	private PreferenceManager preferenceManager;
@@ -64,6 +67,7 @@ public class CodeActionHandler {
 		this.preferenceManager = preferenceManager;
 		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
+		this.advancedQuickAssistProcessor = new AdvancedQuickAssistProcessor();
 	}
 
 	/**
@@ -95,6 +99,13 @@ public class CodeActionHandler {
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
+		}
+
+		try {
+			List<CUCorrectionProposal> corrections = this.advancedQuickAssistProcessor.getAssists(params, context, locations);
+			candidates.addAll(corrections);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem resolving advanced quick assist code actions", e);
 		}
 
 		candidates.sort(new CUCorrectionProposalComparator());
