@@ -100,12 +100,12 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsCleanUp;
-import org.eclipse.jdt.ls.core.internal.corext.fix.LambdaExpressionsFix;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
@@ -556,7 +556,7 @@ public class QuickAssistProcessor {
 			return false;
 		}
 
-		IProposableFix fix = LambdaExpressionsFix.createConvertToLambdaFix(cic);
+		IProposableFix fix = LambdaExpressionsFixCore.createConvertToLambdaFix(cic);
 		if (fix == null) {
 			return false;
 		}
@@ -568,7 +568,7 @@ public class QuickAssistProcessor {
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUp(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
 		resultingCollections.add(proposal);
 		return true;
 	}
