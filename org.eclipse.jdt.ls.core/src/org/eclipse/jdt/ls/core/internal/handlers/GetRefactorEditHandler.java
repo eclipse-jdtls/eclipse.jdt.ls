@@ -29,7 +29,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -54,18 +55,20 @@ public class GetRefactorEditHandler {
 
 		try {
 			Map formatterOptions = params.options == null ? null : FormatterHandler.getOptions(params.options, unit);
-			RefactoringCorrectionProposal proposal = null;
+			LinkedCorrectionProposal proposal = null;
 			if (ExtractProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || ExtractProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
 					|| ExtractProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
-				proposal = (RefactoringCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
+				proposal = (LinkedCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
 			} else if (ExtractProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
-				proposal = (RefactoringCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
+				proposal = (LinkedCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
 			} else if (ExtractProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
-				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+				proposal = (LinkedCorrectionProposal) ExtractProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			} else if (ExtractProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
-				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+				proposal = (LinkedCorrectionProposal) ExtractProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+			} else if (AdvancedQuickAssistProcessor.INVERT_VARIABLE_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) AdvancedQuickAssistProcessor.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
 			}
 
 			if (proposal == null) {

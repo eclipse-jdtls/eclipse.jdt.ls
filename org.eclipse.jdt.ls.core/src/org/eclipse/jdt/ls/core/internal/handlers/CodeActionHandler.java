@@ -67,7 +67,7 @@ public class CodeActionHandler {
 		this.preferenceManager = preferenceManager;
 		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
-		this.advancedQuickAssistProcessor = new AdvancedQuickAssistProcessor();
+		this.advancedQuickAssistProcessor = new AdvancedQuickAssistProcessor(preferenceManager);
 	}
 
 	/**
