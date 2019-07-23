@@ -109,7 +109,7 @@ public class InvertVariableTest extends AbstractSelectionTest {
 		buf.append("        boolean c = bar(a);\n");
 		buf.append("        return a;\n");
 		buf.append("    }\n");
-		buf.append("    public void bar(boolean value) {\n");
+		buf.append("    public boolean bar(boolean value) {\n");
 		buf.append("        return !value;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -125,7 +125,7 @@ public class InvertVariableTest extends AbstractSelectionTest {
 		buf.append("        boolean c = bar(!notA);\n");
 		buf.append("        return !notA;\n");
 		buf.append("    }\n");
-		buf.append("    public void bar(boolean value) {\n");
+		buf.append("    public boolean bar(boolean value) {\n");
 		buf.append("        return !value;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
