@@ -5,30 +5,30 @@ import java.io.IOException;
 import org.apache.commons.lang3.AnnotationUtils;
 
 public class Foo2 {
-	
-	
+
+
 	/**
 	 * {@value #mySimpleString} is a simple String
 	 */
 	public static final String mySimpleString =
 	 	"SimpleStringData";
-	
+
 	/**
 	 * {@link #newMethodBeingLinkedToo}
 	 */
 	public void javadocLinkToMethodInClass() {
-        
+
 	}
-	
+
 	private void newMethodBeingLinkedToo() {
-		
+
 	}
-	
+
 	/**
 	 * {@link Foo#linkedFromFoo2()}
 	 */
 	private void javadocLinkToMethodInOtherClass() {
-		
+
 	}
 
 	/**
@@ -41,6 +41,7 @@ public class Foo2 {
 	 * @author jpinkney
 	 * @return String
 	 * @throws IOException
+	 * @apiNote This is a note
 	 */
     private String javadocLink(String someString) throws IOException {
 		return null;
@@ -52,5 +53,5 @@ public class Foo2 {
     private void linkDoesNotExist() {
 
     }
-	
+
 }

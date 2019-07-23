@@ -438,10 +438,36 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String content = null;
 		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
 
-		String expectedJavadoc = "This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)\n" + "\n" + " \\*  \\*\\*Parameters:\\*\\*\n" + "    \n"
-				+ "     \\*  \\*\\*someString\\*\\* the string to enter\n" + " \\*  \\*\\*Returns:\\*\\*\n" + "    \n" + "     \\*  String\n" + " \\*  \\*\\*Throws:\\*\\*\n" + "    \n" + "     \\*  IOException\n"
-				+ " \\*  \\*\\*Since:\\*\\*\n" + "    \n" + "     \\*  0.0.1\n" + " \\*  \\*\\*Version:\\*\\*\n" + "    \n" + "     \\*  0.0.1\n" + " \\*  \\*\\*Author:\\*\\*\n" + "    \n" + "     \\*  jpinkney\n"
-				+ " \\*  \\*\\*See Also:\\*\\*\n" + "    \n" + "     \\*  \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)";
+		//@formatter:off
+		String expectedJavadoc =
+				"This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)\n" +
+				"\n" +
+				" \\*  \\*\\*Parameters:\\*\\*\n" +
+				"    \n" +
+				"     \\*  \\*\\*someString\\*\\* the string to enter\n" +
+				" \\*  \\*\\*Returns:\\*\\*\n" +
+				"    \n" +
+				"     \\*  String\n" +
+				" \\*  \\*\\*Throws:\\*\\*\n" +
+				"    \n" +
+				"     \\*  IOException\n" +
+				" \\*  \\*\\*Since:\\*\\*\n" +
+				"    \n" +
+				"     \\*  0.0.1\n" +
+				" \\*  \\*\\*Version:\\*\\*\n" +
+				"    \n" +
+				"     \\*  0.0.1\n" +
+				" \\*  \\*\\*Author:\\*\\*\n" +
+				"    \n" +
+				"     \\*  jpinkney\n" +
+				" \\*  \\*\\*See Also:\\*\\*\n" +
+				"    \n" +
+				"     \\*  \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)\n" +
+				" \\*  \\*\\*API Note:\\*\\*\n" +
+				"    \n" +
+				"     \\*  This is a note";
+
+		//@formatter:on
 		assertMatches(expectedJavadoc, content);
 	}
 
