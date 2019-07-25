@@ -327,7 +327,9 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 		assertNotNull("CU not found: " + uri, cu);
 		Document doc = new Document();
-		doc.set(cu.getSource());
+		if (cu.exists()) {
+			doc.set(cu.getSource());
+		}
 		return TextEditUtil.apply(doc, edits);
 	}
 
