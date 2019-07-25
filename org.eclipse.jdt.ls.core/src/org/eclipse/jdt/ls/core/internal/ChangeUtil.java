@@ -37,6 +37,7 @@ import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
 import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.CreateFileOptions;
@@ -134,6 +135,8 @@ public class ChangeUtil {
 			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
 		} else if (resourceChange instanceof RenamePackageChange) {
 			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
+		} else if (resourceChange instanceof CreateFileChange) {
+			convertCreateFileChange(edit, (CreateFileChange) resourceChange);
 		}
 	}
 
@@ -199,6 +202,13 @@ public class ChangeUtil {
 		IPath newPath = currentPath.removeLastSegments(1).append(newCUName);
 		rf.setNewUri(ResourceUtils.fixURI(newPath.toFile().toURI()));
 		edit.getDocumentChanges().add(Either.forRight(rf));
+	}
+
+	private static void convertCreateFileChange(WorkspaceEdit edit, CreateFileChange createFileChange) {
+		CreateFile createFile = new CreateFile();
+		createFile.setUri(ResourceUtils.fixURI(createFileChange.getPath().toFile().toURI()));
+		createFile.setOptions(new CreateFileOptions(false, true));
+		edit.getDocumentChanges().add(Either.forRight(createFile));
 	}
 
 	private static void convertTextChange(TextChange textChange, WorkspaceEdit rootEdit) {

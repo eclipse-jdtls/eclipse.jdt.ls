@@ -108,7 +108,7 @@ public class CreateFileChange extends ResourceChange {
 		fPath= path;
 	}
 
-	protected IPath getPath() {
+	public IPath getPath() {
 		return fPath;
 	}
 
