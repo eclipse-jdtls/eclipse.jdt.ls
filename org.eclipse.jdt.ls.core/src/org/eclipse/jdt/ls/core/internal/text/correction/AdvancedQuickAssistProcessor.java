@@ -2007,9 +2007,9 @@ public class AdvancedQuickAssistProcessor {
 
 		CUCorrectionProposal proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = getInvertVariableCommandProposal(params, context, covering);
+			proposal = getInvertVariableProposal(params, context, covering, true /*returnAsCommand*/);
 		} else {
-			proposal = getInvertVariableProposal(params, context, covering);
+			proposal = getInvertVariableProposal(params, context, covering, false /*returnAsCommand*/);
 		}
 
 		if (proposal == null) {
@@ -2018,14 +2018,6 @@ public class AdvancedQuickAssistProcessor {
 
 		proposals.add(proposal);
 		return true;
-	}
-
-	private static CUCorrectionProposal getInvertVariableCommandProposal(CodeActionParams params, IInvocationContext context, ASTNode covering) {
-		return getInvertVariableProposal(params, context, covering, true);
-	}
-
-	private static CUCorrectionProposal getInvertVariableProposal(CodeActionParams params, IInvocationContext context, ASTNode covering) {
-		return getInvertVariableProposal(params, context, covering, false);
 	}
 
 	public static CUCorrectionProposal getInvertVariableProposal(CodeActionParams params, IInvocationContext context, ASTNode covering, boolean returnAsCommand) {
