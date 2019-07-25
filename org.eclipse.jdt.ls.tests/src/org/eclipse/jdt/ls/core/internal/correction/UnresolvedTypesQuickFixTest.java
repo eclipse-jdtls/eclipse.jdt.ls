@@ -453,7 +453,6 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testQualifiedType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -471,7 +470,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class Test {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create class 'Test' in package 'test2'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
@@ -479,7 +478,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public interface Test {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+		Expected e2 = new Expected("Create interface 'Test' in package 'test2'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
@@ -487,9 +486,9 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public enum Test {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e3 = new Expected("Add all missing tags", buf.toString());
+		Expected e3 = new Expected("Create enum 'Test' in package 'test2'", buf.toString());
 
-		assertCodeActions(cu, e1, e2, e2, e3);
+		assertCodeActions(cu, e1, e2, e3);
 	}
 
 	@Test
@@ -571,7 +570,6 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testTypeInSuperType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -586,13 +584,12 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class XXX {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create class 'XXX'", buf.toString());
 
 		assertCodeActionExists(cu, e1);
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testTypeInSuperInterface() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -607,13 +604,12 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public interface XXX {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create interface 'XXX'", buf.toString());
 
 		assertCodeActionExists(cu, e1);
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testTypeInAnnotation() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -629,13 +625,12 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public @interface Xyz {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create annotation 'Xyz'", buf.toString());
 
 		assertCodeActionExists(cu, e1);
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testTypeInAnnotation_bug153881() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("a", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -651,7 +646,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public @interface Unimportant {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create annotation 'Unimportant' in package 'scratch'", buf.toString());
 
 		assertCodeActions(cu, e1);
 	}
@@ -850,7 +845,6 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Create type")
 	public void testParameterizedType1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -869,7 +863,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class XXY<T> {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		Expected e1 = new Expected("Create class 'XXY<T>'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -877,7 +871,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public interface XXY<T> {\n");
 		buf.append("\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Add Javadoc comment", buf.toString());
+		Expected e2 = new Expected("Create interface 'XXY<T>'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
