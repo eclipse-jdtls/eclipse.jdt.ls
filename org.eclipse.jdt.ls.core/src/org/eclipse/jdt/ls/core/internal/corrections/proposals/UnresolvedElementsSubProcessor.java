@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -44,6 +45,7 @@ import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MemberValuePair;
@@ -776,64 +778,64 @@ public class UnresolvedElementsSubProcessor {
 	public static void addNewTypeProposals(ICompilationUnit cu, Name refNode, int kind, int relevance,
 			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		Name node= refNode;
-		//		do {
-		//			String typeName= ASTNodes.getSimpleNameIdentifier(node);
-		//			Name qualifier= null;
-		//			// only propose to create types for qualifiers when the name starts with upper case
-		//			boolean isPossibleName= isLikelyTypeName(typeName) || node == refNode;
-		//			if (isPossibleName) {
-		//				IPackageFragment enclosingPackage= null;
-		//				IType enclosingType= null;
-		//				if (node.isSimpleName()) {
-		//					enclosingPackage= (IPackageFragment) cu.getParent();
-		//					// don't suggest member type, user can select it in wizard
-		//				} else {
-		//					Name qualifierName= ((QualifiedName) node).getQualifier();
-		//					IBinding binding= qualifierName.resolveBinding();
-		//					if (binding != null && binding.isRecovered()) {
-		//						binding= null;
-		//					}
-		//					if (binding instanceof ITypeBinding) {
-		//						enclosingType=(IType) binding.getJavaElement();
-		//					} else if (binding instanceof IPackageBinding) {
-		//						qualifier= qualifierName;
-		//						enclosingPackage= (IPackageFragment) binding.getJavaElement();
-		//					} else {
-		//						IJavaElement[] res= cu.codeSelect(qualifierName.getStartPosition(), qualifierName.getLength());
-		//						if (res!= null && res.length > 0 && res[0] instanceof IType) {
-		//							enclosingType= (IType) res[0];
-		//						} else {
-		//							qualifier= qualifierName;
-		//							enclosingPackage= JavaModelUtil.getPackageFragmentRoot(cu).getPackageFragment(ASTResolving.getFullName(qualifierName));
-		//						}
-		//					}
-		//				}
-		//				int rel= relevance;
-		//				if (enclosingPackage != null && isLikelyPackageName(enclosingPackage.getElementName())) {
-		//					rel += 3;
-		//				}
-		//
-		//				if (enclosingPackage != null && !enclosingPackage.getCompilationUnit(typeName + JavaModelUtil.DEFAULT_CU_SUFFIX).exists()
-		//						|| enclosingType != null && !enclosingType.isReadOnly() && !enclosingType.getType(typeName).exists()) { // new member type
-		//					IJavaElement enclosing= enclosingPackage != null ? (IJavaElement) enclosingPackage : enclosingType;
-		//
-		//					if ((kind & TypeKinds.CLASSES) != 0) {
-		//						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_CLASS, enclosing, rel+3));
-		//					}
-		//					if ((kind & TypeKinds.INTERFACES) != 0) {
-		//						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_INTERFACE, enclosing, rel+2));
-		//					}
-		//					if ((kind & TypeKinds.ENUMS) != 0) {
-		//						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_ENUM, enclosing, rel));
-		//					}
-		//					if ((kind & TypeKinds.ANNOTATIONS) != 0) {
-		//						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_ANNOTATION, enclosing, rel + 1));
-		//						addNullityAnnotationTypesProposals(cu, node, proposals);
-		//					}
-		//				}
-		//			}
-		//			node= qualifier;
-		//		} while (node != null);
+		do {
+			String typeName = ASTNodes.getSimpleNameIdentifier(node);
+			Name qualifier = null;
+			// only propose to create types for qualifiers when the name starts with upper case
+			boolean isPossibleName = isLikelyTypeName(typeName) || node == refNode;
+			if (isPossibleName) {
+				IPackageFragment enclosingPackage = null;
+				IType enclosingType = null;
+				if (node.isSimpleName()) {
+					enclosingPackage = (IPackageFragment) cu.getParent();
+					// don't suggest member type, user can select it in wizard
+				} else {
+					Name qualifierName = ((QualifiedName) node).getQualifier();
+					IBinding binding = qualifierName.resolveBinding();
+					if (binding != null && binding.isRecovered()) {
+						binding = null;
+					}
+					if (binding instanceof ITypeBinding) {
+						enclosingType = (IType) binding.getJavaElement();
+					} else if (binding instanceof IPackageBinding) {
+						qualifier = qualifierName;
+						enclosingPackage = (IPackageFragment) binding.getJavaElement();
+					} else {
+						IJavaElement[] res = cu.codeSelect(qualifierName.getStartPosition(), qualifierName.getLength());
+						if (res != null && res.length > 0 && res[0] instanceof IType) {
+							enclosingType = (IType) res[0];
+						} else {
+							qualifier = qualifierName;
+							enclosingPackage = JavaModelUtil.getPackageFragmentRoot(cu).getPackageFragment(ASTResolving.getFullName(qualifierName));
+						}
+					}
+				}
+				int rel = relevance;
+				if (enclosingPackage != null && isLikelyPackageName(enclosingPackage.getElementName())) {
+					rel += 3;
+				}
+
+				if (enclosingPackage != null && !enclosingPackage.getCompilationUnit(typeName + JavaModelUtil.DEFAULT_CU_SUFFIX).exists()
+						|| enclosingType != null && !enclosingType.isReadOnly() && !enclosingType.getType(typeName).exists()) { // new member type
+					IJavaElement enclosing = enclosingPackage != null ? (IJavaElement) enclosingPackage : enclosingType;
+
+					if ((kind & TypeKinds.CLASSES) != 0) {
+						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_CLASS, enclosing, rel + 3));
+					}
+					if ((kind & TypeKinds.INTERFACES) != 0) {
+						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_INTERFACE, enclosing, rel + 2));
+					}
+					if ((kind & TypeKinds.ENUMS) != 0) {
+						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_ENUM, enclosing, rel));
+					}
+					if ((kind & TypeKinds.ANNOTATIONS) != 0) {
+						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_ANNOTATION, enclosing, rel + 1));
+						// TODO: addNullityAnnotationTypesProposals(cu, node, proposals);
+					}
+				}
+			}
+			node = qualifier;
+		} while (node != null);
 
 		// type parameter proposals
 		if (refNode.isSimpleName() && (kind & TypeKinds.VARIABLES)  != 0) {
