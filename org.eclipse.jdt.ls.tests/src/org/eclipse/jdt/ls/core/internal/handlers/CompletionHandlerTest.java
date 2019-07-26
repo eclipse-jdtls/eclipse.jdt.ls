@@ -1133,6 +1133,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		if (supportSnippets) {
 			expectedText.append("${0:");
 		}
+		expectedText.append("// TODO Auto-generated method stub\n\t");
 		expectedText.append("return super.toString();");
 		if (supportSnippets) {
 			expectedText.append("}");
@@ -1176,10 +1177,13 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		expectedText.append("public void run() {\n\t");
 		if (supportSnippets) {
-			expectedText.append("${0}");
+			expectedText.append("${0");
+		}
+		expectedText.append("// TODO Auto-generated method stub\n\t");
+		if (supportSnippets) {
+			expectedText.append("}");
 		}
 		expectedText.append("\n}");
-
 		assertEquals(expectedText.toString(), text);
 
 	}
@@ -1210,7 +1214,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String expectedText = "@Override\n"+
 				"protected File getParent(File file, int depth) {\n" +
-				"\t${0:return super.getParent(file, depth);}\n"+
+				"\t${0:// TODO Auto-generated method stub\n\treturn super.getParent(file, depth);}\n" +
 				"}";
 
 		assertEquals(expectedText, text);
@@ -1247,7 +1251,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		String expectedText = "@Override\n"+
 				"protected void deleteSomething() throws IOException {\n" +
-				"\t${0:super.deleteSomething();}\n"+
+				"\t${0:// TODO Auto-generated method stub\n" +
+				"\tsuper.deleteSomething();}\n" +
 				"}";
 
 		assertEquals(expectedText, text);
@@ -1418,7 +1423,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"		@Override\n" +
 				"		public String getName() {\n" +
-				"			${0:return null;}\n" +
+				"			${0:// TODO Auto-generated method stub\n\t\t\treturn null;}\n" +
 				"		}\n" +
 				"};", resolvedItem.getTextEdit());
 	}
@@ -1455,10 +1460,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTextEdit(2, 23, 23, "IFoo(){\n" +
 				"\n		@Override\n" +
 				"		public void setName(String name) {\n" +
-				"			${0}\n" +
+				"			${0// TODO Auto-generated method stub\n\t\t\t}\n" +
 				"		}\n" +
 				"\n		@Override\n" +
 				"		public String getName() {\n" +
+				"			// TODO Auto-generated method stub\n" +
 				"			return null;\n" +
 				"		}\n" +
 				"};", resolvedItem.getTextEdit());
@@ -1493,7 +1499,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0}\n" +
+				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1527,7 +1533,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0}\n" +
+				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1563,7 +1569,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0}\n" +
+				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1600,7 +1606,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0}\n" +
+				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1632,7 +1638,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0}\n" +
+				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
