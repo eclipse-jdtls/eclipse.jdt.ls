@@ -61,14 +61,14 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
+import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
+import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore.MakeTypeAbstractOperation;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.ModifierRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
-import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix.MakeTypeAbstractOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
@@ -608,10 +608,10 @@ public class ModifierCorrectionSubProcessor {
 	}
 
 	private static void addMakeTypeAbstractProposal(IInvocationContext context, TypeDeclaration parentTypeDecl, Collection<ChangeCorrectionProposal> proposals) {
-		MakeTypeAbstractOperation operation = new UnimplementedCodeFix.MakeTypeAbstractOperation(parentTypeDecl);
+		MakeTypeAbstractOperation operation = new UnimplementedCodeFixCore.MakeTypeAbstractOperation(parentTypeDecl);
 
 		String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_addabstract_description, BasicElementLabels.getJavaElementName(parentTypeDecl.getName().getIdentifier()));
-		UnimplementedCodeFix fix = new UnimplementedCodeFix(label, context.getASTRoot(), new CompilationUnitRewriteOperation[] { operation });
+		UnimplementedCodeFixCore fix = new UnimplementedCodeFixCore(label, context.getASTRoot(), new CompilationUnitRewriteOperation[] { operation });
 
 		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_TYPE_ABSTRACT_FIX, context);
 		proposals.add(proposal);

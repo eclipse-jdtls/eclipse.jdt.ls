@@ -72,13 +72,13 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
+import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.dom.CodeScopeBuilder;
-import org.eclipse.jdt.ls.core.internal.corext.fix.UnimplementedCodeFix;
-import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -381,7 +381,7 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
-		IProposableFix fix = UnimplementedCodeFix.createAddUnimplementedMethodsFix(context.getASTRoot(), problem);
+		IProposableFix fix = UnimplementedCodeFixCore.createAddUnimplementedMethodsFix(context.getASTRoot(), problem);
 
 		if (fix != null) {
 			try {
@@ -397,7 +397,7 @@ public class LocalCorrectionsSubProcessor {
 	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		int problemId = problem.getProblemId();
 
-		UnusedCodeFix fix = UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, false);
+		UnusedCodeFixCore fix = UnusedCodeFixCore.createUnusedMemberFix(context.getASTRoot(), problem, false);
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
@@ -409,7 +409,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 
 		if (problemId == IProblem.LocalVariableIsNeverUsed) {
-			fix = UnusedCodeFix.createUnusedMemberFix(context.getASTRoot(), problem, true);
+			fix = UnusedCodeFixCore.createUnusedMemberFix(context.getASTRoot(), problem, true);
 			if (fix != null) {
 				try {
 					CompilationUnitChange change = fix.createChange(null);
