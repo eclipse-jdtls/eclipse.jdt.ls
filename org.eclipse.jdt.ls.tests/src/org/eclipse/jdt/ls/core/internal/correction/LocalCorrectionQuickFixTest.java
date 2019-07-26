@@ -67,6 +67,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("\n");
 		buf.append("    @Override\n");
 		buf.append("    public void foo() {\n");
+		buf.append("        // TODO Auto-generated method stub\n");
 		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -98,6 +99,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("\n");
 		buf.append("    @Override\n");
 		buf.append("    public void foo() {\n");
+		buf.append("        // TODO Auto-generated method stub\n");
 		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
