@@ -185,7 +185,7 @@ public class QuickAssistProcessor {
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
 				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
-				//				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, resultingCollections);
+				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
 				//				getAddInferredLambdaParameterTypes(context, coveringNode, resultingCollections);
@@ -569,6 +569,34 @@ public class QuickAssistProcessor {
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
 		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
+		resultingCollections.add(proposal);
+		return true;
+	}
+
+	public static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		LambdaExpression lambda;
+		if (covering instanceof LambdaExpression) {
+			lambda = (LambdaExpression) covering;
+		} else if (covering.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
+			lambda = (LambdaExpression) covering.getParent();
+		} else {
+			return false;
+		}
+
+		IProposableFix fix = LambdaExpressionsFixCore.createConvertToAnonymousClassCreationsFix(lambda);
+		if (fix == null) {
+			return false;
+		}
+
+		// add correction proposal
+		Map<String, String> options = new HashMap<>();
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context);
 		resultingCollections.add(proposal);
 		return true;
 	}
