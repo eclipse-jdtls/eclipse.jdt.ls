@@ -574,6 +574,10 @@ public class QuickAssistProcessor {
 	}
 
 	public static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {
+		if (resultingCollections == null) {
+			return true;
+		}
+
 		LambdaExpression lambda;
 		if (covering instanceof LambdaExpression) {
 			lambda = (LambdaExpression) covering;
@@ -586,10 +590,6 @@ public class QuickAssistProcessor {
 		IProposableFix fix = LambdaExpressionsFixCore.createConvertToAnonymousClassCreationsFix(lambda);
 		if (fix == null) {
 			return false;
-		}
-
-		if (resultingCollections == null) {
-			return true;
 		}
 
 		// add correction proposal

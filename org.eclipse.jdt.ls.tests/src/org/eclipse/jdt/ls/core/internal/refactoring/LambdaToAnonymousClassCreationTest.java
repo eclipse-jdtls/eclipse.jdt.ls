@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import java.util.Hashtable;
+
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.junit.Before;
@@ -27,7 +30,9 @@ public class LambdaToAnonymousClassCreationTest extends AbstractSelectionTest {
 	@Before
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
-		fJProject.setOptions(TestOptions.getDefaultOptions());
+		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		options.put(JavaCore.COMPILER_PB_MISSING_OVERRIDE_ANNOTATION, JavaCore.WARNING);
+		fJProject.setOptions(options);
 		fSourceFolder = fJProject.getPackageFragmentRoot(fJProject.getProject().getFolder("src"));
 	}
 

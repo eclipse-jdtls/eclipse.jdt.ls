@@ -39,7 +39,6 @@ import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
-import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -104,8 +103,6 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
 		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
-
-		defEclipsePrefs.put(CodeGenerationSettingsConstants.CODEGEN_USE_OVERRIDE_ANNOTATION, Boolean.TRUE.toString());
 
 		IEclipsePreferences m2eAptPrefs = DefaultScope.INSTANCE.getNode(M2E_APT_ID);
 		if (m2eAptPrefs != null) {
