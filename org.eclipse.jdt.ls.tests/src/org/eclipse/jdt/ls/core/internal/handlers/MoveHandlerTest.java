@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -27,6 +28,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
+import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -36,7 +38,6 @@ import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
-import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,9 +94,10 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		IPackageFragment pack3 = sourceFolder.createPackageFragment("jdtls.test3", false, null);
 		String packageUri = JDTUtils.getFileURI(pack3.getResource());
-		WorkspaceEdit edit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitB) }, packageUri, true));
-		assertNotNull(edit);
-		List<Either<TextDocumentEdit, ResourceOperation>> changes = edit.getDocumentChanges();
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
 		assertEquals(4, changes.size());
 
 		//@formatter:off
@@ -150,9 +152,10 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		IPackageFragment pack2 = sourceFolder.createPackageFragment("jdtls.test2", false, null);
 		String packageUri = JDTUtils.getFileURI(pack2.getResource());
-		WorkspaceEdit edit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitA), JDTUtils.toURI(unitB) }, packageUri, true));
-		assertNotNull(edit);
-		List<Either<TextDocumentEdit, ResourceOperation>> changes = edit.getDocumentChanges();
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitA), JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
 		assertEquals(6, changes.size());
 
 		//@formatter:off
