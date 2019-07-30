@@ -1,17 +1,25 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Originally copied from org.eclipse.jdt.internal.ui.text.correction.proposals.NewCUUsingWizardProposal
  *
  * Contributors:
- *     Red Hat Inc. - initial API and implementation
+ *     Renaud Waldura &lt;renaud+eclipse@waldura.com&gt;
+ *     IBM Corporation - updates
+ *     Microsoft Corporation - copy and modify to decouple from UI
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.Flags;
@@ -206,27 +214,24 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 	private static String getTypeName(int typeKind, Name node) {
 		String name = ASTNodes.getSimpleNameIdentifier(node);
 
-		if (typeKind == K_CLASS || typeKind == K_INTERFACE) {
+		if (isParameterizedType(typeKind, node)) {
 			ASTNode parent = node.getParent();
-			if (parent.getLocationInParent() == ParameterizedType.TYPE_PROPERTY) {
-				String typeArgBaseName = getTypeArgBaseName(name);
-
-				int nTypeArgs = ((ParameterizedType) parent.getParent()).typeArguments().size();
-				StringBuilder buf = new StringBuilder(name);
-				buf.append('<');
-				if (nTypeArgs == 1) {
-					buf.append(typeArgBaseName);
-				} else {
-					for (int i = 0; i < nTypeArgs; i++) {
-						if (i != 0) {
-							buf.append(", "); //$NON-NLS-1$
-						}
-						buf.append(typeArgBaseName).append(i + 1);
+			String typeArgBaseName = getGenericTypeArgBaseName(name);
+			int nTypeArgs = ((ParameterizedType) parent.getParent()).typeArguments().size();
+			StringBuilder buf = new StringBuilder(name);
+			buf.append('<');
+			if (nTypeArgs == 1) {
+				buf.append(typeArgBaseName);
+			} else {
+				for (int i = 0; i < nTypeArgs; i++) {
+					if (i != 0) {
+						buf.append(", "); //$NON-NLS-1$
 					}
+					buf.append(typeArgBaseName).append(i + 1);
 				}
-				buf.append('>');
-				return buf.toString();
 			}
+			buf.append('>');
+			return buf.toString();
 		}
 		return name;
 	}
@@ -236,7 +241,7 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 		if (node instanceof CompilationUnit) {
 			iter = ((CompilationUnit) node).types().iterator();
 		} else if (node instanceof TypeDeclaration) {
-			if (typeName.equals(((TypeDeclaration) node).getName().toString())) {
+			if (Objects.equals(typeName, ((TypeDeclaration) node).getName().toString())) {
 				return (TypeDeclaration) node;
 			}
 			iter = ((TypeDeclaration) node).bodyDeclarations().iterator();
@@ -318,7 +323,7 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 
 	private void addTypeParameters(TypeDeclaration newDeclaration) {
 		if (isParameterizedType(fTypeKind, fNode)) {
-			String typeArgBaseName = getTypeArgBaseName(ASTNodes.getSimpleNameIdentifier(fNode));
+			String typeArgBaseName = getGenericTypeArgBaseName(ASTNodes.getSimpleNameIdentifier(fNode));
 			int nTypeArgs = ((ParameterizedType) fNode.getParent().getParent()).typeArguments().size();
 			String[] typeArgNames = new String[nTypeArgs];
 			if (nTypeArgs == 1) {
@@ -341,7 +346,7 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 
 	}
 
-	private static String getTypeArgBaseName(String typeName) {
+	private static String getGenericTypeArgBaseName(String typeName) {
 		return typeName.startsWith(String.valueOf('T')) ? String.valueOf('S') : String.valueOf('T'); // use 'S' or 'T'
 	}
 
