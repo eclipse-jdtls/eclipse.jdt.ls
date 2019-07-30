@@ -27,8 +27,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -50,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.JavaMoveProcess
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgPolicyFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -152,11 +154,10 @@ public class MoveHandler {
 		return null;
 	}
 
-	public static WorkspaceEdit moveFile(MoveFileParams moveFileParams) {
+	public static RefactorWorkspaceEdit moveFile(MoveFileParams moveFileParams, IProgressMonitor monitor) {
 		URI targetUri = JDTUtils.toURI(moveFileParams.targetUri);
 		if (targetUri == null) {
-			JavaLanguageServerPlugin.logError("Failed to move the files because of illegal uri '" + moveFileParams.targetUri + "'.");
-			return null;
+			return new RefactorWorkspaceEdit("Failed to move the files because of illegal uri '" + moveFileParams.targetUri + "'.");
 		}
 
 		List<IJavaElement> elements = new ArrayList<>();
@@ -169,16 +170,15 @@ public class MoveHandler {
 			elements.add(unit);
 		}
 
+		SubMonitor submonitor = SubMonitor.convert(monitor, "Moving File...", 100);
 		try {
 			IResource[] resources = ReorgUtils.getResources(elements);
 			IJavaElement[] javaElements = ReorgUtils.getJavaElements(elements);
 			IContainer[] targetContainers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(targetUri);
 			if (targetContainers == null || targetContainers.length == 0) {
-				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the target folder '" + moveFileParams.targetUri + "' in the workspace.");
-				return null;
+				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the target folder '" + moveFileParams.targetUri + "' in the workspace.");
 			} else if ((resources == null || resources.length == 0) && (javaElements == null || javaElements.length == 0)) {
-				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find any resources or Java elements associated with the files.");
-				return null;
+				return new RefactorWorkspaceEdit("Failed to move the files because cannot find any resources or Java elements associated with the files.");
 			}
 
 			IJavaElement targetElement = JavaCore.create(targetContainers[0]);
@@ -192,19 +192,21 @@ public class MoveHandler {
 			}
 
 			IReorgDestination packageDestination = ReorgDestinationFactory.createDestination(targetElement);
-			WorkspaceEdit edit = move(resources, javaElements, packageDestination, moveFileParams.updateReferences);
+			WorkspaceEdit edit = move(resources, javaElements, packageDestination, moveFileParams.updateReferences, submonitor);
 			if (edit == null) {
-				JavaLanguageServerPlugin.logError("Cannot enable move operation.");
+				return new RefactorWorkspaceEdit("Cannot enable move operation.");
 			}
 
-			return edit;
+			return new RefactorWorkspaceEdit(edit);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to move the files.", e);
-			return null;
+			return new RefactorWorkspaceEdit("Failed to move the files because of " + e.toString());
+		} finally {
+			submonitor.done();
 		}
 	}
 
-	public static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences) throws JavaModelException, CoreException {
+	public static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws JavaModelException, CoreException {
 		IMovePolicy policy = ReorgPolicyFactory.createMovePolicy(resources, javaElements);
 		if (policy.canEnable()) {
 			JavaMoveProcessor processor = new JavaMoveProcessor(policy);
@@ -242,7 +244,7 @@ public class MoveHandler {
 
 			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 			final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-			create.run(new NullProgressMonitor());
+			create.run(monitor);
 			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
 				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
 				JavaLanguageServerPlugin.logError(check.getStatus().toString());

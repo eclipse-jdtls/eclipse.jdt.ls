@@ -153,6 +153,7 @@ public class GetRefactorEditHandler {
 		 * command, first the edit is executed and then the command.
 		 */
 		public Command command;
+		public String errorMessage;
 
 		public RefactorWorkspaceEdit(WorkspaceEdit edit) {
 			this.edit = edit;
@@ -161,6 +162,10 @@ public class GetRefactorEditHandler {
 		public RefactorWorkspaceEdit(WorkspaceEdit edit, Command command) {
 			this.edit = edit;
 			this.command = command;
+		}
+
+		public RefactorWorkspaceEdit(String errorMessage) {
+			this.errorMessage = errorMessage;
 		}
 	}
 

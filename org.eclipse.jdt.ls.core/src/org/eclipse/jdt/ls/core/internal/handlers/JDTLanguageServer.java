@@ -884,9 +884,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<WorkspaceEdit> moveFile(MoveFileParams params) {
+	public CompletableFuture<RefactorWorkspaceEdit> moveFile(MoveFileParams params) {
 		logInfo(">> java/moveFile");
-		return computeAsync((monitor) -> MoveHandler.moveFile(params));
+		return computeAsyncWithClientProgress((monitor) -> MoveHandler.moveFile(params, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

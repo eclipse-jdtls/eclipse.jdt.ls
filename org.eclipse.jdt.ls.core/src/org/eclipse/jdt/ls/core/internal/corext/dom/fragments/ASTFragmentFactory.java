@@ -47,8 +47,8 @@ public class ASTFragmentFactory {
 	 * Creates and returns a fragment representing the entire subtree rooted at
 	 * <code>node</code>. It is not true in general that the node to which the
 	 * produced IASTFragment maps (see
-	 * {@link org.eclipse.jdt.internal.corext.dom.fragments.IASTFragment
-	 * IASTFragment}) will be <code>node</code>.
+	 * org.eclipse.jdt.internal.corext.dom.fragments.IASTFragment IASTFragment) will
+	 * be <code>node</code>.
 	 *
 	 * XXX: more doc (current assertions about input vs. output)
 	 */

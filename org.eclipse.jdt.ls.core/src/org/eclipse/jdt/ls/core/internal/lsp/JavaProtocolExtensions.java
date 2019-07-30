@@ -104,5 +104,5 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<PackageDestinationsResponse> getPackageDestinations(String[] documentUris);
 
 	@JsonRequest
-	CompletableFuture<WorkspaceEdit> moveFile(MoveFileParams params);
+	CompletableFuture<RefactorWorkspaceEdit> moveFile(MoveFileParams params);
 }
