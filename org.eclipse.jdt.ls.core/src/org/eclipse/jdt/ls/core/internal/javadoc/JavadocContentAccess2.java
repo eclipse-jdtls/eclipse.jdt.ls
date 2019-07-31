@@ -1461,6 +1461,10 @@ public class JavadocContentAccess2 {
 			previousNode = child;
 			if (child instanceof TextElement) {
 				String text = ((TextElement) child).getText();
+				if (JavaDocHTMLPathHandler.containsHTMLTag(text)) {
+					text = JavaDocHTMLPathHandler.getValidatedHTMLSrcAttribute((TextElement) child, fElement);
+				}
+
 				if (skipLeadingWhitespace) {
 					text = text.replaceFirst("^\\s", ""); //$NON-NLS-1$ //$NON-NLS-2$
 				}

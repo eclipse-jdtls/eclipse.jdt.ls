@@ -51,6 +51,7 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 			Whitelist w = (Whitelist) whitelistField.get(c);
 
 			w.addProtocols("a", "href", "file", "jdt");
+			w.addProtocols("img", "src", "file");
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			JavaLanguageServerPlugin.logException("Unable to modify jsoup to include file and jdt protocols", e);
 		}
