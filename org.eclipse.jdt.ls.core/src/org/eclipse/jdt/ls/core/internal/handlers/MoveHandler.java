@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -181,14 +182,25 @@ public class MoveHandler {
 				return new RefactorWorkspaceEdit("Failed to move the files because cannot find any resources or Java elements associated with the files.");
 			}
 
-			IJavaElement targetElement = JavaCore.create(targetContainers[0]);
-			if (targetElement instanceof IPackageFragmentRoot) {
-				targetElement = ((IPackageFragmentRoot) targetElement).getPackageFragment("");
+			// For multi-module scenario, findContainersForLocationURI API may return a container array, need put the result from the nearest project in front.
+			Arrays.sort(targetContainers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
+				return a.getFullPath().toPortableString().length() - b.getFullPath().toPortableString().length();
+			});
+			IJavaElement targetElement = null;
+			for (IContainer container : targetContainers) {
+				targetElement = JavaCore.create(container);
+				if (targetElement instanceof IPackageFragmentRoot) {
+					targetElement = ((IPackageFragmentRoot) targetElement).getPackageFragment("");
+				}
+
+				if (targetElement != null) {
+					break;
+				}
 			}
 
 			if (targetElement == null) {
-				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the corresponding package associated with the path '" + moveFileParams.targetUri + "'.");
-				return null;
+				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the package associated with the path '" + moveFileParams.targetUri + "'.");
+				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the package associated with the path '" + moveFileParams.targetUri + "'.");
 			}
 
 			IReorgDestination packageDestination = ReorgDestinationFactory.createDestination(targetElement);
