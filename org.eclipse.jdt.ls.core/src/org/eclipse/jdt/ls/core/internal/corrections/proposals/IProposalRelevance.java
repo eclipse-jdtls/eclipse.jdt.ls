@@ -18,7 +18,7 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 /**
  * Interface defining relevance values for quick fixes/assists.
  *
- * see org.eclipse.jdt.ui.text.java.IJavaCompletionProposal#getRelevance()
+ * @see org.eclipse.jdt.ui.text.java.IJavaCompletionProposal#getRelevance()
  */
 public interface IProposalRelevance {
 	public static final int OVERRIDES_DEPRECATED= 15;

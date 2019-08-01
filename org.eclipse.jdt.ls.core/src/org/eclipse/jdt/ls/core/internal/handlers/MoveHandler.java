@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -55,6 +56,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
@@ -66,7 +68,19 @@ import org.eclipse.ltk.core.refactoring.participants.MoveRefactoring;
 public class MoveHandler {
 	public static final String DEFAULT_PACKAGE_DISPLAYNAME = "(default package)";
 
-	public static PackageDestinationsResponse getPackageDestinations(String[] documentUris) {
+	public static MoveDestinationsResponse getMoveDestinations(MoveDestinationsParams moveParams) {
+		if (moveParams == null || StringUtils.isBlank(moveParams.destinationKind)) {
+			return null;
+		}
+
+		if ("package".equalsIgnoreCase(moveParams.destinationKind)) {
+			return getPackageDestinations(moveParams.sourceUris);
+		}
+
+		return null;
+	}
+
+	private static MoveDestinationsResponse getPackageDestinations(String[] documentUris) {
 		if (documentUris == null) {
 			documentUris = new String[0];
 		}
@@ -135,7 +149,7 @@ public class MoveHandler {
 			JavaLanguageServerPlugin.logException("Failed to list Java packages for source paths.", e);
 		}
 
-		return new PackageDestinationsResponse(packageNodes.toArray(new PackageNode[0]));
+		return new MoveDestinationsResponse(packageNodes.toArray(new PackageNode[0]));
 	}
 
 	public static IProject findNearestProject(IPath filePath) {
@@ -269,11 +283,33 @@ public class MoveHandler {
 		return null;
 	}
 
-	public static class PackageDestinationsResponse {
-		public PackageNode[] packageNodes;
+	public static class MoveDestinationsParams {
+		public String destinationKind;
+		public String[] sourceUris;
+		public CodeActionParams params;
 
-		public PackageDestinationsResponse(PackageNode[] packageNodes) {
-			this.packageNodes = packageNodes;
+		public MoveDestinationsParams(String destinationKind, String[] sourceUris) {
+			this.destinationKind = destinationKind;
+			this.sourceUris = sourceUris;
+		}
+
+		public MoveDestinationsParams(String destinationKind, CodeActionParams params) {
+			this.destinationKind = destinationKind;
+			this.params = params;
+		}
+
+		public MoveDestinationsParams(String destinationKind, String[] sourceUris, CodeActionParams params) {
+			this.destinationKind = destinationKind;
+			this.sourceUris = sourceUris;
+			this.params = params;
+		}
+	}
+
+	public static class MoveDestinationsResponse {
+		public Object[] destinations;
+
+		public MoveDestinationsResponse(Object[] destinations) {
+			this.destinations = destinations;
 		}
 	}
 

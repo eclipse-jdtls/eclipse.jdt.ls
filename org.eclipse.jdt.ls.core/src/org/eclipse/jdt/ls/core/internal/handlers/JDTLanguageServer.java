@@ -60,8 +60,9 @@ import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefac
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
@@ -878,9 +879,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<PackageDestinationsResponse> getPackageDestinations(String[] documentUris) {
-		logInfo(">> java/getPackageDestinations");
-		return computeAsync((monitor) -> MoveHandler.getPackageDestinations(documentUris));
+	public CompletableFuture<MoveDestinationsResponse> getMoveDestinations(MoveDestinationsParams params) {
+		logInfo(">> java/getMoveDestinations");
+		return computeAsync((monitor) -> MoveHandler.getMoveDestinations(params));
 	}
 
 	@Override

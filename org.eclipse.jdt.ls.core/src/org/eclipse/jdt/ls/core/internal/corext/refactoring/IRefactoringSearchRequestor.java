@@ -16,7 +16,7 @@ import org.eclipse.jdt.core.search.SearchMatch;
 
 /**
  * Interface for search requestors used in conjunction with
- * org.eclipse.jdt.internal.corext.refactoring.RefactoringSearchEngine2.
+ * {@link org.eclipse.jdt.internal.corext.refactoring.RefactoringSearchEngine2}.
  *
  * @since 3.1
  */

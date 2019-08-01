@@ -29,8 +29,10 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageDestinationsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
@@ -62,14 +64,15 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				"public class A {\r\n" +
 				"}", true, null);
 		//@formatter:on
-		PackageDestinationsResponse response = MoveHandler.getPackageDestinations(new String[] { JDTUtils.toURI(unit) });
+		MoveDestinationsParams params = new MoveDestinationsParams("package", new String[] { JDTUtils.toURI(unit) });
+		MoveDestinationsResponse response = MoveHandler.getMoveDestinations(params);
 		assertNotNull(response);
-		assertNotNull(response.packageNodes);
-		assertEquals(3, response.packageNodes.length);
-		assertTrue(response.packageNodes[0].isDefaultPackage);
-		assertEquals("jdtls", response.packageNodes[1].displayName);
-		assertEquals("jdtls.test1", response.packageNodes[2].displayName);
-		assertTrue(response.packageNodes[2].isParentOfSelectedFile);
+		assertNotNull(response.destinations);
+		assertEquals(3, response.destinations.length);
+		assertTrue(((PackageNode) response.destinations[0]).isDefaultPackage);
+		assertEquals("jdtls", ((PackageNode) response.destinations[1]).displayName);
+		assertEquals("jdtls.test1", ((PackageNode) response.destinations[2]).displayName);
+		assertTrue(((PackageNode) response.destinations[2]).isParentOfSelectedFile);
 	}
 
 	@Test
