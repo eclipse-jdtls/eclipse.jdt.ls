@@ -234,7 +234,7 @@ public class MoveCuUpdateCreator {
 		if (fDestination.exists()) {
 			ICompilationUnit[] cus= fDestination.getCompilationUnits();
 			for (int i= 0; i < cus.length; i++) {
-				types.addAll(Arrays.asList(cus[i].getAllTypes()));
+				types.addAll(Arrays.asList(cus[i].getTypes()));
 			}
 		}
 		return types.toArray(new IType[types.size()]);
@@ -249,15 +249,15 @@ public class MoveCuUpdateCreator {
 		IPackageFragment srcPack= (IPackageFragment)movedUnit.getParent();
 		for (int i= 0; i < referencedTypes.length; i++) {
 				IType iType= referencedTypes[i];
-				if (! iType.exists()) {
+			if (!iType.exists()) {
 					continue;
-				}
-				if (!JavaModelUtil.isSamePackage(iType.getPackageFragment(), srcPack)) {
+			}
+			if (!JavaModelUtil.isSamePackage(iType.getPackageFragment(), srcPack)) {
 					continue;
-				}
-				if (cuList.contains(iType.getCompilationUnit())) {
+			}
+			if (cuList.contains(iType.getCompilationUnit())) {
 					continue;
-				}
+			}
 				importEdit.addImport(iType.getFullyQualifiedName('.'));
 		}
 	}
@@ -285,12 +285,11 @@ public class MoveCuUpdateCreator {
 		}
 
 		//heuristic
-		if (referencingCu.getImport(movedUnit.getParent().getElementName() + ".*").exists())
-		 {
+		if (referencingCu.getImport(movedUnit.getParent().getElementName() + ".*").exists()) {
 			return true; // has old star import
 		}
 		if (referencingCu.getParent().equals(movedUnit.getParent()))
-		 {
+		{
 			return true; //is moved away from same package
 		}
 		return false;
@@ -300,7 +299,7 @@ public class MoveCuUpdateCreator {
 		if (referencingCu == null) {
 			return false;
 		}
-		if (! (referencingCu.getParent() instanceof IPackageFragment)) {
+		if (!(referencingCu.getParent() instanceof IPackageFragment)) {
 			return false;
 		}
 		IPackageFragment pack= (IPackageFragment) referencingCu.getParent();
@@ -308,7 +307,7 @@ public class MoveCuUpdateCreator {
 	}
 
 	private static boolean isInAnotherFragmentOfSamePackage(ICompilationUnit cu, IPackageFragment pack) {
-		if (! (cu.getParent() instanceof IPackageFragment)) {
+		if (!(cu.getParent() instanceof IPackageFragment)) {
 			return false;
 		}
 		IPackageFragment cuPack= (IPackageFragment) cu.getParent();
