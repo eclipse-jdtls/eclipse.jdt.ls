@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -62,13 +63,12 @@ public class RefactorProposalUtility {
 	public static final String MOVE_FILE_COMMAND = "moveFile";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
-		List<CUCorrectionProposal> result = new ArrayList<>();
 		String label = ActionMessages.MoveRefactoringAction_label;
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
 		ICompilationUnit cu = context.getCompilationUnit();
 		String uri = JDTUtils.toURI(cu);
-		result.add(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))));
-		return result;
+		return Collections
+				.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))));
 	}
 
 	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
