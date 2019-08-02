@@ -12,12 +12,12 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -35,6 +35,7 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
@@ -47,13 +48,13 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
-import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -125,7 +126,7 @@ public class ChangeUtil {
 
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = edit.getDocumentChanges();
 		if (changes == null) {
-			changes = new LinkedList<>();
+			changes = new ArrayList<>();
 			edit.setDocumentChanges(changes);
 		}
 
@@ -134,7 +135,26 @@ public class ChangeUtil {
 			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
 		} else if (resourceChange instanceof RenamePackageChange) {
 			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
+		} else if (resourceChange instanceof MoveCompilationUnitChange) {
+			convertMoveCompilationUnitChange(edit, (MoveCompilationUnitChange) resourceChange);
 		}
+	}
+
+	private static void convertMoveCompilationUnitChange(WorkspaceEdit edit, MoveCompilationUnitChange change) throws JavaModelException {
+		IPackageFragment newPackage = change.getDestinationPackage();
+		ICompilationUnit unit = change.getCu();
+		CompilationUnit astCU = RefactoringASTParser.parseWithASTProvider(unit, true, new NullProgressMonitor());
+		ASTRewrite rewrite = ASTRewrite.create(astCU.getAST());
+		// update the package declaration
+		updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
+		convertTextEdit(edit, unit, rewrite.rewriteAST());
+
+		RenameFile cuResourceChange = new RenameFile();
+		cuResourceChange.setOldUri(JDTUtils.toURI(unit));
+		IPath newCUPath = newPackage.getResource().getLocation().append(unit.getPath().lastSegment());
+		String newUri = ResourceUtils.fixURI(newCUPath.toFile().toURI());
+		cuResourceChange.setNewUri(newUri);
+		edit.getDocumentChanges().add(Either.forRight(cuResourceChange));
 	}
 
 	private static void convertRenamePackcageChange(WorkspaceEdit edit, RenamePackageChange packageChange) throws CoreException {
@@ -216,29 +236,28 @@ public class ChangeUtil {
 	}
 
 	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit) {
-		TextEdit[] textEdits;
-		if (edit instanceof MultiTextEdit) {
-			textEdits = edit.getChildren();
-		} else {
-			textEdits = new TextEdit[] { edit };
+		if (edit == null) {
+			return;
 		}
-		for (TextEdit textEdit : textEdits) {
-			TextEditConverter converter = new TextEditConverter(unit, textEdit);
-			String uri = JDTUtils.toURI(unit);
-			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
-				List<Either<TextDocumentEdit, ResourceOperation>> changes = root.getDocumentChanges();
-				if (changes == null) {
-					changes = new LinkedList<>();
-					root.setDocumentChanges(changes);
-				}
-				changes.add(Either.forLeft(converter.convertToTextDocumentEdit(0)));
+
+		TextEditConverter converter = new TextEditConverter(unit, edit);
+		String uri = JDTUtils.toURI(unit);
+		if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+			List<Either<TextDocumentEdit, ResourceOperation>> changes = root.getDocumentChanges();
+			if (changes == null) {
+				changes = new ArrayList<>();
+				root.setDocumentChanges(changes);
+			}
+
+			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, 0);
+			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, converter.convert());
+			changes.add(Either.forLeft(documentEdit));
+		} else {
+			Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
+			if (changes.containsKey(uri)) {
+				changes.get(uri).addAll(converter.convert());
 			} else {
-				Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
-				if (changes.containsKey(uri)) {
-					changes.get(uri).addAll(converter.convert());
-				} else {
-					changes.put(uri, converter.convert());
-				}
+				changes.put(uri, converter.convert());
 			}
 		}
 	}

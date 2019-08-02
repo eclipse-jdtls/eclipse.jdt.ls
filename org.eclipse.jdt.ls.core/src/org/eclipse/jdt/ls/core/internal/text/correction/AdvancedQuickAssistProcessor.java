@@ -2045,7 +2045,7 @@ public class AdvancedQuickAssistProcessor {
 
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_inverseBooleanVariable;
 		if (returnAsCommand) {
-			return new CUCorrectionCommandProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), IProposalRelevance.INVERSE_BOOLEAN_VARIABLE, ExtractProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+			return new CUCorrectionCommandProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), IProposalRelevance.INVERSE_BOOLEAN_VARIABLE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 					Arrays.asList(INVERT_VARIABLE_COMMAND, params));
 		}
 

@@ -25,6 +25,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefac
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -97,4 +99,10 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params);
+
+	@JsonRequest
+	CompletableFuture<MoveDestinationsResponse> getMoveDestinations(MoveParams params);
+
+	@JsonRequest
+	CompletableFuture<RefactorWorkspaceEdit> move(MoveParams params);
 }

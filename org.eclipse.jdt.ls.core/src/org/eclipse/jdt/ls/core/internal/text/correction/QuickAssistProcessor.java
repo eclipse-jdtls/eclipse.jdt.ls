@@ -162,6 +162,7 @@ public class QuickAssistProcessor {
 			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
+			getMoveRefactoringProposals(params, context, coveringNode, locations, resultingCollections);
 
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
@@ -207,6 +208,23 @@ public class QuickAssistProcessor {
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
+		if (resultingCollections == null) {
+			return false;
+		}
+
+		if (this.preferenceManager.getClientPreferences().isMoveRefactoringSupported()) {
+			boolean problemsAtLocation = locations.length != 0;
+			List<CUCorrectionProposal> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context, problemsAtLocation);
+			if (newProposals != null && !newProposals.isEmpty()) {
+				resultingCollections.addAll(newProposals);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
@@ -507,9 +525,9 @@ public class QuickAssistProcessor {
 
 		CUCorrectionProposal proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = ExtractProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation);
+			proposal = RefactorProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation);
 		} else {
-			proposal = ExtractProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
+			proposal = RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
 		}
 
 		if (proposal == null) {
@@ -525,7 +543,7 @@ public class QuickAssistProcessor {
 			return false;
 		}
 
-		CUCorrectionProposal proposal = ExtractProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
+		CUCorrectionProposal proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
 
 		if (proposal == null) {
 			return false;
@@ -608,9 +626,9 @@ public class QuickAssistProcessor {
 
 		List<CUCorrectionProposal> newProposals = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			newProposals = ExtractProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation);
+			newProposals = RefactorProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation);
 		} else {
-			newProposals = ExtractProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation);
+			newProposals = RefactorProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation);
 		}
 
 		if (newProposals == null || newProposals.isEmpty()) {

@@ -228,16 +228,15 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> resourceChanges = edit.getDocumentChanges();
 
-		assertEquals(resourceChanges.size(), 3);
+		assertEquals(resourceChanges.size(), 2);
 
-		Either<TextDocumentEdit, ResourceOperation> change = resourceChanges.get(2);
+		Either<TextDocumentEdit, ResourceOperation> change = resourceChanges.get(1);
 		RenameFile resourceChange = (RenameFile) change.getRight();
 		assertEquals(JDTUtils.toURI(cu), resourceChange.getOldUri());
 		assertEquals(JDTUtils.toURI(cu).replaceFirst("(?s)E(?!.*?E)", "Newname"), resourceChange.getNewUri());
 
 		List<TextEdit> testChanges = new LinkedList<>();
 		testChanges.addAll(resourceChanges.get(0).getLeft().getEdits());
-		testChanges.addAll(resourceChanges.get(1).getLeft().getEdits());
 
 		String expected = "package test1;\n" +
 						  "public class Newname {\n" +
@@ -786,14 +785,13 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<Either<TextDocumentEdit, ResourceOperation>> resourceChanges = edit.getDocumentChanges();
 
-		assertEquals(6, resourceChanges.size());
+		assertEquals(5, resourceChanges.size());
 
 		List<TextEdit> testChangesA = new LinkedList<>();
 		testChangesA.addAll(resourceChanges.get(0).getLeft().getEdits());
 
 		List<TextEdit> testChangesB = new LinkedList<>();
 		testChangesB.addAll(resourceChanges.get(1).getLeft().getEdits());
-		testChangesB.addAll(resourceChanges.get(2).getLeft().getEdits());
 
 		String expectedA =
 				"package test1;\n" +
@@ -815,11 +813,11 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(expectedB, TextEditUtil.apply(builderB.toString(), testChangesB));
 
 		//moved package
-		CreateFile resourceChange = (CreateFile) resourceChanges.get(3).getRight();
+		CreateFile resourceChange = (CreateFile) resourceChanges.get(2).getRight();
 		assertEquals(ResourceUtils.fixURI(pack2.getResource().getRawLocationURI()).replaceFirst("test2[/]?", "newpackage/.temp"), resourceChange.getUri());
 
 		//moved class B
-		RenameFile resourceChange2 = (RenameFile) resourceChanges.get(4).getRight();
+		RenameFile resourceChange2 = (RenameFile) resourceChanges.get(3).getRight();
 		assertEquals(ResourceUtils.fixURI(cuB.getResource().getRawLocationURI()), resourceChange2.getOldUri());
 		assertEquals(ResourceUtils.fixURI(cuB.getResource().getRawLocationURI()).replace("test2", "newpackage"), resourceChange2.getNewUri());
 	}

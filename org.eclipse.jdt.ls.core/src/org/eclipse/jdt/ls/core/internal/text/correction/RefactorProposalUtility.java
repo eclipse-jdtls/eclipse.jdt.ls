@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
@@ -50,7 +52,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrect
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 
-public class ExtractProposalUtility {
+public class RefactorProposalUtility {
 	public static final String APPLY_REFACTORING_COMMAND_ID = "java.action.applyRefactoringCommand";
 	public static final String EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND = "extractVariableAllOccurrence";
 	public static final String EXTRACT_VARIABLE_COMMAND = "extractVariable";
@@ -58,6 +60,16 @@ public class ExtractProposalUtility {
 	public static final String EXTRACT_METHOD_COMMAND = "extractMethod";
 	public static final String EXTRACT_FIELD_COMMAND = "extractField";
 	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
+	public static final String MOVE_FILE_COMMAND = "moveFile";
+
+	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
+		String label = ActionMessages.MoveRefactoringAction_label;
+		int relevance = IProposalRelevance.MOVE_REFACTORING;
+		ICompilationUnit cu = context.getCompilationUnit();
+		String uri = JDTUtils.toURI(cu);
+		return Collections
+				.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))));
+	}
 
 	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, false);
@@ -493,6 +505,14 @@ public class ExtractProposalUtility {
 
 		public ExtractFieldInfo(List<String> scopes) {
 			this.initializedScopes = scopes;
+		}
+	}
+
+	public static class MoveFileInfo {
+		public String uri;
+
+		public MoveFileInfo(String uri) {
+			this.uri = uri;
 		}
 	}
 }
