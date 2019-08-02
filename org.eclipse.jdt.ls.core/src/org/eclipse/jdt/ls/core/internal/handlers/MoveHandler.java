@@ -71,12 +71,12 @@ import com.google.gson.Gson;
 public class MoveHandler {
 	public static final String DEFAULT_PACKAGE_DISPLAYNAME = "(default package)";
 
-	public static MoveDestinationsResponse getMoveDestinations(MoveDestinationsParams moveParams) {
-		if (moveParams == null || StringUtils.isBlank(moveParams.destinationKind)) {
+	public static MoveDestinationsResponse getMoveDestinations(MoveParams moveParams) {
+		if (moveParams == null || StringUtils.isBlank(moveParams.moveKind)) {
 			return null;
 		}
 
-		if ("package".equalsIgnoreCase(moveParams.destinationKind)) {
+		if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 			return getPackageDestinations(moveParams.sourceUris);
 		}
 
@@ -308,37 +308,6 @@ public class MoveHandler {
 		return null;
 	}
 
-	public static class MoveDestinationsParams {
-		/**
-		 * The supported destination kinds: package, class, instanceDeclaration.
-		 */
-		public String destinationKind;
-		/**
-		 * The resource uris when it's a resource move action.
-		 */
-		public String[] sourceUris;
-		/**
-		 * The code action params when it's a Java element move action.
-		 */
-		public CodeActionParams params;
-
-		public MoveDestinationsParams(String destinationKind, String[] sourceUris) {
-			this.destinationKind = destinationKind;
-			this.sourceUris = sourceUris;
-		}
-
-		public MoveDestinationsParams(String destinationKind, CodeActionParams params) {
-			this.destinationKind = destinationKind;
-			this.params = params;
-		}
-
-		public MoveDestinationsParams(String destinationKind, String[] sourceUris, CodeActionParams params) {
-			this.destinationKind = destinationKind;
-			this.sourceUris = sourceUris;
-			this.params = params;
-		}
-	}
-
 	public static class MoveDestinationsResponse {
 		public Object[] destinations;
 
@@ -392,11 +361,11 @@ public class MoveHandler {
 		 */
 		String moveKind;
 		/**
-		 * The resource uris when it's a resource move action.
+		 * The selected resource uris when the move operation is triggered.
 		 */
 		String[] sourceUris;
 		/**
-		 * The code action params when it's a Java element move action.
+		 * The code action params when the move operation is triggered.
 		 */
 		CodeActionParams params;
 		/**
@@ -404,6 +373,14 @@ public class MoveHandler {
 		 */
 		Object destination;
 		boolean updateReferences;
+
+		public MoveParams(String moveKind, String[] sourceUris) {
+			this(moveKind, sourceUris, null);
+		}
+
+		public MoveParams(String moveKind, String[] sourceUris, CodeActionParams params) {
+			this(moveKind, sourceUris, params, null, true);
+		}
 
 		public MoveParams(String moveKind, String[] sourceUris, Object destination, boolean updateReferences) {
 			this(moveKind, sourceUris, null, destination, updateReferences);

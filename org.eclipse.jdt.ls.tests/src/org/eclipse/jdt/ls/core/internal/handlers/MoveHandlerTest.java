@@ -29,7 +29,6 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
@@ -64,7 +63,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				"public class A {\r\n" +
 				"}", true, null);
 		//@formatter:on
-		MoveDestinationsParams params = new MoveDestinationsParams("package", new String[] { JDTUtils.toURI(unit) });
+		MoveParams params = new MoveParams("moveResource", new String[] { JDTUtils.toURI(unit) });
 		MoveDestinationsResponse response = MoveHandler.getMoveDestinations(params);
 		assertNotNull(response);
 		assertNotNull(response.destinations);
