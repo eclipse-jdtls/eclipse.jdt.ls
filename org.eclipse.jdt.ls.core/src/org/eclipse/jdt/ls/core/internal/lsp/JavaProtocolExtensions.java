@@ -27,7 +27,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHash
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -105,5 +105,5 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<MoveDestinationsResponse> getMoveDestinations(MoveDestinationsParams params);
 
 	@JsonRequest
-	CompletableFuture<RefactorWorkspaceEdit> moveFile(MoveFileParams params);
+	CompletableFuture<RefactorWorkspaceEdit> move(MoveParams params);
 }

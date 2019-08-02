@@ -31,7 +31,7 @@ import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
@@ -97,7 +97,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		IPackageFragment pack3 = sourceFolder.createPackageFragment("jdtls.test3", false, null);
 		String packageUri = JDTUtils.getFileURI(pack3.getResource());
-		RefactorWorkspaceEdit refactorEdit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveResource", new String[] { JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
 		assertNotNull(refactorEdit);
 		assertNotNull(refactorEdit.edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
@@ -155,7 +155,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		IPackageFragment pack2 = sourceFolder.createPackageFragment("jdtls.test2", false, null);
 		String packageUri = JDTUtils.getFileURI(pack2.getResource());
-		RefactorWorkspaceEdit refactorEdit = MoveHandler.moveFile(new MoveFileParams(new String[] { JDTUtils.toURI(unitA), JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveResource", new String[] { JDTUtils.toURI(unitA), JDTUtils.toURI(unitB) }, packageUri, true), new NullProgressMonitor());
 		assertNotNull(refactorEdit);
 		assertNotNull(refactorEdit.edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();

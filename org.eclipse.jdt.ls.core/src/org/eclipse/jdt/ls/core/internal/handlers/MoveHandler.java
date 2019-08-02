@@ -42,6 +42,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -64,6 +65,8 @@ import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.MoveRefactoring;
+
+import com.google.gson.Gson;
 
 public class MoveHandler {
 	public static final String DEFAULT_PACKAGE_DISPLAYNAME = "(default package)";
@@ -152,7 +155,7 @@ public class MoveHandler {
 		return new MoveDestinationsResponse(packageNodes.toArray(new PackageNode[0]));
 	}
 
-	public static IProject findNearestProject(IPath filePath) {
+	private static IProject findNearestProject(IPath filePath) {
 		List<IProject> projects = Stream.of(ProjectUtils.getAllProjects()).filter(ProjectUtils::isJavaProject).sorted(new Comparator<IProject>() {
 			@Override
 			public int compare(IProject p1, IProject p2) {
@@ -169,14 +172,36 @@ public class MoveHandler {
 		return null;
 	}
 
-	public static RefactorWorkspaceEdit moveFile(MoveFileParams moveFileParams, IProgressMonitor monitor) {
-		URI targetUri = JDTUtils.toURI(moveFileParams.targetUri);
-		if (targetUri == null) {
-			return new RefactorWorkspaceEdit("Failed to move the files because of illegal uri '" + moveFileParams.targetUri + "'.");
+	public static RefactorWorkspaceEdit move(MoveParams moveParams, IProgressMonitor monitor) {
+		// TODO Currently resource move operation only supports CU.
+		if (moveParams != null && "moveResource".equalsIgnoreCase(moveParams.moveKind)) {
+			String targetUri = null;
+			if (moveParams.destination instanceof String) {
+				targetUri = (String) moveParams.destination;
+			} else {
+				String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
+				PackageNode packageNode = JSONUtility.toModel(json, PackageNode.class);
+				if (packageNode == null) {
+					return new RefactorWorkspaceEdit("Invalid destination object: " + moveParams.destination);
+				}
+
+				targetUri = packageNode.uri;
+			}
+
+			return moveCU(moveParams.sourceUris, targetUri, moveParams.updateReferences, monitor);
+		}
+
+		return new RefactorWorkspaceEdit("Unsupported move operation.");
+	}
+
+	private static RefactorWorkspaceEdit moveCU(String[] sourceUris, String targetUri, boolean updateReferences, IProgressMonitor monitor) {
+		URI targetURI = JDTUtils.toURI(targetUri);
+		if (targetURI == null) {
+			return new RefactorWorkspaceEdit("Failed to move the files because of illegal uri '" + targetUri + "'.");
 		}
 
 		List<IJavaElement> elements = new ArrayList<>();
-		for (String uri : moveFileParams.documentUris) {
+		for (String uri : sourceUris) {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 			if (unit == null) {
 				continue;
@@ -189,9 +214,9 @@ public class MoveHandler {
 		try {
 			IResource[] resources = ReorgUtils.getResources(elements);
 			IJavaElement[] javaElements = ReorgUtils.getJavaElements(elements);
-			IContainer[] targetContainers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(targetUri);
+			IContainer[] targetContainers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(targetURI);
 			if (targetContainers == null || targetContainers.length == 0) {
-				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the target folder '" + moveFileParams.targetUri + "' in the workspace.");
+				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the target folder '" + targetUri + "' in the workspace.");
 			} else if ((resources == null || resources.length == 0) && (javaElements == null || javaElements.length == 0)) {
 				return new RefactorWorkspaceEdit("Failed to move the files because cannot find any resources or Java elements associated with the files.");
 			}
@@ -213,12 +238,12 @@ public class MoveHandler {
 			}
 
 			if (targetElement == null) {
-				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the package associated with the path '" + moveFileParams.targetUri + "'.");
-				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the package associated with the path '" + moveFileParams.targetUri + "'.");
+				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the package associated with the path '" + targetUri + "'.");
+				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the package associated with the path '" + targetUri + "'.");
 			}
 
 			IReorgDestination packageDestination = ReorgDestinationFactory.createDestination(targetElement);
-			WorkspaceEdit edit = move(resources, javaElements, packageDestination, moveFileParams.updateReferences, submonitor);
+			WorkspaceEdit edit = move(resources, javaElements, packageDestination, updateReferences, submonitor);
 			if (edit == null) {
 				return new RefactorWorkspaceEdit("Cannot enable move operation.");
 			}
@@ -232,7 +257,7 @@ public class MoveHandler {
 		}
 	}
 
-	public static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws JavaModelException, CoreException {
+	private static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws CoreException {
 		IMovePolicy policy = ReorgPolicyFactory.createMovePolicy(resources, javaElements);
 		if (policy.canEnable()) {
 			JavaMoveProcessor processor = new JavaMoveProcessor(policy);
@@ -284,8 +309,17 @@ public class MoveHandler {
 	}
 
 	public static class MoveDestinationsParams {
+		/**
+		 * The supported destination kinds: package, class, instanceDeclaration.
+		 */
 		public String destinationKind;
+		/**
+		 * The resource uris when it's a resource move action.
+		 */
 		public String[] sourceUris;
+		/**
+		 * The code action params when it's a Java element move action.
+		 */
 		public CodeActionParams params;
 
 		public MoveDestinationsParams(String destinationKind, String[] sourceUris) {
@@ -352,14 +386,38 @@ public class MoveHandler {
 		}
 	}
 
-	public static class MoveFileParams {
-		String[] documentUris;
-		String targetUri;
+	public static class MoveParams {
+		/**
+		 * The supported move kind: moveResource.
+		 */
+		String moveKind;
+		/**
+		 * The resource uris when it's a resource move action.
+		 */
+		String[] sourceUris;
+		/**
+		 * The code action params when it's a Java element move action.
+		 */
+		CodeActionParams params;
+		/**
+		 * The possible destination: a folder/package, class, instanceDeclaration.
+		 */
+		Object destination;
 		boolean updateReferences;
 
-		public MoveFileParams(String[] documentUris, String targetUri, boolean updateReferences) {
-			this.documentUris = documentUris;
-			this.targetUri = targetUri;
+		public MoveParams(String moveKind, String[] sourceUris, Object destination, boolean updateReferences) {
+			this(moveKind, sourceUris, null, destination, updateReferences);
+		}
+
+		public MoveParams(String moveKind, CodeActionParams params, Object destination, boolean updateReferences) {
+			this(moveKind, null, params, destination, updateReferences);
+		}
+
+		public MoveParams(String moveKind, String[] sourceUris, CodeActionParams params, Object destination, boolean updateReferences) {
+			this.moveKind = moveKind;
+			this.sourceUris = sourceUris;
+			this.params = params;
+			this.destination = destination;
 			this.updateReferences = updateReferences;
 		}
 	}

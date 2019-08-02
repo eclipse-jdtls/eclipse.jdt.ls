@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -127,7 +126,7 @@ public class ChangeUtil {
 
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = edit.getDocumentChanges();
 		if (changes == null) {
-			changes = new LinkedList<>();
+			changes = new ArrayList<>();
 			edit.setDocumentChanges(changes);
 		}
 
@@ -141,18 +140,14 @@ public class ChangeUtil {
 		}
 	}
 
-	private static void convertMoveCompilationUnitChange(WorkspaceEdit edit, MoveCompilationUnitChange change) {
+	private static void convertMoveCompilationUnitChange(WorkspaceEdit edit, MoveCompilationUnitChange change) throws JavaModelException {
 		IPackageFragment newPackage = change.getDestinationPackage();
 		ICompilationUnit unit = change.getCu();
 		CompilationUnit astCU = RefactoringASTParser.parseWithASTProvider(unit, true, new NullProgressMonitor());
 		ASTRewrite rewrite = ASTRewrite.create(astCU.getAST());
-		try {
-			// update the package declaration
-			updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
-			convertTextEdit(edit, unit, rewrite.rewriteAST());
-		} catch (JavaModelException | IllegalArgumentException e) {
-			// do nothing
-		}
+		// update the package declaration
+		updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
+		convertTextEdit(edit, unit, rewrite.rewriteAST());
 
 		RenameFile cuResourceChange = new RenameFile();
 		cuResourceChange.setOldUri(JDTUtils.toURI(unit));
@@ -250,7 +245,7 @@ public class ChangeUtil {
 		if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 			List<Either<TextDocumentEdit, ResourceOperation>> changes = root.getDocumentChanges();
 			if (changes == null) {
-				changes = new LinkedList<>();
+				changes = new ArrayList<>();
 				root.setDocumentChanges(changes);
 			}
 

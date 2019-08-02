@@ -62,7 +62,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHash
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
-import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveFileParams;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
@@ -885,9 +885,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<RefactorWorkspaceEdit> moveFile(MoveFileParams params) {
-		logInfo(">> java/moveFile");
-		return computeAsyncWithClientProgress((monitor) -> MoveHandler.moveFile(params, monitor));
+	public CompletableFuture<RefactorWorkspaceEdit> move(MoveParams params) {
+		logInfo(">> java/move");
+		return computeAsyncWithClientProgress((monitor) -> MoveHandler.move(params, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {
