@@ -49,6 +49,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -168,6 +169,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
 		fDefaultPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, DEFAULT_MEMBER_SORT_ORDER);
+		fDefaultPreferenceStore.put(CodeGenerationSettingsConstants.CODEGEN_USE_OVERRIDE_ANNOTATION, Boolean.TRUE.toString());
 
 		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
 		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();

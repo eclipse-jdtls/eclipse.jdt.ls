@@ -205,6 +205,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedExtractRefactoringSupport", "false").toString());
 	}
 
+	public boolean isMoveRefactoringSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

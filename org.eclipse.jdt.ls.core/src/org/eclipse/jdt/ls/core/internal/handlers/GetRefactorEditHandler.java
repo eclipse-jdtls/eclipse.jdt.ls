@@ -29,8 +29,9 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.text.correction.ExtractProposalUtility;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.FormattingOptions;
@@ -54,18 +55,20 @@ public class GetRefactorEditHandler {
 
 		try {
 			Map formatterOptions = params.options == null ? null : FormatterHandler.getOptions(params.options, unit);
-			RefactoringCorrectionProposal proposal = null;
-			if (ExtractProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || ExtractProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
-					|| ExtractProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
-				proposal = (RefactoringCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
-			} else if (ExtractProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
-				proposal = (RefactoringCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
-			} else if (ExtractProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
+			LinkedCorrectionProposal proposal = null;
+			if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
+					|| RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
+			} else if (RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
+			} else if (RefactorProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
-				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
-			} else if (ExtractProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+			} else if (RefactorProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
-				proposal = (RefactoringCorrectionProposal) ExtractProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
+			} else if (AdvancedQuickAssistProcessor.INVERT_VARIABLE_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) AdvancedQuickAssistProcessor.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
 			}
 
 			if (proposal == null) {
@@ -109,23 +112,23 @@ public class GetRefactorEditHandler {
 	}
 
 	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
-		if (ExtractProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(refactorType)) {
-			return ExtractProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false);
+		if (RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(refactorType)) {
+			return RefactorProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
-		if (ExtractProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(refactorType)) {
-			return ExtractProposalUtility.getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, false);
+		if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(refactorType)) {
+			return RefactorProposalUtility.getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
-		if (ExtractProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(refactorType)) {
-			return ExtractProposalUtility.getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, false);
+		if (RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(refactorType)) {
+			return RefactorProposalUtility.getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
 		return null;
 	}
 
 	private static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
-		return ExtractProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
+		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
 	}
 
 	public static class RenamePosition {
@@ -150,6 +153,7 @@ public class GetRefactorEditHandler {
 		 * command, first the edit is executed and then the command.
 		 */
 		public Command command;
+		public String errorMessage;
 
 		public RefactorWorkspaceEdit(WorkspaceEdit edit) {
 			this.edit = edit;
@@ -158,6 +162,10 @@ public class GetRefactorEditHandler {
 		public RefactorWorkspaceEdit(WorkspaceEdit edit, Command command) {
 			this.edit = edit;
 			this.command = command;
+		}
+
+		public RefactorWorkspaceEdit(String errorMessage) {
+			this.errorMessage = errorMessage;
 		}
 	}
 

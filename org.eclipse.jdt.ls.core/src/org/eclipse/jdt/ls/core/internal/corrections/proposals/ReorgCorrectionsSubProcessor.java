@@ -32,11 +32,11 @@ import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.fix.UnusedCodeFix;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -119,7 +119,7 @@ public class ReorgCorrectionsSubProcessor {
 
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<ChangeCorrectionProposal> proposals) {
-		IProposableFix fix= UnusedCodeFix.createRemoveUnusedImportFix(context.getASTRoot(), problem);
+		IProposableFix fix = UnusedCodeFixCore.createRemoveUnusedImportFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
