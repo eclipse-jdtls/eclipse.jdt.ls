@@ -27,11 +27,13 @@ public class JdtDomModels {
 		public String bindingKey;
 		public String name;
 		public String type;
+		public boolean isField;
 
 		public LspVariableBinding(IVariableBinding binding) {
 			this.bindingKey = binding.getKey();
 			this.name = binding.getName();
 			this.type = binding.getType().getName();
+			this.isField = binding.isField();
 		}
 	}
 

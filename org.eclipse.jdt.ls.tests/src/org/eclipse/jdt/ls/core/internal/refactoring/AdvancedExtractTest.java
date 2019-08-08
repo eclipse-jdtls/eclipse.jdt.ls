@@ -170,4 +170,76 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveFileInfo);
 		Assert.assertEquals(JDTUtils.toURI(cu), ((RefactorProposalUtility.MoveFileInfo) moveCommand.getArguments().get(2)).uri);
 	}
+
+	@Test
+	public void testMoveInstanceMethod() throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		//@formatter:off
+		pack1.createCompilationUnit("Second.java", "package test1;\n"
+				+ "\n"
+				+ "public class Second {\n"
+				+ "    public void bar() {\n"
+				+ "    }\n"
+				+ "}",
+				false, null);
+		//@formatter:on
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    Second s;\n");
+		buf.append("    public void print() {\n");
+		buf.append("        /*[*//*]*/s.bar();\n");
+		buf.append("    }\n");
+		buf.append("}");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
+		Assert.assertNotNull(moveAction);
+		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
+		Assert.assertNotNull(moveCommand);
+		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		Assert.assertNotNull(moveCommand.getArguments());
+		Assert.assertEquals(3, moveCommand.getArguments().size());
+		Assert.assertEquals(RefactorProposalUtility.MOVE_INSTANCE_METHOD_COMMAND, moveCommand.getArguments().get(0));
+		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveInstanceMethodInfo);
+		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveInstanceMethodInfo) moveCommand.getArguments().get(2)).displayName);
+	}
+
+	@Test
+	public void testMoveStaticMember() throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void print() {\n");
+		buf.append("        /*[*//*]*/\n");
+		buf.append("    }\n");
+		buf.append("}");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
+		Assert.assertNotNull(moveAction);
+		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
+		Assert.assertNotNull(moveCommand);
+		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		Assert.assertNotNull(moveCommand.getArguments());
+		Assert.assertEquals(3, moveCommand.getArguments().size());
+		Assert.assertEquals(RefactorProposalUtility.MOVE_STATIC_MEMBER_COMMAND, moveCommand.getArguments().get(0));
+		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveStaticMemberInfo);
+		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).projectName);
+		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).displayName);
+	}
 }

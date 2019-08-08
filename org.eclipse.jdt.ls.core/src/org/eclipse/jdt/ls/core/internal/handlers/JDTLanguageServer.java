@@ -64,6 +64,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsRes
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
@@ -390,9 +391,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
 		logInfo(">> workspace/symbol");
-		WorkspaceSymbolHandler handler = new WorkspaceSymbolHandler(preferenceManager);
 		return computeAsync((monitor) -> {
-			return handler.search(params.getQuery(), monitor);
+			return WorkspaceSymbolHandler.search(params.getQuery(), monitor);
 		});
 	}
 
@@ -887,6 +887,12 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	public CompletableFuture<RefactorWorkspaceEdit> move(MoveParams params) {
 		logInfo(">> java/move");
 		return computeAsyncWithClientProgress((monitor) -> MoveHandler.move(params, monitor));
+	}
+
+	@Override
+	public CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params) {
+		logInfo(">> java/searchSymbols");
+		return computeAsyncWithClientProgress((monitor) -> WorkspaceSymbolHandler.search(params.getQuery(), params.top, params.projectName, params.sourceOnly, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

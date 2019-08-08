@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -24,16 +25,22 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
@@ -44,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantR
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
+import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
@@ -61,14 +69,64 @@ public class RefactorProposalUtility {
 	public static final String EXTRACT_FIELD_COMMAND = "extractField";
 	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
 	public static final String MOVE_FILE_COMMAND = "moveFile";
+	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
+	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
 		String label = ActionMessages.MoveRefactoringAction_label;
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+
+		while (node != null && !(node instanceof BodyDeclaration)) {
+			node = node.getParent();
+		}
+
 		ICompilationUnit cu = context.getCompilationUnit();
+		if (cu != null && node != null) {
+			if (node instanceof MethodDeclaration && !JdtFlags.isStatic((BodyDeclaration) node)) {
+				// move instance method.
+				return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+						Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveInstanceMethodInfo(getDisplayName(node)))));
+			} else if ((node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) && JdtFlags.isStatic((BodyDeclaration) node)) {
+				// move static member.
+				return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+						Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveStaticMemberInfo(getDisplayName(node), cu.getJavaProject().getProject().getName()))));
+			}
+		}
+
 		String uri = JDTUtils.toURI(cu);
-		return Collections
-				.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))));
+		return Collections.singletonList(
+				(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+	}
+
+	private static String getDisplayName(ASTNode declaration) {
+		if (declaration instanceof MethodDeclaration) {
+			IMethodBinding method = ((MethodDeclaration) declaration).resolveBinding();
+			if (method != null) {
+				String name = method.getName();
+				String[] parameters = Stream.of(method.getParameterTypes()).map(type -> type.getName()).toArray(String[]::new);
+				return name + "(" + String.join(",", parameters) + ")";
+			}
+		} else if (declaration instanceof FieldDeclaration) {
+			List<String> fieldNames = new ArrayList<>();
+			for (Object fragment : ((FieldDeclaration) declaration).fragments()) {
+				IVariableBinding variable = ((VariableDeclarationFragment) fragment).resolveBinding();
+				if (variable != null) {
+					fieldNames.add(variable.getName());
+				}
+			}
+			return String.join(",", fieldNames);
+		} else if (declaration instanceof AbstractTypeDeclaration) {
+			ITypeBinding type = ((AbstractTypeDeclaration) declaration).resolveBinding();
+			if (type != null) {
+				return type.getName();
+			}
+		}
+
+		return null;
 	}
 
 	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
@@ -513,6 +571,28 @@ public class RefactorProposalUtility {
 
 		public MoveFileInfo(String uri) {
 			this.uri = uri;
+		}
+	}
+
+	public static class MoveInstanceMethodInfo {
+		public String displayName;
+
+		public MoveInstanceMethodInfo(String displayName) {
+			this.displayName = displayName;
+		}
+	}
+
+	public static class MoveStaticMemberInfo {
+		public String displayName;
+		public String projectName;
+
+		public MoveStaticMemberInfo(String projectName) {
+			this.projectName = projectName;
+		}
+
+		public MoveStaticMemberInfo(String displayName, String projectName) {
+			this.displayName = displayName;
+			this.projectName = projectName;
 		}
 	}
 }

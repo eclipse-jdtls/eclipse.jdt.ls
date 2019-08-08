@@ -37,7 +37,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");//We need at least 1 project
-		handler = new WorkspaceSymbolHandler(preferenceManager);
+		handler = new WorkspaceSymbolHandler();
 	}
 
 	@Test
@@ -130,4 +130,22 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		assertTrue("Did not find "+className, foundClass);
 	}
 
+	@Test
+	public void testSearchSourceOnly() {
+		String query = "B*";
+		List<SymbolInformation> results = handler.search(query, "hello", true, monitor);
+		assertNotNull(results);
+		assertEquals("Found " + results.size() + "result", 5, results.size());
+		String className = "BaseTest";
+		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
+		assertTrue("Did not find " + className, foundClass);
+	}
+
+	@Test
+	public void testSearchReturnTopOnly() {
+		String query = "B*";
+		List<SymbolInformation> results = handler.search(query, 2, "hello", true, monitor);
+		assertNotNull(results);
+		assertEquals("Found " + results.size() + "result", 2, results.size());
+	}
 }

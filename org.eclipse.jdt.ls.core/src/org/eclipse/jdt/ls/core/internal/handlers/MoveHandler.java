@@ -18,6 +18,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,16 +32,29 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInstanceMethodProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.structure.MoveStaticMembersProcessor;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
@@ -54,10 +69,15 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.JavaMoveProcess
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgPolicyFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgUtils;
+import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
@@ -78,6 +98,8 @@ public class MoveHandler {
 
 		if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 			return getPackageDestinations(moveParams.sourceUris);
+		} else if ("moveInstanceMethod".equalsIgnoreCase(moveParams.moveKind)) {
+			return getInstanceMethodDestinations(moveParams.params);
 		}
 
 		return null;
@@ -155,6 +177,64 @@ public class MoveHandler {
 		return new MoveDestinationsResponse(packageNodes.toArray(new PackageNode[0]));
 	}
 
+	private static MethodDeclaration getSelectedMethodDeclaration(ICompilationUnit unit, CodeActionParams params) {
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
+
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+
+		while (node != null && !(node instanceof BodyDeclaration)) {
+			node = node.getParent();
+		}
+
+		if (node != null && node instanceof MethodDeclaration) {
+			return (MethodDeclaration) node;
+		}
+
+		return null;
+	}
+
+	private static MoveDestinationsResponse getInstanceMethodDestinations(CodeActionParams params) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null) {
+			return new MoveDestinationsResponse("Cannot find the compilation unit associated with " + params.getTextDocument().getUri());
+		}
+
+		MethodDeclaration methodDeclaration = getSelectedMethodDeclaration(unit, params);
+		if (methodDeclaration == null) {
+			return new MoveDestinationsResponse("The selected element is not a method.");
+		}
+
+		IMethodBinding methodBinding = methodDeclaration.resolveBinding();
+		if (methodBinding == null || !(methodBinding.getJavaElement() instanceof IMethod)) {
+			return new MoveDestinationsResponse("The selected element is not a method.");
+		}
+
+		IMethod method = (IMethod) methodBinding.getJavaElement();
+		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(method.getJavaProject().getProject()));
+		Refactoring refactoring = new MoveRefactoring(processor);
+		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
+		try {
+			check.run(new NullProgressMonitor());
+			if (check.getStatus().hasFatalError()) {
+				return new MoveDestinationsResponse(check.getStatus().getMessageMatchingSeverity(RefactoringStatus.FATAL));
+			}
+
+			IVariableBinding[] possibleTargets = processor.getPossibleTargets();
+			LspVariableBinding[] targets = Stream.of(possibleTargets).map(target -> new LspVariableBinding(target)).toArray(LspVariableBinding[]::new);
+			return new MoveDestinationsResponse(targets);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+		}
+
+		return new MoveDestinationsResponse("Cannot find any target to move the method to.");
+	}
+
 	private static IProject findNearestProject(IPath filePath) {
 		List<IProject> projects = Stream.of(ProjectUtils.getAllProjects()).filter(ProjectUtils::isJavaProject).sorted(new Comparator<IProject>() {
 			@Override
@@ -174,13 +254,13 @@ public class MoveHandler {
 
 	public static RefactorWorkspaceEdit move(MoveParams moveParams, IProgressMonitor monitor) {
 		// TODO Currently resource move operation only supports CU.
-		if (moveParams != null && "moveResource".equalsIgnoreCase(moveParams.moveKind)) {
+		if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 			String targetUri = null;
 			if (moveParams.destination instanceof String) {
 				targetUri = (String) moveParams.destination;
 			} else {
 				String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
-				PackageNode packageNode = JSONUtility.toModel(json, PackageNode.class);
+				PackageNode packageNode = JSONUtility.toLsp4jModel(json, PackageNode.class);
 				if (packageNode == null) {
 					return new RefactorWorkspaceEdit("Invalid destination object: " + moveParams.destination);
 				}
@@ -189,6 +269,32 @@ public class MoveHandler {
 			}
 
 			return moveCU(moveParams.sourceUris, targetUri, moveParams.updateReferences, monitor);
+		} else if ("moveInstanceMethod".equalsIgnoreCase(moveParams.moveKind)) {
+			String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
+			LspVariableBinding variableBinding = JSONUtility.toLsp4jModel(json, LspVariableBinding.class);
+			if (variableBinding == null) {
+				return new RefactorWorkspaceEdit("Invalid destination object: " + moveParams.destination);
+			}
+
+			return moveInstanceMethod(moveParams.params, variableBinding, monitor);
+		} else if ("moveStaticMember".equalsIgnoreCase(moveParams.moveKind)) {
+			String typeName = null;
+			if (moveParams.destination instanceof String) {
+				typeName = (String) moveParams.destination;
+			} else {
+				String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
+				SymbolInformation destination = JSONUtility.toLsp4jModel(json, SymbolInformation.class);
+				if (destination == null) {
+					return new RefactorWorkspaceEdit("Invalid destination object: " + moveParams.destination);
+				}
+
+				typeName = destination.getName();
+				if (StringUtils.isNotBlank(destination.getContainerName())) {
+					typeName = destination.getContainerName() + "." + destination.getName();
+				}
+			}
+
+			return moveStaticMember(moveParams.params, typeName, monitor);
 		}
 
 		return new RefactorWorkspaceEdit("Unsupported move operation.");
@@ -296,11 +402,6 @@ public class MoveHandler {
 			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 			final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
 			create.run(monitor);
-			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
-				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-				JavaLanguageServerPlugin.logError(check.getStatus().toString());
-			}
-
 			Change change = create.getChange();
 			return ChangeUtil.convertToWorkspaceEdit(change);
 		}
@@ -308,8 +409,146 @@ public class MoveHandler {
 		return null;
 	}
 
+	private static RefactorWorkspaceEdit moveInstanceMethod(CodeActionParams params, LspVariableBinding destination, IProgressMonitor monitor) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null) {
+			return new RefactorWorkspaceEdit("Failed to move instance method because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
+		}
+
+		MethodDeclaration methodDeclaration = getSelectedMethodDeclaration(unit, params);
+		if (methodDeclaration == null || destination == null) {
+			return new RefactorWorkspaceEdit("Failed to move instance method because no method is selected or no destination is specified.");
+		}
+
+		IMethodBinding methodBinding = methodDeclaration.resolveBinding();
+		if (methodBinding == null || !(methodBinding.getJavaElement() instanceof IMethod)) {
+			return new RefactorWorkspaceEdit("Failed to move instance method because the selected element is not a method.");
+		}
+
+		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving instance method...", 100);
+		IMethod method = (IMethod) methodBinding.getJavaElement();
+		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(method.getJavaProject().getProject()));
+		Refactoring refactoring = new MoveRefactoring(processor);
+		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
+		try {
+			check.run(subMonitor.split(20));
+			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
+				JavaLanguageServerPlugin.logError(check.getStatus().toString());
+				return new RefactorWorkspaceEdit("Failed to move instance method. Reason: " + check.getStatus().toString());
+			}
+
+			IVariableBinding[] possibleTargets = processor.getPossibleTargets();
+			Optional<IVariableBinding> target = Stream.of(possibleTargets).filter(possibleTarget -> Objects.equals(possibleTarget.getKey(), destination.bindingKey)).findFirst();
+			if (target.isPresent()) {
+				processor.setTarget(target.get());
+				processor.setDeprecateDelegates(false);
+				processor.setInlineDelegator(true);
+				processor.setRemoveDelegator(true);
+				check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+				check.run(subMonitor.split(60));
+				if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+					JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
+					JavaLanguageServerPlugin.logError(check.getStatus().toString());
+					return new RefactorWorkspaceEdit("Failed to move instance method. Reason: " + check.getStatus().toString());
+				}
+
+				Change change = processor.createChange(subMonitor.split(20));
+				return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+			} else {
+				return new RefactorWorkspaceEdit("Failed to move instance method because cannot find the target " + destination.name);
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+			return new RefactorWorkspaceEdit("Failed to move instance method because of " + e.toString());
+		} finally {
+			subMonitor.done();
+		}
+	}
+
+	private static RefactorWorkspaceEdit moveStaticMember(CodeActionParams params, String destinationTypeName, IProgressMonitor monitor) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null) {
+			return new RefactorWorkspaceEdit("Failed to move static member because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
+		}
+
+		BodyDeclaration bodyDeclaration = getSelectedMemberDeclaration(unit, params);
+		List<IJavaElement> elements = new ArrayList<>();
+		if (bodyDeclaration instanceof MethodDeclaration) {
+			elements.add(((MethodDeclaration) bodyDeclaration).resolveBinding().getJavaElement());
+		} else if (bodyDeclaration instanceof FieldDeclaration) {
+			for (Object fragment : ((FieldDeclaration) bodyDeclaration).fragments()) {
+				elements.add(((VariableDeclarationFragment) fragment).resolveBinding().getJavaElement());
+			}
+		} else if (bodyDeclaration instanceof AbstractTypeDeclaration) {
+			elements.add(((AbstractTypeDeclaration) bodyDeclaration).resolveBinding().getJavaElement());
+		}
+
+		IMember[] members = elements.stream().filter(element -> element instanceof IMember).map(element -> (IMember) element).toArray(IMember[]::new);
+		if (members.length == 0 || destinationTypeName == null) {
+			return new RefactorWorkspaceEdit("Failed to move static member because no members are selected or no destination is specified.");
+		}
+
+		MoveStaticMembersProcessor processor = new MoveStaticMembersProcessor(members, PreferenceManager.getCodeGenerationSettings(members[0].getJavaProject().getProject()));
+		Refactoring refactoring = new MoveRefactoring(processor);
+		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
+		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving static members...", 100);
+		try {
+			check.run(subMonitor.split(20));
+			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
+				JavaLanguageServerPlugin.logError(check.getStatus().toString());
+			}
+
+			processor.setDestinationTypeFullyQualifiedName(destinationTypeName);
+			processor.setDeprecateDelegates(false);
+			check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+			check.run(subMonitor.split(60));
+			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
+				JavaLanguageServerPlugin.logError(check.getStatus().toString());
+				return new RefactorWorkspaceEdit("Failed to move static member. Reason: " + check.getStatus().toString());
+			}
+
+			Change change = processor.createChange(subMonitor.split(20));
+			return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+			return new RefactorWorkspaceEdit("Failed to move static member because of " + e.toString());
+		} finally {
+			subMonitor.done();
+		}
+	}
+
+	private static BodyDeclaration getSelectedMemberDeclaration(ICompilationUnit unit, CodeActionParams params) {
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
+
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+
+		while (node != null && !(node instanceof BodyDeclaration)) {
+			node = node.getParent();
+		}
+
+		if (node != null && (node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) && JdtFlags.isStatic((BodyDeclaration) node)) {
+			return (BodyDeclaration) node;
+		}
+
+		return null;
+	}
+
 	public static class MoveDestinationsResponse {
+		public String errorMessage;
 		public Object[] destinations;
+
+		public MoveDestinationsResponse(String errorMessage) {
+			this.errorMessage = errorMessage;
+		}
 
 		public MoveDestinationsResponse(Object[] destinations) {
 			this.destinations = destinations;

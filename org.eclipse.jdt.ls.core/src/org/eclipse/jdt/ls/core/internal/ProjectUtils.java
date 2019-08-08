@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -116,6 +117,23 @@ public final class ProjectUtils {
 
 	public static IProject[] getAllProjects() {
 		return ResourcesPlugin.getWorkspace().getRoot().getProjects();
+	}
+
+	public static IProject getProject(String projectName) {
+		if (StringUtils.isBlank(projectName)) {
+			return null;
+		}
+
+		return ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+	}
+
+	public static IJavaProject getJavaProject(String projectName) {
+		IProject project = getProject(projectName);
+		if (project != null && isJavaProject(project)) {
+			return JavaCore.create(project);
+		}
+
+		return null;
 	}
 
 	public static boolean addSourcePath(IPath sourcePath, IJavaProject project) throws CoreException {
