@@ -13,7 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.maven.shared.utils.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
@@ -44,7 +44,7 @@ public class WorkspaceSymbolHandler{
 		return search(query, 0, projectName, sourceOnly, monitor);
 	}
 
-	public static List<SymbolInformation> search(String query, int top, String projectName, boolean sourceOnly, IProgressMonitor monitor) {
+	public static List<SymbolInformation> search(String query, int maxResults, String projectName, boolean sourceOnly, IProgressMonitor monitor) {
 		ArrayList<SymbolInformation> symbols = new ArrayList<>();
 		if (StringUtils.isBlank(query)) {
 			return symbols;
@@ -81,7 +81,7 @@ public class WorkspaceSymbolHandler{
 							symbolInformation.setKind(mapKind(match));
 							symbolInformation.setLocation(location);
 							symbols.add(symbolInformation);
-							if (top > 0 && symbols.size() >= top) {
+							if (maxResults > 0 && symbols.size() >= maxResults) {
 								monitor.setCanceled(true);
 							}
 						}
@@ -139,7 +139,7 @@ public class WorkspaceSymbolHandler{
 	public static class SearchSymbolParams extends WorkspaceSymbolParams {
 		public String projectName;
 		public boolean sourceOnly;
-		public int top;
+		public int maxResults;
 
 		public SearchSymbolParams(String query, String projectName) {
 			super(query);

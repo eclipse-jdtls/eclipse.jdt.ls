@@ -21,6 +21,8 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -42,11 +44,14 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
@@ -85,21 +90,68 @@ public class RefactorProposalUtility {
 		}
 
 		ICompilationUnit cu = context.getCompilationUnit();
+		String uri = JDTUtils.toURI(cu);
 		if (cu != null && node != null) {
-			if (node instanceof MethodDeclaration && !JdtFlags.isStatic((BodyDeclaration) node)) {
-				// move instance method.
-				return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-						Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveInstanceMethodInfo(getDisplayName(node)))));
-			} else if ((node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) && JdtFlags.isStatic((BodyDeclaration) node)) {
-				// move static member.
-				return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-						Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveStaticMemberInfo(getDisplayName(node), cu.getJavaProject().getProject().getName()))));
+			try {
+				if (node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) {
+					if (JdtFlags.isStatic((BodyDeclaration) node)) {
+						// move static member.
+						if (isMoveStaticMemberAvailable(node)) {
+							String displayName = getDisplayName(node);
+							int memberType = node.getNodeType();
+							String enclosingTypeName = getEnclosingType(node);
+							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveStaticMemberInfo(displayName, memberType, enclosingTypeName, cu.getJavaProject().getProject().getName()))));
+						}
+					} else if (node instanceof MethodDeclaration) {
+						// move instance method.
+						if (isMoveMethodAvailable((MethodDeclaration) node)) {
+							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveInstanceMethodInfo(getDisplayName(node)))));
+						}
+					} else if (node instanceof AbstractTypeDeclaration) {
+						// TODO if it's inner type, then move inner type to file or another class.
+						// move ICompilationUnit.
+						return Collections.singletonList((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+					}
+
+					return Collections.EMPTY_LIST;
+				}
+			} catch (JavaModelException e) {
+				return Collections.EMPTY_LIST;
 			}
 		}
 
-		String uri = JDTUtils.toURI(cu);
 		return Collections.singletonList(
 				(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+	}
+
+	private static boolean isMoveMethodAvailable(MethodDeclaration declaration) throws JavaModelException {
+		IMethodBinding methodBinding = declaration.resolveBinding();
+		IMethod method = methodBinding == null ? null : (IMethod) methodBinding.getJavaElement();
+		return method != null && RefactoringAvailabilityTester.isMoveMethodAvailable(method);
+	}
+
+	private static boolean isMoveStaticMemberAvailable(ASTNode declaration) throws JavaModelException {
+		if (declaration instanceof MethodDeclaration) {
+			IMethodBinding method = ((MethodDeclaration) declaration).resolveBinding();
+			return method != null && RefactoringAvailabilityTesterCore.isMoveStaticAvailable((IMember) method.getJavaElement());
+		} else if (declaration instanceof FieldDeclaration) {
+			List<IMember> members = new ArrayList<>();
+			for (Object fragment : ((FieldDeclaration) declaration).fragments()) {
+				IVariableBinding variable = ((VariableDeclarationFragment) fragment).resolveBinding();
+				if (variable != null) {
+					members.add((IField) variable.getJavaElement());
+				}
+			}
+			return RefactoringAvailabilityTesterCore.isMoveStaticMembersAvailable(members.toArray(new IMember[0]));
+		} else if (declaration instanceof AbstractTypeDeclaration) {
+			ITypeBinding type = ((AbstractTypeDeclaration) declaration).resolveBinding();
+			return type != null && RefactoringAvailabilityTesterCore.isMoveStaticAvailable((IType) type.getJavaElement());
+		}
+
+		return false;
 	}
 
 	private static String getDisplayName(ASTNode declaration) {
@@ -127,6 +179,12 @@ public class RefactorProposalUtility {
 		}
 
 		return null;
+	}
+
+	private static String getEnclosingType(ASTNode declaration) {
+		ASTNode node = declaration == null ? null : declaration.getParent();
+		ITypeBinding type = ASTNodes.getEnclosingType(node);
+		return type == null ? null : type.getQualifiedName();
 	}
 
 	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
@@ -584,14 +642,14 @@ public class RefactorProposalUtility {
 
 	public static class MoveStaticMemberInfo {
 		public String displayName;
+		public int memberType;
+		public String enclosingTypeName;
 		public String projectName;
 
-		public MoveStaticMemberInfo(String projectName) {
-			this.projectName = projectName;
-		}
-
-		public MoveStaticMemberInfo(String displayName, String projectName) {
+		public MoveStaticMemberInfo(String displayName, int memberType, String enclosingTypeName, String projectName) {
 			this.displayName = displayName;
+			this.memberType = memberType;
+			this.enclosingTypeName = enclosingTypeName;
 			this.projectName = projectName;
 		}
 	}

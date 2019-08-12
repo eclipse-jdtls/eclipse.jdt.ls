@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
@@ -241,5 +242,7 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveStaticMemberInfo);
 		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).projectName);
 		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).displayName);
+		Assert.assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).memberType);
+		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
 	}
 }

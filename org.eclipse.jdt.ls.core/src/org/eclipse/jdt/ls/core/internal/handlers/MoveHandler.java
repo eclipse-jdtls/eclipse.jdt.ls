@@ -253,6 +253,10 @@ public class MoveHandler {
 	}
 
 	public static RefactorWorkspaceEdit move(MoveParams moveParams, IProgressMonitor monitor) {
+		if (moveParams == null) {
+			return new RefactorWorkspaceEdit("moveParams should not be empty.");
+		}
+
 		// TODO Currently resource move operation only supports CU.
 		if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 			String targetUri = null;

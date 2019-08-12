@@ -892,7 +892,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params) {
 		logInfo(">> java/searchSymbols");
-		return computeAsyncWithClientProgress((monitor) -> WorkspaceSymbolHandler.search(params.getQuery(), params.top, params.projectName, params.sourceOnly, monitor));
+		return computeAsyncWithClientProgress((monitor) -> WorkspaceSymbolHandler.search(params.getQuery(), params.maxResults, params.projectName, params.sourceOnly, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {

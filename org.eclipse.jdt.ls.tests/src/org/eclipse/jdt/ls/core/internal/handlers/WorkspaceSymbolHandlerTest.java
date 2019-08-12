@@ -142,7 +142,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
-	public void testSearchReturnTopOnly() {
+	public void testSearchReturnMaxResults() {
 		String query = "B*";
 		List<SymbolInformation> results = handler.search(query, 2, "hello", true, monitor);
 		assertNotNull(results);
