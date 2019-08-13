@@ -115,6 +115,42 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
+	public void testMethodInvocationImplementation() {
+		URI uri = project.getFile("src/org/sample/FooService.java").getRawLocationURI();
+		String fileURI = ResourceUtils.fixURI(uri);
+
+		TextDocumentPositionParams param = new TextDocumentPositionParams();
+		param.setPosition(new Position(6, 14)); //Position over foo.someMethod
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<? extends Location> implementations = handler.findImplementations(param, monitor);
+		assertNotNull("findImplementations should not return null", implementations);
+		assertEquals(implementations.toString(), 1, implementations.size());
+		Location foo2 = implementations.get(0);
+		assertTrue("Unexpected implementation : " + foo2.getUri(), foo2.getUri().contains("org/sample/Foo2.java"));
+		//check range points to someMethod() position
+		assertEquals(new Position(4, 16), foo2.getRange().getStart());
+		assertEquals(new Position(4, 26), foo2.getRange().getEnd());
+	}
+
+	@Test
+	public void testMethodSuperInvocationImplementation() {
+		URI uri = project.getFile("src/org/sample/FooChild.java").getRawLocationURI();
+		String fileURI = ResourceUtils.fixURI(uri);
+
+		TextDocumentPositionParams param = new TextDocumentPositionParams();
+		param.setPosition(new Position(5, 14)); //Position over super.someMethod
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<? extends Location> implementations = handler.findImplementations(param, monitor);
+		assertNotNull("findImplementations should not return null", implementations);
+		assertEquals(implementations.toString(), 1, implementations.size());
+		Location foo = implementations.get(0);
+		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/Foo.java"));
+		//check range points to someMethod() position
+		assertEquals(new Position(8, 13), foo.getRange().getStart());
+		assertEquals(new Position(8, 23), foo.getRange().getEnd());
+	}
+
+	@Test
 	public void testImplementationFromBinaryTypeWithoutClassContentSupport() {
 		//Only workspace implementation returned
 		List<? extends Location> implementations = getRunnableImplementations();

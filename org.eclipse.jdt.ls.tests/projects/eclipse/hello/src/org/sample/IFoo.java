@@ -1,4 +1,4 @@
-package java;
+package org.sample;
 
 public interface IFoo {
 	
