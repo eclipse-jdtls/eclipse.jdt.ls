@@ -1,6 +1,6 @@
 package org.sample;
 
-public class Foo2Child extends Foo2 {
+public class FooChild extends Foo {
 
 	public void someMethod() {
 		super.someMethod();

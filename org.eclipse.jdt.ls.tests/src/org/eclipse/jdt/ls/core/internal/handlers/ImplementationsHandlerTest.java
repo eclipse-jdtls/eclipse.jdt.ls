@@ -134,7 +134,7 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testMethodSuperInvocationImplementation() {
-		URI uri = project.getFile("src/org/sample/Foo2Child.java").getRawLocationURI();
+		URI uri = project.getFile("src/org/sample/FooChild.java").getRawLocationURI();
 		String fileURI = ResourceUtils.fixURI(uri);
 
 		TextDocumentPositionParams param = new TextDocumentPositionParams();
@@ -143,11 +143,11 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
 		assertNotNull("findImplementations should not return null", implementations);
 		assertEquals(implementations.toString(), 1, implementations.size());
-		Location foo2 = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo2.getUri(), foo2.getUri().contains("org/sample/Foo2.java"));
+		Location foo = implementations.get(0);
+		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/Foo.java"));
 		//check range points to someMethod() position
-		assertEquals(new Position(4, 16), foo2.getRange().getStart());
-		assertEquals(new Position(4, 26), foo2.getRange().getEnd());
+		assertEquals(new Position(8, 13), foo.getRange().getStart());
+		assertEquals(new Position(8, 23), foo.getRange().getEnd());
 	}
 
 	@Test
