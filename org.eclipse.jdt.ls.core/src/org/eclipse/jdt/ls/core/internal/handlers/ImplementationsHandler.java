@@ -61,7 +61,7 @@ public class ImplementationsHandler {
 			// by avoiding opening all files from the Object hierarchy
 			boolean useDefaultLocation = primaryType == null ? false : "java.lang.Object".equals(primaryType.getFullyQualifiedName());
 			ImplementationToLocationMapper mapper = new ImplementationToLocationMapper(preferenceManager.isClientSupportsClassFileContent(), useDefaultLocation);
-			ImplementationCollector<Location> collector = new ImplementationCollector<>(region, elementToSearch, mapper);
+			ImplementationCollector<Location> collector = new ImplementationCollector<>(typeRoot, region, elementToSearch, mapper);
 			locations = collector.findImplementations(monitor);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Find implementations failure ", e);
