@@ -10,16 +10,27 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -46,8 +57,10 @@ public class ImplementationsHandler {
 	public List<? extends Location> findImplementations(TextDocumentPositionParams param, IProgressMonitor monitor) {
 		List<Location> locations = null;
 		IJavaElement elementToSearch = null;
+		ITypeRoot typeRoot = null;
+		IRegion region = null;
 		try {
-			ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
+			typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
 			if (typeRoot != null) {
 				elementToSearch = JDTUtils.findElementAtSelection(typeRoot, param.getPosition().getLine(), param.getPosition().getCharacter(), this.preferenceManager, monitor);
 			}
@@ -55,7 +68,7 @@ public class ImplementationsHandler {
 				return Collections.emptyList();
 			}
 			int offset = getOffset(param, typeRoot);
-			IRegion region = new Region(offset, 0);
+			region = new Region(offset, 0);
 			IType primaryType = typeRoot.findPrimaryType();
 			//java.lang.Object is a special case. We need to minimize heavy cost of I/O,
 			// by avoiding opening all files from the Object hierarchy
@@ -65,6 +78,18 @@ public class ImplementationsHandler {
 			locations = collector.findImplementations(monitor);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Find implementations failure ", e);
+		}
+
+		if (shouldIncludeDefinition(typeRoot, region, elementToSearch, locations)) {
+			try {
+				Location definition = NavigateToDefinitionHandler.computeDefinitionNavigation(elementToSearch, typeRoot.getJavaProject());
+				if (definition != null) {
+					locations = locations == null ? new ArrayList<>() : new ArrayList<>(locations);
+					locations.add(0, definition);
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Problem computing definition for" + typeRoot.getElementName(), e);
+			}
 		}
 
 		return locations;
@@ -81,4 +106,54 @@ public class ImplementationsHandler {
 		return offset;
 	}
 
+	private boolean shouldIncludeDefinition(ITypeRoot typeRoot, IRegion region, IJavaElement elementToSearch, List<Location> implementations) {
+		boolean isUnimplemented = false;
+		try {
+			isUnimplemented = isUnimplementedMember(elementToSearch);
+		} catch (JavaModelException e) {
+			// do nothing.
+		}
+
+		if (isUnimplemented && implementations != null && !implementations.isEmpty()) {
+			return false;
+		}
+
+		CompilationUnit ast = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		if (ast == null) {
+			return false;
+		}
+
+		ASTNode node = NodeFinder.perform(ast, region.getOffset(), region.getLength());
+		if (node instanceof SimpleName && !(node.getParent() instanceof MethodDeclaration || node.getParent() instanceof SuperMethodInvocation || node.getParent() instanceof AbstractTypeDeclaration)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean isUnimplementedMember(IJavaElement element) throws JavaModelException {
+		if (element instanceof IMethod) {
+			return isUnimplementedMethod((IMethod) element);
+		} else if (element instanceof IType) {
+			return isUnimplementedType((IType) element);
+		}
+
+		return false;
+	}
+
+	private boolean isUnimplementedMethod(IMethod method) throws JavaModelException {
+		if (JdtFlags.isAbstract(method) || (method.getDeclaringType() != null && method.getDeclaringType().isInterface())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean isUnimplementedType(IType type) throws JavaModelException {
+		if (JdtFlags.isAbstract(type) || type.isInterface()) {
+			return true;
+		}
+
+		return false;
+	}
 }

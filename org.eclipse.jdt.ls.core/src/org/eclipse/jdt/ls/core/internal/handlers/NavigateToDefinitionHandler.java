@@ -51,22 +51,29 @@ public class NavigateToDefinitionHandler {
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
-			if (element == null) {
-				return null;
-			}
-
-
-			ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
-			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
-			if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)  ) {
-				return fixLocation(element, JDTUtils.toLocation(element), unit.getJavaProject());
-			}
-			if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
-				return fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), unit.getJavaProject());
-			}
+			return computeDefinitionNavigation(element, unit.getJavaProject());
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem computing definition for" +  unit.getElementName(), e);
+			JavaLanguageServerPlugin.logException("Problem computing definition for" + unit.getElementName(), e);
 		}
+
+		return null;
+	}
+
+	public static Location computeDefinitionNavigation(IJavaElement element, IJavaProject javaProject) throws JavaModelException {
+		if (element == null) {
+			return null;
+		}
+
+		ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)) {
+			return fixLocation(element, JDTUtils.toLocation(element), javaProject);
+		}
+
+		if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+			return fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), javaProject);
+		}
+
 		return null;
 	}
 
