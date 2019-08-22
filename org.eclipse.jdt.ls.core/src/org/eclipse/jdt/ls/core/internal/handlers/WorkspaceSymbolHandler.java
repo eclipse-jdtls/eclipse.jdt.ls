@@ -11,11 +11,13 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -25,51 +27,72 @@ import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.WorkspaceSymbolParams;
 
 public class WorkspaceSymbolHandler{
 
-	private PreferenceManager preferenceManager;
-
-	public WorkspaceSymbolHandler(PreferenceManager preferenceManager) {
-		this.preferenceManager = preferenceManager;
+	public static List<SymbolInformation> search(String query, IProgressMonitor monitor) {
+		return search(query, 0, null, false, monitor);
 	}
 
-	public List<SymbolInformation> search(String query, IProgressMonitor monitor) {
-		if (query == null || query.trim().isEmpty()) {
-			return Collections.emptyList();
+	public static List<SymbolInformation> search(String query, String projectName, boolean sourceOnly, IProgressMonitor monitor) {
+		return search(query, 0, projectName, sourceOnly, monitor);
+	}
+
+	public static List<SymbolInformation> search(String query, int maxResults, String projectName, boolean sourceOnly, IProgressMonitor monitor) {
+		ArrayList<SymbolInformation> symbols = new ArrayList<>();
+		if (StringUtils.isBlank(query)) {
+			return symbols;
 		}
 
 		try {
-			ArrayList<SymbolInformation> symbols = new ArrayList<>();
-			new SearchEngine().searchAllTypeNames(null,SearchPattern.R_PATTERN_MATCH, query.toCharArray(), SearchPattern.R_CAMELCASE_MATCH, IJavaSearchConstants.TYPE, createSearchScope(),new TypeNameMatchRequestor() {
+			monitor.beginTask("Searching the types...", 100);
+			IJavaSearchScope searchScope = createSearchScope(projectName, sourceOnly);
+			int typeMatchRule = SearchPattern.R_CAMELCASE_MATCH;
+			if (query.contains("*") || query.contains("?")) {
+				typeMatchRule |= SearchPattern.R_PATTERN_MATCH;
+			}
+			new SearchEngine().searchAllTypeNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
 
 				@Override
 				public void acceptTypeNameMatch(TypeNameMatch match) {
-					SymbolInformation symbolInformation = new SymbolInformation();
-					symbolInformation.setContainerName(match.getTypeContainerName());
-					symbolInformation.setName(match.getSimpleTypeName());
-					symbolInformation.setKind(mapKind(match));
-					Location location;
 					try {
-						if (match.getType().isBinary()) {
-							location = JDTUtils.toLocation(match.getType().getClassFile());
-						}  else {
-							location = JDTUtils.toLocation(match.getType());
+						Location location = null;
+						try {
+							if (!sourceOnly && match.getType().isBinary()) {
+								location = JDTUtils.toLocation(match.getType().getClassFile());
+							} else if (!match.getType().isBinary()) {
+								location = JDTUtils.toLocation(match.getType());
+							}
+						} catch (Exception e) {
+							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
+							return;
+						}
+
+						if (location != null) {
+							SymbolInformation symbolInformation = new SymbolInformation();
+							symbolInformation.setContainerName(match.getTypeContainerName());
+							symbolInformation.setName(match.getSimpleTypeName());
+							symbolInformation.setKind(mapKind(match));
+							symbolInformation.setLocation(location);
+							symbols.add(symbolInformation);
+							if (maxResults > 0 && symbols.size() >= maxResults) {
+								monitor.setCanceled(true);
+							}
 						}
 					} catch (Exception e) {
-						JavaLanguageServerPlugin.logException("Unable to determine location for " +  match.getSimpleTypeName(), e);
+						JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
 						return;
 					}
-					symbolInformation.setLocation(location);
-					symbols.add(symbolInformation);
 				}
 
 				private SymbolKind mapKind(TypeNameMatch match) {
-					int flags= match.getModifiers();
+					int flags = match.getModifiers();
 					if (Flags.isInterface(flags)) {
 						return SymbolKind.Interface;
 					}
@@ -82,15 +105,45 @@ public class WorkspaceSymbolHandler{
 					return SymbolKind.Class;
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
-			return symbols;
 		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException("Problem getting search for" +  query, e);
+			if (e instanceof OperationCanceledException) {
+				// ignore.
+			} else {
+				JavaLanguageServerPlugin.logException("Problem getting search for" + query, e);
+			}
+		} finally {
+			monitor.done();
 		}
-		return Collections.emptyList();
+
+		return symbols;
 	}
 
-	private IJavaSearchScope createSearchScope() throws JavaModelException {
-		return JDTUtils.createSearchScope(null, preferenceManager);
+	private static IJavaSearchScope createSearchScope(String projectName, boolean sourceOnly) throws JavaModelException {
+		IJavaProject[] targetProjects;
+		IJavaProject project = ProjectUtils.getJavaProject(projectName);
+		if (project != null) {
+			targetProjects = new IJavaProject[] { project };
+		} else {
+			targetProjects = ProjectUtils.getJavaProjects();
+		}
+
+		int scope = IJavaSearchScope.REFERENCED_PROJECTS | IJavaSearchScope.SOURCES;
+		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (!sourceOnly && preferenceManager != null && preferenceManager.isClientSupportsClassFileContent()) {
+			scope |= IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES;
+		}
+
+		return SearchEngine.createJavaSearchScope(targetProjects, scope);
 	}
 
+	public static class SearchSymbolParams extends WorkspaceSymbolParams {
+		public String projectName;
+		public boolean sourceOnly;
+		public int maxResults;
+
+		public SearchSymbolParams(String query, String projectName) {
+			super(query);
+			this.projectName = projectName;
+		}
+	}
 }

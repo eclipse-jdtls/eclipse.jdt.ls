@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.lsp;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
@@ -29,7 +30,9 @@ import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsRes
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
@@ -105,4 +108,7 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<RefactorWorkspaceEdit> move(MoveParams params);
+
+	@JsonRequest
+	CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params);
 }
