@@ -539,6 +539,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testMoveInnerTypeToFile() throws Exception {
+		System.setProperty("line.separator", "\n");
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit cu = pack1.createCompilationUnit("Top.java", "package test1;\n"
@@ -577,24 +578,24 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(ResourceUtils.fixURI(cu.getResource().getRawLocationURI()).replace("Top", "Inner"), ((CreateFile) resourceOperation).getUri());
 
 		//@formatter:off
-		expected = "package test1;\r\n"
-				+ "\r\n"
-				+ "public class Inner {\r\n"
-				+ "    /**\r\n"
-				+ "	 *\r\n"
-				+ "	 */\r\n"
-				+ "	\r\n"
-				+ "	private final Top top;\r\n\r\n"
-				+ "	/**\r\n"
-				+ "	 * @param top\r\n"
-				+ "	 */\r\n"
-				+ "	\r\n"
-				+ "	Inner(Top top) {\r\n"
-				+ "		this.top = top;\r\n"
-				+ "	}\r\n\r\n"
-				+ "	public void print() {\r\n"
-				+ "        System.out.println(this.top.name);\r\n"
-				+ "    }\r\n"
+		expected = "package test1;\n"
+				+ "\n"
+				+ "public class Inner {\n"
+				+ "    /**\n"
+				+ "	 *\n"
+				+ "	 */\n"
+				+ "	\n"
+				+ "	private final Top top;\n\n"
+				+ "	/**\n"
+				+ "	 * @param top\n"
+				+ "	 */\n"
+				+ "	\n"
+				+ "	Inner(Top top) {\n"
+				+ "		this.top = top;\n"
+				+ "	}\n\n"
+				+ "	public void print() {\n"
+				+ "        System.out.println(this.top.name);\n"
+				+ "    }\n"
 				+ "}";
 		//@formatter:on
 		textEdit = changes.get(2).getLeft();
