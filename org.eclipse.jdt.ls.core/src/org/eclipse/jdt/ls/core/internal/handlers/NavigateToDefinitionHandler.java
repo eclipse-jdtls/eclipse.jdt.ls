@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,7 @@ public class NavigateToDefinitionHandler {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
 		}
-		return location == null ? null : Arrays.asList(location);
+		return location == null ? Collections.emptyList : Arrays.asList(location);
 	}
 
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
