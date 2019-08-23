@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +51,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	public void testGetEmptyDefinition() throws Exception {
 		List<? extends Location> definitions = handler.definition(
 				new TextDocumentPositionParams(new TextDocumentIdentifier("/foo/bar"), new Position(1, 1)), monitor);
-		assertNull(definitions);
+		assertNotNull(definitions);
+		assertEquals(0, definitions.size());
 	}
 
 	@Test
@@ -66,7 +66,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		String uri = ClassFileUtil.getURI(project, "org.apache.commons.lang3.StringUtils");
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(false);
 		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(20, 26)), monitor);
-		assertNull(definitions);
+		assertNotNull(definitions);
+		assertEquals(0, definitions.size());
 	}
 
 	@Test
