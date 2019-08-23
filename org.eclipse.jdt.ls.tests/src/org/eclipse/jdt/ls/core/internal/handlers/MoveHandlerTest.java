@@ -40,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
@@ -534,5 +535,70 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
 		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits()));
+	}
+
+	@Test
+	public void testMoveInnerTypeToFile() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		//@formatter:off
+		ICompilationUnit cu = pack1.createCompilationUnit("Top.java", "package test1;\n"
+				+ "\n"
+				+ "public class Top {\n"
+				+ "    String name;\n\n"
+				+ "    public class Inner {\n"
+				+ "        public void print() {\n"
+				+ "            System.out.println(Top.this.name);\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}", false, null);
+		//@formatter:on
+
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, "class Inner");
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveTypeToNewFile", params, "Foo", true), new NullProgressMonitor());
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
+		assertEquals(3, changes.size());
+
+		//@formatter:off
+		String expected = "package test1;\n"
+						+ "\n"
+						+ "public class Top {\n"
+						+ "    String name;\n"
+						+ "}";
+		//@formatter:on
+		TextDocumentEdit textEdit = changes.get(0).getLeft();
+		assertNotNull(textEdit);
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
+
+		ResourceOperation resourceOperation = changes.get(1).getRight();
+		assertNotNull(resourceOperation);
+		assertTrue(resourceOperation instanceof CreateFile);
+		assertEquals(ResourceUtils.fixURI(cu.getResource().getRawLocationURI()).replace("Top", "Inner"), ((CreateFile) resourceOperation).getUri());
+
+		//@formatter:off
+		expected = "package test1;\r\n"
+				+ "\r\n"
+				+ "public class Inner {\r\n"
+				+ "    /**\r\n"
+				+ "	 *\r\n"
+				+ "	 */\r\n"
+				+ "	\r\n"
+				+ "	private final Top top;\r\n\r\n"
+				+ "	/**\r\n"
+				+ "	 * @param top\r\n"
+				+ "	 */\r\n"
+				+ "	\r\n"
+				+ "	Inner(Top top) {\r\n"
+				+ "		this.top = top;\r\n"
+				+ "	}\r\n\r\n"
+				+ "	public void print() {\r\n"
+				+ "        System.out.println(this.top.name);\r\n"
+				+ "    }\r\n"
+				+ "}";
+		//@formatter:on
+		textEdit = changes.get(2).getLeft();
+		assertNotNull(textEdit);
+		assertEquals(expected, TextEditUtil.apply(pack1.getCompilationUnit("Inner.java").getWorkingCopy(null), textEdit.getEdits()));
 	}
 }

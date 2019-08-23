@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.gson.Gson;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
@@ -43,6 +45,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -53,6 +56,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInnerToTopRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInstanceMethodProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveStaticMembersProcessor;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -85,8 +89,6 @@ import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.MoveRefactoring;
-
-import com.google.gson.Gson;
 
 public class MoveHandler {
 	public static final String DEFAULT_PACKAGE_DISPLAYNAME = "(default package)";
@@ -257,7 +259,6 @@ public class MoveHandler {
 			return new RefactorWorkspaceEdit("moveParams should not be empty.");
 		}
 
-		// TODO Currently resource move operation only supports CU.
 		if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 			String targetUri = null;
 			if (moveParams.destination instanceof String) {
@@ -299,6 +300,8 @@ public class MoveHandler {
 			}
 
 			return moveStaticMember(moveParams.params, typeName, monitor);
+		} else if ("moveTypeToNewFile".equalsIgnoreCase(moveParams.moveKind)) {
+			return moveTypeToNewFile(moveParams.params, monitor);
 		}
 
 		return new RefactorWorkspaceEdit("Unsupported move operation.");
@@ -524,6 +527,43 @@ public class MoveHandler {
 		}
 	}
 
+	private static RefactorWorkspaceEdit moveTypeToNewFile(CodeActionParams params, IProgressMonitor monitor) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null) {
+			return new RefactorWorkspaceEdit("Failed to move type to new file because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
+		}
+
+		AbstractTypeDeclaration typeDeclaration = getSelectedTypeDeclaration(unit, params);
+		IType type = null;
+		if (typeDeclaration != null) {
+			type = (IType) typeDeclaration.resolveBinding().getJavaElement();
+		}
+
+		if (type == null) {
+			return new RefactorWorkspaceEdit("Failed to move type to new file because no type is selected.");
+		}
+
+		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving type to new file...", 100);
+		try {
+			MoveInnerToTopRefactoring refactoring = new MoveInnerToTopRefactoring(type, PreferenceManager.getCodeGenerationSettings(unit.getJavaProject().getProject()));
+			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
+			check.run(subMonitor.split(50));
+			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
+				JavaLanguageServerPlugin.logError(check.getStatus().toString());
+				return new RefactorWorkspaceEdit("Failed to move type to new file. Reason: " + check.getStatus().toString());
+			}
+
+			Change change = refactoring.createChange(subMonitor.split(50));
+			return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+			return new RefactorWorkspaceEdit("Failed to move type to new file because of " + e.toString());
+		} catch (OperationCanceledException e) {
+			return null;
+		}
+	}
+
 	private static BodyDeclaration getSelectedMemberDeclaration(ICompilationUnit unit, CodeActionParams params) {
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
@@ -544,6 +584,24 @@ public class MoveHandler {
 		}
 
 		return null;
+	}
+
+	private static AbstractTypeDeclaration getSelectedTypeDeclaration(ICompilationUnit unit, CodeActionParams params) {
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
+
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+
+		while (node != null && !(node instanceof AbstractTypeDeclaration)) {
+			node = node.getParent();
+		}
+
+		return (AbstractTypeDeclaration) node;
 	}
 
 	public static class MoveDestinationsResponse {
@@ -600,7 +658,8 @@ public class MoveHandler {
 
 	public static class MoveParams {
 		/**
-		 * The supported move kind: moveResource.
+		 * The supported move kind: moveResource, moveInstanceMethod, moveStaticMember,
+		 * moveTypeToNewFile.
 		 */
 		String moveKind;
 		/**

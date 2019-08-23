@@ -76,6 +76,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_FILE_COMMAND = "moveFile";
 	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
 	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
+	public static final String MOVE_TYPE_TO_NEWFILE_COMMAND = "moveTypeToNewFile";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
 		String label = ActionMessages.MoveRefactoringAction_label;
@@ -92,6 +93,7 @@ public class RefactorProposalUtility {
 		ICompilationUnit cu = context.getCompilationUnit();
 		String uri = JDTUtils.toURI(cu);
 		if (cu != null && node != null) {
+			List<CUCorrectionProposal> proposals = new ArrayList<>();
 			try {
 				if (node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) {
 					if (JdtFlags.isStatic((BodyDeclaration) node)) {
@@ -100,27 +102,36 @@ public class RefactorProposalUtility {
 							String displayName = getDisplayName(node);
 							int memberType = node.getNodeType();
 							String enclosingTypeName = getEnclosingType(node);
-							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+							proposals.add(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
 									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveStaticMemberInfo(displayName, memberType, enclosingTypeName, cu.getJavaProject().getProject().getName()))));
 						}
 					} else if (node instanceof MethodDeclaration) {
 						// move instance method.
 						if (isMoveMethodAvailable((MethodDeclaration) node)) {
-							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+							proposals.add(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
 									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveInstanceMethodInfo(getDisplayName(node)))));
 						}
 					} else if (node instanceof AbstractTypeDeclaration) {
-						// TODO if it's inner type, then move inner type to file or another class.
 						// move ICompilationUnit.
-						return Collections.singletonList((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+						proposals.add((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
 					}
+				}
 
-					return Collections.EMPTY_LIST;
+				while (node != null && !(node instanceof AbstractTypeDeclaration)) {
+					node = node.getParent();
+				}
+
+				if (node instanceof AbstractTypeDeclaration && isMoveInnerAvailable((AbstractTypeDeclaration) node)) {
+					proposals.add(
+							new CUCorrectionCommandProposal(ActionMessages.MoveTypeToNewFileAction_label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+							Arrays.asList(MOVE_TYPE_TO_NEWFILE_COMMAND, params)));
 				}
 			} catch (JavaModelException e) {
-				return Collections.EMPTY_LIST;
+				// do nothing.
 			}
+
+			return proposals;
 		}
 
 		return Collections.singletonList(
@@ -149,6 +160,15 @@ public class RefactorProposalUtility {
 		} else if (declaration instanceof AbstractTypeDeclaration) {
 			ITypeBinding type = ((AbstractTypeDeclaration) declaration).resolveBinding();
 			return type != null && RefactoringAvailabilityTesterCore.isMoveStaticAvailable((IType) type.getJavaElement());
+		}
+
+		return false;
+	}
+
+	private static boolean isMoveInnerAvailable(AbstractTypeDeclaration declaration) throws JavaModelException {
+		ITypeBinding type = declaration.resolveBinding();
+		if (type != null) {
+			return RefactoringAvailabilityTester.isMoveInnerAvailable((IType) type.getJavaElement());
 		}
 
 		return false;

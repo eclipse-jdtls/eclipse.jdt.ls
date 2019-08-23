@@ -245,4 +245,32 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).memberType);
 		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
 	}
+
+	@Test
+	public void testMoveTypeToNewFile() throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    class Inner {\n");
+		buf.append("        /*[*//*]*/\n");
+		buf.append("    }\n");
+		buf.append("}");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
+		Assert.assertNotNull(moveAction);
+		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
+		Assert.assertNotNull(moveCommand);
+		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		Assert.assertNotNull(moveCommand.getArguments());
+		Assert.assertEquals(2, moveCommand.getArguments().size());
+		Assert.assertEquals(RefactorProposalUtility.MOVE_TYPE_TO_NEWFILE_COMMAND, moveCommand.getArguments().get(0));
+	}
 }
