@@ -89,6 +89,7 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
 		javaCoreOptions.put(JavaCore.COMPILER_RELEASE, JavaCore.ENABLED);
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
+		javaCoreOptions.put(JavaCore.COMPILER_PB_UNHANDLED_WARNING_TOKEN, JavaCore.IGNORE);
 		JavaCore.setOptions(javaCoreOptions);
 
 		// Initialize default preferences
