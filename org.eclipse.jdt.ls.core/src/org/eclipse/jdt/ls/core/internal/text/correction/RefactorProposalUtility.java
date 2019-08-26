@@ -76,7 +76,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_FILE_COMMAND = "moveFile";
 	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
 	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
-	public static final String MOVE_TYPE_TO_NEWFILE_COMMAND = "moveTypeToNewFile";
+	public static final String MOVE_TYPE_COMMAND = "moveType";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
 		String label = ActionMessages.MoveRefactoringAction_label;
@@ -93,45 +93,51 @@ public class RefactorProposalUtility {
 		ICompilationUnit cu = context.getCompilationUnit();
 		String uri = JDTUtils.toURI(cu);
 		if (cu != null && node != null) {
-			List<CUCorrectionProposal> proposals = new ArrayList<>();
 			try {
 				if (node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) {
-					if (JdtFlags.isStatic((BodyDeclaration) node)) {
+					String displayName = getDisplayName(node);
+					int memberType = node.getNodeType();
+					String enclosingTypeName = getEnclosingType(node);
+					String projectName = cu.getJavaProject().getProject().getName();
+					if (node instanceof AbstractTypeDeclaration) {
+						MoveTypeInfo moveTypeInfo = new MoveTypeInfo(displayName, enclosingTypeName, projectName);
+						if (isMoveInnerAvailable((AbstractTypeDeclaration) node)) {
+							moveTypeInfo.addDestinationKind("newFile");
+						}
+
+						if (isMoveStaticMemberAvailable(node)) {
+							moveTypeInfo.addDestinationKind("class");
+						}
+
+						// move inner type.
+						if (moveTypeInfo.isMoveAvaiable()) {
+							return Collections.singletonList(
+								new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+								Arrays.asList(MOVE_TYPE_COMMAND, params, moveTypeInfo)));
+						}
+
+						// move ICompilationUnit.
+						return Collections.singletonList((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+					} else if (JdtFlags.isStatic((BodyDeclaration) node)) {
 						// move static member.
 						if (isMoveStaticMemberAvailable(node)) {
-							String displayName = getDisplayName(node);
-							int memberType = node.getNodeType();
-							String enclosingTypeName = getEnclosingType(node);
-							proposals.add(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveStaticMemberInfo(displayName, memberType, enclosingTypeName, cu.getJavaProject().getProject().getName()))));
+							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveMemberInfo(displayName, memberType, enclosingTypeName, projectName))));
 						}
 					} else if (node instanceof MethodDeclaration) {
 						// move instance method.
 						if (isMoveMethodAvailable((MethodDeclaration) node)) {
-							proposals.add(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveInstanceMethodInfo(getDisplayName(node)))));
+							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveMemberInfo(displayName))));
 						}
-					} else if (node instanceof AbstractTypeDeclaration) {
-						// move ICompilationUnit.
-						proposals.add((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
-								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
 					}
-				}
-
-				while (node != null && !(node instanceof AbstractTypeDeclaration)) {
-					node = node.getParent();
-				}
-
-				if (node instanceof AbstractTypeDeclaration && isMoveInnerAvailable((AbstractTypeDeclaration) node)) {
-					proposals.add(
-							new CUCorrectionCommandProposal(ActionMessages.MoveTypeToNewFileAction_label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-							Arrays.asList(MOVE_TYPE_TO_NEWFILE_COMMAND, params)));
 				}
 			} catch (JavaModelException e) {
 				// do nothing.
 			}
 
-			return proposals;
+			return Collections.emptyList();
 		}
 
 		return Collections.singletonList(
@@ -652,25 +658,41 @@ public class RefactorProposalUtility {
 		}
 	}
 
-	public static class MoveInstanceMethodInfo {
-		public String displayName;
-
-		public MoveInstanceMethodInfo(String displayName) {
-			this.displayName = displayName;
-		}
-	}
-
-	public static class MoveStaticMemberInfo {
+	public static class MoveMemberInfo {
 		public String displayName;
 		public int memberType;
 		public String enclosingTypeName;
 		public String projectName;
 
-		public MoveStaticMemberInfo(String displayName, int memberType, String enclosingTypeName, String projectName) {
+		public MoveMemberInfo(String displayName, int memberType, String enclosingTypeName, String projectName) {
 			this.displayName = displayName;
 			this.memberType = memberType;
 			this.enclosingTypeName = enclosingTypeName;
 			this.projectName = projectName;
+		}
+
+		public MoveMemberInfo(String displayName, String enclosingTypeName, String projectName) {
+			this(displayName, 0, enclosingTypeName, projectName);
+		}
+
+		public MoveMemberInfo(String displayName) {
+			this.displayName = displayName;
+		}
+	}
+
+	public static class MoveTypeInfo extends MoveMemberInfo {
+		public List<String> supportedDestinationKinds = new ArrayList<>();
+
+		public MoveTypeInfo(String displayName, String enclosingTypeName, String projectName) {
+			super(displayName, ASTNode.TYPE_DECLARATION, enclosingTypeName, projectName);
+		}
+
+		public void addDestinationKind(String kind) {
+			supportedDestinationKinds.add(kind);
+		}
+
+		public boolean isMoveAvaiable() {
+			return !supportedDestinationKinds.isEmpty();
 		}
 	}
 }

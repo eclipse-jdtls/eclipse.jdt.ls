@@ -209,8 +209,8 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertNotNull(moveCommand.getArguments());
 		Assert.assertEquals(3, moveCommand.getArguments().size());
 		Assert.assertEquals(RefactorProposalUtility.MOVE_INSTANCE_METHOD_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveInstanceMethodInfo);
-		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveInstanceMethodInfo) moveCommand.getArguments().get(2)).displayName);
+		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
+		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
 	}
 
 	@Test
@@ -239,15 +239,15 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertNotNull(moveCommand.getArguments());
 		Assert.assertEquals(3, moveCommand.getArguments().size());
 		Assert.assertEquals(RefactorProposalUtility.MOVE_STATIC_MEMBER_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveStaticMemberInfo);
-		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).projectName);
-		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).displayName);
-		Assert.assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).memberType);
-		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveStaticMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
+		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
+		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).projectName);
+		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
+		Assert.assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).memberType);
+		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
 	}
 
 	@Test
-	public void testMoveTypeToNewFile() throws Exception {
+	public void testMoveInnerType() throws Exception {
 		when(preferenceManager.getClientPreferences().isMoveRefactoringSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
@@ -270,7 +270,12 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertNotNull(moveCommand);
 		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
 		Assert.assertNotNull(moveCommand.getArguments());
-		Assert.assertEquals(2, moveCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.MOVE_TYPE_TO_NEWFILE_COMMAND, moveCommand.getArguments().get(0));
+		Assert.assertEquals(3, moveCommand.getArguments().size());
+		Assert.assertEquals(RefactorProposalUtility.MOVE_TYPE_COMMAND, moveCommand.getArguments().get(0));
+		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveTypeInfo);
+		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).projectName);
+		Assert.assertEquals("Inner", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).displayName);
+		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
+		Assert.assertTrue(((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).isMoveAvaiable());
 	}
 }

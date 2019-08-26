@@ -502,7 +502,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, "class Inner");
-		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveStaticMember", params, "Foo", true), new NullProgressMonitor());
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveTypeToClass", params, "Foo", true), new NullProgressMonitor());
 		assertNotNull(refactorEdit);
 		assertNotNull(refactorEdit.edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
