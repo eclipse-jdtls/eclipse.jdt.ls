@@ -296,6 +296,32 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	@Test
+	public void testReconcile() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E123 {\n");
+		buf.append("    public void testing() {\n");
+		buf.append("        int someIntegerChanged = 5;\n");
+		buf.append("        int i = someInteger + 5\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu1 = pack1.createCompilationUnit("E123.java", buf.toString(), false, null);
+		openDocument(cu1, cu1.getSource(), 1);
+		assertEquals(true, cu1.isWorkingCopy());
+		assertEquals(false, cu1.hasUnsavedChanges());
+		List<PublishDiagnosticsParams> diagnosticsParams = getClientRequests("publishDiagnostics");
+		assertEquals(1, diagnosticsParams.size());
+		PublishDiagnosticsParams diagnosticsParam = diagnosticsParams.get(0);
+		List<Diagnostic> diagnostics = diagnosticsParam.getDiagnostics();
+		assertEquals(2, diagnostics.size());
+		diagnosticsParams.clear();
+		closeDocument(cu1);
+	}
+
+	@Test
 	public void testIncrementalChangeDocument() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
