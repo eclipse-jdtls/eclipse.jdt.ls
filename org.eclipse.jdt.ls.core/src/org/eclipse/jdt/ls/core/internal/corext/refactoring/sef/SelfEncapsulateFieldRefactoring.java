@@ -73,6 +73,7 @@ import org.eclipse.jdt.core.refactoring.descriptors.EncapsulateFieldDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.core.refactoring.descriptors.RefactoringSignatureDescriptorFactory;
@@ -89,7 +90,6 @@ import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
@@ -315,7 +315,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 			if (selector.equals(name)) {
 				if (!reUseExistingField) {
 					status.addFatalError(Messages.format(RefactoringCoreMessages.SelfEncapsulateField_method_exists,
-							new String[] { BindingLabelProvider.getBindingLabel(method, JavaElementLabels.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(type.getElementName()) }));
+							new String[] { BindingLabelProviderCore.getBindingLabel(method, JavaElementLabels.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(type.getElementName()) }));
 				} else {
 					boolean methodIsStatic = Modifier.isStatic(method.getModifiers());
 					if (methodIsStatic && !isStatic) {

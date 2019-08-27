@@ -73,6 +73,7 @@ import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
+import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
@@ -85,7 +86,6 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.util.CodeAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.LocalVariableIndex;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
@@ -628,7 +628,7 @@ import com.ibm.icu.text.MessageFormat;
 				StringBuffer affectedLocals = new StringBuffer();
 				for (int i = 0; i < localReads.size(); i++) {
 					IVariableBinding binding = localReads.get(i);
-					String bindingName = BindingLabelProvider.getBindingLabel(binding, BindingLabelProvider.DEFAULT_TEXTFLAGS | JavaElementLabels.F_PRE_TYPE_SIGNATURE);
+					String bindingName = BindingLabelProviderCore.getBindingLabel(binding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS | JavaElementLabels.F_PRE_TYPE_SIGNATURE);
 					affectedLocals.append(bindingName);
 					if (i != localReads.size() - 1) {
 						affectedLocals.append('\n');
