@@ -241,7 +241,8 @@ public class DocumentLifeCycleHandler {
 			}
 
 		};
-		unit.reconcile(ICompilationUnit.NO_AST, true, wcOwner, monitor);
+		int flags = ICompilationUnit.FORCE_PROBLEM_DETECTION | ICompilationUnit.ENABLE_BINDINGS_RECOVERY | ICompilationUnit.ENABLE_STATEMENTS_RECOVERY;
+		unit.reconcile(ICompilationUnit.NO_AST, flags, wcOwner, monitor);
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
