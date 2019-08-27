@@ -49,13 +49,13 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.TypeParametersFixCore.InsertTypeArgumentsVisitor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
-import org.eclipse.jdt.ls.core.internal.BindingLabelProvider;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
@@ -110,7 +110,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 		if (isNewTypeVar) {
 			typeName= VAR_TYPE;
 		} else {
-			typeName= BindingLabelProvider.getBindingLabel(fNewType, JavaElementLabels.ALL_DEFAULT);
+			typeName= BindingLabelProviderCore.getBindingLabel(fNewType, JavaElementLabels.ALL_DEFAULT);
 		}
 		if (binding.getKind() == IBinding.VARIABLE) {
 			IVariableBinding varBinding= (IVariableBinding) binding;
