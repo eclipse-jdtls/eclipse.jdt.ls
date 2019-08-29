@@ -46,7 +46,7 @@ public class NavigateToDefinitionHandler {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
 		}
-		return location == null ? Collections.emptyList : Arrays.asList(location);
+		return location == null ? Collections.emptyList() : Arrays.asList(location);
 	}
 
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
