@@ -1,5 +1,20 @@
 # Change Log
 
+## [0.42.0 (September 4th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/60?closed=1)
+* enhancement - code action to create unresolved types. See [#853](https://github.com/eclipse/eclipse.jdt.ls/issues/853).
+* enhancement - ignore "Unsupported SuppressWarning" warnings by default. See [#1062](https://github.com/eclipse/eclipse.jdt.ls/issues/1062).
+* enhancement - properly render @ApiNote in javadoc. See [#1069](https://github.com/eclipse/eclipse.jdt.ls/issues/1069).
+* enhancement - code action to move class to another package. See [#1089](https://github.com/eclipse/eclipse.jdt.ls/issues/1089).
+* enhancement - code action to move member to another class. See [#1089](https://github.com/eclipse/eclipse.jdt.ls/issues/1089).
+* enhancement - code action to move inner types to new class. See [#1089](https://github.com/eclipse/eclipse.jdt.ls/issues/1089).
+* enhancement - code action to 'Invert local variable'. See [#1117](https://github.com/eclipse/eclipse.jdt.ls/issues/1117).
+* enhancement - code action to convert lambda to anonymous class. See [#1119](https://github.com/eclipse/eclipse.jdt.ls/issues/1119).
+* bug fix - fixed find implementation doesn't work on classes. See [#1098](https://github.com/eclipse/eclipse.jdt.ls/issues/1098).
+* bug fix - fixed NavigateToDefinitionHandler should not return null. See [#1143](https://github.com/eclipse/eclipse.jdt.ls/pull/1143).
+* bug fix - fixed secondary same-line error not reported. See [#1147](https://github.com/eclipse/eclipse.jdt.ls/issues/1147).
+* bug fix - fixed go to implementation doesn't work for method invocation. See [#1149](https://github.com/eclipse/eclipse.jdt.ls/pull/1149).
+* debt - migrate to BindingLabelProviderCore.See [#1155](https://github.com/eclipse/eclipse.jdt.ls/pull/1155).
+
 ## [0.41.0 (July 18th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/59?closed=1)
 * enhancement - added code action to convert a local variable to a field. See [#772](https://github.com/eclipse/eclipse.jdt.ls/issues/772).
 * enhancement - migrated to lsp4j 0.7.2. See [#1040](https://github.com/eclipse/eclipse.jdt.ls/issues/1040).
