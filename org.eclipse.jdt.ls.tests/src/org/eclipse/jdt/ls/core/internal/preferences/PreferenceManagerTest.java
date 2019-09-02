@@ -69,6 +69,7 @@ public class PreferenceManagerTest {
 	public void testInitialize() throws Exception {
 		preferenceManager.initialize();
 		assertEquals(JavaCore.ENABLED, JavaCore.getOptions().get(JavaCore.CODEASSIST_VISIBILITY_CHECK));
+		assertEquals(JavaCore.IGNORE, JavaCore.getOptions().get(JavaCore.COMPILER_PB_UNHANDLED_WARNING_TOKEN));
 	}
 
 	@Test
