@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.tests.Unstable;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
@@ -45,6 +46,7 @@ import org.eclipse.m2e.core.internal.Messages;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -366,6 +368,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
+	@Category(Unstable.class)
 	public void testResetPomDiagnostics() throws Exception {
 		//import project
 		importProjects("maven/multimodule");
