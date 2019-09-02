@@ -244,12 +244,12 @@ class CodeTemplatePreferences {
 	/**
 	 * Default value for field comments
 	 */
-	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */\n";
+	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */";
 
 	/**
 	 * Default value for constructor comments
 	 */
-	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */";
 
 	/**
 	 * Default value for delegate comments

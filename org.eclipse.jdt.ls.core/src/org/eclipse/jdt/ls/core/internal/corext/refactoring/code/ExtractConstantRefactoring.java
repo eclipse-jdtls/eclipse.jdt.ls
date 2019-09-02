@@ -541,7 +541,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		//		boolean createComments = JavaPreferencesSettings.getCodeGenerationSettings(fCu.getJavaProject()).createComments;
 		//		if (createComments) {
 		String comment = CodeGeneration.getFieldComment(fCu, getConstantTypeName(), fConstantName, StubUtility.getLineDelimiterUsed(fCu));
-		if (comment != null && comment.length() > 0 && !"/**\n *\n */\n".equals(comment)) {
+		if (comment != null && comment.length() > 0 && !"/**\n *\n */".equals(comment)) {
 			Javadoc doc = (Javadoc) fCuRewrite.getASTRewrite().createStringPlaceholder(comment, ASTNode.JAVADOC);
 			fieldDeclaration.setJavadoc(doc);
 		}

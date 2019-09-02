@@ -33,6 +33,7 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.refactoring.changes.CreateCompilationUnitChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
@@ -56,6 +57,7 @@ import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
+import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -140,6 +142,8 @@ public class ChangeUtil {
 			convertMoveCompilationUnitChange(edit, (MoveCompilationUnitChange) resourceChange);
 		} else if (resourceChange instanceof CreateFileChange) {
 			convertCreateFileChange(edit, (CreateFileChange) resourceChange);
+		} else if (resourceChange instanceof CreateCompilationUnitChange) {
+			convertCreateCompilationUnitChange(edit, (CreateCompilationUnitChange) resourceChange);
 		}
 	}
 
@@ -158,6 +162,16 @@ public class ChangeUtil {
 		String newUri = ResourceUtils.fixURI(newCUPath.toFile().toURI());
 		cuResourceChange.setNewUri(newUri);
 		edit.getDocumentChanges().add(Either.forRight(cuResourceChange));
+	}
+
+	private static void convertCreateCompilationUnitChange(WorkspaceEdit edit, CreateCompilationUnitChange change) {
+		ICompilationUnit unit = change.getCu();
+		CreateFile createFile = new CreateFile();
+		createFile.setUri(JDTUtils.toURI(unit));
+		createFile.setOptions(new CreateFileOptions(false, true));
+		edit.getDocumentChanges().add(Either.forRight(createFile));
+		InsertEdit textEdit = new InsertEdit(0, change.getPreview());
+		convertTextEdit(edit, unit, textEdit);
 	}
 
 	private static void convertRenamePackcageChange(WorkspaceEdit edit, RenamePackageChange packageChange) throws CoreException {
