@@ -124,9 +124,12 @@ public class WorkspaceExecuteCommandHandler implements IRegistryChangeListener {
 		}
 	}
 
-	private final Set<DelegateCommandHandlerDescriptor> fgContributedCommandHandlers = new HashSet<>();
+	private final Set<DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
 
 	private WorkspaceExecuteCommandHandler() {
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
+		fgContributedCommandHandlers = Stream.of(elements).map(e -> new DelegateCommandHandlerDescriptor(e)).collect(Collectors.toSet());
+
 		Platform.getExtensionRegistry().addRegistryChangeListener(this);
 	}
 
