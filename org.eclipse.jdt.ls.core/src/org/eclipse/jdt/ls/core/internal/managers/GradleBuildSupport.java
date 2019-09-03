@@ -108,4 +108,5 @@ public class GradleBuildSupport implements IBuildSupport {
 	public static void saveModels() {
 		CorePlugin.listenerRegistry().dispatch(new WorkbenchShutdownEvent());
 	}
+
 }

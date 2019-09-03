@@ -12,7 +12,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.core.resources.IProjectDescription.DESCRIPTION_FILE_NAME;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -25,6 +27,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -40,6 +43,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/bin");//default Eclipse build dir
 			directories = eclipseDetector.scan(monitor);
 		}
+		directories = directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
 		return !directories.isEmpty();
 	}
 

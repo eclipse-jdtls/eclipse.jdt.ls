@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.osgi.framework.BundleActivator;
@@ -30,6 +33,10 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		TestVMType.setTestJREAsDefault("1.8");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceDescription description = workspace.getDescription();
+		description.setAutoBuilding(true);
+		workspace.setDescription(description);
 	}
 
 	/* (non-Javadoc)

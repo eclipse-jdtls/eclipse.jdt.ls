@@ -241,7 +241,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (JavaCore.isJavaLikeFileName(file.getName())) {
 				ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 				//ignoring working copies, they're handled in the DocumentLifecycleHandler
-				if (!cu.isWorkingCopy()) {
+				if (cu != null && !cu.isWorkingCopy()) {
 					try {
 						document = JsonRpcHelpers.toDocument(cu.getBuffer());
 					} catch (JavaModelException e) {

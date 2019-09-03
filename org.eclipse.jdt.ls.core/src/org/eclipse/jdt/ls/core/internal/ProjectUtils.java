@@ -31,8 +31,10 @@ import java.util.stream.Stream;
 
 import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -386,5 +388,30 @@ public final class ProjectUtils {
 		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
 	}
 
+	public static void removeJavaNatureAndBuilder(IProject project, IProgressMonitor monitor) throws CoreException {
+		if (project != null && project.isAccessible() && ProjectUtils.isJavaProject(project)) {
+			IProjectDescription description = project.getDescription();
+			String[] natureIds = description.getNatureIds();
+			String[] newIds = new String[natureIds.length - 1];
+			int count = 0;
+			for (String id : natureIds) {
+				if (!JavaCore.NATURE_ID.equals(id)) {
+					newIds[count++] = id;
+				}
+			}
+			description.setNatureIds(newIds);
+			ICommand[] commands = description.getBuildSpec();
+			for (int i = 0; i < commands.length; ++i) {
+				if (commands[i].getBuilderName().equals(JavaCore.BUILDER_ID)) {
+					ICommand[] newCommands = new ICommand[commands.length - 1];
+					System.arraycopy(commands, 0, newCommands, 0, i);
+					System.arraycopy(commands, i + 1, newCommands, i, commands.length - i - 1);
+					description.setBuildSpec(newCommands);
+					break;
+				}
+			}
+			project.setDescription(description, IResource.FORCE, monitor);
+		}
+	}
 
 }
