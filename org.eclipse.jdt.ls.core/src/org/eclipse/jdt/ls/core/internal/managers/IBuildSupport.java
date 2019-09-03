@@ -15,6 +15,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 
 /**
@@ -70,6 +72,13 @@ public interface IBuildSupport {
 			return;
 		}
 		if (changeType == CHANGE_TYPE.DELETED) {
+			if (IJavaProject.CLASSPATH_FILE_NAME.equals(resource.getName())) {
+				IProject project = resource.getProject();
+				if (ProjectUtils.isJavaProject(project)) {
+					ProjectUtils.removeJavaNatureAndBuilder(project, monitor);
+					update(project, true, monitor);
+				}
+			}
 			resource = resource.getParent();
 		}
 		if (resource != null) {

@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -145,7 +146,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				toImport.add(projectInfo);
 			} else {
 				IProject project = container.getProject();
-				if (ProjectUtils.isMavenProject(project)) {
+				boolean valid = !ProjectUtils.isJavaProject(project) || project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists();
+				if (ProjectUtils.isMavenProject(project) && valid) {
 					projects.add(container.getProject());
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it

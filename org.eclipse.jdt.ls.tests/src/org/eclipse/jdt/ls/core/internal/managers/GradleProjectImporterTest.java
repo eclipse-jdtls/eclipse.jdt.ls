@@ -10,8 +10,27 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import com.google.common.collect.ImmutableList;
-import org.eclipse.buildship.core.*;
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.FixedVersionGradleDistribution;
+import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.LocalGradleDistribution;
+import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -24,21 +43,14 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author Fred Bricon
@@ -214,7 +226,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testBuildFile() throws Exception {
 		IProject project = importSimpleJavaProject();
-		IFile file = project.getFile("/bin/build.gradle");
+		IFile file = project.getFile("/target/build.gradle");
 		assertFalse(projectsManager.isBuildFile(file));
 		importProjects("gradle/gradle-withoutjava");
 		project = getProject("gradle-withoutjava");
@@ -225,7 +237,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testGradlePropertiesFile() throws Exception {
 		IProject project = importSimpleJavaProject();
-		IFile file = project.getFile("/bin/gradle.properties");
+		IFile file = project.getFile("/target/gradle.properties");
 		assertFalse(projectsManager.isBuildFile(file));
 		importProjects("gradle/gradle-withoutjava");
 		project = getProject("gradle-withoutjava");
@@ -283,6 +295,32 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(build.getJvmArguments().contains("-Djavax.net.ssl.trustStore=truststore.jks"));
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleJvmArguments(jvmArguments);
+		}
+	}
+
+	@Test
+	public void testDeleteClasspath() throws Exception {
+		FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
+		try {
+			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
+			IProject project = importSimpleJavaProject();
+			assertIsJavaProject(project);
+			assertIsGradleProject(project);
+			IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
+			File file = dotClasspath.getRawLocation().toFile();
+			assertTrue(file.exists());
+			file.delete();
+			projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
+			waitForBackgroundJobs();
+			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+			project = getProject("simple-gradle");
+			assertIsGradleProject(project);
+			assertIsJavaProject(project);
+			IFile bin = project.getFile("bin");
+			assertFalse(bin.getRawLocation().toFile().exists());
+			assertTrue(dotClasspath.exists());
+		} finally {
+			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(status);
 		}
 	}
 

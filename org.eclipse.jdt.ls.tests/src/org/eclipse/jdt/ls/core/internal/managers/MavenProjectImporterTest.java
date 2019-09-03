@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -39,6 +40,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -130,6 +132,24 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertEquals(2, projects.size());
 		invalid = WorkspaceHelper.getProject(INVALID);
 		assertIsMavenProject(invalid);
+	}
+
+	@Test
+	public void testDeleteClasspath() throws Exception {
+		String name = "salut";
+		importProjects("maven/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertIsMavenProject(project);
+		IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
+		File file = dotClasspath.getRawLocation().toFile();
+		assertTrue(file.exists());
+		file.delete();
+		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
+		project = getProject(name);
+		IFile bin = project.getFile("bin");
+		assertFalse(bin.getRawLocation().toFile().exists());
+		assertTrue(dotClasspath.exists());
 	}
 
 	@Test

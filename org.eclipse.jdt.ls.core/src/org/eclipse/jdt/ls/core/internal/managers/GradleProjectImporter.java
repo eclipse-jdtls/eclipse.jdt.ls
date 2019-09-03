@@ -32,6 +32,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -45,7 +46,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static final String GRADLE_HOME = "GRADLE_HOME";
 
-	private static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
+	public static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
@@ -201,6 +202,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	private static boolean checkGradlePersistence(boolean shouldSynchronize, IProject project, File projectDir) {
+		if (!ProjectUtils.isJavaProject(project) || !project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists()) {
+			return true;
+		}
 		PersistentModel model = CorePlugin.modelPersistence().loadModel(project);
 		if (model.isPresent()) {
 			File persistentFile = CorePlugin.getInstance().getStateLocation().append("project-preferences").append(project.getName()).toFile();
