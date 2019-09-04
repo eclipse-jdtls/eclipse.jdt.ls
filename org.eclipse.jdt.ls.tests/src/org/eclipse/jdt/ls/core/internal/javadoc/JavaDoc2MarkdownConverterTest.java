@@ -29,12 +29,13 @@ import org.junit.Test;
  * @author Fred Bricon
  */
 public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest {
-
-	private static final String MARKDOWN_0 = "This Javadoc contains some `code`, a link to `IOException` and a table\n" +
+	//@formatter:off
+	private static final String MARKDOWN_0 =
+			"This Javadoc contains some `code`, a link to `IOException` and a table\n" +
 			"\n" +
-			"    | header 1 | header 2 |\n" +
-			"    | -------- | -------- |\n" +
-			"    | data 1   | data 2   |\n" +
+			"| header 1 | header 2 |\n" +
+			"| -------- | -------- |\n" +
+			"| data 1   | data 2   |\n" +
 			"\n" +
 			"\n" +
 			"literally <b>literal</b> and now a list:\n" +
@@ -75,6 +76,20 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 			"    \n" +
 			"     *  another unknown tag";
 
+	private static final String MARKDOWN_TABLE_0=
+			"| Header 1 | Header 2 |\n" +
+			"| -------- | -------- |\n" +
+			"| Row 1A   | Row 1B   |\n" +
+			"| Row 2A   | Row 2B   |";
+
+	private static final String MARKDOWN_TABLE_1=
+			"|        |        |\n" +
+			"| ------ | ------ |\n" +
+			"| Row 0A | Row 0B |\n" +
+			"| Row 1A | Row 1B |\n" +
+			"| Row 2A | Row 2B |";
+	//@formatter:on
+
 	static final String RAW_JAVADOC_HTML_1 = "<a href=\"file://some_location\">File</a>";
 	static final String RAW_JAVADOC_HTML_2 = "<a href=\"jdt://some_location\">JDT</a>";
 	static final String RAW_JAVADOC_HTML_SEE = "@see <a href=\"https://docs.oracle.com/javase/7/docs/api/\">Online docs for java</a>";
@@ -97,6 +112,18 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 	public void testGetAsString() throws IOException {
 		String result = new JavaDoc2MarkdownConverter(RAW_JAVADOC_0).getAsString();
 		assertEquals(Util.convertToIndependentLineDelimiter(MARKDOWN_0), Util.convertToIndependentLineDelimiter(result));
+	}
+
+	@Test
+	public void testMarkdownTableNoTHEAD() throws IOException {
+		String result = new JavaDoc2MarkdownConverter(RAW_JAVADOC_TABLE_0).getAsString();
+		assertEquals(Util.convertToIndependentLineDelimiter(MARKDOWN_TABLE_0), Util.convertToIndependentLineDelimiter(result));
+	}
+
+	@Test
+	public void testMarkdownTableInsertBlankHeader() throws IOException {
+		String result = new JavaDoc2MarkdownConverter(RAW_JAVADOC_TABLE_1).getAsString();
+		assertEquals(Util.convertToIndependentLineDelimiter(MARKDOWN_TABLE_1), Util.convertToIndependentLineDelimiter(result));
 	}
 
 	@Test
