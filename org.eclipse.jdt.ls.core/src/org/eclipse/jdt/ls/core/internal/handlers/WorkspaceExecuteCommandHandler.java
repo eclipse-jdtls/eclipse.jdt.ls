@@ -21,10 +21,10 @@ import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtensionDelta;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IRegistryChangeEvent;
-import org.eclipse.core.runtime.IRegistryChangeListener;
+import org.eclipse.core.runtime.IRegistryEventListener;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -39,7 +39,7 @@ import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
-public class WorkspaceExecuteCommandHandler implements IRegistryChangeListener {
+public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 
 	private static WorkspaceExecuteCommandHandler instance = null;
 
@@ -130,7 +130,7 @@ public class WorkspaceExecuteCommandHandler implements IRegistryChangeListener {
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
 		fgContributedCommandHandlers = Stream.of(elements).map(e -> new DelegateCommandHandlerDescriptor(e)).collect(Collectors.toSet());
 
-		Platform.getExtensionRegistry().addRegistryChangeListener(this);
+		Platform.getExtensionRegistry().addListener(this);
 	}
 
 	private synchronized Set<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
@@ -223,14 +223,27 @@ public class WorkspaceExecuteCommandHandler implements IRegistryChangeListener {
 	}
 
 	@Override
-	public void registryChanged(IRegistryChangeEvent event) {
-		Set<DelegateCommandHandlerDescriptor> addedDescriptors = Stream.of(event.getExtensionDeltas())
-				.filter(extensionDelta -> extensionDelta.getKind() == IExtensionDelta.ADDED)
-				.filter(extensionDelta -> extensionDelta.getExtension().getExtensionPointUniqueIdentifier().equals(EXTENSION_POINT_ID))
-				.flatMap(extensionDelta -> Stream.of(extensionDelta.getExtension().getConfigurationElements()))
+	public void added(IExtension[] extensions) {
+		Set<DelegateCommandHandlerDescriptor> addedDescriptors = Stream.of(extensions)
+				.filter(extension -> extension.getExtensionPointUniqueIdentifier().equals(EXTENSION_POINT_ID))
+				.flatMap(extension -> Stream.of(extension.getConfigurationElements()))
 				.map(configurationElement -> new DelegateCommandHandlerDescriptor(configurationElement))
 				.collect(Collectors.toSet());
 		fgContributedCommandHandlers.addAll(addedDescriptors);
+	}
+
+	@Override
+	public void removed(IExtension[] extensions) {
+
+	}
+
+	@Override
+	public void added(IExtensionPoint[] extensionPoints) {
+
+	}
+
+	@Override
+	public void removed(IExtensionPoint[] extensionPoints) {
 
 	}
 }
