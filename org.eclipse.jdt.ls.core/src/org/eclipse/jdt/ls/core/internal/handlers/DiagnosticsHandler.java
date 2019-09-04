@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,6 +29,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.DiagnosticTag;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -134,9 +136,55 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(openable, problem));
+			diag.setTags(getDiagnosticTag(problem.getID()));
 			array.add(diag);
 		}
 		return array;
+	}
+
+	public static List<DiagnosticTag> getDiagnosticTag(int id) {
+		switch (id) {
+			case IProblem.UsingDeprecatedType:
+			case IProblem.UsingDeprecatedField:
+			case IProblem.UsingDeprecatedMethod:
+			case IProblem.UsingDeprecatedConstructor:
+			case IProblem.OverridingDeprecatedMethod:
+			case IProblem.JavadocUsingDeprecatedField:
+			case IProblem.JavadocUsingDeprecatedConstructor:
+			case IProblem.JavadocUsingDeprecatedMethod:
+			case IProblem.JavadocUsingDeprecatedType:
+			case IProblem.UsingTerminallyDeprecatedType:
+			case IProblem.UsingTerminallyDeprecatedMethod:
+			case IProblem.UsingTerminallyDeprecatedConstructor:
+			case IProblem.UsingTerminallyDeprecatedField:
+			case IProblem.OverridingTerminallyDeprecatedMethod:
+			case IProblem.UsingDeprecatedSinceVersionType:
+			case IProblem.UsingDeprecatedSinceVersionMethod:
+			case IProblem.UsingDeprecatedSinceVersionConstructor:
+			case IProblem.UsingDeprecatedSinceVersionField:
+			case IProblem.OverridingDeprecatedSinceVersionMethod:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionType:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionMethod:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionConstructor:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionField:
+			case IProblem.OverridingTerminallyDeprecatedSinceVersionMethod:
+			case IProblem.UsingDeprecatedPackage:
+			case IProblem.UsingDeprecatedSinceVersionPackage:
+			case IProblem.UsingTerminallyDeprecatedPackage:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionPackage:
+			case IProblem.UsingDeprecatedModule:
+			case IProblem.UsingDeprecatedSinceVersionModule:
+			case IProblem.UsingTerminallyDeprecatedModule:
+			case IProblem.UsingTerminallyDeprecatedSinceVersionModule:
+				return Arrays.asList(DiagnosticTag.Deprecated);
+			case IProblem.UnnecessaryCast:
+			case IProblem.UnnecessaryInstanceof:
+			case IProblem.UnnecessaryElse:
+			case IProblem.UnnecessaryNLSTag:
+				return Arrays.asList(DiagnosticTag.Unnecessary);
+		}
+
+		return null;
 	}
 
 	private static DiagnosticSeverity convertSeverity(IProblem problem) {

@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.DiagnosticTag;
 import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
@@ -181,6 +182,26 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		} finally {
 			cu.discardWorkingCopy();
 		}
+	}
+
+	@Test
+	public void testDeprecated() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.security.Certificate;\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
+		IProblem[] problems = astRoot.getProblems();
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems));
+		assertEquals(2, diagnostics.size());
+		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
+		assertEquals(1, tags.size());
+		assertEquals(DiagnosticTag.Deprecated, tags.get(0));
 	}
 
 }
