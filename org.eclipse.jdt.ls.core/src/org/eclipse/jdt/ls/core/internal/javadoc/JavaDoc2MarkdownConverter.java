@@ -32,7 +32,7 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 
 	static {
 		Options options = new Options();
-		options.tables = Tables.CONVERT_TO_CODE_BLOCK;
+		options.tables = Tables.MULTI_MARKDOWN;
 		options.hardwraps = true;
 		options.inlineLinks = true;
 		options.autoLinks = true;
