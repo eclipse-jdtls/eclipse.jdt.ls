@@ -20,7 +20,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaConventions;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -37,9 +39,11 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.TextEdit;
@@ -115,6 +119,27 @@ public class ReorgCorrectionsSubProcessor {
 		// correct package declaration
 		int relevance= cu.getPackageDeclarations().length == 0 ? IProposalRelevance.MISSING_PACKAGE_DECLARATION : IProposalRelevance.CORRECT_PACKAGE_DECLARATION; // bug 38357
 		proposals.add(new CorrectPackageDeclarationProposal(cu, problem, relevance));
+
+		// move to package
+		IPackageDeclaration[] packDecls= cu.getPackageDeclarations();
+		String newPackName= packDecls.length > 0 ? packDecls[0].getElementName() : ""; //$NON-NLS-1$
+
+		IPackageFragmentRoot root= JavaModelUtil.getPackageFragmentRoot(cu);
+		IPackageFragment newPack= root.getPackageFragment(newPackName);
+
+		ICompilationUnit newCU= newPack.getCompilationUnit(cu.getElementName());
+		boolean isLinked= cu.getResource().isLinked();
+		if (!newCU.exists() && !isLinked) {
+			String label;
+			if (newPack.isDefaultPackage()) {
+				label= Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_default_description, BasicElementLabels.getFileName(cu));
+			} else {
+				String packageLabel= JavaElementLabels.getElementLabel(newPack, JavaElementLabels.ALL_DEFAULT);
+				label= Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_description, new Object[] { BasicElementLabels.getFileName(cu), packageLabel });
+			}
+
+			proposals.add(new ChangeCorrectionProposal(label, CodeActionKind.QuickFix, new MoveCompilationUnitChange(cu, newPack), IProposalRelevance.MOVE_CU_TO_PACKAGE));
+		}
 	}
 
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,

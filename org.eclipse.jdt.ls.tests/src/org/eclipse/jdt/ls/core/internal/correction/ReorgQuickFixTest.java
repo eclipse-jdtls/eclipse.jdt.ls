@@ -13,13 +13,29 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.RenameFile;
+import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.TextDocumentEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +53,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		fJProject1.setOptions(TestOptions.getDefaultOptions());
 
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(false);
+		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(true);
 
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 	}
@@ -158,15 +174,44 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Change package declaration to 'test1'");
+		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("}\n");
+		assertEquals(buf.toString(), evaluateCodeActionCommand(codeAction));
 
-		Expected e1 = new Expected("Change package declaration to 'test1'", buf.toString());
-		assertCodeActions(cu, e1);
+		codeAction = findAction(codeActions, "Move 'E.java' to package 'test2'");
+		assertNotNull(codeAction);
+		assertRenameFileOperation(codeAction, ResourceUtils.fixURI(cu.getResource().getRawLocationURI()).replace("test1", "test2"));
+	}
+
+	private Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String title) {
+		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(title, action.getLeft() == null ? action.getRight().getTitle() : action.getLeft().getTitle())).findFirst();
+		return any.isPresent() ? any.get() : null;
+	}
+
+	private WorkspaceEdit getWorkspaceEdit(Either<Command, CodeAction> codeAction) {
+		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
+		assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		assertNotNull(c.getArguments());
+		assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		return (WorkspaceEdit) c.getArguments().get(0);
+	}
+
+	private void assertRenameFileOperation(Either<Command, CodeAction> codeAction, String newUri) {
+		WorkspaceEdit edit = getWorkspaceEdit(codeAction);
+		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
+		assertNotNull(documentChanges);
+		assertEquals(1, documentChanges.size());
+		ResourceOperation resourceOperation = documentChanges.get(0).getRight();
+		assertNotNull(resourceOperation);
+		assertTrue(resourceOperation instanceof RenameFile);
+		assertEquals(newUri, ((RenameFile) resourceOperation).getNewUri());
 	}
 
 	@Test
@@ -178,15 +223,20 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public enum E {\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Change package declaration to 'test1'");
+		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
 		buf.append("public enum E {\n");
 		buf.append("}\n");
+		assertEquals(buf.toString(), evaluateCodeActionCommand(codeAction));
 
-		Expected e1 = new Expected("Change package declaration to 'test1'", buf.toString());
-		assertCodeActions(cu, e1);
+		codeAction = findAction(codeActions, "Move 'E.java' to package 'test2'");
+		assertNotNull(codeAction);
+		assertRenameFileOperation(codeAction, ResourceUtils.fixURI(cu.getResource().getRawLocationURI()).replace("test1", "test2"));
 	}
 
 	@Test
@@ -198,15 +248,20 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Remove package declaration 'package test2'");
+		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("}\n");
+		assertEquals(buf.toString(), evaluateCodeActionCommand(codeAction));
 
-		Expected e1 = new Expected("Remove package declaration 'package test2'", buf.toString());
-		assertCodeActions(cu, e1);
+		codeAction = findAction(codeActions, "Move 'E.java' to package 'test2'");
+		assertNotNull(codeAction);
+		assertRenameFileOperation(codeAction, ResourceUtils.fixURI(pack1.getResource().getRawLocation().append("test2/E.java").toFile().toURI()));
 	}
 
 	@Test
@@ -216,35 +271,20 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Add package declaration 'test2;'");
+		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("\n");
 		buf.append("public class E {\n");
 		buf.append("}\n");
+		assertEquals(buf.toString(), evaluateCodeActionCommand(codeAction));
 
-		Expected e1 = new Expected("Add package declaration 'test2;'", buf.toString());
-		assertCodeActions(cu, e1);
-	}
-
-	@Test
-	public void testWrongPackageStatementButColliding() throws Exception {
-		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test2;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("}\n");
-
-		Expected e1 = new Expected("Change package declaration to 'test1'", buf.toString());
-		assertCodeActions(cu, e1);
+		codeAction = findAction(codeActions, "Move 'E.java' to the default package");
+		assertNotNull(codeAction);
+		assertRenameFileOperation(codeAction, ResourceUtils.fixURI(pack1.getResource().getRawLocation().append("../E.java").toFile().toURI()));
 	}
 
 	@Test
@@ -397,5 +437,4 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		Expected e1 = new Expected("Rename type to 'E'", buf.toString());
 		assertCodeActions(cu, e1);
 	}
-
 }

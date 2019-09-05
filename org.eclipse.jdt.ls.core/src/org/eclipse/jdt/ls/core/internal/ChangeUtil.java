@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -21,6 +22,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -152,9 +154,14 @@ public class ChangeUtil {
 		ICompilationUnit unit = change.getCu();
 		CompilationUnit astCU = RefactoringASTParser.parseWithASTProvider(unit, true, new NullProgressMonitor());
 		ASTRewrite rewrite = ASTRewrite.create(astCU.getAST());
-		// update the package declaration
-		updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
-		convertTextEdit(edit, unit, rewrite.rewriteAST());
+
+		IPackageDeclaration[] packDecls = unit.getPackageDeclarations();
+		String oldPackageName = packDecls.length > 0 ? packDecls[0].getElementName() : "";
+		if (!Objects.equals(oldPackageName, newPackage.getElementName())) {
+			// update the package declaration
+			updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
+			convertTextEdit(edit, unit, rewrite.rewriteAST());
+		}
 
 		RenameFile cuResourceChange = new RenameFile();
 		cuResourceChange.setOldUri(JDTUtils.toURI(unit));
