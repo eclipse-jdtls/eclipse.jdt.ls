@@ -290,7 +290,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return codeActions;
 	}
 
-	private String evaluateCodeActionCommand(Either<Command, CodeAction> codeAction)
+	protected String evaluateCodeActionCommand(Either<Command, CodeAction> codeAction)
 			throws BadLocationException, JavaModelException {
 
 		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
