@@ -43,7 +43,7 @@
             <repository location="http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.2-2018-12-24_15-46-05-H18/"/>
         </location>
 	    <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-		    <repository location="https://github.com/akaroml/lsp4j-latest/raw/master/p2/"/>
+		    <repository location="http://services.typefox.io/open-source/jenkins/job/lsp4j/job/master/lastSuccessfulBuild/artifact/build/p2-repository/"/>
 		    <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
 	    </location>
     </locations>
