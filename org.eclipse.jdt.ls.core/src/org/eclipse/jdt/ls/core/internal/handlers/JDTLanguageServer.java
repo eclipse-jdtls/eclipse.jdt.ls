@@ -229,7 +229,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isTypeDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.TYPEDEFINITION_ID, Preferences.TYPEDEFINITION);
 		}
-		if (preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
+		if (!preferenceManager.getClientPreferences().isClientHoverProviderRegistered() && preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
 			registerCapability(Preferences.HOVER_ID, Preferences.HOVER);
 		}
 		if (preferenceManager.getClientPreferences().isReferencesDynamicRegistered()) {
@@ -560,6 +560,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		logInfo(">> document/references");
 		ReferencesHandler handler = new ReferencesHandler(this.preferenceManager);
 		return computeAsync((monitor) -> handler.findReferences(params, monitor));
+	}
+
+	public 	CompletableFuture<List<? extends Location>> methodOverride(TextDocumentPositionParams position) {
+		logInfo(">> methodOverride");
+		return computeAsync((monitor) -> NavigateToOverrideHandler.methodOverride(position, monitor));
 	}
 
 	/* (non-Javadoc)

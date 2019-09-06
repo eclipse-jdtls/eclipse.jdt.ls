@@ -32,8 +32,10 @@ import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverr
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -111,4 +113,7 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params);
+
+	@JsonRequest
+	CompletableFuture<List<? extends Location>> methodOverride(TextDocumentPositionParams position);
 }
