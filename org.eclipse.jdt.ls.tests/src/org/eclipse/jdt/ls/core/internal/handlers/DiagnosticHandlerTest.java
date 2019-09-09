@@ -74,7 +74,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
 		IProblem[] problems = astRoot.getProblems();
-		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems));
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
 		assertEquals(1, diagnostics.size());
 		Range range = diagnostics.get(0).getRange();
 		assertNotEquals(range.getStart().getLine(), range.getEnd().getLine());
@@ -123,7 +123,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 			List<IProblem> problems = handler.getProblems();
 			assertEquals(problems.size(), 1);
-			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems, true);
 			assertEquals(diagnostics.size(), 1);
 			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
 			assertEquals(severity, DiagnosticSeverity.Information);
@@ -175,7 +175,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 			List<IProblem> problems = handler.getProblems();
 			assertEquals(problems.size(), 1);
-			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems, true);
 			assertEquals(diagnostics.size(), 1);
 			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
 			assertEquals(severity, DiagnosticSeverity.Warning);
@@ -197,7 +197,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
 		IProblem[] problems = astRoot.getProblems();
-		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems));
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
 		assertEquals(2, diagnostics.size());
 		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
 		assertEquals(1, tags.size());

@@ -64,10 +64,17 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	public static final String PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML = "Project configuration is not up-to-date with pom.xml, requires an update.";
 	private final JavaClientConnection connection;
 	private final ProjectsManager projectsManager;
+	private final boolean isDiagnosticTagSupported;
 
+	@Deprecated
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
+		this(connection, projectsManager, false);
+	}
+
+	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager, boolean isDiagnosticTagSupported) {
 		this.connection = connection;
 		this.projectsManager = projectsManager;
+		this.isDiagnosticTagSupported = isDiagnosticTagSupported;
 	}
 
 	public void addResourceChangeListener() {
@@ -150,7 +157,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		if (document != null) {
 			String uri = JDTUtils.getFileURI(resource);
-			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers)));
+			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers, isDiagnosticTagSupported)));
 		}
 		return false;
 	}
@@ -173,13 +180,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				projectMarkers.add(marker);
 			}
 		}
-		List<Diagnostic> diagnostics = toDiagnosticArray(range, projectMarkers);
+		List<Diagnostic> diagnostics = toDiagnosticArray(range, projectMarkers, isDiagnosticTagSupported);
 		String clientUri = ResourceUtils.toClientUri(uri);
 		connection.publishDiagnostics(new PublishDiagnosticsParams(clientUri, diagnostics));
 		if (pom.exists()) {
 			IDocument document = JsonRpcHelpers.toDocument(pom);
-			diagnostics = toDiagnosticsArray(document, pom.findMarkers(null, true, IResource.DEPTH_ZERO));
-			List<Diagnostic> diagnosicts2 = toDiagnosticArray(range, pomMarkers);
+			diagnostics = toDiagnosticsArray(document, pom.findMarkers(null, true, IResource.DEPTH_ZERO), isDiagnosticTagSupported);
+			List<Diagnostic> diagnosicts2 = toDiagnosticArray(range, pomMarkers, isDiagnosticTagSupported);
 			diagnostics.addAll(diagnosicts2);
 			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
 		}
@@ -252,13 +259,16 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				document = JsonRpcHelpers.toDocument(file);
 			}
 			if (document != null) {
-				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, entry.getValue().toArray(new IMarker[0]));
+				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, entry.getValue().toArray(new IMarker[0]), isDiagnosticTagSupported);
 				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
 			}
 		}
 	}
 
-
+	@Deprecated
+	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers) {
+		return toDiagnosticArray(range, markers, false);
+	}
 
 	/**
 	 * Transforms {@link IMarker}s into a list of {@link Diagnostic}s
@@ -267,12 +277,12 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param markers
 	 * @return a list of {@link Diagnostic}s
 	 */
-	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers) {
-		List<Diagnostic> diagnostics = markers.stream().map(m -> toDiagnostic(range, m)).filter(d -> d != null).collect(Collectors.toList());
+	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers, boolean isDiagnosticTagSupported) {
+		List<Diagnostic> diagnostics = markers.stream().map(m -> toDiagnostic(range, m, isDiagnosticTagSupported)).filter(d -> d != null).collect(Collectors.toList());
 		return diagnostics;
 	}
 
-	private static Diagnostic toDiagnostic(Range range, IMarker marker) {
+	private static Diagnostic toDiagnostic(Range range, IMarker marker, boolean isDiagnosticTagSupported) {
 		if (marker == null || !marker.exists()) {
 			return null;
 		}
@@ -284,9 +294,18 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		d.setMessage(message);
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
-		d.setCode(String.valueOf(marker.getAttribute(IJavaModelMarker.ID, 0)));
+		int problemId = marker.getAttribute(IJavaModelMarker.ID, 0);
+		d.setCode(String.valueOf(problemId));
+		if (isDiagnosticTagSupported) {
+			d.setTags(DiagnosticsHandler.getDiagnosticTag(problemId));
+		}
 		d.setRange(range);
 		return d;
+	}
+
+	@Deprecated
+	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
+		return toDiagnosticsArray(document, markers, false);
 	}
 
 	/**
@@ -297,15 +316,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @param markers
 	 * @return a list of {@link Diagnostic}s
 	 */
-	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers) {
+	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers, boolean isDiagnosticTagSupported) {
 		List<Diagnostic> diagnostics = Stream.of(markers)
-				.map(m -> toDiagnostic(document, m))
+				.map(m -> toDiagnostic(document, m, isDiagnosticTagSupported))
 				.filter(d -> d != null)
 				.collect(Collectors.toList());
 		return diagnostics;
 	}
 
-	private static Diagnostic toDiagnostic(IDocument document, IMarker marker) {
+	private static Diagnostic toDiagnostic(IDocument document, IMarker marker, boolean isDiagnosticTagSupported) {
 		if (marker == null || !marker.exists()) {
 			return null;
 		}
@@ -316,7 +335,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		d.setCode(String.valueOf(problemId));
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
 		d.setRange(convertRange(document, marker));
-		d.setTags(DiagnosticsHandler.getDiagnosticTag(problemId));
+		if (isDiagnosticTagSupported) {
+			d.setTags(DiagnosticsHandler.getDiagnosticTag(problemId));
+		}
 		return d;
 	}
 

@@ -118,7 +118,8 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	@Override
 	public void endReporting() {
 		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(this.cu, problems));
+		boolean isDiagnosticTagSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isDiagnosticTagSupported();
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(this.cu, problems, isDiagnosticTagSupported));
 		this.connection.publishDiagnostics($);
 	}
 
@@ -127,7 +128,12 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		return true;
 	}
 
+	@Deprecated
 	public static List<Diagnostic> toDiagnosticsArray(IOpenable openable, List<IProblem> problems) {
+		return toDiagnosticsArray(openable, problems, false);
+	}
+
+	public static List<Diagnostic> toDiagnosticsArray(IOpenable openable, List<IProblem> problems, boolean isDiagnosticTagSupported) {
 		List<Diagnostic> array = new ArrayList<>(problems.size());
 		for (IProblem problem : problems) {
 			Diagnostic diag = new Diagnostic();
@@ -136,7 +142,9 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(openable, problem));
-			diag.setTags(getDiagnosticTag(problem.getID()));
+			if (isDiagnosticTagSupported) {
+				diag.setTags(getDiagnosticTag(problem.getID()));
+			}
 			array.add(diag);
 		}
 		return array;

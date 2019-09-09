@@ -66,7 +66,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Before
 	public void setup() throws Exception {
-		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager);
+		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, true);
 		handler.addResourceChangeListener();
 	}
 
