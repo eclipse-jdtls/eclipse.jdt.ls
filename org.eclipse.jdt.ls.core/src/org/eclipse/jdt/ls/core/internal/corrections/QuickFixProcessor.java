@@ -62,8 +62,7 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public List<ChangeCorrectionProposal> getCorrections(IInvocationContext context, IProblemLocationCore[] locations)
-			throws CoreException {
+	public List<ChangeCorrectionProposal> getCorrections(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
@@ -80,76 +79,75 @@ public class QuickFixProcessor {
 		return resultingCollections;
 	}
 
-	private void process(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private void process(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
 		}
 		switch (id) {
-		case IProblem.UnterminatedString:
-			String quoteLabel = CorrectionMessages.JavaCorrectionProcessor_addquote_description;
-			int pos = moveBack(problem.getOffset() + problem.getLength(), problem.getOffset(), "\n\r", //$NON-NLS-1$
-					context.getCompilationUnit());
-			proposals.add(new ReplaceCorrectionProposal(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", //$NON-NLS-1$
-					IProposalRelevance.ADD_QUOTE));
-			break;
-		case IProblem.UnusedImport:
-		case IProblem.DuplicateImport:
-		case IProblem.CannotImportPackage:
-		case IProblem.ConflictingImport:
-		case IProblem.ImportNotFound:
-			ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
-			break;
-		case IProblem.PublicClassMustMatchFileName:
-			ReorgCorrectionsSubProcessor.getWrongTypeNameProposals(context, problem, proposals);
-			break;
-		case IProblem.PackageIsNotExpectedPackage:
-			ReorgCorrectionsSubProcessor.getWrongPackageDeclNameProposals(context, problem, proposals);
-			break;
+			case IProblem.UnterminatedString:
+				String quoteLabel = CorrectionMessages.JavaCorrectionProcessor_addquote_description;
+				int pos = moveBack(problem.getOffset() + problem.getLength(), problem.getOffset(), "\n\r", //$NON-NLS-1$
+						context.getCompilationUnit());
+				proposals.add(new ReplaceCorrectionProposal(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", //$NON-NLS-1$
+						IProposalRelevance.ADD_QUOTE));
+				break;
+			case IProblem.UnusedImport:
+			case IProblem.DuplicateImport:
+			case IProblem.CannotImportPackage:
+			case IProblem.ConflictingImport:
+			case IProblem.ImportNotFound:
+				ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
+				break;
+			case IProblem.PublicClassMustMatchFileName:
+				ReorgCorrectionsSubProcessor.getWrongTypeNameProposals(context, problem, proposals);
+				break;
+			case IProblem.PackageIsNotExpectedPackage:
+				ReorgCorrectionsSubProcessor.getWrongPackageDeclNameProposals(context, problem, proposals);
+				break;
 
-		case IProblem.UndefinedMethod:
-			UnresolvedElementsSubProcessor.getMethodProposals(context, problem, false, proposals);
-			break;
-		case IProblem.UndefinedConstructor:
-			UnresolvedElementsSubProcessor.getConstructorProposals(context, problem, proposals);
-			break;
-		case IProblem.UndefinedAnnotationMember:
-			UnresolvedElementsSubProcessor.getAnnotationMemberProposals(context, problem, proposals);
-			break;
-		case IProblem.ParameterMismatch:
-			UnresolvedElementsSubProcessor.getMethodProposals(context, problem, true, proposals);
-			break;
+			case IProblem.UndefinedMethod:
+				UnresolvedElementsSubProcessor.getMethodProposals(context, problem, false, proposals);
+				break;
+			case IProblem.UndefinedConstructor:
+				UnresolvedElementsSubProcessor.getConstructorProposals(context, problem, proposals);
+				break;
+			case IProblem.UndefinedAnnotationMember:
+				UnresolvedElementsSubProcessor.getAnnotationMemberProposals(context, problem, proposals);
+				break;
+			case IProblem.ParameterMismatch:
+				UnresolvedElementsSubProcessor.getMethodProposals(context, problem, true, proposals);
+				break;
 			// case IProblem.MethodButWithConstructorName:
 			// ReturnTypeSubProcessor.addMethodWithConstrNameProposals(context,
 			// problem, proposals);
 			// break;
-		case IProblem.UndefinedField:
-		case IProblem.UndefinedName:
-		case IProblem.UnresolvedVariable:
-			UnresolvedElementsSubProcessor.getVariableProposals(context, problem, null, proposals);
-			break;
-		case IProblem.AmbiguousType:
-		case IProblem.JavadocAmbiguousType:
-			UnresolvedElementsSubProcessor.getAmbiguousTypeReferenceProposals(context, problem, proposals);
-			break;
-		case IProblem.UndefinedType:
-		case IProblem.JavadocUndefinedType:
-			UnresolvedElementsSubProcessor.getTypeProposals(context, problem, proposals);
-			break;
-		case IProblem.TypeMismatch:
-		case IProblem.ReturnTypeMismatch:
-			TypeMismatchSubProcessor.addTypeMismatchProposals(context, problem, proposals);
-			break;
-		case IProblem.IncompatibleTypesInForeach:
-			TypeMismatchSubProcessor.addTypeMismatchInForEachProposals(context, problem, proposals);
-			break;
-		case IProblem.IncompatibleReturnType:
-			TypeMismatchSubProcessor.addIncompatibleReturnTypeProposals(context, problem, proposals);
-			break;
-		case IProblem.IncompatibleExceptionInThrowsClause:
-			TypeMismatchSubProcessor.addIncompatibleThrowsProposals(context, problem, proposals);
-			break;
+			case IProblem.UndefinedField:
+			case IProblem.UndefinedName:
+			case IProblem.UnresolvedVariable:
+				UnresolvedElementsSubProcessor.getVariableProposals(context, problem, null, proposals);
+				break;
+			case IProblem.AmbiguousType:
+			case IProblem.JavadocAmbiguousType:
+				UnresolvedElementsSubProcessor.getAmbiguousTypeReferenceProposals(context, problem, proposals);
+				break;
+			case IProblem.UndefinedType:
+			case IProblem.JavadocUndefinedType:
+				UnresolvedElementsSubProcessor.getTypeProposals(context, problem, proposals);
+				break;
+			case IProblem.TypeMismatch:
+			case IProblem.ReturnTypeMismatch:
+				TypeMismatchSubProcessor.addTypeMismatchProposals(context, problem, proposals);
+				break;
+			case IProblem.IncompatibleTypesInForeach:
+				TypeMismatchSubProcessor.addTypeMismatchInForEachProposals(context, problem, proposals);
+				break;
+			case IProblem.IncompatibleReturnType:
+				TypeMismatchSubProcessor.addIncompatibleReturnTypeProposals(context, problem, proposals);
+				break;
+			case IProblem.IncompatibleExceptionInThrowsClause:
+				TypeMismatchSubProcessor.addIncompatibleThrowsProposals(context, problem, proposals);
+				break;
 			case IProblem.UnhandledException:
 			case IProblem.UnhandledExceptionOnAutoClose:
 				LocalCorrectionsSubProcessor.addUncaughtExceptionProposals(context, problem, proposals);
@@ -163,23 +161,19 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addRedundantSuperInterfaceProposal(context,
 			// problem, proposals);
 			// break;
-      case IProblem.VoidMethodReturnsValue:
-      ReturnTypeSubProcessor.addVoidMethodReturnsProposals(context,
-      problem, proposals);
-      break;
-      case IProblem.MethodReturnsVoid:
-      ReturnTypeSubProcessor.addMethodReturnsVoidProposals(context, problem,
-      proposals);
-      break;
-      case IProblem.MissingReturnType:
-      ReturnTypeSubProcessor.addMissingReturnTypeProposals(context,
-      problem, proposals);
-      break;
-      case IProblem.ShouldReturnValue:
-      case IProblem.ShouldReturnValueHintMissingDefault:
-      ReturnTypeSubProcessor.addMissingReturnStatementProposals(context,
-      problem, proposals);
-      break;
+			case IProblem.VoidMethodReturnsValue:
+				ReturnTypeSubProcessor.addVoidMethodReturnsProposals(context, problem, proposals);
+				break;
+			case IProblem.MethodReturnsVoid:
+				ReturnTypeSubProcessor.addMethodReturnsVoidProposals(context, problem, proposals);
+				break;
+			case IProblem.MissingReturnType:
+				ReturnTypeSubProcessor.addMissingReturnTypeProposals(context, problem, proposals);
+				break;
+			case IProblem.ShouldReturnValue:
+			case IProblem.ShouldReturnValueHintMissingDefault:
+				ReturnTypeSubProcessor.addMissingReturnStatementProposals(context, problem, proposals);
+				break;
 			// case IProblem.NonExternalizedStringLiteral:
 			// LocalCorrectionsSubProcessor.addNLSProposals(context, problem,
 			// proposals);
@@ -196,14 +190,12 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addCorrectAccessToStaticProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.StaticMethodRequested:
-			// case IProblem.NonStaticFieldFromStaticInvocation:
-			// case IProblem.InstanceMethodDuringConstructorInvocation:
-			// case IProblem.InstanceFieldDuringConstructorInvocation:
-			// ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_STATIC,
-			// IProposalRelevance.CHANGE_MODIFIER_TO_STATIC);
-			// break;
+			case IProblem.StaticMethodRequested:
+			case IProblem.NonStaticFieldFromStaticInvocation:
+			case IProblem.InstanceMethodDuringConstructorInvocation:
+			case IProblem.InstanceFieldDuringConstructorInvocation:
+				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_STATIC, IProposalRelevance.CHANGE_MODIFIER_TO_STATIC);
+				break;
 			// case IProblem.NonBlankFinalLocalAssignment:
 			// case IProblem.DuplicateFinalLocalInitialization:
 			// case IProblem.FinalFieldAssignment:
@@ -347,26 +339,26 @@ public class QuickFixProcessor {
 			// proposals.add(new TaskMarkerProposal(context.getCompilationUnit(),
 			// problem, 10));
 			// break;
-		case IProblem.JavadocMissing:
-			JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
-			break;
-		case IProblem.JavadocMissingParamTag:
-		case IProblem.JavadocMissingReturnTag:
-		case IProblem.JavadocMissingThrowsTag:
-			JavadocTagsSubProcessor.getMissingJavadocTagProposals(context, problem, proposals);
-			break;
-		case IProblem.JavadocInvalidThrowsClassName:
-		case IProblem.JavadocDuplicateThrowsClassName:
-		case IProblem.JavadocDuplicateReturnTag:
-		case IProblem.JavadocDuplicateParamName:
-		case IProblem.JavadocInvalidParamName:
-		case IProblem.JavadocUnexpectedTag:
-		case IProblem.JavadocInvalidTag:
-			JavadocTagsSubProcessor.getRemoveJavadocTagProposals(context, problem, proposals);
-			break;
-		case IProblem.JavadocInvalidMemberTypeQualification:
-			JavadocTagsSubProcessor.getInvalidQualificationProposals(context, problem, proposals);
-			break;
+			case IProblem.JavadocMissing:
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
+				break;
+			case IProblem.JavadocMissingParamTag:
+			case IProblem.JavadocMissingReturnTag:
+			case IProblem.JavadocMissingThrowsTag:
+				JavadocTagsSubProcessor.getMissingJavadocTagProposals(context, problem, proposals);
+				break;
+			case IProblem.JavadocInvalidThrowsClassName:
+			case IProblem.JavadocDuplicateThrowsClassName:
+			case IProblem.JavadocDuplicateReturnTag:
+			case IProblem.JavadocDuplicateParamName:
+			case IProblem.JavadocInvalidParamName:
+			case IProblem.JavadocUnexpectedTag:
+			case IProblem.JavadocInvalidTag:
+				JavadocTagsSubProcessor.getRemoveJavadocTagProposals(context, problem, proposals);
+				break;
+			case IProblem.JavadocInvalidMemberTypeQualification:
+				JavadocTagsSubProcessor.getInvalidQualificationProposals(context, problem, proposals);
+				break;
 			//
 			// case IProblem.LocalVariableHidingLocalVariable:
 			// case IProblem.LocalVariableHidingField:
@@ -385,9 +377,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context,
 			// problem, proposals);
 			// break;
-		case IProblem.NoMessageSendOnArrayType:
-			UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
-			break;
+			case IProblem.NoMessageSendOnArrayType:
+				UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
+				break;
 			// case IProblem.InvalidOperator:
 			// LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context,
 			// problem, proposals);
@@ -641,9 +633,9 @@ public class QuickFixProcessor {
 			// problem, proposals);
 			// break;
 
-		default:
-			String str = problem.toString();
-			System.out.println(str);
+			default:
+				String str = problem.toString();
+				System.out.println(str);
 		}
 		// if
 		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))
