@@ -55,6 +55,7 @@ import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -75,6 +76,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.ThisExpression;
@@ -89,8 +91,11 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
+import org.eclipse.jdt.core.manipulation.CleanUpRequirementsCore;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
@@ -99,11 +104,15 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.ConvertLoopFixCore;
+import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
+import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -120,8 +129,6 @@ import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 
-/**
-  */
 public class QuickAssistProcessor {
 
 	public static final String SPLIT_JOIN_VARIABLE_DECLARATION_ID = "org.eclipse.jdt.ls.correction.splitJoinVariableDeclaration.assist"; //$NON-NLS-1$
@@ -204,10 +211,98 @@ public class QuickAssistProcessor {
 				getConvertVarTypeToResolvedTypeProposal(context, coveringNode, resultingCollections);
 				getConvertResolvedTypeToVarTypeProposal(context, coveringNode, resultingCollections);
 				getAddStaticImportProposals(context, coveringNode, resultingCollections);
+				getConvertForLoopProposal(context, coveringNode, resultingCollections);
 			}
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+		ForStatement forStatement = getEnclosingForStatementHeader(node);
+		if (forStatement == null) {
+			return false;
+		}
+		if (resultingCollections == null) {
+			return true;
+		}
+		IProposableFix fix = ConvertLoopFixCore.createConvertForLoopToEnhancedFix(context.getASTRoot(), forStatement);
+		if (fix == null) {
+			return false;
+		}
+		Map<String, String> options = new HashMap<>();
+		options.put(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
+		ICleanUpCore cleanUp = new AbstractCleanUpCore(options) {
+			@Override
+			public CleanUpRequirementsCore getRequirementsCore() {
+				return new CleanUpRequirementsCore(isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
+			}
+
+			@Override
+			public ICleanUpFixCore createFixCore(CleanUpContextCore context) throws CoreException {
+				CompilationUnit compilationUnit = context.getAST();
+				if (compilationUnit == null) {
+					return null;
+				}
+				boolean convertForLoops = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+				return ConvertLoopFixCore.createCleanUp(compilationUnit, convertForLoops, convertForLoops,
+						isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL) && isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES));
+			}
+
+			@Override
+			public String[] getStepDescriptions() {
+				List<String> result = new ArrayList<>();
+				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
+					result.add(MultiFixMessages.Java50CleanUp_ConvertToEnhancedForLoop_description);
+				}
+				return result.toArray(new String[result.size()]);
+			}
+
+			@Override
+			public String getPreview() {
+				StringBuilder buf = new StringBuilder();
+				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
+					buf.append("for (int element : ids) {\n"); //$NON-NLS-1$
+					buf.append("    double value= element / 2; \n"); //$NON-NLS-1$
+					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
+					buf.append("}\n"); //$NON-NLS-1$
+				} else {
+					buf.append("for (int i = 0; i < ids.length; i++) {\n"); //$NON-NLS-1$
+					buf.append("    double value= ids[i] / 2; \n"); //$NON-NLS-1$
+					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
+					buf.append("}\n"); //$NON-NLS-1$
+				}
+				return buf.toString();
+			}
+		};
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context);
+		resultingCollections.add(proposal);
+		return true;
+	}
+
+	private static ForStatement getEnclosingForStatementHeader(ASTNode node) {
+		return getEnclosingHeader(node, ForStatement.class, ForStatement.INITIALIZERS_PROPERTY, ForStatement.EXPRESSION_PROPERTY, ForStatement.UPDATERS_PROPERTY);
+	}
+
+	private static <T extends ASTNode> T getEnclosingHeader(ASTNode node, Class<T> headerType, StructuralPropertyDescriptor... headerProperties) {
+		if (headerType.isInstance(node)) {
+			return headerType.cast(node);
+		}
+
+		while (node != null) {
+			ASTNode parent = node.getParent();
+			if (headerType.isInstance(parent)) {
+				StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
+				for (StructuralPropertyDescriptor property : headerProperties) {
+					if (locationInParent == property) {
+						return headerType.cast(parent);
+					}
+				}
+				return null;
+			}
+			node = parent;
+		}
+		return null;
 	}
 
 	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
