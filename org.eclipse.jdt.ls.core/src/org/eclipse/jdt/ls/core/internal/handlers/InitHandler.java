@@ -137,8 +137,6 @@ final public class InitHandler {
 			}
 		}
 		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
-
-		triggerInitialization(rootPaths);
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
@@ -245,6 +243,10 @@ final public class InitHandler {
 		capabilities.setWorkspace(wsCapabilities);
 
 		result.setCapabilities(capabilities);
+
+		// At the end of the InitHandler, trigger a job to import the workspace. This is used to ensure ServiceStatus notification
+		// is not sent before the initialize response. See the bug https://github.com/redhat-developer/vscode-java/issues/1056
+		triggerInitialization(rootPaths);
 		return result;
 	}
 
