@@ -69,7 +69,7 @@ public class NavigateToOverrideHandler {
 
 		ITypeHierarchy hierarchy = type.newSupertypeHierarchy(monitor);
 		MethodOverrideTester tester = new MethodOverrideTester(type, hierarchy);
-		IMethod found = tester.findDeclaringMethod(method, true);
+		IMethod found = tester.findOverriddenMethod(method, true);
 		if (found != null && !found.equals(method)) {
 			return found;
 		}
