@@ -13,6 +13,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -137,6 +138,33 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	@Test
+	public void testLoadSameBundleMultipleTimes() throws Exception {
+		loadBundles(Arrays.asList(getBundle(), getAnotherBundle()));
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+
+		String bundleLocation = getBundleLocation(getBundle(), true);
+		Bundle installedBundle = context.getBundle(bundleLocation);
+
+		String skippedBundleLocation = getBundleLocation(getAnotherBundle(), true);
+		Bundle skippedBundle = context.getBundle(skippedBundleLocation);
+		try {
+			assertNotNull(installedBundle);
+			assertNull(skippedBundle);
+
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("testbundle.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+
+			String extResult = getBundleExtensionResult();
+			assertEquals("EXT_TOSTRING", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
+	}
+
 	@Test(expected = CoreException.class)
 	public void testLoadThrowCoreException() throws Exception {
 		BundleUtils.loadBundles(Arrays.asList(new String[] { "Fakedlocation" }));
@@ -157,6 +185,10 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 	private String getBundle() {
 		return getBundle("testresources", "testbundle-0.3.0-SNAPSHOT.jar");
+	}
+
+	private String getAnotherBundle() {
+		return getBundle("testresources/path with whitespace", "testbundle-0.3.0-SNAPSHOT.jar");
 	}
 
 	private String getBundle(String folder, String bundleName) {

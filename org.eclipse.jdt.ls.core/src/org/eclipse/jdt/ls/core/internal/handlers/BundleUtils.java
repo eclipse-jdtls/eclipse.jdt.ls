@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -59,6 +61,37 @@ public final class BundleUtils {
 		private String getSymbolicName() {
 			return symbolicName;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((symbolicName == null) ? 0 : symbolicName.hashCode());
+			result = prime * result + ((version == null) ? 0 : version.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			BundleInfo other = (BundleInfo) obj;
+			if (symbolicName == null) {
+				if (other.symbolicName != null)
+					return false;
+			} else if (!symbolicName.equals(other.symbolicName))
+				return false;
+			if (version == null) {
+				if (other.version != null)
+					return false;
+			} else if (!version.equals(other.version))
+				return false;
+			return true;
+		}
 	}
 
 	private BundleUtils(){
@@ -82,6 +115,7 @@ public final class BundleUtils {
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
 		Collection<Bundle> bundlesToStart = new ArrayList<>();
+		Set<BundleInfo> bundleInfos = new HashSet<>();
 		for (String bundleLocation : bundleLocations) {
 			try {
 				if (StringUtils.isEmpty(bundleLocation)) {
@@ -92,6 +126,11 @@ public final class BundleUtils {
 				String location = getBundleLocation(bundleLocation, true);
 
 				BundleInfo bundleInfo = getBundleInfo(bundleLocation);
+				// Since installBundle() is an async call, we use bundleInfos to act as a cache to prevent installing multiple times for a same bundle.
+				if (bundleInfos.contains(bundleInfo)) {
+					continue;
+				}
+				bundleInfos.add(bundleInfo);
 				if (bundleInfo == null) {
 					status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Failed to get bundleInfo for bundle from " + bundleLocation, null));
 					continue;
