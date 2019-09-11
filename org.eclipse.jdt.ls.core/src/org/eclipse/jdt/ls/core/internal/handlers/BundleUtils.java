@@ -126,11 +126,9 @@ public final class BundleUtils {
 				String location = getBundleLocation(bundleLocation, true);
 
 				BundleInfo bundleInfo = getBundleInfo(bundleLocation);
-				// Since installBundle() is an async call, we use bundleInfos to act as a cache to prevent installing multiple times for a same bundle.
-				if (bundleInfos.contains(bundleInfo)) {
+				if (!bundleInfos.add(bundleInfo)){  // returns false if bundleInfo is not added because it already exists
 					continue;
-				}
-				bundleInfos.add(bundleInfo);
+				 }
 				if (bundleInfo == null) {
 					status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Failed to get bundleInfo for bundle from " + bundleLocation, null));
 					continue;
