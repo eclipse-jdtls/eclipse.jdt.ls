@@ -1177,7 +1177,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		expectedText.append("public void run() {\n\t");
 		if (supportSnippets) {
-			expectedText.append("${0");
+			expectedText.append("${0:");
 		}
 		expectedText.append("// TODO Auto-generated method stub\n\t");
 		if (supportSnippets) {
