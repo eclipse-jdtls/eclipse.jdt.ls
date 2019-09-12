@@ -1177,7 +1177,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		expectedText.append("public void run() {\n\t");
 		if (supportSnippets) {
-			expectedText.append("${0");
+			expectedText.append("${0:");
 		}
 		expectedText.append("// TODO Auto-generated method stub\n\t");
 		if (supportSnippets) {
@@ -1460,7 +1460,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTextEdit(2, 23, 23, "IFoo(){\n" +
 				"\n		@Override\n" +
 				"		public void setName(String name) {\n" +
-				"			${0// TODO Auto-generated method stub\n\t\t\t}\n" +
+				"			${0:// TODO Auto-generated method stub\n\t\t\t}\n" +
 				"		}\n" +
 				"\n		@Override\n" +
 				"		public String getName() {\n" +
@@ -1499,7 +1499,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
+				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1533,7 +1533,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
+				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1569,7 +1569,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
+				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1606,7 +1606,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
+				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
@@ -1638,7 +1638,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"\n" +
 				"	@Override\n" +
 				"	public void run() {\n" +
-				"		${0// TODO Auto-generated method stub\n\t\t}\n" +
+				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
 	}
