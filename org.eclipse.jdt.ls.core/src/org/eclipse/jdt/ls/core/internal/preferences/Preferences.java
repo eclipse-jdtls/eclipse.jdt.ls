@@ -29,7 +29,9 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -237,6 +239,9 @@ public class Preferences {
 	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
 	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
+	public static final String JAVA_COMPLETION_FILTERED_TYPES_KEY = "java.completion.filteredTypes";
+	public static final List<String> JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
+
 	// A named preference that defines whether to use Objects.hash and Objects.equals methods when generating the hashCode and equals methods.
 	public static final String JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS = "java.codeGeneration.hashCodeEquals.useJava7Objects";
 	// A named preference that defines whether to use 'instanceof' to compare types when generating the hashCode and equals methods.
@@ -343,6 +348,7 @@ public class Preferences {
 	private List<String> javaImportExclusions = new ArrayList<>();
 	private String javaHome;
 	private List<String> importOrder;
+	private List<String> filteredTypes;
 	private String formatterUrl;
 	private String formatterProfileName;
 	private Collection<IPath> rootPaths;
@@ -368,6 +374,9 @@ public class Preferences {
 		JAVA_IMPORT_ORDER_DEFAULT.add("javax");
 		JAVA_IMPORT_ORDER_DEFAULT.add("com");
 		JAVA_IMPORT_ORDER_DEFAULT.add("org");
+		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT = new ArrayList<>();
+		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("java.awt.*");
+		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("com.sun.*");
 	}
 
 	public static enum Severity {
@@ -453,6 +462,7 @@ public class Preferences {
 		formatterUrl = null;
 		formatterProfileName = null;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
+		filteredTypes = JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
 		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 	}
 
@@ -579,6 +589,9 @@ public class Preferences {
 
 		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
 		prefs.setImportOrder(javaImportOrder);
+
+		List<String> javaFilteredTypes = getList(configuration, JAVA_COMPLETION_FILTERED_TYPES_KEY, JAVA_COMPLETION_FILTERED_TYPES_DEFAULT);
+		prefs.setFilteredTypes(javaFilteredTypes);
 
 		int maxConcurrentBuilds = getInt(configuration, JAVA_MAX_CONCURRENT_BUILDS, PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT);
 		maxConcurrentBuilds = maxConcurrentBuilds >= 1 ? maxConcurrentBuilds : 1;
@@ -801,6 +814,14 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setFilteredTypes(List<String> filteredTypes) {
+		this.filteredTypes = (filteredTypes == null) ? Collections.emptyList() : filteredTypes;
+		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		pref.put(TypeFilter.TYPEFILTER_ENABLED, String.join(";", filteredTypes));
+		JavaLanguageServerPlugin.getInstance().getTypeFilter().dispose();
+		return this;
+	}
+
 	public Preferences setMaxBuildCount(int maxConcurrentBuilds) {
 		this.parallelBuildsCount = maxConcurrentBuilds;
 		return this;
@@ -973,6 +994,10 @@ public class Preferences {
 
 	public String[] getImportOrder() {
 		return this.importOrder == null ? new String[0] : this.importOrder.toArray(new String[importOrder.size()]);
+	}
+
+	public String[] getFilteredTypes() {
+		return this.filteredTypes == null ? new String[0] : this.filteredTypes.toArray(new String[filteredTypes.size()]);
 	}
 
 	public int getMaxConcurrentBuilds() {

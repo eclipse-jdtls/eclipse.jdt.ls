@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 
 public class SimilarElementsRequestor extends CompletionRequestor {
 
@@ -231,9 +232,9 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 			return;
 		}
 		String fullName= new String(Signature.toCharArray(Signature.getTypeErasure(typeNameSig)));
-		//		if (TypeFilter.isFiltered(fullName)) {  // requires jdt.ui preferences
-		//			return;
-		//		}
+		if (TypeFilter.isFiltered(fullName)) {
+			return;
+		}
 		if (NameMatcher.isSimilarName(fName, Signature.getSimpleName(fullName))) {
 			addResult(new SimilarElement(kind, fullName, relevance));
 		}

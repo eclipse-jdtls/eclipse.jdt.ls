@@ -16,7 +16,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextEdit;
@@ -235,6 +238,51 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
+	public void testOrganizeImportsFilterTypes() throws CoreException, BadLocationException {
+		List<String> filteredTypes = new ArrayList<>();
+		filteredTypes.add("java.util.*");
+		PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
+		try {
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        List list = new ArrayList();\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+			buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("import java.util.ArrayList;\n");
+			buf.append("import java.util.List;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        List list = new ArrayList();\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+
+			WorkspaceEdit rootEdit = new WorkspaceEdit();
+			command.organizeImportsInCompilationUnit(cu, rootEdit);
+			assertEquals(0, rootEdit.getChanges().size());
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+			command.organizeImportsInCompilationUnit(cu, rootEdit);
+			assertFalse(rootEdit.getChanges().isEmpty());
+			assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
+		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
 	public void testOrganizeImportsInPackage() throws CoreException, BadLocationException {
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
@@ -349,6 +397,9 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 
 	private String getOrganizeImportResult(ICompilationUnit cu, WorkspaceEdit we) throws BadLocationException, CoreException {
 		List<TextEdit> change = we.getChanges().get(JDTUtils.toURI(cu));
+		if (change == null) {
+			return cu.getSource();
+		}
 		Document doc = new Document();
 		doc.set(cu.getSource());
 
