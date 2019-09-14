@@ -51,6 +51,7 @@ import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
@@ -107,6 +108,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private JDTLanguageServer protocol;
 
 	private PreferenceManager preferenceManager;
+
+	private TypeFilter typeFilter;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -479,5 +482,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 		if (pluginInstance != null) {
 			pluginInstance.preferenceManager = preferenceManager;
 		}
+	}
+
+	public synchronized TypeFilter getTypeFilter() {
+		if (typeFilter == null) {
+			typeFilter = new TypeFilter();
+		}
+		return typeFilter;
 	}
 }

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.CompletionContext;
@@ -33,6 +34,7 @@ import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -102,6 +104,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	@Override
 	public void accept(CompletionProposal proposal) {
+		if (isFiltered(proposal)) {
+			return;
+		}
 		if (!isIgnored(proposal.getKind())) {
 			if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
 				acceptPotentialMethodDeclaration(proposal);
@@ -292,6 +297,66 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	public CompletionContext getContext() {
 		return context;
+	}
+
+	/**
+	 * copied from
+	 * org.eclipse.jdt.ui.text.java.CompletionProposalCollector.isFiltered(CompletionProposal)
+	 */
+	protected boolean isFiltered(CompletionProposal proposal) {
+		if (isIgnored(proposal.getKind())) {
+			return true;
+		}
+		char[] declaringType = getDeclaringType(proposal);
+		return declaringType != null && TypeFilter.isFiltered(declaringType);
+	}
+
+	/**
+	 * copied from
+	 * org.eclipse.jdt.ui.text.java.CompletionProposalCollector.getDeclaringType(CompletionProposal)
+	 */
+	protected final char[] getDeclaringType(CompletionProposal proposal) {
+		switch (proposal.getKind()) {
+			case CompletionProposal.METHOD_DECLARATION:
+			case CompletionProposal.METHOD_NAME_REFERENCE:
+			case CompletionProposal.JAVADOC_METHOD_REF:
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.FIELD_REF:
+			case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.JAVADOC_FIELD_REF:
+			case CompletionProposal.JAVADOC_VALUE_REF:
+				char[] declaration = proposal.getDeclarationSignature();
+				// special methods may not have a declaring type: methods defined on arrays etc.
+				// Currently known: class literals don't have a declaring type - use Object
+				if (declaration == null) {
+					return "java.lang.Object".toCharArray(); //$NON-NLS-1$
+				}
+				return Signature.toCharArray(declaration);
+			case CompletionProposal.PACKAGE_REF:
+			case CompletionProposal.MODULE_REF:
+			case CompletionProposal.MODULE_DECLARATION:
+				return proposal.getDeclarationSignature();
+			case CompletionProposal.JAVADOC_TYPE_REF:
+			case CompletionProposal.TYPE_REF:
+				return Signature.toCharArray(proposal.getSignature());
+			case CompletionProposal.LOCAL_VARIABLE_REF:
+			case CompletionProposal.VARIABLE_DECLARATION:
+			case CompletionProposal.KEYWORD:
+			case CompletionProposal.LABEL_REF:
+			case CompletionProposal.JAVADOC_BLOCK_TAG:
+			case CompletionProposal.JAVADOC_INLINE_TAG:
+			case CompletionProposal.JAVADOC_PARAM_REF:
+				return null;
+			default:
+				Assert.isTrue(false);
+				return null;
+		}
 	}
 
 }
