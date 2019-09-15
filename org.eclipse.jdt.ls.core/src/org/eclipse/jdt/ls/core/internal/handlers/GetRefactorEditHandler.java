@@ -87,7 +87,12 @@ public class GetRefactorEditHandler {
 			Command additionalCommand = null;
 			if (linkedProposalModel != null) {
 				LinkedProposalPositionGroupCore linkedPositionGroup = linkedProposalModel.getPositionGroup(positionKey, false);
-				PositionInformation highlightPosition = getFirstTrackedNodePosition(linkedPositionGroup);
+				PositionInformation highlightPosition;
+				if (QuickAssistProcessor.CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND.equals(params.command)) {
+					highlightPosition = getFirstTrackedNodePositionBySequenceRank(linkedPositionGroup);
+				} else {
+					highlightPosition = getFirstTrackedNodePosition(linkedPositionGroup);
+				}
 				if (highlightPosition != null) {
 					int offset = highlightPosition.getOffset();
 					int length = highlightPosition.getLength();
@@ -115,6 +120,26 @@ public class GetRefactorEditHandler {
 		}
 
 		return positions[0];
+	}
+
+	private static PositionInformation getFirstTrackedNodePositionBySequenceRank(LinkedProposalPositionGroupCore positionGroup) {
+		if (positionGroup == null) {
+			return null;
+		}
+
+		PositionInformation[] positions = positionGroup.getPositions();
+		if (positions == null || positions.length == 0) {
+			return null;
+		}
+
+		PositionInformation targetPosition = positions[0];
+
+		for (int i = 1; i < positions.length; i++) {
+			if (positions[i].getSequenceRank() < targetPosition.getSequenceRank()) {
+				targetPosition = positions[i];
+			}
+		}
+		return targetPosition;
 	}
 
 	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
