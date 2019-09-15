@@ -31,6 +31,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -40,6 +41,7 @@ import org.eclipse.ltk.core.refactoring.Change;
 
 public class GetRefactorEditHandler {
 	public static final String RENAME_COMMAND = "java.action.rename";
+	private static final String DEFAULT_POSITION_KEY = "name";
 
 	public static RefactorWorkspaceEdit getEditsForRefactor(GetRefactorEditParams params) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.context.getTextDocument().getUri());
@@ -52,6 +54,7 @@ public class GetRefactorEditHandler {
 		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
 		IProblemLocationCore[] locations = CodeActionHandler.getProblemLocationCores(unit, params.context.getContext().getDiagnostics());
 		boolean problemsAtLocation = locations.length != 0;
+		String positionKey = DEFAULT_POSITION_KEY;
 
 		try {
 			Map formatterOptions = params.options == null ? null : FormatterHandler.getOptions(params.options, unit);
@@ -69,6 +72,9 @@ public class GetRefactorEditHandler {
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			} else if (AdvancedQuickAssistProcessor.INVERT_VARIABLE_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) AdvancedQuickAssistProcessor.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
+			} else if (QuickAssistProcessor.CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND.equals(params.command)) {
+				proposal = QuickAssistProcessor.getConvertAnonymousToNestedProposal(params.context, context, context.getCoveringNode(), false);
+				positionKey = "type_name";
 			}
 
 			if (proposal == null) {
@@ -80,7 +86,7 @@ public class GetRefactorEditHandler {
 			LinkedProposalModelCore linkedProposalModel = proposal.getLinkedProposalModel();
 			Command additionalCommand = null;
 			if (linkedProposalModel != null) {
-				LinkedProposalPositionGroupCore linkedPositionGroup = linkedProposalModel.getPositionGroup("name", false);
+				LinkedProposalPositionGroupCore linkedPositionGroup = linkedProposalModel.getPositionGroup(positionKey, false);
 				PositionInformation highlightPosition = getFirstTrackedNodePosition(linkedPositionGroup);
 				if (highlightPosition != null) {
 					int offset = highlightPosition.getOffset();
