@@ -39,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -149,6 +150,9 @@ public class CodeActionHandler {
 		Command command;
 		if (proposal instanceof CUCorrectionCommandProposal) {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
+			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
+		} else if (proposal instanceof RefactoringCorrectionCommandProposal) {
+			RefactoringCorrectionCommandProposal commandProposal = (RefactoringCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
 			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());

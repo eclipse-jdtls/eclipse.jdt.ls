@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,10 +30,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
@@ -109,7 +112,9 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
@@ -123,6 +128,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionPropos
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
@@ -147,6 +153,8 @@ public class QuickAssistProcessor {
 	public static final String CONVERT_TO_STRING_BUFFER_ID = "org.eclipse.jdt.ls.correction.convertToStringBuffer.assist"; //$NON-NLS-1$
 	public static final String CONVERT_TO_MESSAGE_FORMAT_ID = "org.eclipse.jdt.ls.correction.convertToMessageFormat.assist"; //$NON-NLS-1$;
 	public static final String EXTRACT_METHOD_INPLACE_ID = "org.eclipse.jdt.ls.correction.extractMethodInplace.assist"; //$NON-NLS-1$;
+
+	public static final String CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND = "convertAnonymousClassToNestedCommand";
 
 	private PreferenceManager preferenceManager;
 
@@ -191,7 +199,7 @@ public class QuickAssistProcessor {
 				getExtractFieldProposal(params, context, problemsAtLocation, resultingCollections);
 				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
-				//				getConvertAnonymousToNestedProposal(context, coveringNode, resultingCollections);
+				getConvertAnonymousToNestedProposals(params, context, coveringNode, resultingCollections);
 				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
 				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
@@ -646,6 +654,78 @@ public class QuickAssistProcessor {
 
 		proposals.add(proposal);
 		return true;
+	}
+
+	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<CUCorrectionProposal> proposals) throws CoreException {
+		if (!(node instanceof Name)) {
+			return false;
+		}
+
+		if (proposals == null) {
+			return false;
+		}
+
+		RefactoringCorrectionProposal proposal = null;
+		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			proposal = getConvertAnonymousToNestedProposal(params, context, node, true /*returnAsCommand*/);
+		} else {
+			proposal = getConvertAnonymousToNestedProposal(params, context, node, false /*returnAsCommand*/);
+		}
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
+	public static RefactoringCorrectionProposal getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContext context, final ASTNode node, boolean returnAsCommand) throws CoreException {
+		String label = CorrectionMessages.QuickAssistProcessor_convert_anonym_to_nested;
+		ASTNode normalized = ASTNodes.getNormalizedNode(node);
+		if (normalized.getLocationInParent() != ClassInstanceCreation.TYPE_PROPERTY) {
+			return null;
+		}
+
+		final AnonymousClassDeclaration anonymTypeDecl = ((ClassInstanceCreation) normalized.getParent()).getAnonymousClassDeclaration();
+		if (anonymTypeDecl == null || anonymTypeDecl.resolveBinding() == null) {
+			return null;
+		}
+
+		final ConvertAnonymousToNestedRefactoring refactoring = new ConvertAnonymousToNestedRefactoring(anonymTypeDecl);
+		if (!refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			return null;
+		}
+
+		if (returnAsCommand) {
+			return new RefactoringCorrectionCommandProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+					Arrays.asList(CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND, params));
+		}
+
+		String extTypeName = ASTNodes.getSimpleNameIdentifier((Name) node);
+		ITypeBinding anonymTypeBinding = anonymTypeDecl.resolveBinding();
+		String className;
+		if (anonymTypeBinding.getInterfaces().length == 0) {
+			className = Messages.format(CorrectionMessages.QuickAssistProcessor_name_extension_from_interface, extTypeName);
+		} else {
+			className = Messages.format(CorrectionMessages.QuickAssistProcessor_name_extension_from_class, extTypeName);
+		}
+		String[][] existingTypes = ((IType) anonymTypeBinding.getJavaElement()).resolveType(className);
+		int i = 1;
+		while (existingTypes != null) {
+			i++;
+			existingTypes = ((IType) anonymTypeBinding.getJavaElement()).resolveType(className + i);
+		}
+		refactoring.setClassName(i == 1 ? className : className + i);
+
+		LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+		refactoring.setLinkedProposalModel(linkedProposalModel);
+
+		final ICompilationUnit cu = context.getCompilationUnit();
+		RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.Refactor, cu, refactoring, IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED);
+		proposal.setLinkedProposalModel(linkedProposalModel);
+		return proposal;
+
 	}
 
 	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {

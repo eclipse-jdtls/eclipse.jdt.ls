@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -2049,7 +2049,6 @@ public class AdvancedQuickAssistProcessor {
 					Arrays.asList(INVERT_VARIABLE_COMMAND, params));
 		}
 
-		List<CUCorrectionProposal> proposals = new ArrayList<>();
 		final AST ast = covering.getAST();
 		// find linked nodes
 		final MethodDeclaration method = ASTResolving.findParentMethodDeclaration(covering);
