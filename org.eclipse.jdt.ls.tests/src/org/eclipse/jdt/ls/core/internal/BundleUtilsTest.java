@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -31,6 +33,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceExecuteCommandHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
@@ -110,6 +113,32 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 			extResult = getBundleExtensionResult();
 			assertEquals("EXT_TOSTRING_0.6.0", extResult);
+
+			loadBundles(Arrays.asList(getBundle("testresources", "jdt.ls.extension-0.0.1.jar")));
+			bundleLocation = getBundleLocation(getBundle("testresources", "jdt.ls.extension-0.0.1.jar"), true);
+			Bundle extensionBundle = context.getBundle(bundleLocation);
+
+			assertNotNull(extensionBundle);
+			assertTrue(extensionBundle.getState() == Bundle.STARTING || extensionBundle.getState() == Bundle.ACTIVE);
+			extensionBundle.loadClass("jdt.ls.extension.Activator");
+			assertEquals(extensionBundle.getState(), Bundle.ACTIVE);
+
+			Set<String> extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
+			assertTrue(extensionCommands.containsAll(Set.of("jdt.ls.extension.command1", "jdt.ls.extension.command2")));
+
+			loadBundles(Arrays.asList(getBundle("testresources", "jdt.ls.extension-0.0.2.jar")));
+			bundleLocation = getBundleLocation(getBundle("testresources", "jdt.ls.extension-0.0.2.jar"), true);
+			extensionBundle = context.getBundle(bundleLocation);
+
+			assertNotNull(extensionBundle);
+			assertTrue(extensionBundle.getState() == Bundle.STARTING || extensionBundle.getState() == Bundle.ACTIVE);
+			extensionBundle.loadClass("jdt.ls.extension.Activator");
+			assertEquals(extensionBundle.getState(), Bundle.ACTIVE);
+
+
+			extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
+			assertTrue(extensionCommands.containsAll(Set.of("jdt.ls.extension.command2", "jdt.ls.extension.command3")));
+			assertFalse(extensionCommands.contains("jdt.ls.extension.command1"));
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
 			installedBundle.uninstall();
