@@ -124,7 +124,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			assertEquals(extensionBundle.getState(), Bundle.ACTIVE);
 
 			Set<String> extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
-			assertTrue(extensionCommands.containsAll(Set.of("jdt.ls.extension.command1", "jdt.ls.extension.command2")));
+			assertTrue(extensionCommands.contains("jdt.ls.extension.command1"));
+			assertTrue(extensionCommands.contains("jdt.ls.extension.command2"));
 
 			loadBundles(Arrays.asList(getBundle("testresources", "jdt.ls.extension-0.0.2.jar")));
 			bundleLocation = getBundleLocation(getBundle("testresources", "jdt.ls.extension-0.0.2.jar"), true);
@@ -137,7 +138,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 
 			extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
-			assertTrue(extensionCommands.containsAll(Set.of("jdt.ls.extension.command2", "jdt.ls.extension.command3")));
+			assertTrue(extensionCommands.contains("jdt.ls.extension.command2"));
+			assertTrue(extensionCommands.contains("jdt.ls.extension.command3"));
 			assertFalse(extensionCommands.contains("jdt.ls.extension.command1"));
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
