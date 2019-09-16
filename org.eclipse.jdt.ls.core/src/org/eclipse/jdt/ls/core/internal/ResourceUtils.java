@@ -120,6 +120,22 @@ public final class ResourceUtils {
 	}
 
 	/**
+	 * Reads file content directly from the filesystem.
+	 */
+	public static String getContent(File file) throws CoreException {
+		if (file == null) {
+			return null;
+		}
+		String content;
+		try {
+			content = Files.toString(file, Charsets.UTF_8);
+		} catch (IOException e) {
+			throw new CoreException(StatusFactory.newErrorStatus("Can not get " + file + " content", e));
+		}
+		return content;
+	}
+
+	/**
 	 * Writes content to file, outside the workspace. No change event is
 	 * emitted.
 	 */
@@ -261,6 +277,18 @@ public final class ResourceUtils {
 			globPattern += "**";
 		}
 		return globPattern;
+	}
+
+	public static IPath fixDevice(IPath path) {
+		if (path != null && path.getDevice() != null) {
+			return path.setDevice(path.getDevice().toUpperCase());
+		}
+		if (Platform.OS_WIN32.equals(Platform.getOS()) && path != null && path.toString().startsWith("//")) {
+			String server = path.segment(0);
+			String pathStr = path.toString().replace(server, server.toUpperCase());
+			return new Path(pathStr);
+		}
+		return path;
 	}
 
 }

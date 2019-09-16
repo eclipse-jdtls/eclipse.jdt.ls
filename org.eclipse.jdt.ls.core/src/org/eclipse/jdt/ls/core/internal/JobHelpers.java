@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -195,7 +196,7 @@ public final class JobHelpers {
 		@Override
 		public boolean matches(Job job) {
 			return (job instanceof WorkspaceJob) || job.getClass().getName().matches("(.*\\.AutoBuild.*)")
-					|| job.getClass().getName().endsWith("JREUpdateJob");
+					|| job.getClass().getName().endsWith("JREUpdateJob") || job.belongsTo(CorePlugin.GRADLE_JOB_FAMILY);
 		}
 
 	}

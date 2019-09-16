@@ -10,9 +10,33 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import com.google.common.collect.ImmutableList;
-import org.eclipse.buildship.core.*;
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.FixedVersionGradleDistribution;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
+import org.eclipse.buildship.core.GradleDistribution;
+import org.eclipse.buildship.core.LocalGradleDistribution;
+import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.configuration.ConfigurationManager;
+import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -29,16 +53,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author Fred Bricon
@@ -99,13 +114,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertTrue(file.isDirectory());
 		try {
 			GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
-			assertTrue(distribution instanceof WrapperGradleDistribution);
+			assertEquals(WrapperGradleDistribution.class, distribution.getClass());
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(false);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
 			if (GradleProjectImporter.getGradleHomeFile() != null) {
 				assertEquals(distribution.getClass(), LocalGradleDistribution.class);
 			} else {
-				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
+				assertSame(GradleProjectImporter.DEFAULT_DISTRIBUTION, distribution);
 			}
 			String requiredVersion = "5.2.1";
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
@@ -121,6 +136,41 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(enabled);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(gradleVersion);
 		}
+	}
+
+	@Test
+	public void testBuildshipPreferences() throws Exception {
+		IProject project = importSimpleJavaProject();
+		Optional<GradleBuild> gradleBuild = GradleCore.getWorkspace().getBuild(project);
+		assertTrue(gradleBuild.isPresent());
+		ConfigurationManager manager = CorePlugin.configurationManager();
+		org.eclipse.buildship.core.internal.configuration.BuildConfiguration currentConfig = manager.loadProjectConfiguration(project).getBuildConfiguration();
+		assertFalse(currentConfig.isAutoSync());
+		// @formatter:off
+		org.eclipse.buildship.core.internal.configuration.BuildConfiguration updatedConfig = manager.createBuildConfiguration(currentConfig.getRootProjectDirectory(),
+				true, // overrideWorkspaceSettings
+				currentConfig.getGradleDistribution(),
+				currentConfig.getGradleUserHome(),
+				currentConfig.getJavaHome(),
+				currentConfig.isBuildScansEnabled(),
+				currentConfig.isOfflineMode(),
+				true, // autoAsync
+				currentConfig.getArguments(),
+				currentConfig.getJvmArguments(),
+				currentConfig.isShowConsoleView(),
+				currentConfig.isShowExecutionsView());
+		// @formatter:on
+		ProjectConfiguration projectConfig = manager.createProjectConfiguration(updatedConfig, project.getLocation().toFile());
+		manager.saveProjectConfiguration(projectConfig);
+		IFile file = project.getFile("/build.gradle");
+		// touch file
+		file.setLocalTimeStamp(System.currentTimeMillis());
+		List<IProject> projects = importExistingProjects("gradle/simple-gradle");
+		project = getProject("simple-gradle");
+		gradleBuild = GradleCore.getWorkspace().getBuild(project);
+		assertTrue(gradleBuild.isPresent());
+		currentConfig = manager.loadProjectConfiguration(project).getBuildConfiguration();
+		assertTrue(currentConfig.isAutoSync());
 	}
 
 	@Test
@@ -303,5 +353,18 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		//Buildship/Gradle don't automatically execute the eclipseJdt task, so the default config is unchanged
 		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		assertEquals(JavaCore.WARNING, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+	}
+
+	@Test
+	public void testImportExistingEclipseProject() throws Exception {
+		IProject project = importGradleProject("existing");
+		Job.getJobManager().join(GradleProjectImporter.JAVALS_GRADLE_FAMILY, null);
+		assertTrue(ProjectUtils.isGradleProject(project));
+		ConfigurationManager manager = CorePlugin.configurationManager();
+		ProjectConfiguration configuration = manager.loadProjectConfiguration(project);
+		assertTrue(configuration.getBuildConfiguration().isAutoSync());
+		assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+		GradleDistribution distribution = configuration.getBuildConfiguration().getGradleDistribution();
+		assertEquals(WrapperGradleDistribution.class, distribution.getClass());
 	}
 }

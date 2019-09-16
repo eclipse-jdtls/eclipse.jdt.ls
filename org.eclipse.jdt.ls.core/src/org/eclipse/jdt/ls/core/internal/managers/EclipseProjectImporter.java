@@ -23,11 +23,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
 
@@ -78,14 +79,14 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 			IProject project = workspace.getRoot().getProject(name);
 			if (project.exists()) {
 				IPath existingProjectPath = project.getLocation();
-				existingProjectPath = fixDevice(existingProjectPath);
-				dotProjectPath = fixDevice(dotProjectPath);
+				existingProjectPath = ResourceUtils.fixDevice(existingProjectPath);
+				dotProjectPath = ResourceUtils.fixDevice(dotProjectPath);
 				if (existingProjectPath.equals(dotProjectPath.removeLastSegments(1))) {
 					project.open(IResource.NONE, monitor.newChild(1));
 					project.refreshLocal(IResource.DEPTH_INFINITE, monitor.newChild(1));
 					return;
 				} else {
-					project = findUniqueProject(workspace, name);
+					project = ProjectUtils.findUniqueProject(workspace, name);
 					descriptor.setName(project.getName());
 				}
 			}
@@ -97,29 +98,6 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		} finally {
 			monitor.done();
 		}
-	}
-
-	private IPath fixDevice(IPath path) {
-		if (path != null && path.getDevice() != null) {
-			return path.setDevice(path.getDevice().toUpperCase());
-		}
-		if (Platform.OS_WIN32.equals(Platform.getOS()) && path != null && path.toString().startsWith("//")) {
-			String server = path.segment(0);
-			String pathStr = path.toString().replace(server, server.toUpperCase());
-			return new Path(pathStr);
-		}
-		return path;
-	}
-
-	//XXX should be package protected. Temporary fix (ahaha!) until test fragment can work in tycho builds
-	public IProject findUniqueProject(IWorkspace workspace, String basename) {
-		IProject project = null;
-		String name;
-		for (int i = 1; project == null || project.exists(); i++) {
-			name = (i < 2)? basename:basename + " ("+ i +")";
-			project = workspace.getRoot().getProject(name);
-		}
-		return project;
 	}
 
 }
