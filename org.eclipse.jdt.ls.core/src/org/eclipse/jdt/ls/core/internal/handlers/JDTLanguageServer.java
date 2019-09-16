@@ -562,9 +562,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> handler.findReferences(params, monitor));
 	}
 
-	public 	CompletableFuture<List<? extends Location>> methodOverride(TextDocumentPositionParams position) {
-		logInfo(">> methodOverride");
-		return computeAsync((monitor) -> NavigateToOverrideHandler.methodOverride(position, monitor));
+	public 	CompletableFuture<List<? extends Location>> superMethod(TextDocumentPositionParams position) {
+		logInfo(">> java/superMethod");
+		return computeAsync((monitor) -> NavigateToSuperMethodHandler.superMethod(position, monitor));
 	}
 
 	/* (non-Javadoc)

@@ -28,19 +28,19 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 
-public class NavigateToOverrideHandler {
+public class NavigateToSuperMethodHandler {
 
-	public static List<? extends Location> methodOverride(TextDocumentPositionParams position, IProgressMonitor monitor) {
+	public static List<? extends Location> superMethod(TextDocumentPositionParams position, IProgressMonitor monitor) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		Location location = null;
-		IMethod overrideMethod = null;
+		IMethod overriddenMethod = null;
 		if (unit != null && !monitor.isCanceled()) {
 			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
 			try {
 				IJavaElement element = JDTUtils.findElementAtSelection(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), preferenceManager, monitor);
-				overrideMethod = findOverrideMethod(element, monitor);
-				if (overrideMethod != null) {
-					location = NavigateToDefinitionHandler.computeDefinitionNavigation(overrideMethod, element.getJavaProject());
+				overriddenMethod = findOverriddenMethod(element, monitor);
+				if (overriddenMethod != null) {
+					location = NavigateToDefinitionHandler.computeDefinitionNavigation(overriddenMethod, element.getJavaProject());
 				}
 			} catch (JavaModelException e) {
 				// do nothing
@@ -51,12 +51,12 @@ public class NavigateToOverrideHandler {
 			return Collections.emptyList();
 		}
 
-		String declaringTypeName = overrideMethod.getDeclaringType().getFullyQualifiedName();
-		String methodName = overrideMethod.getElementName();
+		String declaringTypeName = overriddenMethod.getDeclaringType().getFullyQualifiedName();
+		String methodName = overriddenMethod.getElementName();
 		return Collections.singletonList(new MethodLocation(declaringTypeName, methodName, location));
 	}
 
-	public static IMethod findOverrideMethod(IJavaElement element, IProgressMonitor monitor) throws JavaModelException {
+	public static IMethod findOverriddenMethod(IJavaElement element, IProgressMonitor monitor) throws JavaModelException {
 		if (!(element instanceof IMethod)) {
 			return null;
 		}

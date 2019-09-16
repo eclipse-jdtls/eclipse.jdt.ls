@@ -24,7 +24,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.handlers.NavigateToOverrideHandler.MethodLocation;
+import org.eclipse.jdt.ls.core.internal.handlers.NavigateToSuperMethodHandler.MethodLocation;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.Location;
@@ -35,7 +35,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
 
-public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedTest {
+public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IPackageFragmentRoot sourceFolder;
 
 	@Before
@@ -47,7 +47,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 	}
 
 	@Test
-	public void testNavigateToOverrideMethod() throws JavaModelException {
+	public void testNavigateToSuperMethod() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit unitA = pack1.createCompilationUnit("A.java", "package test1;\n" +
@@ -68,7 +68,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitB);
-		List<? extends Location> response = NavigateToOverrideHandler.methodOverride(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response != null && response.size() == 1);
 		MethodLocation location = (MethodLocation) response.get(0);
 		assertEquals("test1.A", location.declaringTypeName);
@@ -82,7 +82,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 	}
 
 	@Test
-	public void testNearestOverrideMethod() throws JavaModelException {
+	public void testNearestSuperMethod() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit unitA = pack1.createCompilationUnit("A.java", "package test1;\n" +
@@ -110,7 +110,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitC);
-		List<? extends Location> response = NavigateToOverrideHandler.methodOverride(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response != null && response.size() == 1);
 		MethodLocation location = (MethodLocation) response.get(0);
 		assertEquals("test1.A", location.declaringTypeName);
@@ -124,7 +124,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 	}
 
 	@Test
-	public void testNoOverrideMethod() throws JavaModelException {
+	public void testNoSuperMethod() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit unitA = pack1.createCompilationUnit("A.java", "package test1;\n" +
@@ -136,7 +136,7 @@ public class NavigateToOverrideHandlerTest extends AbstractProjectsManagerBasedT
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitA);
-		List<? extends Location> response = NavigateToOverrideHandler.methodOverride(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response == null || response.isEmpty());
 	}
 }

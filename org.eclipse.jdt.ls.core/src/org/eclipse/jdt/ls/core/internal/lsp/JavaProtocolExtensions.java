@@ -115,5 +115,5 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<List<SymbolInformation>> searchSymbols(SearchSymbolParams params);
 
 	@JsonRequest
-	CompletableFuture<List<? extends Location>> methodOverride(TextDocumentPositionParams position);
+	CompletableFuture<List<? extends Location>> superMethod(TextDocumentPositionParams position);
 }
