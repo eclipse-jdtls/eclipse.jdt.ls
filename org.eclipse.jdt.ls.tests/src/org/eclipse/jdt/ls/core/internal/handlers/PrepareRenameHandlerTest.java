@@ -326,6 +326,33 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		testRenameClassFile("java.lang.Ex|*ception");
 	}
 
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameBinaryPackage() throws JavaModelException, BadLocationException {
+		testRenameClassFile("java.net|*.URI");
+	}
+
+	@Test(expected = ResponseErrorException.class)
+	public void testRenameImportDeclaration() throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
+
+		{
+		//@formatter:off
+		String[] content = {
+			"package ex.amples;\n",
+			"import java.ne|*t.URI;\n",
+			"public class A {}\n"
+		};
+		//@formatter:on
+			StringBuilder builder = new StringBuilder();
+			Position pos = mergeCode(builder, content);
+			ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+			prepareRename(cu, pos, "");
+		}
+	}
+
 	private void testRenameClassFile(String type) throws JavaModelException, BadLocationException {
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
