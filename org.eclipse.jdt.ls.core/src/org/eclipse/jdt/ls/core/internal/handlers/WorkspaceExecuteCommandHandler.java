@@ -129,16 +129,16 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 		}
 	}
 
-	private final Map<String, DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
-
-	private WorkspaceExecuteCommandHandler() {
-		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
-		fgContributedCommandHandlers = Stream.of(elements).collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new));
-
-		Platform.getExtensionRegistry().addListener(this);
-	}
+	private Map<String, DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
 
 	private synchronized Collection<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
+		if (fgContributedCommandHandlers == null) {
+			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
+			fgContributedCommandHandlers = Stream.of(elements).collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new, (value1, value2) -> value2));
+
+			Platform.getExtensionRegistry().addListener(this);
+		}
+
 		return fgContributedCommandHandlers.values();
 	}
 
@@ -229,12 +229,10 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 
 	@Override
 	public synchronized void added(IExtension[] extensions) {
-		removed(extensions);
-
 		Map<String, DelegateCommandHandlerDescriptor> addedDescriptors = Stream.of(extensions)
 				.filter(extension -> extension.getExtensionPointUniqueIdentifier().equals(EXTENSION_POINT_ID))
 				.flatMap(extension -> Stream.of(extension.getConfigurationElements()))
-				.collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new));
+				.collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new, (value1, value2) -> value2));
 
 		fgContributedCommandHandlers.putAll(addedDescriptors);
 	}
