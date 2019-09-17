@@ -15,13 +15,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IRegistryEventListener;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -36,7 +40,7 @@ import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
-public class WorkspaceExecuteCommandHandler {
+public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 
 	private static WorkspaceExecuteCommandHandler instance = null;
 
@@ -119,24 +123,27 @@ public class WorkspaceExecuteCommandHandler {
 			}
 			return fDelegateCommandHandlerInstance;
 		}
+
+		public static String createId(IConfigurationElement element) {
+			return element.getNamespaceIdentifier() + "#" + element.getAttribute(CLASS);
+		}
 	}
 
-	private Set<DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
+	private Map<String, DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
 
-	private WorkspaceExecuteCommandHandler() {
-
-	}
-
-	private synchronized Set<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
+	private synchronized Collection<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
 		if (fgContributedCommandHandlers == null) {
 			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
-			fgContributedCommandHandlers = Stream.of(elements).map(e -> new DelegateCommandHandlerDescriptor(e)).collect(Collectors.toSet());
+			fgContributedCommandHandlers = Stream.of(elements).collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new, (value1, value2) -> value2));
+
+			Platform.getExtensionRegistry().addListener(this);
 		}
-		return fgContributedCommandHandlers;
+
+		return fgContributedCommandHandlers.values();
 	}
 
 	public Set<String> getStaticCommands() {
-		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
 			commands.addAll(handler.getStaticCommands());
@@ -145,7 +152,7 @@ public class WorkspaceExecuteCommandHandler {
 	}
 
 	public Set<String> getNonStaticCommands() {
-		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
 			commands.addAll(handler.getNonStaticCommands());
@@ -154,7 +161,7 @@ public class WorkspaceExecuteCommandHandler {
 	}
 
 	public Set<String> getAllCommands() {
-		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
 			commands.addAll(handler.getAllCommands());
@@ -178,7 +185,7 @@ public class WorkspaceExecuteCommandHandler {
 			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidParams, errorMessage, null));
 		}
 
-		Set<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 
 		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getAllCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
 
@@ -218,5 +225,31 @@ public class WorkspaceExecuteCommandHandler {
 			}
 		});
 		return resultValues[0];
+	}
+
+	@Override
+	public synchronized void added(IExtension[] extensions) {
+		Map<String, DelegateCommandHandlerDescriptor> addedDescriptors = Stream.of(extensions)
+				.filter(extension -> extension.getExtensionPointUniqueIdentifier().equals(EXTENSION_POINT_ID))
+				.flatMap(extension -> Stream.of(extension.getConfigurationElements()))
+				.collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new, (value1, value2) -> value2));
+
+		fgContributedCommandHandlers.putAll(addedDescriptors);
+	}
+
+	@Override
+	public synchronized void removed(IExtension[] extensions) {
+		Stream.of(extensions).filter(extension -> extension.getExtensionPointUniqueIdentifier().equals(EXTENSION_POINT_ID)).flatMap(extension -> Stream.of(extension.getConfigurationElements()))
+				.map(DelegateCommandHandlerDescriptor::createId).forEach(fgContributedCommandHandlers::remove);
+	}
+
+	@Override
+	public void added(IExtensionPoint[] extensionPoints) {
+
+	}
+
+	@Override
+	public void removed(IExtensionPoint[] extensionPoints) {
+
 	}
 }

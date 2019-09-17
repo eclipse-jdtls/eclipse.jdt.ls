@@ -16,15 +16,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IRegistryChangeEvent;
-import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -37,8 +32,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
-
-	private static final String REFERENCE_PREFIX = "reference:";
 
 	private static final String EXTENSIONPOINT_ID = "testbundle.ext";
 
@@ -170,43 +163,12 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		BundleUtils.loadBundles(Arrays.asList(new String[] { "Fakedlocation" }));
 	}
 
-	private void loadBundles(List<String> bundles) throws Exception {
-		RegistryChangeListener listener = new RegistryChangeListener(false);
-		try {
-			Platform.getExtensionRegistry().addRegistryChangeListener(listener);
-			BundleUtils.loadBundles(bundles);
-			while (!listener.isChanged()) {
-				Thread.sleep(100);
-			}
-		} finally {
-			Platform.getExtensionRegistry().removeRegistryChangeListener(listener);
-		}
-	}
-
 	private String getBundle() {
 		return getBundle("testresources", "testbundle-0.3.0-SNAPSHOT.jar");
 	}
 
 	private String getAnotherBundle() {
 		return getBundle("testresources/path with whitespace", "testbundle-0.3.0-SNAPSHOT.jar");
-	}
-
-	private String getBundle(String folder, String bundleName) {
-		return (new File(folder, bundleName)).getAbsolutePath();
-	}
-
-	private String getBundleLocation(String location, boolean useReference) {
-		File f = new File(location);
-		String bundleLocation = null;
-		try {
-			bundleLocation = f.toURI().toURL().toString();
-			if (useReference) {
-				bundleLocation = REFERENCE_PREFIX + bundleLocation;
-			}
-		} catch (MalformedURLException e) {
-			JavaLanguageServerPlugin.logException("Get bundle location failure ", e);
-		}
-		return bundleLocation;
 	}
 
 	private String getBundleExtensionResult() {
@@ -231,29 +193,5 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			}
 		}
 		return resultValues[0];
-	}
-
-	private class RegistryChangeListener implements IRegistryChangeListener {
-		private boolean changed;
-
-		private RegistryChangeListener(boolean changed) {
-			this.setChanged(changed);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.core.runtime.IRegistryChangeListener#registryChanged(org.eclipse.core.runtime.IRegistryChangeEvent)
-		 */
-		@Override
-		public void registryChanged(IRegistryChangeEvent event) {
-			setChanged(true);
-		}
-
-		public boolean isChanged() {
-			return changed;
-		}
-
-		public void setChanged(boolean changed) {
-			this.changed = changed;
-		}
 	}
 }

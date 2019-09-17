@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IRegistryChangeEvent;
+import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -64,6 +67,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -79,6 +83,8 @@ import org.mockito.Mock;
 public abstract class AbstractProjectsManagerBasedTest {
 
 	public static final String TEST_PROJECT_NAME = "TestProject";
+
+	private static final java.lang.String REFERENCE_PREFIX = "reference:";
 
 	protected IProgressMonitor monitor;
 	protected ProjectsManager projectsManager;
@@ -307,5 +313,60 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected void assertMatches(String pattern, String value) {
 		assertTrue(value + " doesn't match pattern: " + pattern, Pattern.matches(pattern, value));
+	}
+
+	protected String getBundle(String folder, String bundleName) {
+		return (new File(folder, bundleName)).getAbsolutePath();
+	}
+
+	protected String getBundleLocation(String location, boolean useReference) {
+		File f = new File(location);
+		String bundleLocation = null;
+		try {
+			bundleLocation = f.toURI().toURL().toString();
+			if (useReference) {
+				bundleLocation = REFERENCE_PREFIX + bundleLocation;
+			}
+		} catch (MalformedURLException e) {
+			JavaLanguageServerPlugin.logException("Get bundle location failure ", e);
+		}
+		return bundleLocation;
+	}
+
+	protected void loadBundles(List<String> bundles) throws Exception {
+		RegistryChangeListener listener = new RegistryChangeListener(false);
+		try {
+			Platform.getExtensionRegistry().addRegistryChangeListener(listener);
+			BundleUtils.loadBundles(bundles);
+			while (!listener.isChanged()) {
+				Thread.sleep(100);
+			}
+		} finally {
+			Platform.getExtensionRegistry().removeRegistryChangeListener(listener);
+		}
+	}
+
+	private class RegistryChangeListener implements IRegistryChangeListener {
+		private boolean changed;
+
+		private RegistryChangeListener(boolean changed) {
+			this.setChanged(changed);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.core.runtime.IRegistryChangeListener#registryChanged(org.eclipse.core.runtime.IRegistryChangeEvent)
+		 */
+		@Override
+		public void registryChanged(IRegistryChangeEvent event) {
+			setChanged(true);
+		}
+
+		public boolean isChanged() {
+			return changed;
+		}
+
+		public void setChanged(boolean changed) {
+			this.changed = changed;
+		}
 	}
 }
