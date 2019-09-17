@@ -24,7 +24,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.handlers.NavigateToSuperMethodHandler.MethodLocation;
+import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.LinkLocation;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.Location;
@@ -35,7 +35,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Before;
 import org.junit.Test;
 
-public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBasedTest {
+public class FindLinksHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IPackageFragmentRoot sourceFolder;
 
 	@Before
@@ -47,7 +47,7 @@ public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBas
 	}
 
 	@Test
-	public void testNavigateToSuperMethod() throws JavaModelException {
+	public void testFindSuperMethod() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit unitA = pack1.createCompilationUnit("A.java", "package test1;\n" +
@@ -68,11 +68,11 @@ public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBas
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitB);
-		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = FindLinksHandler.findLinks("superImplementation", new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response != null && response.size() == 1);
-		MethodLocation location = (MethodLocation) response.get(0);
-		assertEquals("test1.A", location.declaringTypeName);
-		assertEquals("run", location.methodName);
+		LinkLocation location = (LinkLocation) response.get(0);
+		assertEquals("test1.A.run", location.displayName);
+		assertEquals("method", location.kind);
 		assertEquals(JDTUtils.toURI(unitA), location.getUri());
 		Range range = location.getRange();
 		assertEquals(3, range.getStart().getLine());
@@ -82,7 +82,7 @@ public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBas
 	}
 
 	@Test
-	public void testNearestSuperMethod() throws JavaModelException {
+	public void testFindNearestSuperMethod() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		//@formatter:off
 		ICompilationUnit unitA = pack1.createCompilationUnit("A.java", "package test1;\n" +
@@ -110,11 +110,11 @@ public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBas
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitC);
-		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = FindLinksHandler.findLinks("superImplementation", new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response != null && response.size() == 1);
-		MethodLocation location = (MethodLocation) response.get(0);
-		assertEquals("test1.A", location.declaringTypeName);
-		assertEquals("run", location.methodName);
+		LinkLocation location = (LinkLocation) response.get(0);
+		assertEquals("test1.A.run", location.displayName);
+		assertEquals("method", location.kind);
 		assertEquals(JDTUtils.toURI(unitA), location.getUri());
 		Range range = location.getRange();
 		assertEquals(3, range.getStart().getLine());
@@ -136,7 +136,7 @@ public class NavigateToSuperMethodHandlerTest extends AbstractProjectsManagerBas
 		//@formatter:on
 
 		String uri = JDTUtils.toURI(unitA);
-		List<? extends Location> response = NavigateToSuperMethodHandler.superMethod(new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
+		List<? extends Location> response = FindLinksHandler.findLinks("superImplementation", new TextDocumentPositionParams(new TextDocumentIdentifier(uri), new Position(3, 14)), new NullProgressMonitor());
 		assertTrue(response == null || response.isEmpty());
 	}
 }

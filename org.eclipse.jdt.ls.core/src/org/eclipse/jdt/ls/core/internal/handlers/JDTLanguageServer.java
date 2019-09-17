@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
@@ -562,9 +563,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> handler.findReferences(params, monitor));
 	}
 
-	public 	CompletableFuture<List<? extends Location>> superMethod(TextDocumentPositionParams position) {
-		logInfo(">> java/superMethod");
-		return computeAsync((monitor) -> NavigateToSuperMethodHandler.superMethod(position, monitor));
+	public 	CompletableFuture<List<? extends Location>> findLinks(FindLinksParams params) {
+		logInfo(">> java/findLinks");
+		return computeAsync((monitor) -> FindLinksHandler.findLinks(params.type, params.position, monitor));
 	}
 
 	/* (non-Javadoc)
