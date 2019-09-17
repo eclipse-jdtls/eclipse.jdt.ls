@@ -5,10 +5,13 @@
 
 * enhancement - code action: fix non accessible references. See [#440](https://github.com/eclipse/eclipse.jdt.ls/issues/440).
 * enhancement - code action: create non existing package when package declaration mismatch. See [#1163](https://github.com/eclipse/eclipse.jdt.ls/pull/1163).
-* enhancement - code action: convert for-loop to for-each loop. See [#1166](https://github.com/eclipse/eclipse.jdt.ls/issues/1166). 
+* enhancement - code action: convert for-loop to for-each loop. See [#1166](https://github.com/eclipse/eclipse.jdt.ls/issues/1166).
 * enhancement - code action: convert anonymous class to nested class. See [#1177](https://github.com/eclipse/eclipse.jdt.ls/issues/1177).
 * enhancement - navigate to the super implementation. See [#1165](https://github.com/eclipse/eclipse.jdt.ls/pull/1165).
+* enhancement - exclude certain packages from autocomplete/autoimport. [#1176](https://github.com/eclipse/eclipse.jdt.ls/pull/1176).
+* bug fix - extract embedded javadoc images. See [#1138](https://github.com/eclipse/eclipse.jdt.ls/pull/1138).
 * bug fix - fixed "No delegateCommandHandler for 'xxx'" error. See [#1146](https://github.com/eclipse/eclipse.jdt.ls/issues/1146).
+* bug fix - fixed Javadoc table conversion to Markdown. See [#1167](https://github.com/eclipse/eclipse.jdt.ls/pull/1167).
 * bug fix - fixed wrong completion text for AnonymousDeclarationType. See [#1168](https://github.com/eclipse/eclipse.jdt.ls/issues/1168).
 * bug fix - fixed client never receiving server Ready notification. See [#1170](https://github.com/eclipse/eclipse.jdt.ls/pull/1170).
 * bug fix - load bundle only once if same bundle occurs multiple times in different locations. See [#1174](https://github.com/eclipse/eclipse.jdt.ls/pull/1174).
