@@ -15,6 +15,7 @@
 * bug fix - fixed wrong completion text for AnonymousDeclarationType. See [#1168](https://github.com/eclipse/eclipse.jdt.ls/issues/1168).
 * bug fix - fixed client never receiving server Ready notification. See [#1170](https://github.com/eclipse/eclipse.jdt.ls/pull/1170).
 * bug fix - load bundle only once if same bundle occurs multiple times in different locations. See [#1174](https://github.com/eclipse/eclipse.jdt.ls/pull/1174).
+* bug fix - fixed incorrect `prepareRename` response when called over import. See [#1175](https://github.com/eclipse/eclipse.jdt.ls/issues/1175).
 * build - add org.eclipse.ant.core into the launch config. See [#1173](https://github.com/eclipse/eclipse.jdt.ls/pull/1173).
 
 ## [0.42.0 (September 4th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/60?closed=1)
