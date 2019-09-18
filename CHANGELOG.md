@@ -1,7 +1,7 @@
 # Change Log
 
 
-## [0.43.0 (September 19th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/61?closed=1)
+## [0.43.0 (September 18th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/61?closed=1)
 
 * enhancement - code action: fix non accessible references. See [#440](https://github.com/eclipse/eclipse.jdt.ls/issues/440).
 * enhancement - code action: create non existing package when package declaration mismatch. See [#1163](https://github.com/eclipse/eclipse.jdt.ls/pull/1163).
