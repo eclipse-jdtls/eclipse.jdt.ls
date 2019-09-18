@@ -1019,7 +1019,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		}
 		if (fLinkedProposalModel != null) {
 			LinkedProposalPositionGroupCore nameGroup = fLinkedProposalModel.getPositionGroup(KEY_NAME, true);
-			nameGroup.addPosition(fRewriter.track(invocation.getName()), false);
+			nameGroup.addPosition(fRewriter.track(invocation.getName()), true);
 		}
 
 		ASTNode call;
