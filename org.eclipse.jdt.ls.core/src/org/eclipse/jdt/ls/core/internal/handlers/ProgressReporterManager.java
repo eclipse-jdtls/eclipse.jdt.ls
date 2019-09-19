@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusReport;
+import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
@@ -77,6 +79,8 @@ public class ProgressReporterManager extends ProgressProvider {
 
 	private class ProgressReporter extends CancellableProgressMonitor {
 
+		protected static final String SEPARATOR = " - ";
+		protected static final String IMPORTING_MAVEN_PROJECTS = "Importing Maven project(s)";
 		protected Job job;
 		protected int totalWork;
 		protected String taskName;
@@ -99,7 +103,6 @@ public class ProgressReporterManager extends ProgressProvider {
 			super(checker);
 		}
 
-
 		@Override
 		public void setTaskName(String name) {
 			super.setTaskName(name);
@@ -116,6 +119,10 @@ public class ProgressReporterManager extends ProgressProvider {
 		@Override
 		public void subTask(String name) {
 			this.subTaskName = name;
+			if (IMPORTING_MAVEN_PROJECTS.equals(taskName) && (subTaskName == null || subTaskName.isEmpty())) {
+				// completed or failed transfer
+				return;
+			}
 			sendProgress();
 		}
 
@@ -160,14 +167,29 @@ public class ProgressReporterManager extends ProgressProvider {
 			progressReport.setTotalWork(totalWork);
 			progressReport.setWorkDone(progress);
 			progressReport.setComplete(isDone());
-			String subTask = subTaskName == null ? "" : " - " + subTaskName;
-			progressReport.setStatus(formatMessage(task + subTask));
+			if (task != null && subTaskName != null && !subTaskName.isEmpty() && task.equals(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS)) {
+				progressReport.setStatus(task + SEPARATOR + subTaskName);
+			} else {
+				progressReport.setStatus(formatMessage(task));
+			}
 			client.sendProgressReport(progressReport);
 		}
 
 
 		protected String formatMessage(String task) {
-			return (totalWork > 0) ? String.format("%s - %.0f%%", task, ((double) progress / totalWork) * 100) : task;
+			String message = getMessage(task);
+			return (totalWork > 0) ? String.format("%.0f%% %s", ((double) progress / totalWork) * 100, message) : message;
+		}
+
+		protected String getMessage(String task) {
+			String message = subTaskName == null || subTaskName.isEmpty() ? "" : subTaskName;
+			if (!message.isEmpty() && !Objects.equals(taskName, subTaskName)) {
+				message = task + " " + message;
+			}
+			if (message.isEmpty()) {
+				message = task;
+			}
+			return message;
 		}
 	}
 
@@ -177,11 +199,11 @@ public class ProgressReporterManager extends ProgressProvider {
 
 		@Override
 		protected String formatMessage(String task) {
-			String message = this.taskName == null || this.taskName.length() == 0 ? "" : ("- " + this.taskName);
-			if (task != null && task.length() > 0) {
-				message = message + " - " + task;
+			String message = getMessage(task);
+			if (totalWork > 0 && !message.isEmpty()) {
+				message = SEPARATOR + message;
 			}
-			return String.format("%.0f%% Starting Java Language Server %s", ((double) progress / totalWork) * 100, message);
+			return String.format("%.0f%% Starting Java Language Server%s", ((double) progress / totalWork) * 100, message);
 		}
 
 		@Override
@@ -189,8 +211,10 @@ public class ProgressReporterManager extends ProgressProvider {
 			if (client == null) {
 				return;
 			}
-			String message = formatMessage(subTaskName);
+			String task = StringUtils.defaultIfBlank(taskName, (job == null || StringUtils.isBlank(job.getName())) ? "Background task" : job.getName());
+			String message = formatMessage(task);
 			client.sendStatusReport(new StatusReport().withType(ServiceStatus.Starting.name()).withMessage(message));
 		}
+
 	}
 }
