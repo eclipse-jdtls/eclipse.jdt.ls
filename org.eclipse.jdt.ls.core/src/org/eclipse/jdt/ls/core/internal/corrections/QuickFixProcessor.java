@@ -206,12 +206,11 @@ public class QuickFixProcessor {
 			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL,
 			// IProposalRelevance.REMOVE_FINAL_MODIFIER);
 			// break;
-			// case IProblem.InheritedMethodReducesVisibility:
-			// case IProblem.MethodReducesVisibility:
-			// case IProblem.OverridingNonVisibleMethod:
-			// ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE);
-			// break;
+			case IProblem.InheritedMethodReducesVisibility:
+			case IProblem.MethodReducesVisibility:
+			case IProblem.OverridingNonVisibleMethod:
+				ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_VISIBLE);
+				break;
 			case IProblem.FinalMethodCannotBeOverridden:
 				ModifierCorrectionSubProcessor.addChangeOverriddenModifierProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL);
 				break;
