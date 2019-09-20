@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.tests.Unstable;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -66,7 +67,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	@Before
 	public void setup() throws Exception {
-		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, true);
+		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences());
 		handler.addResourceChangeListener();
 	}
 

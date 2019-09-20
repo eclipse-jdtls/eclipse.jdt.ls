@@ -254,7 +254,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		// we do not have the user setting initialized yet at this point but we should
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
-		boolean isDiagnosticTagSupported = preferenceManager.getClientPreferences().isDiagnosticTagSupported();
+
 		Job initializeWorkspace = new Job("Initialize workspace") {
 
 			@Override
@@ -262,7 +262,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				try {
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
-					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, isDiagnosticTagSupported);
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					pm.registerWatchers();

@@ -42,6 +42,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -68,13 +69,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 
 	@Deprecated
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
-		this(connection, projectsManager, false);
+		this(connection, projectsManager, null);
 	}
 
-	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager, boolean isDiagnosticTagSupported) {
+	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager, ClientPreferences prefs) {
 		this.connection = connection;
 		this.projectsManager = projectsManager;
-		this.isDiagnosticTagSupported = isDiagnosticTagSupported;
+		this.isDiagnosticTagSupported = prefs != null ? prefs.isDiagnosticTagSupported() : false;
 	}
 
 	public void addResourceChangeListener() {
