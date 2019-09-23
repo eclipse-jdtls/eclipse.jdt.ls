@@ -113,6 +113,7 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
@@ -197,7 +198,7 @@ public class QuickAssistProcessor {
 				getExtractVariableProposal(params, context, problemsAtLocation, resultingCollections);
 				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, resultingCollections);
 				getExtractFieldProposal(params, context, problemsAtLocation, resultingCollections);
-				//				getInlineLocalProposal(context, coveringNode, resultingCollections);
+				getInlineProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				getConvertAnonymousToNestedProposals(params, context, coveringNode, resultingCollections);
 				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
@@ -654,6 +655,43 @@ public class QuickAssistProcessor {
 
 		proposals.add(proposal);
 		return true;
+	}
+
+	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) throws CoreException {
+		if (resultingCollections == null) {
+			return false;
+		}
+
+		if (!(node instanceof SimpleName)) {
+			return false;
+		}
+
+		SimpleName name= (SimpleName) node;
+		IBinding binding = name.resolveBinding();
+		if (binding instanceof IVariableBinding) {
+			IVariableBinding varBinding = (IVariableBinding) binding;
+			if (varBinding.isParameter() || varBinding.isField()) {
+				return false;
+			}
+
+			ASTNode decl= context.getASTRoot().findDeclaringNode(varBinding);
+			if (!(decl instanceof VariableDeclarationFragment) || decl.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY) {
+				return false;
+			}
+
+			InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
+			if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
+				int relevance = IProposalRelevance.INLINE_LOCAL;
+				RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
+				resultingCollections.add(proposal);
+				return true;
+			}
+		} else if (binding instanceof IMethodBinding) {
+			// TODO add inline method refactoring
+		}
+
+		return false;
 	}
 
 	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<CUCorrectionProposal> proposals) throws CoreException {
