@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -34,7 +33,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.After;
 import org.junit.Before;
@@ -175,12 +173,20 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testPreviewFeaturesDisabledByDefault() throws Exception {
+		String name = "java13";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertHasErrors(project, "is a preview feature and disabled by default");
+	}
+
+	@Test
+	public void testPreviewFeaturesNotAvailable() throws Exception {
 		String name = "java12";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
-		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertTrue(errors.stream().findAny().filter(e -> ResourceUtils.getMessage(e).contains("is a preview feature and disabled by default")).isPresent());
+		assertHasErrors(project, "The preview feature Switch Expressions is only available with source level", "The preview feature Case Labels with '->' is only available with source level");
 	}
 
 	@Test
