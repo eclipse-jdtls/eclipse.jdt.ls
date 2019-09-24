@@ -158,8 +158,8 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 	public void testPreviewFeaturesEnabledByDefault() throws Exception {
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
 		try {
-			TestVMType.setTestJREAsDefault("12");
-			IProject invisibleProject = copyAndImportFolder("singlefile/java12", "foo/bar/Foo.java");
+			TestVMType.setTestJREAsDefault("13");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java13", "foo/bar/Foo.java");
 			assertTrue(invisibleProject.exists());
 			assertNoErrors(invisibleProject);
 			IJavaProject javaProject = JavaCore.create(invisibleProject);

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -257,6 +258,19 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected void assertHasErrors(IProject project) {
 		try {
 			assertTrue(project.getName() + " has no errors", ResourceUtils.getErrorMarkers(project).size() > 0);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected void assertHasErrors(IProject project, String... expectedErrorsLike) {
+		try {
+			List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+			String allErrors = ResourceUtils.toString(markers);
+			for (String expectedError : expectedErrorsLike) {
+				boolean hasError = markers.stream().map(ResourceUtils::getMessage).filter(Objects::nonNull).filter(m -> m.contains(expectedError)).findFirst().isPresent();
+				assertTrue(expectedError + " was not found in: \n" + allErrors, hasError);
+			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

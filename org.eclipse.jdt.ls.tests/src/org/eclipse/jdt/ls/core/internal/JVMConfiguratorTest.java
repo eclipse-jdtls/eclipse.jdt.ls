@@ -69,7 +69,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		try {
 			JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 			IJavaProject defaultProject = newDefaultProject();
-			IProject invisibleProject = copyAndImportFolder("singlefile/java12", "foo/bar/Foo.java");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java13", "foo/bar/Foo.java");
 			IJavaProject randomProject = JavaCore.create(invisibleProject);
 
 			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
