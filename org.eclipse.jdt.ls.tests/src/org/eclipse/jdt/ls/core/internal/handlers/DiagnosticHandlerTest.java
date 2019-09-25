@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.DiagnosticTag;
 import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,7 +74,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
 		IProblem[] problems = astRoot.getProblems();
-		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems));
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
 		assertEquals(1, diagnostics.size());
 		Range range = diagnostics.get(0).getRange();
 		assertNotEquals(range.getStart().getLine(), range.getEnd().getLine());
@@ -122,7 +123,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 			List<IProblem> problems = handler.getProblems();
 			assertEquals(problems.size(), 1);
-			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems, true);
 			assertEquals(diagnostics.size(), 1);
 			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
 			assertEquals(severity, DiagnosticSeverity.Information);
@@ -174,13 +175,33 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 			cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 			List<IProblem> problems = handler.getProblems();
 			assertEquals(problems.size(), 1);
-			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems);
+			List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, problems, true);
 			assertEquals(diagnostics.size(), 1);
 			DiagnosticSeverity severity = diagnostics.get(0).getSeverity();
 			assertEquals(severity, DiagnosticSeverity.Warning);
 		} finally {
 			cu.discardWorkingCopy();
 		}
+	}
+
+	@Test
+	public void testDeprecated() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.security.Certificate;\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
+		IProblem[] problems = astRoot.getProblems();
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
+		assertEquals(2, diagnostics.size());
+		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
+		assertEquals(1, tags.size());
+		assertEquals(DiagnosticTag.Deprecated, tags.get(0));
 	}
 
 }

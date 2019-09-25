@@ -274,4 +274,17 @@ public class ClientPreferences {
 				.stream().filter(k -> kind.startsWith(k)).findAny().isPresent();
 		//@formatter:on
 	}
+
+	/**
+	 * {@code true} if the client has explicitly set the
+	 * {@code textDocument.publishDiagnostics.tagSupport} to
+	 * {@code true} when initializing the LS. Otherwise, {@code false}.
+	 */
+	public boolean isDiagnosticTagSupported() {
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getPublishDiagnostics() != null
+				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport() != null
+				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport().booleanValue();
+		//@formatter:on
+	}
 }
