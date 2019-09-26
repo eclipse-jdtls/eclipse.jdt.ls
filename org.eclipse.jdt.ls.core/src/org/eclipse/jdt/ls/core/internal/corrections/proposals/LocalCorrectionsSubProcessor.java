@@ -97,7 +97,7 @@ public class LocalCorrectionsSubProcessor {
 		ICompilationUnit cu = context.getCompilationUnit();
 
 		CompilationUnit astRoot = context.getASTRoot();
-		ASTNode selectedNode = problem.getCoveringNode(astRoot);
+		ASTNode selectedNode = context.getCoveredNode();
 		if (selectedNode == null) {
 			return;
 		}
