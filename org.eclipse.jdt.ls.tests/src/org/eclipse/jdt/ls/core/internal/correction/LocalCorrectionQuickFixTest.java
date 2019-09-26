@@ -21,7 +21,10 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1015,6 +1018,110 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Expected e4 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4);
+	}
+
+	@Test
+	public void testMultiCatchUncaughtExceptions() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.EOFException;\n");
+		buf.append("import java.io.FileNotFoundException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws EOFException {}\n");
+		buf.append("    public void bar() throws FileNotFoundException {}\n");
+		buf.append("    public void test() {\n");
+		buf.append("        System.out.println(1);\n");
+		buf.append("        foo();\n");
+		buf.append("        System.out.println(2);\n");
+		buf.append("        bar();\n");
+		buf.append("        System.out.println(3);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.EOFException;\n");
+		buf.append("import java.io.FileNotFoundException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws EOFException {}\n");
+		buf.append("    public void bar() throws FileNotFoundException {}\n");
+		buf.append("    public void test() {\n");
+		buf.append("        try {\n");
+		buf.append("            System.out.println(1);\n");
+		buf.append("            foo();\n");
+		buf.append("            System.out.println(2);\n");
+		buf.append("            bar();\n");
+		buf.append("            System.out.println(3);\n");
+		buf.append("        } catch (EOFException | FileNotFoundException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Surround with try/multi-catch", buf.toString());
+
+		String beginningExpr = "System.out.println(1);";
+		String endingExpr = "System.out.println(3);";
+		String sourceCode = cu.getSource();
+		int offset = sourceCode.indexOf(beginningExpr);
+		int length = sourceCode.indexOf(endingExpr) - offset + endingExpr.length();
+		Range selection = JDTUtils.toRange(cu, offset, length);
+		assertCodeActions(cu, selection, e1);
+	}
+
+	@Test
+	public void testMultiCatchUncaughtExceptions2() throws Exception {
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.EOFException;\n");
+		buf.append("import java.io.FileNotFoundException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws EOFException {}\n");
+		buf.append("    public void bar() throws FileNotFoundException {}\n");
+		buf.append("    public void test() {\n");
+		buf.append("        System.out.println(1);\n");
+		buf.append("        foo();\n");
+		buf.append("        System.out.println(2);\n");
+		buf.append("        bar();\n");
+		buf.append("        System.out.println(3);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.io.EOFException;\n");
+		buf.append("import java.io.FileNotFoundException;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() throws EOFException {}\n");
+		buf.append("    public void bar() throws FileNotFoundException {}\n");
+		buf.append("    public void test() {\n");
+		buf.append("        System.out.println(1);\n");
+		buf.append("        try {\n");
+		buf.append("            foo();\n");
+		buf.append("            System.out.println(2);\n");
+		buf.append("            bar();\n");
+		buf.append("        } catch (EOFException | FileNotFoundException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        }\n");
+		buf.append("        System.out.println(3);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Surround with try/multi-catch", buf.toString());
+
+		String beginningExpr = "foo();";
+		String endingExpr = "bar();";
+		String sourceCode = cu.getSource();
+		int offset = sourceCode.indexOf(beginningExpr);
+		int length = sourceCode.indexOf(endingExpr) - offset + endingExpr.length();
+		Range selection = JDTUtils.toRange(cu, offset, length);
+		assertCodeActions(cu, selection, e1);
 	}
 
 	@Test
