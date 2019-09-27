@@ -96,7 +96,7 @@ public class CodeActionHandler {
 		}
 
 		try {
-			List<CUCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(params, context, locations);
+			List<ChangeCorrectionProposal> corrections = this.quickAssistProcessor.getAssists(params, context, locations);
 			candidates.addAll(corrections);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
@@ -109,7 +109,7 @@ public class CodeActionHandler {
 			JavaLanguageServerPlugin.logException("Problem resolving advanced quick assist code actions", e);
 		}
 
-		candidates.sort(new CUCorrectionProposalComparator());
+		candidates.sort(new ChangeCorrectionProposalComparator());
 
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
 			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
@@ -201,7 +201,7 @@ public class CodeActionHandler {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 	}
 
-	private static class CUCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
+	private static class ChangeCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
 
 		@Override
 		public int compare(ChangeCorrectionProposal p1, ChangeCorrectionProposal p2) {
