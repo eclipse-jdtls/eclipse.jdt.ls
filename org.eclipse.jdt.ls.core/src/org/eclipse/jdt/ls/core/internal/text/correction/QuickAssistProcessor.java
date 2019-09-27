@@ -32,9 +32,11 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -112,7 +114,10 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
@@ -135,6 +140,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
+import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
+import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 public class QuickAssistProcessor {
 
@@ -163,11 +171,11 @@ public class QuickAssistProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<CUCorrectionProposal> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ChangeCorrectionProposal> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
-			ArrayList<CUCorrectionProposal> resultingCollections = new ArrayList<>();
+			ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
 			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
 
 			// quick assists that show up also if there is an error/warning
@@ -227,7 +235,7 @@ public class QuickAssistProcessor {
 		return Collections.emptyList();
 	}
 
-	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		ForStatement forStatement = getEnclosingForStatementHeader(node);
 		if (forStatement == null) {
 			return false;
@@ -314,7 +322,7 @@ public class QuickAssistProcessor {
 		return null;
 	}
 
-	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<CUCorrectionProposal> resultingCollections) {
+	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -331,7 +339,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -381,7 +389,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) {
+	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -414,7 +422,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
+	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -470,7 +478,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
+	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -622,7 +630,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -642,7 +650,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -657,7 +665,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> resultingCollections) throws CoreException {
+	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -668,33 +676,74 @@ public class QuickAssistProcessor {
 
 		SimpleName name= (SimpleName) node;
 		IBinding binding = name.resolveBinding();
-		if (binding instanceof IVariableBinding) {
-			IVariableBinding varBinding = (IVariableBinding) binding;
-			if (varBinding.isParameter() || varBinding.isField()) {
-				return false;
-			}
+		try {
+			if (binding instanceof IVariableBinding) {
+				IVariableBinding varBinding = (IVariableBinding) binding;
+				if (varBinding.isParameter()) {
+					return false;
+				}
 
-			ASTNode decl= context.getASTRoot().findDeclaringNode(varBinding);
-			if (!(decl instanceof VariableDeclarationFragment) || decl.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY) {
-				return false;
-			}
+				if (varBinding.isField()) {
+					// Inline Constant (static final field)
+					if (RefactoringAvailabilityTesterCore.isInlineConstantAvailable((IField) varBinding.getJavaElement())) {
+						InlineConstantRefactoring refactoring = new InlineConstantRefactoring(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+						if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+							refactoring.setRemoveDeclaration(refactoring.isDeclarationSelected());
+							refactoring.setReplaceAllReferences(refactoring.isDeclarationSelected());
+							CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+							final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+							create.run(new NullProgressMonitor());
+							String label = ActionMessages.InlineConstantRefactoringAction_label;
+							int relevance = IProposalRelevance.INLINE_LOCAL;
+							ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
+							resultingCollections.add(proposal);
+							return true;
+						}
+					}
 
-			InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
-			if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-				String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
-				int relevance = IProposalRelevance.INLINE_LOCAL;
-				RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
-				resultingCollections.add(proposal);
-				return true;
+					return false;
+				}
+
+				ASTNode decl= context.getASTRoot().findDeclaringNode(varBinding);
+				if (!(decl instanceof VariableDeclarationFragment) || decl.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY) {
+					return false;
+				}
+
+				// Inline Local Variable
+				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
+					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
+					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
+						int relevance = IProposalRelevance.INLINE_LOCAL;
+						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
+						resultingCollections.add(proposal);
+						return true;
+					}
+				}
+			} else if (binding instanceof IMethodBinding) {
+				// Inline Method
+				if (RefactoringAvailabilityTesterCore.isInlineMethodAvailable((IMethod) binding.getJavaElement())) {
+					InlineMethodRefactoring refactoring = InlineMethodRefactoring.create(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+					if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+						final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+						create.run(new NullProgressMonitor());
+						String label = ActionMessages.InlineMethodRefactoringAction_label;
+						int relevance = IProposalRelevance.INLINE_LOCAL;
+						ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
+						resultingCollections.add(proposal);
+						return true;
+					}
+				}
 			}
-		} else if (binding instanceof IMethodBinding) {
-			// TODO add inline method refactoring
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
 		}
 
 		return false;
 	}
 
-	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		if (!(node instanceof Name)) {
 			return false;
 		}
@@ -766,7 +815,7 @@ public class QuickAssistProcessor {
 
 	}
 
-	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {
+	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
 		while (covering instanceof Name || covering instanceof Type || covering instanceof Dimension || covering.getParent() instanceof MethodDeclaration
 				|| covering.getLocationInParent() == AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY) {
 			covering = covering.getParent();
@@ -804,7 +853,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	public static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<CUCorrectionProposal> resultingCollections) {
+	public static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}
@@ -832,7 +881,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<CUCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -1334,7 +1383,7 @@ public class QuickAssistProcessor {
 	 * @return {@code true} if the operation could or has been performed,
 	 *         {@code false otherwise}
 	 */
-	private static boolean getAddStaticImportProposals(IInvocationContext context, ASTNode node, Collection<CUCorrectionProposal> proposals) {
+	private static boolean getAddStaticImportProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
 		if (!(node instanceof SimpleName)) {
 			return false;
 		}
