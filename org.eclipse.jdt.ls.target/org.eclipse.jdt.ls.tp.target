@@ -16,7 +16,7 @@
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="3.1.0.v20190501-0830"/>
+            <unit id="org.eclipse.buildship.feature.group" version="3.1.2.v20190903-1732"/>
             <repository location="http://download.eclipse.org/buildship/updates/e410/releases/3.x/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
