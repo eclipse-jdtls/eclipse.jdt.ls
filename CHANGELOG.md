@@ -6,6 +6,7 @@
 * enhancement - added Java 13 support for Maven and Eclipse projects. See [#1179](https://github.com/eclipse/eclipse.jdt.ls/issues/1179).
 * enhancement - code-action: fixed methods with reduced visibility. See [#442](https://github.com/eclipse/eclipse.jdt.ls/issues/442).
 * enhancement - code-action: inline method/variable/field. See [#656](https://github.com/eclipse/eclipse.jdt.ls/issues/656) and [#771](https://github.com/eclipse/eclipse.jdt.ls/issues/771).
+* enhancement - provide more granularity of progress during Maven import. See [#1121](https://github.com/eclipse/eclipse.jdt.ls/issues/1121).
 * enhancement - added support for diagnostic tags. See [#1162](https://github.com/eclipse/eclipse.jdt.ls/issues/1162).
 * enhancement - update Buildship to 3.1.2. See [#1195](https://github.com/eclipse/eclipse.jdt.ls/pulls/1195).
 * bug - fixed wrong range for `Surround with try/multi-catch` code action. See [#1189](https://github.com/eclipse/eclipse.jdt.ls/issues/1189).
