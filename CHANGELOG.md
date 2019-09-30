@@ -1,6 +1,16 @@
 # Change Log
 
 
+## [0.44.0 (October 1st, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/62?closed=1)
+
+* enhancement - added Java 13 support for Maven and Eclipse projects. See [#1179](https://github.com/eclipse/eclipse.jdt.ls/issues/1179).
+* enhancement - code-action: fixed methods with reduced visibility. See [#442](https://github.com/eclipse/eclipse.jdt.ls/issues/442).
+* enhancement - code-action: inline method/variable/field. See [#656](https://github.com/eclipse/eclipse.jdt.ls/issues/656) and [#771](https://github.com/eclipse/eclipse.jdt.ls/issues/771).
+* enhancement - added support for diagnostic tags. See [#1162](https://github.com/eclipse/eclipse.jdt.ls/issues/1162).
+* enhancement - update Buildship to 3.1.2. See [#1195](https://github.com/eclipse/eclipse.jdt.ls/pulls/1195).
+* bug - fixed wrong range for `Surround with try/multi-catch` code action. See [#1189](https://github.com/eclipse/eclipse.jdt.ls/issues/1189).
+* debt -  use sequence rank to get the first position in the position group. See [#1180](https://github.com/eclipse/eclipse.jdt.ls/issues/1180).
+
 ## [0.43.0 (September 18th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/61?closed=1)
 
 * enhancement - code action: fix non accessible references. See [#440](https://github.com/eclipse/eclipse.jdt.ls/issues/440).
