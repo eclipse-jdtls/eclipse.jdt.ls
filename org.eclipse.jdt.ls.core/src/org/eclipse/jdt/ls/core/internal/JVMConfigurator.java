@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.AbstractVMInstall;
@@ -132,16 +131,18 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		if (javaProject == null) {
 			return;
 		}
-		long jdkLevel = 0;
+		String version = "";
 		if (vmInstall instanceof AbstractVMInstall) {
 			AbstractVMInstall jvm = (AbstractVMInstall) vmInstall;
-			jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+			version = jvm.getJavaVersion();
+			long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
 			String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
 			Map<String, String> options = javaProject.getOptions(false);
 			JavaCore.setComplianceOptions(compliance, options);
 		}
-		if (jdkLevel > ClassFileConstants.JDK11) {
-			//Enable Java 12+ preview features by default and stfu about it
+		;
+		if (JavaCore.compareJavaVersions(version, JavaCore.latestSupportedJavaVersion()) >= 0) {
+			//Enable Java preview features for the latest JDK release by default and stfu about it
 			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
 			javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
 		} else {

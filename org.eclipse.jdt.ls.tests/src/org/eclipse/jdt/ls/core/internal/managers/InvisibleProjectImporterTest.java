@@ -163,7 +163,24 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 			assertTrue(invisibleProject.exists());
 			assertNoErrors(invisibleProject);
 			IJavaProject javaProject = JavaCore.create(invisibleProject);
+			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 			assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		} finally {
+			TestVMType.setTestJREAsDefault(defaultJVM);
+		}
+	}
+
+	@Test
+	public void testPreviewFeaturesDisabledForNotLatestJDK() throws Exception {
+		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
+		try {
+			String secondToLastJDK = JavaCore.getAllVersions().get(JavaCore.getAllVersions().size() - 2);
+			TestVMType.setTestJREAsDefault(secondToLastJDK);
+			IProject invisibleProject = copyAndImportFolder("singlefile/lesson1", "src/org/samples/HelloWorld.java");
+			assertTrue(invisibleProject.exists());
+			assertNoErrors(invisibleProject);
+			IJavaProject javaProject = JavaCore.create(invisibleProject);
+			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}

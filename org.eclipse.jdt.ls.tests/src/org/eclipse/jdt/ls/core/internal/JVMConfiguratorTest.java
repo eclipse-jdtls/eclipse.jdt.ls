@@ -75,15 +75,22 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
 			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
 
+			String latest = JavaCore.latestSupportedJavaVersion();
+			TestVMType.setTestJREAsDefault(latest);
+
+			assertComplianceAndPreviewSupport(defaultProject, latest, true);
+			assertComplianceAndPreviewSupport(randomProject, latest, true);
+
 			TestVMType.setTestJREAsDefault("12");
 
-			assertComplianceAndPreviewSupport(defaultProject, "12", true);
-			assertComplianceAndPreviewSupport(randomProject, "12", true);
+			assertComplianceAndPreviewSupport(defaultProject, "12", false);
+			assertComplianceAndPreviewSupport(randomProject, "12", false);
 
 			TestVMType.setTestJREAsDefault("1.8");
 
 			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
 			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
+
 
 		} finally {
 			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
