@@ -101,6 +101,7 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -111,7 +112,6 @@ import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IASTFragment;
 import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IExpressionFragment;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
@@ -258,7 +258,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 
 			if (fCURewrite == null) {
 				fCURewrite = new CompilationUnitRewrite(fCu, fCompilationUnitNode);
-				fCURewrite.setFormatterOptions(fFormatterOptions);
+				fCURewrite.setFormattingOptions(fFormatterOptions);
 				fCURewrite.getASTRewrite().setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
 			}
 			pm.worked(1);
