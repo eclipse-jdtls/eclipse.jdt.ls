@@ -110,6 +110,7 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
+import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -123,7 +124,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessag
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
@@ -529,7 +529,7 @@ public class ExtractTempRefactoring extends Refactoring {
 			pm.beginTask(RefactoringCoreMessages.ExtractTempRefactoring_checking_preconditions, 4);
 
 			fCURewrite = new CompilationUnitRewrite(fCu, fCompilationUnitNode);
-			fCURewrite.setFormatterOptions(fFormatterOptions);
+			fCURewrite.setFormattingOptions(fFormatterOptions);
 			fCURewrite.getASTRewrite().setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
 
 			doCreateChange(new SubProgressMonitor(pm, 2));
