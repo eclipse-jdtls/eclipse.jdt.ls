@@ -96,15 +96,21 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	private boolean exclude(java.nio.file.Path path) {
 		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		boolean excluded = false;
 		if (javaImportExclusions != null) {
 			for (String pattern : javaImportExclusions) {
+				boolean includePattern = false;
+				if (pattern.startsWith("!")) {
+					includePattern = true;
+					pattern = pattern.substring(1);
+				}
 				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
 				if (matcher.matches(path)) {
-					return true;
+					excluded = includePattern ? false : true;
 				}
 			}
 		}
-		return false;
+		return excluded;
 	}
 
 	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws OperationCanceledException {
