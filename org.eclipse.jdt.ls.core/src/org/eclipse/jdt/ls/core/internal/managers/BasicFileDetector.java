@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -56,7 +56,7 @@ public class BasicFileDetector {
 	private String fileName;
 	private int maxDepth = 5;
 	private boolean includeNested = true;
-	private Set<String> exclusions = new HashSet<>(1);
+	private Set<String> exclusions = new LinkedHashSet<>(1);
 
 	/**
 	 * Constructs a new BasicFileDetector for the given root directory, searching for a fileName.
@@ -172,13 +172,19 @@ public class BasicFileDetector {
 		if (dir.getFileName() == null) {
 			return true;
 		}
+		boolean excluded = false;
 		for (String pattern : exclusions) {
+			boolean includePattern = false;
+			if (pattern.startsWith("!")) {
+				includePattern = true;
+				pattern = pattern.substring(1);
+			}
 			PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
 			if (matcher.matches(dir)) {
-				return true;
+				excluded = includePattern ? false : true;
 			}
 		}
-		return false;
+		return excluded;
 	}
 
 	private boolean hasTargetFile(Path dir) {
