@@ -56,5 +56,4 @@ public class JavaContextType extends AbstractJavaContextTypeCore {
 			context.addCompatibleContextType(JavaContextType.ID_ALL);
 		}
 	}
-
 }
