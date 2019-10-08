@@ -1,0 +1,40 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Microsoft Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Microsoft Corporation - initial API and implementation
+ *******************************************************************************/
+
+package org.eclipse.jdt.ls.core.internal.corext.template.java;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.jface.text.templates.Template;
+import org.eclipse.text.templates.ContextTypeRegistry;
+import org.eclipse.text.templates.TemplatePersistenceData;
+import org.eclipse.text.templates.TemplateStoreCore;
+
+/**
+ * LSTemplateStore
+ */
+public class JavaLanguageServerTemplateStore extends TemplateStoreCore {
+
+	public JavaLanguageServerTemplateStore(ContextTypeRegistry registry, IEclipsePreferences store, String key) {
+		super(registry, store, key);
+	}
+
+	@Override
+	protected void loadContributedTemplates() {
+		for (CodeSnippetTemplates snippet : CodeSnippetTemplates.values()) {
+			Template template = snippet.createTemplate();
+			TemplatePersistenceData data = new TemplatePersistenceData(template, true, snippet.getId());
+			add(data);
+		}
+	}
+}

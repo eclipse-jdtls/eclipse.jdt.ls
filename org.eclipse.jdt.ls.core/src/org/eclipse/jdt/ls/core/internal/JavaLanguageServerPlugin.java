@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,6 +27,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,15 +53,21 @@ import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
+import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jface.text.templates.TemplateContextType;
+import org.eclipse.jface.text.templates.TemplateVariableResolver;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
+import org.eclipse.text.templates.ContextTypeRegistry;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -94,7 +101,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	public static final String DEFAULT_MEMBER_SORT_ORDER = "T,SF,SI,SM,F,I,C,M"; //$NON-NLS-1$
 
-
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
 	private ServiceTracker<IProxyService, IProxyService> proxyServiceTracker = null;
@@ -112,6 +118,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private PreferenceManager preferenceManager;
 
 	private TypeFilter typeFilter;
+
+	private ContextTypeRegistry fContextTypeRegistry;
+	private JavaLanguageServerTemplateStore fTemplateStore;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -481,6 +490,47 @@ public class JavaLanguageServerPlugin extends Plugin {
 			return protocol.getClientConnection();
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the template context type registry for the java plug-in.
+	 *
+	 * @return the template context type registry for the java plug-in
+	 */
+	public synchronized ContextTypeRegistry getTemplateContextRegistry() {
+		if (fContextTypeRegistry == null) {
+			ContextTypeRegistry registry = new ContextTypeRegistry();
+
+			JavaContextType statementContextType = new JavaContextType();
+			statementContextType.setId(JavaContextType.ID_STATEMENTS);
+			statementContextType.setName(JavaContextType.ID_STATEMENTS);
+			statementContextType.initializeContextTypeResolvers();
+
+			registry.addContextType(statementContextType);
+
+			fContextTypeRegistry = registry;
+		}
+
+		return fContextTypeRegistry;
+	}
+
+	/**
+	 * Returns the template store for the java editor templates.
+	 *
+	 * @return the template store for the java editor templates
+	 * @since 3.0
+	 */
+	public JavaLanguageServerTemplateStore getTemplateStore() {
+		if (fTemplateStore == null) {
+			fTemplateStore = new JavaLanguageServerTemplateStore(getTemplateContextRegistry(), DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId()), "");
+			try {
+				fTemplateStore.load();
+			} catch (IOException e) {
+				logException(e.getMessage(), e);
+			}
+		}
+
+		return fTemplateStore;
 	}
 
 	//Public for testing purposes

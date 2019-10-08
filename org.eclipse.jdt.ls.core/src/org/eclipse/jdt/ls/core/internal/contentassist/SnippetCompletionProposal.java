@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Microsoft Corporation and others.
+ * Copyright (c) 2018-2019 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.CompletionContext;
@@ -29,6 +30,7 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
@@ -43,14 +45,22 @@ import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContext;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
+import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
+import org.eclipse.jdt.internal.corext.template.java.JavaContextCore;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.templates.DocumentTemplateContext;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
+import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -68,10 +78,74 @@ public class SnippetCompletionProposal {
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
 
-	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) {
+	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) throws JavaModelException {
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
 		}
+
+		List<CompletionItem> res = new ArrayList<>();
+		res.addAll(getGenericSnippets(cu, completionContext));
+		res.addAll(getClassAndInterfaceSnippets(cu, completionContext, monitor));
+
+		return res;
+	}
+
+	private static List<CompletionItem> getGenericSnippets(ICompilationUnit cu, CompletionContext completionContext) throws JavaModelException {
+		List<CompletionItem> res = new ArrayList<>();
+
+		char[] completionToken = completionContext.getToken();
+		if (completionToken == null) {
+			return Collections.emptyList();
+		}
+		int tokenLocation = completionContext.getTokenLocation();
+		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
+		if (contextType == null) {
+			return Collections.emptyList();
+		}
+
+		IDocument document = new Document(cu.getSource());
+		DocumentTemplateContext javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+		Template[] templates = null;
+		if ((tokenLocation & CompletionContext.TL_STATEMENT_START) != 0) {
+			templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaContextType.ID_STATEMENTS);
+		} else {
+			// We only support statement templates for now.
+		}
+
+		if (templates == null || templates.length == 0) {
+			return Collections.emptyList();
+		}
+
+		for (Template template : templates) {
+			if (!javaContext.canEvaluate(template)) {
+				continue;
+			}
+			TemplateBuffer buffer = null;
+			try {
+				buffer = javaContext.evaluate(template);
+			} catch (BadLocationException | TemplateException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				continue;
+			}
+			if (buffer == null) {
+				continue;
+			}
+			String content = buffer.getString();
+			if (Strings.containsOnlyWhitespaces(content)) {
+				continue;
+			}
+			final CompletionItem item = new CompletionItem();
+			item.setLabel(template.getName());
+			item.setInsertText(content);
+			item.setDetail(template.getDescription());
+			setFields(item, cu);
+			res.add(item);
+		}
+
+		return res;
+	}
+
+	private static List<CompletionItem> getClassAndInterfaceSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) throws JavaModelException {
 		char[] completionToken = completionContext.getToken();
 		boolean isInterfacePrefix = true;
 		boolean isClassPrefix = true;
