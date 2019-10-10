@@ -54,6 +54,7 @@ import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
 import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
+import org.eclipse.jdt.internal.corext.template.java.VarResolver;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
@@ -505,6 +506,11 @@ public class JavaLanguageServerPlugin extends Plugin {
 			statementContextType.setId(JavaContextType.ID_STATEMENTS);
 			statementContextType.setName(JavaContextType.ID_STATEMENTS);
 			statementContextType.initializeContextTypeResolvers();
+			// Todo: Some of the resolvers is defined in the XML of the jdt.ui, now we have to add them manually.
+			// See: https://github.com/eclipse/eclipse.jdt.ui/blob/cf6c42522ee5a5ea21a34fcfdecf3504d4750a04/org.eclipse.jdt.ui/plugin.xml#L5619-L5625
+			TemplateVariableResolver resolver = new VarResolver();
+			resolver.setType("var");
+			statementContextType.addResolver(resolver);
 
 			registry.addContextType(statementContextType);
 

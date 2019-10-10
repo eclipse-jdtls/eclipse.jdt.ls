@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2019 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -861,6 +861,307 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(8, range.getStart().getCharacter());
 		assertEquals(0, range.getEnd().getLine());
 		assertEquals(15, range.getEnd().getCharacter());
+	}
+
+	@Test
+	public void testSnippet_sysout() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		sysout" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "sysout");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("sysout", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("System.out.println($0);", insertText);
+	}
+
+	@Test
+	public void testSnippet_syserr() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		syserr" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "syserr");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("syserr", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("System.err.println($0);", insertText);
+	}
+
+	@Test
+	public void testSnippet_systrace() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		systrace" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "systrace");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("systrace", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("System.out.println(\"Test.testMethod()\");", insertText);
+	}
+
+	@Test
+	public void testSnippet_array_foreach() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(String[] args) {\n" +
+			"		foreach" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "foreach");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("foreach", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("for (String string : args) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_list_foreach() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import java.util.List;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(List<String> args) {\n" +
+			"		foreach" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "foreach");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("foreach", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("for (String string : args) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_array_fori() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(String[] args) {\n" +
+			"		fori" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "fori");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("fori", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("for (int i = 0; i < args.length; i++) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_while() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(boolean con) {\n" +
+			"		while" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "while");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(1);
+		assertEquals("while", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("while (con) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_dowhile() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(boolean con) {\n" +
+			"		dowhile" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "dowhile");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("dowhile", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("do {\n\t$0\n} while (con);", insertText);
+	}
+
+	@Test
+	public void testSnippet_if() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(boolean con) {\n" +
+			"		if" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "if");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(5);
+		assertEquals("if", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("if (con) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_ifelse() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(boolean con) {\n" +
+			"		ifelse" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "ifelse");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("ifelse", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("if (con) {\n\t$0\n} else {\n\t\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_ifnull() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(Object obj) {\n" +
+			"		ifnull" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "ifnull");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("ifnull", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("if (obj == null) {\n\t$0\n}", insertText);
+	}
+
+	@Test
+	public void testSnippet_ifnotnull() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(Object obj) {\n" +
+			"		ifnotnull" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "ifnotnull");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("ifnotnull", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("if (obj != null) {\n\t$0\n}", insertText);
 	}
 
 	@Test

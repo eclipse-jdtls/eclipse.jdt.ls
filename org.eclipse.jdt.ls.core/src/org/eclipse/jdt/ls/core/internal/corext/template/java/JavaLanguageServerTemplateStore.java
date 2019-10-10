@@ -31,7 +31,7 @@ public class JavaLanguageServerTemplateStore extends TemplateStoreCore {
 
 	@Override
 	protected void loadContributedTemplates() {
-		for (CodeSnippetTemplates snippet : CodeSnippetTemplates.values()) {
+		for (CodeSnippetTemplate snippet : CodeSnippetTemplate.values()) {
 			Template template = snippet.createTemplate();
 			TemplatePersistenceData data = new TemplatePersistenceData(template, true, snippet.getId());
 			add(data);
