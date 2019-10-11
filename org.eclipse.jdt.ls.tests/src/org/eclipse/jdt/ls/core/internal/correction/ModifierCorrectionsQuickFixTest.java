@@ -896,4 +896,28 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 		assertCodeActions(cu, e1);
 	}
+
+	@Test
+	public void testInsertFinalModifierWherePossible() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("  public static void abc(int x){\n");
+		buf.append("    int b = 3;\n");
+		buf.append("  }\n");
+		buf.append("}");
+		ICompilationUnit cu = pack.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("  public static void abc(final int x){\n");
+		buf.append("    final int b = 3;\n");
+		buf.append("  }\n");
+		buf.append("}");
+		Expected e1 = new Expected("Change modifiers to final where possible", buf.toString());
+
+		assertCodeActions(cu, e1);
+	}
 }
