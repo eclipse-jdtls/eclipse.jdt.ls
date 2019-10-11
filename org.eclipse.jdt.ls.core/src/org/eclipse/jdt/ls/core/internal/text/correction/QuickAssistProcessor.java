@@ -114,6 +114,7 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
@@ -222,7 +223,7 @@ public class QuickAssistProcessor {
 				//				}
 				//				getConvertEnhancedForLoopProposal(context, coveringNode, resultingCollections);
 				//				getRemoveBlockProposals(context, coveringNode, resultingCollections);
-				//				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
+				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
 				getConvertVarTypeToResolvedTypeProposal(context, coveringNode, resultingCollections);
@@ -1372,6 +1373,19 @@ public class QuickAssistProcessor {
 				}
 			}
 		}
+		return true;
+	}
+
+	private static boolean getMakeVariableDeclarationFinalProposals(IInvocationContext context, Collection<ChangeCorrectionProposal> resultingCollections) {
+		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
+
+		if (fix == null) {
+			return false;
+		}
+
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context);
+		proposal.setDisplayName("Change modifiers to final where possible");
+		resultingCollections.add(proposal);
 		return true;
 	}
 
