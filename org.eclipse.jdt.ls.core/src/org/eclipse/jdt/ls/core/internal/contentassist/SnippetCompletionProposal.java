@@ -16,12 +16,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.CompletionContext;
@@ -45,9 +43,6 @@ import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContext;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
-import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
-import org.eclipse.jdt.internal.corext.template.java.JavaContextCore;
-import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
@@ -60,20 +55,16 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.DocumentTemplateContext;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
-import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
-
-import com.google.common.collect.Sets;
 
 public class SnippetCompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
-	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
@@ -159,10 +150,6 @@ public class SnippetCompletionProposal {
 		}
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
-		}
-		//This check might need to be pushed back to the different get*Snippet() methods, depending on future features
-		if (!isSnippetStringSupported() || UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
-			return Collections.emptyList();
 		}
 		boolean needsPublic = needsPublic(cu, completionContext, monitor);
 		if (monitor.isCanceled()) {
@@ -320,11 +307,6 @@ public class SnippetCompletionProposal {
 			return null;
 		}
 		return interfaceSnippetItem;
-	}
-
-	private static boolean isSnippetStringSupported() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
 	}
 
 	private static void setFields(CompletionItem ci, ICompilationUnit cu) {

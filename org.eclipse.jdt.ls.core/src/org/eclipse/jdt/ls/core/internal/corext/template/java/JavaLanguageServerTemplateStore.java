@@ -11,9 +11,6 @@
 
 package org.eclipse.jdt.ls.core.internal.corext.template.java;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.text.templates.ContextTypeRegistry;
