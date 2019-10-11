@@ -84,7 +84,7 @@ class TemplatePreferences {
 	public static final String FOREACH_DESCRIPTION = "iterate over an array or Iterable";
 	public static final String FORI_DESCRIPTION = "iterate over array";
 	public static final String WHILE_DESCRIPTION = "while statement";
-	public static final String DOWHILE_DESCRIPTION = "do-While statement";
+	public static final String DOWHILE_DESCRIPTION = "do-while statement";
 	public static final String IF_DESCRIPTION = "if statement";
 	public static final String IFELSE_DESCRIPTION = "if-else statement";
 	public static final String IFNULL_DESCRIPTION = "if statement checking for null";

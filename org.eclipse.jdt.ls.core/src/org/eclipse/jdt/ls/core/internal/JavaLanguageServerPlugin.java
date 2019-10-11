@@ -524,7 +524,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 * Returns the template store for the java editor templates.
 	 *
 	 * @return the template store for the java editor templates
-	 * @since 3.0
 	 */
 	public JavaLanguageServerTemplateStore getTemplateStore() {
 		if (fTemplateStore == null) {
