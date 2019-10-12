@@ -891,7 +891,7 @@ public final class JDTUtils {
 			return file;
 		}
 		try {
-			parent.refreshLocal(DEPTH_ZERO, null);
+			parent.refreshLocal(DEPTH_ONE, null);
 		} catch (CoreException e) {
 			// Ignore
 		}
