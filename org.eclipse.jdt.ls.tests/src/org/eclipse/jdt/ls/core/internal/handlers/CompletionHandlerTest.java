@@ -885,7 +885,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("sysout", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("System.out.println($0);", insertText);
+		assertEquals("System.out.println(${0});", insertText);
 	}
 
 	@Test
@@ -910,7 +910,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("syserr", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("System.err.println($0);", insertText);
+		assertEquals("System.err.println(${0});", insertText);
 	}
 
 	@Test
@@ -960,7 +960,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (String string : args) {\n\t$0\n}", insertText);
+		assertEquals("for (String string : args) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -986,7 +986,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (String string : args) {\n\t$0\n}", insertText);
+		assertEquals("for (String string : args) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -1011,7 +1011,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("fori", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (int i = 0; i < args.length; i++) {\n\t$0\n}", insertText);
+		assertEquals("for (int i = 0; i < args.length; i++) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -1036,7 +1036,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(1);
 		assertEquals("while", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("while (con) {\n\t$0\n}", insertText);
+		assertEquals("while (con) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -1061,7 +1061,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("dowhile", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("do {\n\t$0\n} while (con);", insertText);
+		assertEquals("do {\n\t${0}\n} while (con);", insertText);
 	}
 
 	@Test
@@ -1086,7 +1086,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(5);
 		assertEquals("if", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (con) {\n\t$0\n}", insertText);
+		assertEquals("if (con) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -1111,7 +1111,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifelse", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (con) {\n\t$0\n} else {\n\t\n}", insertText);
+		assertEquals("if (con) {\n\t${0}\n} else {\n\t\n}", insertText);
 	}
 
 	@Test
@@ -1136,7 +1136,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (obj == null) {\n\t$0\n}", insertText);
+		assertEquals("if (obj == null) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
@@ -1161,7 +1161,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnotnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (obj != null) {\n\t$0\n}", insertText);
+		assertEquals("if (obj != null) {\n\t${0}\n}", insertText);
 	}
 
 	@Test
