@@ -59,16 +59,12 @@ import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
-import org.eclipse.lsp4j.MarkupContent;
-import org.eclipse.lsp4j.MarkupKind;
 
 public class SnippetCompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
-
-	private static final String MARKDOWN_LANGUAGE = "java";
 
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
@@ -316,7 +312,7 @@ public class SnippetCompletionProposal {
 	private static void setFields(CompletionItem ci, ICompilationUnit cu) {
 		ci.setKind(CompletionItemKind.Snippet);
 		ci.setInsertTextFormat(InsertTextFormat.Snippet);
-		setItemDocument(ci, ci.getInsertText());
+		ci.setDocumentation(SnippetUtils.beautifyDocument(ci.getInsertText()));
 		Map<String, String> data = new HashMap<>(3);
 		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(cu));
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "0");
@@ -370,20 +366,5 @@ public class SnippetCompletionProposal {
 
 	private static Predicate<IType> isTypeExists(String typeName) {
 		return type -> type.getElementName().equals(typeName);
-	}
-
-	private static void setItemDocument(CompletionItem item, String raw) {
-		// remove the placeholder for the plain cursor like: ${0}, ${1:variable}
-		String escapedString = raw.replaceAll("\\$\\{\\d:?(.*)\\}", "$1");
-		
-		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-			MarkupContent markupContent = new MarkupContent();
-			markupContent.setKind(MarkupKind.MARKDOWN);
-			markupContent.setValue(String.format("```%s\n%s\n```", MARKDOWN_LANGUAGE, escapedString));
-			item.setDocumentation(markupContent);
-		} else {
-			item.setDocumentation(escapedString);
-		}
 	}
 }
