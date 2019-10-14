@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -18,6 +19,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Location;
@@ -147,5 +150,18 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		List<SymbolInformation> results = handler.search(query, 2, "hello", true, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + "result", 2, results.size());
+	}
+
+	@Test
+	public void testEmptyNames() throws Exception {
+		importProjects("maven/reactor");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("reactor");
+		assertIsJavaProject(project);
+		String query = "Mono";
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 0, "reactor", false, monitor);
+		assertNotNull(results);
+		assertEquals("Found ", 119, results.size());
+		boolean hasEmptyName = results.stream().filter(s -> (s.getName() == null || s.getName().isEmpty())).findFirst().isPresent();
+		assertFalse("Found empty name", hasEmptyName);
 	}
 }
