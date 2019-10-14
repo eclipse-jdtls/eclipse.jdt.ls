@@ -74,7 +74,7 @@ public class WorkspaceSymbolHandler{
 							return;
 						}
 
-						if (location != null) {
+						if (location != null && match.getSimpleTypeName() != null && !match.getSimpleTypeName().isEmpty()) {
 							SymbolInformation symbolInformation = new SymbolInformation();
 							symbolInformation.setContainerName(match.getTypeContainerName());
 							symbolInformation.setName(match.getSimpleTypeName());
