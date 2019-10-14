@@ -11,7 +11,6 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.core.resources.IResource.DEPTH_ONE;
-import static org.eclipse.core.resources.IResource.DEPTH_ZERO;
 
 import java.io.File;
 import java.io.IOException;
