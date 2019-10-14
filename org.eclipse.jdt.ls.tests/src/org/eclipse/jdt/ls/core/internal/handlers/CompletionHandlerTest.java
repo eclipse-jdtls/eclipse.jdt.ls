@@ -2262,6 +2262,48 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Default: \"test\"", documentation);
 	}
 
+	@Test
+	public void testCompletion_showMethodLabelInDetail() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n"
+			+	"		System.out.println\n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "System.out.println");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertTrue(list.getItems().size() > 0);
+		CompletionItem ci = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Method, ci.getKind());
+		assertEquals("println(Object arg0) : void", ci.getLabel());
+		assertEquals("PrintStream", ci.getDetail());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertEquals("PrintStream - println(Object arg0) : void", resolvedItem.getDetail());
+	}
+
+	@Test
+	public void testCompletion_showImportLabelInDetail() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"import java.util.ArrayList\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "java.util.ArrayList");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertTrue(list.getItems().size() > 0);
+		CompletionItem ci = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("ArrayList - java.util", ci.getLabel());
+		assertNull(ci.getDetail());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertEquals("Class - ArrayList - java.util", resolvedItem.getDetail());
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
 				.replace("${line}", String.valueOf(line))

@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -36,6 +37,7 @@ import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.osgi.util.NLS;
@@ -43,6 +45,7 @@ import org.eclipse.osgi.util.NLS;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
+
 /**
  * Adds the completion string and documentation.
  * It checks the client capabilities.
@@ -191,6 +194,12 @@ public class CompletionResolveHandler {
 		if (monitor.isCanceled()) {
 			param.setData(null);
 		}
+
+		// Mitigate the bug https://github.com/redhat-developer/vscode-java/issues/249
+		// When the completion label is too long, some client cannot show the full label well. A workaround is displaying the full label in the detail.
+		// Then expand the Java doc and the user will see the full completion information.
+		String newDetail = String.format("%s - %s", StringUtils.isBlank(param.getDetail()) ? param.getKind().name() : param.getDetail(), param.getLabel());
+		param.setDetail(newDetail);
 		return param;
 	}
 
