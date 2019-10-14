@@ -30,6 +30,7 @@ import java.util.Comparator;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -228,5 +229,23 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertFalse(JDTUtils.isFolder(uriFile.toString()));
 		assertNotNull(JDTUtils.findFile(uriFile.toString()));
 		assertNotNull(JDTUtils.findFolder(uriFolder.toString()));
+	}
+
+	@Test
+	public void testGetFileOrFolder() throws Exception {
+		// For: https://github.com/eclipse/eclipse.jdt.ls/issues/1137
+		IProject project = WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME);
+
+		File parentFolder = new File(project.getLocation().toString(), "/src/org/eclipse");
+		IResource parent = JDTUtils.getFileOrFolder(parentFolder.toURI().toString());
+		assertTrue(parent instanceof IFolder);
+		final int originalMemberNum = ((IFolder) parent).members().length;
+
+		File newPackage = new File(project.getLocation().toString(), "/src/org/eclipse/testGetFileOrFolder");
+		newPackage.mkdirs();
+
+		IResource resource = JDTUtils.getFileOrFolder(newPackage.toURI().toString());
+		assertTrue(resource instanceof IFolder);
+		assertEquals("The parent package should be aware of the newly created child package", ((IFolder) parent).members().length, originalMemberNum + 1);
 	}
 }
