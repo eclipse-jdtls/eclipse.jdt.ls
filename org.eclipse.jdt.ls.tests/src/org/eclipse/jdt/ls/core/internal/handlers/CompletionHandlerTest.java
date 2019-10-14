@@ -2267,22 +2267,23 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
 		//@formatter:off
 				"package org.sample;\n"
+			+	"import java.util.Collections;\n\n"
 			+	"public class Test {\n\n"
 			+	"	void test() {\n"
-			+	"		System.out.println\n"
+			+	"		Collections.emptyListIt\n"
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "System.out.println");
+		int[] loc = findCompletionLocation(unit, "Collections.emptyListIt");
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
 		assertTrue(list.getItems().size() > 0);
 		CompletionItem ci = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Method, ci.getKind());
-		assertEquals("println(Object arg0) : void", ci.getLabel());
-		assertEquals("PrintStream", ci.getDetail());
+		assertEquals("emptyListIterator() : ListIterator<T>", ci.getLabel());
+		assertEquals("Collections", ci.getDetail());
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
-		assertEquals("PrintStream - println(Object arg0) : void", resolvedItem.getDetail());
+		assertEquals("Collections - emptyListIterator() : ListIterator<T>", resolvedItem.getDetail());
 	}
 
 	@Test
