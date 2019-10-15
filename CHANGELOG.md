@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.45.0 (October 16th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/63?closed=1)
+
+* enhancement - completion should provide code snippets (sysout/syserr/systrace/conditions/loops). See [#977](https://github.com/eclipse/eclipse.jdt.ls/issues/977).
+* enhancement - improve snippet documentation rendering. See [#1205](https://github.com/eclipse/eclipse.jdt.ls/issues/1205).
+* bug fix - don't return workspace symbols without a name. See [#1204](https://github.com/eclipse/eclipse.jdt.ls/issues/1204).
+* bug fix - fixed package fragments not updated when adding a new folder. See [#1137](https://github.com/eclipse/eclipse.jdt.ls/issues/1137).
 
 ## [0.44.0 (October 1st, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/62?closed=1)
 
@@ -9,7 +15,7 @@
 * enhancement - provide more granularity of progress during Maven import. See [#1121](https://github.com/eclipse/eclipse.jdt.ls/issues/1121).
 * enhancement - added support for diagnostic tags. See [#1162](https://github.com/eclipse/eclipse.jdt.ls/issues/1162).
 * enhancement - update Buildship to 3.1.2. See [#1195](https://github.com/eclipse/eclipse.jdt.ls/pulls/1195).
-* bug - fixed wrong range for `Surround with try/multi-catch` code action. See [#1189](https://github.com/eclipse/eclipse.jdt.ls/issues/1189).
+* bug fix - fixed wrong range for `Surround with try/multi-catch` code action. See [#1189](https://github.com/eclipse/eclipse.jdt.ls/issues/1189).
 * debt -  use sequence rank to get the first position in the position group. See [#1180](https://github.com/eclipse/eclipse.jdt.ls/issues/1180).
 
 ## [0.43.0 (September 18th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/61?closed=1)
