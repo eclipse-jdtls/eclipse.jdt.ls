@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Microsoft Corporation and others.
+ * Copyright (c) 2018-2019 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.CoreException;
@@ -29,6 +28,7 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
@@ -46,9 +46,13 @@ import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.templates.DocumentTemplateContext;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
 import org.eclipse.jface.text.templates.TemplateException;
@@ -56,22 +60,83 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 
-import com.google.common.collect.Sets;
-
 public class SnippetCompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
-	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
 
-	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) {
+	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) throws JavaModelException {
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
 		}
+
+		List<CompletionItem> res = new ArrayList<>();
+		res.addAll(getGenericSnippets(cu, completionContext));
+		res.addAll(getClassAndInterfaceSnippets(cu, completionContext, monitor));
+
+		return res;
+	}
+
+	private static List<CompletionItem> getGenericSnippets(ICompilationUnit cu, CompletionContext completionContext) throws JavaModelException {
+		List<CompletionItem> res = new ArrayList<>();
+
+		char[] completionToken = completionContext.getToken();
+		if (completionToken == null) {
+			return Collections.emptyList();
+		}
+		int tokenLocation = completionContext.getTokenLocation();
+		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
+		if (contextType == null) {
+			return Collections.emptyList();
+		}
+
+		IDocument document = new Document(cu.getSource());
+		DocumentTemplateContext javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+		Template[] templates = null;
+		if ((tokenLocation & CompletionContext.TL_STATEMENT_START) != 0) {
+			templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaContextType.ID_STATEMENTS);
+		} else {
+			// We only support statement templates for now.
+		}
+
+		if (templates == null || templates.length == 0) {
+			return Collections.emptyList();
+		}
+
+		for (Template template : templates) {
+			if (!javaContext.canEvaluate(template)) {
+				continue;
+			}
+			TemplateBuffer buffer = null;
+			try {
+				buffer = javaContext.evaluate(template);
+			} catch (BadLocationException | TemplateException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				continue;
+			}
+			if (buffer == null) {
+				continue;
+			}
+			String content = buffer.getString();
+			if (Strings.containsOnlyWhitespaces(content)) {
+				continue;
+			}
+			final CompletionItem item = new CompletionItem();
+			item.setLabel(template.getName());
+			item.setInsertText(content);
+			item.setDetail(template.getDescription());
+			setFields(item, cu);
+			res.add(item);
+		}
+
+		return res;
+	}
+
+	private static List<CompletionItem> getClassAndInterfaceSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) throws JavaModelException {
 		char[] completionToken = completionContext.getToken();
 		boolean isInterfacePrefix = true;
 		boolean isClassPrefix = true;
@@ -85,10 +150,6 @@ public class SnippetCompletionProposal {
 		}
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
-		}
-		//This check might need to be pushed back to the different get*Snippet() methods, depending on future features
-		if (!isSnippetStringSupported() || UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
-			return Collections.emptyList();
 		}
 		boolean needsPublic = needsPublic(cu, completionContext, monitor);
 		if (monitor.isCanceled()) {
@@ -248,15 +309,10 @@ public class SnippetCompletionProposal {
 		return interfaceSnippetItem;
 	}
 
-	private static boolean isSnippetStringSupported() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
-	}
-
 	private static void setFields(CompletionItem ci, ICompilationUnit cu) {
 		ci.setKind(CompletionItemKind.Snippet);
 		ci.setInsertTextFormat(InsertTextFormat.Snippet);
-		ci.setDocumentation(ci.getInsertText());
+		ci.setDocumentation(SnippetUtils.beautifyDocument(ci.getInsertText()));
 		Map<String, String> data = new HashMap<>(3);
 		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(cu));
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "0");
@@ -311,5 +367,4 @@ public class SnippetCompletionProposal {
 	private static Predicate<IType> isTypeExists(String typeName) {
 		return type -> type.getElementName().equals(typeName);
 	}
-
 }

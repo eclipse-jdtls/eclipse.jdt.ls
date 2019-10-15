@@ -37,6 +37,7 @@ Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.
  org.eclipse.jdt.ls.core.internal.commands;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.contentassist;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.corext.codemanipulation;x-friends:="org.eclipse.jdt.ls.tests",
+ org.eclipse.jdt.ls.core.internal.corext.template.java;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.corext.dom;x-internal:=true,
  org.eclipse.jdt.ls.core.internal.corext.refactoring;x-internal:=true,
  org.eclipse.jdt.ls.core.internal.corext.refactoring.changes;x-internal:=true,

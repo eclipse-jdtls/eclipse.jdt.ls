@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -37,6 +40,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 public class CompletionHandler{
 
 	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*"));
+	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
 			IProgressMonitor monitor) {
@@ -113,7 +117,9 @@ public class CompletionHandler{
 				try {
 					unit.codeComplete(offset, collector, subMonitor);
 					proposals.addAll(collector.getCompletionItems());
-					proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
+					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
+						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
+					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
@@ -129,5 +135,10 @@ public class CompletionHandler{
 			return preferenceManager.getPreferences().getJavaCompletionFavoriteMembers();
 		}
 		return new String[0];
+	}
+
+	private boolean isSnippetStringSupported() {
+		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
 	}
 }
