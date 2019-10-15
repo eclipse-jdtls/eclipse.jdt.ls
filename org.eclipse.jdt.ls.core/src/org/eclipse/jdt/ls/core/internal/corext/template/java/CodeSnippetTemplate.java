@@ -68,14 +68,14 @@ class TemplatePreferences {
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
 	public static final String SYSERR_CONTENT = "System.err.println($${0});";
 	public static final String SYSTRACE_CONTENT = "System.out.println(\"${enclosing_type}.${enclosing_method}()\");";
-	public static final String FOREACH_CONTENT = "for (${iterable_type} ${iterable_element} : ${iterable}) {\n" + "\t$${0}\n" + "}";
-	public static final String FORI_CONTENT = "for (int ${index} = 0; ${index} < ${array}.length; ${index}++) {\n" + "\t$${0}\n" + "}";
-	public static final String WHILE_CONTENT = "while (${condition:var(boolean)}) {\n" + "\t$${0}\n" + "}";
-	public static final String DOWHILE_CONTENT = "do {\n" + "\t$${0}\n" + "} while (${condition:var(boolean)});";
-	public static final String IF_CONTENT = "if (${condition:var(boolean)}) {\n" + "\t$${0}\n" + "}";
-	public static final String IFELSE_CONTENT = "if (${condition:var(boolean)}) {\n" + "\t$${0}\n" + "} else {\n" + "\t\n" + "}";
-	public static final String IFNULL_CONTENT = "if (${name:var} == null) {\n" + "\t$${0}\n" + "}";
-	public static final String IFNOTNULL_CONTENT = "if (${name:var} != null) {\n" + "\t$${0}\n" + "}";
+	public static final String FOREACH_CONTENT = "for ($${1:${iterable_type}} $${2:${iterable_element}} : $${3:${iterable}}) {\n" + "\t$${0}\n" + "}";
+	public static final String FORI_CONTENT = "for ($${1:int} $${2:${index}} = $${3:0}; $${2:${index}} < $${4:${array}.length}; $${2:${index}}++) {\n" + "\t$${0}\n" + "}";
+	public static final String WHILE_CONTENT = "while ($${1:${condition:var(boolean)}}) {\n" + "\t$${0}\n" + "}";
+	public static final String DOWHILE_CONTENT = "do {\n" + "\t$${0}\n" + "} while ($${1:${condition:var(boolean)}});";
+	public static final String IF_CONTENT = "if ($${1:${condition:var(boolean)}}) {\n" + "\t$${0}\n" + "}";
+	public static final String IFELSE_CONTENT = "if ($${1:${condition:var(boolean)}}) {\n" + "\t$${2}\n" + "} else {\n" + "\t$${0}\n" + "}";
+	public static final String IFNULL_CONTENT = "if ($${1:${name:var}} == null) {\n" + "\t$${0}\n" + "}";
+	public static final String IFNOTNULL_CONTENT = "if ($${1:${name:var}} != null) {\n" + "\t$${0}\n" + "}";
 
 	// Descriptions
 	public static final String SYSOUT_DESCRIPTION = "print to standard out";

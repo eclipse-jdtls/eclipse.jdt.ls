@@ -32,9 +32,7 @@ public class SnippetUtilsTest {
 
 	@Before
 	public void initProjectManager() throws Exception {
-		//		if (preferenceManager == null) {
 		preferenceManager = mock(PreferenceManager.class);
-		//		}
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
 	}
 
@@ -93,6 +91,28 @@ public class SnippetUtilsTest {
 				" */\n" +
 				"public class A {\n" +
 				"\n" +
+				"\t\n" +
+				"}";
+		//@formatter:on
+
+		assertEquals(result.getLeft(), expected);
+	}
+
+	@Test
+	public void testMultipleVariablesInput() {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(Boolean.FALSE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		//@formatter:off
+		String raw = "for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:args.length}; ${2:i}++) {\n" +
+				"\t${0}\n" +
+				"}";
+		//@formatter:on
+		Either<String, MarkupContent> result = SnippetUtils.beautifyDocument(raw);
+
+		//@formatter:off
+		String expected = "for (int i = 0; i < args.length; i++) {\n" +
 				"\t\n" +
 				"}";
 		//@formatter:on

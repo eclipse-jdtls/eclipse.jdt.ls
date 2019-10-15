@@ -25,7 +25,7 @@ public class SnippetUtils {
 
 	public static Either<String, MarkupContent> beautifyDocument(String raw) {
 		// remove the placeholder for the plain cursor like: ${0}, ${1:variable}
-		String escapedString = raw.replaceAll("\\$\\{\\d:?(.*)\\}", "$1");
+		String escapedString = raw.replaceAll("\\$\\{\\d:?(.*?)\\}", "$1");
 
 		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
