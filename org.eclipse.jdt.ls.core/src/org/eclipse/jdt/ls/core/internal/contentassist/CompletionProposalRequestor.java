@@ -307,8 +307,19 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if (isIgnored(proposal.getKind())) {
 			return true;
 		}
-		char[] declaringType = getDeclaringType(proposal);
-		return declaringType != null && TypeFilter.isFiltered(declaringType);
+		// Only filter types and constructors from completion.
+		// Methods from already imported types and packages can still be proposed.
+		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1212
+		switch (proposal.getKind()) {
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.JAVADOC_TYPE_REF:
+			case CompletionProposal.TYPE_REF: {
+				char[] declaringType = getDeclaringType(proposal);
+				return declaringType != null && TypeFilter.isFiltered(declaringType);
+			}
+		}
+		return false;
 	}
 
 	/**
