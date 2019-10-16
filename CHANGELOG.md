@@ -7,6 +7,7 @@
 * bug fix - don't return workspace symbols without a name. See [#1204](https://github.com/eclipse/eclipse.jdt.ls/issues/1204).
 * bug fix - fixed package fragments not updated when adding a new folder. See [#1137](https://github.com/eclipse/eclipse.jdt.ls/issues/1137).
 * bug fix - only enable preview features for the latest available JDK. See [#1197](https://github.com/eclipse/eclipse.jdt.ls/pull/1197).
+* bug fix - don't filter methods from filtered types' code completion. See [#1212](https://github.com/eclipse/eclipse.jdt.ls/issues/1212).
 
 ## [0.44.0 (October 1st, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/62?closed=1)
 
