@@ -2525,6 +2525,33 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_FilterTypesKeepMethods() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		java.util.List l; \n"
+			+   "       l.clea \n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "l.clea");
+		try {
+			List<String> filteredTypes = new ArrayList<>();
+			filteredTypes.add("java.util.*");
+			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
+
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertEquals("Missing completion", 1, list.getItems().size());
+			assertEquals("clear() : void", list.getItems().get(0).getLabel());
+		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
 	public void testCompletion_ConstantDefaultValue() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
 		//@formatter:off
