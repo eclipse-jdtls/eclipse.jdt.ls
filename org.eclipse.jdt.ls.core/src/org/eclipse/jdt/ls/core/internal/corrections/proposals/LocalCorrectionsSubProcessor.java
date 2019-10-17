@@ -20,6 +20,7 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -75,11 +76,13 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -93,10 +96,13 @@ import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class LocalCorrectionsSubProcessor {
+
+	private static final String ADD_STATIC_ACCESS_ID = "org.eclipse.jdt.ui.correction.changeToStatic"; //$NON-NLS-1$
 
 	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu = context.getCompilationUnit();
@@ -637,6 +643,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
+
 	public static void addUnnecessaryCastProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		IProposableFix fix = UnusedCodeFixCore.createRemoveUnusedCastFix(context.getASTRoot(), problem);
 		if (fix != null) {
@@ -645,6 +652,45 @@ public class LocalCorrectionsSubProcessor {
 			FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new UnnecessaryCodeCleanUpCore(options), IProposalRelevance.REMOVE_UNUSED_CAST, context);
 			proposals.add(proposal);
 		}
+	}
+
+	/*
+	 * Fix instance accesses and indirect (static) accesses to static fields/methods
+	 */
+	public static void addCorrectAccessToStaticProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+		IProposableFix fix = CodeStyleFixCore.createIndirectAccessToStaticFix(context.getASTRoot(), problem);
+		if (fix != null) {
+
+			Map<String, String> options = new HashMap<>();
+			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS, CleanUpOptionsCore.TRUE);
+			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS, CleanUpOptionsCore.TRUE);
+			FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_INDIRECT_ACCESS_TO_STATIC, context);
+			//proposal.setCommandId(ADD_STATIC_ACCESS_ID);
+			proposals.add(proposal);
+			return;
+		}
+
+		IProposableFix[] fixes = CodeStyleFixCore.createNonStaticAccessFixes(context.getASTRoot(), problem);
+		if (fixes != null) {
+			IProposableFix fix1 = fixes[0];
+			Map<String, String> options = new HashMap<>();
+			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS, CleanUpOptionsCore.TRUE);
+			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_INSTANCE_ACCESS, CleanUpOptionsCore.TRUE);
+			FixCorrectionProposal proposal = new FixCorrectionProposal(fix1, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_DECLARING_TYPE, context, CodeActionKind.QuickFix);
+			//proposal.setCommandId(ADD_STATIC_ACCESS_ID);
+			proposals.add(proposal);
+
+			if (fixes.length > 1) {
+				Map<String, String> options1 = new HashMap<>();
+				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS, CleanUpOptionsCore.TRUE);
+				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS, CleanUpOptionsCore.TRUE);
+				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_INSTANCE_ACCESS, CleanUpOptionsCore.TRUE);
+				IProposableFix fix2 = fixes[1];
+				proposal = new FixCorrectionProposal(fix2, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE, context, CodeActionKind.QuickFix);
+				proposals.add(proposal);
+			}
+		}
+		ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_STATIC, IProposalRelevance.REMOVE_STATIC_MODIFIER);
 	}
 
 }

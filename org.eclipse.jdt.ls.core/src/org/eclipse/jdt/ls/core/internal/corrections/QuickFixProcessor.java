@@ -182,14 +182,13 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.getUnnecessaryNLSTagProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.NonStaticAccessToStaticField:
-			// case IProblem.NonStaticAccessToStaticMethod:
-			// case IProblem.NonStaticOrAlienTypeReceiver:
-			// case IProblem.IndirectAccessToStaticField:
-			// case IProblem.IndirectAccessToStaticMethod:
-			// LocalCorrectionsSubProcessor.addCorrectAccessToStaticProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.NonStaticAccessToStaticField:
+			case IProblem.NonStaticAccessToStaticMethod:
+			case IProblem.NonStaticOrAlienTypeReceiver:
+			case IProblem.IndirectAccessToStaticField:
+			case IProblem.IndirectAccessToStaticMethod:
+				LocalCorrectionsSubProcessor.addCorrectAccessToStaticProposals(context, problem, proposals);
+				break;
 			case IProblem.StaticMethodRequested:
 			case IProblem.NonStaticFieldFromStaticInvocation:
 			case IProblem.InstanceMethodDuringConstructorInvocation:
