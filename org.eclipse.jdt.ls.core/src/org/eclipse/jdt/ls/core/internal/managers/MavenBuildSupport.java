@@ -81,14 +81,15 @@ public class MavenBuildSupport implements IBuildSupport {
 		Path pomPath = project.getFile("pom.xml").getLocation().toFile().toPath();
 		if (digestStore.updateDigest(pomPath) || force) {
 			JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
+			boolean updateSnapshots = JavaLanguageServerPlugin.getPreferencesManager() == null ? false : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenUpdateSnapshots();
 			if (shouldCollectProjects()) {
 				Set<IProject> projectSet = new LinkedHashSet<>();
 				collectProjects(projectSet, project, monitor);
 				IProject[] projects = projectSet.toArray(new IProject[0]);
-				MavenUpdateRequest request = new MavenUpdateRequest(projects, MavenPlugin.getMavenConfiguration().isOffline(), true);
+				MavenUpdateRequest request = new MavenUpdateRequest(projects, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
 				((ProjectConfigurationManager) configurationManager).updateProjectConfiguration(request, true, true, monitor);
 			} else {
-				MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), true);
+				MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
 				configurationManager.updateProjectConfiguration(request, monitor);
 			}
 		}
