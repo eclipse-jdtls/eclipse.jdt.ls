@@ -1011,7 +1011,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("fori", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:args.length}; ${2:i}++) {\n\t${0}\n}", insertText);
+		assertEquals("for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:args.length}; ${2:i}++) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
@@ -1036,7 +1036,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(1);
 		assertEquals("while", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("while (${1:con}) {\n\t${0}\n}", insertText);
+		assertEquals("while (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
@@ -1061,7 +1061,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("dowhile", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("do {\n\t${0}\n} while (${1:con});", insertText);
+		assertEquals("do {\n\t$TM_SELECTED_TEXT${0}\n} while (${1:con});", insertText);
 	}
 
 	@Test
@@ -1086,7 +1086,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(5);
 		assertEquals("if", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:con}) {\n\t${0}\n}", insertText);
+		assertEquals("if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
@@ -1136,7 +1136,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:obj} == null) {\n\t${0}\n}", insertText);
+		assertEquals("if (${1:obj} == null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
@@ -1161,7 +1161,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnotnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:obj} != null) {\n\t${0}\n}", insertText);
+		assertEquals("if (${1:obj} != null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
