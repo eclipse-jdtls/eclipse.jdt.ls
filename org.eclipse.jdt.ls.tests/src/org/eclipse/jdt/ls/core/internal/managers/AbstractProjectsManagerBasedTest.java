@@ -149,7 +149,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
-		PreferenceManager.initialize();
+		preferenceManager.initialize();
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
