@@ -83,7 +83,7 @@ public class PreferenceManager {
 	 * Initialize default preference values of used bundles to match server
 	 * functionality.
 	 */
-	public static void initialize() {
+	public void initialize() {
 		// Update JavaCore options
 		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
 		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
