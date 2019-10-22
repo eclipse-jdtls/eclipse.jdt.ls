@@ -149,7 +149,9 @@ public class CodeActionHandler {
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 
-		Command command;
+		Command command = null;
+		WorkspaceEdit edit = null;
+		boolean useWorkspaceEdit = preferenceManager.getClientPreferences().isWorkspaceApplyEditSupported();
 		if (proposal instanceof CUCorrectionCommandProposal) {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
@@ -157,19 +159,20 @@ public class CodeActionHandler {
 			RefactoringCorrectionCommandProposal commandProposal = (RefactoringCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+			edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-			command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
+			if (!useWorkspaceEdit) {
+				command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
+			}
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
-			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			codeAction.setDiagnostics(context.getDiagnostics());
-			if (preferenceManager.getClientPreferences().isWorkspaceApplyEditSupported()) {
+			if (useWorkspaceEdit) {
 				codeAction.setEdit(edit);
 			} else {
 				codeAction.setCommand(command);
