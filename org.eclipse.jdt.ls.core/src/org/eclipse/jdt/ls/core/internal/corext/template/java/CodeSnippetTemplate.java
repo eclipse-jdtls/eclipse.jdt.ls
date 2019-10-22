@@ -68,7 +68,7 @@ class TemplatePreferences {
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
 	public static final String SYSERR_CONTENT = "System.err.println($${0});";
 	public static final String SYSTRACE_CONTENT = "System.out.println(\"${enclosing_type}.${enclosing_method}()\");";
-	public static final String FOREACH_CONTENT = "for ($${1:${iterable_type}} $${2:${iterable_element}} : $${3:${iterable}}) {\n" + "\t$${0}\n" + "}";
+	public static final String FOREACH_CONTENT = "for ($${1:${iterable_type}} $${2:${iterable_element}} : $${3:${iterable}}) {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "}";
 	public static final String FORI_CONTENT = "for ($${1:int} $${2:${index}} = $${3:0}; $${2:${index}} < $${4:${array}.length}; $${2:${index}}++) {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "}";
 	public static final String WHILE_CONTENT = "while ($${1:${condition:var(boolean)}}) {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "}";
 	public static final String DOWHILE_CONTENT = "do {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "} while ($${1:${condition:var(boolean)}});";

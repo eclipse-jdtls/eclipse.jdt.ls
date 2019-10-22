@@ -960,7 +960,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t${0}\n}", insertText);
+		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
@@ -986,7 +986,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t${0}\n}", insertText);
+		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 	}
 
 	@Test
