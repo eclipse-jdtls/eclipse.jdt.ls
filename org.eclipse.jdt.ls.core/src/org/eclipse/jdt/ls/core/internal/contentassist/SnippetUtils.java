@@ -20,12 +20,18 @@ public class SnippetUtils {
 
 	private static final String MARKDOWN_LANGUAGE = "java";
 
+	private static final String TM_SELECTED_TEXT = "\\$TM_SELECTED_TEXT";
+
 	private SnippetUtils() {
 	}
 
 	public static Either<String, MarkupContent> beautifyDocument(String raw) {
 		// remove the placeholder for the plain cursor like: ${0}, ${1:variable}
 		String escapedString = raw.replaceAll("\\$\\{\\d:?(.*?)\\}", "$1");
+
+		// Replace the reserved variable with empty string.
+		// See: https://github.com/eclipse/eclipse.jdt.ls/issues/1220
+		escapedString = escapedString.replaceAll(TM_SELECTED_TEXT, "");
 
 		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
