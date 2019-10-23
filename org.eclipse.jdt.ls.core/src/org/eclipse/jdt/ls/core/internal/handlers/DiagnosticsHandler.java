@@ -189,6 +189,24 @@ public class DiagnosticsHandler implements IProblemRequestor {
 			case IProblem.UnnecessaryInstanceof:
 			case IProblem.UnnecessaryElse:
 			case IProblem.UnnecessaryNLSTag:
+			// Report *unused* cases as unnecessary
+			case IProblem.UnusedPrivateType:
+			case IProblem.UnusedPrivateField:
+			case IProblem.UnusedPrivateMethod:
+			case IProblem.UnusedPrivateConstructor:
+			case IProblem.UnusedObjectAllocation:
+			case IProblem.UnusedMethodDeclaredThrownException:
+			case IProblem.UnusedConstructorDeclaredThrownException:
+			case IProblem.UnusedLabel:
+			case IProblem.UnusedImport:
+			case IProblem.UnusedTypeArgumentsForMethodInvocation:
+			case IProblem.UnusedWarningToken:
+			case IProblem.UnusedTypeArgumentsForConstructorInvocation:
+			case IProblem.UnusedTypeParameter:
+			// Other unused cases
+			case IProblem.LocalVariableIsNeverUsed:
+			case IProblem.ArgumentIsNeverUsed:
+			case IProblem.ExceptionParameterIsNeverUsed:
 				return Arrays.asList(DiagnosticTag.Unnecessary);
 		}
 
