@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.46.0 (October 23rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/64?closed=1)
+
+* enhancement - tag IProblem.UnusedImport as DiagnosticTag.Unnecessary. See [#1219](https://github.com/eclipse/eclipse.jdt.ls/issues/1219).
+* enhancement - support selection range in snippets. See [#1220](https://github.com/eclipse/eclipse.jdt.ls/issues/1220).
+
 ## [0.45.0 (October 16th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/63?closed=1)
 
 * enhancement - completion should provide code snippets (sysout/syserr/systrace/conditions/loops). See [#977](https://github.com/eclipse/eclipse.jdt.ls/issues/977).
