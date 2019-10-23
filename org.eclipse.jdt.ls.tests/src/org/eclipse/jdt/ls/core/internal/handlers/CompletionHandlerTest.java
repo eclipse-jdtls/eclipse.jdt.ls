@@ -289,6 +289,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Collections.sort(items, comparator);
 		CompletionItem ctor = items.get(0);
 		assertEquals("Object()", ctor.getLabel());
+		assertEquals("java.lang.Object.Object()", ctor.getDetail());
 		assertEquals("Object", ctor.getInsertText());
 
 		CompletionItem resolvedItem = server.resolveCompletionItem(ctor).join();
@@ -325,6 +326,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		// Check completion item
 		assertNull(item.getInsertText());
 		assertEquals("java.sql",item.getLabel());
+		assertEquals("(package) java.sql", item.getDetail());
 		assertEquals(CompletionItemKind.Module, item.getKind() );
 		assertEquals("999999215", item.getSortText());
 		assertNull(item.getTextEdit());
@@ -577,6 +579,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("put", ci.getInsertText());
+		assertEquals("java.util.HashMap.put(String key, String value) : String", ci.getDetail());
 		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
@@ -774,6 +777,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Field, item.getKind());
 		assertEquals("myTestString", item.getInsertText());
+		assertEquals("Foo.myTestString : String", item.getDetail());
 		assertNull(item.getAdditionalTextEdits());
 		assertNull(item.getTextEdit());
 
@@ -1715,6 +1719,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		assertEquals("Foo.IFoo", ci.getInsertText());
 		assertEquals(CompletionItemKind.Constructor, ci.getKind());
+		assertEquals("java.Foo.IFoo", ci.getDetail());
 		assertEquals("999998684", ci.getSortText());
 		assertNull(ci.getTextEdit());
 
@@ -1942,6 +1947,32 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
 				"	}\n" +
 				"}", resolvedItem.getTextEdit());
+	}
+
+	@Test
+	public void testCompletion_type() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        ArrayList\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "ArrayList");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("ArrayList"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("ArrayList", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("ArrayList - java.util", ci.getLabel());
+		assertEquals("java.util.ArrayList", ci.getDetail());
+		assertEquals("999999148", ci.getSortText());
+		assertNull(ci.getTextEdit());
 	}
 
 	@Test
