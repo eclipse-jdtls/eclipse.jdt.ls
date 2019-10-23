@@ -204,4 +204,24 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(DiagnosticTag.Deprecated, tags.get(0));
 	}
 
+	@Test
+	public void testUnnecessary() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.security.*;\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		CompilationUnit asRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
+		IProblem[] problems = asRoot.getProblems();
+		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
+		assertEquals(1, diagnostics.size());
+		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
+		assertEquals(1, tags.size());
+		assertEquals(DiagnosticTag.Unnecessary, tags.get(0));
+	}
+
 }
