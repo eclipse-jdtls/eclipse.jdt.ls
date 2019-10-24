@@ -497,26 +497,48 @@ public class AdvancedQuickAssistProcessor {
 			return false;
 		}
 
-		if (coveredNodes.isEmpty()) {
-			return false;
-		}
+		final AST ast;
+		final ASTRewrite rewrite;
 
-		final AST ast = covering.getAST();
-		final ASTRewrite rewrite = ASTRewrite.create(ast);
-		// check sub-expressions in fully covered nodes
-		boolean hasChanges = false;
-		for (Iterator<ASTNode> iter = coveredNodes.iterator(); iter.hasNext();) {
-			ASTNode covered = iter.next();
-			Expression coveredExpression = getBooleanExpression(covered);
-			if (coveredExpression != null) {
-				Expression inversedExpression = getInversedExpression(rewrite, coveredExpression);
-				rewrite.replace(coveredExpression, inversedExpression, null);
-				hasChanges = true;
+		if (context.getSelectionLength() == 0) {
+			Expression foundExpression = null;
+			while (covering instanceof Expression) {
+				Expression booleanExpression = getBooleanExpression(covering);
+				if (booleanExpression != null) {
+					foundExpression = getBooleanExpression(covering);
+				}
+				covering = covering.getParent();
 			}
-		}
+			if (foundExpression == null) {
+				return false;
+			}
 
-		if (!hasChanges) {
-			return false;
+			ast = foundExpression.getAST();
+			rewrite = ASTRewrite.create(ast);
+
+			Expression inversedExpression = getInversedExpression(rewrite, foundExpression);
+			rewrite.replace(foundExpression, inversedExpression, null);
+		} else {
+			if (coveredNodes.isEmpty()) {
+				return false;
+			}
+			ast = covering.getAST();
+			rewrite = ASTRewrite.create(ast);
+			// check sub-expressions in fully covered nodes
+			boolean hasChanges = false;
+			for (Iterator<ASTNode> iter = coveredNodes.iterator(); iter.hasNext();) {
+				ASTNode covered = iter.next();
+				Expression coveredExpression = getBooleanExpression(covered);
+				if (coveredExpression != null) {
+					Expression inversedExpression = getInversedExpression(rewrite, coveredExpression);
+					rewrite.replace(coveredExpression, inversedExpression, null);
+					hasChanges = true;
+				}
+			}
+
+			if (!hasChanges) {
+				return false;
+			}
 		}
 
 		// add correction proposal
