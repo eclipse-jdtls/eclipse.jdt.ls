@@ -314,10 +314,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addSuperfluousSemicolonProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnnecessaryCast:
-			// LocalCorrectionsSubProcessor.addUnnecessaryCastProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnnecessaryCast:
+				LocalCorrectionsSubProcessor.addUnnecessaryCastProposal(context, problem, proposals);
+				break;
 			// case IProblem.UnnecessaryInstanceof:
 			// LocalCorrectionsSubProcessor.addUnnecessaryInstanceofProposal(context,
 			// problem, proposals);
