@@ -35,7 +35,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.tests.Unstable;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -65,6 +64,14 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 	private WorkspaceDiagnosticsHandler handler;
 
+	private static final Comparator<Diagnostic> DIAGNOSTICS_COMPARATOR = (Diagnostic d1, Diagnostic d2) -> {
+		int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
+		if (diff == 0) {
+			diff = d1.getMessage().compareTo(d2.getMessage());
+		}
+		return diff;
+	};
+
 	@Before
 	public void setup() throws Exception {
 		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences());
@@ -87,7 +94,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		when(d.getLineOffset(9)).thenReturn(1000);
 		when(d.getLineOffset(99)).thenReturn(10000);
 
-		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[]{m1, m2, m3});
+		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, m2, m3 }, true);
 		assertEquals(3, diags.size());
 
 		Range r;
@@ -171,7 +178,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IDocument d = mock(IDocument.class);
 		when(d.getLineOffset(1)).thenReturn(90);
 
-		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[]{m1, null});
+		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, null }, true);
 		assertEquals(1, diags.size());
 
 		Range r;
@@ -197,25 +204,19 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
 
+		/* With Maven 3.6.2 (m2e 1.14), source folders are no longer configured if dependencies are malformed (missing version tag here)
 		Optional<PublishDiagnosticsParams> fooDiags = allCalls.stream().filter(p -> p.getUri().endsWith("Foo.java")).findFirst();
 		assertTrue("No Foo.java errors were found", fooDiags.isPresent());
 		List<Diagnostic> diags = fooDiags.get().getDiagnostics();
-		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
-			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
-			if (diff == 0) {
-				diff = d1.getMessage().compareTo(d2.getMessage());
-			}
-			return diff;
-		};
-		Collections.sort(diags, comparator );
+		Collections.sort(diags, DIAGNOSTICS_COMPARATOR );
 		assertEquals(diags.toString(), 2, diags.size());
 		assertEquals("The import org cannot be resolved", diags.get(0).getMessage());
 		assertEquals("StringUtils cannot be resolved", diags.get(1).getMessage());
+		*/
 
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
-		diags = pomDiags.get().getDiagnostics();
-		Collections.sort(diags, comparator);
+		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
 		assertEquals(diags.toString(), 1, diags.size());
 		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(0).getMessage());
 	}
@@ -232,20 +233,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/broken")).findFirst();
 		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
-		Comparator<Diagnostic> comparator = (Diagnostic d1, Diagnostic d2) -> {
-			int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
-			if (diff == 0) {
-				diff = d1.getMessage().compareTo(d2.getMessage());
-			}
-			return diff;
-		};
-		Collections.sort(diags, comparator);
+		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
 		assertEquals(diags.toString(), 3, diags.size());
 		assertTrue(diags.get(2).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		diags = pomDiags.get().getDiagnostics();
-		Collections.sort(diags, comparator);
+		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
 		assertEquals(diags.toString(), 1, diags.size());
 		assertTrue(diags.get(0).getMessage().startsWith("Project build error: "));
 	}
@@ -457,7 +451,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	private IMarker createMavenMarker(int severity, String msg, int line, int start, int end) throws Exception {
 		IMarker m = createMarker(severity, msg, line, start, end);
 		when(m.isSubtypeOf(IMavenConstants.MARKER_ID)).thenReturn(true);
-		when(m.getAttribute(IMarker.MESSAGE, "")).thenReturn(msg);
 		when(m.getAttribute(IMavenConstants.MARKER_COLUMN_START, -1)).thenReturn(start);
 		when(m.getAttribute(IMavenConstants.MARKER_COLUMN_END, -1)).thenReturn(end);
 		return m;
