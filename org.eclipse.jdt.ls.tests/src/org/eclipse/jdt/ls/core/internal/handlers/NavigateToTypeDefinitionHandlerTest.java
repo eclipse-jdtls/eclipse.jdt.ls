@@ -86,7 +86,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 		List<? extends Location> definitions = handler
 				.typeDefinition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
 		assertNotNull(definitions);
-		assertEquals(1, definitions.size());
+		assertEquals("No definition found for " + className, 1, definitions.size());
 		assertNotNull(definitions.get(0).getUri());
 		assertTrue(definitions.get(0).getRange().getStart().getLine() >= 0);
 	}
