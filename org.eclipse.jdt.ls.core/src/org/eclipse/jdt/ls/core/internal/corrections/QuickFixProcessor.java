@@ -43,8 +43,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubPro
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 
-/**
- */
+@SuppressWarnings("restriction")
 public class QuickFixProcessor {
 
 	private static int moveBack(int offset, int start, String ignoreCharacters, ICompilationUnit cu) {
@@ -108,6 +107,7 @@ public class QuickFixProcessor {
 
 			case IProblem.UndefinedMethod:
 				UnresolvedElementsSubProcessor.getMethodProposals(context, problem, false, proposals);
+				UnresolvedElementsSubProcessor.getAddStaticImportProposals(context, problem, proposals);
 				break;
 			case IProblem.UndefinedConstructor:
 				UnresolvedElementsSubProcessor.getConstructorProposals(context, problem, proposals);

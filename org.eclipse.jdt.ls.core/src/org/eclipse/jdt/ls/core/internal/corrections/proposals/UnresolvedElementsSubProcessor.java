@@ -31,7 +31,10 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTMatcher;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Annotation;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
@@ -48,6 +51,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -90,6 +94,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -997,6 +1002,194 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
+	public static boolean getAddStaticImportProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		CompilationUnit astRoot= context.getASTRoot();
+		ASTNode node = problem.getCoveringNode(astRoot);
+
+		if (!(node instanceof SimpleName)) {
+			return false;
+		}
+
+		final SimpleName name = (SimpleName) node;
+		final IBinding binding;
+		final ITypeBinding declaringClass;
+
+		// get bindings for method invocation or variable access
+
+		if (name.getParent() instanceof MethodInvocation) {
+			MethodInvocation mi = (MethodInvocation) name.getParent();
+
+			Expression expression = mi.getExpression();
+			if (expression == null || expression.equals(name)) {
+				return false;
+			}
+
+			binding = mi.resolveMethodBinding();
+			if (binding == null) {
+				return false;
+			}
+
+			declaringClass = ((IMethodBinding) binding).getDeclaringClass();
+		} else if (name.getParent() instanceof QualifiedName) {
+			QualifiedName qn = (QualifiedName) name.getParent();
+
+			if (name.equals(qn.getQualifier()) || qn.getParent() instanceof ImportDeclaration) {
+				return false;
+			}
+
+			binding = qn.resolveBinding();
+			if (!(binding instanceof IVariableBinding)) {
+				return false;
+			}
+			declaringClass = ((IVariableBinding) binding).getDeclaringClass();
+		} else {
+			return false;
+		}
+
+		// at this point binding cannot be null
+
+		if (!Modifier.isStatic(binding.getModifiers())) {
+			// only work with static bindings
+			return false;
+		}
+
+		boolean needImport = false;
+		if (!isDirectlyAccessible(name, declaringClass)) {
+			if (Modifier.isPrivate(declaringClass.getModifiers())) {
+				return false;
+			}
+			needImport = true;
+		}
+
+		if (proposals == null) {
+			return true; // return early, just testing if we could do it
+		}
+
+		try {
+			ImportRewrite importRewrite = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
+			ImportRewrite importRewriteReplaceAllOccurences = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
+			ASTRewrite astRewrite = ASTRewrite.create(node.getAST());
+			ASTRewrite astRewriteReplaceAllOccurrences = ASTRewrite.create(node.getAST());
+
+			int[] allReferencesToDeclaringClass = new int[1];
+			allReferencesToDeclaringClass[0] = 0;
+			int[] referencesFromOtherOccurences = new int[1];
+			referencesFromOtherOccurences[0] = 0;
+			MethodInvocation mi = null;
+			QualifiedName qn = null;
+			if (name.getParent() instanceof MethodInvocation) {
+				mi = (MethodInvocation) name.getParent();
+				// convert the method invocation
+				astRewrite.remove(mi.getExpression(), null);
+				mi.typeArguments().forEach(type -> astRewrite.remove((Type) type, null));
+			} else if (name.getParent() instanceof QualifiedName) {
+				qn = (QualifiedName) name.getParent();
+				// convert the field access
+				astRewrite.replace(qn, ASTNodeFactory.newName(node.getAST(), name.getFullyQualifiedName()), null);
+			} else {
+				return false;
+			}
+
+			MethodInvocation miFinal = mi;
+			name.getRoot().accept(new ASTVisitor() {
+				@Override
+				public boolean visit(MethodInvocation methodInvocation) {
+					Expression methodInvocationExpression = methodInvocation.getExpression();
+					if (methodInvocationExpression == null) {
+						return super.visit(methodInvocation);
+					}
+
+					if (methodInvocationExpression instanceof Name) {
+						String fullyQualifiedName = ((Name) methodInvocationExpression).getFullyQualifiedName();
+						if (miFinal != null && miFinal.getExpression() instanceof Name && ((Name) miFinal.getExpression()).getFullyQualifiedName().equals(fullyQualifiedName)
+								&& miFinal.getName().getIdentifier().equals(methodInvocation.getName().getIdentifier())) {
+							methodInvocation.typeArguments().forEach(type -> astRewriteReplaceAllOccurrences.remove((Type) type, null));
+							astRewriteReplaceAllOccurrences.remove(methodInvocationExpression, null);
+							allReferencesToDeclaringClass[0]++;
+						} else if (declaringClass.getName().equals(fullyQualifiedName)) {
+							allReferencesToDeclaringClass[0]++;
+							referencesFromOtherOccurences[0]++;
+						}
+					} else if (methodInvocationExpression instanceof ClassInstanceCreation) {
+						ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) methodInvocationExpression;
+						if (classInstanceCreation.getType() instanceof SimpleType) {
+							String typeName = ((SimpleType) classInstanceCreation.getType()).getName().getFullyQualifiedName();
+							if (typeName.equals(declaringClass.getName())) {
+								allReferencesToDeclaringClass[0]++;
+								referencesFromOtherOccurences[0]++;
+							}
+						}
+					}
+
+					return super.visit(methodInvocation);
+				}
+			});
+			QualifiedName qnFinal = qn;
+			name.getRoot().accept(new ASTVisitor() {
+				@Override
+				public boolean visit(QualifiedName qualifiedName) {
+					if (qnFinal != null && qualifiedName.getFullyQualifiedName().equals(qnFinal.getFullyQualifiedName())) {
+						astRewriteReplaceAllOccurrences.replace(qualifiedName, ASTNodeFactory.newName(node.getAST(), name.getFullyQualifiedName()), null);
+						allReferencesToDeclaringClass[0]++;
+					} else if (declaringClass.getName().equals(qualifiedName.getQualifier().getFullyQualifiedName())) {
+						allReferencesToDeclaringClass[0]++;
+						referencesFromOtherOccurences[0]++;
+					}
+					return super.visit(qualifiedName);
+				}
+			});
+
+			// add the static import
+			if (needImport) {
+				importRewrite.addStaticImport(binding);
+				if (allReferencesToDeclaringClass[0] == 1) { // If there are exactly 1 visits, the import can be removed
+					importRewrite.removeImport(declaringClass.getQualifiedName());
+				}
+				importRewriteReplaceAllOccurences.addStaticImport(binding);
+				if (referencesFromOtherOccurences[0] == 0) {
+					importRewriteReplaceAllOccurences.removeImport(declaringClass.getQualifiedName());
+				}
+			}
+
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite,
+					IProposalRelevance.ADD_STATIC_IMPORT);
+			proposal.setImportRewrite(importRewrite);
+			proposals.add(proposal);
+			ASTRewriteCorrectionProposal proposalReplaceAllOccurrences = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.QuickFix, context.getCompilationUnit(),
+					astRewriteReplaceAllOccurrences, IProposalRelevance.ADD_STATIC_IMPORT);
+			proposalReplaceAllOccurrences.setImportRewrite(importRewriteReplaceAllOccurences);
+			proposals.add(proposalReplaceAllOccurrences);
+		} catch (IllegalArgumentException e) {
+			// Wrong use of ASTRewrite or ImportRewrite API, see bug 541586
+			JavaLanguageServerPlugin.logException("Failed to get static import proposal", e);
+			return false;
+		} catch (JavaModelException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private static boolean isDirectlyAccessible(ASTNode nameNode, ITypeBinding declaringClass) {
+		ASTNode node = nameNode.getParent();
+		while (node != null) {
+
+			if (node instanceof AbstractTypeDeclaration) {
+				ITypeBinding binding = ((AbstractTypeDeclaration) node).resolveBinding();
+				if (binding != null && binding.isSubTypeCompatible(declaringClass)) {
+					return true;
+				}
+			} else if (node instanceof AnonymousClassDeclaration) {
+				ITypeBinding binding = ((AnonymousClassDeclaration) node).resolveBinding();
+				if (binding != null && binding.isSubTypeCompatible(declaringClass)) {
+					return true;
+				}
+			}
+
+			node = node.getParent();
+		}
+		return false;
+	}
 
 	private static void addNewMethodProposals(ICompilationUnit cu, CompilationUnit astRoot, Expression sender,
 			List<Expression> arguments, boolean isSuperInvocation, ASTNode invocationNode, String methodName,
