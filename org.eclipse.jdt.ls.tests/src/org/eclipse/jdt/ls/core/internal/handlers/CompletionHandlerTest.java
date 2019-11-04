@@ -579,7 +579,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci);
 
 		assertEquals("put", ci.getInsertText());
-		assertEquals("java.util.HashMap.put(String key, String value) : String", ci.getDetail());
+		assertTrue(ci.getDetail().matches("java.util.HashMap.put\\(String \\w+, String \\w+\\) : String"));
 		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999019", ci.getSortText());
 		assertNull(ci.getTextEdit());
