@@ -244,7 +244,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 				.documentSymbol(params, monitor).stream()
 				.map(Either::getLeft).collect(toList());
 		//@formatter:on
-		assertTrue(symbols.size() > 0);
+		assertFalse("No symbols found for " + className, symbols.isEmpty());
 		return symbols;
 	}
 

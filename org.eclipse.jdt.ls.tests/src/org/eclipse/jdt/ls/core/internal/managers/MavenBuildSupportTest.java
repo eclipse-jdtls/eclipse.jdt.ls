@@ -174,7 +174,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
 			source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
 		}
-		assertNotNull(source);
+		assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
 	}
 
 	@Test
