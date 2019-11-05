@@ -62,7 +62,7 @@ public class CodeActionHandler {
 	private RefactorProcessor refactorProcessor;
 	private QuickAssistProcessor quickAssistProcessor;
 
-	// TODO (Yan): To remove, move InvertBoolean proposals into RefactorProcessor
+	// TODO (Yan): Remove, move InvertBoolean proposals into RefactorProcessor
 	private AdvancedQuickAssistProcessor advancedQuickAssistProcessor;
 
 	private SourceAssistProcessor sourceAssistProcessor;
@@ -120,22 +120,45 @@ public class CodeActionHandler {
 			try {
 				List<ChangeCorrectionProposal> refactorProposals = this.refactorProcessor.getProposals(params, context);
 				proposals.addAll(refactorProposals);
+
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem resolving refactor code actions", e);
 			}
 		}
 
-		if (codeActionKinds.contains(CODE_ACTION_KIND_QUICK_ASSIST)) {
+		if (codeActionKinds.contains(CODE_ACTION_KIND_QUICK_ASSIST)
+			// TODO (Yan): many refactor actions are still in quickAssistProcessor now, should move them to refactorProcessor and remove below condition later
+			|| codeActionKinds.contains(CodeActionKind.Refactor)
+		) {
 			try {
 				List<ChangeCorrectionProposal> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
 				proposals.addAll(quickassistProposals);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
 			}
+			// TODO (Yan): Remove below block, move InvertBoolean proposals into RefactorProcessor
+			try {
+				List<CUCorrectionProposal> corrections = this.advancedQuickAssistProcessor.getAssists(params, context, locations);
+				proposals.addAll(corrections);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Problem resolving advanced quick assist code actions", e);
+			}
 		}
 
 		// TODO (Yan): below comparator seldomly compares relavance, it returns early if code action kind is different.
 		proposals.sort(new ChangeCorrectionProposalComparator());
+
+		// TODO (Yan): below block post-filters the proposals by CodeActionKind, can be removed in future if all above processors are doing right things.
+		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
+			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
+			for (ChangeCorrectionProposal proposal : proposals) {
+				Stream<String> acceptedActionKinds = params.getContext().getOnly().stream();
+				if (acceptedActionKinds.filter(kind -> proposal.getKind() != null && proposal.getKind().startsWith(kind)).findFirst().isPresent()) {
+					resultList.add(proposal);
+				}
+			}
+			proposals = resultList;
+		}
 
 		List<Either<Command, CodeAction>> codeActions = new ArrayList<>();
 		try {
