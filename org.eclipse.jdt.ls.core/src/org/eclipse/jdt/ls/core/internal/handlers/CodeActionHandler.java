@@ -96,7 +96,12 @@ public class CodeActionHandler {
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
 			codeActionKinds.addAll(params.getContext().getOnly());
 		} else {
-			List<String> defaultCodeActionKinds = Arrays.asList(CodeActionKind.QuickFix, CodeActionKind.Refactor, CODE_ACTION_KIND_QUICK_ASSIST);
+			List<String> defaultCodeActionKinds = Arrays.asList(
+				CodeActionKind.QuickFix,
+				CodeActionKind.Refactor,
+				CODE_ACTION_KIND_QUICK_ASSIST,
+				CodeActionKind.Source
+			);
 			codeActionKinds.addAll(defaultCodeActionKinds);
 		}
 
