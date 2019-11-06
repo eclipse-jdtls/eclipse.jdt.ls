@@ -1529,11 +1529,11 @@ public class QuickAssistProcessor {
 				}
 			}
 
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite,
+			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.Refactor, context.getCompilationUnit(), astRewrite,
 					IProposalRelevance.ADD_STATIC_IMPORT);
 			proposal.setImportRewrite(importRewrite);
 			proposals.add(proposal);
-			ASTRewriteCorrectionProposal proposalReplaceAllOccurrences = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.QuickFix, context.getCompilationUnit(),
+			ASTRewriteCorrectionProposal proposalReplaceAllOccurrences = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.Refactor, context.getCompilationUnit(),
 					astRewriteReplaceAllOccurrences, IProposalRelevance.ADD_STATIC_IMPORT);
 			proposalReplaceAllOccurrences.setImportRewrite(importRewriteReplaceAllOccurences);
 			proposals.add(proposalReplaceAllOccurrences);
