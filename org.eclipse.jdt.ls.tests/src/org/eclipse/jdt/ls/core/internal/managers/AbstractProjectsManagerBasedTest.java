@@ -124,6 +124,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		preferences = new Preferences();
 		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
 		preferences.setCodeGenerationTemplateGenerateComments(true);
+		preferences.setMavenDownloadSources(true);
 		if (preferenceManager == null) {
 			preferenceManager = mock(PreferenceManager.class);
 		}
