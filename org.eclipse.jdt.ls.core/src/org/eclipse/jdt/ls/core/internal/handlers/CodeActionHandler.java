@@ -145,7 +145,7 @@ public class CodeActionHandler {
 			}
 		}
 
-		// TODO (Yan): below comparator seldomly compares relavance, it returns early if code action kind is different.
+		// TODO (Yan): See https://github.com/eclipse/eclipse.jdt.ls/issues/1250
 		proposals.sort(new ChangeCorrectionProposalComparator());
 
 		// TODO (Yan): below block post-filters the proposals by CodeActionKind, can be removed in future if all above processors are doing right things.
