@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -119,6 +120,89 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (Either<Command, CodeAction> codeAction : sourceActions) {
 			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.Source));
 		}
+	}
+
+	@Test
+	public void testCodeAction_refactorActionsOnly() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "bar");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.LocalVariableIsNeverUsed), range)),
+			Collections.singletonList(CodeActionKind.Refactor)
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> refactorActions = getCodeActions(params);
+
+		Assert.assertNotNull(refactorActions);
+		Assert.assertFalse("No refactor actions were found", refactorActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : refactorActions) {
+			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.Refactor));
+		}
+	}
+
+	@Test
+	public void testCodeAction_quickfixActionsOnly() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "bar");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.LocalVariableIsNeverUsed), range)),
+			Collections.singletonList(CodeActionKind.QuickFix)
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> quickfixActions = getCodeActions(params);
+
+		Assert.assertNotNull(quickfixActions);
+		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : quickfixActions) {
+			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.QuickFix));
+		}
+	}
+
+	@Test
+	public void testCodeAction_allKindsOfActions() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "bar");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.LocalVariableIsNeverUsed), range))
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse("No code actions were found", codeActions.isEmpty());
+		boolean hasQuickFix = codeActions.stream().anyMatch(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.QuickFix));
+		assertTrue("No quickfix actions were found", hasQuickFix);
+		boolean hasRefactor = codeActions.stream().anyMatch(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.Refactor));
+		assertTrue("No refactor actions were found", hasRefactor);
+		boolean hasSource = codeActions.stream().anyMatch(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.Source));
+		assertTrue("No source actions were found", hasSource);
 	}
 
 	@Test
