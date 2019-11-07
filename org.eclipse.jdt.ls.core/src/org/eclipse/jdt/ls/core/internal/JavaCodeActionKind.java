@@ -80,4 +80,9 @@ public interface JavaCodeActionKind {
 	 * Move kind
 	 */
 	public static final String REFACTOR_MOVE = CodeActionKind.Refactor + ".move";
+
+	/**
+	 * Base kind for "quickassist" code actions
+	 */
+	public static final String QUICK_ASSIST = "quickassist";
 }
