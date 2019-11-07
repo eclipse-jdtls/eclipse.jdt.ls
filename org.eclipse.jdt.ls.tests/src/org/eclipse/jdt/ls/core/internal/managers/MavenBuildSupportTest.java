@@ -162,19 +162,25 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	public void testDownloadSources() throws Exception {
 		File file = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5");
 		FileUtils.deleteDirectory(file.getParentFile());
-		IProject project = importMavenProject("salut");
-		waitForBackgroundJobs();
-		assertTrue(!file.exists());
-		IJavaProject javaProject = JavaCore.create(project);
-		IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
-		IClassFile classFile = ((BinaryType) type).getClassFile();
-		assertNull(classFile.getBuffer());
-		String source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
-		if (source == null) {
-			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
-			source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+		boolean mavenDownloadSources = preferences.isMavenDownloadSources();
+		try {
+			preferences.setMavenDownloadSources(false);
+			IProject project = importMavenProject("salut");
+			waitForBackgroundJobs();
+			assertTrue(!file.exists());
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+			IClassFile classFile = ((BinaryType) type).getClassFile();
+			assertNull(classFile.getBuffer());
+			String source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+			if (source == null) {
+				JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
+				source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+			}
+			assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
+		} finally {
+			preferences.setMavenDownloadSources(mavenDownloadSources);
 		}
-		assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
 	}
 
 	@Test
