@@ -25,6 +25,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 
 public class ChangeCorrectionProposal extends ChangeCorrectionProposalCore {
+	// LSP: Code Action Kind
 	private String fKind;
 
 	/**
@@ -94,5 +95,12 @@ public class ChangeCorrectionProposal extends ChangeCorrectionProposalCore {
 	 */
 	public String getKind() {
 		return fKind;
+	}
+
+	/**
+	 * @param codeActionKind the Code Action Kind to set
+	 */
+	public void setKind(String codeActionKind) {
+		this.fKind = codeActionKind;
 	}
 }
