@@ -30,6 +30,7 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
@@ -56,7 +57,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 public class CodeActionHandler {
 
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
-	private static final String CODE_ACTION_KIND_QUICK_ASSIST = "quickassist";
 
 	private QuickFixProcessor quickFixProcessor;
 	private RefactorProcessor refactorProcessor;
@@ -99,7 +99,7 @@ public class CodeActionHandler {
 			List<String> defaultCodeActionKinds = Arrays.asList(
 				CodeActionKind.QuickFix,
 				CodeActionKind.Refactor,
-				CODE_ACTION_KIND_QUICK_ASSIST,
+				JavaCodeActionKind.QUICK_ASSIST,
 				CodeActionKind.Source
 			);
 			codeActionKinds.addAll(defaultCodeActionKinds);
@@ -126,7 +126,7 @@ public class CodeActionHandler {
 			}
 		}
 
-		if (codeActionKinds.contains(CODE_ACTION_KIND_QUICK_ASSIST)
+		if (codeActionKinds.contains(JavaCodeActionKind.QUICK_ASSIST)
 			// TODO (Yan): many refactor actions are still in quickAssistProcessor now, should move them to refactorProcessor and remove below condition later
 			|| codeActionKinds.contains(CodeActionKind.Refactor)
 		) {
