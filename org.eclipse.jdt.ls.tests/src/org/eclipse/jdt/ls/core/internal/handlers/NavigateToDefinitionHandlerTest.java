@@ -45,6 +45,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
 		defaultProject = linkFilesToDefaultProject("singlefile/Single.java").getProject();
+		downloadCommonsLang3Sources(project);
 	}
 
 	@Test

@@ -58,6 +58,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		importProjects(Arrays.asList("maven/salut", "eclipse/source-attachment"));
 		project = WorkspaceHelper.getProject("salut");
 		noSourceProject = WorkspaceHelper.getProject("source-attachment");
+		downloadCommonsLang3Sources(project);
 	}
 
 	@Test

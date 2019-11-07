@@ -55,6 +55,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		sourcelessClassFile = JDTUtils.resolveClassFile(sourcelessURI);
 		sourceAvailableURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils"));
 		sourceAvailableClassFile = JDTUtils.resolveClassFile(sourceAvailableURI);
+		downloadCommonsLang3Sources(project);
 	}
 
 	@Before

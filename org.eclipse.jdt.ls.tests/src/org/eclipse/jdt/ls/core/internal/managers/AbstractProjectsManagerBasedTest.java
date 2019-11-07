@@ -54,10 +54,13 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.internal.core.BinaryType;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -67,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
+import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
@@ -357,6 +361,18 @@ public abstract class AbstractProjectsManagerBasedTest {
 			}
 		} finally {
 			Platform.getExtensionRegistry().removeRegistryChangeListener(listener);
+		}
+	}
+
+	protected void downloadCommonsLang3Sources(IProject project) throws Exception {
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+		IClassFile classFile = ((BinaryType) type).getClassFile();
+		String source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+		waitForBackgroundJobs();
+		if (source == null) {
+			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
+			waitForBackgroundJobs();
 		}
 	}
 

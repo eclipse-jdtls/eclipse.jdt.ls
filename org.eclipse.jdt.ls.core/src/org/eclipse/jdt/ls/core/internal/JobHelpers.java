@@ -148,10 +148,19 @@ public final class JobHelpers {
 	}
 
 	public static void waitForDownloadSourcesJobs(int maxTimeMillis) {
-		waitForJobs(DownloadSourcesJobMatcher.INSTANCE, maxTimeMillis);
+		Job job = getJob(DownloadSourcesJobMatcher.INSTANCE);
+		if (job != null) {
+			job.cancel();
+			job.schedule();
+		}
+		waitForJobs(DownloadSourcesJobMatcher.INSTANCE, false, maxTimeMillis);
 	}
 
 	public static void waitForJobs(IJobMatcher matcher, int maxWaitMillis) {
+		waitForJobs(matcher, true, maxWaitMillis);
+	}
+
+	public static void waitForJobs(IJobMatcher matcher, boolean wakeup, int maxWaitMillis) {
 		final long limit = System.currentTimeMillis() + maxWaitMillis;
 		while(true) {
 			Job job = getJob(matcher);
@@ -163,7 +172,10 @@ public final class JobHelpers {
 				JavaLanguageServerPlugin.logInfo("Timeout while waiting for completion of job: " + job);
 				break;
 			}
-			job.wakeUp();
+			// The wakeup method locks a job that is scheduled, but isn't started
+			if (wakeup) {
+				job.wakeUp();
+			}
 			try {
 				Thread.sleep(POLLING_DELAY);
 			} catch(InterruptedException e) {

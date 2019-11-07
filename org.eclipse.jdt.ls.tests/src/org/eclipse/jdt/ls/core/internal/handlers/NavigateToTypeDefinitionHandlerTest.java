@@ -42,6 +42,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 		handler = new NavigateToTypeDefinitionHandler();
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
+		downloadCommonsLang3Sources(project);
 	}
 
 	@Test

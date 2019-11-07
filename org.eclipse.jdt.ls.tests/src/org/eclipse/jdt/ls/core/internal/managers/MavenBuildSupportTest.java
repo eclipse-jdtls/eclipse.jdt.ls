@@ -170,8 +170,10 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		IClassFile classFile = ((BinaryType) type).getClassFile();
 		assertNull(classFile.getBuffer());
 		String source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
+		waitForBackgroundJobs();
 		if (source == null) {
 			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
+			waitForBackgroundJobs();
 			source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
 		}
 		assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
