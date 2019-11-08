@@ -474,7 +474,9 @@ public class QuickAssistProcessor {
 			return false;
 		}
 
-		proposals.add(new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, false, IProposalRelevance.CHANGE_VARIABLE));
+		TypeChangeCorrectionProposal proposal = new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, false, IProposalRelevance.CHANGE_VARIABLE);
+		proposal.setKind(CodeActionKind.Refactor);
+		proposals.add(proposal);
 		return true;
 	}
 
@@ -577,7 +579,9 @@ public class QuickAssistProcessor {
 			return false;
 		}
 
-		proposals.add(new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, IProposalRelevance.CHANGE_VARIABLE));
+		TypeChangeCorrectionProposal proposal = new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, IProposalRelevance.CHANGE_VARIABLE);
+		proposal.setKind(CodeActionKind.Refactor);
+		proposals.add(proposal);
 		return true;
 	}
 	static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
