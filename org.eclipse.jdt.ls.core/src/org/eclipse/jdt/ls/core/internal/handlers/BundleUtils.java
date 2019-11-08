@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2019 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,8 +16,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -29,12 +33,19 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.osgi.container.Module;
+import org.eclipse.osgi.container.ModuleRevision;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.Version;
+import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.wiring.FrameworkWiring;
+import org.osgi.resource.Capability;
 
 /**
  * BundleContext and Bundle utilities
@@ -94,7 +105,7 @@ public final class BundleUtils {
 		}
 	}
 
-	private BundleUtils(){
+	private BundleUtils() {
 		//prevent instantianation
 	}
 
@@ -115,7 +126,9 @@ public final class BundleUtils {
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
 		Collection<Bundle> bundlesToStart = new ArrayList<>();
-		Set<BundleInfo> bundleInfos = new HashSet<>();
+		Set<Bundle> toRefresh = new HashSet<>();
+		Map<String, Bundle> installedBundles = new HashMap<>();
+		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
 		for (String bundleLocation : bundleLocations) {
 			try {
 				if (StringUtils.isEmpty(bundleLocation)) {
@@ -126,13 +139,22 @@ public final class BundleUtils {
 				String location = getBundleLocation(bundleLocation, true);
 
 				BundleInfo bundleInfo = getBundleInfo(bundleLocation);
-				if (!bundleInfos.add(bundleInfo)){  // returns false if bundleInfo is not added because it already exists
-					continue;
-				 }
+
 				if (bundleInfo == null) {
 					status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Failed to get bundleInfo for bundle from " + bundleLocation, null));
 					continue;
 				}
+
+				// Platform.getBundle() won't return the bundle with INSTALLED state, so we use this Map to persist the current installed bundles
+				Bundle installedBundle = installedBundles.get(bundleInfo.getSymbolicName());
+				if (installedBundle != null) {
+					Module module = installedBundle.adapt(Module.class);
+					if (isSingleton(module.getCurrentRevision())) {
+						// We have installed this singleton bundle before, so skip this one.
+						continue;
+					}
+				}
+
 				Bundle bundle = Platform.getBundle(bundleInfo.getSymbolicName());
 				if (bundle != null) {
 					if (bundle.getLocation().equals(location) && bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
@@ -140,9 +162,12 @@ public final class BundleUtils {
 						continue;
 					}
 					bundle.uninstall();
+					JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
+					toRefresh.add(bundle);
 				}
 				bundle = context.installBundle(location);
 				JavaLanguageServerPlugin.logInfo("Installed " + bundle.getLocation());
+				installedBundles.put(bundle.getSymbolicName(), bundle);
 				bundlesToStart.add(bundle);
 
 			} catch (BundleException e) {
@@ -153,9 +178,31 @@ public final class BundleUtils {
 				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Cannot extract bundle symbolicName or version " + bundleLocation, e));
 			}
 		}
+
+		refreshBundles(toRefresh, frameworkWiring);
+
 		status.addAll(startBundles(bundlesToStart));
 		if (status.getChildren().length > 0) {
 			throw new CoreException(status);
+		}
+	}
+
+	private static void refreshBundles(Set<Bundle> toRefresh, FrameworkWiring frameworkWiring) {
+		if (!toRefresh.isEmpty()) {
+			JavaLanguageServerPlugin.logInfo("Refresh the bundles");
+			final CountDownLatch latch = new CountDownLatch(1);
+			frameworkWiring.refreshBundles(toRefresh, new FrameworkListener() {
+				@Override
+				public void frameworkEvent(FrameworkEvent event) {
+					latch.countDown();
+				}
+			});
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				JavaLanguageServerPlugin.logException("InterruptedException happened when refreshing", e);
+			}
+			JavaLanguageServerPlugin.logInfo("Finished Refreshing bundles");
 		}
 	}
 
@@ -218,5 +265,14 @@ public final class BundleUtils {
 			}
 		}
 		return null;
+	}
+
+	// Copied from {@link org.eclipse.osgi.container.ModuleResolver#isSingleton(ModuleRevision)}
+	static boolean isSingleton(ModuleRevision revision) {
+		List<Capability> identities = revision.getCapabilities(IdentityNamespace.IDENTITY_NAMESPACE);
+		if (identities.isEmpty()) {
+			return false;
+		}
+		return "true".equals(identities.get(0).getDirectives().get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE)); //$NON-NLS-1$
 	}
 }

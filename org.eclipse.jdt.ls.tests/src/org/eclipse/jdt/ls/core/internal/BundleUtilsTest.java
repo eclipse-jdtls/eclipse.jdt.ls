@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2019 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -152,6 +152,57 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 			String extResult = getBundleExtensionResult();
 			assertEquals("EXT_TOSTRING", extResult);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
+	}
+
+	@Test
+	public void testLoadSameSingletonBundleFromDifferentLocation() throws Exception {
+		// First, we load a bundle depends on JUnit 5 runtime
+		String bundleDependOnJUnit5 = getBundle("testresources/extension-with-dependency", "jdt.ls.extension.with.dependency-0.0.2.jar");
+		String junit5Runtime = getBundle("testresources/extension-with-dependency", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar");
+		BundleUtils.loadBundles(Arrays.asList(bundleDependOnJUnit5, junit5Runtime));
+		String bundleLocation = getBundleLocation(bundleDependOnJUnit5, true);
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		Bundle installedBundle = context.getBundle(bundleLocation);
+		try {
+			assertNotNull(installedBundle);
+
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+
+			// Now we load JUnit 5 runtime from another location, this may happen when the LS extensions get updated.
+			BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.700.v20191009-0503.jar")));
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			installedBundle.uninstall();
+		}
+	}
+
+	@Test
+	public void testLoadSameBundleWithDifferentVersionMultipleTimes() throws Exception {
+		// First, we load a bundle depends on JUnit 5 runtime
+		String bundleDependOnJUnit5 = getBundle("testresources/extension-with-dependency", "jdt.ls.extension.with.dependency-0.0.2.jar");
+		String junit5Runtime = getBundle("testresources/extension-with-dependency", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar");
+		BundleUtils.loadBundles(Arrays.asList(bundleDependOnJUnit5, junit5Runtime));
+		String bundleLocation = getBundleLocation(bundleDependOnJUnit5, true);
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		Bundle installedBundle = context.getBundle(bundleLocation);
+		try {
+			assertNotNull(installedBundle);
+
+			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
+			installedBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
+
+			// Now we load two different version of JUnit 5 runtime
+			// this may happen when different extensions are getting loaded.
+			BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.700.v20191009-0503.jar"), getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar")));
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
 			installedBundle.uninstall();
