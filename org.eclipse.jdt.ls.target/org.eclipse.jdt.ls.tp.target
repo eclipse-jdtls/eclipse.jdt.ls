@@ -16,8 +16,8 @@
             <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="3.1.2.v20190903-1732"/>
-            <repository location="http://download.eclipse.org/buildship/updates/e410/releases/3.x/"/>
+            <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
+            <repository location="https://download.eclipse.org/buildship/updates/e413/snapshots/3.x/3.1.3.v20191107-2249-s"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
