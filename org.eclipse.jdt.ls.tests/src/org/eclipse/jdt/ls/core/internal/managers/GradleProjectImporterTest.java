@@ -342,4 +342,15 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		assertEquals(JavaCore.WARNING, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
 	}
+
+	@Test
+	public void testJava13Project() throws Exception {
+		IProject project = importGradleProject("gradle-13");
+		assertIsJavaProject(project);
+		assertEquals("13", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		//The project has enabled preview features in the jdt settings
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+	}
 }
