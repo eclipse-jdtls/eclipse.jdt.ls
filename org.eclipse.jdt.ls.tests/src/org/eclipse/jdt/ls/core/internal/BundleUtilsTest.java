@@ -160,52 +160,82 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testLoadSameSingletonBundleFromDifferentLocation() throws Exception {
-		// First, we load a bundle depends on JUnit 5 runtime
-		String bundleDependOnJUnit5 = getBundle("testresources/extension-with-dependency", "jdt.ls.extension.with.dependency-0.0.2.jar");
-		String junit5Runtime = getBundle("testresources/extension-with-dependency", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar");
-		BundleUtils.loadBundles(Arrays.asList(bundleDependOnJUnit5, junit5Runtime));
-		String bundleLocation = getBundleLocation(bundleDependOnJUnit5, true);
+		// First, we load a bundle depends on dependency bundle
+		String oldBundlePath = getBundle("testresources/extension-with-dependency-0.0.1/", "jdt.ls.extension.with.dependency_0.0.1.jar");
+		String oldDependencyPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
+		BundleUtils.loadBundles(Arrays.asList(oldBundlePath, oldDependencyPath));
+		String oldBundleLocation = getBundleLocation(oldBundlePath, true);
+		String oldDependencyLocation = getBundleLocation(oldDependencyPath, true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
-		Bundle installedBundle = context.getBundle(bundleLocation);
+		Bundle oldBundle = context.getBundle(oldBundleLocation);
+		Bundle oldDependency = context.getBundle(oldDependencyLocation);
+
+		assertNotNull(oldBundle);
+
+		assertTrue(oldBundle.getState() == Bundle.STARTING || oldBundle.getState() == Bundle.ACTIVE);
+		assertTrue(oldDependency.getState() == Bundle.ACTIVE);
+		oldBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+		assertEquals(oldBundle.getState(), Bundle.ACTIVE);
+
+		// Now we load bundles from another location, this may happen when the LS extensions get updated.
+		String newBundlePath = getBundle("testresources/extension-with-dependency-0.0.2/", "jdt.ls.extension.with.dependency_0.0.2.jar");
+		String newDependencyPath = getBundle("testresources", "dependency_0.0.2.201911081538.jar");
+		BundleUtils.loadBundles(Arrays.asList(newBundlePath, newDependencyPath));
+
+		String newBundleLocation = getBundleLocation(newBundlePath, true);
+		String newDependencyLocation = getBundleLocation(newDependencyPath, true);
+
+		Bundle newBundle = context.getBundle(newBundleLocation);
+		Bundle newDependency = context.getBundle(newDependencyLocation);
+
 		try {
-			assertNotNull(installedBundle);
+			assertTrue(oldBundle.getState() == Bundle.UNINSTALLED);
+			assertTrue(oldDependency.getState() == Bundle.UNINSTALLED);
 
-			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-			installedBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
-			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
-
-			// Now we load JUnit 5 runtime from another location, this may happen when the LS extensions get updated.
-			BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.700.v20191009-0503.jar")));
+			assertTrue(newBundle.getState() == Bundle.STARTING || oldBundle.getState() == Bundle.ACTIVE);
+			assertTrue(newDependency.getState() == Bundle.ACTIVE);
+			newBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+			assertEquals(newBundle.getState(), Bundle.ACTIVE);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
-			installedBundle.uninstall();
+			newBundle.uninstall();
+			newDependency.uninstall();
 		}
 	}
 
 	@Test
 	public void testLoadSameBundleWithDifferentVersionMultipleTimes() throws Exception {
-		// First, we load a bundle depends on JUnit 5 runtime
-		String bundleDependOnJUnit5 = getBundle("testresources/extension-with-dependency", "jdt.ls.extension.with.dependency-0.0.2.jar");
-		String junit5Runtime = getBundle("testresources/extension-with-dependency", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar");
-		BundleUtils.loadBundles(Arrays.asList(bundleDependOnJUnit5, junit5Runtime));
-		String bundleLocation = getBundleLocation(bundleDependOnJUnit5, true);
+		String oldDependencyPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
+		BundleUtils.loadBundles(Arrays.asList(oldDependencyPath));
+		String oldDependencyLocation = getBundleLocation(oldDependencyPath, true);
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
-		Bundle installedBundle = context.getBundle(bundleLocation);
+		Bundle oldDependencyBundle = context.getBundle(oldDependencyLocation);
+
+		assertNotNull(oldDependencyBundle);
+		assertTrue(oldDependencyBundle.getState() == Bundle.ACTIVE);
+
+		// Now we load two different version of bundles
+		// this may happen when different extensions which required the same bundle are getting loaded.
+		String newDependencyAPath = getBundle("testresources", "dependency_0.0.2.201911081538.jar");
+		String newDependencyBPath = getBundle("testresources", "dependency_0.0.1.201911081535.jar");
+
+		String newDependencyALocation = getBundleLocation(newDependencyAPath, true);
+		String newDependencyBLocation = getBundleLocation(newDependencyBPath, true);
+		BundleUtils.loadBundles(Arrays.asList(newDependencyAPath, newDependencyBPath));
+
+		Bundle newBundleA = context.getBundle(newDependencyALocation);
+		Bundle newBundleB = context.getBundle(newDependencyBLocation);
 		try {
-			assertNotNull(installedBundle);
-
-			assertTrue(installedBundle.getState() == Bundle.STARTING || installedBundle.getState() == Bundle.ACTIVE);
-			installedBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
-			assertEquals(installedBundle.getState(), Bundle.ACTIVE);
-
-			// Now we load two different version of JUnit 5 runtime
-			// this may happen when different extensions are getting loaded.
-			BundleUtils.loadBundles(Arrays.asList(getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.700.v20191009-0503.jar"), getBundle("testresources", "org.eclipse.jdt.junit5.runtime_1.0.500.v20190510-0840.jar")));
+			assertTrue(oldDependencyBundle.getState() == Bundle.UNINSTALLED);
+			assertNotNull(newBundleA);
+			assertTrue(newBundleA.getState() == Bundle.ACTIVE);
+			// skipped newBundleB since this is a singleton bundle
+			assertNull(newBundleB);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
-			installedBundle.uninstall();
+			newBundleA.uninstall();
 		}
 	}
 
