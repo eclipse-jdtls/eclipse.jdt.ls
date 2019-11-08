@@ -37,7 +37,11 @@ public class FixCorrectionProposal extends LinkedCorrectionProposal {
 	private CompilationUnit fCompilationUnit;
 
 	public FixCorrectionProposal(IProposableFix fix, ICleanUpCore cleanUp, int relevance, IInvocationContext context) {
-		super(fix.getDisplayString(), CodeActionKind.QuickFix, context.getCompilationUnit(), null, relevance);
+		this(fix, cleanUp, relevance, context, CodeActionKind.QuickFix);
+	}
+
+	public FixCorrectionProposal(IProposableFix fix, ICleanUpCore cleanUp, int relevance, IInvocationContext context, String codeActionKind) {
+		super(fix.getDisplayString(), codeActionKind, context.getCompilationUnit(), null, relevance);
 		fFix = fix;
 		fCleanUp = cleanUp;
 		fCompilationUnit = context.getASTRoot();

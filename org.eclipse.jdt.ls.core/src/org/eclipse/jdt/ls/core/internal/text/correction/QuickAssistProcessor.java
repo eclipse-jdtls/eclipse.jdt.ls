@@ -848,7 +848,7 @@ public class QuickAssistProcessor {
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context, CodeActionKind.Refactor);
 		resultingCollections.add(proposal);
 		return true;
 	}
@@ -876,7 +876,7 @@ public class QuickAssistProcessor {
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context, CodeActionKind.Refactor);
 		resultingCollections.add(proposal);
 		return true;
 	}
