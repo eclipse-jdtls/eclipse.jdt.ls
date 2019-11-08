@@ -159,6 +159,36 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testLoadMultipleNonSongletonBundles() throws Exception {
+		// First, we load a bundle depends on dependency bundle
+		String bundleAPath = getBundle("testresources", "nonsingleton_0.0.1.201911081703.jar");
+		String bundleBPath = getBundle("testresources/path with whitespace", "nonsingleton_0.0.1.201911081703.jar");
+		String bundleCPath = getBundle("testresources", "nonsingleton_0.0.2.201911081702.jar");
+
+		String bundleALocation = getBundleLocation(bundleAPath, true);
+		String bundleBLocation = getBundleLocation(bundleBPath, true);
+		String bundleCLocation = getBundleLocation(bundleCPath, true);
+
+		BundleUtils.loadBundles(Arrays.asList(bundleAPath, bundleBPath, bundleCPath));
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+
+		Bundle bundleA = context.getBundle(bundleALocation);
+		Bundle bundleB = context.getBundle(bundleBLocation);
+		Bundle bundleC = context.getBundle(bundleCLocation);
+
+		try {
+			assertTrue(bundleA.getState() == Bundle.STARTING || bundleA.getState() == Bundle.ACTIVE);
+			// non singleton bundle with same symbolic name and version should not be installed
+			assertNull(bundleB);
+			assertTrue(bundleC.getState() == Bundle.STARTING || bundleC.getState() == Bundle.ACTIVE);
+		} finally {
+			bundleA.uninstall();
+			bundleC.uninstall();
+		}
+	}
+
+	@Test
 	public void testLoadSameSingletonBundleFromDifferentLocation() throws Exception {
 		// First, we load a bundle depends on dependency bundle
 		String oldBundlePath = getBundle("testresources/extension-with-dependency-0.0.1/", "jdt.ls.extension.with.dependency_0.0.1.jar");

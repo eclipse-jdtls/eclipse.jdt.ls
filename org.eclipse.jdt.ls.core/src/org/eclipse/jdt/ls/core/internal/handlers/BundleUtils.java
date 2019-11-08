@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -127,7 +128,7 @@ public final class BundleUtils {
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
 		Collection<Bundle> bundlesToStart = new ArrayList<>();
 		Set<Bundle> toRefresh = new HashSet<>();
-		Map<String, Bundle> installedBundles = new HashMap<>();
+		Map<String, List<Bundle>> installedBundles = new HashMap<>();
 		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
 		for (String bundleLocation : bundleLocations) {
 			try {
@@ -146,28 +147,48 @@ public final class BundleUtils {
 				}
 
 				// Platform.getBundle() won't return the bundle with INSTALLED state, so we use this Map to persist the current installed bundles
-				Bundle installedBundle = installedBundles.get(bundleInfo.getSymbolicName());
-				if (installedBundle != null) {
-					Module module = installedBundle.adapt(Module.class);
-					if (isSingleton(module.getCurrentRevision())) {
-						// We have installed this singleton bundle before, so skip this one.
+				List<Bundle> installedBundleList = installedBundles.get(bundleInfo.getSymbolicName());
+				if (installedBundleList != null) {
+					boolean shouldSkip = false;
+					for (Bundle bundle : installedBundleList) {
+						Module module = bundle.adapt(Module.class);
+						if (isSingleton(module.getCurrentRevision())) {
+							// We have installed this singleton bundle before, so skip this one.
+							shouldSkip = true;
+							break;
+						} else if (bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
+							// if It's not singleton, make sure the same version does not get installed
+							shouldSkip = true;
+							break;
+						}
+					}
+					if (shouldSkip) {
 						continue;
 					}
 				}
 
 				Bundle bundle = Platform.getBundle(bundleInfo.getSymbolicName());
 				if (bundle != null) {
-					if (bundle.getLocation().equals(location) && bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
+					if (bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
 						// Same bundle exists
 						continue;
 					}
-					bundle.uninstall();
-					JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
-					toRefresh.add(bundle);
+
+					Module module = bundle.adapt(Module.class);
+					if (isSingleton(module.getCurrentRevision())) {
+						// The uninstallation will only happen when the bundle is singleton with different version
+						bundle.uninstall();
+						JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
+						toRefresh.add(bundle);
+					}
 				}
 				bundle = context.installBundle(location);
 				JavaLanguageServerPlugin.logInfo("Installed " + bundle.getLocation());
-				installedBundles.put(bundle.getSymbolicName(), bundle);
+				if (installedBundles.containsKey(bundle.getSymbolicName())) {
+					installedBundleList.add(bundle);
+				} else {
+					installedBundles.put(bundle.getSymbolicName(), new ArrayList<>(Arrays.asList(bundle)));
+				}
 				bundlesToStart.add(bundle);
 
 			} catch (BundleException e) {
@@ -194,7 +215,9 @@ public final class BundleUtils {
 			frameworkWiring.refreshBundles(toRefresh, new FrameworkListener() {
 				@Override
 				public void frameworkEvent(FrameworkEvent event) {
-					latch.countDown();
+					if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
+						latch.countDown();
+					}
 				}
 			});
 			try {
