@@ -34,8 +34,7 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.osgi.container.Module;
-import org.eclipse.osgi.container.ModuleRevision;
+import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -43,10 +42,8 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.Version;
-import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.FrameworkWiring;
-import org.osgi.resource.Capability;
 
 /**
  * BundleContext and Bundle utilities
@@ -61,9 +58,12 @@ public final class BundleUtils {
 
 		private String symbolicName;
 
-		private BundleInfo(String bundleVersion, String symbolicName) {
+		private boolean isSingleton;
+
+		private BundleInfo(String bundleVersion, String symbolicName, boolean isSingleton) {
 			this.version = bundleVersion;
 			this.symbolicName = symbolicName;
+			this.isSingleton = isSingleton;
 		}
 
 		private String getVersion() {
@@ -74,35 +74,8 @@ public final class BundleUtils {
 			return symbolicName;
 		}
 
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((symbolicName == null) ? 0 : symbolicName.hashCode());
-			result = prime * result + ((version == null) ? 0 : version.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			BundleInfo other = (BundleInfo) obj;
-			if (symbolicName == null) {
-				if (other.symbolicName != null)
-					return false;
-			} else if (!symbolicName.equals(other.symbolicName))
-				return false;
-			if (version == null) {
-				if (other.version != null)
-					return false;
-			} else if (!version.equals(other.version))
-				return false;
-			return true;
+		private boolean isSingleton() {
+			return isSingleton;
 		}
 	}
 
@@ -128,7 +101,7 @@ public final class BundleUtils {
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
 		Collection<Bundle> bundlesToStart = new ArrayList<>();
 		Set<Bundle> toRefresh = new HashSet<>();
-		Map<String, List<Bundle>> installedBundles = new HashMap<>();
+		Map<String, List<BundleInfo>> installedBundles = new HashMap<>();
 		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
 		for (String bundleLocation : bundleLocations) {
 			try {
@@ -147,16 +120,15 @@ public final class BundleUtils {
 				}
 
 				// Platform.getBundle() won't return the bundle with INSTALLED state, so we use this Map to persist the current installed bundles
-				List<Bundle> installedBundleList = installedBundles.get(bundleInfo.getSymbolicName());
+				List<BundleInfo> installedBundleList = installedBundles.get(bundleInfo.getSymbolicName());
 				if (installedBundleList != null) {
 					boolean shouldSkip = false;
-					for (Bundle bundle : installedBundleList) {
-						Module module = bundle.adapt(Module.class);
-						if (isSingleton(module.getCurrentRevision())) {
+					for (BundleInfo info : installedBundleList) {
+						if (info.isSingleton()) {
 							// We have installed this singleton bundle before, so skip this one.
 							shouldSkip = true;
 							break;
-						} else if (bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
+						} else if (info.getVersion().equals(bundleInfo.getVersion())) {
 							// if It's not singleton, make sure the same version does not get installed
 							shouldSkip = true;
 							break;
@@ -174,8 +146,7 @@ public final class BundleUtils {
 						continue;
 					}
 
-					Module module = bundle.adapt(Module.class);
-					if (isSingleton(module.getCurrentRevision())) {
+					if (bundleInfo.isSingleton()) {
 						// The uninstallation will only happen when the bundle is singleton with different version
 						bundle.uninstall();
 						JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
@@ -185,9 +156,9 @@ public final class BundleUtils {
 				bundle = context.installBundle(location);
 				JavaLanguageServerPlugin.logInfo("Installed " + bundle.getLocation());
 				if (installedBundles.containsKey(bundle.getSymbolicName())) {
-					installedBundleList.add(bundle);
+					installedBundleList.add(bundleInfo);
 				} else {
-					installedBundles.put(bundle.getSymbolicName(), new ArrayList<>(Arrays.asList(bundle)));
+					installedBundles.put(bundle.getSymbolicName(), new ArrayList<>(Arrays.asList(bundleInfo)));
 				}
 				bundlesToStart.add(bundle);
 
@@ -217,6 +188,9 @@ public final class BundleUtils {
 				public void frameworkEvent(FrameworkEvent event) {
 					if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
 						latch.countDown();
+					} else if (event.getType() == FrameworkEvent.ERROR) {
+						latch.countDown();
+						JavaLanguageServerPlugin.logError("Error happens when refreshing the bundles");
 					}
 				}
 			});
@@ -269,7 +243,7 @@ public final class BundleUtils {
 		return bundleLocation;
 	}
 
-	private static BundleInfo getBundleInfo(String bundleLocation) throws IOException {
+	private static BundleInfo getBundleInfo(String bundleLocation) throws IOException, BundleException {
 		try (JarFile jarFile = new JarFile(bundleLocation)) {
 			Manifest manifest = jarFile.getManifest();
 			if (manifest != null) {
@@ -280,22 +254,19 @@ public final class BundleUtils {
 						return null;
 					}
 					String symbolicName = mainAttributes.getValue(Constants.BUNDLE_SYMBOLICNAME);
-					if (StringUtils.isNotBlank(symbolicName) && symbolicName.indexOf(';') >= 0) {
-						symbolicName = symbolicName.substring(0, symbolicName.indexOf(';'));
+					boolean isSingleton = false;
+					if (StringUtils.isNotBlank(symbolicName)) {
+						ManifestElement[] symbolicNameElements = ManifestElement.parseHeader(Constants.BUNDLE_SYMBOLICNAME, symbolicName);
+						if (symbolicNameElements.length > 0) {
+							symbolicName = symbolicNameElements[0].getValue();
+							String singleton = symbolicNameElements[0].getDirective(Constants.SINGLETON_DIRECTIVE);
+							isSingleton = "true".equals(singleton);
+						}
 					}
-					return new BundleInfo(bundleVersion, symbolicName);
+					return new BundleInfo(bundleVersion, symbolicName, isSingleton);
 				}
 			}
 		}
 		return null;
-	}
-
-	// Copied from {@link org.eclipse.osgi.container.ModuleResolver#isSingleton(ModuleRevision)}
-	static boolean isSingleton(ModuleRevision revision) {
-		List<Capability> identities = revision.getCapabilities(IdentityNamespace.IDENTITY_NAMESPACE);
-		if (identities.isEmpty()) {
-			return false;
-		}
-		return "true".equals(identities.get(0).getDirectives().get(IdentityNamespace.CAPABILITY_SINGLETON_DIRECTIVE)); //$NON-NLS-1$
 	}
 }
