@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Gorkem Ercan
@@ -95,6 +96,32 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnusedImport() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionLiteral()).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sql.*; \n" +
+						"public class Foo {\n"+
+						"	void foo() {\n"+
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(codeActions.size() >= 3);
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
@@ -226,6 +253,30 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnterminatedString() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionLiteral()).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"String s = \"some str\n" +
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "some str");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse(codeActions.isEmpty());
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
