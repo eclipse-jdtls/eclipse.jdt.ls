@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
@@ -120,8 +121,34 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
 		Assert.assertNotNull(organizeImportActions);
 		Assert.assertEquals(1, organizeImportActions.size());
-		Command c = codeActions.get(0).getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		WorkspaceEdit e = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(e);
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnusedImport() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sql.*; \n" +
+						"public class Foo {\n"+
+						"	void foo() {\n"+
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(codeActions.size() >= 3);
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
@@ -192,13 +219,13 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String bar");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
+		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
 	}
 
 	@Test
@@ -403,8 +430,32 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse(codeActions.isEmpty());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Command c = codeActions.get(0).getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		WorkspaceEdit e = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(e);
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnterminatedString() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"String s = \"some str\n" +
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "some str");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse(codeActions.isEmpty());
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
@@ -449,11 +500,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Assert.assertEquals(1, codeActions.size());
 		Assert.assertEquals(codeActions.get(0), CodeActionKind.QuickFix);
-		Command c = getCommand(codeActions.get(0));
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-		Assert.assertNotNull(c.getArguments());
-		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
+		WorkspaceEdit we = codeActions.get(0).getRight().getEdit();
 		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.toURI(unit));
 		Assert.assertEquals(1, edits.size());
 		Assert.assertEquals("", edits.get(0).getNewText());
@@ -541,8 +588,8 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
 		Assert.assertNotNull(organizeImportActions);
 		Assert.assertEquals(1, organizeImportActions.size());
-		Command c = codeActions.get(0).getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		WorkspaceEdit edit = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(edit);
 	}
 
 	@Test
@@ -587,11 +634,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertTrue(found.isPresent());
 
 		Either<Command, CodeAction> codeAction = found.get();
-		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-		Assert.assertNotNull(c.getArguments());
-		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-		WorkspaceEdit edit = (WorkspaceEdit) c.getArguments().get(0);
+		WorkspaceEdit edit = codeAction.getRight().getEdit();
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(edit);
 		builder = new StringBuilder();
 		builder.append("package test1;\n");
@@ -655,7 +698,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Organize imports");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Organize imports");
 	}
 
 	@Test
@@ -672,10 +715,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getter and Setter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(3)).getTitle(), "Generate Constructors...");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Generate Getter and Setter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(1)), "Generate Getter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(2)), "Generate Setter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(3)), "Generate Constructors...");
 	}
 
 	@Test
@@ -692,13 +735,13 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getters and Setters");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getters");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setters");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(3)).getTitle(), "Generate Constructors...");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(4)).getTitle(), "Generate hashCode() and equals()...");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(5)).getTitle(), "Generate toString()...");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(6)).getTitle(), "Override/Implement Methods...");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Generate Getters and Setters");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(1)), "Generate Getters");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(2)), "Generate Setters");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(3)), "Generate Constructors...");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(4)), "Generate hashCode() and equals()...");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(5)), "Generate toString()...");
+		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(6)), "Override/Implement Methods...");
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
@@ -707,6 +750,17 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	public static Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
+	}
+
+	public static String getTitle(Either<Command, CodeAction> codeAction) {
+		Command command = getCommand(codeAction);
+		return ResourceUtils.dos2Unix(command != null ? command.getTitle() : codeAction.getRight().getTitle());
+	}
+
+	public static WorkspaceEdit getEdit(Either<Command, CodeAction> codeAction) {
+		assertTrue(codeAction.isRight());
+		assertNotNull(codeAction.getRight().getEdit());
+		return codeAction.getRight().getEdit();
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){
@@ -764,6 +818,18 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (Either<Command, CodeAction> codeAction : codeActions) {
 			Command actionCommand = getCommand(codeAction);
 			if (actionCommand != null && actionCommand.getCommand().equals(command) && actionCommand.getTitle().equals(title)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean titleExists(List<Either<Command, CodeAction>> codeActions, String title) {
+		if (codeActions.isEmpty()) {
+			return false;
+		}
+		for (Either<Command, CodeAction> codeAction : codeActions) {
+			if (title.equals(getTitle(codeAction))) {
 				return true;
 			}
 		}

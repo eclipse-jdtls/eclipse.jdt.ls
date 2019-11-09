@@ -654,7 +654,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		assertCodeActionExists(cu, e1);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
-		WorkspaceEdit edit = (WorkspaceEdit) codeActions.get(0).getRight().getCommand().getArguments().get(0);
+		WorkspaceEdit edit = codeActions.get(0).getRight().getEdit();
 		assertNotNull(edit.getDocumentChanges());
 		ResourceOperation resourceOperation = edit.getDocumentChanges().get(0).getRight();
 		assertNotNull(resourceOperation);

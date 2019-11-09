@@ -288,6 +288,7 @@ public class CodeActionHandler {
 		String name = proposal.getName();
 
 		Command command = null;
+		WorkspaceEdit edit = null;
 		if (proposal instanceof CUCorrectionCommandProposal commandProposal) {
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else if (proposal instanceof RefactoringCorrectionCommandProposal commandProposal) {
@@ -296,7 +297,7 @@ public class CodeActionHandler {
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
 			if (!this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
-				WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+				edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 				if (!ChangeUtil.hasChanges(edit)) {
 					return Optional.empty();
 				}
@@ -305,7 +306,6 @@ public class CodeActionHandler {
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
-			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(pk.getKind());
 			if (command == null) { // lazy resolve the edit.
@@ -323,8 +323,13 @@ public class CodeActionHandler {
 				// The relevance is in descending order while CodeActionComparator sorts in ascending order
 				codeAction.setData(new CodeActionData(proposal, -proposal.getRelevance()));
 			} else {
-				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, -proposal.getRelevance()));
+				if (edit != null) {
+					// no code action resolve support, but have code action literal support
+					codeAction.setEdit(edit);
+				} else {
+					codeAction.setCommand(command);
+					codeAction.setData(new CodeActionData(null, -proposal.getRelevance()));
+				}
 			}
 			if (pk.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
 				codeAction.setDiagnostics(context.getDiagnostics());

@@ -33,6 +33,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,9 +76,8 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
 		Assert.assertNotNull(generateAccessorsAction);
-		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
-		Assert.assertNotNull(generateAccessorsCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, generateAccessorsCommand.getCommand());
+		WorkspaceEdit generateAccessorsEdit = CodeActionHandlerTest.getEdit(generateAccessorsAction);
+		Assert.assertNotNull(generateAccessorsEdit);
 	}
 
 	@Test
@@ -173,9 +173,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getters and Setters"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getters"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
 	}
 
 	@Test
@@ -193,9 +193,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 	}
 
 	@Test
@@ -215,9 +215,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 			Assert.assertNotNull(codeActions);
 			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 		} finally {
 			this.preferences.setJavaQuickFixShowAt(value);
 		}
@@ -240,9 +240,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 			Assert.assertNotNull(codeActions);
 			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 		} finally {
 			this.preferences.setJavaQuickFixShowAt(value);
 		}
@@ -263,9 +263,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getters and Setters"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getters"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
 	}
 
 	@Test
@@ -283,8 +283,8 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 	}
 }

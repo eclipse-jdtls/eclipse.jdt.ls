@@ -30,6 +30,7 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,10 +76,8 @@ public class ConvertMethodReferenceToLambdaTest extends AbstractQuickFixTest {
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.QUICK_ASSIST, action.getKind());
 		assertEquals("Convert to lambda expression", action.getTitle());
-		Command c = action.getCommand();
-		assertEquals("java.apply.workspaceEdit", c.getCommand());
-		assertNotNull(c.getArguments());
-		assertEquals("Convert to lambda expression", c.getTitle());
+		WorkspaceEdit edit = action.getEdit();
+		assertNotNull(edit);
 	}
 
 	@Test
@@ -102,10 +101,8 @@ public class ConvertMethodReferenceToLambdaTest extends AbstractQuickFixTest {
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.QUICK_ASSIST, action.getKind());
 		assertEquals("Clean up lambda expression", action.getTitle());
-		Command c = action.getCommand();
-		assertEquals("java.apply.workspaceEdit", c.getCommand());
-		assertNotNull(c.getArguments());
-		assertEquals("Clean up lambda expression", c.getTitle());
+		WorkspaceEdit edit = action.getEdit();
+		assertNotNull(edit);
 	}
 
 }
