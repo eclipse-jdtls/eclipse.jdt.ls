@@ -260,9 +260,9 @@ public class ClientPreferences {
 	}
 
 	/**
-	 * {@code true} if the client has explicitly set the
-	 * {@code textDocument.documentSymbol.hierarchicalDocumentSymbolSupport} to
-	 * {@code true} when initializing the LS. Otherwise, {@code false}.
+	 * {@code true} if the client has listed {@code kind} in
+	 * {@code textDocument.codeAction.codeActionLiteralSupport.codeActionKind.valueSet}
+	 * when initializing the LS. Otherwise, {@code false}.
 	 */
 	public boolean isSupportedCodeActionKind(String kind) {
 		//@formatter:off

@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,9 +70,8 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
 		Assert.assertNotNull(generateAccessorsAction);
-		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
-		Assert.assertNotNull(generateAccessorsCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, generateAccessorsCommand.getCommand());
+		WorkspaceEdit generateAccessorsEdit = CodeActionHandlerTest.getEdit(generateAccessorsAction);
+		Assert.assertNotNull(generateAccessorsEdit);
 	}
 
 	@Test
