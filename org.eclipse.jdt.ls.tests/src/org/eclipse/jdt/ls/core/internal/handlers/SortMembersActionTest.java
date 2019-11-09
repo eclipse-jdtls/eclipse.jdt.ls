@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,9 +70,8 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
 		Assert.assertNotNull(sortMemberAction);
-		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberAction);
-		Assert.assertNotNull(sortMemberCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, sortMemberCommand.getCommand());
+		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberAction);
+		Assert.assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -109,9 +109,8 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
 		Assert.assertNotNull(sortMemberAction);
-		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberAction);
-		Assert.assertNotNull(sortMemberCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, sortMemberCommand.getCommand());
+		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberAction);
+		Assert.assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -131,9 +130,8 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Members for 'A.java'");
 		Assert.assertNotNull(sortMemberQuickAssist);
-		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberQuickAssist);
-		Assert.assertNotNull(sortMemberCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, sortMemberCommand.getCommand());
+		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberQuickAssist);
+		Assert.assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -153,8 +151,7 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Selected Members");
 		Assert.assertNotNull(sortMemberQuickAssist);
-		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberQuickAssist);
-		Assert.assertNotNull(sortMemberCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, sortMemberCommand.getCommand());
+		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberQuickAssist);
+		Assert.assertNotNull(sortMemberEdit);
 	}
 }

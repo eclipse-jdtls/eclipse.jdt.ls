@@ -614,7 +614,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(actionMessage);
 			codeAction.setKind(kind);
 			codeAction.setData(new CodeActionData(proposal, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			WorkspaceEdit edit;
@@ -632,9 +632,8 @@ public class SourceAssistProcessor {
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(actionMessage);
 				codeAction.setKind(kind);
-				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
-				codeAction.setDiagnostics(Collections.EMPTY_LIST);
+				codeAction.setEdit(edit);
+				codeAction.setDiagnostics(Collections.emptyList());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
 				return Optional.of(Either.forLeft(command));
@@ -713,8 +712,7 @@ public class SourceAssistProcessor {
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(name);
 				codeAction.setKind(kind);
-				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, priority));
+				codeAction.setEdit(edit);
 				codeAction.setDiagnostics(context.getDiagnostics());
 				return Optional.of(Either.forRight(codeAction));
 			} else {

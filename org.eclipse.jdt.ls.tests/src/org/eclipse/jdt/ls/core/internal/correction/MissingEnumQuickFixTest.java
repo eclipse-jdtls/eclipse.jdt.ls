@@ -25,7 +25,6 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -35,7 +34,6 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -136,11 +134,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	private TextEdit getTextEdit(Either<Command, CodeAction> codeAction) {
-		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-		Assert.assertNotNull(c.getArguments());
-		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
+		WorkspaceEdit we = codeAction.getRight().getEdit();
 		Iterator<Entry<String, List<TextEdit>>> editEntries = we.getChanges().entrySet().iterator();
 		Entry<String, List<TextEdit>> entry = editEntries.next();
 		TextEdit edit = entry.getValue().get(0);

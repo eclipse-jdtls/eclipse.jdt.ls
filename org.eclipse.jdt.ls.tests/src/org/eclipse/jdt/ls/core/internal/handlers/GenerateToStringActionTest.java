@@ -31,6 +31,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -93,9 +94,8 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
 		Assert.assertNotNull(toStringAction);
-		Command toStringCommand = CodeActionHandlerTest.getCommand(toStringAction);
-		Assert.assertNotNull(toStringCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, toStringCommand.getCommand());
+		WorkspaceEdit toStringEdit = CodeActionHandlerTest.getEdit(toStringAction);
+		Assert.assertNotNull(toStringEdit);
 	}
 
 	@Test
@@ -169,13 +169,13 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, ActionMessages.GenerateToStringAction_label));
+		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, ActionMessages.GenerateToStringAction_label));
+		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
 	}
 
 	@Test
