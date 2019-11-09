@@ -352,7 +352,7 @@ public class SourceAssistProcessor {
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(kind);
-			codeAction.setCommand(command);
+			codeAction.setEdit(workspaceEdit);
 			codeAction.setDiagnostics(context.getDiagnostics());
 			return Optional.of(Either.forRight(codeAction));
 		} else {

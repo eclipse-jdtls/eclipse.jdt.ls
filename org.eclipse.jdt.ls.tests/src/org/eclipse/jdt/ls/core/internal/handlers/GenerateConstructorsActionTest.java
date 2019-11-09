@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -88,9 +89,8 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
 		Assert.assertNotNull(constructorAction);
-		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
-		Assert.assertNotNull(constructorCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, constructorCommand.getCommand());
+		WorkspaceEdit constructorEdit = CodeActionHandlerTest.getEdit(constructorAction);
+		Assert.assertNotNull(constructorEdit);
 	}
 
 	@Test
