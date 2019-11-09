@@ -69,6 +69,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Gorkem Ercan
@@ -120,8 +121,34 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
 		Assert.assertNotNull(organizeImportActions);
 		Assert.assertEquals(1, organizeImportActions.size());
-		Command c = codeActions.get(0).getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		WorkspaceEdit e = (WorkspaceEdit) codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(e);
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnusedImport() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sql.*; \n" +
+						"public class Foo {\n"+
+						"	void foo() {\n"+
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(codeActions.size() >= 3);
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
@@ -403,8 +430,32 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse(codeActions.isEmpty());
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Command c = codeActions.get(0).getRight().getCommand();
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		WorkspaceEdit e = (WorkspaceEdit) codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(e);
+	}
+
+	@Test
+	public void testCodeActionLiteral_removeUnterminatedString() throws Exception{
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"String s = \"some str\n" +
+						"	}\n"+
+				"}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "some str");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnterminatedString), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse(codeActions.isEmpty());
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
+		Assert.assertNotNull(w);
 	}
 
 	@Test
@@ -707,6 +758,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	public static Command getCommand(Either<Command, CodeAction> codeAction) {
 		return codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
+	}
+
+	public static WorkspaceEdit getEdit(Either<Command, CodeAction> codeAction) {
+		assertTrue(codeAction.isRight());
+		assertNotNull(codeAction.getRight().getEdit());
+		return (WorkspaceEdit) codeAction.getRight().getEdit();
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){
