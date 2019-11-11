@@ -68,7 +68,6 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
-import org.eclipse.lsp4j.CodeActionKind;
 
 /**
  * Proposals for 'Assign to variable' quick assist
