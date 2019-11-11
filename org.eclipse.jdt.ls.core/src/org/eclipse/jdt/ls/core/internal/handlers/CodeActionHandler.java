@@ -61,12 +61,7 @@ public class CodeActionHandler {
 	private QuickFixProcessor quickFixProcessor;
 	private RefactorProcessor refactorProcessor;
 	private QuickAssistProcessor quickAssistProcessor;
-
-	// TODO (Yan): Remove, move InvertBoolean proposals into RefactorProcessor
-	private AdvancedQuickAssistProcessor advancedQuickAssistProcessor;
-
 	private SourceAssistProcessor sourceAssistProcessor;
-
 
 	private PreferenceManager preferenceManager;
 
@@ -75,7 +70,6 @@ public class CodeActionHandler {
 		this.quickFixProcessor = new QuickFixProcessor();
 		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
-		this.advancedQuickAssistProcessor = new AdvancedQuickAssistProcessor(preferenceManager);
 		this.refactorProcessor = new RefactorProcessor(preferenceManager);
 	}
 
@@ -135,13 +129,6 @@ public class CodeActionHandler {
 				proposals.addAll(quickassistProposals);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
-			}
-			// TODO (Yan): Remove below block, move InvertBoolean proposals into RefactorProcessor
-			try {
-				List<CUCorrectionProposal> corrections = this.advancedQuickAssistProcessor.getAssists(params, context, locations);
-				proposals.addAll(corrections);
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem resolving advanced quick assist code actions", e);
 			}
 		}
 

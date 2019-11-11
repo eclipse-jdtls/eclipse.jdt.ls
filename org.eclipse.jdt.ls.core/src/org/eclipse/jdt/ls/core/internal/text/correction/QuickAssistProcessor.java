@@ -584,7 +584,9 @@ public class QuickAssistProcessor {
 		proposals.add(proposal);
 		return true;
 	}
-	static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
+
+	// TODO (Yan): QuickAssistProcessor.getFullyCoveredNodes should be extracted as a utility.
+	public static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
 		final ArrayList<ASTNode> coveredNodes = new ArrayList<>();
 		final int selectionBegin = context.getSelectionOffset();
 		final int selectionEnd = selectionBegin + context.getSelectionLength();

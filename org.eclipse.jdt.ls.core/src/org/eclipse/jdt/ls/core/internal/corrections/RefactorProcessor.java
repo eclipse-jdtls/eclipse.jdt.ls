@@ -28,8 +28,11 @@ public class RefactorProcessor {
 
 	private PreferenceManager preferenceManager;
 
+	private InvertBooleanSubProcessor invertBooleanSubProcessor;
+
 	public RefactorProcessor(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+		invertBooleanSubProcessor = new InvertBooleanSubProcessor(this.preferenceManager);
 	}
 
 	public List<ChangeCorrectionProposal> getProposals(CodeActionParams params, IInvocationContext context) throws CoreException {
@@ -37,9 +40,11 @@ public class RefactorProcessor {
 		if (coveringNode != null) {
 			ArrayList<ChangeCorrectionProposal> proposals = new ArrayList<>();
 			// TODO (Yan): Move refactor proposals here.
+			InvertBooleanSubProcessor.getInverseConditionProposals(params, context, coveringNode, proposals);
+			invertBooleanSubProcessor.getInverseLocalVariableProposals(params, context, coveringNode, proposals);
+
 			return proposals;
 		}
 		return Collections.emptyList();
 	}
-
 }
