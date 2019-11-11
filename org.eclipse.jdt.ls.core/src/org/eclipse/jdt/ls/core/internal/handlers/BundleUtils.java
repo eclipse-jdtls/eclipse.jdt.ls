@@ -190,7 +190,7 @@ public final class BundleUtils {
 						latch.countDown();
 					} else if (event.getType() == FrameworkEvent.ERROR) {
 						latch.countDown();
-						JavaLanguageServerPlugin.logError("Error happens when refreshing the bundles");
+						JavaLanguageServerPlugin.logException("Error happens when refreshing the bundles", event.getThrowable());
 					}
 				}
 			});
