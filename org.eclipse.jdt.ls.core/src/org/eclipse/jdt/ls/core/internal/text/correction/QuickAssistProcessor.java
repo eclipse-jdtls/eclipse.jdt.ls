@@ -292,7 +292,7 @@ public class QuickAssistProcessor {
 				return buf.toString();
 			}
 		};
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context, CodeActionKind.Refactor);
 		resultingCollections.add(proposal);
 		return true;
 	}
