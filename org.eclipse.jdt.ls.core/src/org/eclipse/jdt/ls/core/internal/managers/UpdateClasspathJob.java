@@ -11,16 +11,19 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -49,13 +52,25 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			requests = new ArrayList<>(this.queue);
 			this.queue.clear();
 		}
-		Map<IJavaProject, Set<IPath>> reqPerProject = requests.stream().collect(Collectors.groupingBy(UpdateClasspathRequest::getProject, Collectors.mapping(UpdateClasspathRequest::getLibPath, Collectors.toSet())));
-
-		for (Map.Entry<IJavaProject, Set<IPath>> reqs : reqPerProject.entrySet()) {
+		Map<IJavaProject, UpdateClasspathRequest> mergedRequestPerProject = requests.stream().collect(
+			Collectors.groupingBy(UpdateClasspathRequest::getProject,
+				Collectors.reducing(null, (mergedRequest, request) -> {
+					mergedRequest.getInclude().addAll(request.getInclude());
+					mergedRequest.getExclude().addAll(request.getExclude());
+					mergedRequest.getSources().putAll(request.getSources());
+					return mergedRequest;
+				})
+			)
+		);
+		for (Map.Entry<IJavaProject, UpdateClasspathRequest> entry : mergedRequestPerProject.entrySet()) {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
-			updateClasspath(reqs.getKey(), reqs.getValue(), monitor);
+			if (entry.getValue() != null) {
+				final IJavaProject project = entry.getKey();
+				final UpdateClasspathRequest request = entry.getValue();
+				updateClasspath(project, request.include, request.exclude, request.sources, monitor);
+			}
 		}
 		synchronized (queue) {
 			if (!queue.isEmpty()) {
@@ -65,15 +80,24 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		return Status.OK_STATUS;
 	}
 
-	private void updateClasspath(IJavaProject project, Set<IPath> libFolders, IProgressMonitor monitor) throws CoreException {
-		ProjectUtils.updateBinaries(project, libFolders, monitor);
+	private void updateClasspath(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources, IProgressMonitor monitor) throws CoreException {
+		final Map<String, String> libraries = include.stream()
+			.filter(binary -> !exclude.contains(binary))
+			.collect(Collectors.toMap(Function.identity(), sources::get));
+		ProjectUtils.updateBinaries(project, libraries, monitor);
 	}
 
-	public void updateClasspath(IJavaProject project, IPath libPath) {
-		if (project == null || libPath == null) {
+	public void updateClasspath(IJavaProject project, Collection<String> include, Collection<String> exclude, Map<String, String> sources) {
+		if (project == null || include == null) {
 			return;
 		}
-		queue(new UpdateClasspathRequest(project, libPath));
+		if (exclude == null) {
+			exclude = new ArrayList<>();
+		}
+		if (sources == null) {
+			sources = new HashMap<>();
+		}
+		queue(new UpdateClasspathRequest(project, new HashSet<>(include), new HashSet<>(exclude), sources));
 		schedule(SCHEDULE_DELAY);
 	}
 
@@ -90,20 +114,36 @@ public class UpdateClasspathJob extends WorkspaceJob {
 
 	static class UpdateClasspathRequest {
 		private IJavaProject project;
-		private IPath libPath;
+		private Set<String> include;
+		private Set<String> exclude;
+		private Map<String, String> sources;
 
-		UpdateClasspathRequest(IJavaProject project, IPath libPath) {
+		UpdateClasspathRequest(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources) {
 			this.project = project;
-			this.libPath = libPath;
+			this.include = include;
+			this.exclude = exclude;
+			this.sources = sources;
 		}
 
-		IPath getLibPath() {
-			return libPath;
+		IJavaProject getProject() {
+			return project;
+		}
+
+		Set<String> getInclude() {
+			return include;
+		}
+
+		Set<String> getExclude() {
+			return exclude;
+		}
+
+		Map<String, String> getSources() {
+			return sources;
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(libPath, project);
+			return Objects.hash(include, exclude, sources, project);
 		}
 
 		@Override
@@ -118,11 +158,10 @@ public class UpdateClasspathJob extends WorkspaceJob {
 				return false;
 			}
 			UpdateClasspathRequest other = (UpdateClasspathRequest) obj;
-			return Objects.equals(libPath, other.libPath) && Objects.equals(project, other.project);
-		}
-
-		IJavaProject getProject() {
-			return project;
+			return Objects.equals(project, other.project)
+				&& Objects.equals(include, other.include)
+				&& Objects.equals(exclude, other.exclude)
+				&& Objects.equals(sources, other.sources);
 		}
 
 	}
