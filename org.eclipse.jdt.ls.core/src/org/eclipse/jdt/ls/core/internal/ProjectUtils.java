@@ -314,26 +314,21 @@ public final class ProjectUtils {
 		}
 	}
 
-	public static void updateBinaries(IJavaProject javaProject, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
-		updateBinaries(javaProject, Collections.singleton(libFolderPath), monitor);
-	}
-
-	public static void updateBinaries(IJavaProject javaProject, Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
-		Set<Path> binaries = collectBinaries(libFolderPaths, monitor);
+	public static void updateBinaries(IJavaProject javaProject, Map<String, String> libraries, IProgressMonitor monitor) throws CoreException {
 		if (monitor.isCanceled()) {
 			return;
 		}
 		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
 		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
 
-		for (Path file : binaries) {
+		for (Map.Entry<String, String> library : libraries.entrySet()) {
 			if (monitor.isCanceled()) {
 				return;
 			}
-			IPath newLibPath = new org.eclipse.core.runtime.Path(file.toString());
-			IPath sourcePath = detectSources(file);
-			IClasspathEntry newEntry = JavaCore.newLibraryEntry(newLibPath, sourcePath, null);
-			JavaLanguageServerPlugin.logInfo("Adding " + newLibPath + " to the classpath");
+			IPath binary = new org.eclipse.core.runtime.Path(library.getKey());
+			IPath source = new org.eclipse.core.runtime.Path(library.getValue());
+			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
+			JavaLanguageServerPlugin.logInfo("Adding " + binary + " to the classpath");
 			newEntries.add(newEntry);
 		}
 		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
