@@ -65,6 +65,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.util.Messages;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -89,7 +90,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	private VariableDeclarationFragment fExistingFragment;
 
 	public AssignToVariableAssistProposal(ICompilationUnit cu, int variableKind, ExpressionStatement node, ITypeBinding typeBinding, int relevance) {
-		super("", CodeActionKind.QuickFix, cu, null, relevance); //$NON-NLS-1$
+		super("", JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance); //$NON-NLS-1$
 
 		fVariableKind= variableKind;
 		fNodesToAssign= new ArrayList<>();
@@ -105,7 +106,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	}
 
 	public AssignToVariableAssistProposal(ICompilationUnit cu, SingleVariableDeclaration parameter, VariableDeclarationFragment existingFragment, ITypeBinding typeBinding, int relevance) {
-		super("", CodeActionKind.QuickFix, cu, null, relevance); //$NON-NLS-1$
+		super("", JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance); //$NON-NLS-1$
 
 		fVariableKind= FIELD;
 		fNodesToAssign= new ArrayList<>();
@@ -121,7 +122,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	}
 
 	public AssignToVariableAssistProposal(ICompilationUnit cu, List<SingleVariableDeclaration> parameters, int relevance) {
-		super("", CodeActionKind.QuickFix, cu, null, relevance); //$NON-NLS-1$
+		super("", JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance); //$NON-NLS-1$
 
 		fVariableKind= FIELD;
 		fNodesToAssign= new ArrayList<>();
