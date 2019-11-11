@@ -89,10 +89,10 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWith
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
-import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -503,8 +503,8 @@ public class LocalCorrectionsSubProcessor {
 
 			InnovationContext assistContext = new InnovationContext(context.getCompilationUnit(), infixExpression.getRightOperand().getStartPosition() - 1, 0);
 			assistContext.setASTRoot(root);
-			AdvancedQuickAssistProcessor.getSplitAndConditionProposals(assistContext, infixExpression, proposals);
-			AdvancedQuickAssistProcessor.getSplitOrConditionProposals(assistContext, infixExpression, proposals);
+			InvertBooleanSubProcessor.getSplitAndConditionProposals(assistContext, infixExpression, proposals);
+			InvertBooleanSubProcessor.getSplitOrConditionProposals(assistContext, infixExpression, proposals);
 
 		} else if (selectedNode instanceof Statement && selectedNode.getLocationInParent().isChildListProperty()) {
 			// remove all statements following the unreachable:
