@@ -191,7 +191,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testLoadSameSingletonBundleFromDifferentLocation() throws Exception {
 		// First, we load a bundle depends on dependency bundle
-		String oldBundlePath = getBundle("testresources/extension-with-dependency-0.0.1/", "jdt.ls.extension.with.dependency_0.0.1.jar");
+		String oldBundlePath = getBundle("testresources/extension-with-dependency-0.0.1", "jdt.ls.extension.with.dependency_0.0.1.jar");
 		String oldDependencyPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
 		BundleUtils.loadBundles(Arrays.asList(oldBundlePath, oldDependencyPath));
 		String oldBundleLocation = getBundleLocation(oldBundlePath, true);
@@ -209,8 +209,8 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(oldBundle.getState(), Bundle.ACTIVE);
 
 		// Now we load bundles from another location, this may happen when the LS extensions get updated.
-		String newBundlePath = getBundle("testresources/extension-with-dependency-0.0.2/", "jdt.ls.extension.with.dependency_0.0.2.jar");
-		String newDependencyPath = getBundle("testresources", "dependency_0.0.2.201911081538.jar");
+		String newBundlePath = getBundle("testresources/extension-with-dependency-0.0.2", "jdt.ls.extension.with.dependency_0.0.2.jar");
+		String newDependencyPath = getBundle("testresources/extension-with-dependency-0.0.2", "dependency_0.0.2.201911081538.jar");
 		BundleUtils.loadBundles(Arrays.asList(newBundlePath, newDependencyPath));
 
 		String newBundleLocation = getBundleLocation(newBundlePath, true);
@@ -235,6 +235,60 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testUpdateExtensionsDependingOnTheSameBundle() throws Exception {
+		// First, we load a bundle depends on dependency bundle
+		String oldBundlePath = getBundle("testresources/extension-with-dependency-0.0.1", "jdt.ls.extension.with.dependency_0.0.1.jar");
+		String oldDependencyPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
+		String anotherBundlePath = getBundle("testresources/another-extension-with-dependency-0.0.1", "jdt.ls.another.extension.with.dependency_0.0.1.jar");
+
+		BundleUtils.loadBundles(Arrays.asList(oldBundlePath, oldDependencyPath, anotherBundlePath));
+		String oldBundleLocation = getBundleLocation(oldBundlePath, true);
+		String oldDependencyLocation = getBundleLocation(oldDependencyPath, true);
+		String anotherBundleLocation = getBundleLocation(anotherBundlePath, true);
+
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		Bundle oldBundle = context.getBundle(oldBundleLocation);
+		Bundle oldDependency = context.getBundle(oldDependencyLocation);
+		Bundle anotherBundle = context.getBundle(anotherBundleLocation);
+
+		assertNotNull(oldBundle);
+
+		assertTrue(oldBundle.getState() == Bundle.STARTING || oldBundle.getState() == Bundle.ACTIVE);
+		assertTrue(oldDependency.getState() == Bundle.ACTIVE);
+		assertTrue(anotherBundle.getState() == Bundle.STARTING || oldBundle.getState() == Bundle.ACTIVE);
+		oldBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+		assertEquals(oldBundle.getState(), Bundle.ACTIVE);
+		anotherBundle.loadClass("jdt.ls.another.extension.with.dependency.Activator");
+		assertEquals(anotherBundle.getState(), Bundle.ACTIVE);
+
+		// Now we load bundles from another location, this may happen when the LS extensions get updated.
+		String newBundlePath = getBundle("testresources/extension-with-dependency-0.0.2", "jdt.ls.extension.with.dependency_0.0.2.jar");
+		String newDependencyPath = getBundle("testresources/extension-with-dependency-0.0.2", "dependency_0.0.2.201911081538.jar");
+		BundleUtils.loadBundles(Arrays.asList(newBundlePath, newDependencyPath));
+
+		String newBundleLocation = getBundleLocation(newBundlePath, true);
+		String newDependencyLocation = getBundleLocation(newDependencyPath, true);
+
+		Bundle newBundle = context.getBundle(newBundleLocation);
+		Bundle newDependency = context.getBundle(newDependencyLocation);
+
+		try {
+			assertTrue(oldBundle.getState() == Bundle.UNINSTALLED);
+			assertTrue(oldDependency.getState() == Bundle.UNINSTALLED);
+
+			assertTrue(newBundle.getState() == Bundle.STARTING || oldBundle.getState() == Bundle.ACTIVE);
+			assertTrue(newDependency.getState() == Bundle.ACTIVE);
+			newBundle.loadClass("jdt.ls.extension.with.dependency.Activator");
+			assertEquals(newBundle.getState(), Bundle.ACTIVE);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			newBundle.uninstall();
+			newDependency.uninstall();
+			anotherBundle.uninstall();
+		}
+	}
+
+	@Test
 	public void testLoadSameBundleWithDifferentVersionMultipleTimes() throws Exception {
 		String oldDependencyPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
 		BundleUtils.loadBundles(Arrays.asList(oldDependencyPath));
@@ -249,7 +303,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		// Now we load two different version of bundles
 		// this may happen when different extensions which required the same bundle are getting loaded.
 		String newDependencyAPath = getBundle("testresources", "dependency_0.0.2.201911081538.jar");
-		String newDependencyBPath = getBundle("testresources", "dependency_0.0.1.201911081535.jar");
+		String newDependencyBPath = getBundle("testresources/another-extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
 
 		String newDependencyALocation = getBundleLocation(newDependencyAPath, true);
 		String newDependencyBLocation = getBundleLocation(newDependencyBPath, true);
