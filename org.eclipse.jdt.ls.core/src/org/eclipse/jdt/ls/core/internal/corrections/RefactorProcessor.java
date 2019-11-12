@@ -12,6 +12,7 @@
 package org.eclipse.jdt.ls.core.internal.corrections;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,11 +29,8 @@ public class RefactorProcessor {
 
 	private PreferenceManager preferenceManager;
 
-	private InvertBooleanSubProcessor invertBooleanSubProcessor;
-
 	public RefactorProcessor(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
-		invertBooleanSubProcessor = new InvertBooleanSubProcessor(this.preferenceManager);
 	}
 
 	public List<ChangeCorrectionProposal> getProposals(CodeActionParams params, IInvocationContext context) throws CoreException {
@@ -40,11 +38,32 @@ public class RefactorProcessor {
 		if (coveringNode != null) {
 			ArrayList<ChangeCorrectionProposal> proposals = new ArrayList<>();
 			// TODO (Yan): Move refactor proposals here.
-			InvertBooleanSubProcessor.getInverseConditionProposals(params, context, coveringNode, proposals);
-			invertBooleanSubProcessor.getInverseLocalVariableProposals(params, context, coveringNode, proposals);
+			InvertBooleanUtility.getInverseConditionProposals(params, context, coveringNode, proposals);
+			getInverseLocalVariableProposals(params, context, coveringNode, proposals);
 
 			return proposals;
 		}
 		return Collections.emptyList();
 	}
+
+	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {
+		if (proposals == null) {
+			return false;
+		}
+
+		ChangeCorrectionProposal proposal = null;
+		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			proposal = InvertBooleanUtility.getInvertVariableProposal(params, context, covering, true /*returnAsCommand*/);
+		} else {
+			proposal = InvertBooleanUtility.getInvertVariableProposal(params, context, covering, false /*returnAsCommand*/);
+		}
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
 }

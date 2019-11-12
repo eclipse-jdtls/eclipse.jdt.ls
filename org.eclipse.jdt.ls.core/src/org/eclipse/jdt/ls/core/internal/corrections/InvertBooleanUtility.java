@@ -78,13 +78,8 @@ import org.eclipse.lsp4j.CodeActionParams;
 /**
  * InvertBooleanSubProcessor
  */
-public class InvertBooleanSubProcessor {
+public class InvertBooleanUtility {
 	public static final String INVERT_VARIABLE_COMMAND = "invertVariable";
-	private PreferenceManager preferenceManager;
-
-	public InvertBooleanSubProcessor(PreferenceManager preferenceManager) {
-		this.preferenceManager = preferenceManager;
-	}
 
 	public static ChangeCorrectionProposal getInvertVariableProposal(CodeActionParams params, IInvocationContext context, ASTNode covering, boolean returnAsCommand) {
 		// cursor should be placed on variable name
@@ -231,26 +226,6 @@ public class InvertBooleanSubProcessor {
 		}
 
 		return proposal;
-	}
-
-	public boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {
-		if (proposals == null) {
-			return false;
-		}
-
-		ChangeCorrectionProposal proposal = null;
-		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = getInvertVariableProposal(params, context, covering, true /*returnAsCommand*/);
-		} else {
-			proposal = getInvertVariableProposal(params, context, covering, false /*returnAsCommand*/);
-		}
-
-		if (proposal == null) {
-			return false;
-		}
-
-		proposals.add(proposal);
-		return true;
 	}
 
 	public static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {
