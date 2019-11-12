@@ -187,7 +187,6 @@ public class QuickAssistProcessor {
 			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
-			getMoveRefactoringProposals(params, context, coveringNode, resultingCollections);
 
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
@@ -321,22 +320,6 @@ public class QuickAssistProcessor {
 			node = parent;
 		}
 		return null;
-	}
-
-	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
-		if (resultingCollections == null) {
-			return false;
-		}
-
-		if (this.preferenceManager.getClientPreferences().isMoveRefactoringSupported()) {
-			List<CUCorrectionProposal> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context);
-			if (newProposals != null && !newProposals.isEmpty()) {
-				resultingCollections.addAll(newProposals);
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
