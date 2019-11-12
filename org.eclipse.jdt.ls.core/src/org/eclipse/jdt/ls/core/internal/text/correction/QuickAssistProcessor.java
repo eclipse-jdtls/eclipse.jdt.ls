@@ -187,7 +187,7 @@ public class QuickAssistProcessor {
 			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
-			getMoveRefactoringProposals(params, context, coveringNode, locations, resultingCollections);
+			getMoveRefactoringProposals(params, context, coveringNode, resultingCollections);
 
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
@@ -323,14 +323,13 @@ public class QuickAssistProcessor {
 		return null;
 	}
 
-	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
 
 		if (this.preferenceManager.getClientPreferences().isMoveRefactoringSupported()) {
-			boolean problemsAtLocation = locations.length != 0;
-			List<CUCorrectionProposal> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context, problemsAtLocation);
+			List<CUCorrectionProposal> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context);
 			if (newProposals != null && !newProposals.isEmpty()) {
 				resultingCollections.addAll(newProposals);
 				return true;
