@@ -203,8 +203,6 @@ public class QuickAssistProcessor {
 				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
 				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
-
-				getInlineProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				getConvertAnonymousToNestedProposals(params, context, coveringNode, resultingCollections);
 				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, resultingCollections);
@@ -599,84 +597,6 @@ public class QuickAssistProcessor {
 			}
 		});
 		return coveredNodes;
-	}
-
-	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
-		if (resultingCollections == null) {
-			return false;
-		}
-
-		if (!(node instanceof SimpleName)) {
-			return false;
-		}
-
-		SimpleName name= (SimpleName) node;
-		IBinding binding = name.resolveBinding();
-		try {
-			if (binding instanceof IVariableBinding) {
-				IVariableBinding varBinding = (IVariableBinding) binding;
-				if (varBinding.isParameter()) {
-					return false;
-				}
-
-				if (varBinding.isField()) {
-					// Inline Constant (static final field)
-					if (RefactoringAvailabilityTesterCore.isInlineConstantAvailable((IField) varBinding.getJavaElement())) {
-						InlineConstantRefactoring refactoring = new InlineConstantRefactoring(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-						if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-							refactoring.setRemoveDeclaration(refactoring.isDeclarationSelected());
-							refactoring.setReplaceAllReferences(refactoring.isDeclarationSelected());
-							CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
-							final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-							create.run(new NullProgressMonitor());
-							String label = ActionMessages.InlineConstantRefactoringAction_label;
-							int relevance = IProposalRelevance.INLINE_LOCAL;
-							ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
-							resultingCollections.add(proposal);
-							return true;
-						}
-					}
-
-					return false;
-				}
-
-				ASTNode decl= context.getASTRoot().findDeclaringNode(varBinding);
-				if (!(decl instanceof VariableDeclarationFragment) || decl.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY) {
-					return false;
-				}
-
-				// Inline Local Variable
-				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
-					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
-					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
-						int relevance = IProposalRelevance.INLINE_LOCAL;
-						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
-						resultingCollections.add(proposal);
-						return true;
-					}
-				}
-			} else if (binding instanceof IMethodBinding) {
-				// Inline Method
-				if (RefactoringAvailabilityTesterCore.isInlineMethodAvailable((IMethod) binding.getJavaElement())) {
-					InlineMethodRefactoring refactoring = InlineMethodRefactoring.create(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-					if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-						CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
-						final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-						create.run(new NullProgressMonitor());
-						String label = ActionMessages.InlineMethodRefactoringAction_label;
-						int relevance = IProposalRelevance.INLINE_LOCAL;
-						ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
-						resultingCollections.add(proposal);
-						return true;
-					}
-				}
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.log(e);
-		}
-
-		return false;
 	}
 
 	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
