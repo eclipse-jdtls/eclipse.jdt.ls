@@ -175,7 +175,6 @@ public class QuickAssistProcessor {
 		if (coveringNode != null) {
 			ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
 			ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
-			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
 
 			// quick assists that show up also if there is an error/warning
 			//			getRenameLocalProposals(context, coveringNode, locations, resultingCollections);
@@ -186,8 +185,9 @@ public class QuickAssistProcessor {
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
 
-			if (noErrorsAtLocation) {
-				boolean problemsAtLocation = locations.length != 0;
+			// boolean noErrorsAtLocation = noErrorsAtLocation(locations);
+			// if (noErrorsAtLocation) {
+				// boolean problemsAtLocation = locations.length != 0;
 				//				getCatchClauseToThrowsProposals(context, coveringNode, resultingCollections);
 				//				getPickoutTypeFromMulticatchProposals(context, coveringNode, coveredNodes, resultingCollections);
 				//				getConvertToMultiCatchProposals(context, coveringNode, resultingCollections);
@@ -216,98 +216,10 @@ public class QuickAssistProcessor {
 				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
-				getConvertForLoopProposal(context, coveringNode, resultingCollections);
-			}
+			// }
 			return resultingCollections;
 		}
 		return Collections.emptyList();
-	}
-
-	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
-		ForStatement forStatement = getEnclosingForStatementHeader(node);
-		if (forStatement == null) {
-			return false;
-		}
-		if (resultingCollections == null) {
-			return true;
-		}
-		IProposableFix fix = ConvertLoopFixCore.createConvertForLoopToEnhancedFix(context.getASTRoot(), forStatement);
-		if (fix == null) {
-			return false;
-		}
-		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
-		ICleanUpCore cleanUp = new AbstractCleanUpCore(options) {
-			@Override
-			public CleanUpRequirementsCore getRequirementsCore() {
-				return new CleanUpRequirementsCore(isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
-			}
-
-			@Override
-			public ICleanUpFixCore createFixCore(CleanUpContextCore context) throws CoreException {
-				CompilationUnit compilationUnit = context.getAST();
-				if (compilationUnit == null) {
-					return null;
-				}
-				boolean convertForLoops = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-				return ConvertLoopFixCore.createCleanUp(compilationUnit, convertForLoops, convertForLoops,
-						isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL) && isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES));
-			}
-
-			@Override
-			public String[] getStepDescriptions() {
-				List<String> result = new ArrayList<>();
-				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
-					result.add(MultiFixMessages.Java50CleanUp_ConvertToEnhancedForLoop_description);
-				}
-				return result.toArray(new String[result.size()]);
-			}
-
-			@Override
-			public String getPreview() {
-				StringBuilder buf = new StringBuilder();
-				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
-					buf.append("for (int element : ids) {\n"); //$NON-NLS-1$
-					buf.append("    double value= element / 2; \n"); //$NON-NLS-1$
-					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
-					buf.append("}\n"); //$NON-NLS-1$
-				} else {
-					buf.append("for (int i = 0; i < ids.length; i++) {\n"); //$NON-NLS-1$
-					buf.append("    double value= ids[i] / 2; \n"); //$NON-NLS-1$
-					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
-					buf.append("}\n"); //$NON-NLS-1$
-				}
-				return buf.toString();
-			}
-		};
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context, CodeActionKind.Refactor);
-		resultingCollections.add(proposal);
-		return true;
-	}
-
-	private static ForStatement getEnclosingForStatementHeader(ASTNode node) {
-		return getEnclosingHeader(node, ForStatement.class, ForStatement.INITIALIZERS_PROPERTY, ForStatement.EXPRESSION_PROPERTY, ForStatement.UPDATERS_PROPERTY);
-	}
-
-	private static <T extends ASTNode> T getEnclosingHeader(ASTNode node, Class<T> headerType, StructuralPropertyDescriptor... headerProperties) {
-		if (headerType.isInstance(node)) {
-			return headerType.cast(node);
-		}
-
-		while (node != null) {
-			ASTNode parent = node.getParent();
-			if (headerType.isInstance(parent)) {
-				StructuralPropertyDescriptor locationInParent = node.getLocationInParent();
-				for (StructuralPropertyDescriptor property : headerProperties) {
-					if (locationInParent == property) {
-						return headerType.cast(parent);
-					}
-				}
-				return null;
-			}
-			node = parent;
-		}
-		return null;
 	}
 
 	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
