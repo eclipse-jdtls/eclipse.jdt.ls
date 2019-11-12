@@ -216,7 +216,6 @@ public class QuickAssistProcessor {
 				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
-				getAddStaticImportProposals(context, coveringNode, resultingCollections);
 				getConvertForLoopProposal(context, coveringNode, resultingCollections);
 			}
 			return resultingCollections;
