@@ -28,9 +28,9 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.text.correction.AdvancedQuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -70,8 +70,8 @@ public class GetRefactorEditHandler {
 			} else if (RefactorProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
-			} else if (AdvancedQuickAssistProcessor.INVERT_VARIABLE_COMMAND.equals(params.command)) {
-				proposal = (LinkedCorrectionProposal) AdvancedQuickAssistProcessor.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
+			} else if (InvertBooleanUtility.INVERT_VARIABLE_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) InvertBooleanUtility.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
 			} else if (QuickAssistProcessor.CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND.equals(params.command)) {
 				proposal = QuickAssistProcessor.getConvertAnonymousToNestedProposal(params.context, context, context.getCoveringNode(), false);
 				positionKey = "type_name";
