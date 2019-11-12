@@ -203,9 +203,7 @@ public class QuickAssistProcessor {
 				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
 				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
 				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
-				getExtractVariableProposal(params, context, problemsAtLocation, resultingCollections);
-				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, resultingCollections);
-				getExtractFieldProposal(params, context, problemsAtLocation, resultingCollections);
+
 				getInlineProposal(context, coveringNode, resultingCollections);
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				getConvertAnonymousToNestedProposals(params, context, coveringNode, resultingCollections);
@@ -603,57 +601,6 @@ public class QuickAssistProcessor {
 		return coveredNodes;
 	}
 
-	static boolean noErrorsAtLocation(IProblemLocationCore[] locations) {
-		if (locations != null) {
-			for (int i = 0; i < locations.length; i++) {
-				IProblemLocationCore location = locations[i];
-				if (location.isError()) {
-					if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && JavaCore.getOptionForConfigurableSeverity(location.getProblemId()) != null) {
-						// continue (only drop out for severe (non-optional) errors)
-					} else {
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
-		if (proposals == null) {
-			return false;
-		}
-
-		CUCorrectionProposal proposal = null;
-		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = RefactorProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation);
-		} else {
-			proposal = RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation);
-		}
-
-		if (proposal == null) {
-			return false;
-		}
-
-		proposals.add(proposal);
-		return true;
-	}
-
-	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
-		if (proposals == null) {
-			return false;
-		}
-
-		CUCorrectionProposal proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
-
-		if (proposal == null) {
-			return false;
-		}
-
-		proposals.add(proposal);
-		return true;
-	}
-
 	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
@@ -867,26 +814,6 @@ public class QuickAssistProcessor {
 		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
 		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context, CodeActionKind.Refactor);
 		resultingCollections.add(proposal);
-		return true;
-	}
-
-	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
-		if (proposals == null) {
-			return false;
-		}
-
-		List<CUCorrectionProposal> newProposals = null;
-		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			newProposals = RefactorProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation);
-		} else {
-			newProposals = RefactorProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation);
-		}
-
-		if (newProposals == null || newProposals.isEmpty()) {
-			return false;
-		}
-
-		proposals.addAll(newProposals);
 		return true;
 	}
 

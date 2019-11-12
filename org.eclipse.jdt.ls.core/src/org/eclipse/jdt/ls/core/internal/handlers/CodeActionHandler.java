@@ -111,7 +111,7 @@ public class CodeActionHandler {
 
 		if (codeActionKinds.contains(CodeActionKind.Refactor)) {
 			try {
-				List<ChangeCorrectionProposal> refactorProposals = this.refactorProcessor.getProposals(params, context);
+				List<ChangeCorrectionProposal> refactorProposals = this.refactorProcessor.getProposals(params, context, locations);
 				proposals.addAll(refactorProposals);
 
 			} catch (CoreException e) {
