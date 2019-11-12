@@ -82,7 +82,7 @@ public class CodeActionHandler {
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
 		context.setASTRoot(getASTRoot(unit));
-		// TODO (Yan): Problem locations should be calculated only for quickfix code actions.
+
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<String> codeActionKinds = new ArrayList<>();
@@ -119,10 +119,7 @@ public class CodeActionHandler {
 			}
 		}
 
-		if (codeActionKinds.contains(JavaCodeActionKind.QUICK_ASSIST)
-			// TODO (Yan): many refactor actions are still in quickAssistProcessor now, should move them to refactorProcessor and remove below condition later
-			|| codeActionKinds.contains(CodeActionKind.Refactor)
-		) {
+		if (codeActionKinds.contains(JavaCodeActionKind.QUICK_ASSIST)) {
 			try {
 				List<ChangeCorrectionProposal> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
 				proposals.addAll(quickassistProposals);
@@ -133,18 +130,6 @@ public class CodeActionHandler {
 
 		// TODO (Yan): See https://github.com/eclipse/eclipse.jdt.ls/issues/1250
 		proposals.sort(new ChangeCorrectionProposalComparator());
-
-		// TODO (Yan): below block post-filters the proposals by CodeActionKind, can be removed in future if all above processors are doing right things.
-		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
-			List<ChangeCorrectionProposal> resultList = new ArrayList<>();
-			for (ChangeCorrectionProposal proposal : proposals) {
-				Stream<String> acceptedActionKinds = params.getContext().getOnly().stream();
-				if (acceptedActionKinds.filter(kind -> proposal.getKind() != null && proposal.getKind().startsWith(kind)).findFirst().isPresent()) {
-					resultList.add(proposal);
-				}
-			}
-			proposals = resultList;
-		}
 
 		List<Either<Command, CodeAction>> codeActions = new ArrayList<>();
 		try {
