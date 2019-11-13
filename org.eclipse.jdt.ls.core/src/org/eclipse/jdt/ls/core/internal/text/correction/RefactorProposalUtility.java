@@ -78,7 +78,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
 	public static final String MOVE_TYPE_COMMAND = "moveType";
 
-	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) {
+	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
 		String label = ActionMessages.MoveRefactoringAction_label;
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
 		ASTNode node = context.getCoveredNode();
