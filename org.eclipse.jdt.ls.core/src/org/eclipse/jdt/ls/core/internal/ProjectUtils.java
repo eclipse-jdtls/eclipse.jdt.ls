@@ -337,7 +337,7 @@ public final class ProjectUtils {
 		}
 	}
 
-	private static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
+	public static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
 		FileVisitor<? super Path> jarDetector = new SimpleFileVisitor<Path>() {
 			@Override
@@ -367,20 +367,20 @@ public final class ProjectUtils {
 		return binaries;
 	}
 
+	public static IPath detectSources(Path file) {
+		String filename = file.getFileName().toString();
+		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
+		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
+		Path sourcePath = file.getParent().resolve(sourceName);
+		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
+	}
+
 	private static boolean isBinary(Path file) {
 		String fileName = file.getFileName().toString();
 		return (fileName.endsWith(JAR_SUFFIX)
 				//skip source jar files
 				//more robust approach would be to check if jar contains .class files or not
 				&& !fileName.endsWith(SOURCE_JAR_SUFFIX));
-	}
-
-	private static IPath detectSources(Path file) {
-		String filename = file.getFileName().toString();
-		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
-		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
-		Path sourcePath = file.getParent().resolve(sourceName);
-		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
 	}
 
 	public static void removeJavaNatureAndBuilder(IProject project, IProgressMonitor monitor) throws CoreException {

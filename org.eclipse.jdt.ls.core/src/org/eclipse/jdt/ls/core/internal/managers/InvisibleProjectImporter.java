@@ -109,7 +109,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			}
 		}
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		ProjectUtils.updateBinaries(javaProject, rootPath.append(libFolder), monitor);
+		UpdateClasspathJob.getInstance().updateClasspath(javaProject, rootPath.append(libFolder), monitor);
 	}
 
 	@Override

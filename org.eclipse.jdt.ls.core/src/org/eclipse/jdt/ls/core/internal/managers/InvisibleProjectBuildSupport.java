@@ -46,7 +46,7 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 		if (realFolderPath != null) {
 			IPath libFolderPath = realFolderPath.append(LIB_FOLDER);
 			if (libFolderPath.isPrefixOf(resource.getLocation())) {
-				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(invisibleProject), libFolderPath);
+				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(invisibleProject), libFolderPath, monitor);
 			}
 		}
 		return false;

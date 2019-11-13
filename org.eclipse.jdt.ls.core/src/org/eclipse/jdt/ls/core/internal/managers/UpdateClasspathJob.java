@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -99,6 +102,13 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		}
 		queue(new UpdateClasspathRequest(project, new HashSet<>(include), new HashSet<>(exclude), sources));
 		schedule(SCHEDULE_DELAY);
+	}
+
+	public void updateClasspath(IJavaProject project, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
+		final Set<Path> binaries = ProjectUtils.collectBinaries(Collections.singleton(libFolderPath), monitor);
+		final Set<String> includeBinaries = binaries.stream().map(Path::toString).collect(Collectors.toSet());
+		final Map<String, String> sources = binaries.stream().collect(Collectors.toMap(Path::toString, bin -> ProjectUtils.detectSources(bin).toString()));
+		updateClasspath(project, includeBinaries, null, sources);
 	}
 
 	void update(UpdateClasspathRequest updateRequest) {
