@@ -261,20 +261,8 @@ public class ClientPreferences {
 
 	/**
 	 * {@code true} if the client has explicitly set the
-	 * {@code textDocument.codeAction.codeActionLiteralSupport}
-	 * when initializing the LS. Otherwise, {@code false}.
-	 */
-	public boolean isSupportedCodeActionLiteral() {
-		//@formatter:off
-		return v3supported && capabilities.getTextDocument().getCodeAction() != null
-				&& capabilities.getTextDocument().getCodeAction().getCodeActionLiteralSupport() != null;
-		//@formatter:on
-	}
-
-	/**
-	 * {@code true} if the client has listed {@code kind} in
-	 * {@code textDocument.codeAction.codeActionLiteralSupport.codeActionKind.valueSet}
-	 * when initializing the LS. Otherwise, {@code false}.
+	 * {@code textDocument.documentSymbol.hierarchicalDocumentSymbolSupport} to
+	 * {@code true} when initializing the LS. Otherwise, {@code false}.
 	 */
 	public boolean isSupportedCodeActionKind(String kind) {
 		//@formatter:off

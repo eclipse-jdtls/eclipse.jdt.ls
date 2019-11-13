@@ -173,13 +173,10 @@ public class CodeActionHandler {
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
-			if (preferenceManager.getClientPreferences().isSupportedCodeActionLiteral()) {
-				codeAction.setEdit((WorkspaceEdit)command.getArguments().get(0));
-			} else {
-				codeAction.setCommand(command);
-			}
+			codeAction.setCommand(command);
 			codeAction.setDiagnostics(context.getDiagnostics());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
