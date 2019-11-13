@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -245,13 +246,22 @@ public class ProjectsManager implements ISaveParticipant {
 
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
 		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> ProjectUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
+		List<IProject> validGradleProjects = new ArrayList<>();
+		List<IProject> suspiciousGradleProjects = new ArrayList<>();
 		for (IProject project : getWorkspaceRoot().getProjects()) {
 			if (project.equals(this.getDefaultProject())) {
 				continue;
 			}
-			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project)) || workspaceProjects.contains(project.getName())) {
+			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project) || workspaceProjects.contains(project.getName()))) {
 				try {
 					project.getDescription();
+					if (ProjectUtils.isGradleProject(project)) {
+						if (ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
+							validGradleProjects.add(project);
+						} else {
+							suspiciousGradleProjects.add(project);
+						}
+					}
 				} catch (CoreException e) {
 					try {
 						project.delete(true, monitor);
@@ -267,6 +277,69 @@ public class ProjectsManager implements ISaveParticipant {
 				}
 			}
 		}
+
+		List<IProject> unrelatedProjects = findUnrelatedGradleProjects(suspiciousGradleProjects, validGradleProjects);
+		unrelatedProjects.forEach((project) -> {
+			try {
+				project.delete(false, true, monitor);
+			} catch (CoreException e1) {
+				JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
+			}
+		});
+	}
+
+	/**
+	 * Find those gradle projects not referenced by any gradle project in the current workspace.
+	 */
+	private List<IProject> findUnrelatedGradleProjects(List<IProject> suspiciousProjects, List<IProject> validProjects) {
+		suspiciousProjects.sort((IProject p1, IProject p2) -> p1.getLocation().toOSString().length() - p2.getLocation().toOSString().length());
+
+		List<IProject> unrelatedProjects = new ArrayList<>();
+		Collection<IPath> verifiedPaths = new ArrayList<>();
+		for (IProject suspiciousProject : suspiciousProjects) {
+			IPath uncheckedPath = suspiciousProject.getLocation();
+			if (ResourceUtils.isContainedIn(uncheckedPath, verifiedPaths)) {
+				continue;
+			}
+
+			if (isReferencedByGradleProjects(suspiciousProject, validProjects)) {
+				verifiedPaths.add(suspiciousProject.getLocation());
+			} else {
+				unrelatedProjects.add(suspiciousProject);
+			}
+		}
+
+		return unrelatedProjects;
+	}
+
+	private boolean isReferencedByGradleProjects(IProject target, List<IProject> gradleProjects) {
+		for (IProject gradleProject : gradleProjects) {
+			IPath commonPath = getCommonPath(target.getLocation(), gradleProject.getLocation());
+			if (commonPath != null && commonPath.append("build.gradle").toFile().exists() || commonPath.append("settings.gradle").toFile().exists()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private IPath getCommonPath(IPath path1, IPath path2) {
+		if (path1 == null || path2 == null) {
+			return null;
+		}
+
+		if (path1.segmentCount() > path2.segmentCount()) {
+			IPath temp = path1;
+			path1 = path2;
+			path2 = temp;
+		}
+
+		int commonSegments = path1.matchingFirstSegments(path2);
+		if (commonSegments > 0 && Objects.equals(path1.getDevice(), path2.getDevice())) {
+			return path1.removeLastSegments(path1.segmentCount() - commonSegments);
+		}
+
+		return null;
 	}
 
 	private static IWorkspaceRoot getWorkspaceRoot() {
