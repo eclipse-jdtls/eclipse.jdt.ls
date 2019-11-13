@@ -118,9 +118,9 @@ public final class BundleUtils {
 					continue;
 				}
 
-				Version currentBundleVersion = Version.parseVersion(bundleInfo.getVersion());
 				Bundle[] bundles = getBundles(bundleInfo.getSymbolicName(), frameworkWiring);
 				if (bundles != null) {
+					Version currentBundleVersion = Version.parseVersion(bundleInfo.getVersion());
 					boolean shouldSkip = false;
 					for (Bundle bundle : bundles) {
 						if (bundle.getVersion().equals(currentBundleVersion)) {
