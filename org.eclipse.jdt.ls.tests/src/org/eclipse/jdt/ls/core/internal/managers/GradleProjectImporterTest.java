@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,23 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertIsGradleProject(gradle1);
 		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
 		assertIsGradleProject(gradle2);
+	}
+
+	@Test
+	public void testDeleteInvalidProjects() throws Exception {
+		List<IProject> projects = importProjects(Arrays.asList("gradle/nested/gradle1", "gradle/nested/gradle2"));
+		assertEquals(3, projects.size());//default + 2 gradle projects
+		IProject gradle1 = WorkspaceHelper.getProject("gradle1");
+		assertIsGradleProject(gradle1);
+		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
+		assertIsGradleProject(gradle2);
+
+		projects = importProjects("gradle/nested/gradle1");
+		assertEquals(2, projects.size());
+		gradle1 = WorkspaceHelper.getProject("gradle1");
+		assertNotNull(gradle1);
+		gradle2 = WorkspaceHelper.getProject("gradle2");
+		assertNull(gradle2);
 	}
 
 	@Test
