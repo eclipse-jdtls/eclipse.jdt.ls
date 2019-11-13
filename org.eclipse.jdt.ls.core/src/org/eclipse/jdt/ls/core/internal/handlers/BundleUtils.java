@@ -14,12 +14,9 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -31,9 +28,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.osgi.container.ModuleContainer;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -42,8 +39,11 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.Version;
+import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.FrameworkWiring;
+import org.osgi.resource.Namespace;
 
 /**
  * BundleContext and Bundle utilities
@@ -99,9 +99,8 @@ public final class BundleUtils {
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
-		Collection<Bundle> bundlesToStart = new ArrayList<>();
+		Set<Bundle> bundlesToStart = new HashSet<>();
 		Set<Bundle> toRefresh = new HashSet<>();
-		Map<String, List<BundleInfo>> installedBundles = new HashMap<>();
 		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
 		for (String bundleLocation : bundleLocations) {
 			try {
@@ -119,17 +118,11 @@ public final class BundleUtils {
 					continue;
 				}
 
-				// Platform.getBundle() won't return the bundle with INSTALLED state, so we use this Map to persist the current installed bundles
-				List<BundleInfo> installedBundleList = installedBundles.get(bundleInfo.getSymbolicName());
-				if (installedBundleList != null) {
+				Bundle[] bundles = getBundles(bundleInfo.getSymbolicName(), frameworkWiring);
+				if (bundles != null) {
 					boolean shouldSkip = false;
-					for (BundleInfo info : installedBundleList) {
-						if (info.isSingleton()) {
-							// We have installed this singleton bundle before, so skip this one.
-							shouldSkip = true;
-							break;
-						} else if (info.getVersion().equals(bundleInfo.getVersion())) {
-							// if It's not singleton, make sure the same version does not get installed
+					for (Bundle bundle : bundles) {
+						if (bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
 							shouldSkip = true;
 							break;
 						}
@@ -137,29 +130,21 @@ public final class BundleUtils {
 					if (shouldSkip) {
 						continue;
 					}
-				}
-
-				Bundle bundle = Platform.getBundle(bundleInfo.getSymbolicName());
-				if (bundle != null) {
-					if (bundle.getVersion().equals(Version.parseVersion(bundleInfo.getVersion()))) {
-						// Same bundle exists
-						continue;
-					}
-
 					if (bundleInfo.isSingleton()) {
+						if (bundles.length > 1) {
+							status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Multiple singleton bundles are installed: " + bundleInfo.getSymbolicName()));
+							continue;
+						}
 						// The uninstallation will only happen when the bundle is singleton with different version
-						bundle.uninstall();
-						JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
-						toRefresh.add(bundle);
+						bundles[0].uninstall();
+						JavaLanguageServerPlugin.logInfo("Uninstalled " + bundles[0].getLocation());
+						toRefresh.add(bundles[0]);
+						bundlesToStart.remove(bundles[0]);
 					}
 				}
-				bundle = context.installBundle(location);
+
+				Bundle bundle = context.installBundle(location);
 				JavaLanguageServerPlugin.logInfo("Installed " + bundle.getLocation());
-				if (installedBundles.containsKey(bundle.getSymbolicName())) {
-					installedBundleList.add(bundleInfo);
-				} else {
-					installedBundles.put(bundle.getSymbolicName(), new ArrayList<>(Arrays.asList(bundleInfo)));
-				}
 				bundlesToStart.add(bundle);
 
 			} catch (BundleException e) {
@@ -179,6 +164,30 @@ public final class BundleUtils {
 		}
 	}
 
+	private static Bundle[] getBundles(String symbolicName, FrameworkWiring fwkWiring) {
+		BundleContext context = fwkWiring.getBundle().getBundleContext();
+		if (Constants.SYSTEM_BUNDLE_SYMBOLICNAME.equals(symbolicName)) {
+			symbolicName = context.getBundle(Constants.SYSTEM_BUNDLE_LOCATION).getSymbolicName();
+		}
+		StringBuilder filter = new StringBuilder();
+		filter.append('(')
+			.append(IdentityNamespace.IDENTITY_NAMESPACE)
+			.append('=')
+			.append(symbolicName)
+			.append(')');
+		Map<String, String> directives = Collections.singletonMap(Namespace.REQUIREMENT_FILTER_DIRECTIVE, filter.toString());
+		Collection<BundleCapability> matchingBundleCapabilities = fwkWiring.findProviders(ModuleContainer.createRequirement(IdentityNamespace.IDENTITY_NAMESPACE, directives, Collections.emptyMap()));
+		if (matchingBundleCapabilities.isEmpty()) {
+			return null;
+		}
+		Bundle[] results = matchingBundleCapabilities.stream().map(c -> c.getRevision().getBundle())
+				// Remove all the bundles that are uninstalled
+				.filter(bundle -> (bundle.getState() & (Bundle.UNINSTALLED)) == 0)
+				.sorted((b1, b2) -> b2.getVersion().compareTo(b1.getVersion())) // highest version first
+				.toArray(Bundle[]::new);
+		return results.length > 0 ? results : null;
+	}
+
 	private static void refreshBundles(Set<Bundle> toRefresh, FrameworkWiring frameworkWiring) {
 		if (!toRefresh.isEmpty()) {
 			JavaLanguageServerPlugin.logInfo("Refresh the bundles");
@@ -189,8 +198,8 @@ public final class BundleUtils {
 					if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
 						latch.countDown();
 					} else if (event.getType() == FrameworkEvent.ERROR) {
-						latch.countDown();
 						JavaLanguageServerPlugin.logException("Error happens when refreshing the bundles", event.getThrowable());
+						latch.countDown();
 					}
 				}
 			});

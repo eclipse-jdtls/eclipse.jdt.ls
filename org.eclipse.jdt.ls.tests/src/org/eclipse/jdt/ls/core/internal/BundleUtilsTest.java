@@ -161,7 +161,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void testLoadMultipleNonSongletonBundles() throws Exception {
+	public void testLoadMultipleNonSingletonBundles() throws Exception {
 		Bundle bundleA = null;
 		Bundle bundleB = null;
 		Bundle bundleC = null;
@@ -331,13 +331,53 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			newBundleB = context.getBundle(newDependencyBLocation);
 
 			assertTrue(oldDependencyBundle.getState() == Bundle.UNINSTALLED);
-			assertNotNull(newBundleA);
-			assertTrue(newBundleA.getState() == Bundle.ACTIVE);
-			// skipped newBundleB since this is a singleton bundle
-			assertNull(newBundleB);
+			assertNull(newBundleA);
+			assertNotNull(newBundleB);
+			assertTrue(newBundleB.getState() == Bundle.ACTIVE);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
 			uninstallBundles(Arrays.asList(oldDependencyBundle, newBundleA, newBundleB));
+		}
+	}
+
+	@Test
+	public void testLoadMultipleExtensionsRequiringSameBundleButDifferentUrl() throws Exception {
+		Bundle extensionBundleA = null;
+		Bundle extensionBundleB = null;
+		Bundle dependencyA = null;
+		Bundle dependencyB = null;
+
+		try {
+			String extensionBundleAPath = getBundle("testresources/extension-with-dependency-0.0.1", "jdt.ls.extension.with.dependency_0.0.1.jar");
+			String dependencyAPath = getBundle("testresources/extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
+			String extensionBundleBPath = getBundle("testresources/another-extension-with-dependency-0.0.1", "jdt.ls.another.extension.with.dependency_0.0.1.jar");
+			String dependencyBPath = getBundle("testresources/another-extension-with-dependency-0.0.1", "dependency_0.0.1.201911081535.jar");
+
+			BundleUtils.loadBundles(Arrays.asList(extensionBundleAPath, dependencyAPath, extensionBundleBPath, dependencyBPath));
+			String extensionBundleALocation = getBundleLocation(extensionBundleAPath, true);
+			String dependencyALocation = getBundleLocation(dependencyAPath, true);
+			String extensionBundleBLocation = getBundleLocation(extensionBundleBPath, true);
+			String dependencyBLocation = getBundleLocation(dependencyBPath, true);
+
+			BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+			extensionBundleA = context.getBundle(extensionBundleALocation);
+			dependencyA = context.getBundle(dependencyALocation);
+			extensionBundleB = context.getBundle(extensionBundleBLocation);
+			dependencyB = context.getBundle(dependencyBLocation);
+
+			assertTrue(extensionBundleA.getState() == Bundle.STARTING || extensionBundleA.getState() == Bundle.ACTIVE);
+			assertTrue(extensionBundleB.getState() == Bundle.STARTING || extensionBundleB.getState() == Bundle.ACTIVE);
+			extensionBundleA.loadClass("jdt.ls.extension.with.dependency.Activator");
+			assertEquals(extensionBundleA.getState(), Bundle.ACTIVE);
+			extensionBundleB.loadClass("jdt.ls.another.extension.with.dependency.Activator");
+			assertEquals(extensionBundleB.getState(), Bundle.ACTIVE);
+
+			// Bundles with same version but different URL, only the first one will be loaded
+			assertTrue(dependencyA.getState() == Bundle.ACTIVE);
+			assertNull(dependencyB);
+		} finally {
+			// Uninstall the bundle to clean up the testing bundle context.
+			uninstallBundles(Arrays.asList(extensionBundleA, extensionBundleB, dependencyA, dependencyB));
 		}
 	}
 
