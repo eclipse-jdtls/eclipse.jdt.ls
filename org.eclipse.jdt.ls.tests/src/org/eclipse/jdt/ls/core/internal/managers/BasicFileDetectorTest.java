@@ -87,7 +87,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 2, dirs.size());
+			assertEquals("Found " + dirs + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions(), 2, dirs.size());
 			List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_0/0_2_0", "projects/buildfiles/parent/1_0/0_2_1"));
 			dirs.stream().map(Path::toString).forEach(missingDirs::remove);
 			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
@@ -113,7 +113,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 1, dirs.size());
+			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 1, dirs.size());
 			List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_0/0_2_0"));
 			dirs.stream().map(Path::toString).forEach(missingDirs::remove);
 			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
@@ -135,7 +135,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 0, dirs.size());
+			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 0, dirs.size());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}

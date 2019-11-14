@@ -92,6 +92,8 @@ public abstract class AbstractProjectsManagerBasedTest {
 	@Mock
 	protected PreferenceManager preferenceManager;
 
+	private PreferenceManager oldPreferenceManager;
+
 	protected Preferences preferences;
 
 	protected SimpleLogListener logListener;
@@ -130,6 +132,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 		initPreferenceManager(true);
 
+		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
 		projectsManager = new ProjectsManager(preferenceManager);
 		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager);
@@ -242,6 +245,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	@After
 	public void cleanUp() throws Exception {
+		JavaLanguageServerPlugin.setPreferencesManager(oldPreferenceManager);
 		projectsManager = null;
 		Platform.removeLogListener(logListener);
 		logListener = null;

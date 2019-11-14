@@ -22,6 +22,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,11 +30,18 @@ public class SnippetUtilsTest {
 
 	//	@Mock
 	protected PreferenceManager preferenceManager;
+	private PreferenceManager oldPreferenceManager;
 
 	@Before
 	public void initProjectManager() throws Exception {
 		preferenceManager = mock(PreferenceManager.class);
+		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
+	}
+
+	@After
+	public void cleanup() throws Exception {
+		JavaLanguageServerPlugin.setPreferencesManager(oldPreferenceManager);
 	}
 
 	@Test

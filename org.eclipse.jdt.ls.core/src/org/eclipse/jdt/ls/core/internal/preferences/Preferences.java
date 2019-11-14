@@ -18,6 +18,7 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -345,7 +346,7 @@ public class Preferences {
 
 	private List<String> javaCompletionFavoriteMembers;
 
-	private List<String> javaImportExclusions = new ArrayList<>();
+	private List<String> javaImportExclusions = new LinkedList<>();
 	private String javaHome;
 	private List<String> importOrder;
 	private List<String> filteredTypes;
@@ -357,7 +358,7 @@ public class Preferences {
 	private int parallelBuildsCount;
 
 	static {
-		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new ArrayList<>();
+		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources/**");
@@ -561,8 +562,12 @@ public class Preferences {
 		prefs.setGenerateToStringLimitElements(generateToStringLimitElements);
 
 		List<String> javaImportExclusions = getList(configuration, JAVA_IMPORT_EXCLUSIONS_KEY, JAVA_IMPORT_EXCLUSIONS_DEFAULT);
-		prefs.setJavaImportExclusions(javaImportExclusions);
-
+		if (javaImportExclusions instanceof LinkedList) {
+			prefs.setJavaImportExclusions(javaImportExclusions);
+		} else {
+			List<String> copy = new LinkedList<>(javaImportExclusions);
+			prefs.setJavaImportExclusions(copy);
+		}
 		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
 
