@@ -315,7 +315,7 @@ public class ProjectsManager implements ISaveParticipant {
 	private boolean isReferencedByGradleProjects(IProject target, List<IProject> gradleProjects) {
 		for (IProject gradleProject : gradleProjects) {
 			IPath commonPath = getCommonPath(target.getLocation(), gradleProject.getLocation());
-			if (commonPath != null && commonPath.append("build.gradle").toFile().exists() || commonPath.append("settings.gradle").toFile().exists()) {
+			if (commonPath != null && (commonPath.append("build.gradle").toFile().exists() || commonPath.append("settings.gradle").toFile().exists())) {
 				return true;
 			}
 		}
