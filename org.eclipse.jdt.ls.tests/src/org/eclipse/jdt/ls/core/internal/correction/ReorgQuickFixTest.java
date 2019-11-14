@@ -26,7 +26,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.lsp4j.CodeAction;
@@ -51,10 +50,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		fJProject1.setOptions(TestOptions.getDefaultOptions());
-
-		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
 		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(true);
-
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 	}
 
