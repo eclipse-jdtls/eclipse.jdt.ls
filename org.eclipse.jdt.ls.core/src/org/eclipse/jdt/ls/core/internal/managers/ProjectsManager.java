@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -37,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.codehaus.plexus.util.StringUtils;
+import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -294,52 +295,45 @@ public class ProjectsManager implements ISaveParticipant {
 	private List<IProject> findUnrelatedGradleProjects(List<IProject> suspiciousProjects, List<IProject> validProjects) {
 		suspiciousProjects.sort((IProject p1, IProject p2) -> p1.getLocation().toOSString().length() - p2.getLocation().toOSString().length());
 
-		List<IProject> unrelatedProjects = new ArrayList<>();
-		Collection<IPath> verifiedPaths = new ArrayList<>();
+		List<IProject> unrelatedCandidates = new ArrayList<>();
+		Collection<IPath> validSubPaths = new ArrayList<>();
 		for (IProject suspiciousProject : suspiciousProjects) {
-			IPath uncheckedPath = suspiciousProject.getLocation();
-			if (ResourceUtils.isContainedIn(uncheckedPath, verifiedPaths)) {
+			if (validSubPaths.contains(suspiciousProject.getFullPath().makeRelative())) {
 				continue;
 			}
 
-			if (isReferencedByGradleProjects(suspiciousProject, validProjects)) {
-				verifiedPaths.add(suspiciousProject.getLocation());
+			// Check whether the suspicious gradle project is the parent project of the opening project.
+			boolean isParentProject = false;
+			Collection<IPath> subpaths = null;
+			PersistentModel model = CorePlugin.modelPersistence().loadModel(suspiciousProject);
+			if (model.isPresent()) {
+				subpaths = model.getSubprojectPaths();
+				if (!subpaths.isEmpty()) {
+					for (IProject validProject : validProjects) {
+						if (subpaths.contains(validProject.getFullPath().makeRelative())) {
+							isParentProject = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (isParentProject) {
+				validSubPaths.addAll(subpaths);
 			} else {
-				unrelatedProjects.add(suspiciousProject);
+				unrelatedCandidates.add(suspiciousProject);
 			}
 		}
 
-		return unrelatedProjects;
-	}
-
-	private boolean isReferencedByGradleProjects(IProject target, List<IProject> gradleProjects) {
-		for (IProject gradleProject : gradleProjects) {
-			IPath commonPath = getCommonPath(target.getLocation(), gradleProject.getLocation());
-			if (commonPath != null && (commonPath.append("build.gradle").toFile().exists() || commonPath.append("settings.gradle").toFile().exists())) {
-				return true;
+		List<IProject> result = new ArrayList<>();
+		// Exclude those projects which are the subprojects of the verified parent project.
+		for (IProject candidate : unrelatedCandidates) {
+			if (!validSubPaths.contains(candidate.getFullPath().makeRelative())) {
+				result.add(candidate);
 			}
 		}
 
-		return false;
-	}
-
-	private IPath getCommonPath(IPath path1, IPath path2) {
-		if (path1 == null || path2 == null) {
-			return null;
-		}
-
-		if (path1.segmentCount() > path2.segmentCount()) {
-			IPath temp = path1;
-			path1 = path2;
-			path2 = temp;
-		}
-
-		int commonSegments = path1.matchingFirstSegments(path2);
-		if (commonSegments > 0 && Objects.equals(path1.getDevice(), path2.getDevice())) {
-			return path1.removeLastSegments(path1.segmentCount() - commonSegments);
-		}
-
-		return null;
+		return result;
 	}
 
 	private static IWorkspaceRoot getWorkspaceRoot() {
