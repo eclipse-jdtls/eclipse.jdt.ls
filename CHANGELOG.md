@@ -6,6 +6,7 @@
 * enhancement - provide better symbol details on hover. See [#1227](https://github.com/eclipse/eclipse.jdt.ls/issues/1227).
 * enhancement - update m2e to 1.14 (embeds Maven 3.6.2). See [#1238](https://github.com/eclipse/eclipse.jdt.ls/pull/1238).
 * enhancement - code action: improve "Invert Condition" refactoring trigger. See [#1230](https://github.com/eclipse/eclipse.jdt.ls/issues/1230).
+* enhancement - code action: add final modifier where possible. See [#1234](https://github.com/eclipse/eclipse.jdt.ls/pull/1234).
 * enhancement - refresh the bundles after uninstalling. See [#1253](https://github.com/eclipse/eclipse.jdt.ls/pull/1253).
 * bug fixed  - add Java 13 support for Gradle projects. See [#1196](https://github.com/eclipse/eclipse.jdt.ls/issues/1196).
 * bug fixed - fixed build job reporting errors from unrelated gradle projects outside the workspace. See [#1261](https://github.com/eclipse/eclipse.jdt.ls/issues/1261).
