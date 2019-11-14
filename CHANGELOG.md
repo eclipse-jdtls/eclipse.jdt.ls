@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.47.0 (November 15th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/65?closed=1)
+## [0.47.0 (November 14th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/65?closed=1)
 
 * enhancement - code action: remove unnecessary cast. See [#165](https://github.com/eclipse/eclipse.jdt.ls/issues/165).
 * enhancement - provide better symbol details on hover. See [#1227](https://github.com/eclipse/eclipse.jdt.ls/issues/1227).
