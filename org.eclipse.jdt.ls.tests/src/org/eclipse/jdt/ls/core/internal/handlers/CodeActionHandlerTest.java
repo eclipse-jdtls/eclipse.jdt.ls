@@ -144,7 +144,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 
 		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No refactor actions were found", codeActions.isEmpty());
+		Assert.assertFalse("No organize imports actions were found", codeActions.isEmpty());
 		for (Either<Command, CodeAction> codeAction : codeActions) {
 			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.SourceOrganizeImports));
 		}
