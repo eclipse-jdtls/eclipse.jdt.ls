@@ -244,7 +244,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testBuildFile() throws Exception {
 		IProject project = importSimpleJavaProject();
-		IFile file = project.getFile("/target/build.gradle");
+		IFile file = project.getFile("/target-default/build.gradle");
 		assertFalse(projectsManager.isBuildFile(file));
 		importProjects("gradle/gradle-withoutjava");
 		project = getProject("gradle-withoutjava");
@@ -255,7 +255,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testGradlePropertiesFile() throws Exception {
 		IProject project = importSimpleJavaProject();
-		IFile file = project.getFile("/target/gradle.properties");
+		IFile file = project.getFile("/target-default/gradle.properties");
 		assertFalse(projectsManager.isBuildFile(file));
 		importProjects("gradle/gradle-withoutjava");
 		project = getProject("gradle-withoutjava");

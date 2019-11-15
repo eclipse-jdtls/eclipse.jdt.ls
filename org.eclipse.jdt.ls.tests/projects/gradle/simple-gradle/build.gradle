@@ -35,5 +35,14 @@ dependencies {
 eclipse {
   classpath {
     defaultOutputDir = file('target')
+    file {
+        whenMerged {
+            cp -> cp.getEntries().forEach{
+                cpEntry -> if(cpEntry.kind=='src') {
+                    cpEntry.output = cpEntry.output.replace('bin/', 'target/')
+                }
+            }
+        }
+    }
   }
 }
