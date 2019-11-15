@@ -123,6 +123,34 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCodeAction_organizeImportsSourceActionOnly() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.util.List;\n"+
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "bar");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.LocalVariableIsNeverUsed), range)),
+			Collections.singletonList(CodeActionKind.SourceOrganizeImports)
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse("No organize imports actions were found", codeActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : codeActions) {
+			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.SourceOrganizeImports));
+		}
+	}
+
+	@Test
 	public void testCodeAction_refactorActionsOnly() throws Exception {
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
