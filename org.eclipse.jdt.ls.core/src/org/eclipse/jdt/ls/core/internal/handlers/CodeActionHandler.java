@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -99,9 +98,8 @@ public class CodeActionHandler {
 		}
 
 		List<ChangeCorrectionProposal> proposals = new ArrayList<>();
-		if (codeActionKinds.contains(CodeActionKind.QuickFix)) {
+		if (containsKind(codeActionKinds, CodeActionKind.QuickFix)) {
 			try {
-
 				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(context, locations);
 				proposals.addAll(quickfixProposals);
 			} catch (CoreException e) {
@@ -109,17 +107,16 @@ public class CodeActionHandler {
 			}
 		}
 
-		if (codeActionKinds.contains(CodeActionKind.Refactor)) {
+		if (containsKind(codeActionKinds, CodeActionKind.Refactor)) {
 			try {
 				List<ChangeCorrectionProposal> refactorProposals = this.refactorProcessor.getProposals(params, context, locations);
 				proposals.addAll(refactorProposals);
-
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem resolving refactor code actions", e);
 			}
 		}
 
-		if (codeActionKinds.contains(JavaCodeActionKind.QUICK_ASSIST)) {
+		if (containsKind(codeActionKinds, JavaCodeActionKind.QUICK_ASSIST)) {
 			try {
 				List<ChangeCorrectionProposal> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
 				proposals.addAll(quickassistProposals);
@@ -143,7 +140,7 @@ public class CodeActionHandler {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
 
-		if (codeActionKinds.contains(CodeActionKind.Source)) {
+		if (containsKind(codeActionKinds, CodeActionKind.Source)) {
 			codeActions.addAll(sourceAssistProcessor.getSourceActionCommands(params, context, locations));
 		}
 		return codeActions;
@@ -230,6 +227,10 @@ public class CodeActionHandler {
 			return p1.getName().compareToIgnoreCase(p2.getName());
 		}
 
+	}
+
+	private static boolean containsKind(List<String> codeActionKinds, String baseKind) {
+		return codeActionKinds.stream().anyMatch(kind -> kind.startsWith(baseKind));
 	}
 
 }
