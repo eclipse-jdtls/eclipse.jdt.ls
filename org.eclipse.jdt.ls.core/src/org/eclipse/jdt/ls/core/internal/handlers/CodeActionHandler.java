@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -206,6 +207,12 @@ public class CodeActionHandler {
 
 		@Override
 		public int compare(ChangeCorrectionProposal p1, ChangeCorrectionProposal p2) {
+			String k1 = p1.getKind();
+			String k2 = p2.getKind();
+			if (!StringUtils.isBlank(k1) && !StringUtils.isBlank(k2) && !k1.equals(k2)) {
+				return k1.compareTo(k2);
+			}
+
 			int r1 = p1.getRelevance();
 			int r2 = p2.getRelevance();
 			int relevanceDif = r2 - r1;
