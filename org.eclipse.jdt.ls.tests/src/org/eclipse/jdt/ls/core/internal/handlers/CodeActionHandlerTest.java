@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -231,6 +232,18 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue("No refactor actions were found", hasRefactor);
 		boolean hasSource = codeActions.stream().anyMatch(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.Source));
 		assertTrue("No source actions were found", hasSource);
+
+		List<String> baseKinds = codeActions.stream().map(codeAction -> getBaseKind(codeAction.getRight().getKind())).collect(Collectors.toList());
+		assertTrue("quickfix actions should be ahead of refactor actions",  baseKinds.lastIndexOf(CodeActionKind.QuickFix) < baseKinds.indexOf(CodeActionKind.Refactor));
+		assertTrue("refactor actions should be ahead of source actions",  baseKinds.lastIndexOf(CodeActionKind.Refactor) < baseKinds.indexOf(CodeActionKind.Source));
+	}
+
+	private static String getBaseKind(String codeActionKind) {
+		if (codeActionKind.contains(".")) {
+			return codeActionKind.substring(0, codeActionKind.indexOf('.'));
+		} else {
+			return codeActionKind;
+		}
 	}
 
 	@Test
