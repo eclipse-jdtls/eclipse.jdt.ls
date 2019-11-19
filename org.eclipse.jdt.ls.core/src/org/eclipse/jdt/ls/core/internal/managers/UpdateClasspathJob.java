@@ -84,14 +84,18 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		return Status.OK_STATUS;
 	}
 
-	private void updateClasspath(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources, IProgressMonitor monitor) throws CoreException {
-		final Map<String, String> libraries = include.stream()
-			.filter(binary -> !exclude.contains(binary))
-			.collect(Collectors.toMap(Function.identity(), sources::get));
+	private void updateClasspath(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, IPath> sources, IProgressMonitor monitor) throws CoreException {
+		final Map<String, IPath> libraries = new HashMap<>();
+		for (final String binary: include) {
+			if (exclude.contains(binary)) {
+				continue;
+			}
+			libraries.put(binary, sources.get(binary));
+		}
 		ProjectUtils.updateBinaries(project, libraries, monitor);
 	}
 
-	public void updateClasspath(IJavaProject project, Collection<String> include, Collection<String> exclude, Map<String, String> sources) {
+	public void updateClasspath(IJavaProject project, Collection<String> include, Collection<String> exclude, Map<String, IPath> sources) {
 		if (project == null || include == null) {
 			return;
 		}
@@ -107,9 +111,14 @@ public class UpdateClasspathJob extends WorkspaceJob {
 
 	public void updateClasspath(IJavaProject project, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
 		final Set<Path> binaries = ProjectUtils.collectBinaries(Collections.singleton(libFolderPath), monitor);
-		final Set<String> includeBinaries = binaries.stream().map(Path::toString).collect(Collectors.toSet());
-		final Map<String, String> sources = binaries.stream().collect(Collectors.toMap(Path::toString, bin -> ProjectUtils.detectSources(bin).toString()));
-		updateClasspath(project, includeBinaries, null, sources);
+		final Set<String> include = new HashSet<>();
+		final Map<String, IPath> sources = new HashMap<>();
+		for (final Path binary: binaries) {
+			final IPath source = ProjectUtils.detectSources(binary);
+			include.add(binary.toString());
+			sources.put(binary.toString(), source);
+		}
+		updateClasspath(project, include, null, sources);
 	}
 
 	void update(UpdateClasspathRequest updateRequest) {
@@ -127,9 +136,9 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		private IJavaProject project;
 		private Set<String> include;
 		private Set<String> exclude;
-		private Map<String, String> sources;
+		private Map<String, IPath> sources;
 
-		UpdateClasspathRequest(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources) {
+		UpdateClasspathRequest(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, IPath> sources) {
 			this.project = project;
 			this.include = include;
 			this.exclude = exclude;
@@ -148,7 +157,7 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			return exclude;
 		}
 
-		Map<String, String> getSources() {
+		Map<String, IPath> getSources() {
 			return sources;
 		}
 

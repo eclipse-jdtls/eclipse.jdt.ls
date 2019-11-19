@@ -314,19 +314,19 @@ public final class ProjectUtils {
 		}
 	}
 
-	public static void updateBinaries(IJavaProject javaProject, Map<String, String> libraries, IProgressMonitor monitor) throws CoreException {
+	public static void updateBinaries(IJavaProject javaProject, Map<String, IPath> libraries, IProgressMonitor monitor) throws CoreException {
 		if (monitor.isCanceled()) {
 			return;
 		}
 		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
 		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
 
-		for (Map.Entry<String, String> library : libraries.entrySet()) {
+		for (Map.Entry<String, IPath> library : libraries.entrySet()) {
 			if (monitor.isCanceled()) {
 				return;
 			}
 			IPath binary = new org.eclipse.core.runtime.Path(library.getKey());
-			IPath source = new org.eclipse.core.runtime.Path(library.getValue());
+			IPath source = library.getValue();
 			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
 			JavaLanguageServerPlugin.logInfo("Adding " + binary + " to the classpath");
 			newEntries.add(newEntry);
