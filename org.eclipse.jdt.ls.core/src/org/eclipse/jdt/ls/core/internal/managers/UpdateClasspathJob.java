@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -55,9 +56,9 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			requests = new ArrayList<>(this.queue);
 			this.queue.clear();
 		}
-		Map<IJavaProject, UpdateClasspathRequest> mergedRequestPerProject = requests.stream().collect(
+		Map<IJavaProject, Optional<UpdateClasspathRequest>> mergedRequestPerProject = requests.stream().collect(
 			Collectors.groupingBy(UpdateClasspathRequest::getProject,
-				Collectors.reducing(null, (mergedRequest, request) -> {
+				Collectors.reducing((mergedRequest, request) -> {
 					mergedRequest.getInclude().addAll(request.getInclude());
 					mergedRequest.getExclude().addAll(request.getExclude());
 					mergedRequest.getSources().putAll(request.getSources());
@@ -65,13 +66,13 @@ public class UpdateClasspathJob extends WorkspaceJob {
 				})
 			)
 		);
-		for (Map.Entry<IJavaProject, UpdateClasspathRequest> entry : mergedRequestPerProject.entrySet()) {
+		for (Map.Entry<IJavaProject, Optional<UpdateClasspathRequest>> entry : mergedRequestPerProject.entrySet()) {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
 			if (entry.getValue() != null) {
 				final IJavaProject project = entry.getKey();
-				final UpdateClasspathRequest request = entry.getValue();
+				final UpdateClasspathRequest request = entry.getValue().get();
 				updateClasspath(project, request.include, request.exclude, request.sources, monitor);
 			}
 		}
