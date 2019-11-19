@@ -181,7 +181,6 @@ public class QuickAssistProcessor {
 				//				}
 				//				getConvertEnhancedForLoopProposal(context, coveringNode, resultingCollections);
 				//				getRemoveBlockProposals(context, coveringNode, resultingCollections);
-				getMakeVariableDeclarationFinalProposals(context, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
 			// }
@@ -774,19 +773,6 @@ public class QuickAssistProcessor {
 				}
 			}
 		}
-		return true;
-	}
-
-	private static boolean getMakeVariableDeclarationFinalProposals(IInvocationContext context, Collection<ChangeCorrectionProposal> resultingCollections) {
-		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
-
-		if (fix == null) {
-			return false;
-		}
-
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context);
-		proposal.setDisplayName("Change modifiers to final where possible");
-		resultingCollections.add(proposal);
 		return true;
 	}
 
