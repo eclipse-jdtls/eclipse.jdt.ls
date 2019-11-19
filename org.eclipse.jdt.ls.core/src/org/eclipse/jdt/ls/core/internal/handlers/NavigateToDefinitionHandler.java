@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -24,6 +25,23 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ContinueStatement;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.Initializer;
+import org.eclipse.jdt.core.dom.LabeledStatement;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SwitchExpression;
+import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.WhileStatement;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
+import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -52,11 +70,80 @@ public class NavigateToDefinitionHandler {
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
+			if (element == null) {
+				return computeBreakContinue(unit, line, column);
+			}
 			return computeDefinitionNavigation(element, unit.getJavaProject());
-		} catch (JavaModelException e) {
+		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem computing definition for" + unit.getElementName(), e);
 		}
 
+		return null;
+	}
+
+	private Location computeBreakContinue(ITypeRoot typeRoot, int line, int column) throws CoreException {
+		int offset = JsonRpcHelpers.toOffset(typeRoot.getBuffer(), line, column);
+		if (offset >= 0) {
+			CompilationUnit unit = SharedASTProviderCore.getAST(typeRoot, SharedASTProviderCore.WAIT_YES, null);
+			if (unit == null) {
+				return null;
+			}
+			ASTNode selectedNode = NodeFinder.perform(unit, offset, 0);
+			ASTNode node = null;
+			SimpleName label = null;
+			if (selectedNode instanceof BreakStatement) {
+				node = selectedNode;
+				label = ((BreakStatement) node).getLabel();
+			} else if (selectedNode instanceof ContinueStatement) {
+				node = selectedNode;
+				label = ((ContinueStatement) node).getLabel();
+			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof BreakStatement) {
+				node = selectedNode.getParent();
+				label = ((BreakStatement) node).getLabel();
+			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof ContinueStatement) {
+				node = selectedNode.getParent();
+				label = ((ContinueStatement) node).getLabel();
+			}
+			if (node != null) {
+				ASTNode parent = node.getParent();
+				ASTNode target = null;
+				while (parent != null) {
+					if (parent instanceof MethodDeclaration || parent instanceof Initializer) {
+						break;
+					}
+					if (label == null) {
+						if (parent instanceof ForStatement || parent instanceof EnhancedForStatement || parent instanceof WhileStatement || parent instanceof DoStatement) {
+							target = parent;
+							break;
+						}
+						if (node instanceof BreakStatement) {
+							if (parent instanceof SwitchStatement || parent instanceof SwitchExpression) {
+								target = parent;
+								break;
+							}
+						}
+						if (node instanceof LabeledStatement) {
+							target = parent;
+							break;
+						}
+					} else if (LabeledStatement.class.isInstance(parent)) {
+						LabeledStatement ls = (LabeledStatement) parent;
+						if (ls.getLabel().getIdentifier().equals(label.getIdentifier())) {
+							target = ls;
+							break;
+						}
+					}
+					parent = parent.getParent();
+				}
+				if (target != null) {
+					int start = target.getStartPosition();
+					int end = new TokenScanner(unit.getTypeRoot()).getNextEndOffset(node.getStartPosition(), true) - start;
+					if (start >= 0 && end >= 0) {
+						return JDTUtils.toLocation((ICompilationUnit) typeRoot, start, end);
+					}
+				}
+			}
+		}
 		return null;
 	}
 
