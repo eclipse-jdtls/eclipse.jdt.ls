@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -48,7 +50,9 @@ public class ProgressReporterManager extends ProgressProvider {
 	@Override
 	public IProgressMonitor createMonitor(Job job) {
 		if (job.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS)) {
-			return new ServerStatusMonitor();
+			// for backward compatibility
+			List<IProgressMonitor> monitors = Arrays.asList(new ServerStatusMonitor(), createJobMonitor(job));
+			return new MulticastProgressReporter(monitors);
 		}
 		IProgressMonitor monitor = createJobMonitor(job);
 		return monitor;
@@ -75,6 +79,74 @@ public class ProgressReporterManager extends ProgressProvider {
 	//For Unit tests purposes
 	public void setReportThrottle(long delay) {
 		this.delay = delay;
+	}
+
+	private class MulticastProgressReporter implements IProgressMonitor {
+		protected List<IProgressMonitor> monitors;
+
+		public MulticastProgressReporter(List<IProgressMonitor> monitors) {
+			this.monitors = monitors;
+		}
+
+		@Override
+		public void done() {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.done();
+			}
+		}
+
+		@Override
+		public boolean isCanceled() {
+			for (IProgressMonitor monitor : monitors) {
+				if (!monitor.isCanceled()) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public void beginTask(String name, int totalWork) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.beginTask(name, totalWork);
+			}
+		}
+
+		@Override
+		public void internalWorked(double work) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.internalWorked(work);
+			}
+		}
+
+		@Override
+		public void setCanceled(boolean cancelled) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.setCanceled(cancelled);
+			}
+		}
+
+		@Override
+		public void setTaskName(String name) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.setTaskName(name);
+			}
+		}
+
+		@Override
+		public void subTask(String name) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.subTask(name);
+			}
+		}
+
+		@Override
+		public void worked(int work) {
+			for (IProgressMonitor monitor : monitors) {
+				monitor.worked(work);
+			}
+		}
 	}
 
 	private class ProgressReporter extends CancellableProgressMonitor {
