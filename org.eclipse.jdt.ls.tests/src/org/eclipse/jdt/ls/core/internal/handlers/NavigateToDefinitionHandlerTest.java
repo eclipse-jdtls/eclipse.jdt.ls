@@ -85,6 +85,40 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		testClass("org.apache.commons.lang3.stringutils", 6579, 20);
 	}
 
+	@Test
+	public void testBreakContinue() throws JavaModelException {
+		String uri = ClassFileUtil.getURI(project, "org.sample.TestBreakContinue");
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		// continue
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(11, 5)), monitor);
+		assertNotNull(definitions);
+		assertEquals(1, definitions.size());
+		Location definition = definitions.get(0);
+		assertEquals(8, definition.getRange().getStart().getLine());
+		assertEquals(3, definition.getRange().getStart().getCharacter());
+		// outer continue
+		definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(14, 5)), monitor);
+		assertNotNull(definitions);
+		assertEquals(1, definitions.size());
+		definition = definitions.get(0);
+		assertEquals(6, definition.getRange().getStart().getLine());
+		assertEquals(2, definition.getRange().getStart().getCharacter());
+		// break
+		definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(17, 5)), monitor);
+		assertNotNull(definitions);
+		assertEquals(1, definitions.size());
+		definition = definitions.get(0);
+		assertEquals(8, definition.getRange().getStart().getLine());
+		assertEquals(3, definition.getRange().getStart().getCharacter());
+		// outer break
+		definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(20, 5)), monitor);
+		assertNotNull(definitions);
+		assertEquals(1, definitions.size());
+		definition = definitions.get(0);
+		assertEquals(6, definition.getRange().getStart().getLine());
+		assertEquals(2, definition.getRange().getStart().getCharacter());
+	}
+
 	private void testClass(String className, int line, int column) throws JavaModelException {
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
