@@ -79,6 +79,7 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
@@ -124,11 +125,12 @@ public class RefactorProcessor {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ChangeCorrectionProposal> proposals = new ArrayList<>();
-			// TODO (Yan): Move refactor proposals here.
+
 			InvertBooleanUtility.getInverseConditionProposals(params, context, coveringNode, proposals);
 			getInverseLocalVariableProposals(params, context, coveringNode, proposals);
 
 			getMoveRefactoringProposals(params, context, coveringNode, proposals);
+			getMakeVariableDeclarationFinalProposals(context, proposals);
 
 			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
 			if (noErrorsAtLocation) {
@@ -928,6 +930,21 @@ public class RefactorProcessor {
 			node = parent;
 		}
 		return null;
+	}
+
+
+
+	private static boolean getMakeVariableDeclarationFinalProposals(IInvocationContext context, Collection<ChangeCorrectionProposal> resultingCollections) {
+		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
+
+		if (fix == null) {
+			return false;
+		}
+
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context, CodeActionKind.Refactor);
+		proposal.setDisplayName("Change modifiers to final where possible");
+		resultingCollections.add(proposal);
+		return true;
 	}
 
 }
