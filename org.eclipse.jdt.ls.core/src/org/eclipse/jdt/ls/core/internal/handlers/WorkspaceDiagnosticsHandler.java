@@ -107,14 +107,22 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	@Override
 	public boolean visit(IResourceDelta delta) throws CoreException {
 		IResource resource = delta.getResource();
-		// Check if resource is accessible.
-		// We do not deal with the markers for deleted files here
-		// WorkspaceEventsHandler removes the diagnostics for deleted resources.
-		if (resource == null || !resource.isAccessible()) {
+		if (resource == null) {
 			return false;
 		}
 		if (resource.getType() == IResource.FOLDER || resource.getType() == IResource.ROOT) {
 			return true;
+		}
+		// WorkspaceEventsHandler only handles the case of deleting the specific file and removes it's diagnostics.
+		// If delete a folder directly, no way to clean up the diagnostics for it's children.
+		// The resource delta visitor will make sure to clean up all stale diagnostics.
+		if (!resource.isAccessible()) { // Check if resource is accessible.
+			if (isSupportedDiagnosticsResource(resource)) {
+				cleanUpDiagnostics(resource);
+				return resource.getType() == IResource.PROJECT;
+			}
+
+			return false;
 		}
 		if (resource.getType() == IResource.PROJECT) {
 			// ignore problems caused by standalone files (problems in the default project)
@@ -387,5 +395,19 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			return DiagnosticSeverity.Warning;
 		}
 		return DiagnosticSeverity.Information;
+	}
+
+	private void cleanUpDiagnostics(IResource resource) {
+		String uri = JDTUtils.getFileURI(resource);
+		this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
+	}
+
+	private boolean isSupportedDiagnosticsResource(IResource resource) {
+		if (resource.getType() == IResource.PROJECT) {
+			return true;
+		}
+
+		IFile file = (IFile) resource;
+		return JavaCore.isJavaLikeFileName(file.getName()) || projectsManager.isBuildFile(file);
 	}
 }

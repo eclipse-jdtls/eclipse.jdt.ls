@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
@@ -435,6 +436,27 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue("module2/pom.xml diagnostics were not reset", reset2);
 		assertFalse("module3/pom.xml diagnostics were reset", reset3);
 
+	}
+
+	@Test
+	public void testDeletePackage() throws Exception {
+		importProjects("eclipse/unresolvedtype");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("unresolvedtype");
+		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+		assertTrue("unresolved type in Foo.java", markers.stream().anyMatch((marker) -> marker.getResource() != null && ((IFile) marker.getResource()).getName().endsWith("Foo.java")));
+
+		reset(connection);
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		IFolder folder = project.getFolder("/src/pckg");
+		assertTrue(folder.exists());
+		folder.delete(true, new NullProgressMonitor());
+		waitForBackgroundJobs();
+
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		List<PublishDiagnosticsParams> errors = allCalls.stream().filter((p) -> p.getUri().endsWith("Foo.java")).collect(Collectors.toList());
+		assertTrue("Should update the children's diagnostics of the deleted package", errors.size() == 1);
+		assertTrue("Should clean up the children's diagnostics of the deleted package", errors.get(0).getDiagnostics().isEmpty());
 	}
 
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {
