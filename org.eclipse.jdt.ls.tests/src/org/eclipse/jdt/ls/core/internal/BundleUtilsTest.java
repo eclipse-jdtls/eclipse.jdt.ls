@@ -139,11 +139,11 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
 
-		String bundleLocation = getBundleLocation(getBundle(), true);
-		Bundle installedBundle = context.getBundle(bundleLocation);
-
-		String skippedBundleLocation = getBundleLocation(getAnotherBundle(), true);
+		String skippedBundleLocation = getBundleLocation(getBundle(), true);
 		Bundle skippedBundle = context.getBundle(skippedBundleLocation);
+
+		String bundleLocation = getBundleLocation(getAnotherBundle(), true);
+		Bundle installedBundle = context.getBundle(bundleLocation);
 		try {
 			assertNotNull(installedBundle);
 			assertNull(skippedBundle);
@@ -156,7 +156,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			assertEquals("EXT_TOSTRING", extResult);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
-			installedBundle.uninstall();
+			uninstallBundles(Arrays.asList(installedBundle, skippedBundle));
 		}
 	}
 
@@ -184,9 +184,9 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			bundleB = context.getBundle(bundleBLocation);
 			bundleC = context.getBundle(bundleCLocation);
 
-			assertTrue(bundleA.getState() == Bundle.STARTING || bundleA.getState() == Bundle.ACTIVE);
-			// non singleton bundle with same symbolic name and version should not be installed
-			assertNull(bundleB);
+			assertNull(bundleA);
+			// For the same version bundle with different location, later comes wins.
+			assertTrue(bundleB.getState() == Bundle.STARTING || bundleB.getState() == Bundle.ACTIVE);
 			assertTrue(bundleC.getState() == Bundle.STARTING || bundleC.getState() == Bundle.ACTIVE);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
@@ -372,9 +372,9 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 			extensionBundleB.loadClass("jdt.ls.another.extension.with.dependency.Activator");
 			assertEquals(extensionBundleB.getState(), Bundle.ACTIVE);
 
-			// Bundles with same version but different URL, only the first one will be loaded
-			assertTrue(dependencyA.getState() == Bundle.ACTIVE);
-			assertNull(dependencyB);
+			// Bundles with same version but different URL, only the later comes one will be loaded
+			assertNull(dependencyA);
+			assertTrue(dependencyB.getState() == Bundle.ACTIVE);
 		} finally {
 			// Uninstall the bundle to clean up the testing bundle context.
 			uninstallBundles(Arrays.asList(extensionBundleA, extensionBundleB, dependencyA, dependencyB));
