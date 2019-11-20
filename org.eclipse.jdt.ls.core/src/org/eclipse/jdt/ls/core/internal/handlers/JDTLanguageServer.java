@@ -756,7 +756,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
 		logInfo(">> java/buildWorkspace (" + (forceReBuild ? "full)" : "incremental)"));
-		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(client, pm);
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(pm);
 		return computeAsync((monitor) -> handler.buildWorkspace(forceReBuild, monitor));
 	}
 

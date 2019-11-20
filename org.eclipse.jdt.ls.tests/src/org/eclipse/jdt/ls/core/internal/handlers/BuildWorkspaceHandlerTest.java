@@ -12,7 +12,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -23,23 +22,18 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest {
-	private JavaLanguageClient client = mock(JavaLanguageClient.class);
-	private JavaClientConnection javaClient = new JavaClientConnection(client);
-
 	private BuildWorkspaceHandler handler;
 	private IProject project;
 
 	@Before
 	public void setUp() throws Exception {
-		handler = new BuildWorkspaceHandler(javaClient, projectsManager);
+		handler = new BuildWorkspaceHandler(projectsManager);
 		importProjects("maven/salut2");
 		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut2");
 	}
