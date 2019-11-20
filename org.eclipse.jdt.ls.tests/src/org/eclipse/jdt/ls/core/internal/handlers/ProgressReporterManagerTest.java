@@ -104,6 +104,40 @@ public class ProgressReporterManagerTest {
 	}
 
 	@Test
+	public void testMulticastJobReporting() throws InterruptedException {
+		manager.setReportThrottle(275);
+		Job job = new Job("Test Job") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				return null;
+			}
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == InitHandler.JAVA_LS_INITIALIZATION_JOBS;
+			}
+		};
+
+		IProgressMonitor monitor = manager.createMonitor(job);
+		monitor.done();
+
+		ArgumentCaptor<StatusReport> captorStatus = ArgumentCaptor.forClass(StatusReport.class);
+		verify(client, times(1)).sendStatusReport(captorStatus.capture());
+		List<StatusReport> statusReports = captorStatus.getAllValues();
+		assertEquals(1, statusReports.size());
+		StatusReport statusReport = statusReports.get(0);
+		assertEquals(ServiceStatus.Starting.name(), statusReport.getType());
+
+		ArgumentCaptor<ProgressReport> captorProgress = ArgumentCaptor.forClass(ProgressReport.class);
+		verify(client, times(1)).sendProgressReport(captorProgress.capture());
+		List<ProgressReport> progressReports = captorProgress.getAllValues();
+		assertEquals(1, progressReports.size());
+		ProgressReport progressReport = progressReports.get(0);
+		assertEquals(job.getName(), progressReport.getStatus());
+		assertEquals(job.getName(), progressReport.getTask());
+		assertTrue(progressReport.isComplete());
+	}
+
+	@Test
 	public void testStartupJobReporting() throws InterruptedException {
 		manager.setReportThrottle(0);
 		Job job = new Job("Startup job") {
