@@ -399,7 +399,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 
 	private void cleanUpDiagnostics(IResource resource) {
 		String uri = JDTUtils.getFileURI(resource);
-		this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
+		if (uri != null) {
+			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
+		}
 	}
 
 	private boolean isSupportedDiagnosticsResource(IResource resource) {
