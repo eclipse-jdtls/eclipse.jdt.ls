@@ -14,7 +14,6 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,23 +27,18 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
 
 /**
  * @author xuzho
  *
  */
 public class BuildWorkspaceHandler {
-	private JavaClientConnection connection;
 	private final ProjectsManager projectsManager;
 
-	public BuildWorkspaceHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
-		this.connection = connection;
+	public BuildWorkspaceHandler(ProjectsManager projectsManager) {
 		this.projectsManager = projectsManager;
 	}
 
@@ -54,13 +48,6 @@ public class BuildWorkspaceHandler {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
 			projectsManager.cleanupResources(projectsManager.getDefaultProject());
-			IProject[] projects = ProjectUtils.getAllProjects();
-			for (IProject project : projects) {
-				if (!project.equals(projectsManager.getDefaultProject())) {
-					String uri = JDTUtils.getFileURI(project);
-					connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
-				}
-			}
 			if (forceReBuild) {
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
@@ -68,6 +55,7 @@ public class BuildWorkspaceHandler {
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 			}
 			List<IMarker> problemMarkers = new ArrayList<>();
+			IProject[] projects = ProjectUtils.getAllProjects();
 			for (IProject project : projects) {
 				if (!project.equals(projectsManager.getDefaultProject())) {
 					List<IMarker> markers = ResourceUtils.getErrorMarkers(project);

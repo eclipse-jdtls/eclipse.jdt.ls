@@ -321,7 +321,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		// build workspace
 		reset(connection);
 		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
-		BuildWorkspaceHandler bwh = new BuildWorkspaceHandler(connection, projectsManager);
+		BuildWorkspaceHandler bwh = new BuildWorkspaceHandler(projectsManager);
 		bwh.buildWorkspace(true, new NullProgressMonitor());
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		allCalls = captor.getAllValues();

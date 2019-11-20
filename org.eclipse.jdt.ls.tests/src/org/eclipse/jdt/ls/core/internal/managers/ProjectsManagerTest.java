@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -47,7 +46,6 @@ import org.junit.Test;
 public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	private JavaLanguageClient client = mock(JavaLanguageClient.class);
-	private JavaClientConnection javaClient = new JavaClientConnection(client);
 	private JDTLanguageServer server;
 	private boolean autoBuild;
 
@@ -91,7 +89,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		java.io.File physicalFile = new java.io.File(file.getLocationURI());
 		physicalFile.delete();
 
-		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(javaClient, projectsManager);
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(projectsManager);
 		BuildWorkspaceStatus result = handler.buildWorkspace(true, monitor);
 
 		waitForBackgroundJobs();
