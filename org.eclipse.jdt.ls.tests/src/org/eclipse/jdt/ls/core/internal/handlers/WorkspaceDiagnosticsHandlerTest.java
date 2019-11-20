@@ -79,6 +79,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		handler.addResourceChangeListener();
 	}
 
+	@After
+	@Override
+	public void cleanUp() throws Exception {
+		super.cleanUp();
+		handler.removeResourceChangeListener();
+	}
+
 	@Test
 	public void testToDiagnosticsArray() throws Exception {
 		String msg1 = "Something's wrong Jim";
@@ -476,11 +483,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		when(m.getAttribute(IMavenConstants.MARKER_COLUMN_START, -1)).thenReturn(start);
 		when(m.getAttribute(IMavenConstants.MARKER_COLUMN_END, -1)).thenReturn(end);
 		return m;
-	}
-
-	@After
-	public void removeResourceChangeListener() {
-		handler.removeResourceChangeListener();
 	}
 
 }
