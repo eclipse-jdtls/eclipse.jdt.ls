@@ -138,7 +138,7 @@ public final class BundleUtils {
 								if (bundle.getLocation().equals(location)) {
 									shouldSkip = true;
 								} else {
-									// Uninstall non-songleton bundle if it's the same version but different location
+									// Uninstall non-singleton bundle if it's the same version but different location
 									uninstallBundle(context, bundlesToStart, toRefresh, bundle);
 								}
 								break;
