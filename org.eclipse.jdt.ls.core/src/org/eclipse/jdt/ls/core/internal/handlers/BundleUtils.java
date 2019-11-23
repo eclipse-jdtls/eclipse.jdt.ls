@@ -121,33 +121,36 @@ public final class BundleUtils {
 				Bundle[] bundles = getBundles(bundleInfo.getSymbolicName(), frameworkWiring);
 				if (bundles != null) {
 					Version currentBundleVersion = Version.parseVersion(bundleInfo.getVersion());
-					boolean shouldSkip = false;
-					for (Bundle bundle : bundles) {
-						if (bundle.getVersion().equals(currentBundleVersion)) {
-							shouldSkip = true;
-							break;
-						}
-					}
-					if (shouldSkip) {
-						continue;
-					}
 					if (bundleInfo.isSingleton()) {
 						if (bundles.length > 1) {
 							status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Multiple singleton bundles are installed: " + bundleInfo.getSymbolicName()));
 							continue;
+						} else if (bundles[0].getLocation().equals(location) && bundles[0].getVersion().equals(currentBundleVersion)) {
+							continue;
 						}
-						// The uninstallation will only happen when the bundle is singleton with different version
-						bundles[0].uninstall();
-						JavaLanguageServerPlugin.logInfo("Uninstalled " + bundles[0].getLocation());
-						toRefresh.add(bundles[0]);
-						bundlesToStart.remove(bundles[0]);
+
+						// Uninstall the singleton bundle if the location or version is not equal
+						uninstallBundle(context, bundlesToStart, toRefresh, bundles[0]);
+					} else {
+						boolean shouldSkip = false;
+						for (Bundle bundle : bundles) {
+							if (bundle.getVersion().equals(currentBundleVersion)) {
+								if (bundle.getLocation().equals(location)) {
+									shouldSkip = true;
+								} else {
+									// Uninstall non-singleton bundle if it's the same version but different location
+									uninstallBundle(context, bundlesToStart, toRefresh, bundle);
+								}
+								break;
+							}
+						}
+						if (shouldSkip) {
+							continue;
+						}
 					}
 				}
 
-				Bundle bundle = context.installBundle(location);
-				JavaLanguageServerPlugin.logInfo("Installed " + bundle.getLocation());
-				bundlesToStart.add(bundle);
-
+				installBundle(context, bundlesToStart, location);
 			} catch (BundleException e) {
 				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Install bundle failure " + bundleLocation, e));
 			} catch (MalformedURLException ex) {
@@ -163,6 +166,46 @@ public final class BundleUtils {
 		if (status.getChildren().length > 0) {
 			throw new CoreException(status);
 		}
+	}
+
+	/**
+	 * Install the bundle within the given location.
+	 *
+	 * @param context
+	 *            Bundle context
+	 * @param bundlesToStart
+	 *            The set containing bundles which need to start
+	 * @param location
+	 *            The location of the bundle which needs to be installed
+	 * @throws BundleException
+	 */
+	private static void installBundle(BundleContext context, Set<Bundle> bundlesToStart, String location) throws BundleException {
+		Bundle newlyInstalledBundle = context.installBundle(location);
+		JavaLanguageServerPlugin.logInfo("Installed " + newlyInstalledBundle.getLocation());
+		bundlesToStart.add(newlyInstalledBundle);
+	}
+
+	/**
+	 * Uninstall the specified bundle and update the set for bundle refreshing and
+	 * starting.
+	 *
+	 * @param context
+	 *            Bundle context
+	 * @param bundlesToStart
+	 *            The set containing bundles which need to start
+	 * @param toRefresh
+	 *            The set containing bundles which need to refresh after
+	 *            unsintallation
+	 * @param bundle
+	 *            Bundle needs to be uninstalled
+	 *
+	 * @throws BundleException
+	 */
+	private static void uninstallBundle(BundleContext context, Set<Bundle> bundlesToStart, Set<Bundle> toRefresh, Bundle bundle) throws BundleException {
+		bundle.uninstall();
+		JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
+		toRefresh.add(bundle);
+		bundlesToStart.remove(bundle);
 	}
 
 	private static Bundle[] getBundles(String symbolicName, FrameworkWiring fwkWiring) {
