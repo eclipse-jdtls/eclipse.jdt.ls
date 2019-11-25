@@ -16,10 +16,16 @@ import static org.junit.Assert.assertNull;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -139,4 +145,78 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 	}
 
+	@Test
+	public void testReferencedBinariesUpdate() throws Exception {
+		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
+		IProject project = importRootFolder(projectFolder, "Test.java");
+		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+
+		File originBinary = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo.jar");
+		File originSource = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo-sources.jar");
+
+		Set<String> include = new HashSet<>();
+		Set<String> exclude = new HashSet<>();
+		Map<String, IPath> sources = new HashMap<>();
+
+		// Include following jars (by lib/** detection)
+		// - /lib/foo.jar
+		// - /lib/foo-sources.jar
+		File libFolder = Files.createDirectories(projectFolder.toPath().resolve(InvisibleProjectBuildSupport.LIB_FOLDER)).toFile();
+		File fooBinary = new File(libFolder, "foo.jar");
+		File fooSource = new File(libFolder, "foo-source.jar");
+		FileUtils.copyFile(originBinary, fooBinary);
+		FileUtils.copyFile(originSource, fooSource);
+
+		// Include following jars (by manually add include)
+		// - /bar.jar
+		// - /library/bar-src.jar
+		File libraryFolder = Files.createDirectories(projectFolder.toPath().resolve("library")).toFile();
+		File barBinary = new File(projectFolder, "bar.jar");
+		File barSource = new File(libraryFolder, "bar-src.jar");
+		FileUtils.copyFile(originBinary, barBinary);
+		FileUtils.copyFile(originSource, barSource);
+		include.add(barBinary.toString());
+		sources.put(barBinary.toString(), new org.eclipse.core.runtime.Path(barSource.toString()));
+
+		// Exclude following jars (by manually add exclude)
+		// - /lib/foo.jar
+		exclude.add(fooBinary.toString());
+
+		// Before sending requests
+		IJavaProject javaProject = JavaCore.create(project);
+		int[] jobInvocations = new int[1];
+		IJobChangeListener listener = new JobChangeAdapter() {
+			@Override
+			public void scheduled(IJobChangeEvent event) {
+				if (event.getJob() instanceof UpdateClasspathJob) {
+					jobInvocations[0] = jobInvocations[0] + 1;
+				}
+			}
+		};
+
+		try { // Send two update request concurrently
+			Job.getJobManager().addJobChangeListener(listener);
+			projectsManager.fileChanged(fooBinary.toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
+			UpdateClasspathJob.getInstance().updateClasspath(javaProject, include, exclude, sources); // Request sent by third-party client
+			waitForBackgroundJobs();
+			assertEquals("Update classpath job should have been invoked once", 1, jobInvocations[0]);
+		} finally {
+			Job.getJobManager().removeJobChangeListener(listener);
+		}
+
+		{
+			// The requests sent by `jdt'ls lib detection` and `third-party client` is merged in queue,
+			// So client's `exclude: lib/foo.jar` comes into effect to block jdt.ls's `include: lib/foo.jar`
+			// This is the way client uses to neutralize the effect of jdt.ls's lib detection
+			IClasspathEntry[] classpath = javaProject.getRawClasspath();
+			// Check only one jar file is added to classpath (foo.jar is excluded)
+			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+			// Check the only added jar is bar.jar
+			assertEquals("bar.jar", classpath[2].getPath().lastSegment());
+			assertEquals("bar-src.jar", classpath[2].getSourceAttachmentPath().lastSegment());
+			// Check the source of bar.jar is in /library folder
+			assertEquals("library", classpath[2].getSourceAttachmentPath().removeLastSegments(1).lastSegment());
+		}
+	}
 }

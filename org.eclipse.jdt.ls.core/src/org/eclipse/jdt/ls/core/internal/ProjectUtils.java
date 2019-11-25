@@ -314,26 +314,21 @@ public final class ProjectUtils {
 		}
 	}
 
-	public static void updateBinaries(IJavaProject javaProject, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
-		updateBinaries(javaProject, Collections.singleton(libFolderPath), monitor);
-	}
-
-	public static void updateBinaries(IJavaProject javaProject, Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
-		Set<Path> binaries = collectBinaries(libFolderPaths, monitor);
+	public static void updateBinaries(IJavaProject javaProject, Map<String, IPath> libraries, IProgressMonitor monitor) throws CoreException {
 		if (monitor.isCanceled()) {
 			return;
 		}
 		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
 		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
 
-		for (Path file : binaries) {
+		for (Map.Entry<String, IPath> library : libraries.entrySet()) {
 			if (monitor.isCanceled()) {
 				return;
 			}
-			IPath newLibPath = new org.eclipse.core.runtime.Path(file.toString());
-			IPath sourcePath = detectSources(file);
-			IClasspathEntry newEntry = JavaCore.newLibraryEntry(newLibPath, sourcePath, null);
-			JavaLanguageServerPlugin.logInfo("Adding " + newLibPath + " to the classpath");
+			IPath binary = new org.eclipse.core.runtime.Path(library.getKey());
+			IPath source = library.getValue();
+			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
+			JavaLanguageServerPlugin.logInfo("Adding " + binary + " to the classpath");
 			newEntries.add(newEntry);
 		}
 		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
@@ -342,7 +337,7 @@ public final class ProjectUtils {
 		}
 	}
 
-	private static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
+	public static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
 		FileVisitor<? super Path> jarDetector = new SimpleFileVisitor<Path>() {
 			@Override
@@ -372,20 +367,20 @@ public final class ProjectUtils {
 		return binaries;
 	}
 
+	public static IPath detectSources(Path file) {
+		String filename = file.getFileName().toString();
+		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
+		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
+		Path sourcePath = file.getParent().resolve(sourceName);
+		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
+	}
+
 	private static boolean isBinary(Path file) {
 		String fileName = file.getFileName().toString();
 		return (fileName.endsWith(JAR_SUFFIX)
 				//skip source jar files
 				//more robust approach would be to check if jar contains .class files or not
 				&& !fileName.endsWith(SOURCE_JAR_SUFFIX));
-	}
-
-	private static IPath detectSources(Path file) {
-		String filename = file.getFileName().toString();
-		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
-		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
-		Path sourcePath = file.getParent().resolve(sourceName);
-		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
 	}
 
 	public static void removeJavaNatureAndBuilder(IProject project, IProgressMonitor monitor) throws CoreException {
