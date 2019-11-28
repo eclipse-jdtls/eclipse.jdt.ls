@@ -193,16 +193,10 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 
 	private WorkspaceEdit getWorkspaceEdit(Either<Command, CodeAction> codeAction) {
 		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		if (c != null) {
-			assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			assertNotNull(c.getArguments());
-			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			return (WorkspaceEdit) c.getArguments().get(0);
-		} else {
-			WorkspaceEdit e = (WorkspaceEdit) codeAction.getRight().getEdit();
-			assertNotNull(e);
-			return e;
-		}
+		assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		assertNotNull(c.getArguments());
+		assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		return (WorkspaceEdit) c.getArguments().get(0);
 	}
 
 	private void assertRenameFileOperation(Either<Command, CodeAction> codeAction, String newUri) {

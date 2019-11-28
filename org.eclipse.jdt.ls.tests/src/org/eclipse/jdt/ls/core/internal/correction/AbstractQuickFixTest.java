@@ -294,22 +294,14 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			throws BadLocationException, JavaModelException {
 
 		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		if (c != null) {
-			Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			Assert.assertNotNull(c.getArguments());
-			Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-			if (we.getDocumentChanges() != null) {
-				return evaluateChanges(we.getDocumentChanges());
-			}
-			return evaluateChanges(we.getChanges());
-		} else {
-			WorkspaceEdit we = (WorkspaceEdit) codeAction.getRight().getEdit();
-			if (we.getDocumentChanges() != null) {
-				return evaluateChanges(we.getDocumentChanges());
-			}
-			return evaluateChanges(we.getChanges());
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		Assert.assertNotNull(c.getArguments());
+		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
+		if (we.getDocumentChanges() != null) {
+			return evaluateChanges(we.getDocumentChanges());
 		}
+		return evaluateChanges(we.getChanges());
 	}
 
 	private String evaluateChanges(List<Either<TextDocumentEdit, ResourceOperation>> documentChanges) throws BadLocationException, JavaModelException {
@@ -346,7 +338,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	public String getTitle(Either<Command, CodeAction> codeAction) {
-		return codeAction.isLeft() ? codeAction.getLeft().getTitle() : codeAction.getRight().getTitle();
+		return getCommand(codeAction).getTitle();
 	}
 
 }

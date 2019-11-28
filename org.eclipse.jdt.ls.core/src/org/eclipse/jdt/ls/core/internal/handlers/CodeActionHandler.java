@@ -150,7 +150,6 @@ public class CodeActionHandler {
 		String name = proposal.getName();
 
 		Command command;
-		WorkspaceEdit edit = null;
 		if (proposal instanceof CUCorrectionCommandProposal) {
 			CUCorrectionCommandProposal commandProposal = (CUCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
@@ -158,7 +157,7 @@ public class CodeActionHandler {
 			RefactoringCorrectionCommandProposal commandProposal = (RefactoringCorrectionCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
@@ -166,13 +165,10 @@ public class CodeActionHandler {
 		}
 
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
-			if (edit != null) {
-				codeAction.setEdit(edit);
-			} else {
-				codeAction.setCommand(command);
-			}
+			codeAction.setCommand(command);
 			codeAction.setDiagnostics(context.getDiagnostics());
 			return Optional.of(Either.forRight(codeAction));
 		} else {

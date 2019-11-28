@@ -28,7 +28,6 @@ import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
-import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -90,8 +89,9 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
 		Assert.assertNotNull(toStringAction);
-		WorkspaceEdit toStringEdit = CodeActionHandlerTest.getEdit(toStringAction);
-		Assert.assertNotNull(toStringEdit);
+		Command toStringCommand = CodeActionHandlerTest.getCommand(toStringAction);
+		Assert.assertNotNull(toStringCommand);
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, toStringCommand.getCommand());
 	}
 
 	@Test
