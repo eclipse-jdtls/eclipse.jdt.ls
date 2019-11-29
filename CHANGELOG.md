@@ -1,5 +1,20 @@
 # Change Log
 
+## [0.48.0 (December 3rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/66?closed=1)
+* enhancement - add quickfix to correct access to static elements. See [#439](https://github.com/eclipse/eclipse.jdt.ls/issues/439).
+* enhancement - sort code actions by relevance. See [#1250](https://github.com/eclipse/eclipse.jdt.ls/issues/1250).
+* enhancement - enhanced referenced library support. See [#1257](https://github.com/eclipse/eclipse.jdt.ls/issues/1257).
+* enhancement - use ProgressReporter to monitor initialization jobs. See [#1280](https://github.com/eclipse/eclipse.jdt.ls/pull/1280).
+* enhancement - jump to definition on break/continue. See [#1281](https://github.com/eclipse/eclipse.jdt.ls/pull/1281).
+* enhancement - no need to publish diagnostics in BuildWorkspaceHandler. See [#1282](https://github.com/eclipse/eclipse.jdt.ls/pull/1282).
+* bug fixed - set correct kind for action "Add final modifier where possible". See [#1266](https://github.com/eclipse/eclipse.jdt.ls/issues/1266).
+* bug fixed - call corresponding code action processor according to base kind. See [#1275](https://github.com/eclipse/eclipse.jdt.ls/pull/1275).
+* bug fixed - should update the diagnostics for the deleted resource and it's children. See [#1283](https://github.com/eclipse/eclipse.jdt.ls/pull/1283).
+* bug fixed - added the location check back when loading bundles. See [#1286](https://github.com/eclipse/eclipse.jdt.ls/issues/1286).
+* debt - BasicFileDetectorTest.testInclusions* fail randomly. See [#1262](https://github.com/eclipse/eclipse.jdt.ls/issues/1262).
+* debt - HoverHandlerTest.testHoverOnPackageWithJavadoc fails. See [#1284](https://github.com/eclipse/eclipse.jdt.ls/issues/1284).
+* build/infra - CI jobs "Killed" randomly. See [#1275](https://github.com/eclipse/eclipse.jdt.ls/issues/1274).
+
 ## [0.47.0 (November 14th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/65?closed=1)
 
 * enhancement - code action: remove unnecessary cast. See [#165](https://github.com/eclipse/eclipse.jdt.ls/issues/165).
