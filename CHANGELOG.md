@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.48.0 (November 30th, 2019)] (https://github.com/eclipse/eclipse.jdt.ls/milestone/66?closed=1)
+* bug fixed - CI jobs "Killed" randomly. See [#1275](https://github.com/eclipse/eclipse.jdt.ls/issues/1274).
+* bug fixed - Call corresponding code action processor according to base kind. See [#1275](https://github.com/eclipse/eclipse.jdt.ls/pull/1275).
+* bug fixed - Set correct kind for action "Add final modifier where possible". See [#1266](https://github.com/eclipse/eclipse.jdt.ls/issues/1266).
+* bug fixed - HoverHandlerTest.testHoverOnPackageWithJavadoc fails. See [#1284](https://github.com/eclipse/eclipse.jdt.ls/issues/1284).
+* enhancement - Add quickfix to correct access to static elements See [#439](https://github.com/eclipse/eclipse.jdt.ls/issues/439).
+* enhancement - Use ProgressReporter to monitor initialization jobs. See [#1280]https://github.com/eclipse/eclipse.jdt.ls/pull/1280).
+* enhancement - No need to publish diagnostics in BuildWorkspaceHandler. See [#1282](https://github.com/eclipse/eclipse.jdt.ls/pull/1282).
+* bug fixed - BasicFileDetectorTest.testInclusions* fail randomly. See [#1262](https://github.com/eclipse/eclipse.jdt.ls/issues/1262).
+
 ## [0.47.0 (November 14th, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/65?closed=1)
 
 * enhancement - code action: remove unnecessary cast. See [#165](https://github.com/eclipse/eclipse.jdt.ls/issues/165).
