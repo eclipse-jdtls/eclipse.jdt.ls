@@ -42,8 +42,10 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.BinaryType;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -180,6 +182,42 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 			assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
 		} finally {
 			preferences.setMavenDownloadSources(mavenDownloadSources);
+		}
+	}
+
+	@Test
+	public void testUpdateSnapshots() throws Exception {
+		boolean updateSnapshots = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenUpdateSnapshots();
+		FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
+		try {
+			IProject project = importMavenProject("salut3");
+			waitForBackgroundJobs();
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+			assertNull(type);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setMavenUpdateSnapshots(false);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
+			IFile pom = project.getFile("pom.xml");
+			String content = ResourceUtils.getContent(pom);
+			//@formatter:off
+			content = content.replace("<dependencies></dependencies>",
+					"<dependencies>\n"
+						+ "<dependency>\n"
+						+ "   <groupId>org.apache.commons</groupId>\n"
+						+ "   <artifactId>commons-lang3</artifactId>\n"
+						+ "   <version>3.9</version>\n"
+						+ "</dependency>"
+						+ "</dependencies>");
+			//@formatter:on
+			ResourceUtils.setContent(pom, content);
+			URI uri = pom.getRawLocationURI();
+			projectsManager.fileChanged(uri.toString(), CHANGE_TYPE.CHANGED);
+			waitForBackgroundJobs();
+			type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+			assertNotNull(type);
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setMavenUpdateSnapshots(updateSnapshots);
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setUpdateBuildConfigurationStatus(status);
 		}
 	}
 

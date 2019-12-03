@@ -92,6 +92,10 @@ public class Preferences {
 	 */
 	public static final String MAVEN_DOWNLOAD_SOURCES = "java.maven.downloadSources";
 	/**
+	 * Preference key to force update of Snapshots/Releases.
+	 */
+	public static final String MAVEN_UPDATE_SNAPSHOTS = "java.maven.updateSnapshots";
+	/**
 	 * Preference key to enable/disable reference code lenses.
 	 */
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
@@ -317,6 +321,7 @@ public class Preferences {
 	private String gradleHome;
 	private boolean importMavenEnabled;
 	private boolean mavenDownloadSources;
+	private boolean mavenUpdateSnapshots;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private boolean javaFormatOnTypeEnabled;
@@ -434,6 +439,7 @@ public class Preferences {
 		gradleHome = null;
 		importMavenEnabled = true;
 		mavenDownloadSources = false;
+		mavenUpdateSnapshots = false;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
@@ -500,6 +506,8 @@ public class Preferences {
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
 		prefs.setMavenDownloadSources(downloadSources);
+		boolean updateSnapshots = getBoolean(configuration, MAVEN_UPDATE_SNAPSHOTS, false);
+		prefs.setMavenUpdateSnapshots(updateSnapshots);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
@@ -694,6 +702,11 @@ public class Preferences {
 
 	public Preferences setMavenDownloadSources(boolean enabled) {
 		this.mavenDownloadSources = enabled;
+		return this;
+	}
+
+	public Preferences setMavenUpdateSnapshots(boolean enabled) {
+		this.mavenUpdateSnapshots = enabled;
 		return this;
 	}
 
@@ -898,6 +911,10 @@ public class Preferences {
 
 	public boolean isMavenDownloadSources() {
 		return mavenDownloadSources;
+	}
+
+	public boolean isMavenUpdateSnapshots() {
+		return mavenUpdateSnapshots;
 	}
 
 	public boolean isImplementationsCodeLensEnabled() {
