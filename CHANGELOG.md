@@ -1,7 +1,8 @@
 # Change Log
 
-## [0.48.0 (December 3rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/66?closed=1)
+## [0.48.0 (December 4rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/66?closed=1)
 * enhancement - add quickfix to correct access to static elements. See [#439](https://github.com/eclipse/eclipse.jdt.ls/issues/439).
+* enhancement - new `java.maven.updateSnapshots` preference to update snapshots/releases for Maven projects. See [#1217](https://github.com/eclipse/eclipse.jdt.ls/pull/1217).
 * enhancement - sort code actions by relevance. See [#1250](https://github.com/eclipse/eclipse.jdt.ls/issues/1250).
 * enhancement - enhanced referenced library support. See [#1257](https://github.com/eclipse/eclipse.jdt.ls/issues/1257).
 * enhancement - use ProgressReporter to monitor initialization jobs. See [#1280](https://github.com/eclipse/eclipse.jdt.ls/pull/1280).
