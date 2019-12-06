@@ -8,6 +8,13 @@
 	<name>${base.name} :: Parent</name>
 	<version>0.49.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
+	<licenses>
+		<license>
+			<name>Eclipse Public License - v 2.0</name>
+			<url>http://www.eclipse.org/legal/epl-v20.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 	<properties>
 		<base.name>JDT Language Server</base.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -65,7 +72,7 @@
 					<configuration>
 						<skip>false</skip>
 						<outputDirectory>${basedir}/lib/</outputDirectory>
-						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with 
+						<!-- baseVersion is to avoid SNAPSHOT dependencies being copied with
 							ever daily changing timestamp -->
 						<useBaseVersion>true</useBaseVersion>
 					</configuration>

@@ -1,9 +1,11 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Copied from org.eclipse.jdt.internal.corext.dom.VariableDeclarationRewrite
  *
@@ -60,15 +62,15 @@ public class VariableDeclarationRewrite {
 		/*
 		 * Problem: Same declarationNode can be the subject of multiple calls to this method.
 		 * For the 2nd++ calls, the original declarationNode has already been rewritten, and this has to be taken into account.
-		 * 
+		 *
 		 * Assumption:
 		 * - Modifiers for each VariableDeclarationFragment are modified at most once.
-		 * 
+		 *
 		 * Solution:
 		 * - Maintain a map from original VariableDeclarationFragments to their new FieldDeclaration.
 		 * - Original modifiers in declarationNode belong to the first fragment.
 		 * - When a later fragment needs different modifiers, we create a new FieldDeclaration and move all successive fragments into that declaration
-		 * - When a fragment has been moved to a new declaration, make sure we don't create a new move target again, but instead use the already created one 
+		 * - When a fragment has been moved to a new declaration, make sure we don't create a new move target again, but instead use the already created one
 		 */
 		List<VariableDeclarationFragment> fragments = declarationNode.fragments();
 		Iterator<VariableDeclarationFragment> iter = fragments.iterator();
