@@ -626,7 +626,8 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String getFileURI(IResource resource) {
-		return ResourceUtils.fixURI(resource.getRawLocationURI() == null ? resource.getLocationURI() : resource.getRawLocationURI());
+		URI uri = resource.getRawLocationURI();
+		return ResourceUtils.fixURI(uri == null ? resource.getLocationURI() : uri);
 	}
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
