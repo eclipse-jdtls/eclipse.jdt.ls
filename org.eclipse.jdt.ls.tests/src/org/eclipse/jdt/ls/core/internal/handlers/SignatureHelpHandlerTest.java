@@ -342,6 +342,69 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("println\\(Object \\w+\\) : void"));
 	}
 
+	@Test
+	public void testSignatureHelp_stringLiteral() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	public void foo(String p, int x) {\n");
+		buf.append("		 foo(\"(\" , 1)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		testStringLiteral(cu, 3, 7);
+		testStringLiteral(cu, 3, 8);
+		testStringLiteral(cu, 3, 9);
+		testStringLiteral(cu, 3, 10);
+		testStringLiteral(cu, 3, 11);
+		testStringLiteral(cu, 3, 12);
+		testStringLiteral(cu, 3, 13);
+		testStringLiteral(cu, 3, 14);
+	}
+
+	private void testStringLiteral(ICompilationUnit cu, int line, int character) {
+		SignatureHelp help = getSignatureHelp(cu, line, character);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertNotNull(help.getActiveParameter());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("foo(String p, int x) : void"));
+	}
+
+	@Test
+	public void testSignatureHelp_assertEquals() throws Exception {
+		importProjects("maven/classpathtest");
+		project = WorkspaceHelper.getProject("classpathtest");
+		IJavaProject javaProject = JavaCore.create(project);
+		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src/test/java"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import static org.junit.Assert.assertEquals;\n");
+		buf.append("public class E {\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		 long num = 1;\n");
+		buf.append("		 assertEquals(num,num)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		testAssertEquals(cu, 5, 16);
+		testAssertEquals(cu, 5, 17);
+		testAssertEquals(cu, 5, 18);
+		testAssertEquals(cu, 5, 19);
+		testAssertEquals(cu, 5, 20);
+		testAssertEquals(cu, 5, 21);
+		testAssertEquals(cu, 5, 22);
+	}
+
+	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
+		SignatureHelp help = getSignatureHelp(cu, line, character);
+		assertNotNull(help);
+		assertEquals(12, help.getSignatures().size());
+		assertNotNull(help.getActiveParameter());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("assertEquals(long expected, long actual) : void"));
+	}
+
 	private SignatureHelp getSignatureHelp(ICompilationUnit cu, int line, int character) {
 		String payload = createSignatureHelpRequest(cu, line, character);
 		TextDocumentPositionParams position = getParams(payload);
