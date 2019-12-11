@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
@@ -82,6 +83,16 @@ public class SignatureHelpHandler {
 			if (offset > -1 && !monitor.isCanceled()) {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
 				help = collector.getSignatureHelp(monitor);
+				IMethod method = getMethod(node);
+				if (help.getSignatures().isEmpty()) {
+					int pos = offset;
+					if (method != null) {
+						int start = node.getStartPosition();
+						pos = start + method.getElementName().length();
+					}
+					unit.codeComplete(pos, collector, monitor);
+					help = collector.getSignatureHelp(monitor);
+				}
 				if (!monitor.isCanceled() && help != null) {
 					SignatureHelp help2 = null;
 					SignatureHelpRequestor collector2 = null;
@@ -95,30 +106,45 @@ public class SignatureHelpHandler {
 					List<SignatureInformation> infos = help.getSignatures();
 					int activeParameter = currentParameter < 0 ? 0 : currentParameter;
 					if (node != null) {
+						IJavaProject javaProject = unit.getJavaProject();
 						if (help2 != null) {
-							for (int i = 0; i < infos.size(); i++) {
-								if (infos.get(i).getParameters().size() >= size) {
-									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-									IMethod m = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
-									if (isSameParameters(m, help2, collector2, unit.getJavaProject())) {
-										help.setActiveSignature(i);
-										help.setActiveParameter(activeParameter);
-										break;
-									}
-								}
-							}
-						}
-						if (!monitor.isCanceled() && help.getActiveSignature() == null && (help2 == null || help2.getSignatures().size() <= 0)) {
-							IMethod method = getMethod(node);
 							if (method != null) {
 								for (int i = 0; i < infos.size(); i++) {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-										IMethod m = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
+										if (isSameParameters(m, method)) {
+											help.setActiveSignature(i);
+											help.setActiveParameter(activeParameter);
+											return help;
+										}
+									}
+								}
+							}
+							if (!monitor.isCanceled() && help.getActiveSignature() == null) {
+								for (int i = 0; i < infos.size(); i++) {
+									if (infos.get(i).getParameters().size() >= size) {
+										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
+										if (isSameParameters(m, help2, collector2, javaProject)) {
+											help.setActiveSignature(i);
+											help.setActiveParameter(activeParameter);
+											return help;
+										}
+									}
+								}
+							}
+						}
+						if (!monitor.isCanceled() && help.getActiveSignature() == null) {
+							if (method != null) {
+								for (int i = 0; i < infos.size(); i++) {
+									if (infos.get(i).getParameters().size() >= size) {
+										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
 										if (isSameParameters(method, m)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
-											break;
+											return help;
 										}
 									}
 								}
@@ -135,7 +161,7 @@ public class SignatureHelpHandler {
 									} else {
 										help.setActiveParameter(activeParameter);
 									}
-									break;
+									return help;
 								}
 							}
 						}
@@ -144,7 +170,7 @@ public class SignatureHelpHandler {
 								if (infos.get(i).getParameters().size() >= activeParameter) {
 									help.setActiveSignature(i);
 									help.setActiveParameter(activeParameter);
-									break;
+									return help;
 								}
 							}
 						}
@@ -248,6 +274,12 @@ public class SignatureHelpHandler {
 					}
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+			}
+			if (node instanceof Expression) {
+				node = node.getParent();
+				if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef) {
+					return node;
 				}
 			}
 		}
