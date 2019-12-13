@@ -86,6 +86,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.InitHandler;
+import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
@@ -129,8 +130,19 @@ public class ProjectsManager implements ISaveParticipant {
 
 	};
 
+	private IPreferencesChangeListener prefChangeListener = new IPreferencesChangeListener() {
+		@Override
+		public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
+			if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
+				registerWatcherJob.schedule(1000L);
+				UpdateClasspathJob.getInstance().updateClasspath();
+			}
+		}
+	};
+
 	public ProjectsManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+		this.preferenceManager.addPreferencesChangeListener(prefChangeListener);
 	}
 
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
@@ -653,6 +665,7 @@ public class ProjectsManager implements ISaveParticipant {
 	public List<FileSystemWatcher> registerWatchers() {
 		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
+			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
 			Set<IPath> sources = new HashSet<>();
 			try {
 				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
@@ -688,14 +701,11 @@ public class ProjectsManager implements ISaveParticipant {
 								}
 							}
 						}
-						if (!ProjectUtils.isVisibleProject(project)) {
-							//watch lib folder for invisible projects
-							IPath realFolderPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocation();
-							if (realFolderPath != null) {
-								IPath libFolderPath = realFolderPath.append(InvisibleProjectBuildSupport.LIB_FOLDER);
-								if (!isContainedIn(libFolderPath, sources)) {
-									sources.add(libFolderPath);
-								}
+						if (!ProjectUtils.isVisibleProject(project)) { // Invisible project will watch referenced libaraies' include pattern
+							IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
+							Set<String> libraries = preferenceManager.getPreferences().getReferencedLibraries().getInclude();
+							for (String pattern: libraries) {
+								patterns.add(ProjectUtils.resolveGlobPath(projectFolder, pattern).toString());
 							}
 						}
 					}
@@ -717,7 +727,6 @@ public class ProjectsManager implements ISaveParticipant {
 					}
 				}
 			}
-			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
 			patterns.addAll(sources.stream().map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
 
 			for (String pattern : patterns) {
