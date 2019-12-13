@@ -218,9 +218,7 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
 			capabilities.setSelectionRangeProvider(Boolean.TRUE);
 		}
-		if (!preferenceManager.getClientPreferences().isCallHierarchyDynamicRegistered()) {
-			capabilities.setCallHierarchyProvider(Boolean.TRUE);
-		}
+		capabilities.setCallHierarchyProvider(Boolean.TRUE);
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);
 		textDocumentSyncOptions.setSave(new SaveOptions(Boolean.TRUE));

@@ -287,7 +287,7 @@ public class ClientPreferences {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getPublishDiagnostics() != null
 				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport() != null
-				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport().booleanValue();
+				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport().getValueSet() != null;
 		//@formatter:on
 	}
 

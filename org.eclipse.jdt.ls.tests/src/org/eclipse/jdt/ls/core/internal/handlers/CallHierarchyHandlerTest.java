@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static org.eclipse.lsp4j.CallHierarchyDirection.Incoming;
-import static org.eclipse.lsp4j.CallHierarchyDirection.Outgoing;
 import static org.eclipse.lsp4j.SymbolKind.Class;
 import static org.eclipse.lsp4j.SymbolKind.Constructor;
 import static org.eclipse.lsp4j.SymbolKind.Field;
@@ -25,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
@@ -32,12 +29,15 @@ import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.eclipse.lsp4j.CallHierarchyDirection;
+import org.eclipse.lsp4j.CallHierarchyIncomingCall;
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
-import org.eclipse.lsp4j.CallHierarchyParams;
-import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
+import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,92 +53,118 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void incoming_src_missing() throws Exception {
+	public void prepareCallHierarchy_noItemAtLocation() throws Exception {
 		// Line 16 from `CallHierarchy`
 		//<|>/*nothing*/
 		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
-		assertNull(getIncomings(uri, 13, 0, 1));
+		assertNull(prepareCallHierarchy(uri, 15, 0));
 	}
 
 	@Test
-	public void incoming_src_resolve_0() throws Exception {
+	public void prepareCallHierarchy() throws Exception {
 		// Line 15 from `CallHierarchy`
 		//    protected int <|>protectedField = 200;
 		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
-		CallHierarchyItem item = getIncomings(uri, 14, 18, 0);
-		assertItem(item, "protectedField", Field, "", null, false, null);
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 14, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "protectedField", Field, "", false, 14);
 	}
 
 	@Test
-	public void incoming_src_resolve_1() throws Exception {
-		// Line 26 from `CallHierarchy`
-		//    public void <|>bar() {
-		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
-		CallHierarchyItem item = getIncomings(uri, 25, 16, 1);
-		assertItem(item, "bar()", Method, "void", 3, false, null);
-
-		List<CallHierarchyItem> calls = item.getCalls();
-		assertItem(calls.get(0), "Child()", Constructor, "", null, false, asList(45));
-		assertItem(calls.get(1), "main(String[])", Method, "void", null, true, asList(7));
-		assertItem(calls.get(2), "method_1()", Method, "void", null, false, asList(35));
-	}
-
-	@Test
-	public void outgoing_src_resolve_0_enclosing() throws Exception {
+	public void prepareCallHierarchy_src_enclosing() throws Exception {
 		// Line 20 from `CallHierarchy`
 		///*should resolve to enclosing "method/constructor/initializer"*/
 		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
-		CallHierarchyItem item = getIncomings(uri, 19, 0, 0);
-		assertItem(item, "Base()", Constructor, "", null, false, null);
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 19, 0);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "Base()", Constructor, "", false, 18);
 	}
 
 	@Test
-	public void outgoing_src_resolve_2() throws Exception {
+	public void incomingCalls_src() throws Exception {
+		// Line 27 from `CallHierarchy`
+		//    public void <|>bar() {
+		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 26, 16);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "bar()", Method, "void", false, 26);
+
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+		assertNotNull(calls);
+		assertEquals(3, calls.size());
+		assertItem(calls.get(0).getFrom(), "Child()", Constructor, "", false, 42);
+		assertItem(calls.get(1).getFrom(), "main(String[])", Method, "void", true, 5);
+		assertItem(calls.get(2).getFrom(), "method_1()", Method, "void", false, 33);
+	}
+
+	@Test
+	public void outgoingCalls_src() throws Exception {
 		// Line 34 from `CallHierarchy`
 		//    protected void <|>method_1() {
 		String uri = getUriFromSrcProject("org.sample.CallHierarchy");
-		CallHierarchyItem item = getOutgoings(uri, 33, 19, 2);
-		assertItem(item, "method_1()", Method, "void", 2, false, null);
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 33, 19);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "method_1()", Method, "void", false, 33);
 
-		List<CallHierarchyItem> calls = item.getCalls();
-		assertItem(calls.get(0), "foo()", Method, "void", 0, false, asList(34));
-		assertItem(calls.get(1), "bar()", Method, "void", 2, false, asList(35));
+		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
+		assertNotNull(calls);
+		assertEquals(2, calls.size());
+		assertItem(calls.get(0).getTo(), "foo()", Method, "void", false, 22);
+		assertItem(calls.get(1).getTo(), "bar()", Method, "void", false, 26);
 
-		List<CallHierarchyItem> call1Calls = calls.get(1).getCalls();
-		assertItem(call1Calls.get(0), "Child()", Constructor, "", null, false, asList(27, 28));
-		assertItem(call1Calls.get(1), "currentThread()", Method, "Thread", null, false, asList(29, 30));
+		List<CallHierarchyOutgoingCall> call1Calls = getOutgoings(calls.get(1).getTo());
+		assertNotNull(call1Calls);
+		assertEquals(2, call1Calls.size());
+		assertItem(call1Calls.get(0).getTo(), "Child()", Constructor, "", false, 42);
+		assertItem(call1Calls.get(1).getTo(), "currentThread()", Method, "Thread", false, 0);
 	}
 
 	@Test
-	public void incoming_jar_resolve_2() throws Exception {
+	public void incomingCalls_maven() throws Exception {
 		// Line 12 from `CallHierarchyOther`
 		//  @Deprecated public static class <|>X {
 		String uri = getUriFromJarProject("org.sample.CallHierarchyOther");
-		CallHierarchyItem item = getIncomings(uri, 11, 34, 2);
-		assertItem(item, "X", Class, "", 1, true, null);
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 11, 34);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "X", Class, "", true, 11);
 
-		List<CallHierarchyItem> calls = item.getCalls();
-		assertItem(calls.get(0), "FooBuilder()", Constructor, "", 1, false, asList(10));
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+		assertNotNull(calls);
+		assertEquals(1, calls.size());
+		assertItem(calls.get(0).getFrom(), "FooBuilder()", Constructor, "", false, 9);
 
-		List<CallHierarchyItem> call0Calls = calls.get(0).getCalls();
-		assertItem(call0Calls.get(0), "{...}", Constructor, "", null, false, asList(5, 6, 7));
+		List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
+		assertNotNull(call0Calls);
+		assertEquals(1, call0Calls.size());
+		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "", false, 4);
 	}
 
 	@Test
-	public void outgoing_jar_resolve_2() throws Exception {
+	public void outgoing_jar() throws Exception {
 		// Line 15 from `CallHierarchy`
 		//    public Object <|>build() {
 		String uri = getUriFromJarProject("org.sample.CallHierarchy");
-		CallHierarchyItem item = getOutgoings(uri, 14, 18, 2);
-		assertItem(item, "build()", Method, "Object", 1, false, null);
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 14, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "build()", Method, "Object", false, 14);
 
-		List<CallHierarchyItem> calls = item.getCalls();
-		assertItem(calls.get(0), "capitalize(String)", Method, "String", 1, false, asList(15, 16));
+		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
+		assertNotNull(calls);
+		assertEquals(1, calls.size());
+		assertItem(calls.get(0).getTo(), "capitalize(String)", Method, "String", false, 368);
 
-		List<CallHierarchyItem> call0Calls = calls.get(0).getCalls();
-		assertItem(call0Calls.get(0), "capitalize(String, char...)", Method, "String", null, false, asList(369));
+		List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());
+		assertNotNull(call0Calls);
+		assertEquals(1, call0Calls.size());
+		assertItem(call0Calls.get(0).getTo(), "capitalize(String, char...)", Method, "String", false, 401);
 
-		String jarUri = call0Calls.get(0).getUri();
+		String jarUri = call0Calls.get(0).getTo().getUri();
 		assertTrue(jarUri.startsWith("jdt://"));
 		assertTrue(jarUri.contains("org.apache.commons.lang3.text"));
 		assertTrue(jarUri.contains("WordUtils.class"));
@@ -153,16 +179,13 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 	 *            the expected kind
 	 * @param detail
 	 *            the expected detail <b>without</b> the ` : ` (declaration) suffix.
-	 * @param calls
-	 *            the number of calls or {@code null} if expected non-defined calls.
 	 * @param deprecated
 	 *            expected deprecated state
-	 * @param callLocationStartLines
-	 *            {@code null}, if there are no call locations. Otherwise a list of
-	 *            expected start lines for the call locations
+	 * @param selectionStartLine
+	 *            the start line of the selection range
 	 * @return the {@code item}
 	 */
-	static CallHierarchyItem assertItem(CallHierarchyItem item, String name, SymbolKind kind, String detail, Integer calls, boolean deprecated, List<Integer> callLocationStartLines) {
+	static CallHierarchyItem assertItem(CallHierarchyItem item, String name, SymbolKind kind, String detail, boolean deprecated, int selectionStartLine) {
 		assertNotNull(item);
 		assertEquals(name, item.getName());
 		assertEquals(kind, item.getKind());
@@ -171,39 +194,38 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		} else {
 			assertEquals(JavaElementLabels.DECL_STRING + detail, item.getDetail());
 		}
-		if (calls == null) {
-			assertNull(item.getCalls());
+		if (deprecated) {
+			assertNotNull(item.getTags());
+			assertTrue(Stream.of(item.getTags()).anyMatch(tag -> tag == SymbolTag.Deprecated));
 		} else {
-			assertEquals(calls.intValue(), item.getCalls().size());
+			assertTrue(item.getTags() == null || item.getTags().length == 0 || !Stream.of(item.getTags()).anyMatch(tag -> tag == SymbolTag.Deprecated));
 		}
-		assertEquals(deprecated, item.getDeprecated());
-		if (callLocationStartLines == null) {
-			assertNull(item.getCallLocations());
-		} else {
-			List<Location> callLocations = item.getCallLocations();
-			assertEquals(callLocationStartLines.size(), callLocations.size());
-			List<Integer> actualStartLines = callLocations.stream().map(loc -> loc.getRange().getStart().getLine()).collect(toList());
-			assertEquals(callLocationStartLines, actualStartLines);
-		}
+
+		assertEquals(selectionStartLine, item.getSelectionRange().getStart().getLine());
 		return item;
 	}
 
-	static CallHierarchyItem getIncomings(String uri, int line, int character, int resolve) {
-		CallHierarchyParams params = createParams(uri, line, character, Incoming, resolve);
-		return new CallHierarchyHandler().callHierarchy(params, new NullProgressMonitor());
+	static List<CallHierarchyItem> prepareCallHierarchy(String uri, int line, int character) {
+		CallHierarchyPrepareParams params = createCallHierarchyPrepareParams(uri, line, character);
+		return new CallHierarchyHandler().prepareCallHierarchy(params, new NullProgressMonitor());
 	}
 
-	static CallHierarchyItem getOutgoings(String uri, int line, int character, int resolve) {
-		CallHierarchyParams params = createParams(uri, line, character, Outgoing, resolve);
-		return new CallHierarchyHandler().callHierarchy(params, new NullProgressMonitor());
+	static List<CallHierarchyIncomingCall> getIncomingCalls(CallHierarchyItem item) {
+		CallHierarchyIncomingCallsParams params = new CallHierarchyIncomingCallsParams();
+		params.setItem(item);
+		return new CallHierarchyHandler().callHierarchyIncomingCalls(params, new NullProgressMonitor());
 	}
 
-	static CallHierarchyParams createParams(String uri, int line, int character, CallHierarchyDirection direction, int resolve) {
-		CallHierarchyParams params = new CallHierarchyParams();
+	static List<CallHierarchyOutgoingCall> getOutgoings(CallHierarchyItem item) {
+		CallHierarchyOutgoingCallsParams params = new CallHierarchyOutgoingCallsParams();
+		params.setItem(item);
+		return new CallHierarchyHandler().callHierarchyOutgoingCalls(params, new NullProgressMonitor());
+	}
+
+	static CallHierarchyPrepareParams createCallHierarchyPrepareParams(String uri, int line, int character) {
+		CallHierarchyPrepareParams params = new CallHierarchyPrepareParams();
 		params.setTextDocument(new TextDocumentIdentifier(uri));
 		params.setPosition(new Position(line, character));
-		params.setDirection(direction);
-		params.setResolve(resolve);
 		return params;
 	}
 

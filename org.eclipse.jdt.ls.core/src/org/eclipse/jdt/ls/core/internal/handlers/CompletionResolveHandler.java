@@ -18,6 +18,7 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.stripS
 
 import java.io.Reader;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -134,7 +135,7 @@ public class CompletionResolveHandler {
 					String javadoc = null;
 					try {
 						final IMember curMember = member;
-						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
+						javadoc = SimpleTimeLimiter.create(Executors.newCachedThreadPool()).callWithTimeout(() -> {
 							Reader reader;
 							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 								reader = JavadocContentAccess2.getMarkdownContentReader(curMember);
@@ -142,7 +143,7 @@ public class CompletionResolveHandler {
 								reader = JavadocContentAccess.getPlainTextContentReader(curMember);
 							}
 							return reader == null? null:CharStreams.toString(reader);
-						}, 500, TimeUnit.MILLISECONDS, true);
+						}, 500, TimeUnit.MILLISECONDS);
 					} catch (UncheckedTimeoutException tooSlow) {
 						//Ignore error for now as it's spamming clients on content assist.
 						//TODO cache javadoc resolution results?

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -190,10 +191,10 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 					String javadoc = null;
 					try {
-						javadoc = new SimpleTimeLimiter().callWithTimeout(() -> {
+						javadoc = SimpleTimeLimiter.create(Executors.newCachedThreadPool()).callWithTimeout(() -> {
 							Reader reader = JavadocContentAccess.getPlainTextContentReader(method);
 							return reader == null? null:CharStreams.toString(reader);
-						}, 500, TimeUnit.MILLISECONDS, true);
+						}, 500, TimeUnit.MILLISECONDS);
 					} catch (UncheckedTimeoutException tooSlow) {
 					} catch (Exception e) {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
