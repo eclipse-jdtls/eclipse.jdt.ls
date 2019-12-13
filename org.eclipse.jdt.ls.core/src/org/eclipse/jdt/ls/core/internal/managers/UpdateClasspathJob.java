@@ -15,18 +15,17 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -34,7 +33,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
 
 /**
  * Job updating project classpath to match content of library folders.
@@ -58,9 +61,10 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			requests = new ArrayList<>(this.queue);
 			this.queue.clear();
 		}
-		Map<IJavaProject, Optional<UpdateClasspathRequest>> mergedRequestPerProject = requests.stream().collect(
+		Map<IJavaProject, UpdateClasspathRequest> mergedRequestPerProject = requests.stream().collect(
 			Collectors.groupingBy(UpdateClasspathRequest::getProject,
-				Collectors.reducing((mergedRequest, request) -> {
+				Collectors.reducing(new UpdateClasspathRequest(), (mergedRequest, request) -> {
+					mergedRequest.setProject(request.getProject());
 					mergedRequest.getInclude().addAll(request.getInclude());
 					mergedRequest.getExclude().addAll(request.getExclude());
 					mergedRequest.getSources().putAll(request.getSources());
@@ -68,14 +72,14 @@ public class UpdateClasspathJob extends WorkspaceJob {
 				})
 			)
 		);
-		for (Map.Entry<IJavaProject, Optional<UpdateClasspathRequest>> entry : mergedRequestPerProject.entrySet()) {
+		for (Map.Entry<IJavaProject, UpdateClasspathRequest> entry : mergedRequestPerProject.entrySet()) {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
 			if (entry.getValue() != null) {
 				final IJavaProject project = entry.getKey();
-				final UpdateClasspathRequest request = entry.getValue().get();
-				updateClasspath(project, request.include, request.exclude, request.sources, monitor);
+				final UpdateClasspathRequest request = entry.getValue();
+				doUpdateClasspath(project, request.include, request.exclude, request.sources, monitor);
 			}
 		}
 		synchronized (queue) {
@@ -86,41 +90,63 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		return Status.OK_STATUS;
 	}
 
-	private void updateClasspath(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, IPath> sources, IProgressMonitor monitor) throws CoreException {
-		final Map<String, IPath> libraries = new HashMap<>();
-		for (final String binary: include) {
-			if (exclude.contains(binary)) {
-				continue;
-			}
-			libraries.put(binary, sources.get(binary));
+	private void doUpdateClasspath(IJavaProject javaProject, Set<String> include, Set<String> exclude, Map<String, String> sources, IProgressMonitor monitor) throws CoreException {
+		JavaLanguageServerPlugin.logInfo(">> Updating classpath for project " + javaProject.getElementName());
+		final IPath realFolder = ProjectUtils.getProjectRealFolder(javaProject.getProject());
+		final Set<Path> binaries = ProjectUtils.collectBinaries(realFolder, include, exclude, monitor);
+		final Map<Path, IPath> expandedSources = new HashMap<>();
+		for (final Map.Entry<String, String> entry: sources.entrySet()) { // Expand sources to absolute path
+			final Path realFolderPath = realFolder.toFile().toPath();
+			final Path binary = realFolderPath.resolve(entry.getKey());
+			final Path source = realFolderPath.resolve(entry.getValue());
+			expandedSources.put(binary, new org.eclipse.core.runtime.Path(source.toString()));
 		}
-		ProjectUtils.updateBinaries(project, libraries, monitor);
+		final Map<String, IPath> libraries = new HashMap<>();
+		for (final Path binary: binaries) {
+			if (expandedSources.containsKey(binary)) {
+				libraries.put(binary.toString(), expandedSources.get(binary));
+			} else { // If not specified in source map, try to detect it
+				libraries.put(binary.toString(), ProjectUtils.detectSources(binary));
+			}
+		}
+		ProjectUtils.updateBinaries(javaProject, libraries, monitor);
 	}
 
-	public void updateClasspath(IJavaProject project, Collection<String> include, Collection<String> exclude, Map<String, IPath> sources) {
+	public void updateClasspath(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources) {
 		if (project == null || include == null) {
 			return;
 		}
 		if (exclude == null) {
-			exclude = new ArrayList<>();
+			exclude = new HashSet<>();
 		}
 		if (sources == null) {
 			sources = new HashMap<>();
 		}
-		queue(new UpdateClasspathRequest(project, new HashSet<>(include), new HashSet<>(exclude), sources));
-		schedule(SCHEDULE_DELAY);
+		update(new UpdateClasspathRequest(project, include, exclude, sources));
 	}
 
-	public void updateClasspath(IJavaProject project, IPath libFolderPath, IProgressMonitor monitor) throws CoreException {
-		final Set<Path> binaries = ProjectUtils.collectBinaries(Collections.singleton(libFolderPath), monitor);
-		final Set<String> include = new HashSet<>();
-		final Map<String, IPath> sources = new HashMap<>();
-		for (final Path binary: binaries) {
-			final IPath source = ProjectUtils.detectSources(binary);
-			include.add(binary.toString());
-			sources.put(binary.toString(), source);
+	public void updateClasspath(IJavaProject project, ReferencedLibraries libraries) {
+		updateClasspath(project, libraries.getInclude(), libraries.getExclude(), libraries.getSources());
+	}
+
+	public void updateClasspath(IJavaProject project) {
+		updateClasspath(project, JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getReferencedLibraries());
+	}
+
+	public void updateClasspath() {
+		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+		Collection<IPath> rootPaths = preferences.getRootPaths();
+		if (rootPaths == null) {
+			return;
 		}
-		updateClasspath(project, include, null, sources);
+		for (IPath rootPath: rootPaths) { // Update classpath for all invisible projects
+			String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
+			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
+			if (!(project.exists() && project.isAccessible())) {
+				continue;
+			}
+			updateClasspath(JavaCore.create(project), preferences.getReferencedLibraries());
+		}
 	}
 
 	void update(UpdateClasspathRequest updateRequest) {
@@ -138,13 +164,21 @@ public class UpdateClasspathJob extends WorkspaceJob {
 		private IJavaProject project;
 		private Set<String> include;
 		private Set<String> exclude;
-		private Map<String, IPath> sources;
+		private Map<String, String> sources;
 
-		UpdateClasspathRequest(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, IPath> sources) {
+		UpdateClasspathRequest(IJavaProject project, Set<String> include, Set<String> exclude, Map<String, String> sources) {
 			this.project = project;
 			this.include = include;
 			this.exclude = exclude;
 			this.sources = sources;
+		}
+
+		UpdateClasspathRequest() {
+			this(null, new HashSet<>(), new HashSet<>(), new HashMap<>());
+		}
+
+		void setProject(IJavaProject project) {
+			this.project = project;
 		}
 
 		IJavaProject getProject() {
@@ -159,7 +193,7 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			return exclude;
 		}
 
-		Map<String, IPath> getSources() {
+		Map<String, String> getSources() {
 			return sources;
 		}
 
