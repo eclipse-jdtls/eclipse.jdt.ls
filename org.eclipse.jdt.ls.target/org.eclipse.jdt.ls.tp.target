@@ -36,15 +36,15 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="http://download.eclipse.org/releases/2019-06/"/>
+            <repository location="http://download.eclipse.org/releases/2019-09/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
             <repository location="https://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.3-2019-11-08_11-04-22-H22/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://github.com/kittaakos/lsp4j-call-hierarchy/raw/master/p2/"/>
-           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.7.0.v20190128-1442"/>
+           <repository location="https://github.com/testforstephen/lsp4j/raw/p2/p2/"/>
+           <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>

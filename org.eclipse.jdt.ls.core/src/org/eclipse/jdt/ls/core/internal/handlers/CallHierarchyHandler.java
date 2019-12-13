@@ -11,11 +11,11 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 import static org.eclipse.jdt.core.ICompilationUnit.NO_AST;
 import static org.eclipse.jdt.core.IJavaElement.CLASS_FILE;
 import static org.eclipse.jdt.core.IJavaElement.COMPILATION_UNIT;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -37,56 +37,90 @@ import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.corext.callhierarchy.CallHierarchyCore;
+import org.eclipse.jdt.internal.corext.callhierarchy.CallLocation;
+import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.callhierarchy.CallHierarchy;
-import org.eclipse.jdt.ls.core.internal.corext.callhierarchy.CallLocation;
-import org.eclipse.jdt.ls.core.internal.corext.callhierarchy.MethodWrapper;
-import org.eclipse.lsp4j.CallHierarchyDirection;
+import org.eclipse.lsp4j.CallHierarchyIncomingCall;
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
-import org.eclipse.lsp4j.CallHierarchyParams;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
+import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.SymbolTag;
 
-/**
- * Handler for the {@link TextDocumentService#callHierarchy(CallHierarchyParams)
- * <code>textDocument/callHierarchy</code>} language server method.
- */
 public class CallHierarchyHandler {
 
-	protected static ThreadLocal<CallHierarchyItem> THREAD_LOCAL = new ThreadLocal<>();
-
-	public CallHierarchyItem callHierarchy(CallHierarchyParams params, IProgressMonitor monitor) {
+	public List<CallHierarchyItem> prepareCallHierarchy(CallHierarchyPrepareParams params, IProgressMonitor monitor) {
 		Assert.isNotNull(params, "params");
-		Assert.isLegal(params.getResolve() >= 0, "'resolve' must a non-negative integer. Was: " + params.getResolve());
 
-		CallHierarchyDirection direction = params.getDirection() == null ? CallHierarchyDirection.Incoming : params.getDirection();
 		String uri = params.getTextDocument().getUri();
 		int line = params.getPosition().getLine();
 		int character = params.getPosition().getCharacter();
-		int resolve = params.getResolve();
 
 		try {
-			return getCallHierarchyItemAt(uri, line, character, resolve, direction, monitor);
+			IMember candidate = getCallHierarchyElement(uri, line, character, monitor);
+			if (candidate == null) {
+				return null;
+			}
+			checkMonitor(monitor);
+			return Arrays.asList(toCallHierarchyItem(candidate));
 		} catch (OperationCanceledException e) {
-			return THREAD_LOCAL.get();
+			// do nothing
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.log(e);
-		} finally {
-			if (THREAD_LOCAL.get() != null) {
-				THREAD_LOCAL.set(null);
-			}
 		}
+
 		return null;
 	}
 
-	private CallHierarchyItem getCallHierarchyItemAt(String uri, int line, int character, int resolve, CallHierarchyDirection direction, IProgressMonitor monitor) throws JavaModelException {
+	public List<CallHierarchyIncomingCall> callHierarchyIncomingCalls(CallHierarchyIncomingCallsParams params, IProgressMonitor monitor) {
+		Assert.isNotNull(params, "params");
+
+		CallHierarchyItem item = params.getItem();
+		Assert.isNotNull(item, "call item");
+		Position position = item.getSelectionRange().getStart();
+		int line = position.getLine();
+		int character = position.getCharacter();
+
+		try {
+			return getIncomingCallItemsAt(item.getUri(), line, character, monitor);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+		} catch (OperationCanceledException e) {
+			// do nothing
+		}
+
+		return null;
+	}
+
+	public List<CallHierarchyOutgoingCall> callHierarchyOutgoingCalls(CallHierarchyOutgoingCallsParams params, IProgressMonitor monitor) {
+		Assert.isNotNull(params, "params");
+
+		CallHierarchyItem item = params.getItem();
+		Assert.isNotNull(item, "call item");
+		Position position = item.getSelectionRange().getStart();
+		int line = position.getLine();
+		int character = position.getCharacter();
+
+		try {
+			return getOutgoingCallItemsAt(item.getUri(), line, character, monitor);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+		} catch (OperationCanceledException e) {
+			// do nothing
+		}
+
+		return null;
+	}
+
+	private IMember getCallHierarchyElement(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
 		Assert.isNotNull(uri, "uri");
-		Assert.isLegal(resolve >= 0, "Expected a non negative integer for 'resolve'. Was: " + resolve);
-		Assert.isNotNull(direction, "direction");
 
 		ITypeRoot root = JDTUtils.resolveTypeRoot(uri);
 		if (root == null) {
@@ -107,7 +141,7 @@ public class CallHierarchyHandler {
 		IMember candidate = null;
 		int offset = JsonRpcHelpers.toOffset(root, line, character);
 		List<IJavaElement> selectedElements = codeResolve(root, offset);
-		Stream<IJavaElement> possibleElements = selectedElements.stream().filter(CallHierarchy::isPossibleInputElement);
+		Stream<IJavaElement> possibleElements = selectedElements.stream().filter(CallHierarchyCore::isPossibleInputElement);
 		Optional<IJavaElement> firstElement = possibleElements.findFirst();
 		if (firstElement.isPresent() && firstElement.get() instanceof IMember) {
 			candidate = (IMember) firstElement.get();
@@ -121,14 +155,69 @@ public class CallHierarchyHandler {
 			}
 		}
 
+		return candidate;
+	}
+
+	private List<CallHierarchyIncomingCall> getIncomingCallItemsAt(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
+		IMember candidate = getCallHierarchyElement(uri, line, character, monitor);
+		if (candidate == null) {
+			return null;
+		}
+
 		checkMonitor(monitor);
 
-		MethodWrapper wrapper = toMethodWrapper(candidate, direction);
+		MethodWrapper wrapper = toMethodWrapper(candidate, true);
 		if (wrapper == null) {
 			return null;
 		}
 
-		return toCallHierarchyItem(wrapper, resolve, monitor);
+		MethodWrapper[] calls = wrapper.getCalls(monitor);
+		if (calls == null) {
+			return null;
+		}
+
+		List<CallHierarchyIncomingCall> result = new ArrayList<>();
+		for (MethodWrapper call : calls) {
+			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
+			CallHierarchyIncomingCall incomingCall = new CallHierarchyIncomingCall();
+			incomingCall.setFrom(symbol);
+			incomingCall.setFromRanges(ranges.toArray(new Range[0]));
+			result.add(incomingCall);
+		}
+
+		return result;
+	}
+
+	private List<CallHierarchyOutgoingCall> getOutgoingCallItemsAt(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
+		IMember candidate = getCallHierarchyElement(uri, line, character, monitor);
+		if (candidate == null) {
+			return null;
+		}
+
+		checkMonitor(monitor);
+
+		MethodWrapper wrapper = toMethodWrapper(candidate, false);
+		if (wrapper == null) {
+			return null;
+		}
+
+		MethodWrapper[] calls = wrapper.getCalls(monitor);
+		if (calls == null) {
+			return null;
+		}
+
+		List<CallHierarchyOutgoingCall> result = new ArrayList<>();
+		for (MethodWrapper call : calls) {
+			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
+			CallHierarchyOutgoingCall outgoingCall = new CallHierarchyOutgoingCall();
+			outgoingCall.setTo(symbol);
+			outgoingCall.setFromRanges(ranges.toArray(new Range[0]));
+			result.add(outgoingCall);
+		}
+
+		return result;
 	}
 
 	private List<IJavaElement> codeResolve(IJavaElement input, int offset) throws JavaModelException {
@@ -138,13 +227,13 @@ public class CallHierarchyHandler {
 		return emptyList();
 	}
 
-	private MethodWrapper toMethodWrapper(IMember member, CallHierarchyDirection direction) {
+	private MethodWrapper toMethodWrapper(IMember member, boolean isIncomingCall) {
 		Assert.isNotNull(member, "member");
 
 		IMember[] members = { member };
-		CallHierarchy callHierarchy = CallHierarchy.getDefault();
+		CallHierarchyCore callHierarchy = CallHierarchyCore.getDefault();
 		final MethodWrapper[] result;
-		if (direction == CallHierarchyDirection.Incoming) {
+		if (isIncomingCall) {
 			result = callHierarchy.getCallerRoots(members);
 		} else {
 			result = callHierarchy.getCalleeRoots(members);
@@ -155,58 +244,43 @@ public class CallHierarchyHandler {
 		return result[0];
 	}
 
-	private CallHierarchyItem toCallHierarchyItem(MethodWrapper wrapper, int resolve, IProgressMonitor monitor) {
-		checkMonitor(monitor);
-
-		if (wrapper == null || wrapper.getMember() == null) {
-			return null;
+	private CallHierarchyItem toCallHierarchyItem(IJavaElement member) throws JavaModelException {
+		Location fullLocation = getLocation(member, LocationType.FULL_RANGE);
+		Range range = fullLocation.getRange();
+		String uri = fullLocation.getUri();
+		CallHierarchyItem item = new CallHierarchyItem();
+		item.setName(JDTUtils.getName(member));
+		item.setKind(JDTUtils.getSymbolKind(member));
+		item.setRange(range);
+		item.setSelectionRange(getLocation(member, LocationType.NAME_RANGE).getRange());
+		item.setUri(uri);
+		item.setDetail(JDTUtils.getDetail(member));
+		if (JDTUtils.isDeprecated(member)) {
+			item.setTags(new SymbolTag[] { SymbolTag.Deprecated });
 		}
 
-		try {
-			IMember member = wrapper.getMember();
-			Location fullLocation = getLocation(member, LocationType.FULL_RANGE);
-			Range range = fullLocation.getRange();
-			String uri = fullLocation.getUri();
-			CallHierarchyItem item = new CallHierarchyItem();
-			item.setName(JDTUtils.getName(member));
-			item.setKind(JDTUtils.getSymbolKind(member));
-			item.setRange(range);
-			item.setSelectionRange(getLocation(member, LocationType.NAME_RANGE).getRange());
-			item.setUri(uri);
-			item.setDetail(JDTUtils.getDetail(member));
-			item.setDeprecated(JDTUtils.isDeprecated(member));
+		return item;
+	}
 
-			Collection<CallLocation> callLocations = wrapper.getMethodCall().getCallLocations();
-			// The `callLocations` should be `null` for the root item.
-			if (callLocations != null) {
-				item.setCallLocations(callLocations.stream().map(location -> {
-					IOpenable openable = location.getMember().getCompilationUnit();
-					if (openable == null) {
-						openable = location.getMember().getTypeRoot();
-					}
-					int[] start = JsonRpcHelpers.toLine(openable, location.getStart());
-					int[] end = JsonRpcHelpers.toLine(openable, location.getEnd());
-					Assert.isNotNull(start, "start");
-					Assert.isNotNull(end, "end");
-					Assert.isLegal(start[0] == end[0], "Expected equal start and end lines. Start was: " + Arrays.toString(start) + " End was:" + Arrays.toString(end));
-					Range callRange = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
-					return new Location(uri, callRange);
-				}).collect(toList()));
+	private List<Range> toCallRanges(Collection<CallLocation> callLocations) {
+		List<Range> ranges = new ArrayList<>();
+		if (callLocations != null) {
+			for (CallLocation location : callLocations) {
+				IOpenable openable = location.getMember().getCompilationUnit();
+				if (openable == null) {
+					openable = location.getMember().getTypeRoot();
+				}
+				int[] start = JsonRpcHelpers.toLine(openable, location.getStart());
+				int[] end = JsonRpcHelpers.toLine(openable, location.getEnd());
+				Assert.isNotNull(start, "start");
+				Assert.isNotNull(end, "end");
+				// Assert.isLegal(start[0] == end[0], "Expected equal start and end lines. Start was: " + Arrays.toString(start) + " End was:" + Arrays.toString(end));
+				Range callRange = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
+				ranges.add(callRange);
 			}
-
-			// Set the copy of the unresolved item to the thread local, so that we can return with it in case of user abort. (`monitor#cancel()`)
-			if (THREAD_LOCAL.get() == null) {
-				THREAD_LOCAL.set(shallowCopy(item));
-			}
-
-			if (resolve > 0) {
-				item.setCalls(Arrays.stream(wrapper.getCalls(monitor)).map(w -> toCallHierarchyItem(w, resolve - 1, monitor)).collect(toList()));
-			}
-			return item;
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Error when converting to a call hierarchy item.", e);
 		}
-		return null;
+
+		return ranges;
 	}
 
 	/**
@@ -216,23 +290,6 @@ public class CallHierarchyHandler {
 		if (monitor != null && monitor.isCanceled()) {
 			throw new OperationCanceledException();
 		}
-	}
-
-	/**
-	 * Returns with a copy of the argument without the
-	 * {@link CallHierarchyItem#getCalls() calls} set.
-	 */
-	private CallHierarchyItem shallowCopy(CallHierarchyItem other) {
-		CallHierarchyItem copy = new CallHierarchyItem();
-		copy.setName(other.getName());
-		copy.setDetail(other.getDetail());
-		copy.setKind(other.getKind());
-		copy.setDeprecated(other.getDeprecated());
-		copy.setUri(other.getUri());
-		copy.setRange(other.getRange());
-		copy.setSelectionRange(other.getSelectionRange());
-		copy.setCallLocations(other.getCallLocations());
-		return copy;
 	}
 
 	/**

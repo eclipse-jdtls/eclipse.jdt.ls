@@ -140,7 +140,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "B*";
 		List<SymbolInformation> results = handler.search(query, "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + "result", 5, results.size());
+		assertEquals("Found " + results.size() + "result", 6, results.size());
 		String className = "BaseTest";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
 		assertTrue("Did not find " + className, foundClass);

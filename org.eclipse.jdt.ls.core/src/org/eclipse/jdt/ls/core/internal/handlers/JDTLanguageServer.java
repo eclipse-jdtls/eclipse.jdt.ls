@@ -74,8 +74,12 @@ import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.CallHierarchyIncomingCall;
+import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
-import org.eclipse.lsp4j.CallHierarchyParams;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
+import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
+import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionOptions;
@@ -119,7 +123,6 @@ import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
-import org.eclipse.lsp4j.ResolveCallHierarchyItemParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -569,7 +572,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> handler.findReferences(params, monitor));
 	}
 
-	public 	CompletableFuture<List<? extends Location>> findLinks(FindLinksParams params) {
+	public CompletableFuture<List<? extends Location>> findLinks(FindLinksParams params) {
 		logInfo(">> java/findLinks");
 		return computeAsync((monitor) -> FindLinksHandler.findLinks(params.type, params.position, monitor));
 	}
@@ -907,22 +910,22 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsyncWithClientProgress((monitor) -> WorkspaceSymbolHandler.search(params.getQuery(), params.maxResults, params.projectName, params.sourceOnly, monitor));
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#callHierarchy(org.eclipse.lsp4j.CallHierarchyParams)
-	 */
 	@Override
-	public CompletableFuture<CallHierarchyItem> callHierarchy(CallHierarchyParams params) {
-		logInfo(">> textDocumentt/callHierarchy");
-		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchy(params, monitor));
+	public CompletableFuture<List<CallHierarchyItem>> prepareCallHierarchy(CallHierarchyPrepareParams params) {
+		logInfo(">> textDocumentt/prepareCallHierarchy");
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().prepareCallHierarchy(params, monitor));
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#resolveCallHierarchy(org.eclipse.lsp4j.ResolveCallHierarchyItemParams)
-	 */
 	@Override
-	public CompletableFuture<CallHierarchyItem> resolveCallHierarchy(ResolveCallHierarchyItemParams params) {
-		logInfo(">> callHierarchy/resolve");
-		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyResolveHandler().resolve(params, monitor));
+	public CompletableFuture<List<CallHierarchyIncomingCall>> callHierarchyIncomingCalls(CallHierarchyIncomingCallsParams params) {
+		logInfo(">> callHierarchy/incomingCalls");
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchyIncomingCalls(params, monitor));
+	}
+
+	@Override
+	public CompletableFuture<List<CallHierarchyOutgoingCall>> callHierarchyOutgoingCalls(CallHierarchyOutgoingCallsParams params) {
+		logInfo(">> callHierarchy/outgoingCalls");
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchyOutgoingCalls(params, monitor));
 	}
 
 	public void sendStatus(ServiceStatus serverStatus, String status) {
