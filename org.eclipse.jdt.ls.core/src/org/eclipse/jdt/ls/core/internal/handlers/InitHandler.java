@@ -124,9 +124,11 @@ final public class InitHandler {
 			Object settings = initializationOptions.get(SETTINGS_KEY);
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
+		} else {
+			preferenceManager.getPreferences().setRootPaths(rootPaths);
 		}
-		preferenceManager.getPreferences().setRootPaths(rootPaths);
 
 		Collection<IPath> triggerPaths = new ArrayList<>();
 		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
