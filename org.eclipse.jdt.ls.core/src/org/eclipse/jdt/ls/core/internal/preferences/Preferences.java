@@ -16,13 +16,18 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
@@ -152,6 +157,12 @@ public class Preferences {
 	 */
 	public static final String JAVA_IMPORT_EXCLUSIONS_KEY = "java.import.exclusions";
 	public static final List<String> JAVA_IMPORT_EXCLUSIONS_DEFAULT;
+
+	/**
+	 * Preference key to specify the local libraries referenced by invisible project
+	 */
+	public static final String JAVA_PROJECT_REFERENCED_LIBRARIES_KEY = "java.project.referencedLibraries";
+	public static final ReferencedLibraries JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 
 	/**
 	 * Preference key for project build/configuration update settings.
@@ -361,6 +372,7 @@ public class Preferences {
 	private List<String> javaCompletionFavoriteMembers;
 
 	private List<String> javaImportExclusions = new LinkedList<>();
+	private ReferencedLibraries referencedLibraries;
 	private String javaHome;
 	private List<String> importOrder;
 	private List<String> filteredTypes;
@@ -377,6 +389,8 @@ public class Preferences {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/META-INF/maven/**");
+		JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT = new ReferencedLibraries();
+		JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT.getInclude().add("lib/**");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT = new ArrayList<>();
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assert.*:");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assume.*:");
@@ -436,6 +450,54 @@ public class Preferences {
 		}
 	}
 
+	public static class ReferencedLibraries {
+		private Set<String> include;
+		private Set<String> exclude;
+		private Map<String, String> sources;
+
+		ReferencedLibraries() {
+			this(new HashSet<>(), new HashSet<>(), new HashMap<>());
+		}
+
+		ReferencedLibraries(Set<String> include) {
+			this(include, new HashSet<>(), new HashMap<>());
+		}
+
+		ReferencedLibraries(Set<String> include, Set<String> exclude, Map<String, String> sources) {
+			this.include = include;
+			this.exclude = exclude;
+			this.sources = sources;
+		}
+
+		public Set<String> getInclude() {
+			return include;
+		}
+
+		public Set<String> getExclude() {
+			return exclude;
+		}
+
+		public Map<String, String> getSources() {
+			return sources;
+		}
+
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			ReferencedLibraries other = (ReferencedLibraries) obj;
+			return Objects.equals(include, other.include)
+				&& Objects.equals(exclude, other.exclude)
+				&& Objects.equals(sources, other.sources);
+		}
+	}
+
 	public Preferences() {
 		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
@@ -481,11 +543,13 @@ public class Preferences {
 		filteredTypes = JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
 		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 		maxCompletionResults = JAVA_COMPLETION_MAX_RESULTS_DEFAULT;
+		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 	}
 
 	/**
 	 * Create a {@link Preferences} model from a {@link Map} configuration.
 	 */
+	@SuppressWarnings("unchecked")
 	public static Preferences createFrom(Map<String, Object> configuration) {
 		if (configuration == null) {
 			throw new IllegalArgumentException("Configuration can not be null");
@@ -586,6 +650,29 @@ public class Preferences {
 			List<String> copy = new LinkedList<>(javaImportExclusions);
 			prefs.setJavaImportExclusions(copy);
 		}
+
+		Object referencedLibraries = getValue(configuration, JAVA_PROJECT_REFERENCED_LIBRARIES_KEY);
+		if (referencedLibraries == null) {
+			prefs.setReferencedLibraries(JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT);
+		} else if (referencedLibraries instanceof Map) {
+			try {
+				Map<String, Object> config = (Map<String, Object>) referencedLibraries;
+				Set<String> include = new HashSet<>((List<String>) config.get("include"));
+				Set<String> exclude = new HashSet<>((List<String>) config.get("exclude"));
+				Map<String, String> sources = (Map<String, String>) config.get("sources");
+				prefs.setReferencedLibraries(new ReferencedLibraries(include, exclude, sources));
+			} catch (Exception e) {
+				prefs.setReferencedLibraries(JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT);
+			}
+		} else { // referencedLibraries is a shortcut array to represent include patterns
+			try {
+				Set<String> include = new HashSet<>((List<String>) referencedLibraries);
+				prefs.setReferencedLibraries(new ReferencedLibraries(include));
+			} catch (Exception e) {
+				prefs.setReferencedLibraries(JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT);
+			}
+		}
+
 		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
 
@@ -1091,6 +1178,15 @@ public class Preferences {
 		} else {
 			this.maxCompletionResults = maxCompletions;
 		}
+		return this;
+	}
+
+	public ReferencedLibraries getReferencedLibraries() {
+		return referencedLibraries;
+	}
+
+	public Preferences setReferencedLibraries(ReferencedLibraries referencedLibraries) {
+		this.referencedLibraries = referencedLibraries;
 		return this;
 	}
 }
