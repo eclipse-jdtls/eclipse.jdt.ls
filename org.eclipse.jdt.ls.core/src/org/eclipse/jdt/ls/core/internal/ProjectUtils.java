@@ -12,18 +12,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.maven.shared.utils.StringUtils;
+import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFolder;
@@ -266,6 +261,13 @@ public final class ProjectUtils {
 		return projects;
 	}
 
+	public static IPath getProjectRealFolder(IProject project) {
+		if (project.isAccessible() && !isVisibleProject(project)) {
+			return project.getFolder(WORKSPACE_LINK).getLocation();
+		}
+		return project.getLocation();
+	}
+
 	public static IProject createInvisibleProjectIfNotExist(IPath workspaceRoot) throws OperationCanceledException, CoreException {
 		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(workspaceRoot);
 		IProject invisibleProject = ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
@@ -330,7 +332,7 @@ public final class ProjectUtils {
 			IPath binary = new org.eclipse.core.runtime.Path(library.getKey());
 			IPath source = library.getValue();
 			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
-			JavaLanguageServerPlugin.logInfo("Adding " + binary + " to the classpath");
+			JavaLanguageServerPlugin.logInfo(">> Adding " + binary + " to the classpath");
 			newEntries.add(newEntry);
 		}
 		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
@@ -339,31 +341,34 @@ public final class ProjectUtils {
 		}
 	}
 
-	public static Set<Path> collectBinaries(Set<IPath> libFolderPaths, IProgressMonitor monitor) throws CoreException {
+	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
-		FileVisitor<? super Path> jarDetector = new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				if (monitor.isCanceled()) {
-					return FileVisitResult.TERMINATE;
-				}
-				if (isBinary(file)) {
+		Map<IPath, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
+		Map<IPath, Set<String>> excludeByPrefix = groupGlobsByPrefix(projectDir, exclude);
+		for (IPath baseDir: includeByPrefix.keySet()) {
+			if (monitor.isCanceled()) {
+				return binaries;
+			}
+			if (!baseDir.toFile().isDirectory()) {
+				continue;
+			}
+			Set<String> subInclude = includeByPrefix.get(baseDir);
+			Set<String> subExclude = excludeByPrefix.getOrDefault(baseDir, new LinkedHashSet<>());
+			DirectoryScanner scanner = new DirectoryScanner();
+			try {
+				scanner.setIncludes(subInclude.toArray(new String[0]));
+				scanner.setExcludes(subExclude.toArray(new String[0]));
+				scanner.addDefaultExcludes();
+				scanner.setBasedir(baseDir.toOSString());
+				scanner.scan();
+			} catch (IllegalStateException e) {
+				throw new CoreException(StatusFactory.newErrorStatus("Unable to collect binaries", e));
+			}
+			for (String result: scanner.getIncludedFiles()) {
+				Path file = baseDir.toFile().toPath().resolve(result);
+				if (isBinary(file))	{
 					binaries.add(file);
 				}
-				return FileVisitResult.CONTINUE;
-			}
-
-		};
-		for (IPath libFolderPath : libFolderPaths) {
-			String path = libFolderPath.toOSString();
-			try {
-				Path libFolder = Paths.get(path);
-				if (!Files.isDirectory(libFolder)) {
-					continue;
-				}
-				Files.walkFileTree(Paths.get(path), jarDetector);
-			} catch (IOException e) {
-				throw new CoreException(StatusFactory.newErrorStatus("Unable to analyze " + path, e));
 			}
 		}
 		return binaries;
@@ -383,6 +388,40 @@ public final class ProjectUtils {
 				//skip source jar files
 				//more robust approach would be to check if jar contains .class files or not
 				&& !fileName.endsWith(SOURCE_JAR_SUFFIX));
+	}
+
+	public static IPath resolveGlobPath(IPath base, String glob) {
+		IPath pattern = new org.eclipse.core.runtime.Path(glob);
+		IPath baseDir = pattern.isAbsolute() ? org.eclipse.core.runtime.Path.ROOT : base;
+		return baseDir.append(pattern); // Append cwd to relative path
+	}
+
+	private static Map<IPath, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
+		Map<IPath, Set<String>> groupedPatterns = new HashMap<>();
+		for (String glob: globs) {
+			IPath pattern = resolveGlobPath(base, glob); // Resolve to absolute path
+			int prefixLength = 0;
+			while (prefixLength < pattern.segmentCount()) {
+				// org.codehaus.plexus.util.DirectoryScanner only supports * and ?
+				// and does not handle escaping, so break on these two special chars
+				String segment = pattern.segment(prefixLength);
+				if (segment.contains("*") || segment.contains("?")) {
+					break;
+				}
+				prefixLength += 1;
+			}
+			IPath prefix = pattern.uptoSegment(prefixLength);
+			if (prefixLength == pattern.segmentCount() && prefix.toFile().isFile()) {
+				prefixLength -= 1; // prefix is a simple path pointing to a regular file
+				prefix = prefix.removeLastSegments(1);
+			}
+			IPath remain = pattern.removeFirstSegments(prefixLength);
+			if (!groupedPatterns.containsKey(prefix)) {
+				groupedPatterns.put(prefix, new LinkedHashSet<>());
+			}
+			groupedPatterns.get(prefix).add(remain.toString());
+		}
+		return groupedPatterns;
 	}
 
 	public static void removeJavaNatureAndBuilder(IProject project, IProgressMonitor monitor) throws CoreException {
