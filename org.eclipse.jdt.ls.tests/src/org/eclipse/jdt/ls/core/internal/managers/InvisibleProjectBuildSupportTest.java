@@ -27,7 +27,6 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -159,14 +158,14 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		Set<String> include = new HashSet<>();
 		Set<String> exclude = new HashSet<>();
-		Map<String, IPath> sources = new HashMap<>();
+		Map<String, String> sources = new HashMap<>();
 
 		// Include following jars (by lib/** detection)
 		// - /lib/foo.jar
 		// - /lib/foo-sources.jar
 		File libFolder = Files.createDirectories(projectFolder.toPath().resolve(InvisibleProjectBuildSupport.LIB_FOLDER)).toFile();
 		File fooBinary = new File(libFolder, "foo.jar");
-		File fooSource = new File(libFolder, "foo-source.jar");
+		File fooSource = new File(libFolder, "foo-sources.jar");
 		FileUtils.copyFile(originBinary, fooBinary);
 		FileUtils.copyFile(originSource, fooSource);
 
@@ -179,7 +178,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		FileUtils.copyFile(originBinary, barBinary);
 		FileUtils.copyFile(originSource, barSource);
 		include.add(barBinary.toString());
-		sources.put(barBinary.toString(), new org.eclipse.core.runtime.Path(barSource.toString()));
+		sources.put(barBinary.toString(), barSource.toString());
 
 		// Exclude following jars (by manually add exclude)
 		// - /lib/foo.jar
@@ -199,7 +198,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		try { // Send two update request concurrently
 			Job.getJobManager().addJobChangeListener(listener);
-			projectsManager.fileChanged(fooBinary.toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
+			projectsManager.fileChanged(fooBinary.toURI().toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
 			UpdateClasspathJob.getInstance().updateClasspath(javaProject, include, exclude, sources); // Request sent by third-party client
 			waitForBackgroundJobs();
 			assertEquals("Update classpath job should have been invoked once", 1, jobInvocations[0]);
