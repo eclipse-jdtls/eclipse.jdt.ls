@@ -343,29 +343,35 @@ public final class ProjectUtils {
 
 	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
-		Map<IPath, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
-		Map<IPath, Set<String>> excludeByPrefix = groupGlobsByPrefix(projectDir, exclude);
-		for (IPath baseDir: includeByPrefix.keySet()) {
+		Map<Path, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
+		Map<Path, Set<String>> excludeByPrefix = groupGlobsByPrefix(projectDir, exclude);
+		for (Path base: includeByPrefix.keySet()) {
 			if (monitor.isCanceled()) {
 				return binaries;
 			}
-			if (!baseDir.toFile().isDirectory()) {
-				continue;
+			if (Files.isRegularFile(base)) {
+				if (isBinary(base))	{
+					binaries.add(base);
+				}
+				continue; // base is a regular file path
 			}
-			Set<String> subInclude = includeByPrefix.get(baseDir);
-			Set<String> subExclude = excludeByPrefix.getOrDefault(baseDir, new LinkedHashSet<>());
+			if (!Files.isDirectory(base)) {
+				continue; // base does not exist
+			}
+			Set<String> subInclude = includeByPrefix.get(base);
+			Set<String> subExclude = excludeByPrefix.getOrDefault(base, new LinkedHashSet<>());
 			DirectoryScanner scanner = new DirectoryScanner();
 			try {
 				scanner.setIncludes(subInclude.toArray(new String[0]));
 				scanner.setExcludes(subExclude.toArray(new String[0]));
 				scanner.addDefaultExcludes();
-				scanner.setBasedir(baseDir.toOSString());
+				scanner.setBasedir(base.toString());
 				scanner.scan();
 			} catch (IllegalStateException e) {
 				throw new CoreException(StatusFactory.newErrorStatus("Unable to collect binaries", e));
 			}
 			for (String result: scanner.getIncludedFiles()) {
-				Path file = baseDir.toFile().toPath().resolve(result);
+				Path file = base.resolve(result);
 				if (isBinary(file))	{
 					binaries.add(file);
 				}
@@ -396,8 +402,8 @@ public final class ProjectUtils {
 		return baseDir.append(pattern); // Append cwd to relative path
 	}
 
-	private static Map<IPath, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
-		Map<IPath, Set<String>> groupedPatterns = new HashMap<>();
+	private static Map<Path, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
+		Map<Path, Set<String>> groupedPatterns = new HashMap<>();
 		for (String glob: globs) {
 			IPath pattern = resolveGlobPath(base, glob); // Resolve to absolute path
 			int prefixLength = 0;
@@ -410,12 +416,8 @@ public final class ProjectUtils {
 				}
 				prefixLength += 1;
 			}
-			IPath prefix = pattern.uptoSegment(prefixLength);
-			if (prefixLength == pattern.segmentCount() && prefix.toFile().isFile()) {
-				prefixLength -= 1; // prefix is a simple path pointing to a regular file
-				prefix = prefix.removeLastSegments(1);
-			}
-			IPath remain = pattern.removeFirstSegments(prefixLength);
+			Path prefix = pattern.uptoSegment(prefixLength).toFile().toPath();
+			Path remain = pattern.removeFirstSegments(prefixLength).toFile().toPath();
 			if (!groupedPatterns.containsKey(prefix)) {
 				groupedPatterns.put(prefix, new LinkedHashSet<>());
 			}
