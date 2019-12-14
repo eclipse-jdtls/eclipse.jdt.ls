@@ -105,12 +105,13 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				IJavaProject javaProject = JavaCore.create(invisibleProject);
 				ProjectUtils.addSourcePath(sourcePath, subProjectPaths.toArray(new IPath[0]), javaProject);
 				JavaLanguageServerPlugin.logInfo("Successfully created a workspace invisible project " + invisibleProjectName);
-				UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
 				return;
 			}
 		}
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
 	}
 
 	@Override

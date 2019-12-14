@@ -268,6 +268,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					pm.registerWatchers();
+					pm.registerListeners();
 					logInfo(">> watchers registered");
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);

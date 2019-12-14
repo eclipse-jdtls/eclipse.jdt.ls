@@ -130,19 +130,10 @@ public class ProjectsManager implements ISaveParticipant {
 
 	};
 
-	private IPreferencesChangeListener prefChangeListener = new IPreferencesChangeListener() {
-		@Override
-		public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
-			if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
-				registerWatcherJob.schedule(1000L);
-				UpdateClasspathJob.getInstance().updateClasspath();
-			}
-		}
-	};
+	private IPreferencesChangeListener preferenceChangeListener = null;
 
 	public ProjectsManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
-		this.preferenceManager.addPreferencesChangeListener(prefChangeListener);
 	}
 
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
@@ -745,6 +736,21 @@ public class ProjectsManager implements ISaveParticipant {
 			return fileWatchers;
 		}
 		return Collections.emptyList();
+	}
+
+	public void registerListeners() {
+		if (this.preferenceChangeListener == null) {
+			this.preferenceChangeListener = new IPreferencesChangeListener() {
+				@Override
+				public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
+					if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
+						registerWatcherJob.schedule(1000L);
+						UpdateClasspathJob.getInstance().updateClasspath();
+					}
+				}
+			};
+			this.preferenceManager.addPreferencesChangeListener(this.preferenceChangeListener);
+		}
 	}
 
 	public File findFile(String formatterUrl) {
