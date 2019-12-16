@@ -323,25 +323,8 @@ public final class JDTUtils {
 	 */
 	public static String getName(IJavaElement element) {
 		Assert.isNotNull(element, "element");
-		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT);
+		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
 		return name == null ? element.getElementName() : name;
-	}
-
-	/**
-	 * Returns with the details of the document symbol. This is usually the type
-	 * information of a member. For methods, this is the type information of the
-	 * return type. Can return with an empty string, but never {@code null}.
-	 *
-	 * @see JDTUtils#getName(IJavaElement)
-	 */
-	public static String getDetail(IJavaElement element) {
-		Assert.isNotNull(element, "element");
-		String name = getName(element);
-		String nameWithDetails = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
-		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
-			return nameWithDetails.substring(name.length());
-		}
-		return "";
 	}
 
 	/**
