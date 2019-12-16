@@ -91,10 +91,12 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int toOffset(IDocument document, int line, int column) {
-		try {
-			return document.getLineOffset(line) + column;
-		} catch (BadLocationException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		if (document != null) {
+			try {
+				return document.getLineOffset(line) + column;
+			} catch (BadLocationException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 		}
 		return -1;
 	}

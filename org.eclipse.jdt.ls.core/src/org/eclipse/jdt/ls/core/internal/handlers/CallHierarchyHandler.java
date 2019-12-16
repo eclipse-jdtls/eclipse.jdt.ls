@@ -244,7 +244,7 @@ public class CallHierarchyHandler {
 		return result[0];
 	}
 
-	private CallHierarchyItem toCallHierarchyItem(IJavaElement member) throws JavaModelException {
+	private CallHierarchyItem toCallHierarchyItem(IMember member) throws JavaModelException {
 		Location fullLocation = getLocation(member, LocationType.FULL_RANGE);
 		Range range = fullLocation.getRange();
 		String uri = fullLocation.getUri();
@@ -254,7 +254,8 @@ public class CallHierarchyHandler {
 		item.setRange(range);
 		item.setSelectionRange(getLocation(member, LocationType.NAME_RANGE).getRange());
 		item.setUri(uri);
-		item.setDetail(JDTUtils.getDetail(member));
+		IType declaringType = member.getDeclaringType();
+		item.setDetail(declaringType == null ? null : declaringType.getFullyQualifiedName());
 		if (JDTUtils.isDeprecated(member)) {
 			item.setTags(new SymbolTag[] { SymbolTag.Deprecated });
 		}
