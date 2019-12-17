@@ -318,18 +318,18 @@ public final class ProjectUtils {
 		}
 	}
 
-	public static void updateBinaries(IJavaProject javaProject, Map<String, IPath> libraries, IProgressMonitor monitor) throws CoreException {
+	public static void updateBinaries(IJavaProject javaProject, Map<Path, IPath> libraries, IProgressMonitor monitor) throws CoreException {
 		if (monitor.isCanceled()) {
 			return;
 		}
 		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
 		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
 
-		for (Map.Entry<String, IPath> library : libraries.entrySet()) {
+		for (Map.Entry<Path, IPath> library : libraries.entrySet()) {
 			if (monitor.isCanceled()) {
 				return;
 			}
-			IPath binary = new org.eclipse.core.runtime.Path(library.getKey());
+			IPath binary = new org.eclipse.core.runtime.Path(library.getKey().toString());
 			IPath source = library.getValue();
 			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
 			JavaLanguageServerPlugin.logInfo(">> Adding " + binary + " to the classpath");
@@ -343,9 +343,10 @@ public final class ProjectUtils {
 
 	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
-		Map<Path, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
-		Stream<Path> excludeResolved = exclude.stream().map(glob -> resolveGlobPath(projectDir, glob).toFile().toPath());
-		for (Path base: includeByPrefix.keySet()) {
+		Map<IPath, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
+		Stream<IPath> excludeResolved = exclude.stream().map(glob -> resolveGlobPath(projectDir, glob));
+		for (IPath baseDir: includeByPrefix.keySet()) {
+			Path base = baseDir.toFile().toPath();
 			if (monitor.isCanceled()) {
 				return binaries;
 			}
@@ -358,8 +359,8 @@ public final class ProjectUtils {
 			if (!Files.isDirectory(base)) {
 				continue; // base does not exist
 			}
-			Set<String> subInclude = includeByPrefix.get(base);
-			Set<String> subExclude = excludeResolved.map(glob -> base.relativize(glob).toString()).collect(Collectors.toSet());
+			Set<String> subInclude = includeByPrefix.get(baseDir);
+			Set<String> subExclude = excludeResolved.map(glob -> glob.makeRelativeTo(baseDir).toOSString()).collect(Collectors.toSet());
 			DirectoryScanner scanner = new DirectoryScanner();
 			try {
 				scanner.setIncludes(subInclude.toArray(new String[subInclude.size()]));
@@ -398,12 +399,11 @@ public final class ProjectUtils {
 
 	public static IPath resolveGlobPath(IPath base, String glob) {
 		IPath pattern = new org.eclipse.core.runtime.Path(glob);
-		IPath baseDir = pattern.isAbsolute() ? org.eclipse.core.runtime.Path.ROOT : base;
-		return baseDir.append(pattern); // Append cwd to relative path
+		return pattern.isAbsolute() ? pattern : base.append(pattern); // Append cwd to relative path
 	}
 
-	private static Map<Path, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
-		Map<Path, Set<String>> groupedPatterns = new HashMap<>();
+	private static Map<IPath, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
+		Map<IPath, Set<String>> groupedPatterns = new HashMap<>();
 		for (String glob: globs) {
 			IPath pattern = resolveGlobPath(base, glob); // Resolve to absolute path
 			int prefixLength = 0;
@@ -416,12 +416,12 @@ public final class ProjectUtils {
 				}
 				prefixLength += 1;
 			}
-			Path prefix = pattern.uptoSegment(prefixLength).toFile().toPath();
-			Path remain = pattern.removeFirstSegments(prefixLength).toFile().toPath();
+			IPath prefix = pattern.uptoSegment(prefixLength);
+			IPath remain = pattern.removeFirstSegments(prefixLength).setDevice("");
 			if (!groupedPatterns.containsKey(prefix)) {
 				groupedPatterns.put(prefix, new LinkedHashSet<>());
 			}
-			groupedPatterns.get(prefix).add(remain.toString());
+			groupedPatterns.get(prefix).add(remain.toOSString());
 		}
 		return groupedPatterns;
 	}

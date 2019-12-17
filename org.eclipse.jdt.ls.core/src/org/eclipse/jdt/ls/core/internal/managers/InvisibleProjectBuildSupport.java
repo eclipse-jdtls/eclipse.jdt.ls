@@ -65,7 +65,7 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 	}
 
 	public boolean matchPattern(IPath base, String pattern, String path) {
-		return SelectorUtils.matchPath(ProjectUtils.resolveGlobPath(base, pattern).toString(), path);
+		return SelectorUtils.matchPath(ProjectUtils.resolveGlobPath(base, pattern).toOSString(), path);
 	}
 
 }

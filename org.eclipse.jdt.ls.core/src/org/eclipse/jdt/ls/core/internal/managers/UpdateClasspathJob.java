@@ -101,12 +101,12 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			final Path source = realFolderPath.resolve(entry.getValue());
 			expandedSources.put(binary, new org.eclipse.core.runtime.Path(source.toString()));
 		}
-		final Map<String, IPath> libraries = new HashMap<>();
+		final Map<Path, IPath> libraries = new HashMap<>();
 		for (final Path binary: binaries) {
 			if (expandedSources.containsKey(binary)) {
-				libraries.put(binary.toString(), expandedSources.get(binary));
+				libraries.put(binary, expandedSources.get(binary));
 			} else { // If not specified in source map, try to detect it
-				libraries.put(binary.toString(), ProjectUtils.detectSources(binary));
+				libraries.put(binary, ProjectUtils.detectSources(binary));
 			}
 		}
 		ProjectUtils.updateBinaries(javaProject, libraries, monitor);

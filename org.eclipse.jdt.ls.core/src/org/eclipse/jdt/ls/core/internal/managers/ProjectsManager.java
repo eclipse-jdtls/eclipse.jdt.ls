@@ -696,7 +696,12 @@ public class ProjectsManager implements ISaveParticipant {
 							IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
 							Set<String> libraries = preferenceManager.getPreferences().getReferencedLibraries().getInclude();
 							for (String pattern: libraries) {
-								patterns.add(ProjectUtils.resolveGlobPath(projectFolder, pattern).toString());
+								IPath resolved = ProjectUtils.resolveGlobPath(projectFolder, pattern);
+								if (resolved.getDevice() != null) {
+									patterns.add(resolved.toPortableString().replace(resolved.getDevice(), "**"));
+								} else {
+									patterns.add(resolved.toPortableString());
+								}
 							}
 						}
 					}
