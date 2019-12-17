@@ -455,15 +455,15 @@ public class Preferences {
 		private Set<String> exclude;
 		private Map<String, String> sources;
 
-		ReferencedLibraries() {
+		public ReferencedLibraries() {
 			this(new HashSet<>(), new HashSet<>(), new HashMap<>());
 		}
 
-		ReferencedLibraries(Set<String> include) {
+		public ReferencedLibraries(Set<String> include) {
 			this(include, new HashSet<>(), new HashMap<>());
 		}
 
-		ReferencedLibraries(Set<String> include, Set<String> exclude, Map<String, String> sources) {
+		public ReferencedLibraries(Set<String> include, Set<String> exclude, Map<String, String> sources) {
 			this.include = include;
 			this.exclude = exclude;
 			this.sources = sources;
