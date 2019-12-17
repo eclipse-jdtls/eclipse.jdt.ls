@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.function.Function;
+
 import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
@@ -44,26 +46,13 @@ final public class JsonRpcHelpers {
 	 */
 	public static int toOffset(IOpenable openable, int line, int column) {
 		if (openable != null) {
-			boolean mustClose = false;
 			try {
-				if (!openable.isOpen()) {
-					openable.open(new NullProgressMonitor());
-					mustClose = openable.isOpen();
-				}
-				IBuffer buffer = openable.getBuffer();
-				return toOffset(toDocument(buffer), line, column);
+				return convert(openable, (IDocument document) -> toOffset(document, line, column));
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.log(e);
-			} finally {
-				if (mustClose) {
-					try {
-						openable.close();
-					} catch (JavaModelException e) {
-						JavaLanguageServerPlugin.logException("Error when closing openable: " + openable, e);
-					}
-				}
 			}
 		}
+
 		return -1;
 	}
 
@@ -124,6 +113,16 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int[] toLine(IOpenable openable, int offset) {
+		try {
+			return convert(openable, (IDocument document) -> toLine(document, offset));
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+		}
+
+		return null;
+	}
+
+	private static <T> T convert(IOpenable openable, Function<IDocument, T> consumer) throws JavaModelException {
 		Assert.isNotNull(openable, "openable");
 		boolean mustClose = false;
 		try {
@@ -132,10 +131,7 @@ final public class JsonRpcHelpers {
 				mustClose = openable.isOpen();
 			}
 			IBuffer buffer = openable.getBuffer();
-			return toLine(toDocument(buffer), offset);
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.log(e);
-			return null;
+			return consumer.apply(toDocument(buffer));
 		} finally {
 			if (mustClose) {
 				try {
@@ -155,12 +151,14 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int[] toLine(IDocument document, int offset) {
-		try {
-			int line = document.getLineOfOffset(offset);
-			int column = offset - document.getLineOffset(line);
-			return new int[] { line, column };
-		} catch (BadLocationException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		if (document != null) {
+			try {
+				int line = document.getLineOfOffset(offset);
+				int column = offset - document.getLineOffset(line);
+				return new int[] { line, column };
+			} catch (BadLocationException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 		}
 		return null;
 	}

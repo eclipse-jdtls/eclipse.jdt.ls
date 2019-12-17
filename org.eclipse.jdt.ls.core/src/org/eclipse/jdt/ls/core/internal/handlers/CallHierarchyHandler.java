@@ -150,9 +150,6 @@ public class CallHierarchyHandler {
 		// If the member cannot be resolved, retrieve the enclosing method.
 		if (candidate == null) {
 			candidate = getEnclosingMember(root, offset);
-			if (candidate == null) {
-				return null;
-			}
 		}
 
 		return candidate;
@@ -250,7 +247,7 @@ public class CallHierarchyHandler {
 		String uri = fullLocation.getUri();
 		CallHierarchyItem item = new CallHierarchyItem();
 		item.setName(JDTUtils.getName(member));
-		item.setKind(JDTUtils.getSymbolKind(member));
+		item.setKind(DocumentSymbolHandler.mapKind(member));
 		item.setRange(range);
 		item.setSelectionRange(getLocation(member, LocationType.NAME_RANGE).getRange());
 		item.setUri(uri);
