@@ -328,58 +328,6 @@ public final class JDTUtils {
 	}
 
 	/**
-	 * Returns with the document symbol {@code SymbolKind kind} for the Java
-	 * element.
-	 */
-	public static SymbolKind getSymbolKind(IJavaElement element) {
-		switch (element.getElementType()) {
-			case IJavaElement.ANNOTATION:
-				return SymbolKind.Property; // TODO: find a better mapping
-			case IJavaElement.CLASS_FILE:
-			case IJavaElement.COMPILATION_UNIT:
-				return SymbolKind.File;
-			case IJavaElement.FIELD:
-				return SymbolKind.Field;
-			case IJavaElement.IMPORT_CONTAINER:
-			case IJavaElement.IMPORT_DECLARATION:
-				return SymbolKind.Module;
-			case IJavaElement.INITIALIZER:
-				return SymbolKind.Constructor;
-			case IJavaElement.LOCAL_VARIABLE:
-			case IJavaElement.TYPE_PARAMETER:
-				return SymbolKind.Variable;
-			case IJavaElement.METHOD:
-				try {
-					// TODO handle `IInitializer`. What should be the `SymbolKind`?
-					if (element instanceof IMethod) {
-						if (((IMethod) element).isConstructor()) {
-							return SymbolKind.Constructor;
-						}
-					}
-					return SymbolKind.Method;
-				} catch (JavaModelException e) {
-					return SymbolKind.Method;
-				}
-			case IJavaElement.PACKAGE_DECLARATION:
-				return SymbolKind.Package;
-			case IJavaElement.TYPE:
-				try {
-					IType type = (IType) element;
-					if (type.isEnum()) {
-						return SymbolKind.Enum;
-					} else if (type.isInterface()) {
-						return SymbolKind.Interface;
-					} else {
-						return SymbolKind.Class;
-					}
-				} catch (JavaModelException e) {
-					return SymbolKind.Class;
-				}
-		}
-		return SymbolKind.String;
-	}
-
-	/**
 	 * {@code true} if the element is deprecated. Otherwise, {@code false}.
 	 */
 	public static boolean isDeprecated(IJavaElement element) throws JavaModelException {
