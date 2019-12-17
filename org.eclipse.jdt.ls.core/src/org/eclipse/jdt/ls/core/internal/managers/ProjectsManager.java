@@ -692,7 +692,7 @@ public class ProjectsManager implements ISaveParticipant {
 								}
 							}
 						}
-						if (!ProjectUtils.isVisibleProject(project)) { // Invisible project will watch referenced libaraies' include pattern
+						if (!ProjectUtils.isVisibleProject(project)) { // Invisible project will watch referenced libraries' include patterns
 							IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
 							Set<String> libraries = preferenceManager.getPreferences().getReferencedLibraries().getInclude();
 							for (String pattern: libraries) {

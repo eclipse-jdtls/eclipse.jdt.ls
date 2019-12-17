@@ -362,8 +362,8 @@ public final class ProjectUtils {
 			Set<String> subExclude = excludeResolved.map(glob -> base.relativize(glob).toString()).collect(Collectors.toSet());
 			DirectoryScanner scanner = new DirectoryScanner();
 			try {
-				scanner.setIncludes(subInclude.toArray(new String[0]));
-				scanner.setExcludes(subExclude.toArray(new String[0]));
+				scanner.setIncludes(subInclude.toArray(new String[subInclude.size()]));
+				scanner.setExcludes(subExclude.toArray(new String[subExclude.size()]));
 				scanner.addDefaultExcludes();
 				scanner.setBasedir(base.toString());
 				scanner.scan();
