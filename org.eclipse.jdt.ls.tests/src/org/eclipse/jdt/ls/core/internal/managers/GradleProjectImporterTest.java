@@ -301,6 +301,21 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void testGradleOfflineMode() {
+		boolean offlineMode = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleOfflineEnabled();
+		try {
+			Path rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile().toPath();
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertFalse(build.isOfflineMode());
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleOfflineEnabled(true);
+			build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertTrue(build.isOfflineMode());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleOfflineEnabled(offlineMode);
+		}
+	}
+
+	@Test
 	public void testGradleJvmArguments() {
 		List<String> jvmArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments();
 		try {
