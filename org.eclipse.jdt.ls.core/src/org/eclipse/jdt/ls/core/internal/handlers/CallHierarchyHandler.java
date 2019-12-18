@@ -190,10 +190,7 @@ public class CallHierarchyHandler {
 			}
 			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
 			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
-			CallHierarchyIncomingCall incomingCall = new CallHierarchyIncomingCall();
-			incomingCall.setFrom(symbol);
-			incomingCall.setFromRanges(ranges.toArray(new Range[0]));
-			result.add(incomingCall);
+			result.add(new CallHierarchyIncomingCall(symbol, ranges));
 		}
 
 		return result;
@@ -225,10 +222,7 @@ public class CallHierarchyHandler {
 			}
 			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
 			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
-			CallHierarchyOutgoingCall outgoingCall = new CallHierarchyOutgoingCall();
-			outgoingCall.setTo(symbol);
-			outgoingCall.setFromRanges(ranges.toArray(new Range[0]));
-			result.add(outgoingCall);
+			result.add(new CallHierarchyOutgoingCall(symbol, ranges));
 		}
 
 		return result;
@@ -271,7 +265,7 @@ public class CallHierarchyHandler {
 		IType declaringType = member.getDeclaringType();
 		item.setDetail(declaringType == null ? null : declaringType.getFullyQualifiedName());
 		if (JDTUtils.isDeprecated(member)) {
-			item.setTags(new SymbolTag[] { SymbolTag.Deprecated });
+			item.setTags(Arrays.asList(SymbolTag.Deprecated));
 		}
 
 		return item;

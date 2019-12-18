@@ -240,9 +240,9 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(detail, item.getDetail());
 		if (deprecated) {
 			assertNotNull(item.getTags());
-			assertTrue(Stream.of(item.getTags()).anyMatch(tag -> tag == SymbolTag.Deprecated));
+			assertTrue(item.getTags().stream().anyMatch(tag -> tag == SymbolTag.Deprecated));
 		} else {
-			assertTrue(item.getTags() == null || item.getTags().length == 0 || !Stream.of(item.getTags()).anyMatch(tag -> tag == SymbolTag.Deprecated));
+			assertTrue(item.getTags() == null || item.getTags().isEmpty() || !item.getTags().stream().anyMatch(tag -> tag == SymbolTag.Deprecated));
 		}
 
 		assertEquals(selectionStartLine, item.getSelectionRange().getStart().getLine());
@@ -255,14 +255,12 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	static List<CallHierarchyIncomingCall> getIncomingCalls(CallHierarchyItem item) {
-		CallHierarchyIncomingCallsParams params = new CallHierarchyIncomingCallsParams();
-		params.setItem(item);
+		CallHierarchyIncomingCallsParams params = new CallHierarchyIncomingCallsParams(item);
 		return new CallHierarchyHandler().callHierarchyIncomingCalls(params, new NullProgressMonitor());
 	}
 
 	static List<CallHierarchyOutgoingCall> getOutgoings(CallHierarchyItem item) {
-		CallHierarchyOutgoingCallsParams params = new CallHierarchyOutgoingCallsParams();
-		params.setItem(item);
+		CallHierarchyOutgoingCallsParams params = new CallHierarchyOutgoingCallsParams(item);
 		return new CallHierarchyHandler().callHierarchyOutgoingCalls(params, new NullProgressMonitor());
 	}
 
