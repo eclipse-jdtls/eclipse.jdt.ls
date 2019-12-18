@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.Assert;
@@ -55,9 +57,15 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolTag;
 
 public class CallHierarchyHandler {
+	private static Map<IJavaElement, MethodWrapper> incomingMethodWrapperCache = new ConcurrentHashMap<>();
+	private static Map<IJavaElement, MethodWrapper> outgoingMethodWrapperCache = new ConcurrentHashMap<>();
 
 	public List<CallHierarchyItem> prepareCallHierarchy(CallHierarchyPrepareParams params, IProgressMonitor monitor) {
 		Assert.isNotNull(params, "params");
+
+		// trigger call hierarchy at a new position, clean the method wrapper cache.
+		incomingMethodWrapperCache.clear();
+		outgoingMethodWrapperCache.clear();
 
 		String uri = params.getTextDocument().getUri();
 		int line = params.getPosition().getLine();
@@ -163,7 +171,8 @@ public class CallHierarchyHandler {
 
 		checkMonitor(monitor);
 
-		MethodWrapper wrapper = toMethodWrapper(candidate, true);
+		MethodWrapper wrapper = incomingMethodWrapperCache.containsKey(candidate) ?
+			incomingMethodWrapperCache.get(candidate) : getCallRoot(candidate, true);
 		if (wrapper == null) {
 			return null;
 		}
@@ -175,6 +184,10 @@ public class CallHierarchyHandler {
 
 		List<CallHierarchyIncomingCall> result = new ArrayList<>();
 		for (MethodWrapper call : calls) {
+			IMember member = call.getMember();
+			if (member != null) {
+				incomingMethodWrapperCache.put(member, call);
+			}
 			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
 			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
 			CallHierarchyIncomingCall incomingCall = new CallHierarchyIncomingCall();
@@ -194,7 +207,7 @@ public class CallHierarchyHandler {
 
 		checkMonitor(monitor);
 
-		MethodWrapper wrapper = toMethodWrapper(candidate, false);
+		MethodWrapper wrapper = outgoingMethodWrapperCache.containsKey(candidate) ? outgoingMethodWrapperCache.get(candidate) : getCallRoot(candidate, false);
 		if (wrapper == null) {
 			return null;
 		}
@@ -206,6 +219,10 @@ public class CallHierarchyHandler {
 
 		List<CallHierarchyOutgoingCall> result = new ArrayList<>();
 		for (MethodWrapper call : calls) {
+			IMember member = call.getMember();
+			if (member != null) {
+				outgoingMethodWrapperCache.put(member, call);
+			}
 			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
 			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
 			CallHierarchyOutgoingCall outgoingCall = new CallHierarchyOutgoingCall();
@@ -224,7 +241,7 @@ public class CallHierarchyHandler {
 		return emptyList();
 	}
 
-	private MethodWrapper toMethodWrapper(IMember member, boolean isIncomingCall) {
+	private MethodWrapper getCallRoot(IMember member, boolean isIncomingCall) {
 		Assert.isNotNull(member, "member");
 
 		IMember[] members = { member };
