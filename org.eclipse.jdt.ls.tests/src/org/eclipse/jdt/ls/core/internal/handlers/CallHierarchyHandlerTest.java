@@ -170,6 +170,54 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(jarUri.contains("WordUtils.class"));
 	}
 
+	// @Test
+	// public void outgoing_recursive() throws Exception {
+	// 	// Line 60 from `CallHierarchy`
+	// 	//  public void <|>recursive1() {
+	// 	String uri = getUriFromSrcProject("org.sample.CallHierarchy");
+	// 	List<CallHierarchyItem> items = prepareCallHierarchy(uri, 59, 14);
+	// 	assertNotNull(items);
+	// 	assertEquals(1, items.size());
+	// 	assertItem(items.get(0), "recursive1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 59);
+
+	// 	List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
+	// 	assertNotNull(calls);
+	// 	assertEquals(1, calls.size());
+	// 	assertItem(calls.get(0).getTo(), "recursive2()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 63);
+
+	// 	List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());
+	// 	assertNotNull(call0Calls);
+	// 	assertEquals(1, call0Calls.size());
+	// 	assertItem(call0Calls.get(0).getTo(), "recursive1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 59);
+
+	// 	List<CallHierarchyOutgoingCall> call1Calls = getOutgoings(call0Calls.get(0).getTo());
+	// 	assertNull(call1Calls);
+	// }
+
+	// @Test
+	// public void incoming_recursive() throws Exception {
+	// 	// Line 60 from `CallHierarchy`
+	// 	//  public void <|>recursive1() {
+	// 	String uri = getUriFromSrcProject("org.sample.CallHierarchy");
+	// 	List<CallHierarchyItem> items = prepareCallHierarchy(uri, 59, 14);
+	// 	assertNotNull(items);
+	// 	assertEquals(1, items.size());
+	// 	assertItem(items.get(0), "recursive1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 59);
+
+	// 	List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+	// 	assertNotNull(calls);
+	// 	assertEquals(1, calls.size());
+	// 	assertItem(calls.get(0).getFrom(), "recursive2()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 63);
+
+	// 	List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
+	// 	assertNotNull(call0Calls);
+	// 	assertEquals(1, call0Calls.size());
+	// 	assertItem(call0Calls.get(0).getFrom(), "recursive1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", false, 59);
+
+	// 	List<CallHierarchyIncomingCall> call1Calls = getIncomingCalls(call0Calls.get(0).getFrom());
+	// 	assertNull(call1Calls);
+	// }
+
 	/**
 	 * @param item
 	 *            to assert

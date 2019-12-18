@@ -57,4 +57,11 @@ public class CallHierarchy {
 
   }
 
+  public void recursive1() {
+    recursive2();
+  }
+
+  public void recursive2() {
+    recursive1();
+  }
 }
