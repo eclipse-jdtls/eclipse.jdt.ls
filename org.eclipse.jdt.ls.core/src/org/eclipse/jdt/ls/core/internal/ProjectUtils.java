@@ -366,7 +366,7 @@ public final class ProjectUtils {
 				scanner.setIncludes(subInclude.toArray(new String[subInclude.size()]));
 				scanner.setExcludes(subExclude.toArray(new String[subExclude.size()]));
 				scanner.addDefaultExcludes();
-				scanner.setBasedir(base.toString());
+				scanner.setBasedir(base.toFile());
 				scanner.scan();
 			} catch (IllegalStateException e) {
 				throw new CoreException(StatusFactory.newErrorStatus("Unable to collect binaries", e));
@@ -399,7 +399,13 @@ public final class ProjectUtils {
 
 	public static IPath resolveGlobPath(IPath base, String glob) {
 		IPath pattern = new org.eclipse.core.runtime.Path(glob);
-		return pattern.isAbsolute() ? pattern : base.append(pattern); // Append cwd to relative path
+		if (!pattern.isAbsolute()) { // Append cwd to relative path
+			pattern = base.append(pattern);
+		}
+		if (pattern.getDevice() != null) { // VS Code only matches lower-case device
+			pattern = pattern.setDevice(pattern.getDevice().toLowerCase());
+		}
+		return pattern;
 	}
 
 	private static Map<IPath, Set<String>> groupGlobsByPrefix(IPath base, Set<String> globs) {
@@ -417,7 +423,7 @@ public final class ProjectUtils {
 				prefixLength += 1;
 			}
 			IPath prefix = pattern.uptoSegment(prefixLength);
-			IPath remain = pattern.removeFirstSegments(prefixLength).setDevice("");
+			IPath remain = pattern.removeFirstSegments(prefixLength).setDevice(null);
 			if (!groupedPatterns.containsKey(prefix)) {
 				groupedPatterns.put(prefix, new LinkedHashSet<>());
 			}
