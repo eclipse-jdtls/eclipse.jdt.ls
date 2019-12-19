@@ -274,6 +274,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					pm.registerWatchers();
+					pm.registerListeners();
 					logInfo(">> watchers registered");
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
@@ -417,8 +418,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
-			preferenceManager.getPreferences().setRootPaths(rootPaths);
 		}
 		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
@@ -438,7 +439,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		FormatterManager.configureFormatter(preferenceManager, pm);
-		logInfo(">>New configuration: " + settings);
+		logInfo(">> New configuration: " + settings);
 	}
 
 

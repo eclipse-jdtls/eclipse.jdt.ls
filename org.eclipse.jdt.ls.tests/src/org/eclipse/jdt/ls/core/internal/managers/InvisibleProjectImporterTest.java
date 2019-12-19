@@ -76,11 +76,13 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
-		assertEquals(9, watchers.size());
+		assertEquals(10, watchers.size()); // basic(8) + project(1) + library(1)
 		String srcGlobPattern = watchers.get(7).getGlobPattern();
 		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
-		String libGlobPattern = watchers.get(8).getGlobPattern();
-		assertTrue("Unexpected project glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/**"));
+		String projGlobPattern = watchers.get(8).getGlobPattern();
+		assertTrue("Unexpected project glob pattern: " + projGlobPattern, projGlobPattern.endsWith(projectFolder.getName() + "/**"));
+		String libGlobPattern = watchers.get(9).getGlobPattern();
+		assertTrue("Unexpected library glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
 	}
 
 	public void automaticJarDetection() throws Exception {

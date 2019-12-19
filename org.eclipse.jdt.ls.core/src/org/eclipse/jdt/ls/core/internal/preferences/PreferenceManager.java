@@ -167,8 +167,9 @@ public class PreferenceManager {
 		if(preferences == null){
 			throw new IllegalArgumentException("Preferences can not be null");
 		}
-		preferencesChanged(this.preferences, preferences);
+		Preferences oldPreferences = this.preferences;
 		this.preferences = preferences;
+		preferencesChanged(oldPreferences, preferences); // listener will get latest preference from getPreferences()
 
 		String newMavenSettings = preferences.getMavenUserSettings();
 		String oldMavenSettings = getMavenConfiguration().getUserSettingsFile();

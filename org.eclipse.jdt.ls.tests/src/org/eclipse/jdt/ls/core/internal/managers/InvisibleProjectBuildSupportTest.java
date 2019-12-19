@@ -14,20 +14,22 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -38,6 +40,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -148,7 +151,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 	}
 
 	@Test
-	public void testReferencedBinariesUpdate() throws Exception {
+	public void testManuallyReferenceLibraries() throws Exception {
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
@@ -159,14 +162,14 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		Set<String> include = new HashSet<>();
 		Set<String> exclude = new HashSet<>();
-		Map<String, IPath> sources = new HashMap<>();
+		Map<String, String> sources = new HashMap<>();
 
 		// Include following jars (by lib/** detection)
 		// - /lib/foo.jar
 		// - /lib/foo-sources.jar
 		File libFolder = Files.createDirectories(projectFolder.toPath().resolve(InvisibleProjectBuildSupport.LIB_FOLDER)).toFile();
 		File fooBinary = new File(libFolder, "foo.jar");
-		File fooSource = new File(libFolder, "foo-source.jar");
+		File fooSource = new File(libFolder, "foo-sources.jar");
 		FileUtils.copyFile(originBinary, fooBinary);
 		FileUtils.copyFile(originSource, fooSource);
 
@@ -179,7 +182,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		FileUtils.copyFile(originBinary, barBinary);
 		FileUtils.copyFile(originSource, barSource);
 		include.add(barBinary.toString());
-		sources.put(barBinary.toString(), new org.eclipse.core.runtime.Path(barSource.toString()));
+		sources.put(barBinary.toString(), barSource.toString());
 
 		// Exclude following jars (by manually add exclude)
 		// - /lib/foo.jar
@@ -199,7 +202,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		try { // Send two update request concurrently
 			Job.getJobManager().addJobChangeListener(listener);
-			projectsManager.fileChanged(fooBinary.toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
+			projectsManager.fileChanged(fooBinary.toURI().toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
 			UpdateClasspathJob.getInstance().updateClasspath(javaProject, include, exclude, sources); // Request sent by third-party client
 			waitForBackgroundJobs();
 			assertEquals("Update classpath job should have been invoked once", 1, jobInvocations[0]);
@@ -208,9 +211,8 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		}
 
 		{
-			// The requests sent by `jdt'ls lib detection` and `third-party client` is merged in queue,
-			// So client's `exclude: lib/foo.jar` comes into effect to block jdt.ls's `include: lib/foo.jar`
-			// This is the way client uses to neutralize the effect of jdt.ls's lib detection
+			// The requests sent by `fileChanged` and `updateClasspath` is merged in queue,
+			// So latter's `exclude: lib/foo.jar` comes into effect to block former's `include: lib/foo.jar`
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
 			// Check only one jar file is added to classpath (foo.jar is excluded)
 			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
@@ -219,6 +221,96 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			assertEquals("bar-src.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 			// Check the source of bar.jar is in /library folder
 			assertEquals("library", classpath[2].getSourceAttachmentPath().removeLastSegments(1).lastSegment());
+		}
+	}
+
+	@Test
+	public void testDynamicReferenceLibraries() throws Exception {
+		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
+		IProject project = importRootFolder(projectFolder, "Test.java");
+		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+
+		ReferencedLibraries libraries = new ReferencedLibraries();
+		libraries.getInclude().add("lib/foo.jar");
+		libraries.getInclude().add("library/**/*.jar");
+		libraries.getExclude().add("library/sources/**");
+		libraries.getSources().put("library/bar.jar", "library/sources/bar-src.jar");
+		preferenceManager.getPreferences().setReferencedLibraries(libraries);
+
+		IJavaProject javaProject = JavaCore.create(project);
+		int[] jobInvocations = new int[1];
+		IJobChangeListener listener = new JobChangeAdapter() {
+			@Override
+			public void scheduled(IJobChangeEvent event) {
+				if (event.getJob() instanceof UpdateClasspathJob) {
+					jobInvocations[0] = jobInvocations[0] + 1;
+				}
+			}
+		};
+
+		File originBinary = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo.jar");
+		File originSource = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo-sources.jar");
+		File libFolder = Files.createDirectories(projectFolder.toPath().resolve("lib")).toFile();
+		File libraryFolder = Files.createDirectories(projectFolder.toPath().resolve("library")).toFile();
+		File sourcesFolder = Files.createDirectories(libraryFolder.toPath().resolve("sources")).toFile();
+
+		try {
+			Job.getJobManager().addJobChangeListener(listener);
+
+			{
+				// Include following jars (with detected source jar)
+				// - /lib/foo.jar
+				// - /lib/foo-sources.jar
+				File fooBinary = new File(libFolder, "foo.jar");
+				File fooSource = new File(libFolder, "foo-sources.jar");
+				FileUtils.copyFile(originBinary, fooBinary);
+				FileUtils.copyFile(originSource, fooSource);
+				projectsManager.fileChanged(fooBinary.toURI().toString(), CHANGE_TYPE.CREATED);
+				waitForBackgroundJobs();
+				IClasspathEntry[] classpath = javaProject.getRawClasspath();
+				Optional<IClasspathEntry> fooEntry = Arrays.stream(classpath).filter(c -> c.getPath().lastSegment().equals("foo.jar")).findFirst();
+				assertTrue("Cannot find foo binary", fooEntry.isPresent());
+				assertEquals("Update classpath job should have been invoked 1 times", 1, jobInvocations[0]);
+				assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+				assertEquals("foo.jar", fooEntry.get().getPath().lastSegment());
+				assertEquals("foo-sources.jar", fooEntry.get().getSourceAttachmentPath().lastSegment());
+			}
+
+			{
+				// Include following jars (with manually addding source map):
+				// - /library/bar.jar
+				// - /library/sources/bar-src.jar
+				File barBinary = new File(libraryFolder, "bar.jar");
+				File barSource = new File(sourcesFolder, "bar-src.jar");
+				FileUtils.copyFile(originBinary, barBinary);
+				FileUtils.copyFile(originSource, barSource);
+				projectsManager.fileChanged(barBinary.toURI().toString(), CHANGE_TYPE.CREATED);
+				waitForBackgroundJobs();
+				IClasspathEntry[] classpath = javaProject.getRawClasspath();
+				Optional<IClasspathEntry> barEntry = Arrays.stream(classpath).filter(c -> c.getPath().lastSegment().equals("bar.jar")).findFirst();
+				assertTrue("Cannot find bar binary", barEntry.isPresent());
+				assertEquals("Update classpath job should have been invoked 2 times", 2, jobInvocations[0]);
+				assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 4, classpath.length);
+				assertEquals("bar.jar", barEntry.get().getPath().lastSegment());
+				assertEquals("bar-src.jar", barEntry.get().getSourceAttachmentPath().lastSegment());
+			}
+
+			{
+				// Include following jars (will be excluded):
+				// - /library/sources/exclude.jar
+				// - /library/sources/exclude-sources.jar
+				File excludeBinary = new File(sourcesFolder, "exclude.jar");
+				File excludeSource = new File(sourcesFolder, "exclude-sources.jar");
+				FileUtils.copyFile(originBinary, excludeBinary);
+				FileUtils.copyFile(originSource, excludeSource);
+				projectsManager.fileChanged(excludeBinary.toURI().toString(), CHANGE_TYPE.CREATED); // won't send update request
+				waitForBackgroundJobs();
+				assertEquals("Update classpath job should still have been invoked 2 times", 2, jobInvocations[0]);
+				assertEquals("Classpath length should still be 4", 4, javaProject.getRawClasspath().length);
+			}
+		} finally {
+			Job.getJobManager().removeJobChangeListener(listener);
 		}
 	}
 }

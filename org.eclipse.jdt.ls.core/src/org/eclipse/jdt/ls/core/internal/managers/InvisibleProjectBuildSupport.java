@@ -12,14 +12,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import org.codehaus.plexus.util.SelectorUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
 
 /**
  * @author Fred Bricon
@@ -43,15 +46,31 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 			return false;
 		}
 		refresh(resource, changeType, monitor);
-		IProject invisibleProject = resource.getProject();
-		IPath realFolderPath = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK).getLocation();
-		if (realFolderPath != null) {
-			IPath libFolderPath = realFolderPath.append(LIB_FOLDER);
-			if (libFolderPath.isPrefixOf(resource.getLocation())) {
-				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(invisibleProject), libFolderPath, monitor);
+		String resourcePath = resource.getLocation().toOSString();
+		IProject project = resource.getProject();
+		IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
+		ReferencedLibraries libraries = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getReferencedLibraries();
+		for (String pattern: libraries.getExclude()) {
+			if (matchPattern(projectFolder, pattern, resourcePath)) {
+				return false; // skip if excluded
+			}
+		}
+		for (String pattern: libraries.getInclude()) {
+			if (matchPattern(projectFolder, pattern, resourcePath)) {
+				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
+				return false; // update if included in any pattern
 			}
 		}
 		return false;
+	}
+
+	public boolean matchPattern(IPath base, String pattern, String path) {
+		String glob = ProjectUtils.resolveGlobPath(base, pattern).toOSString();
+		if (base.getDevice() != null) {
+			return SelectorUtils.matchPath(glob, path, false); // Case insensitive match in Windows
+		} else {
+			return SelectorUtils.matchPath(glob, path); // Case sensitive match in *nix
+		}
 	}
 
 }
