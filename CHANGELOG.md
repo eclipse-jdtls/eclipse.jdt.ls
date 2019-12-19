@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.49.0 (December 23rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/67?closed=1)
+* enhancement - added support for Call Hierarchy. See [#508](https://github.com/eclipse/eclipse.jdt.ls/issues/508).
+* enhancement - add jars to classpath via new `java.project.referencedLibraries` preference. See [#1305](https://github.com/eclipse/eclipse.jdt.ls/pull/1305).
+* enhancement - include TextEdit to completion requests, as defined by the LSP. Completion results are now limited via `java.completion.maxResults` preference. See [#465](https://github.com/eclipse/eclipse.jdt.ls/issues/465) and [#1298](https://github.com/eclipse/eclipse.jdt.ls/pull/1298).
+* enhancement - Remove duplicate call of getRawLocationURI(). See [#1299](https://github.com/eclipse/eclipse.jdt.ls/pull/1299).
+* bug fixed - fixed incorrect signatures returned by signatureHelp. See [#1290](https://github.com/eclipse/eclipse.jdt.ls/issues/1290).
+* bug fixed - fixed broken signatureHelp when previous string parameter has `(` or `{`. See [#1293](https://github.com/eclipse/eclipse.jdt.ls/issues/1293).
+* debt - relicensed project to EPL-v2.0. See [#897](https://github.com/eclipse/eclipse.jdt.ls/issues/897).
+
 ## [0.48.0 (December 4rd, 2019)](https://github.com/eclipse/eclipse.jdt.ls/milestone/66?closed=1)
 * enhancement - add quickfix to correct access to static elements. See [#439](https://github.com/eclipse/eclipse.jdt.ls/issues/439).
 * enhancement - new `java.maven.updateSnapshots` preference to update snapshots/releases for Maven projects. See [#1217](https://github.com/eclipse/eclipse.jdt.ls/pull/1217).
