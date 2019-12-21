@@ -344,7 +344,7 @@ public final class ProjectUtils {
 	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
 		Set<Path> binaries = new LinkedHashSet<>();
 		Map<IPath, Set<String>> includeByPrefix = groupGlobsByPrefix(projectDir, include);
-		Stream<IPath> excludeResolved = exclude.stream().map(glob -> resolveGlobPath(projectDir, glob));
+		Set<IPath> excludeResolved = exclude.stream().map(glob -> resolveGlobPath(projectDir, glob)).collect(Collectors.toSet());
 		for (IPath baseDir: includeByPrefix.keySet()) {
 			Path base = baseDir.toFile().toPath();
 			if (monitor.isCanceled()) {
@@ -360,7 +360,7 @@ public final class ProjectUtils {
 				continue; // base does not exist
 			}
 			Set<String> subInclude = includeByPrefix.get(baseDir);
-			Set<String> subExclude = excludeResolved.map(glob -> glob.makeRelativeTo(baseDir).toOSString()).collect(Collectors.toSet());
+			Set<String> subExclude = excludeResolved.stream().map(glob -> glob.makeRelativeTo(baseDir).toOSString()).collect(Collectors.toSet());
 			DirectoryScanner scanner = new DirectoryScanner();
 			try {
 				scanner.setIncludes(subInclude.toArray(new String[subInclude.size()]));
