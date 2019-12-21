@@ -39,6 +39,7 @@ import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCom
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.lsp4j.MessageType;
 
@@ -54,6 +55,11 @@ public class Preferences {
 	 * Specifies the folder path to the JDK .
 	 */
 	public static final String JAVA_HOME = "java.home";
+	/**
+	 * Specifies Java Execution Environments.
+	 */
+	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";
+	public static final Set<String> JAVA_CONFIGURATION_RUNTIMES_DEFAULT;
 	/**
 	 * Specifies the file path to the formatter xml url.
 	 */
@@ -388,9 +394,11 @@ public class Preferences {
 	private Collection<IPath> triggerFiles;
 	private int parallelBuildsCount;
 	private int maxCompletionResults;
+	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
+		JAVA_CONFIGURATION_RUNTIMES_DEFAULT = new HashSet<>();
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources/**");
@@ -487,6 +495,7 @@ public class Preferences {
 			return sources;
 		}
 
+		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
@@ -719,6 +728,61 @@ public class Preferences {
 		int maxCompletions = getInt(configuration, JAVA_COMPLETION_MAX_RESULTS_KEY, JAVA_COMPLETION_MAX_RESULTS_DEFAULT);
 		prefs.setMaxCompletionResults(maxCompletions);
 
+		List<?> runtimeList = getList(configuration, JAVA_CONFIGURATION_RUNTIMES, JAVA_IMPORT_ORDER_DEFAULT);
+		Set<RuntimeEnvironment> runtimes = new HashSet<>();
+		boolean[] hasDefault = { false };
+		for (Object object : runtimeList) {
+			if (object instanceof Map) {
+				RuntimeEnvironment runtime = new RuntimeEnvironment();
+				Map<?, ?> map = (Map<?, ?>) object;
+				map.forEach((k, v) -> {
+					if (k instanceof String) {
+						switch ((String) k) {
+							case "name":
+								if (v instanceof String) {
+									runtime.setName((String) v);
+								}
+								break;
+							case "path":
+								if (v instanceof String) {
+									runtime.setPath((String) v);
+								}
+								break;
+							case "javadoc":
+								if (v instanceof String) {
+									runtime.setJavadoc((String) v);
+								}
+								break;
+							case "sources":
+								if (v instanceof String) {
+									runtime.setSources((String) v);
+								}
+								break;
+							case "default":
+								if (!hasDefault[0]) {
+									if (v instanceof Boolean) {
+										runtime.setDefault((Boolean) v);
+									}
+									hasDefault[0] = true;
+								}
+								break;
+							default:
+								break;
+						}
+					}
+				});
+				if (!runtimes.contains(runtime)) {
+					if (runtime.isValid()) {
+						runtimes.add(runtime);
+					} else {
+						JavaLanguageServerPlugin.logInfo("Runtime " + runtime + " is not valid.");
+					}
+				} else {
+					JavaLanguageServerPlugin.logInfo("Multiple runtimes with name " + runtime.getName());
+				}
+			}
+		}
+		prefs.setRuntimes(runtimes);
 		return prefs;
 	}
 
@@ -1210,6 +1274,15 @@ public class Preferences {
 
 	public Preferences setReferencedLibraries(ReferencedLibraries referencedLibraries) {
 		this.referencedLibraries = referencedLibraries;
+		return this;
+	}
+
+	public Set<RuntimeEnvironment> getRuntimes() {
+		return runtimes;
+	}
+
+	public Preferences setRuntimes(Set<RuntimeEnvironment> runtimes) {
+		this.runtimes = runtimes;
 		return this;
 	}
 }
