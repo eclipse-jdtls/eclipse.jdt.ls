@@ -978,10 +978,55 @@ public final class JDTUtils {
 		} else if (constantValue instanceof Character) {
 			return '\'' + constantValue.toString() + '\'';
 		} else {
-			return constantValue.toString(); // getHexConstantValue(constantValue);
+			String  value = constantValue.toString();
+			value+=";//0x";
+			value +=  getHexConstantValue(constantValue);
+			return value;
 		}
 	}
 
+	/**
+	 * Returns the hex constant value for the given Object.
+	 *
+	 * @param Object
+	 *            the constvalue
+	 * @return the constant value for the given field or <code>null</code> if none
+	 *
+	 */
+	static String getHexConstantValue(Object constvalue)
+	{
+		if(constvalue instanceof  Integer)
+		{
+			Integer temp = (Integer)(constvalue);
+			return Integer.toHexString(temp.intValue());
+		}
+		else if(constvalue instanceof  Byte){
+			Byte temp = (Byte)(constvalue);
+			return Integer.toHexString(temp.intValue());
+		}
+		else if(constvalue instanceof  Short){
+			Short temp = (Short)(constvalue);
+			return Integer.toHexString(temp.intValue());
+		}
+		else if(constvalue instanceof Long){
+			Long temp = (Long)(constvalue);
+			return Long.toHexString(temp.longValue());
+		}
+		else if(constvalue instanceof Float){
+			Float temp = (Float)(constvalue);
+			return Float.toHexString(temp.floatValue());
+		}
+		else if(constvalue instanceof  Double){
+			Double temp = (Double)(constvalue);
+			return Double.toHexString(temp.doubleValue());
+		}
+		else {
+			return  constvalue.toString();
+		}
+	}
+	
+	
+	
 	/**
 	 * Tells whether the given field is static final.
 	 *
