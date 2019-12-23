@@ -125,6 +125,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 																				CompletionItemKind.Text);
 	// @formatter:on
 
+	/**
+	 * @deprecated use
+	 *             {@link CompletionProposalRequestor#CompletionProposalRequestor(ICompilationUnit, int, PreferenceManager)}
+	 */
+	@Deprecated
+	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset) {
+		this(aUnit, offset, JavaLanguageServerPlugin.getPreferencesManager());
+	}
+
 	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset, PreferenceManager preferenceManager) {
 		this.unit = aUnit;
 		this.preferenceManager = preferenceManager;
