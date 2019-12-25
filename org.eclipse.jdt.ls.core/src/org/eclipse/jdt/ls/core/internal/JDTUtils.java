@@ -978,10 +978,12 @@ public final class JDTUtils {
 		} else if (constantValue instanceof Character) {
 			return '\'' + constantValue.toString() + '\'';
 		} else {
-			String  value = constantValue.toString();
-			value+=";//0x";
-			value +=  getHexConstantValue(constantValue);
-			return value;
+		    StringBuilder value = new StringBuilder(constantValue.toString());
+			String hexValue = getHexConstantValue(constantValue);
+			if (hexValue != null) {
+				value.append(" [hex: 0x").append(hexValue).append("]");
+			}
+			return value.toString();
 		}
 	}
 
@@ -1021,7 +1023,7 @@ public final class JDTUtils {
 			return Double.toHexString(temp.doubleValue());
 		}
 		else {
-			return  constvalue.toString();
+			return null;
 		}
 	}
 	
