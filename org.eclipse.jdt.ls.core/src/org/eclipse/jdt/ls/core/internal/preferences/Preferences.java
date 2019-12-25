@@ -71,6 +71,10 @@ public class Preferences {
 	 */
 	public static final String IMPORT_GRADLE_ENABLED = "java.import.gradle.enabled";
 	/**
+	 * Preference key to enable/disable gradle offline mode.
+	 */
+	public static final String IMPORT_GRADLE_OFFLINE_ENABLED = "java.import.gradle.offline.enabled";
+	/**
 	 * Preference key to enable/disable gradle wrapper.
 	 */
 	public static final String GRADLE_WRAPPER_ENABLED = "java.import.gradle.wrapper.enabled";
@@ -328,12 +332,14 @@ public class Preferences {
 	public static final String WORKSPACE_WATCHED_FILES_ID = UUID.randomUUID().toString();
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
 	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
+	private static final String GRADLE_OFFLINE_MODE = "gradle.offline.mode";
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
+	private boolean importGradleOfflineEnabled;
 	private boolean gradleWrapperEnabled;
 	private String gradleVersion;
 	private List<String> gradleArguments;
@@ -503,6 +509,7 @@ public class Preferences {
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
+		importGradleOfflineEnabled = false;
 		gradleWrapperEnabled = true;
 		gradleVersion = null;
 		gradleArguments = new ArrayList<>();
@@ -566,6 +573,8 @@ public class Preferences {
 
 		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
 		prefs.setImportGradleEnabled(importGradleEnabled);
+		boolean importGradleOfflineEnabled = getBoolean(configuration, IMPORT_GRADLE_OFFLINE_ENABLED, false);
+		prefs.setImportGradleOfflineEnabled(importGradleOfflineEnabled);
 		boolean gradleWrapperEnabled = getBoolean(configuration, GRADLE_WRAPPER_ENABLED, true);
 		prefs.setGradleWrapperEnabled(gradleWrapperEnabled);
 		String gradleVersion = getString(configuration, GRADLE_VERSION);
@@ -790,6 +799,16 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setImportGradleOfflineEnabled(boolean enabled) {
+		this.importGradleOfflineEnabled = enabled;
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode("org.eclipse.buildship.core");
+		boolean offlineMode = prefs.getBoolean(GRADLE_OFFLINE_MODE, false);
+		if (offlineMode != enabled) {
+			prefs.putBoolean(GRADLE_OFFLINE_MODE, enabled);
+		}
+		return this;
+	}
+
 	public Preferences setGradleWrapperEnabled(boolean enabled) {
 		this.gradleWrapperEnabled = enabled;
 		return this;
@@ -999,6 +1018,10 @@ public class Preferences {
 
 	public boolean isImportGradleEnabled() {
 		return importGradleEnabled;
+	}
+
+	public boolean isImportGradleOfflineEnabled() {
+		return importGradleOfflineEnabled;
 	}
 
 	public boolean isGradleWrapperEnabled() {

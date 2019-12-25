@@ -178,6 +178,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
 		List<String> gradleArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments() : new ArrayList<>();
 		List<String> gradleJvmArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments() : new ArrayList<>();
+		boolean offlineMode = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleOfflineEnabled() : false;
 		// @formatter:off
 		BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(rootFolder.toFile())
 				.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
@@ -185,6 +186,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				.javaHome(javaHome)
 				.arguments(gradleArguments)
 				.jvmArguments(gradleJvmArguments)
+				.offlineMode(offlineMode)
 				.build();
 		// @formatter:on
 		return build;
