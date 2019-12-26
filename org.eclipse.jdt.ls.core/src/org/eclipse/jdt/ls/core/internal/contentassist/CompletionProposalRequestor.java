@@ -202,9 +202,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, getContext(), response.getOffset(), preferenceManager.getClientPreferences());
 		for (int i = 0; i < limit; i++) {
 			CompletionProposal proposal = proposals.get(i);
-			CompletionItem item = toCompletionItem(proposal, i);
-			proposalProvider.updateReplacement(proposal, item, '\0');
-			completionItems.add(item);
+			try {
+				CompletionItem item = toCompletionItem(proposal, i);
+				proposalProvider.updateReplacement(proposal, item, '\0');
+				completionItems.add(item);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 		}
 		return completionItems;
 	}

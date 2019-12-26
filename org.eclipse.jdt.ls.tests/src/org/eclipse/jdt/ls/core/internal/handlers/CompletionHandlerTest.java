@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
@@ -2560,6 +2562,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertEquals("clear() : void", list.getItems().get(0).getLabel());
 		} finally {
 			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
+	public void testCompletion_InvalidJavadoc() throws Exception {
+		importProjects("maven/aspose");
+		IProject project = null;
+		ICompilationUnit unit = null;
+		try {
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose");
+			IJavaProject javaProject = JavaCore.create(project);
+			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
+			unit.becomeWorkingCopy(null);
+			int[] loc = findCompletionLocation(unit, "doc.");
+			CompletionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionList list = server.completion(position).join().getRight();
+			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("accept(DocumentVisitor visitor) : boolean")).findFirst().orElse(null);
+			assertNotNull(ci);
+		} finally {
+			if (unit != null) {
+				unit.discardWorkingCopy();
+			}
 		}
 	}
 

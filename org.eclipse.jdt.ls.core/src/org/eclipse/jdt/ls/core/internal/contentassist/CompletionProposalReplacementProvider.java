@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.dom.ASTRequestor;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -443,7 +444,15 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal) {
-		char[][] parameterNames= proposal.findParameterNames(null);
+		char[][] parameterNames;
+		try {
+			parameterNames = proposal.findParameterNames(null);
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			char[] signature = SignatureUtil.fix83600(proposal.getSignature());
+			parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
+			proposal.setParameterNames(parameterNames);
+		}
 
 		int count= parameterNames.length;
 

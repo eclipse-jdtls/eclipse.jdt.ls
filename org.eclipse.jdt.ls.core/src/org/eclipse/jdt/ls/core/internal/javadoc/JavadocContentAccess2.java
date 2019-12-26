@@ -94,6 +94,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 
 /**
@@ -590,7 +591,12 @@ public class JavadocContentAccess2 {
 		if (sourceJavadoc == null || sourceJavadoc.length() == 0 || sourceJavadoc.trim().equals("{@inheritDoc}")) { //$NON-NLS-1$
 			if (useAttachedJavadoc) {
 				if (element.getOpenable().getBuffer() == null) { // only if no source available
-					return element.getAttachedJavadoc(null);
+					try {
+						return element.getAttachedJavadoc(null);
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						return null;
+					}
 				}
 				IMember member = null;
 				if (element instanceof ILocalVariable) {
