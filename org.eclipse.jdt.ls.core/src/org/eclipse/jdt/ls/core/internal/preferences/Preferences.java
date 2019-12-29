@@ -667,8 +667,8 @@ public class Preferences {
 			try {
 				Map<String, Object> config = (Map<String, Object>) referencedLibraries;
 				Set<String> include = new HashSet<>((List<String>) config.get("include"));
-				Set<String> exclude = new HashSet<>((List<String>) config.get("exclude"));
-				Map<String, String> sources = (Map<String, String>) config.get("sources");
+				Set<String> exclude = new HashSet<>((List<String>) config.getOrDefault("exclude", new ArrayList<>()));
+				Map<String, String> sources = (Map<String, String>) config.getOrDefault("sources", new HashMap<>());
 				prefs.setReferencedLibraries(new ReferencedLibraries(include, exclude, sources));
 			} catch (Exception e) {
 				prefs.setReferencedLibraries(JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT);
