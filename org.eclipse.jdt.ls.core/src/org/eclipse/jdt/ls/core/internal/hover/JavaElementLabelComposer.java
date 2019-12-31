@@ -302,7 +302,11 @@ public class JavaElementLabelComposer {
 				}
 				String[] names= null;
 				if (getFlag(flags, JavaElementLabels.M_PARAMETER_NAMES) && method.exists()) {
-					names= method.getParameterNames();
+					try {
+						names= method.getParameterNames();
+					} catch (Exception e) {
+						names = method.getRawParameterNames();
+					}
 					if (isPolymorphic) {
 						// handled specially below
 					} else	if (types == null) {

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -34,6 +35,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
@@ -188,6 +190,32 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover.getContents());
 		assertEquals(1, hover.getContents().getLeft().size());
 		assertEquals("Should find empty hover for " + payload, "", hover.getContents().getLeft().get(0).getLeft());
+	}
+
+	@Test
+	public void testInvalidJavadoc() throws Exception {
+		importProjects("maven/aspose");
+		IProject project = null;
+		ICompilationUnit unit = null;
+		try {
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose");
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.sample.TestJavadoc");
+			unit = type.getCompilationUnit();
+			unit.becomeWorkingCopy(null);
+			String uri = JDTUtils.toURI(unit);
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+			TextDocumentPositionParams position = new TextDocumentPositionParams(textDocument, new Position(8, 24));
+			Hover hover = handler.hover(position, monitor);
+			assertNotNull(hover);
+			assertNotNull(hover.getContents());
+			assertEquals(1, hover.getContents().getLeft().size());
+			assertEquals("com.aspose.words.Document.Document(String fileName) throws Exception", hover.getContents().getLeft().get(0).getRight().getValue());
+		} finally {
+			if (unit != null) {
+				unit.discardWorkingCopy();
+			}
+		}
 	}
 
 	String createHoverRequest(String file, int line, int kar) {
