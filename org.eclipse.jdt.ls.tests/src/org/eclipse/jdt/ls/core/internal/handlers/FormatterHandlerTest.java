@@ -208,8 +208,8 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		String expectedText =
 			"package org.sample;\n" +
 			"      public class Baz {\n"+
-			"   void foo() {\n" +
-			"   }\n"+
+			"         void foo() {\n" +
+			"         }\n"+
 			"	}\n";
 		//@formatter:on
 		String newText = TextEditUtil.apply(unit, edits);
@@ -386,7 +386,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			  "package org.sample;\n"
 			+ "\n"
 			+ "    public      class     Baz {  \n"//this part won't be formatted
-			+ "    String name;\n"
+			+ "        String name;\n"
 			+ "}\n";
 		//@formatter:on
 
