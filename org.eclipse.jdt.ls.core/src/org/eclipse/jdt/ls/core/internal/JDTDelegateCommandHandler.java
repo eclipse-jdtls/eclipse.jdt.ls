@@ -63,6 +63,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return ProjectCommand.getProjectSettings((String) arguments.get(0), (ArrayList<String>) arguments.get(1));
 				case "java.project.getClasspaths":
 					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
+				case "java.project.isTestFile":
+					return ProjectCommand.isTestFile((String) arguments.get(0));
 				default:
 					break;
 			}

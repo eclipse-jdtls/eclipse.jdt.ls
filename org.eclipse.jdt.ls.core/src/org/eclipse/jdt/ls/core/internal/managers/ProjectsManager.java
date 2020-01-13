@@ -99,6 +99,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 public class ProjectsManager implements ISaveParticipant {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
+	private static final String CLASSPATH_UPDATED_NOTIFICATION = "__CLASSPATH_UPDATED__";
 	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
 	private JavaLanguageClient client;
@@ -539,6 +540,10 @@ public class ProjectsManager implements ISaveParticipant {
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
+					if (client != null) {
+						ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Log).withMessage(CLASSPATH_UPDATED_NOTIFICATION).withData(project.getLocationURI().toString());
+						client.sendActionableNotification(notification);
+					}
 				} catch (CoreException e) {
 					String msg = "Error updating " + projectName;
 					JavaLanguageServerPlugin.logError(msg);
