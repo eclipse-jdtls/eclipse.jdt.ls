@@ -37,6 +37,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
@@ -533,16 +534,20 @@ public class ProjectsManager implements ISaveParticipant {
 				try {
 					long start = System.currentTimeMillis();
 					project.refreshLocal(IResource.DEPTH_INFINITE, progress.split(5));
+					URI[] impactedProjectsURIs = null;
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
 						buildSupport.get().update(project, force, progress.split(95));
 						registerWatcherJob.schedule();
+						impactedProjectsURIs = buildSupport.get().getAllContainingProjects(project, monitor);
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
-					if (client != null) {
-						ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Log).withMessage(CLASSPATH_UPDATED_NOTIFICATION).withData(project.getLocationURI().toString());
-						client.sendActionableNotification(notification);
+					if (client != null && ArrayUtils.isNotEmpty(impactedProjectsURIs)) {
+						for (URI uri : impactedProjectsURIs) {
+							ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Log).withMessage(CLASSPATH_UPDATED_NOTIFICATION).withData(uri.toString());
+							client.sendActionableNotification(notification);
+						}
 					}
 				} catch (CoreException e) {
 					String msg = "Error updating " + projectName;

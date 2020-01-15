@@ -13,13 +13,19 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
+import java.net.URI;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
 import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -52,7 +58,7 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (!applies(project)) {
 			return;
 		}
-		JavaLanguageServerPlugin.logInfo("Starting Gradle update for "+project.getName());
+		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
 		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
 		if (build.isPresent()) {
 			build.get().synchronize(monitor);
@@ -111,4 +117,17 @@ public class GradleBuildSupport implements IBuildSupport {
 		CorePlugin.listenerRegistry().dispatch(new WorkbenchShutdownEvent());
 	}
 
+	@Override
+	public URI[] getAllContainingProjects(IProject project, IProgressMonitor monitor) {
+		Set<URI> uriList = new LinkedHashSet<>();
+		uriList.add(project.getLocationURI());
+		PersistentModel model = CorePlugin.modelPersistence().loadModel(project);
+		if (model.isPresent()) {
+			Collection<IPath> subpaths = model.getSubprojectPaths();
+			for (IPath path : subpaths) {
+				uriList.add(URIUtil.toURI(project.getLocation().append(path)));
+			}
+		}
+		return uriList.toArray(new URI[0]);
+	}
 }

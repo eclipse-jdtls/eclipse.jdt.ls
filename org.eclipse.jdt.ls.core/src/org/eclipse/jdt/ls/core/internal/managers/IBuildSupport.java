@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.net.URI;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -98,6 +100,20 @@ public interface IBuildSupport {
 	 * @throws CoreException
 	 */
 	default void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	}
+
+	/**
+	 * Discover all the sub-projects of the input project and return them all.
+	 * 
+	 * @param project
+	 *                    - a parent project
+	 * 
+	 * @param monitor
+	 *                    - a progress monitor
+	 * @return array of the parent project and its sub-projects
+	 */
+	default URI[] getAllContainingProjects(IProject project, IProgressMonitor monitor) {
+		return new URI[]{project.getLocationURI()};
 	}
 
 }

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -171,6 +172,19 @@ public class MavenBuildSupport implements IBuildSupport {
 				}
 			}
 		}
+	}
+
+	@Override
+	public URI[] getAllContainingProjects(IProject project, IProgressMonitor monitor) {
+		Set<IProject> projectSet = new LinkedHashSet<>();
+		if (shouldCollectProjects()) {
+			collectProjects(projectSet, project, monitor);
+		} else {
+			projectSet.add(project);
+		}
+		return projectSet.stream().map((p) -> {
+			return p.getLocationURI();
+		}).toArray(URI[]::new);
 	}
 
 }
