@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
@@ -137,7 +138,14 @@ public class CompletionProposalDescriptionProvider {
 		// TODO remove once https://bugs.eclipse.org/bugs/show_bug.cgi?id=85293
 		// gets fixed.
 		char[] signature= SignatureUtil.fix83600(methodProposal.getSignature());
-		char[][] parameterNames= methodProposal.findParameterNames(null);
+		char[][] parameterNames;
+		try {
+			parameterNames = methodProposal.findParameterNames(null);
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
+			methodProposal.setParameterNames(parameterNames);
+		}
 		char[][] parameterTypes= Signature.getParameterTypes(signature);
 
 		for (int i= 0; i < parameterTypes.length; i++) {

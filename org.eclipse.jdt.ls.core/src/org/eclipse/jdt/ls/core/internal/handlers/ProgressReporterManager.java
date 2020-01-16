@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -257,12 +256,6 @@ public class ProgressReporterManager extends ProgressProvider {
 
 		protected String getMessage(String task) {
 			String message = subTaskName == null || subTaskName.isEmpty() ? "" : subTaskName;
-			if (!message.isEmpty() && !Objects.equals(taskName, subTaskName)) {
-				message = task + " " + message;
-			}
-			if (message.isEmpty()) {
-				message = task;
-			}
 			return message;
 		}
 	}

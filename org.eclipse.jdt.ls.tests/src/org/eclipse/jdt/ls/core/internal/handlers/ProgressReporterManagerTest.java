@@ -100,7 +100,7 @@ public class ProgressReporterManagerTest {
 		List<ProgressReport> reports = captor.getAllValues();
 		assertEquals(1, reports.size());
 		ProgressReport report = reports.get(0);
-		assertEquals(job.getName(), report.getStatus());
+		assertEquals("", report.getStatus());
 		assertEquals(job.getName(), report.getTask());
 		assertTrue(report.isComplete());
 	}
@@ -134,7 +134,7 @@ public class ProgressReporterManagerTest {
 		List<ProgressReport> progressReports = captorProgress.getAllValues();
 		assertEquals(1, progressReports.size());
 		ProgressReport progressReport = progressReports.get(0);
-		assertEquals(job.getName(), progressReport.getStatus());
+		assertEquals("", progressReport.getStatus());
 		assertEquals(job.getName(), progressReport.getTask());
 		assertTrue(progressReport.isComplete());
 	}
@@ -167,11 +167,11 @@ public class ProgressReporterManagerTest {
 		assertEquals(2, reports.size());
 
 		StatusReport report1 = reports.get(0);
-		assertEquals("0% Starting Java Language Server - " + taskName, report1.getMessage());
+		assertEquals("0% Starting Java Language Server", report1.getMessage());
 		assertEquals(ServiceStatus.Starting.name(), report1.getType());
 
 		StatusReport report2 = reports.get(1);
-		assertEquals("50% Starting Java Language Server - " + taskName, report2.getMessage());
+		assertEquals("50% Starting Java Language Server", report2.getMessage());
 		assertEquals(ServiceStatus.Starting.name(), report2.getType());
 
 	}
