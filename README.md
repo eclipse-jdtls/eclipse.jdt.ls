@@ -121,6 +121,7 @@ This repository only contains the server implementation. Here are some known cli
 * [Eclipse Theia](https://github.com/theia-ide/theia) : Theia is a cloud & desktop IDE framework implemented in TypeScript
 * [coc-java](https://github.com/neoclide/coc-java) : an extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [MS Paint IDE](https://github.com/MSPaintIDE/MSPaintIDE) : an IDE for programming in MS Paint
+* [JCIDE](http://javacardos.com/javacardforum/viewtopic.php?f=5&p=6175&sid=634adfc0889b2ad8773f727df8a35867#p6175) : an IDE for programming in Javacard
 
 Continuous Integration Builds
 -----------------------------
