@@ -666,7 +666,7 @@ public class Preferences {
 		} else if (referencedLibraries instanceof Map) {
 			try {
 				Map<String, Object> config = (Map<String, Object>) referencedLibraries;
-				Set<String> include = new HashSet<>((List<String>) config.get("include"));
+				Set<String> include = new HashSet<>((List<String>) config.getOrDefault("include", new ArrayList<>()));
 				Set<String> exclude = new HashSet<>((List<String>) config.getOrDefault("exclude", new ArrayList<>()));
 				Map<String, String> sources = (Map<String, String>) config.getOrDefault("sources", new HashMap<>());
 				prefs.setReferencedLibraries(new ReferencedLibraries(include, exclude, sources));

@@ -390,7 +390,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			assertEquals("Configuration with include, exclude and sources", libraries, preferences.getReferencedLibraries());
 		}
 
-		{ // Test import of referenced libraries without include (will fall back to default)
+		{ // Test import of referenced libraries with exclude and sources
 			List<String> exclude = Arrays.asList("libraries/sources/**");
 			Map<String, String> sources = new HashMap<String, String>() {{
 				put("libraries/foo.jar", "libraries/foo-src.jar");
@@ -401,8 +401,32 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 				put("sources", sources);
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
-			ReferencedLibraries libraries = Preferences.JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
-			assertEquals("Configuration with no include", libraries, preferences.getReferencedLibraries());
+			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(exclude), sources);
+			assertEquals("Configuration with exclude and sources", libraries, preferences.getReferencedLibraries());
+		}
+
+		{ // Test import of referenced libraries with only exclude
+			List<String> exclude = Arrays.asList("libraries/sources/**");
+			Map<String, Object> configuration = new HashMap<>();
+			configuration.put(Preferences.JAVA_PROJECT_REFERENCED_LIBRARIES_KEY, new HashMap<String, Object>() {{
+				put("exclude", exclude);
+			}});
+			Preferences preferences = Preferences.createFrom(configuration);
+			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(exclude), new HashMap<>());
+			assertEquals("Configuration with exclude", libraries, preferences.getReferencedLibraries());
+		}
+
+		{ // Test import of referenced libraries with only sources
+			Map<String, String> sources = new HashMap<String, String>() {{
+				put("libraries/foo.jar", "libraries/foo-src.jar");
+			}};
+			Map<String, Object> configuration = new HashMap<>();
+			configuration.put(Preferences.JAVA_PROJECT_REFERENCED_LIBRARIES_KEY, new HashMap<String, Object>() {{
+				put("sources", sources);
+			}});
+			Preferences preferences = Preferences.createFrom(configuration);
+			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(), sources);
+			assertEquals("Configuration with sources", libraries, preferences.getReferencedLibraries());
 		}
 	}
 }
