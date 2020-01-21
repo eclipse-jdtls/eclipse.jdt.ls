@@ -234,6 +234,14 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
+	@Test
+	public void testGetAllContainingProjects() throws Exception {
+		IProject project = importMavenProject("multimodule");
+		MavenBuildSupport mavenBuildSupport = new MavenBuildSupport();
+		URI[] result = mavenBuildSupport.getAllContainingProjects(project, new NullProgressMonitor());
+		assertEquals(result.length, 4);
+	}
+
 	protected void testNonStandardCompilerId(String projectName) throws Exception {
 		IProject project = importMavenProject(projectName);
 		assertIsJavaProject(project);

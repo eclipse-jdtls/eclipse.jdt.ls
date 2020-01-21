@@ -20,6 +20,7 @@ import java.net.URI;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.junit.Test;
 
@@ -60,6 +61,14 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 		waitForBackgroundJobs();
 		assertNoErrors(project);
 		assertEquals("1.7", ProjectUtils.getJavaSourceLevel(project));
+	}
+
+	@Test
+	public void testGetAllContainingProjects() throws Exception {
+		IProject project = importGradleProject("multi-module");
+		GradleBuildSupport gradleBuildSupport = new GradleBuildSupport();
+		URI[] result = gradleBuildSupport.getAllContainingProjects(project, new NullProgressMonitor());
+		assertEquals(result.length, 3);
 	}
 
 }

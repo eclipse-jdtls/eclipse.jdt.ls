@@ -1,0 +1,27 @@
+allprojects {
+	version = "1.0"
+}
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'maven'
+	
+	sourceCompatibility = 1.8 // java 8
+	targetCompatibility = 1.8
+	
+	task sourcesJar(type: Jar, dependsOn: classes) {
+	    classifier = 'sources'
+	    from sourceSets.main.allSource
+	}
+	
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+	    classifier = 'javadoc'
+	    from javadoc.destinationDir
+	}
+	
+	artifacts {
+	    archives sourcesJar
+	    archives javadocJar
+	}
+}
+

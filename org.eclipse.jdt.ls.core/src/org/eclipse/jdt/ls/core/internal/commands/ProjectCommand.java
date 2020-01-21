@@ -257,10 +257,10 @@ public class ProjectCommand {
 		public boolean excludingTests;
 	}
 
-	static class ClasspathResult {
-		URI projectRoot;
-		String[] classpaths;
-		String[] modulepaths;
+	public static class ClasspathResult {
+		public URI projectRoot;
+		public String[] classpaths;
+		public String[] modulepaths;
 
 		public ClasspathResult(URI projectRoot, String[] classpaths, String[] modulepaths) {
 			this.projectRoot = projectRoot;
