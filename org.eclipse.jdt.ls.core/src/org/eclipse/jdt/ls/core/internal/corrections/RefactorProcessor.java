@@ -152,6 +152,7 @@ public class RefactorProcessor {
 				getAddStaticImportProposals(context, coveringNode, proposals);
 
 				getConvertForLoopProposal(context, coveringNode, proposals);
+				getAssignToVariableProposals(context, coveringNode, locations, proposals, params);
 			}
 			return proposals;
 		}
@@ -229,6 +230,25 @@ public class RefactorProcessor {
 		}
 
 		proposals.addAll(newProposals);
+		return true;
+	}
+
+	private boolean getAssignToVariableProposals(IInvocationContext context, ASTNode node, IProblemLocationCore[] locations, Collection<ChangeCorrectionProposal> resultingCollections, CodeActionParams params) {
+		try {
+			Map formatterOptions = null;
+			CUCorrectionProposal proposal = RefactorProposalUtility.getAssignVariableProposal(params, context, locations != null && locations.length != 0, formatterOptions,
+					this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), locations);
+			if (proposal != null) {
+				resultingCollections.add(proposal);
+			}
+			proposal = RefactorProposalUtility.getAssignFieldProposal(params, context, locations != null && locations.length != 0, formatterOptions,
+					this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), locations);
+			if (proposal != null) {
+				resultingCollections.add(proposal);
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
 		return true;
 	}
 
