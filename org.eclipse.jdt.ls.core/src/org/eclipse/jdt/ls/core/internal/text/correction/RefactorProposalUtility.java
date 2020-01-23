@@ -24,16 +24,19 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -46,11 +49,13 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
+import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
@@ -61,6 +66,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefac
 import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
@@ -71,9 +77,11 @@ public class RefactorProposalUtility {
 	public static final String APPLY_REFACTORING_COMMAND_ID = "java.action.applyRefactoringCommand";
 	public static final String EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND = "extractVariableAllOccurrence";
 	public static final String EXTRACT_VARIABLE_COMMAND = "extractVariable";
+	public static final String ASSIGN_VARIABLE_COMMAND = "assignVariable";
 	public static final String EXTRACT_CONSTANT_COMMAND = "extractConstant";
 	public static final String EXTRACT_METHOD_COMMAND = "extractMethod";
 	public static final String EXTRACT_FIELD_COMMAND = "extractField";
+	public static final String ASSIGN_FIELD_COMMAND = "assignField";
 	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
 	public static final String MOVE_FILE_COMMAND = "moveFile";
 	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
@@ -346,6 +354,96 @@ public class RefactorProposalUtility {
 			return proposal;
 		}
 
+		return null;
+	}
+
+	public static boolean containsMatchingProblem(IProblemLocationCore[] locations, int problemId) {
+		if (locations != null) {
+			for (IProblemLocationCore location : locations) {
+				if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && location.getProblemId() == problemId) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static CUCorrectionProposal getAssignVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+			IProblemLocationCore[] locations)
+			throws CoreException {
+		ASTNode node = context.getCoveringNode();
+		Statement statement = ASTResolving.findParentStatement(node);
+		if (!(statement instanceof ExpressionStatement)) {
+			return null;
+		}
+		ExpressionStatement expressionStatement = (ExpressionStatement) statement;
+		Expression expression = expressionStatement.getExpression();
+		if (expression.getNodeType() == ASTNode.ASSIGNMENT) {
+			return null;
+		}
+		ITypeBinding typeBinding = expression.resolveTypeBinding();
+		typeBinding = Bindings.normalizeTypeBinding(typeBinding);
+		if (typeBinding == null) {
+			return null;
+		}
+		if (containsMatchingProblem(locations, IProblem.UnusedObjectAllocation)) {
+			return null;
+		}
+		final ICompilationUnit cu = context.getCompilationUnit();
+		int relevance;
+		if (context.getSelectionLength() == 0) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+		} else if (problemsAtLocation) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+		} else {
+			relevance = IProposalRelevance.EXTRACT_LOCAL;
+		}
+		if (returnAsCommand) {
+			return new AssignToVariableAssistCommandProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, AssignToVariableAssistProposal.LOCAL, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
+					Arrays.asList(ASSIGN_VARIABLE_COMMAND, params));
+		} else {
+			return new AssignToVariableAssistProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, AssignToVariableAssistProposal.LOCAL, expressionStatement, typeBinding, relevance);
+		}
+	}
+
+	public static CUCorrectionProposal getAssignFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+			IProblemLocationCore[] locations) throws CoreException {
+		ASTNode node = context.getCoveringNode();
+		Statement statement = ASTResolving.findParentStatement(node);
+		if (!(statement instanceof ExpressionStatement)) {
+			return null;
+		}
+		ExpressionStatement expressionStatement = (ExpressionStatement) statement;
+		Expression expression = expressionStatement.getExpression();
+		if (expression.getNodeType() == ASTNode.ASSIGNMENT) {
+			return null;
+		}
+		ITypeBinding typeBinding = expression.resolveTypeBinding();
+		typeBinding = Bindings.normalizeTypeBinding(typeBinding);
+		if (typeBinding == null) {
+			return null;
+		}
+		if (containsMatchingProblem(locations, IProblem.UnusedObjectAllocation)) {
+			return null;
+		}
+		final ICompilationUnit cu = context.getCompilationUnit();
+		ASTNode type = ASTResolving.findParentType(expression);
+		if (type != null) {
+			int relevance;
+			if (context.getSelectionLength() == 0) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+			} else if (problemsAtLocation) {
+				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+			} else {
+				relevance = IProposalRelevance.EXTRACT_LOCAL;
+			}
+			if (returnAsCommand) {
+				return new AssignToVariableAssistCommandProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, AssignToVariableAssistProposal.FIELD, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
+						Arrays.asList(ASSIGN_FIELD_COMMAND, params));
+			} else {
+				return new AssignToVariableAssistProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, AssignToVariableAssistProposal.FIELD, expressionStatement, typeBinding, relevance);
+			}
+		}
 		return null;
 	}
 

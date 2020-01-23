@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,6 @@ import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -65,6 +65,10 @@ public class GetRefactorEditHandler {
 			if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
 					|| RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
+			} else if (RefactorProposalUtility.ASSIGN_VARIABLE_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) getAssignVariableProposal(params, context, problemsAtLocation, params.command, formatterOptions, locations);
+			} else if (RefactorProposalUtility.ASSIGN_FIELD_COMMAND.equals(params.command)) {
+				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getAssignFieldProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
 			} else if (RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
 			} else if (RefactorProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
@@ -90,6 +94,16 @@ public class GetRefactorEditHandler {
 			Command additionalCommand = null;
 			if (linkedProposalModel != null) {
 				LinkedProposalPositionGroupCore linkedPositionGroup = linkedProposalModel.getPositionGroup(positionKey, false);
+				if (linkedPositionGroup == null) {
+					Iterator<LinkedProposalPositionGroupCore> iter = linkedProposalModel.getPositionGroupCoreIterator();
+					while (iter.hasNext()) {
+						LinkedProposalPositionGroupCore lppgc = iter.next();
+						if (lppgc.getGroupId().startsWith(positionKey)) {
+							linkedPositionGroup = lppgc;
+							break;
+						}
+					}
+				}
 				PositionInformation highlightPosition = getFirstTrackedNodePositionBySequenceRank(linkedPositionGroup);
 				if (highlightPosition != null) {
 					int offset = highlightPosition.getOffset();
@@ -140,6 +154,17 @@ public class GetRefactorEditHandler {
 			return RefactorProposalUtility.getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
+		return null;
+	}
+
+	private static CUCorrectionProposal getAssignVariableProposal(GetRefactorEditParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions, IProblemLocationCore[] locations)
+			throws CoreException {
+		if (RefactorProposalUtility.ASSIGN_VARIABLE_COMMAND.equals(refactorType)) {
+			return RefactorProposalUtility.getAssignVariableProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
+		}
+		if (RefactorProposalUtility.ASSIGN_FIELD_COMMAND.equals(refactorType)) {
+			return RefactorProposalUtility.getAssignFieldProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
+		}
 		return null;
 	}
 

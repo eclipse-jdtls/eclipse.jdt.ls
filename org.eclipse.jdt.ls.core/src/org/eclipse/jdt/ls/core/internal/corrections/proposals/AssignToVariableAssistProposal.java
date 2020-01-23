@@ -104,6 +104,22 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		createImportRewrite((CompilationUnit) node.getRoot());
 	}
 
+	public AssignToVariableAssistProposal(ICompilationUnit cu, String kind, int variableKind, ExpressionStatement node, ITypeBinding typeBinding, int relevance) {
+		super("", kind, cu, null, relevance); //$NON-NLS-1$
+
+		fVariableKind = variableKind;
+		fNodesToAssign = new ArrayList<>();
+		fNodesToAssign.add(node);
+
+		fTypeBinding = Bindings.normalizeForDeclarationUse(typeBinding, node.getAST());
+		if (variableKind == LOCAL) {
+			setDisplayName(CorrectionMessages.AssignToVariableAssistProposal_assigntolocal_description);
+		} else {
+			setDisplayName(CorrectionMessages.AssignToVariableAssistProposal_assigntofield_description);
+		}
+		createImportRewrite((CompilationUnit) node.getRoot());
+	}
+
 	public AssignToVariableAssistProposal(ICompilationUnit cu, SingleVariableDeclaration parameter, VariableDeclarationFragment existingFragment, ITypeBinding typeBinding, int relevance) {
 		super("", JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance); //$NON-NLS-1$
 

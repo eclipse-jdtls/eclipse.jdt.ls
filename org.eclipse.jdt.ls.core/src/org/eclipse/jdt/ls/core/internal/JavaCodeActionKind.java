@@ -84,6 +84,16 @@ public interface JavaCodeActionKind {
 	public static final String REFACTOR_MOVE = CodeActionKind.Refactor + ".move";
 
 	/**
+	 * Assign statement to new local variable
+	 */
+	public static final String REFACTOR_ASSIGN_VARIABLE = CodeActionKind.Refactor + ".assign.variable";
+
+	/**
+	 * Assign statement to new field
+	 */
+	public static final String REFACTOR_ASSIGN_FIELD = CodeActionKind.Refactor + ".assign.field";
+
+	/**
 	 * Base kind for "quickassist" code actions
 	 */
 	public static final String QUICK_ASSIST = "quickassist";

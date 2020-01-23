@@ -39,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
@@ -157,6 +158,9 @@ public class CodeActionHandler {
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else if (proposal instanceof RefactoringCorrectionCommandProposal) {
 			RefactoringCorrectionCommandProposal commandProposal = (RefactoringCorrectionCommandProposal) proposal;
+			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
+		} else if (proposal instanceof AssignToVariableAssistCommandProposal) {
+			AssignToVariableAssistCommandProposal commandProposal = (AssignToVariableAssistCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
 			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
