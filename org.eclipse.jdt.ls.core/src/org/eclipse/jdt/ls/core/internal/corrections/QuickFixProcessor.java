@@ -197,16 +197,14 @@ public class QuickFixProcessor {
 			case IProblem.InstanceFieldDuringConstructorInvocation:
 				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_STATIC, IProposalRelevance.CHANGE_MODIFIER_TO_STATIC);
 				break;
-			// case IProblem.NonBlankFinalLocalAssignment:
-			// case IProblem.DuplicateFinalLocalInitialization:
-			// case IProblem.FinalFieldAssignment:
-			// case IProblem.DuplicateBlankFinalFieldInitialization:
-			// case IProblem.AnonymousClassCannotExtendFinalClass:
-			// case IProblem.ClassExtendFinalClass:
-			// ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL,
-			// IProposalRelevance.REMOVE_FINAL_MODIFIER);
-			// break;
+		    case IProblem.NonBlankFinalLocalAssignment:
+		    case IProblem.DuplicateFinalLocalInitialization:
+		    case IProblem.FinalFieldAssignment:
+		    case IProblem.DuplicateBlankFinalFieldInitialization:
+		    case IProblem.AnonymousClassCannotExtendFinalClass:
+		    case IProblem.ClassExtendFinalClass:
+				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_FINAL, IProposalRelevance.REMOVE_FINAL_MODIFIER);
+				break;
 			case IProblem.InheritedMethodReducesVisibility:
 			case IProblem.MethodReducesVisibility:
 			case IProblem.OverridingNonVisibleMethod:
