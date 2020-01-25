@@ -922,4 +922,309 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 		assertCodeActions(cu, e1);
 	}
+
+	@Test
+	public void testNonBlankFinalLocalAssignment() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("  void foo() {\n");
+		buf.append("    final String s = \"\";\n");
+		buf.append("    if (false) {\n");
+		buf.append("      s = \"\";\n");
+		buf.append("    }\n");
+		buf.append("  }\n");
+		buf.append("}");
+
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("  void foo() {\n");
+		buf.append("    String s = \"\";\n");
+		buf.append("    if (false) {\n");
+		buf.append("      s = \"\";\n");
+		buf.append("    }\n");
+		buf.append("  }\n");
+		buf.append("}");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 's'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testDuplicateFinalLocalInitialization() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("   private int a;");
+		buf.append("	public X (int a) {\n");
+		buf.append("		this.a = a;\n");
+		buf.append("	}\n");
+		buf.append("	public int returnA () {\n");
+		buf.append("		return a;\n");
+		buf.append("	}\n");
+		buf.append("	public static boolean comparison (X x, int val) {\n");
+		buf.append("		return (x.returnA() == val);\n");
+		buf.append("	}\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		final X abc;\n");
+		buf.append("		boolean comp = X.comparison((abc = new X(2)), (abc = new X(1)).returnA());\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("   private int a;");
+		buf.append("	public X (int a) {\n");
+		buf.append("		this.a = a;\n");
+		buf.append("	}\n");
+		buf.append("	public int returnA () {\n");
+		buf.append("		return a;\n");
+		buf.append("	}\n");
+		buf.append("	public static boolean comparison (X x, int val) {\n");
+		buf.append("		return (x.returnA() == val);\n");
+		buf.append("	}\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		X abc;\n");
+		buf.append("		boolean comp = X.comparison((abc = new X(2)), (abc = new X(1)).returnA());\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 'abc'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testFinalFieldAssignment() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("	final int contents;\n");
+		buf.append("	\n");
+		buf.append("	X() {\n");
+		buf.append("		contents = 3;\n");
+		buf.append("	}\n");
+		buf.append("	X(X other) {\n");
+		buf.append("		other.contents = 5;\n");
+		buf.append("	}\n");
+		buf.append("	\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		X one = new X();\n");
+		buf.append("		System.out.println(\"one.contents: \" + one.contents);\n");
+		buf.append("		X two = new X(one);\n");
+		buf.append("		System.out.println(\"one.contents: \" + one.contents);\n");
+		buf.append("		System.out.println(\"two.contents: \" + two.contents);\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("	int contents;\n");
+		buf.append("	\n");
+		buf.append("	X() {\n");
+		buf.append("		contents = 3;\n");
+		buf.append("	}\n");
+		buf.append("	X(X other) {\n");
+		buf.append("		other.contents = 5;\n");
+		buf.append("	}\n");
+		buf.append("	\n");
+		buf.append("	public static void main(String[] args) {\n");
+		buf.append("		X one = new X();\n");
+		buf.append("		System.out.println(\"one.contents: \" + one.contents);\n");
+		buf.append("		X two = new X(one);\n");
+		buf.append("		System.out.println(\"one.contents: \" + one.contents);\n");
+		buf.append("		System.out.println(\"two.contents: \" + two.contents);\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 'contents'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testDuplicateBlankFinalFieldInitialization() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("   private int a;\n");
+		buf.append("	final int x;\n");
+		buf.append("	{\n");
+		buf.append("		x = new X(x = 2).returnA();");
+		buf.append("	}\n");
+		buf.append("	public X (int a) {\n");
+		buf.append("		this.a = a;\n");
+		buf.append("	}\n");
+		buf.append("	public int returnA () {\n");
+		buf.append("		return a;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class X {\n");
+		buf.append("   private int a;\n");
+		buf.append("	int x;\n");
+		buf.append("	{\n");
+		buf.append("		x = new X(x = 2).returnA();");
+		buf.append("	}\n");
+		buf.append("	public X (int a) {\n");
+		buf.append("		this.a = a;\n");
+		buf.append("	}\n");
+		buf.append("	public int returnA () {\n");
+		buf.append("		return a;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 'x'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAnonymousClassCannotExtendFinalClass() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("import java.io.Serializable;\n");
+		buf.append("public final class X implements Serializable {\n");
+		buf.append("    class SMember extends String {}  \n");
+		buf.append("    @Annot(value = new SMember())\n");
+		buf.append("     void bar() {}\n");
+		buf.append("    @Annot(value = \n");
+		buf.append("            new X(){\n");
+		buf.append("                    ZorkAnonymous1 z;\n");
+		buf.append("                    void foo() {\n");
+		buf.append("                            this.bar();\n");
+		buf.append("                            Zork2 z;\n");
+		buf.append("                    }\n");
+		buf.append("            })\n");
+		buf.append("	void foo() {}\n");
+		buf.append("}\n");
+		buf.append("@interface Annot {\n");
+		buf.append("        String value();\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("import java.io.Serializable;\n");
+		buf.append("public class X implements Serializable {\n");
+		buf.append("    class SMember extends String {}  \n");
+		buf.append("    @Annot(value = new SMember())\n");
+		buf.append("     void bar() {}\n");
+		buf.append("    @Annot(value = \n");
+		buf.append("            new X(){\n");
+		buf.append("                    ZorkAnonymous1 z;\n");
+		buf.append("                    void foo() {\n");
+		buf.append("                            this.bar();\n");
+		buf.append("                            Zork2 z;\n");
+		buf.append("                    }\n");
+		buf.append("            })\n");
+		buf.append("	void foo() {}\n");
+		buf.append("}\n");
+		buf.append("@interface Annot {\n");
+		buf.append("        String value();\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 'X'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testClassExtendFinalClass() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("import java.io.Serializable;\n");
+		buf.append("\n");
+		buf.append("public final class X implements Serializable {\n");
+		buf.append("\n");
+		buf.append("        void bar() {}\n");
+		buf.append("\n");
+		buf.append("        interface IM {}\n");
+		buf.append("        class SMember extends String {}\n");
+		buf.append("\n");
+		buf.append("        class Member extends X {  \n");
+		buf.append("                ZorkMember z;\n");
+		buf.append("                void foo() {\n");
+		buf.append("                        this.bar();\n");
+		buf.append("                        Zork1 z;\n");
+		buf.append("                } \n");
+		buf.append("        }\n");
+		buf.append("\n");
+		buf.append("        void foo() {\n");
+		buf.append("                new X().new IM();\n");
+		buf.append("                class Local extends X { \n");
+		buf.append("                        ZorkLocal z;\n");
+		buf.append("                        void foo() {\n");
+		buf.append("                                this.bar();\n");
+		buf.append("                                Zork3 z;\n");
+		buf.append("                        }\n");
+		buf.append("                }\n");
+		buf.append("                new X() {\n");
+		buf.append("                        ZorkAnonymous2 z;                       \n");
+		buf.append("                        void foo() {\n");
+		buf.append("                                this.bar();\n");
+		buf.append("                                Zork4 z;\n");
+		buf.append("                        }\n");
+		buf.append("                };\n");
+		buf.append("        }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("X.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("import java.io.Serializable;\n");
+		buf.append("\n");
+		buf.append("public class X implements Serializable {\n");
+		buf.append("\n");
+		buf.append("        void bar() {}\n");
+		buf.append("\n");
+		buf.append("        interface IM {}\n");
+		buf.append("        class SMember extends String {}\n");
+		buf.append("\n");
+		buf.append("        class Member extends X {  \n");
+		buf.append("                ZorkMember z;\n");
+		buf.append("                void foo() {\n");
+		buf.append("                        this.bar();\n");
+		buf.append("                        Zork1 z;\n");
+		buf.append("                } \n");
+		buf.append("        }\n");
+		buf.append("\n");
+		buf.append("        void foo() {\n");
+		buf.append("                new X().new IM();\n");
+		buf.append("                class Local extends X { \n");
+		buf.append("                        ZorkLocal z;\n");
+		buf.append("                        void foo() {\n");
+		buf.append("                                this.bar();\n");
+		buf.append("                                Zork3 z;\n");
+		buf.append("                        }\n");
+		buf.append("                }\n");
+		buf.append("                new X() {\n");
+		buf.append("                        ZorkAnonymous2 z;                       \n");
+		buf.append("                        void foo() {\n");
+		buf.append("                                this.bar();\n");
+		buf.append("                                Zork4 z;\n");
+		buf.append("                        }\n");
+		buf.append("                };\n");
+		buf.append("        }\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Remove 'final' modifier of 'X'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
 }
