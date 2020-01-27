@@ -159,10 +159,9 @@ public class QuickFixProcessor {
 			case IProblem.InvalidUnionTypeReferenceSequence:
 				LocalCorrectionsSubProcessor.addUnreachableCatchProposals(context, problem, proposals);
 				break;
-			// case IProblem.RedundantSuperinterface:
-			// LocalCorrectionsSubProcessor.addRedundantSuperInterfaceProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.RedundantSuperinterface:
+				LocalCorrectionsSubProcessor.addRedundantSuperInterfaceProposal(context, problem, proposals);
+				break;
 			case IProblem.VoidMethodReturnsValue:
 				ReturnTypeSubProcessor.addVoidMethodReturnsProposals(context, problem, proposals);
 				break;

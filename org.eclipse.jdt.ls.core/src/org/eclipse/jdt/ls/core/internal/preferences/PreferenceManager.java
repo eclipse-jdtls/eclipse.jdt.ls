@@ -92,6 +92,7 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.COMPILER_RELEASE, JavaCore.ENABLED);
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
 		javaCoreOptions.put(JavaCore.COMPILER_PB_UNHANDLED_WARNING_TOKEN, JavaCore.IGNORE);
+		javaCoreOptions.put(JavaCore.COMPILER_PB_REDUNDANT_SUPERINTERFACE, JavaCore.WARNING);
 		JavaCore.setOptions(javaCoreOptions);
 
 		// Initialize default preferences

@@ -52,6 +52,7 @@ import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -693,6 +694,19 @@ public class LocalCorrectionsSubProcessor {
 			}
 		}
 		ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_STATIC, IProposalRelevance.REMOVE_STATIC_MODIFIER);
+	}
+
+	public static void addRedundantSuperInterfaceProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (!(selectedNode instanceof Name)) {
+			return;
+		}
+		ASTNode node = ASTNodes.getNormalizedNode(selectedNode);
+		ASTRewrite rewrite = ASTRewrite.create(node.getAST());
+		rewrite.remove(node, null);
+		String label = CorrectionMessages.LocalCorrectionsSubProcessor_remove_redundant_superinterface;
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_REDUNDANT_SUPER_INTERFACE);
+		proposals.add(proposal);
 	}
 
 }
