@@ -41,9 +41,9 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
         Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
-        assertEquals(options.size(), settingKeys.size());
-        assertEquals(options.get("org.eclipse.jdt.core.compiler.compliance"), "1.7");
-        assertEquals(options.get("org.eclipse.jdt.core.compiler.source"), "1.7");
+        assertEquals(settingKeys.size(), options.size());
+        assertEquals("1.7", options.get("org.eclipse.jdt.core.compiler.compliance"));
+        assertEquals("1.7", options.get("org.eclipse.jdt.core.compiler.source"));
     }
 
     @Test
@@ -54,9 +54,9 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
         Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
-        assertEquals(options.size(), settingKeys.size());
-        assertEquals(options.get("org.eclipse.jdt.core.compiler.compliance"), "1.8");
-        assertEquals(options.get("org.eclipse.jdt.core.compiler.source"), "1.8");
+        assertEquals(settingKeys.size(), options.size());
+        assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.compliance"));
+        assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.source"));
     }
 
     @Test
@@ -65,16 +65,16 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         IProject project = WorkspaceHelper.getProject("classpathtest");
         String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
         ClasspathOptions options = new ClasspathOptions();
-        options.excludingTests = true;
+        options.scope = "runtime";
         ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
-        assertEquals(result.classpaths.length, 1);
-        assertEquals(result.modulepaths.length, 0);
+        assertEquals(1, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
         assertTrue(result.classpaths[0].indexOf("junit") == -1);
 
-        options.excludingTests = false;
+        options.scope = "test";
         result = ProjectCommand.getClasspaths(uriString, options);
-        assertEquals(result.classpaths.length, 4);
-        assertEquals(result.modulepaths.length, 0);
+        assertEquals(4, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
         boolean containsJunit = Arrays.stream(result.classpaths).anyMatch(element -> {
             return element.indexOf("junit") > -1;
         });
@@ -88,11 +88,11 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         String uriString = project.getFile("src/main/java/Library.java").getLocationURI().toString();
         ClasspathOptions options = new ClasspathOptions();
         // Gradle project will always return classpath containing test dependencies.
-        // So we only test `excludingTests = false` scenario.
-        options.excludingTests = false;
+        // So we only test `scope = "test"` scenario.
+        options.scope = "test";
         ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
-        assertEquals(result.classpaths.length, 5);
-        assertEquals(result.modulepaths.length, 0);
+        assertEquals(5, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
         boolean containsJunit = Arrays.stream(result.classpaths).anyMatch(element -> {
             return element.indexOf("junit") > -1;
         });
@@ -105,10 +105,10 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         IProject project = WorkspaceHelper.getProject("modular-project");
         String uriString = project.getFile("src/main/java/modular/Main.java").getLocationURI().toString();
         ClasspathOptions options = new ClasspathOptions();
-        options.excludingTests = false;
+        options.scope = "test";
         ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
-        assertEquals(result.classpaths.length, 0);
-        assertEquals(result.modulepaths.length, 1);
+        assertEquals(0, result.classpaths.length);
+        assertEquals(1, result.modulepaths.length);
     }
 
     @Test

@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -114,6 +115,10 @@ public interface IBuildSupport {
 	 */
 	default URI[] getAllContainingProjects(IProject project, IProgressMonitor monitor) {
 		return new URI[]{project.getLocationURI()};
+	}
+
+	default ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
+		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, "");
 	}
 
 }
