@@ -112,6 +112,23 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
     }
 
     @Test
+    public void testGetClasspathsForEclipse() throws Exception {
+        importProjects("eclipse/hello");
+        IProject project = WorkspaceHelper.getProject("hello");
+        String uriString = project.getFile("src/java/Bar.java").getLocationURI().toString();
+        ClasspathOptions options = new ClasspathOptions();
+        options.scope = "runtime";
+        ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
+        assertEquals(1, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
+
+        options.scope = "test";
+        result = ProjectCommand.getClasspaths(uriString, options);
+        assertEquals(2, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
+    }
+
+    @Test
     public void testIsTestFileForMaven() throws Exception {
         importProjects("maven/classpathtest");
         IProject project = WorkspaceHelper.getProject("classpathtest");

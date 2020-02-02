@@ -118,7 +118,7 @@ public interface IBuildSupport {
 	}
 
 	default ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
-		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, "");
+		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, null);
 	}
 
 }
