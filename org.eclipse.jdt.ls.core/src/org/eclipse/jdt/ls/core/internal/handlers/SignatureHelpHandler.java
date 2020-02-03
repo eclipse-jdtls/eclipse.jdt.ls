@@ -46,8 +46,8 @@ import org.eclipse.jdt.ls.core.internal.contentassist.SignatureHelpRequestor;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpOptions;
+import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SignatureInformation;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class SignatureHelpHandler {
 
@@ -63,7 +63,7 @@ public class SignatureHelpHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public SignatureHelp signatureHelp(TextDocumentPositionParams position, IProgressMonitor monitor) {
+	public SignatureHelp signatureHelp(SignatureHelpParams position, IProgressMonitor monitor) {
 
 		SignatureHelp help = new SignatureHelp();
 
