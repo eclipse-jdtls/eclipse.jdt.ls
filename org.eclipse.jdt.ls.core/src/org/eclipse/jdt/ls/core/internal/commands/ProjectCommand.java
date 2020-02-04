@@ -38,13 +38,10 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.m2e.jdt.IClasspathManager;
 
 public class ProjectCommand {
 
 	private static final String TEST_SCOPE_VALUE = "test";
-	private static final String GRADLE_SCOPE_ATTRIBUTE = "gradle_scope";
-	private static final String GRADLE_USED_BY_SCOPE_ATTRIBUTE = "gradle_used_by_scope";
 
 	/**
 	 * Gets the project settings.
@@ -143,10 +140,10 @@ public class ProjectCommand {
 
 		for (final IClasspathAttribute attribute : entry.getExtraAttributes()) {
 			String attributeName = attribute.getName();
-			if (IClasspathManager.SCOPE_ATTRIBUTE.equals(attributeName) ||
-					GRADLE_SCOPE_ATTRIBUTE.equals(attributeName) || GRADLE_USED_BY_SCOPE_ATTRIBUTE.equals(attributeName)) {
-				// the attribute value might be "test" or "integrationTest"
-				return attribute.getValue() != null && attribute.getValue().toLowerCase().contains(TEST_SCOPE_VALUE);
+			// attribute name could be "maven.scope" for Maven, "gradle_scope" or "gradle_used_by_scope" for Gradle
+			if (attributeName.contains("scope")) {
+				// the attribute value could be "test" or "integrationTest"
+				return attribute.getValue() != null && attribute.getValue().toLowerCase().contains(TEST_SCOPE_VALUE); 
 			}
 		}
 
