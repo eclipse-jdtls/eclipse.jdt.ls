@@ -159,6 +159,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
+	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
 
@@ -215,11 +216,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
-		try {
-			Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
-		} catch (OperationCanceledException | InterruptedException e) {
-			logException(e.getMessage(), e);
-		}
+				try {
+					Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
+				} catch (OperationCanceledException | InterruptedException e) {
+					logException(e.getMessage(), e);
+				}
 		logInfo(">> initialization job finished");
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
 			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
@@ -274,6 +275,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
+					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
+					classpathUpdateHandler.addElementChangeListener();
 					pm.registerWatchers();
 					pm.registerListeners();
 					logInfo(">> watchers registered");
@@ -354,6 +357,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				if (workspaceDiagnosticsHandler != null) {
 					workspaceDiagnosticsHandler.removeResourceChangeListener();
 					workspaceDiagnosticsHandler = null;
+				}
+				if (classpathUpdateHandler != null) {
+					classpathUpdateHandler.removeElementChangeListener();
+					classpathUpdateHandler = null;
 				}
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
