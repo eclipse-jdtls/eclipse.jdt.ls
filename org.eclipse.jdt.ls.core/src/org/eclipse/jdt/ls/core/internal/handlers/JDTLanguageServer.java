@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -216,11 +216,11 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
-				try {
-					Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
-				} catch (OperationCanceledException | InterruptedException e) {
-					logException(e.getMessage(), e);
-				}
+		try {
+			Job.getJobManager().join(InitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
+		} catch (OperationCanceledException | InterruptedException e) {
+			logException(e.getMessage(), e);
+		}
 		logInfo(">> initialization job finished");
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
 			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
