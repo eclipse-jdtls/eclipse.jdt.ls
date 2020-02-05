@@ -145,7 +145,6 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(expectedText, newText);
 	}
 
-
 	@Test
 	public void testFormatting_onOffTags() throws Exception {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
@@ -181,6 +180,120 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		String newText = TextEditUtil.apply(unit, edits);
 		assertEquals(expectedText, newText);
 
+	}
+
+	@Test
+	public void testFormatting_indent_switchstatementsDefault() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			"package org.sample;\n" +
+			"\n" +
+			"public class Baz {\n" +
+			"    private enum Numbers {One, Two};\n" +
+			"    public void foo() {\n" +
+			"        Numbers n = Numbers.One;\n" +
+			"        switch (n) {\n" +
+			"        case One:\n" +
+			"        return;\n" +
+			"        case Two:\n" +
+			"        return;\n" +
+			"        default:\n" +
+			"        break;\n" +
+			"        }\n" +
+			"    }\n" +
+			"}"
+		//@formatter:off
+		);
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);
+		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		List<? extends TextEdit> edits = server.formatting(params).get();
+		assertNotNull(edits);
+		//@formatter:off
+		String expectedText =
+			"package org.sample;\n" +
+			"\n" +
+			"public class Baz {\n" +
+			"    private enum Numbers {\n" +
+			"        One, Two\n" +
+			"    };\n" +
+			"\n" +
+			"    public void foo() {\n" +
+			"        Numbers n = Numbers.One;\n" +
+			"        switch (n) {\n" +
+			"            case One:\n" +
+			"                return;\n" +
+			"            case Two:\n" +
+			"                return;\n" +
+			"            default:\n" +
+			"                break;\n" +
+			"        }\n" +
+			"    }\n" +
+			"}";
+		//@formatter:on
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
+	@Test
+	public void testFormatting_indent_switchstatementsFalse() throws Exception {
+		String original = javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, true);
+		try {
+			javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, DefaultCodeFormatterConstants.FALSE);
+			ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+			//@formatter:off
+				"package org.sample;\n" +
+				"\n" +
+				"public class Baz {\n" +
+				"    private enum Numbers {One, Two};\n" +
+				"    public void foo() {\n" +
+				"        Numbers n = Numbers.One;\n" +
+				"        switch (n) {\n" +
+				"        case One:\n" +
+				"        return;\n" +
+				"        case Two:\n" +
+				"        return;\n" +
+				"        default:\n" +
+				"        break;\n" +
+				"        }\n" +
+				"    }\n" +
+				"}"
+			//@formatter:off
+			);
+			String uri = JDTUtils.toURI(unit);
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+			FormattingOptions options = new FormattingOptions(4, true);
+			DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+			List<? extends TextEdit> edits = server.formatting(params).get();
+			assertNotNull(edits);
+			//@formatter:off
+			String expectedText =
+				"package org.sample;\n" +
+				"\n" +
+				"public class Baz {\n" +
+				"    private enum Numbers {\n" +
+				"        One, Two\n" +
+				"    };\n" +
+				"\n" +
+				"    public void foo() {\n" +
+				"        Numbers n = Numbers.One;\n" +
+				"        switch (n) {\n" +
+				"        case One:\n" +
+				"            return;\n" +
+				"        case Two:\n" +
+				"            return;\n" +
+				"        default:\n" +
+				"            break;\n" +
+				"        }\n" +
+				"    }\n" +
+				"}";
+			//@formatter:on
+			String newText = TextEditUtil.apply(unit, edits);
+			assertEquals(expectedText, newText);
+		} finally {
+			javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, original);
+		}
 	}
 
 	@Test
