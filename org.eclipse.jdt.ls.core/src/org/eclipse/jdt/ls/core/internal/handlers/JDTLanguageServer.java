@@ -124,6 +124,7 @@ import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.SignatureHelp;
+import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -531,7 +532,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#signatureHelp(org.eclipse.lsp4j.TextDocumentPositionParams)
 	 */
 	@Override
-	public CompletableFuture<SignatureHelp> signatureHelp(TextDocumentPositionParams position) {
+	public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams position) {
 		logInfo(">> document/signatureHelp");
 		SignatureHelpHandler handler = new SignatureHelpHandler(preferenceManager);
 		return computeAsync((monitor) -> handler.signatureHelp(position, monitor));
@@ -573,6 +574,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsync((monitor) -> handler.findReferences(params, monitor));
 	}
 
+	@Override
 	public CompletableFuture<List<? extends Location>> findLinks(FindLinksParams params) {
 		logInfo(">> java/findLinks");
 		return computeAsync((monitor) -> FindLinksHandler.findLinks(params.type, params.position, monitor));

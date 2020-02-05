@@ -34,7 +34,7 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.SignatureHelp;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.SignatureHelpParams;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -407,7 +407,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private SignatureHelp getSignatureHelp(ICompilationUnit cu, int line, int character) {
 		String payload = createSignatureHelpRequest(cu, line, character);
-		TextDocumentPositionParams position = getParams(payload);
+		SignatureHelpParams position = getParams(payload);
 		return handler.signatureHelp(position, monitor);
 	}
 
