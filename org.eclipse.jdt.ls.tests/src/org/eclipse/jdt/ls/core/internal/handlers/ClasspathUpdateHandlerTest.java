@@ -54,7 +54,7 @@ public class ClasspathUpdateHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
-	public void testProjectConfigurationIsNotUpToDate() throws Exception {
+	public void testClasspathUpdate() throws Exception {
 		//import project
 		importProjects("maven/salut");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
