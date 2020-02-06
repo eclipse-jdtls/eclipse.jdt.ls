@@ -61,6 +61,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private CompletionContext context;
 	private boolean isComplete = true;
 	private PreferenceManager preferenceManager;
+	private CompletionProposalReplacementProvider proposalProvider;
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -199,12 +200,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		CompletionResponses.store(response);
 
 		//Let's compute replacement texts for the most relevant results only
-		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, getContext(), response.getOffset(), preferenceManager.getClientPreferences());
 		for (int i = 0; i < limit; i++) {
 			CompletionProposal proposal = proposals.get(i);
 			try {
 				CompletionItem item = toCompletionItem(proposal, i);
-				proposalProvider.updateReplacement(proposal, item, '\0');
 				completionItems.add(item);
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -266,6 +265,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				JavaLanguageServerPlugin.log(e);
 			}
 		}
+		proposalProvider.updateReplacement(proposal, $, '\0');
 		return $;
 	}
 
@@ -275,6 +275,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.context = context;
 		response.setContext(context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
+		this.proposalProvider = new CompletionProposalReplacementProvider(unit, context, response.getOffset(), preferenceManager.getClientPreferences());
 	}
 
 
@@ -379,6 +380,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	public CompletionContext getContext() {
 		return context;
+	}
+
+	public List<CompletionProposal> getProposals() {
+		return proposals;
 	}
 
 	/**
