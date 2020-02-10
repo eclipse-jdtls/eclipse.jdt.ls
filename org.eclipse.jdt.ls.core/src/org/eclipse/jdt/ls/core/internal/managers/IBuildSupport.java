@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -98,6 +99,10 @@ public interface IBuildSupport {
 	 * @throws CoreException
 	 */
 	default void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	}
+
+	default ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
+		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, null);
 	}
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017,2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -12,13 +12,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.lsp4j.WorkspaceEdit;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
@@ -56,6 +59,12 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return BuildPathCommand.removeFromSourcePath(sourceFolder1);
 				case "java.project.listSourcePaths":
 					return BuildPathCommand.listSourcePaths();
+				case "java.project.getSettings":
+					return ProjectCommand.getProjectSettings((String) arguments.get(0), (ArrayList<String>) arguments.get(1));
+				case "java.project.getClasspaths":
+					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
+				case "java.project.isTestFile":
+					return ProjectCommand.isTestFile((String) arguments.get(0));
 				default:
 					break;
 			}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
 import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
 import org.eclipse.core.resources.IProject;
@@ -26,6 +27,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -52,7 +54,7 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (!applies(project)) {
 			return;
 		}
-		JavaLanguageServerPlugin.logInfo("Starting Gradle update for "+project.getName());
+		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
 		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
 		if (build.isPresent()) {
 			build.get().synchronize(monitor);
@@ -111,4 +113,8 @@ public class GradleBuildSupport implements IBuildSupport {
 		CorePlugin.listenerRegistry().dispatch(new WorkbenchShutdownEvent());
 	}
 
+	@Override
+	public ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
+		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, GradleClasspathProvider.ID);
+	}
 }

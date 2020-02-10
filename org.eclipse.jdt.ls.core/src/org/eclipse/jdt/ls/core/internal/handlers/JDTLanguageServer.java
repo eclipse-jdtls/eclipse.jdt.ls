@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -159,6 +159,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
+	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
 
@@ -274,6 +275,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
+					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
+					classpathUpdateHandler.addElementChangeListener();
 					pm.registerWatchers();
 					pm.registerListeners();
 					logInfo(">> watchers registered");
@@ -354,6 +357,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				if (workspaceDiagnosticsHandler != null) {
 					workspaceDiagnosticsHandler.removeResourceChangeListener();
 					workspaceDiagnosticsHandler = null;
+				}
+				if (classpathUpdateHandler != null) {
+					classpathUpdateHandler.removeElementChangeListener();
+					classpathUpdateHandler = null;
 				}
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {

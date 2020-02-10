@@ -69,6 +69,15 @@
             <command
                   id="java.project.listSourcePaths">
             </command>
+            <command
+                  id="java.project.getSettings">
+            </command>
+            <command
+                  id="java.project.getClasspaths">
+            </command>
+            <command
+                  id="java.project.isTestFile">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
