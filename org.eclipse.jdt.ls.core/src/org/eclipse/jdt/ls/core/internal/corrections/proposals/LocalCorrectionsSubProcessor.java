@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.EmptyStatement;
@@ -45,6 +46,7 @@ import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Initializer;
@@ -54,10 +56,15 @@ import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchExpression;
 import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -83,6 +90,7 @@ import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
+import org.eclipse.jdt.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
@@ -707,6 +715,331 @@ public class LocalCorrectionsSubProcessor {
 		String label = CorrectionMessages.LocalCorrectionsSubProcessor_remove_redundant_superinterface;
 		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_REDUNDANT_SUPER_INTERFACE);
 		proposals.add(proposal);
+	}
+
+	public static void getMissingEnumConstantCaseProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		for (ChangeCorrectionProposal proposal : proposals) {
+			if (CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description.equals(proposal.getName())) {
+				return;
+			}
+		}
+
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode instanceof Expression) {
+			StructuralPropertyDescriptor locationInParent = selectedNode.getLocationInParent();
+			ASTNode parent = selectedNode.getParent();
+			ITypeBinding binding;
+			List<Statement> statements;
+
+			if (locationInParent == SwitchStatement.EXPRESSION_PROPERTY) {
+				SwitchStatement statement = (SwitchStatement) parent;
+				binding = statement.getExpression().resolveTypeBinding();
+				statements = statement.statements();
+			} else if (locationInParent == SwitchExpression.EXPRESSION_PROPERTY) {
+				SwitchExpression switchExpression = (SwitchExpression) parent;
+				binding = switchExpression.getExpression().resolveTypeBinding();
+				statements = switchExpression.statements();
+			} else {
+				return;
+			}
+
+			if (binding == null || !binding.isEnum()) {
+				return;
+			}
+
+			ArrayList<String> missingEnumCases = new ArrayList<>();
+			boolean hasDefault = evaluateMissingSwitchCases(binding, statements, missingEnumCases);
+			if (missingEnumCases.size() == 0 && hasDefault) {
+				return;
+			}
+
+			createMissingCaseProposals(context, parent, missingEnumCases, proposals);
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	public static boolean evaluateMissingSwitchCases(ITypeBinding enumBindings, List<Statement> switchStatements, ArrayList<String> enumConstNames) {
+		for (IVariableBinding field : enumBindings.getDeclaredFields()) {
+			if (field.isEnumConstant()) {
+				enumConstNames.add(field.getName());
+			}
+		}
+
+		boolean hasDefault = false;
+		List<Statement> statements = switchStatements;
+		for (int i = 0; i < statements.size(); i++) {
+			Statement curr = statements.get(i);
+			if (curr instanceof SwitchCase) {
+				SwitchCase switchCase = (SwitchCase) curr;
+				if (switchCase.getAST().isPreviewEnabled()) {
+					List<Expression> expressions = switchCase.expressions();
+					if (expressions.size() == 0) {
+						hasDefault = true;
+					} else {
+						for (Expression expression : expressions) {
+							if (expression instanceof SimpleName) {
+								enumConstNames.remove(((SimpleName) expression).getFullyQualifiedName());
+							}
+						}
+					}
+				} else {
+					Expression expression = ((SwitchCase) curr).getExpression();
+					if (expression instanceof SimpleName) {
+						enumConstNames.remove(((SimpleName) expression).getFullyQualifiedName());
+					} else if (expression == null) {
+						hasDefault = true;
+					}
+				}
+			}
+		}
+		return hasDefault;
+	}
+
+	@SuppressWarnings("deprecation")
+	public static void createMissingCaseProposals(IInvocationContext context, ASTNode parent, ArrayList<String> enumConstNames, Collection<ChangeCorrectionProposal> proposals) {
+		List<Statement> statements;
+		Expression expression;
+		if (parent instanceof SwitchStatement) {
+			SwitchStatement switchStatement = (SwitchStatement) parent;
+			statements = switchStatement.statements();
+			expression = switchStatement.getExpression();
+		} else if (parent instanceof SwitchExpression) {
+			SwitchExpression switchExpression = (SwitchExpression) parent;
+			statements = switchExpression.statements();
+			expression = switchExpression.getExpression();
+		} else {
+			return;
+		}
+		int defaultIndex = statements.size();
+		for (int i = 0; i < statements.size(); i++) {
+			Statement curr = statements.get(i);
+			if (curr instanceof SwitchCase) {
+				SwitchCase switchCase = (SwitchCase) curr;
+				if (switchCase.getAST().isPreviewEnabled()) {
+					if (switchCase.expressions().size() == 0) {
+						defaultIndex = i;
+						break;
+					}
+				} else if (switchCase.getExpression() == null) {
+					defaultIndex = i;
+					break;
+				}
+			}
+		}
+		boolean hasDefault = defaultIndex < statements.size();
+
+		AST ast = parent.getAST();
+
+		if (enumConstNames.size() > 0) {
+			ASTRewrite astRewrite = ASTRewrite.create(ast);
+			ListRewrite listRewrite;
+			if (parent instanceof SwitchStatement) {
+				listRewrite = astRewrite.getListRewrite(parent, SwitchStatement.STATEMENTS_PROPERTY);
+			} else {
+				listRewrite = astRewrite.getListRewrite(parent, SwitchExpression.STATEMENTS_PROPERTY);
+			}
+
+			String label = CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description;
+			LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_CASE_STATEMENTS);
+
+			for (int i = 0; i < enumConstNames.size(); i++) {
+				SwitchCase newSwitchCase = ast.newSwitchCase();
+				String enumConstName = enumConstNames.get(i);
+				Name newName = ast.newName(enumConstName);
+				if (ast.isPreviewEnabled()) {
+					newSwitchCase.expressions().add(newName);
+				} else {
+					newSwitchCase.setExpression(newName);
+				}
+				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
+				defaultIndex++;
+				if (!hasDefault) {
+					if (ast.isPreviewEnabled()) {
+						if (statements.size() > 0) {
+							Statement firstStatement = statements.get(0);
+							SwitchCase switchCase = (SwitchCase) firstStatement;
+							boolean isArrow = switchCase.isSwitchLabeledRule();
+							newSwitchCase.setSwitchLabeledRule(isArrow);
+							if (isArrow || parent instanceof SwitchExpression) {
+								ThrowStatement newThrowStatement = getThrowForUnsupportedCase(expression, ast, astRewrite);
+								listRewrite.insertLast(newThrowStatement, null);
+								proposal.addLinkedPosition(astRewrite.track(newThrowStatement), true, enumConstName);
+							} else {
+								listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+							}
+						} else {
+							listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+						}
+					} else {
+						listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+					}
+
+					defaultIndex++;
+				}
+			}
+			if (!hasDefault) {
+				SwitchCase newSwitchCase = ast.newSwitchCase();
+				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
+				defaultIndex++;
+
+				if (ast.isPreviewEnabled()) {
+					if (statements.size() > 0) {
+						Statement firstStatement = statements.get(0);
+						SwitchCase switchCase = (SwitchCase) firstStatement;
+						boolean isArrow = switchCase.isSwitchLabeledRule();
+						newSwitchCase.setSwitchLabeledRule(isArrow);
+						if (isArrow || parent instanceof SwitchExpression) {
+							ThrowStatement newThrowStatement = getThrowForUnexpectedDefault(expression, ast, astRewrite);
+							listRewrite.insertLast(newThrowStatement, null);
+							proposal.addLinkedPosition(astRewrite.track(newThrowStatement), true, "defaultCase"); //$NON-NLS-1$
+						} else {
+							listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+						}
+					} else {
+						listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+					}
+				} else {
+					newSwitchCase.setExpression(null);
+					listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
+				}
+			}
+			proposals.add(proposal);
+		}
+		if (!hasDefault) {
+			createMissingDefaultProposal(context, parent, proposals);
+		}
+	}
+
+	private static ThrowStatement getThrowForUnsupportedCase(Expression switchExpr, AST ast, ASTRewrite astRewrite) {
+		ThrowStatement newThrowStatement = ast.newThrowStatement();
+		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
+		newCic.setType(ast.newSimpleType(ast.newSimpleName("UnsupportedOperationException"))); //$NON-NLS-1$
+		InfixExpression newInfixExpr = ast.newInfixExpression();
+		StringLiteral newStringLiteral = ast.newStringLiteral();
+		newStringLiteral.setLiteralValue("Unimplemented case: "); //$NON-NLS-1$
+		newInfixExpr.setLeftOperand(newStringLiteral);
+		newInfixExpr.setOperator(InfixExpression.Operator.PLUS);
+		newInfixExpr.setRightOperand((Expression) astRewrite.createCopyTarget(switchExpr));
+		newCic.arguments().add(newInfixExpr);
+		newThrowStatement.setExpression(newCic);
+		return newThrowStatement;
+	}
+
+	public static void addMissingDefaultCaseProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode instanceof Expression) {
+			StructuralPropertyDescriptor locationInParent = selectedNode.getLocationInParent();
+			ASTNode parent = selectedNode.getParent();
+			List<Statement> statements;
+
+			if (locationInParent == SwitchStatement.EXPRESSION_PROPERTY) {
+				statements = ((SwitchStatement) parent).statements();
+			} else if (locationInParent == SwitchExpression.EXPRESSION_PROPERTY) {
+				statements = ((SwitchExpression) parent).statements();
+			} else {
+				return;
+			}
+
+			for (Statement statement : statements) {
+				if (statement instanceof SwitchCase && ((SwitchCase) statement).isDefault()) {
+					return;
+				}
+			}
+			createMissingDefaultProposal(context, parent, proposals);
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private static void createMissingDefaultProposal(IInvocationContext context, ASTNode parent, Collection<ChangeCorrectionProposal> proposals) {
+		List<Statement> statements;
+		Expression expression;
+		if (parent instanceof SwitchStatement) {
+			SwitchStatement switchStatement = (SwitchStatement) parent;
+			statements = switchStatement.statements();
+			expression = switchStatement.getExpression();
+		} else if (parent instanceof SwitchExpression) {
+			SwitchExpression switchExpression = (SwitchExpression) parent;
+			statements = switchExpression.statements();
+			expression = switchExpression.getExpression();
+		} else {
+			return;
+		}
+		AST ast = parent.getAST();
+		ASTRewrite astRewrite = ASTRewrite.create(ast);
+		ListRewrite listRewrite;
+		if (parent instanceof SwitchStatement) {
+			listRewrite = astRewrite.getListRewrite(parent, SwitchStatement.STATEMENTS_PROPERTY);
+		} else {
+			listRewrite = astRewrite.getListRewrite(parent, SwitchExpression.STATEMENTS_PROPERTY);
+		}
+		String label = CorrectionMessages.LocalCorrectionsSubProcessor_add_default_case_description;
+		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_DEFAULT_CASE);
+
+		SwitchCase newSwitchCase = ast.newSwitchCase();
+		listRewrite.insertLast(newSwitchCase, null);
+
+		if (ast.isPreviewEnabled()) {
+			if (statements.size() > 0) {
+				Statement firstStatement = statements.get(0);
+				SwitchCase switchCase = (SwitchCase) firstStatement;
+				boolean isArrow = switchCase.isSwitchLabeledRule();
+				newSwitchCase.setSwitchLabeledRule(isArrow);
+				if (isArrow || parent instanceof SwitchExpression) {
+					ThrowStatement newThrowStatement = getThrowForUnexpectedDefault(expression, ast, astRewrite);
+					listRewrite.insertLast(newThrowStatement, null);
+					proposal.addLinkedPosition(astRewrite.track(newThrowStatement), true, null);
+				} else {
+					listRewrite.insertLast(ast.newBreakStatement(), null);
+				}
+			} else {
+				listRewrite.insertLast(ast.newBreakStatement(), null);
+			}
+		} else {
+			newSwitchCase.setExpression(null);
+			listRewrite.insertLast(ast.newBreakStatement(), null);
+		}
+
+		proposals.add(proposal);
+	}
+
+	private static ThrowStatement getThrowForUnexpectedDefault(Expression switchExpression, AST ast, ASTRewrite astRewrite) {
+		ThrowStatement newThrowStatement = ast.newThrowStatement();
+		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
+		newCic.setType(ast.newSimpleType(ast.newSimpleName("IllegalArgumentException"))); //$NON-NLS-1$
+		InfixExpression newInfixExpr = ast.newInfixExpression();
+		StringLiteral newStringLiteral = ast.newStringLiteral();
+		newStringLiteral.setLiteralValue("Unexpected value: "); //$NON-NLS-1$
+		newInfixExpr.setLeftOperand(newStringLiteral);
+		newInfixExpr.setOperator(InfixExpression.Operator.PLUS);
+		newInfixExpr.setRightOperand((Expression) astRewrite.createCopyTarget(switchExpression));
+		newCic.arguments().add(newInfixExpr);
+		newThrowStatement.setExpression(newCic);
+		return newThrowStatement;
+	}
+
+	public static void addCasesOmittedProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (selectedNode instanceof Expression && selectedNode.getLocationInParent() == SwitchStatement.EXPRESSION_PROPERTY) {
+			AST ast = selectedNode.getAST();
+			SwitchStatement parent = (SwitchStatement) selectedNode.getParent();
+
+			for (Statement statement : (List<Statement>) parent.statements()) {
+				if (statement instanceof SwitchCase && ((SwitchCase) statement).isDefault()) {
+
+					// insert //$CASES-OMITTED$:
+					ASTRewrite rewrite = ASTRewrite.create(ast);
+					rewrite.setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
+					ListRewrite listRewrite = rewrite.getListRewrite(parent, SwitchStatement.STATEMENTS_PROPERTY);
+					ASTNode casesOmittedComment = rewrite.createStringPlaceholder("//$CASES-OMITTED$", ASTNode.EMPTY_STATEMENT); //$NON-NLS-1$
+					listRewrite.insertBefore(casesOmittedComment, statement, null);
+
+					String label = CorrectionMessages.LocalCorrectionsSubProcessor_insert_cases_omitted;
+					ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.INSERT_CASES_OMITTED);
+					proposals.add(proposal);
+					break;
+				}
+			}
+		}
 	}
 
 }
