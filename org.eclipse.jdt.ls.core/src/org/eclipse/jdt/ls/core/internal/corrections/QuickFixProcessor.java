@@ -501,21 +501,19 @@ public class QuickFixProcessor {
 			// SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.MissingEnumConstantCase:
-			// case IProblem.MissingEnumDefaultCase:
-			// LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MissingDefaultCase:
-			// LocalCorrectionsSubProcessor.addMissingDefaultCaseProposal(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MissingEnumConstantCaseDespiteDefault:
-			// LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context,
-			// problem, proposals);
-			// LocalCorrectionsSubProcessor.addCasesOmittedProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MissingEnumConstantCase:
+			case IProblem.MissingEnumDefaultCase:
+			case IProblem.SwitchExpressionsYieldMissingEnumConstantCase:
+				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
+				break;
+			case IProblem.MissingDefaultCase:
+			case IProblem.SwitchExpressionsYieldMissingDefaultCase:
+				LocalCorrectionsSubProcessor.addMissingDefaultCaseProposal(context, problem, proposals);
+				break;
+			case IProblem.MissingEnumConstantCaseDespiteDefault:
+				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addCasesOmittedProposals(context, problem, proposals);
+				break;
 			// case IProblem.MissingSynchronizedModifierInInheritedMethod:
 			// ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context,
 			// problem, proposals);
