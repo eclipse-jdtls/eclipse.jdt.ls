@@ -21,7 +21,7 @@
    </vm>
 
    <plugins>
-      <plugin id="com.ibm.icu.base"/>
+      <plugin id="com.ibm.icu"/>
       <plugin id="javax.xml"/>
       <plugin id="org.eclipse.ant.core"/>
       <plugin id="org.eclipse.buildship.core"/>
