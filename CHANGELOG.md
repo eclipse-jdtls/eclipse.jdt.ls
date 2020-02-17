@@ -1,11 +1,13 @@
 # Change Log
 
-## [0.50.0 (February 5th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/68?closed=1)
+## [0.50.0 (February 17th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/68?closed=1)
 * enhancement - added code actions to remove the `final` modifier. See [#441](https://github.com/eclipse/eclipse.jdt.ls/issues/441).
 * enhancement - added `java.configuration.runtimes` preference for mapping Java Execution Environments to local JDK runtimes. See [#1307](https://github.com/eclipse/eclipse.jdt.ls/issues/1307).
 * enhancement - added code actions to assign statement to new variable/field. See [#1319](https://github.com/eclipse/eclipse.jdt.ls/issues/1319).
 * enhancement - added code action to remove redundant interfaces. See [#438](https://github.com/eclipse/eclipse.jdt.ls/issues/438).
 * enhancement - added `java.import.gradle.offline.enabled` preference. See [#1308](https://github.com/eclipse/eclipse.jdt.ls/pull/1308).
+* enhancement - added code action to add missing case labels in switch statements. See [#1140](https://github.com/eclipse/eclipse.jdt.ls/issues/1140).
+* enhancement - expose full completion proposals to 3rd party extensions. See [#1344](https://github.com/eclipse/eclipse.jdt.ls/pull/1344).
 * bug fix - fixed Intellisense not working when attached javadoc can't be read. See [#1314](https://github.com/eclipse/eclipse.jdt.ls/pull/1314).
 * bug fix - fixed duplicate labels in progress reports. See [#1321](https://github.com/eclipse/eclipse.jdt.ls/pull/1321).
 * bug fix - added default value to `java.project.referencedLibraries`'s exclude and sources. See [#1315](https://github.com/eclipse/eclipse.jdt.ls/pull/1315).
