@@ -96,6 +96,10 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
+import org.eclipse.jdt.internal.codeassist.impl.Engine;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
@@ -109,7 +113,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabelComposer;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -120,7 +123,6 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.SymbolKind;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -1342,7 +1344,18 @@ public final class JDTUtils {
 					return null;
 				}
 			}
-			String[] parameters = Signature.getParameterTypes(String.valueOf(SignatureUtil.fix83600(proposal.getSignature())));
+			char[] signature = proposal.getSignature();
+			if (proposal instanceof InternalCompletionProposal) {
+				Binding binding = ((InternalCompletionProposal) proposal).getBinding();
+				if (binding instanceof MethodBinding) {
+					MethodBinding methodBinding = (MethodBinding) binding;
+					MethodBinding original = methodBinding.original();
+					if (original != binding) {
+						signature = Engine.getSignature(original);
+					}
+				}
+			}
+			String[] parameters = Signature.getParameterTypes(String.valueOf(SignatureUtil.fix83600(signature)));
 			for (int i = 0; i < parameters.length; i++) {
 				parameters[i] = SignatureUtil.getLowerBound(parameters[i]);
 			}
