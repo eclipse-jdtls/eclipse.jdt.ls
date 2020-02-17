@@ -4,7 +4,7 @@
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.mockito.mockito-all" version="1.9.5"/>
-            <repository location="http://download.eclipse.org/scout/releases/4.0/testing"/>
+            <repository location="https://download.eclipse.org/scout/releases/4.0/testing"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
@@ -13,7 +13,7 @@
             <unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
             <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
             <unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
-            <repository location="http://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
+            <repository location="https://download.eclipse.org/tools/orbit/R-builds/R20170516192513/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
@@ -31,7 +31,7 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.15-I-builds/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.15-I-builds/I20200122-1805/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
