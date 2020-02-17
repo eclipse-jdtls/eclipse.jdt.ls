@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMember;
@@ -30,6 +31,10 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
+import org.eclipse.jdt.internal.codeassist.impl.Engine;
+import org.eclipse.jdt.internal.compiler.lookup.Binding;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -105,14 +110,28 @@ public class CompletionResolveHandler {
 				IType type = unit.getJavaProject().findType(typeName);
 
 				if (type!=null && data.containsKey(DATA_FIELD_NAME)) {
+					CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 					String name = data.get(DATA_FIELD_NAME);
 					String[] paramSigs = CharOperation.NO_STRINGS;
 					if(data.containsKey( DATA_FIELD_SIGNATURE)){
-						String[] parameters= Signature.getParameterTypes(String.valueOf(fix83600(data.get(DATA_FIELD_SIGNATURE).toCharArray())));
-						for (int i= 0; i < parameters.length; i++) {
-							parameters[i]= getLowerBound(parameters[i]);
+						if (proposal instanceof InternalCompletionProposal) {
+							Binding binding = ((InternalCompletionProposal) proposal).getBinding();
+							if (binding instanceof MethodBinding) {
+								MethodBinding methodBinding = (MethodBinding) binding;
+								MethodBinding original = methodBinding.original();
+								char[] signature;
+								if (original != binding) {
+									signature = Engine.getSignature(original);
+								} else {
+									signature = Engine.getSignature(methodBinding);
+								}
+								String[] parameters = Signature.getParameterTypes(String.valueOf(fix83600(signature)));
+								for (int i = 0; i < parameters.length; i++) {
+									parameters[i] = getLowerBound(parameters[i]);
+								}
+								paramSigs = parameters;
+							}
 						}
-						paramSigs = parameters;
 					}
 					IMethod method = type.getMethod(name, paramSigs);
 					IMethod[] methods = type.findMethods(method);

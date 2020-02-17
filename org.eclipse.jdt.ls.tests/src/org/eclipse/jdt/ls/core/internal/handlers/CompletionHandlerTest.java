@@ -2628,6 +2628,34 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Default: \"test\"", documentation);
 	}
 
+	// See https://github.com/redhat-developer/vscode-java/issues/1258
+	@Test
+	public void testCompletion_javadocOriginal() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"import java.util.List;\n"
+			+	"import java.util.LinkedList;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n"
+			+	"		MyList<String> l = new LinkedList<>();\n"
+			+	"		l.add\n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "l.add");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertEquals(4, list.getItems().size());
+		CompletionItem ci = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Method, ci.getKind());
+		assertEquals("add(String e) : boolean", ci.getLabel());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertEquals(CompletionItemKind.Method, resolvedItem.getKind());
+		String documentation = resolvedItem.getDocumentation().getLeft();
+		assertEquals(" Test ", documentation);
+	}
+
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
 				.replace("${line}", String.valueOf(line))

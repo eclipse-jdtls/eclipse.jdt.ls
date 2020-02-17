@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
+import org.eclipse.lsp4j.SignatureInformation;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -257,6 +258,31 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		assertEquals(2, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("substring\\(\\w+ \\w+\\) : String"));
+	}
+
+	// See https://github.com/redhat-developer/vscode-java/issues/1258
+	@Test
+	public void testSignatureHelp_javadocOriginal() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.LinkedList;\n");
+		buf.append("import org.sample.MyList;\n");
+		buf.append("public class E {\n\n");
+		buf.append("	void test() {\n");
+		buf.append("		MyList<String> l = new LinkedList<>();\n");
+		buf.append("		l.add(\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		int[] loc = findCompletionLocation(cu, "l.add(");
+		SignatureHelp help = getSignatureHelp(cu, loc[0], loc[1]);
+		assertNotNull(help);
+		assertEquals(2, help.getSignatures().size());
+		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
+		assertTrue(signature.getLabel().equals("add(String e) : boolean"));
+		String documentation = signature.getDocumentation().getLeft();
+		assertEquals(" Test ", documentation);
 	}
 
 	@Test
