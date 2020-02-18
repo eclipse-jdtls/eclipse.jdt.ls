@@ -16,7 +16,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/buildship/updates/e413/snapshots/3.x/3.1.3.v20191107-2249-s"/>
+            <repository location="https://download.eclipse.org/buildship/updates/e413/snapshots/3.x/3.1.4.v20200211-2258-s"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
