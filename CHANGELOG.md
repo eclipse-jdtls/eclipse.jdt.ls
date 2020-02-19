@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.51.0 (February 19th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/69?closed=1)
+* bug fix - update buildship to 3.1.4 to fix issues with projects not using the Gradle wrapper. See [#1354](https://github.com/eclipse/eclipse.jdt.ls/issues/1354).
+* bug fix - fixed Java suggestion details missing in some circumstances. See [#1353](https://github.com/eclipse/eclipse.jdt.ls/pull/1353).
+
 ## [0.50.0 (February 17th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/68?closed=1)
 * enhancement - added code actions to remove the `final` modifier. See [#441](https://github.com/eclipse/eclipse.jdt.ls/issues/441).
 * enhancement - added `java.configuration.runtimes` preference for mapping Java Execution Environments to local JDK runtimes. See [#1307](https://github.com/eclipse/eclipse.jdt.ls/issues/1307).
