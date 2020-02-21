@@ -18,9 +18,11 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.lsp4j.DiagnosticsTagSupport;
 import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.ResourceOperationKind;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /**
  * A wrapper around {@link ClientCapabilities}
@@ -287,8 +289,12 @@ public class ClientPreferences {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getPublishDiagnostics() != null
 				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport() != null
-				&& capabilities.getTextDocument().getPublishDiagnostics().getTagSupport().getValueSet() != null;
+				&& isTagSupported(capabilities.getTextDocument().getPublishDiagnostics().getTagSupport());
 		//@formatter:on
+	}
+
+	private boolean isTagSupported(Either<Boolean, DiagnosticsTagSupport> tagSupport) {
+		return tagSupport.isLeft() ? tagSupport.getLeft() : tagSupport.getRight().getValueSet() != null;
 	}
 
 	public boolean isCallHierarchyDynamicRegistered() {
