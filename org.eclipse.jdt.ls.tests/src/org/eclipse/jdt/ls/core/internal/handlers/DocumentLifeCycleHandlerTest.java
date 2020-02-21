@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -46,6 +48,8 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
@@ -607,6 +611,27 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	@Test
+	public void testDidOpenLazyLoadingInvisibleProject() throws Exception {
+		File standaloneFolder = copyFiles("singlefile/lesson1", true);
+		IPath rootPath = org.eclipse.core.runtime.Path.fromOSString(standaloneFolder.getAbsolutePath());
+		preferences.setRootPaths(Collections.singletonList(rootPath));
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		IPath triggerFile = rootPath.append("src/org/samples/HelloWorld.java");
+		URI fileURI = triggerFile.toFile().toURI();
+		String projectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
+
+		assertFalse(ProjectUtils.getProject(projectName).exists());
+
+		openDocument(fileURI.toString(), ResourceUtils.getContent(fileURI), 1);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+
+		assertTrue(ProjectUtils.getProject(projectName).exists());
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(fileURI);
+		assertNotNull(cu);
+		assertEquals(projectName, cu.getJavaProject().getProject().getName());
+	}
+
+	@Test
 	public void testNotExpectedPackage() throws Exception {
 		newDefaultProject();
 		// @formatter:off
@@ -784,11 +809,15 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {
+		openDocument(JDTUtils.toURI(cu), content, version);
+	}
+
+	private void openDocument(String uri, String content, int version) {
 		DidOpenTextDocumentParams openParms = new DidOpenTextDocumentParams();
 		TextDocumentItem textDocument = new TextDocumentItem();
 		textDocument.setLanguageId("java");
 		textDocument.setText(content);
-		textDocument.setUri(JDTUtils.toURI(cu));
+		textDocument.setUri(uri);
 		textDocument.setVersion(version);
 		openParms.setTextDocument(textDocument);
 		lifeCycleHandler.didOpen(openParms);

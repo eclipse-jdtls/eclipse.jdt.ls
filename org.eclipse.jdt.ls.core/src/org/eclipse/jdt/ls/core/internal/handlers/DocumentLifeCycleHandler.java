@@ -17,8 +17,10 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -49,8 +51,10 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
+import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
@@ -296,7 +300,28 @@ public class DocumentLifeCycleHandler {
 
 	public void handleOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+		ICompilationUnit unit = null;
+		IFile resource = JDTUtils.findFile(uri);
+		if (resource != null) { // Open the files already managed by the jdt workspace.
+			unit = JDTUtils.resolveCompilationUnit(resource);
+		} else { // Open the standalone files.
+			IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
+			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+			Optional<IPath> belongedRootPath = rootPaths.stream().filter(rootPath -> rootPath.isPrefixOf(filePath)).findFirst();
+			boolean invisibleProjectEnabled = false;
+			if (belongedRootPath.isPresent()) {
+				IPath rootPath = belongedRootPath.get();
+				invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false);
+				if (invisibleProjectEnabled) {
+					unit = JDTUtils.resolveCompilationUnit(uri);
+				}
+			}
+
+			if (!invisibleProjectEnabled) {
+				unit = JDTUtils.getFakeCompilationUnit(uri);
+			}
+		}
+
 		if (unit == null || unit.getResource() == null || unit.getResource().isDerived()) {
 			return;
 		}

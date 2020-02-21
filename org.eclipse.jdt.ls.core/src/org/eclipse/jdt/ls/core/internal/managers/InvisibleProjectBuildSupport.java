@@ -30,7 +30,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibrar
  */
 public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements IBuildSupport {
 
-	static final String LIB_FOLDER = "lib";
+	public static final String LIB_FOLDER = "lib";
 
 	public InvisibleProjectBuildSupport() {
 	}
