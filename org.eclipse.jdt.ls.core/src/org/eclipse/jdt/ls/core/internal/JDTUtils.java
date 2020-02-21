@@ -171,6 +171,14 @@ public final class JDTUtils {
 		}
 
 		IFile resource = (IFile) findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
+		if(resource != null) {
+			return resolveCompilationUnit(resource);
+		} else {
+			return getFakeCompilationUnit(uri, new NullProgressMonitor());
+		}
+	}
+
+	public static ICompilationUnit resolveCompilationUnit(IFile resource) {
 		if(resource != null){
 			if(!ProjectUtils.isJavaProject(resource.getProject())){
 				return null;
@@ -181,10 +189,9 @@ public final class JDTUtils {
 					return JavaCore.createCompilationUnitFrom(resource);
 				}
 			}
-			return null;
-		} else {
-			return getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
+
+		return null;
 	}
 
 	/**
@@ -221,6 +228,10 @@ public final class JDTUtils {
 			}
 		}
 		return null;
+	}
+
+	public static ICompilationUnit getFakeCompilationUnit(String uri) {
+		return getFakeCompilationUnit(toURI(uri), new NullProgressMonitor());
 	}
 
 	static ICompilationUnit getFakeCompilationUnit(URI uri, IProgressMonitor monitor) {

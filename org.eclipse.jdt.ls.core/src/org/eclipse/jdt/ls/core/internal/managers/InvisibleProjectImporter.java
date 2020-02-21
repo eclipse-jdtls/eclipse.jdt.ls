@@ -80,10 +80,27 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		String packageName = getPackageName(triggerJavaFile.get(), rootPath);
-		IPath sourceDirectory = inferSourceDirectory(triggerJavaFile.get().toFile().toPath(), packageName);
+		loadInvisibleProject(triggerJavaFile.get(), rootPath, true);
+	}
+
+	@Override
+	public void reset() {
+		// do nothing
+	}
+
+	/**
+	 * Based on the trigger file, check whether to load the invisible project to manage it.
+	 * Return true if an invisible project is enabled.
+	 */
+	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath) {
+		if (!ProjectUtils.getVisibleProjects(rootPath).isEmpty()) {
+			return false;
+		}
+
+		String packageName = getPackageName(javaFile, rootPath);
+		IPath sourceDirectory = inferSourceDirectory(javaFile.toFile().toPath(), packageName);
 		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)) {
-			return;
+			return false;
 		}
 
 		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
@@ -105,21 +122,25 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				IJavaProject javaProject = JavaCore.create(invisibleProject);
 				ProjectUtils.addSourcePath(sourcePath, subProjectPaths.toArray(new IPath[0]), javaProject);
 				JavaLanguageServerPlugin.logInfo("Successfully created a workspace invisible project " + invisibleProjectName);
+				forceUpdateLibPath = true;
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
-				return;
+				return false;
 			}
 		}
-		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
+
+		if (forceUpdateLibPath) {
+			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+			if (preferencesManager != null && preferencesManager.getPreferences() != null) {
+				IJavaProject javaProject = JavaCore.create(invisibleProject);
+				UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
+			}
+		}
+
+		return true;
 	}
 
-	@Override
-	public void reset() {
-		// do nothing
-	}
-
-	private String getPackageName(IPath javaFile, IPath workspaceRoot) {
+	private static String getPackageName(IPath javaFile, IPath workspaceRoot) {
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			return "";
@@ -179,7 +200,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		return String.join(JDTUtils.PERIOD, relativePath.segments());
 	}
 
-	private IPath inferSourceDirectory(java.nio.file.Path filePath, String packageName) {
+	private static IPath inferSourceDirectory(java.nio.file.Path filePath, String packageName) {
 		String packagePath = packageName.replace(JDTUtils.PERIOD, JDTUtils.PATH_SEPARATOR);
 		java.nio.file.Path sourcePath = filePath.getParent();
 		if (StringUtils.isBlank(packagePath)) {
