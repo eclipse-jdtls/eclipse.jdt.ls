@@ -91,6 +91,7 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -100,6 +101,7 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentHighlightParams;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
@@ -110,11 +112,14 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
+import org.eclipse.lsp4j.ImplementationParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.PrepareRenameParams;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
@@ -129,6 +134,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.TypeDefinitionParams;
 import org.eclipse.lsp4j.Unregistration;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
@@ -526,10 +532,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#hover(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#hover(org.eclipse.lsp4j.HoverParams)
 	 */
 	@Override
-	public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+	public CompletableFuture<Hover> hover(HoverParams position) {
 		logInfo(">> document/hover");
 		HoverHandler handler = new HoverHandler(this.preferenceManager);
 		return computeAsync((monitor) -> handler.hover(position, monitor));
@@ -546,10 +552,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#definition(org.eclipse.lsp4j.DefinitionParams)
 	 */
 	@Override
-	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams position) {
 		logInfo(">> document/definition");
 		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
@@ -559,10 +565,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TypeDefinitionParams)
 	 */
 	@Override
-	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TypeDefinitionParams position) {
 		logInfo(">> document/typeDefinition");
 		NavigateToTypeDefinitionHandler handler = new NavigateToTypeDefinitionHandler();
 		return computeAsync((monitor) -> {
@@ -588,10 +594,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#documentHighlight(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#documentHighlight(org.eclipse.lsp4j.DocumentHighlightParams)
 	 */
 	@Override
-	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
+	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams position) {
 		logInfo(">> document/documentHighlight");
 		DocumentHighlightHandler handler = new DocumentHighlightHandler();
 		return computeAsync((monitor) -> handler.documentHighlight(position, monitor));
@@ -681,10 +687,10 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.TextDocumentService#prepareRename(org.eclipse.lsp4j.TextDocumentPositionParams)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#prepareRename(org.eclipse.lsp4j.PrepareRenameParams)
 	 */
 	@Override
-	public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(TextDocumentPositionParams params) {
+	public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(PrepareRenameParams params) {
 		logInfo(">> document/prepareRename");
 
 		PrepareRenameHandler handler = new PrepareRenameHandler();
@@ -789,7 +795,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	}
 
 	@Override
-	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(TextDocumentPositionParams position) {
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(ImplementationParams position) {
 		logInfo(">> document/implementation");
 		return computeAsyncWithClientProgress((monitor) -> {
 			ImplementationsHandler handler = new ImplementationsHandler(preferenceManager);
