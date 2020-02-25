@@ -175,7 +175,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testPreviewFeaturesDisabledByDefault() throws Exception {
-		String name = "java13";
+		String name = "java14";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
@@ -188,7 +188,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
-		assertHasErrors(project, "The preview feature Switch Expressions is only available with source level", "The preview feature Case Labels with '->' is only available with source level");
+		assertHasErrors(project, "Switch Expressions are supported from", "Arrow in case statement supported from");
 	}
 
 	@Test

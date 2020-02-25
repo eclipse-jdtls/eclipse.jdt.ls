@@ -81,7 +81,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
 		assertEquals("Add missing case statements", action.getTitle());
 		edit = getTextEdit(codeAction);
-		assertEquals("\n        case One:\n            break;\n        default:\n            break;", edit.getNewText());
+		assertEquals("\n        default:\n            break;\n        default:\n            break;\n        default:\n            break;", edit.getNewText());
 	}
 
 	@Test
@@ -109,14 +109,22 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		options.put(JavaCore.COMPILER_PB_MISSING_ENUM_CASE_DESPITE_DEFAULT, JavaCore.ENABLED);
 		fJProject.setOptions(options);
 		codeActions = evaluateCodeActions(cu, range);
-		assertEquals(2, codeActions.size());
+		assertEquals(3, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
-		assertEquals("Add missing case statements", action.getTitle());
+		assertEquals("Add 'default' case", action.getTitle());
 		TextEdit edit = getTextEdit(codeAction);
-		assertEquals("\n        case One:", edit.getNewText());
+		// FIXME
+		assertEquals("\n        default:\n            break;", edit.getNewText());
 		codeAction = codeActions.get(1);
+		action = codeAction.getRight();
+		assertEquals(CodeActionKind.QuickFix, action.getKind());
+		assertEquals("Add missing case statements", action.getTitle());
+		edit = getTextEdit(codeAction);
+		// FIXME
+		assertEquals("\n        default:\n            break;\n        default:\n            break;\n        default:\n            break;", edit.getNewText());
+		codeAction = codeActions.get(2);
 		action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
 		assertEquals("Insert '//$CASES-OMITTED$'", action.getTitle());

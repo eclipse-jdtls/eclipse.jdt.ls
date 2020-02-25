@@ -269,6 +269,18 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=549258#c9
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava14Project() throws Exception {
+		IProject project = importMavenProject("salut-java14");
+		assertIsJavaProject(project);
+		assertEquals("14", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 
