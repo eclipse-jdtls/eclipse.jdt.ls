@@ -17,6 +17,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.code;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -98,8 +99,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.flow.InputFlowAn
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-
-import com.ibm.icu.text.MessageFormat;
 
 /* package */ class ExtractMethodAnalyzer extends CodeAnalyzer {
 

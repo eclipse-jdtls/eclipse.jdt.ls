@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,8 +22,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.text.JavaWordIterator;
-
-import com.ibm.icu.text.BreakIterator;
 
 /**
  * This class contains methods for suggesting new names for variables or methods
