@@ -14,11 +14,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.text;
 
+import java.text.BreakIterator;
 import java.text.CharacterIterator;
 
 import org.eclipse.core.runtime.Assert;
-
-import com.ibm.icu.text.BreakIterator;
 
 /**
  * A java break iterator. It returns all breaks, including before and after

@@ -14,7 +14,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import com.ibm.icu.text.MessageFormat;
+import java.text.MessageFormat;
 
 /**
  * Helper class to format message strings.
