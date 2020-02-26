@@ -237,7 +237,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertTrue(isNotBlank(item.getInsertText()));
 			assertNotNull(item.getFilterText());
 			assertFalse(item.getFilterText().contains(" "));
-			assertTrue(item.getLabel().startsWith(item.getFilterText()));
+			assertTrue(item.getLabel().startsWith(item.getInsertText()));
+			assertTrue(item.getFilterText().startsWith("Objec"));
 			//Check contains data used for completionItem resolution
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
@@ -790,6 +791,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Map", item.getInsertText());
 		assertNotNull(item.getTextEdit());
 		assertTextEdit(3, 3, 15, "java.util.Map", item.getTextEdit());
+		assertTrue(item.getFilterText().startsWith("java.util.Ma"));
 		//Not checking the range end character
 	}
 
