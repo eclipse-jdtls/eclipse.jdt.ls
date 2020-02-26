@@ -18,6 +18,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
+import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
@@ -65,6 +66,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
+				case "java.project.refreshDiagnostics":
+					return DiagnosticsCommand.refreshDiagnostics((String) arguments.get(0), (String) arguments.get(1), (boolean) arguments.get(2));
 				default:
 					break;
 			}

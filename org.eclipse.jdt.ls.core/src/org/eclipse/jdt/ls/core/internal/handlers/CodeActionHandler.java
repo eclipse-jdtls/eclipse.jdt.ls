@@ -41,6 +41,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionPr
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
+import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -62,6 +63,7 @@ public class CodeActionHandler {
 	private RefactorProcessor refactorProcessor;
 	private QuickAssistProcessor quickAssistProcessor;
 	private SourceAssistProcessor sourceAssistProcessor;
+	private NonProjectFixProcessor nonProjectFixProcessor;
 
 	private PreferenceManager preferenceManager;
 
@@ -71,6 +73,7 @@ public class CodeActionHandler {
 		this.sourceAssistProcessor = new SourceAssistProcessor(preferenceManager);
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
 		this.refactorProcessor = new RefactorProcessor(preferenceManager);
+		this.nonProjectFixProcessor = new NonProjectFixProcessor(preferenceManager);
 	}
 
 	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
@@ -99,10 +102,12 @@ public class CodeActionHandler {
 			codeActionKinds.addAll(defaultCodeActionKinds);
 		}
 
+		List<Either<Command, CodeAction>> codeActions = new ArrayList<>();
 		List<ChangeCorrectionProposal> proposals = new ArrayList<>();
 		ChangeCorrectionProposalComparator comparator = new ChangeCorrectionProposalComparator();
 		if (containsKind(codeActionKinds, CodeActionKind.QuickFix)) {
 			try {
+				codeActions.addAll(nonProjectFixProcessor.getCorrections(params, context, locations));
 				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(context, locations);
 				quickfixProposals.sort(comparator);
 				proposals.addAll(quickfixProposals);
@@ -131,7 +136,6 @@ public class CodeActionHandler {
 			}
 		}
 
-		List<Either<Command, CodeAction>> codeActions = new ArrayList<>();
 		try {
 			for (ChangeCorrectionProposal proposal : proposals) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());

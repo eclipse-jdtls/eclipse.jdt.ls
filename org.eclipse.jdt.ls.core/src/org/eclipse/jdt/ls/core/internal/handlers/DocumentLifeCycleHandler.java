@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -46,7 +45,6 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.ui.javaeditor.HighlightedPositionCore;
-import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -55,14 +53,11 @@ import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService.HighlightedPositionDiffContext;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -320,29 +315,6 @@ public class DocumentLifeCycleHandler {
 					}
 				} catch (CoreException e) {
 					// ignored
-				}
-			}
-			IProject project = unit.getResource().getProject();
-			// Resources belonging to the default project can only report syntax errors, because the project classpath is incomplete
-			boolean isDefaultProject = project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
-			if (isDefaultProject || !JDTUtils.isOnClassPath(unit)) {
-				Severity severity = preferenceManager.getPreferences(project).getIncompleteClasspathSeverity();
-				String msg;
-				if (isDefaultProject) {
-					msg = "Classpath is incomplete. Only syntax errors will be reported";
-				} else {
-					msg = unit.getElementName() + " isn't on the classpath. Only syntax errors will be reported";
-				}
-				JavaLanguageServerPlugin.logInfo(msg +" for "+uri);
-				if (severity.compareTo(Preferences.Severity.ignore) > 0){
-					ActionableNotification ignoreIncompleteClasspath = new ActionableNotification()
-							.withSeverity(severity.toMessageType())
-							.withMessage(msg)
-							.withCommands(Arrays.asList(
-									new Command("More Information", "java.ignoreIncompleteClasspath.help", null),
-									new Command("Don't Show Again", "java.ignoreIncompleteClasspath", null)
-									));
-					connection.sendActionableNotification(ignoreIncompleteClasspath);
 				}
 			}
 

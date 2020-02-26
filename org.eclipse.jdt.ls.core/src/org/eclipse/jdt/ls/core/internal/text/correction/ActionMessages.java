@@ -33,6 +33,10 @@ public final class ActionMessages extends NLS {
 	public static String MoveRefactoringAction_label;
 	public static String InlineMethodRefactoringAction_label;
 	public static String InlineConstantRefactoringAction_label;
+	public static String ReportAllErrorsForThisFile;
+	public static String ReportAllErrorsForAnyNonProjectFile;
+	public static String ReportSyntaxErrorsForThisFile;
+	public static String ReportSyntaxErrorsForAnyNonProjectFile;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, ActionMessages.class);

@@ -45,6 +45,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
@@ -97,6 +98,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		//		sharedASTProvider.clearASTCreationCount();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
+		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 	}
 
 	@After
@@ -497,7 +499,9 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
-		assertEquals(0, diagParam.getDiagnostics().size());
+		assertEquals(1, diagParam.getDiagnostics().size());
+		Diagnostic d = diagParam.getDiagnostics().get(0);
+		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
 	}
 
 	@Test
@@ -514,7 +518,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
-		assertEquals(1, diagParam.getDiagnostics().size());
+		assertEquals(2, diagParam.getDiagnostics().size());
 		closeDocument(cu);
 		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 		diagnosticReports = getClientRequests("publishDiagnostics");
@@ -546,8 +550,11 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
-		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 1, diagParam.getDiagnostics().size());
+		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 2, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
+		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
+		assertRange(0, 0, 1, d.getRange());
+		d = diagParam.getDiagnostics().get(1);
 		assertEquals("Syntax error, insert \";\" to complete BlockStatements", d.getMessage());
 		assertRange(3, 17, 18, d.getRange());
 	}
@@ -580,16 +587,20 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 
-		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 3, diagParam.getDiagnostics().size());
+		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 4, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
+		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
+		assertRange(0, 0, 1, d.getRange());
+		
+		d = diagParam.getDiagnostics().get(1);
 		assertEquals("Cannot use this in a static context", d.getMessage());
 		assertRange(3, 21, 25, d.getRange());
 
-		d = diagParam.getDiagnostics().get(1);
+		d = diagParam.getDiagnostics().get(2);
 		assertEquals("Duplicate method method1() in type Foo", d.getMessage());
 		assertRange(5, 13, 22, d.getRange());
 
-		d = diagParam.getDiagnostics().get(2);
+		d = diagParam.getDiagnostics().get(3);
 		assertEquals("Duplicate method method1() in type Foo", d.getMessage());
 		assertRange(7, 13, 22, d.getRange());
 	}
