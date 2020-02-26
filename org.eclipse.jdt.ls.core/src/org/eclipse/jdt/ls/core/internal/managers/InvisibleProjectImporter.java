@@ -99,7 +99,8 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 		String packageName = getPackageName(javaFile, rootPath);
 		IPath sourceDirectory = inferSourceDirectory(javaFile.toFile().toPath(), packageName);
-		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)) {
+		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)
+			|| isPartOfMatureProject(sourceDirectory)) {
 			return false;
 		}
 
@@ -138,6 +139,20 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		}
 
 		return true;
+	}
+
+	private static boolean isPartOfMatureProject(IPath sourcePath) {
+		sourcePath = sourcePath.removeTrailingSeparator();
+		List<String> segments = Arrays.asList(sourcePath.segments());
+		int index = segments.lastIndexOf("src");
+		if (index <= 0) {
+			return false;
+		}
+
+		IPath srcPath = sourcePath.removeLastSegments(segments.size() -1 - index);
+		IPath container = srcPath.removeLastSegments(1);
+		return container.append("pom.xml").toFile().exists()
+			|| container.append("build.gradle").toFile().exists();
 	}
 
 	private static String getPackageName(IPath javaFile, IPath workspaceRoot) {

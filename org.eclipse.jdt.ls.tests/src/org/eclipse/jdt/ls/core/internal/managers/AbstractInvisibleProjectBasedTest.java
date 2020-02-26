@@ -88,6 +88,10 @@ public abstract class AbstractInvisibleProjectBasedTest extends AbstractProjects
 
 	protected IProject importRootFolder(File projectFolder, String triggerFile) throws Exception {
 		IPath rootPath = Path.fromOSString(projectFolder.getAbsolutePath());
+		return importRootFolder(rootPath, triggerFile);
+	}
+
+	protected IProject importRootFolder(IPath rootPath, String triggerFile) throws Exception {
 		if (StringUtils.isNotBlank(triggerFile)) {
 			IPath triggerFilePath = rootPath.append(triggerFile);
 			Preferences preferences = preferenceManager.getPreferences();

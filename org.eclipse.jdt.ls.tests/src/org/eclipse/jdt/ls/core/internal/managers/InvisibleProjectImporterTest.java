@@ -58,6 +58,24 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 	}
 
 	@Test
+	public void importPartialMavenFolder() throws Exception {
+		File projectFolder = copyFiles("maven/salut-java11", true);
+		IPath projectFullPath = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath rootPath = projectFullPath.append("src");
+		IProject invisibleProject = importRootFolder(rootPath, "main/java/org/sample/Bar.java");
+		assertFalse(invisibleProject.exists());
+	}
+
+	@Test
+	public void importPartialGradleFolder() throws Exception {
+		File projectFolder = copyFiles("gradle/gradle-11", true);
+		IPath projectFullPath = Path.fromOSString(projectFolder.getAbsolutePath());
+		IPath rootPath = projectFullPath.append("src");
+		IProject invisibleProject = importRootFolder(rootPath, "main/java/foo/bar/Foo.java");
+		assertFalse(invisibleProject.exists());
+	}
+
+	@Test
 	public void automaticJarDetectionLibUnderSource() throws Exception {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
