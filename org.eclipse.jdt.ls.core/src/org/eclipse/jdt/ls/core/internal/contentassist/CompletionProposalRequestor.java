@@ -266,6 +266,11 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			}
 		}
 		proposalProvider.updateReplacement(proposal, $, '\0');
+		// Make sure `filterText` matches `textEdit`
+		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
+		if (proposal.getKind() == CompletionProposal.TYPE_REF && $.getTextEdit() != null && $.getTextEdit().getRange() != null && $.getTextEdit().getNewText() != null) {
+			$.setFilterText($.getTextEdit().getNewText());
+		}
 		return $;
 	}
 
