@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +24,7 @@ import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
+import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -42,8 +42,11 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	private final List<IProblem> problems;
 	private final String uri;
 	private final JavaClientConnection connection;
-	private boolean reportAllErrors = true;
+	private boolean nonProjectFile = false;
 	private boolean isDefaultProject;
+
+	public static final int NON_PROJECT_JAVA_FILE = 0x10;
+	public static final int NOT_ON_CLASSPATH = 0x20;
 
 	public DiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
@@ -51,14 +54,18 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		this.uri = JDTUtils.toURI(cu);
 		this.connection = conn;
 		this.isDefaultProject = JDTUtils.isDefaultProject(cu);
-		this.reportAllErrors = !isDefaultProject && JDTUtils.isOnClassPath(cu);
+		this.nonProjectFile = isDefaultProject || !JDTUtils.isOnClassPath(cu);
 	}
 
 	@Override
 	public void acceptProblem(IProblem problem) {
-		if (reportAllErrors || isSyntaxLikeError(problem)) {
+		if (shouldReportAllErrors() || isSyntaxLikeError(problem)) {
 			problems.add(problem);
 		}
+	}
+
+	private boolean shouldReportAllErrors() {
+		return !nonProjectFile || !JavaLanguageServerPlugin.getNonProjectDiagnosticsState().isOnlySyntaxReported(uri);
 	}
 
 	public boolean isSyntaxLikeError(IProblem problem) {
@@ -119,10 +126,47 @@ public class DiagnosticsHandler implements IProblemRequestor {
 
 	@Override
 	public void endReporting() {
-		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
+		List<IProblem> allProblems = problems;
+		if (nonProjectFile) {
+			allProblems = new ArrayList<>();
+			allProblems.add(createNonProjectProblem());
+			allProblems.addAll(problems);
+		}
+		JavaLanguageServerPlugin.logInfo(allProblems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
 		boolean isDiagnosticTagSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isDiagnosticTagSupported();
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(this.cu, problems, isDiagnosticTagSupported));
+		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(this.cu, allProblems, isDiagnosticTagSupported));
 		this.connection.publishDiagnostics($);
+	}
+
+	private IProblem createNonProjectProblem() {
+		String fileName = cu.getElementName();
+		String projectName = cu.getJavaProject().getProject().getName();
+		String message = null;
+		int problemId = NON_PROJECT_JAVA_FILE;
+		if (shouldReportAllErrors()) {
+			if (isDefaultProject) {
+				message = fileName + " is a non-project file, only JDK classes are added to its build path";
+				problemId = NON_PROJECT_JAVA_FILE;
+			} else {
+				message = fileName + " is not on the classpath of project " + projectName + ", it will not be compiled to a .class file";
+				problemId = NOT_ON_CLASSPATH;
+			}
+		} else {
+			if (isDefaultProject) {
+				message = fileName + " is a non-project file, only syntax errors are reported";
+				problemId = NON_PROJECT_JAVA_FILE;
+			} else {
+				message = fileName + " is not on the classpath of project " + projectName + ", only syntax errors are reported";
+				problemId = NOT_ON_CLASSPATH;
+			}
+		}
+
+		return new DefaultProblem(
+			fileName.toCharArray(),
+			message,
+			problemId,
+			null,
+			ProblemSeverities.Warning, 0, 0, 1, 1);
 	}
 
 	@Override
@@ -216,7 +260,7 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	}
 
 	private static DiagnosticSeverity convertSeverity(IProblem problem) {
-		if(problem.isError()) {
+		if (problem.isError()) {
 			return DiagnosticSeverity.Error;
 		}
 		if (problem.isWarning() && (problem.getID() != IProblem.Task)) {
@@ -260,6 +304,13 @@ public class DiagnosticsHandler implements IProblemRequestor {
 	 * @noreference public for test purposes only
 	 */
 	public List<IProblem> getProblems() {
-		return problems;
+		List<IProblem> allProblems = problems;
+		if (nonProjectFile) {
+			allProblems = new ArrayList<>();
+			allProblems.add(createNonProjectProblem());
+			allProblems.addAll(problems);
+		}
+
+		return allProblems;
 	}
 }

@@ -78,6 +78,9 @@
             <command
                   id="java.project.isTestFile">
             </command>
+            <command
+                  id="java.project.refreshDiagnostics">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

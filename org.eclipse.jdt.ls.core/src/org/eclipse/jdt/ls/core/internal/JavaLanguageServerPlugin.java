@@ -127,6 +127,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private ContextTypeRegistry fContextTypeRegistry;
 	private JavaLanguageServerTemplateStore fTemplateStore;
 
+	private DiagnosticsState nonProjectDiagnosticsState;
+
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
@@ -169,6 +171,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 			logException(e.getMessage(), e);
 		}
 		contentProviderManager = new ContentProviderManager(preferenceManager);
+		nonProjectDiagnosticsState = new DiagnosticsState();
 		logInfo(getClass() + " is started");
 		configureProxy();
 	}
@@ -355,6 +358,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	public static JavaLanguageServerPlugin getInstance() {
 		return pluginInstance;
+	}
+
+	public static DiagnosticsState getNonProjectDiagnosticsState() {
+		return pluginInstance.nonProjectDiagnosticsState;
 	}
 
 	public static void log(IStatus status) {
