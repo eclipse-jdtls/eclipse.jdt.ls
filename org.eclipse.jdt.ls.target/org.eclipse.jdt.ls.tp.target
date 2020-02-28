@@ -20,7 +20,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
-	    <repository location="https://download.eclipse.org/technology/m2e/releases/1.14/"/>
+	    <repository location="https://download.eclipse.org/technology/m2e/milestones/1.15/1.15.0.20200304-0718/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
