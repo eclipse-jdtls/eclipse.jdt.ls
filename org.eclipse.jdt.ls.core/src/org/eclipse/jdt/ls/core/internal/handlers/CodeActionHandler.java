@@ -198,7 +198,11 @@ public class CodeActionHandler {
 	private static int getProblemId(Diagnostic diagnostic) {
 		int $ = 0;
 		try {
-			$ = Integer.parseInt(diagnostic.getCode());
+			if (diagnostic.getCode().getLeft() != null) {
+				$ = Integer.parseInt(diagnostic.getCode().getLeft());
+			} else if (diagnostic.getCode().getRight() != null) {
+				$ = diagnostic.getCode().getRight().intValue();
+			}
 		} catch (NumberFormatException e) {
 			// return 0
 		}
