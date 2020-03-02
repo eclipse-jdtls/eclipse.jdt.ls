@@ -26,6 +26,7 @@ import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.Occu
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
@@ -80,8 +81,13 @@ public class PrepareRenameHandler {
 		if (node instanceof Name) {
 			IBinding resolvedBinding = ((Name) node).resolveBinding();
 			IJavaElement element = resolvedBinding != null ? resolvedBinding.getJavaElement() : null;
-			if (element != null) {
-				return element.getAncestor(IJavaElement.CLASS_FILE) != null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT;
+			try {
+				if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT || !RefactoringAvailabilityTester.isRenameElementAvailable(element)) {
+					return true;
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return true;
 			}
 		}
 		return false;
