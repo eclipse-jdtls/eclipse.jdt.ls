@@ -227,6 +227,29 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testRenameLambdaParameter() throws JavaModelException, BadLocationException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		// @formatter:off
+		String[] codes =
+			{
+				"package test1;\n",
+				"import java.util.function.Function;\n",
+				"public class Test {\n",
+				"    Function<Integer, String> f = i|* -> \"\" + i;\n",
+				"}\n"
+			};
+		// @formatter:on
+		StringBuilder builder = new StringBuilder();
+		Position pos = mergeCode(builder, codes);
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", builder.toString(), false, null);
+
+		Either<Range, PrepareRenameResult> result = prepareRename(cu, pos, "j");
+		assertNotNull(result.getLeft());
+		assertTrue(result.getLeft().getStart().getLine() > 0);
+	}
+
+	@Test
 	public void testRenameJavadoc() throws JavaModelException, BadLocationException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
