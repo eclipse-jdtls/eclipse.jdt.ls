@@ -30,7 +30,7 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.15-I-builds/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.15milestones/S-4.15RC1-202002261800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
@@ -42,7 +42,7 @@
             <repository location="https://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.3-2019-11-08_11-04-22-H22/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://download.eclipse.org/lsp4j/builds/master/"/>
+           <repository location="https://download.eclipse.org/lsp4j/updates/milestones/S202002202238/"/>
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
         </location>
     </locations>

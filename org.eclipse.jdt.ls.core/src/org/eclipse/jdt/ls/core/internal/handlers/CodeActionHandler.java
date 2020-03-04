@@ -202,11 +202,7 @@ public class CodeActionHandler {
 	private static int getProblemId(Diagnostic diagnostic) {
 		int $ = 0;
 		try {
-			if (diagnostic.getCode().getLeft() != null) {
-				$ = Integer.parseInt(diagnostic.getCode().getLeft());
-			} else if (diagnostic.getCode().getRight() != null) {
-				$ = diagnostic.getCode().getRight().intValue();
-			}
+			$ = Integer.parseInt(diagnostic.getCode());
 		} catch (NumberFormatException e) {
 			// return 0
 		}
