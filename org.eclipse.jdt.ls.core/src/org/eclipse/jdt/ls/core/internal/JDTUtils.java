@@ -179,10 +179,7 @@ public final class JDTUtils {
 	}
 
 	public static ICompilationUnit resolveCompilationUnit(IFile resource) {
-		if(resource != null){
-			if(!ProjectUtils.isJavaProject(resource.getProject())){
-				return null;
-			}
+		if (resource != null) {
 			if (resource.getFileExtension() != null) {
 				String name = resource.getName();
 				if (org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name)) {

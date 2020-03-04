@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -37,8 +38,10 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -279,6 +282,18 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IFile autovalueFoo = project.getFile("target/generated-sources/annotations/foo/bar/AutoValue_Foo.java");
 		assertTrue(autovalueFoo.getRawLocation() + " was not generated", autovalueFoo.exists());
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testImportNonJavaMavenModule() throws Exception {
+		IProject project = importMavenProject("nonjavamodule");
+		assertNotNull(project);
+		assertFalse(ProjectUtils.isJavaProject(project));
+		URI uri = project.getFile("Hello.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		assertNotNull(cu);
+		assertEquals(project.getName(), cu.getJavaProject().getProject().getName());
+		assertFalse(JDTUtils.isOnClassPath(cu));
 	}
 
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
