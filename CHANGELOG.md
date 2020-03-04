@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.52.0 (March 5th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/70?closed=1)
+* enhancement - provide diagnostics and quickfixes when opening non-project java files. See [#1366](https://github.com/eclipse/eclipse.jdt.ls/pull/1366).
+* enhancement - parallel downloads of jars, for Maven projects. See [#1369](https://github.com/eclipse/eclipse.jdt.ls/pull/1369).
+* enhancement - allow renaming of lambda parameters. See [#1375](https://github.com/eclipse/eclipse.jdt.ls/pull/1375).
+* enhancement - build workspace action can report progress to client. See [#1368](https://github.com/eclipse/eclipse.jdt.ls/pull/1368).
+* bug fix - fixed inconsistent filterText and textEdit returned, violating the LSP spec. See [#1348](https://github.com/eclipse/eclipse.jdt.ls/issues/1348).
+* bug fix - fixed launch configs to use `com.ibm.icu`. See [#1365](https://github.com/eclipse/eclipse.jdt.ls/pull/1365).
+* debt - remove direct dependency to ICU4J. See [#1362](https://github.com/eclipse/eclipse.jdt.ls/pull/1362).
+* build - Use more stable update sites in TP. See [#1378](https://github.com/eclipse/eclipse.jdt.ls/pull/1378).
+
 ## [0.51.0 (February 19th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/69?closed=1)
 * bug fix - update buildship to 3.1.4 to fix issues with projects not using the Gradle wrapper. See [#1354](https://github.com/eclipse/eclipse.jdt.ls/issues/1354).
 * bug fix - fixed Java suggestion details missing in some circumstances. See [#1353](https://github.com/eclipse/eclipse.jdt.ls/pull/1353).
