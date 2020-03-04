@@ -74,6 +74,7 @@ public class NonProjectFixTest extends AbstractProjectsManagerBasedTest {
 
 	@After
 	public void tearDown() throws Exception {
+		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();

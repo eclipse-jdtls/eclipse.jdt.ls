@@ -145,18 +145,18 @@ public class DiagnosticsHandler implements IProblemRequestor {
 		int problemId = NON_PROJECT_JAVA_FILE;
 		if (shouldReportAllErrors()) {
 			if (isDefaultProject) {
-				message = "File " + fileName + " is non-project file, only JDK is added to the buildpath";
+				message = fileName + " is a non-project file, only JDK classes are added to its build path";
 				problemId = NON_PROJECT_JAVA_FILE;
 			} else {
-				message = "File " + fileName + " isn't on the classpath of project " + projectName + ", the compiler won't generate .class file for it";
+				message = fileName + " is not on the classpath of project " + projectName + ", it will not be compiled to a .class file";
 				problemId = NOT_ON_CLASSPATH;
 			}
 		} else {
 			if (isDefaultProject) {
-				message = "File " + fileName + " is non-project file, only syntax errors are reported";
+				message = fileName + " is a non-project file, only syntax errors are reported";
 				problemId = NON_PROJECT_JAVA_FILE;
 			} else {
-				message = "File " + fileName + " isn't on the classpath of project " + projectName + ", only syntax errors are reported";
+				message = fileName + " is not on the classpath of project " + projectName + ", only syntax errors are reported";
 				problemId = NOT_ON_CLASSPATH;
 			}
 		}

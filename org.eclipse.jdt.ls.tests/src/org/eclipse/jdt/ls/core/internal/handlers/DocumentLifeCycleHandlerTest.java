@@ -103,6 +103,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 	@After
 	public void tearDown() throws Exception {
+		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
@@ -501,7 +502,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(1, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 	}
 
 	@Test
@@ -552,7 +553,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 2, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 		assertRange(0, 0, 1, d.getRange());
 		d = diagParam.getDiagnostics().get(1);
 		assertEquals("Syntax error, insert \";\" to complete BlockStatements", d.getMessage());
@@ -589,7 +590,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 4, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("File Foo.java is non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 		assertRange(0, 0, 1, d.getRange());
 		
 		d = diagParam.getDiagnostics().get(1);

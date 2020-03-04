@@ -57,10 +57,12 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
 		mockJDTLanguageServer();
+		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
@@ -84,7 +86,6 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testRefreshDiagnosticsWithReportAllErrors() throws Exception {
-		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 		IJavaProject javaProject = newDefaultProject();
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("java", false, null);
@@ -107,7 +108,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(2, diagParam.getDiagnostics().size());
-		assertEquals("File Foo.java is non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
 
 		DiagnosticsCommand.refreshDiagnostics(JDTUtils.toURI(cu1), "thisFile", false);
 
@@ -115,7 +116,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, diagnosticReports.size());
 		diagParam = diagnosticReports.get(1);
 		assertEquals(4, diagParam.getDiagnostics().size());
-		assertEquals("File Foo.java is non-project file, only JDK is added to the buildpath", diagParam.getDiagnostics().get(0).getMessage());
+		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage());
 		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage());
 		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage());
 		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage());
@@ -146,7 +147,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(4, diagParam.getDiagnostics().size());
-		assertEquals("File Foo.java is non-project file, only JDK is added to the buildpath", diagParam.getDiagnostics().get(0).getMessage());
+		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage());
 		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage());
 		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage());
 		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage());
@@ -157,7 +158,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, diagnosticReports.size());
 		diagParam = diagnosticReports.get(1);
 		assertEquals(2, diagParam.getDiagnostics().size());
-		assertEquals("File Foo.java is non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
 		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(1).getMessage());
 	}
 
