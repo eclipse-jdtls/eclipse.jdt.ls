@@ -358,6 +358,16 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 */
 	private static Range convertRange(IDocument document, IMarker marker) {
 		int line = marker.getAttribute(IMarker.LINE_NUMBER, -1) - 1;
+		if (line < 0) {
+			int end = marker.getAttribute(IMarker.CHAR_END, -1);
+			int start = marker.getAttribute(IMarker.CHAR_START, -1);
+			if (start >= 0 && end >= start) {
+				int[] startPos = JsonRpcHelpers.toLine(document, start);
+				int[] endPos = JsonRpcHelpers.toLine(document, end);
+				return new Range(new Position(startPos[0], startPos[1]), new Position(endPos[0], endPos[1]));
+			}
+			return new Range(new Position(0, 0), new Position(0, 0));
+		}
 		int cStart = 0;
 		int cEnd = 0;
 		try {

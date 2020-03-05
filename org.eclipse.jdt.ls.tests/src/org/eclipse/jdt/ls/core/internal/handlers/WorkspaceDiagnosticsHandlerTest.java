@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,10 +30,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -252,6 +256,39 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
 		assertEquals(diags.toString(), 1, diags.size());
 		assertTrue(diags.get(0).getMessage().startsWith("Project build error: "));
+	}
+
+	@Test
+	public void testBadLocationException() throws Exception {
+		//import project
+		importProjects("eclipse/hello");
+		IProject project = getProject("hello");
+		IFile iFile = project.getFile("/src/test1/A.java");
+		File file = iFile.getRawLocation().toFile();
+		assertTrue(file.exists());
+		iFile = project.getFile("/src/test1/A1.java");
+		File destFile = iFile.getRawLocation().toFile();
+		assertFalse(destFile.exists());
+		FileUtils.copyFile(file, destFile, false);
+		String uri = destFile.toPath().toUri().toString();
+		project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		waitForBackgroundJobs();
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
+		Collections.reverse(allCalls);
+		projectsManager.setConnection(client);
+		Optional<PublishDiagnosticsParams> param = allCalls.stream().filter(p -> p.getUri().equals(uri)).findFirst();
+		assertTrue(param.isPresent());
+		List<Diagnostic> diags = param.get().getDiagnostics();
+		assertEquals(diags.toString(), 2, diags.size());
+		Optional<Diagnostic> d = diags.stream().filter(p -> p.getMessage().equals("The type A is already defined")).findFirst();
+		assertTrue(d.isPresent());
+		Diagnostic diag = d.get();
+		assertTrue(diag.getRange().getStart().getLine() >= 0);
+		assertTrue(diag.getRange().getStart().getCharacter() >= 0);
+		assertTrue(diag.getRange().getEnd().getLine() >= 0);
+		assertTrue(diag.getRange().getEnd().getCharacter() >= 0);
 	}
 
 	@Test
