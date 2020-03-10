@@ -48,6 +48,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static final String GRADLE_HOME = "GRADLE_HOME";
 
+	public static final String GRADLE_USER_HOME = "GRADLE_USER_HOME";
+
 	public static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
 
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
@@ -151,6 +153,18 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return null;
 	}
 
+	public static File getGradleUserHomeFile() {
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleUserHome() != null
+				&& !JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleUserHome().isEmpty()) {
+			return new File(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleUserHome());
+		}
+		String gradleUserHome = System.getenv().get(GRADLE_USER_HOME);
+		if (gradleUserHome == null) {
+			gradleUserHome = System.getProperties().getProperty(GRADLE_USER_HOME);
+		}
+		return (gradleUserHome == null || gradleUserHome.isEmpty()) ? null : new File(gradleUserHome);
+	}
+
 	protected void startSynchronization(Path rootFolder, IProgressMonitor monitor) {
 		File location = rootFolder.toFile();
 		boolean shouldSynchronize = shouldSynchronize(location);
@@ -173,18 +187,21 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
-		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution);
 		String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
 		File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments() : new ArrayList<>();
 		List<String> gradleJvmArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments() : new ArrayList<>();
 		boolean offlineMode = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleOfflineEnabled() : false;
+		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution) || offlineMode || (gradleArguments != null && !gradleArguments.isEmpty()) || (gradleJvmArguments != null && !gradleJvmArguments.isEmpty())
+				|| gradleUserHome != null || javaHome != null;
 		// @formatter:off
 		BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(rootFolder.toFile())
 				.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
 				.gradleDistribution(distribution)
 				.javaHome(javaHome)
 				.arguments(gradleArguments)
+				.gradleUserHome(gradleUserHome)
 				.jvmArguments(gradleJvmArguments)
 				.offlineMode(offlineMode)
 				.build();

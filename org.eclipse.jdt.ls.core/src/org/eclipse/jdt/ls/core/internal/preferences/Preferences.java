@@ -101,6 +101,10 @@ public class Preferences {
 	 */
 	public static final String GRADLE_HOME = "java.import.gradle.home";
 	/**
+	 * Preference key for setting GRADLE_USER_HOME.
+	 */
+	public static final String GRADLE_USER_HOME = "java.import.gradle.user.home";
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -351,6 +355,7 @@ public class Preferences {
 	private List<String> gradleArguments;
 	private List<String> gradleJvmArguments;
 	private String gradleHome;
+	private String gradleUserHome;
 	private boolean importMavenEnabled;
 	private boolean mavenDownloadSources;
 	private boolean mavenUpdateSnapshots;
@@ -524,6 +529,7 @@ public class Preferences {
 		gradleArguments = new ArrayList<>();
 		gradleJvmArguments = new ArrayList<>();
 		gradleHome = null;
+		gradleUserHome = null;
 		importMavenEnabled = true;
 		mavenDownloadSources = false;
 		mavenUpdateSnapshots = false;
@@ -594,6 +600,8 @@ public class Preferences {
 		prefs.setGradleJvmArguments(gradleJvmArguments);
 		String gradleHome = getString(configuration, GRADLE_HOME);
 		prefs.setGradleHome(gradleHome);
+		String gradleUserHome = getString(configuration, GRADLE_USER_HOME);
+		prefs.setGradleUserHome(gradleUserHome);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
@@ -808,6 +816,11 @@ public class Preferences {
 
 	public Preferences setGradleHome(String gradleHome) {
 		this.gradleHome = gradleHome;
+		return this;
+	}
+
+	public Preferences setGradleUserHome(String gradleUserHome) {
+		this.gradleUserHome = gradleUserHome;
 		return this;
 	}
 
@@ -1062,6 +1075,10 @@ public class Preferences {
 
 	public String getGradleHome() {
 		return gradleHome;
+	}
+
+	public String getGradleUserHome() {
+		return gradleUserHome;
 	}
 
 	public String getFormatterUrl() {

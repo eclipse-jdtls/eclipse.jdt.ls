@@ -29,12 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.LocalGradleDistribution;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -54,6 +56,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 
 /**
  * @author Fred Bricon
@@ -156,6 +159,29 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void testGradleUserHome() throws Exception {
+		String gradleUserHomePreference = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleUserHome();
+		File gradleUserHome = null;
+		try {
+			gradleUserHome = Files.createTempDir();
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHome.getAbsolutePath());
+			List<IProject> projects = importProjects("gradle/simple-gradle");
+			assertEquals(2, projects.size());//default + 1 eclipse projects
+			IProject project = WorkspaceHelper.getProject("simple-gradle");
+			assertNotNull(project);
+			assertTrue(project.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(project));
+			assertTrue(gradleUserHome.exists());
+			ProjectConfiguration projectConfiguration = CorePlugin.configurationManager().loadProjectConfiguration(project);
+			assertEquals(gradleUserHome, projectConfiguration.getBuildConfiguration().getGradleUserHome());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHomePreference);
+			if (gradleUserHome != null) {
+				FileUtils.deleteDirectory(gradleUserHome);
+			}
+		}
+	}
+
+	@Test
 	public void testDisableImportGradle() throws Exception {
 		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleEnabled();
 		try {
@@ -212,7 +238,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testGradleUserHome() {
+	public void testGradleHome() {
 		Map<String, String> env = new HashMap<>();
 		Properties sysprops = new Properties();
 		File file = null;
