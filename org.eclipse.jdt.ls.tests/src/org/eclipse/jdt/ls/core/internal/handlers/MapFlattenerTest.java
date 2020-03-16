@@ -123,6 +123,20 @@ public class MapFlattenerTest {
 		assertNotNull(bar);
 		assertEquals("c", bar.get(0));
 		assertEquals("d", bar.get(1));
+
+		config.put("args", "a  b");
+		List<String> args = getList(config, "args");
+		assertNotNull(args);
+		assertEquals(2, args.size());
+		assertEquals("a", args.get(0));
+		assertEquals("b", args.get(1));
+		config.put("args", "a  b");
+
+		config.put("args2", "a");
+		List<String> args2 = getList(config, "args2");
+		assertNotNull(args2);
+		assertEquals(1, args2.size());
+		assertEquals("a", args2.get(0));
 	}
 
 	@Test

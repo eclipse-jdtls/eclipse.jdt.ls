@@ -13,8 +13,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
@@ -60,14 +62,20 @@ public final class MapFlattener {
 	public static List<String> getList(Map<String, Object> configuration, String key, List<String> def) {
 		Object val = getValue(configuration, key);
 		if (val instanceof String) {
-			if (!((String) val).trim().startsWith("[")) {
-				val = '[' + (String) val + ']';
+			String str = ((String) val);
+			if (!str.trim().startsWith("[")) {
+				if (str.contains(",")) {
+					str = '[' + (String) val + ']';
+				} else {
+					String[] elements = str.split(" ");
+					return Arrays.stream(elements).filter(e -> e != null && !e.isEmpty()).collect(Collectors.toList());
+				}
 			}
 			try {
 				Gson gson = new Gson();
 				Type type = new TypeToken<List<String>>() {
 				}.getType();
-				List<String> list = gson.fromJson((String) val, type);
+				List<String> list = gson.fromJson(str, type);
 				return list;
 			} catch (JsonSyntaxException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
