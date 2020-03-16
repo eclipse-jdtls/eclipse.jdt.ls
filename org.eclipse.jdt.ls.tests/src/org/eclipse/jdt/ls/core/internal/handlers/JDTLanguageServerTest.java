@@ -74,8 +74,6 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isHoverDynamicRegistered()).thenReturn(Boolean.FALSE);
 		when(clientPreferences.isReferencesDynamicRegistered()).thenReturn(Boolean.FALSE);
 		when(clientPreferences.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.FALSE);
-		when(projManager.setAutoBuilding(false)).thenCallRealMethod();
-		when(projManager.setAutoBuilding(true)).thenCallRealMethod();
 		projManager.setAutoBuilding(true);
 		server = new JDTLanguageServer(projManager, prefManager);
 		server.connectClient(client);

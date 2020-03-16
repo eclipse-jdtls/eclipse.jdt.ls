@@ -37,11 +37,11 @@ public class PreferenceManagerTest {
 	@Mock
 	private IMavenConfiguration mavenConfig;
 
-	private PreferenceManager preferenceManager;
+	private StandardPreferenceManager preferenceManager;
 
 	@Before
 	public void setUp() {
-		preferenceManager = new PreferenceManager();
+		preferenceManager = new StandardPreferenceManager();
 		preferenceManager.setMavenConfiguration(mavenConfig);
 	}
 

@@ -16,6 +16,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -27,7 +29,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -40,6 +41,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 
 import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 
 /**
@@ -142,7 +144,9 @@ public final class ResourceUtils {
 		}
 		String content;
 		try {
-			content = IOUtil.toString(file.getContents());
+			try (final Reader reader = new InputStreamReader(file.getContents())) {
+				content = CharStreams.toString(reader);
+			}
 		} catch (IOException e) {
 			throw new CoreException(StatusFactory.newErrorStatus("Can not get " + file.getRawLocation() + " content", e));
 		}

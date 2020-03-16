@@ -217,6 +217,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("clientHoverProvider", "false").toString());
 	}
 
+	public boolean isClientDocumentSymbolProviderRegistered() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("clientDocumentSymbolProvider", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

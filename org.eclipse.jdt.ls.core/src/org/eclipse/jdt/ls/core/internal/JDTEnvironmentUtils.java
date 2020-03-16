@@ -21,6 +21,7 @@ public class JDTEnvironmentUtils {
 	public static final String CLIENT_PORT = "CLIENT_PORT";
 	public static final String CLIENT_HOST = "CLIENT_HOST";
 	public static final String DEFAULT_CLIENT_HOST = "localhost";
+	public static final String SYNTAX_SERVER_ID = "syntaxserver";
 
 	/**
 	 * Environment variable indicating that the JDT LS has to be started with a
@@ -68,4 +69,7 @@ public class JDTEnvironmentUtils {
 		return Boolean.parseBoolean(Environment.get(SOCKET_STREAM_DEBUG, "false")) && (Platform.inDebugMode() || Platform.inDevelopmentMode()) && getClientHost() != null && getClientPort() != null;
 	}
 
+	public static boolean isSyntaxServer() {
+		return Boolean.parseBoolean(Environment.get(SYNTAX_SERVER_ID, "false"));
+	}
 }

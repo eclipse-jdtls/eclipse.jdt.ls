@@ -19,11 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +36,11 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
-import org.eclipse.jdt.ls.core.internal.CancellableProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -123,8 +119,6 @@ import org.eclipse.lsp4j.PrepareRenameParams;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
-import org.eclipse.lsp4j.Registration;
-import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
@@ -134,12 +128,9 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.TypeDefinitionParams;
-import org.eclipse.lsp4j.Unregistration;
-import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
-import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
@@ -151,14 +142,13 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
+public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	/**
 	 * Exit code returned when JDTLanguageServer is forced to exit.
 	 */
 	private static final int FORCED_EXIT_CODE = 1;
-	private JavaClientConnection client;
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
@@ -168,10 +158,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
 
-	private Set<String> registeredCapabilities = new HashSet<>(3);
-
 	private ProgressReporterManager progressReporterManager;
 
+	@Override
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
 	}
@@ -188,8 +177,9 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		this.commandHandler = commandHandler;
 	}
 
+	@Override
 	public void connectClient(JavaLanguageClient client) {
-		this.client = new JavaClientConnection(client);
+		super.connectClient(client);
 		progressReporterManager = new ProgressReporterManager(client, preferenceManager);
 		Job.getJobManager().setProgressProvider(progressReporterManager);
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
@@ -233,7 +223,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
 		}
-		if (preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
+		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
@@ -277,6 +267,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 				try {
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
+					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
@@ -943,40 +934,6 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchyOutgoingCalls(params, monitor));
 	}
 
-	public void sendStatus(ServiceStatus serverStatus, String status) {
-		if (client != null) {
-			client.sendStatus(serverStatus, status);
-		}
-	}
-
-	public void unregisterCapability(String id, String method) {
-		if (registeredCapabilities.remove(id)) {
-			Unregistration unregistration = new Unregistration(id, method);
-			UnregistrationParams unregistrationParams = new UnregistrationParams(Collections.singletonList(unregistration));
-			client.unregisterCapability(unregistrationParams);
-		}
-	}
-
-	public void registerCapability(String id, String method) {
-		registerCapability(id, method, null);
-	}
-
-	public void registerCapability(String id, String method, Object options) {
-		if (registeredCapabilities.add(id)) {
-			Registration registration = new Registration(id, method, options);
-			RegistrationParams registrationParams = new RegistrationParams(Collections.singletonList(registration));
-			client.registerCapability(registrationParams);
-		}
-	}
-
-	public JavaClientConnection getClientConnection() {
-		return client;
-	}
-
-	private <R> CompletableFuture<R> computeAsync(Function<IProgressMonitor, R> code) {
-		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)));
-	}
-
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync((cc) -> {
 			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
@@ -984,18 +941,8 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 		});
 	}
 
-	private IProgressMonitor toMonitor(CancelChecker checker) {
-		return new CancellableProgressMonitor(checker);
-	}
-
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
-		try {
-			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
-		} catch (OperationCanceledException ignorable) {
-			// No need to pollute logs when query is cancelled
-		} catch (InterruptedException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
+		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 	}
 
 }

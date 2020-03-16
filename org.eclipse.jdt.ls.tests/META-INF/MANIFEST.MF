@@ -30,6 +30,9 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.xtend.lib,
  org.eclipse.xtext.xbase.lib,
  org.eclipse.jdt.launching,
- org.eclipse.ltk.core.refactoring
+ org.eclipse.ltk.core.refactoring,
+ org.eclipse.jdt.apt.pluggable.core,
+ org.jboss.tools.maven.apt.core,
+ org.eclipse.buildship.core
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Activator: org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin

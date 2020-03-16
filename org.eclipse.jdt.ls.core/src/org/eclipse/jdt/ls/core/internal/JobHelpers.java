@@ -24,9 +24,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.ls.core.internal.handlers.InitHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
 import org.eclipse.m2e.core.internal.embedder.MavenExecutionContext;
 import org.eclipse.m2e.core.internal.jobs.IBackgroundProcessingQueue;
 
@@ -137,6 +138,21 @@ public final class JobHelpers {
 		return queues;
 	}
 
+	public static void waitForWorkspaceJobsToComplete(IProgressMonitor monitor) throws InterruptedException {
+		IJobManager jobManager = Job.getJobManager();
+		jobManager.suspend();
+		try {
+			Job[] jobs = jobManager.find(null);
+			for(int i = 0; i < jobs.length; i++ ) {
+				if(jobs[i] instanceof WorkspaceJob || jobs[i].getClass().getName().endsWith("JREUpdateJob")) {
+					jobs[i].join();
+				}
+			}
+		} finally {
+			jobManager.resume();
+		}
+	}
+
 	private static void waitForBuildJobs() {
 		waitForBuildJobs(MAX_TIME_MILLIS);
 	}
@@ -184,6 +200,16 @@ public final class JobHelpers {
 		return null;
 	}
 
+	public static void waitForJobs(String jobFamily, IProgressMonitor monitor) {
+		try {
+			Job.getJobManager().join(jobFamily, monitor);
+		} catch (OperationCanceledException ignorable) {
+			// No need to pollute logs when query is cancelled
+		} catch (InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
 	interface IJobMatcher {
 
 		boolean matches(Job job);
@@ -208,7 +234,7 @@ public final class JobHelpers {
 
 		@Override
 		public boolean matches(Job job) {
-			return job.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS);
+			return job.belongsTo(BaseInitHandler.JAVA_LS_INITIALIZATION_JOBS);
 		}
 
 	}

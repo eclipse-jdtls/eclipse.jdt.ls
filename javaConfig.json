@@ -2,7 +2,8 @@
     "projects": [
         "org.eclipse.jdt.ls.core",
         "org.eclipse.jdt.ls.target",
-        "org.eclipse.jdt.ls.tests"
+        "org.eclipse.jdt.ls.tests",
+        "org.eclipse.jdt.ls.tests.syntaxserver"
     ],
 
    "targetPlatform": "org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target"

@@ -13,34 +13,23 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static java.util.Arrays.asList;
 import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSettings;
-import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
-import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.codehaus.plexus.util.StringUtils;
-import org.eclipse.buildship.core.internal.CorePlugin;
-import org.eclipse.buildship.core.internal.preferences.PersistentModel;
-import org.eclipse.core.resources.IFile;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -58,9 +47,7 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
@@ -69,68 +56,31 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
-import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
-import org.eclipse.jdt.ls.core.internal.handlers.InitHandler;
-import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.eclipse.lsp4j.Command;
-import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
-import org.eclipse.lsp4j.FileSystemWatcher;
-import org.eclipse.lsp4j.MessageType;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 
-public class ProjectsManager implements ISaveParticipant {
+public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
-	private static final Set<String> watchers = new LinkedHashSet<>();
+
 	private PreferenceManager preferenceManager;
-	private JavaLanguageClient client;
-	//@formatter:off
-	private static final List<String> basicWatchers = Arrays.asList(
-			"**/*.java",
-			"**/pom.xml",
-			"**/*.gradle",
-			"**/gradle.properties",
-			"**/.project",
-			"**/.classpath",
-			"**/.settings/*.prefs",
-			"**/src/**"
-	);
-	//@formatter:on
+	protected JavaLanguageClient client;
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
 	};
-
-	private Job registerWatcherJob = new Job("Register Watchers") {
-
-		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			JobHelpers.waitForJobsToComplete();
-			registerWatchers();
-			return Status.OK_STATUS;
-		}
-
-	};
-
-	private IPreferencesChangeListener preferenceChangeListener = null;
 
 	public ProjectsManager(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -138,15 +88,14 @@ public class ProjectsManager implements ISaveParticipant {
 
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-		deleteInvalidProjects(rootPaths, subMonitor.split(10));
-		GradleBuildSupport.cleanGradleModels(subMonitor.split(10));
+		cleanInvalidProjects(rootPaths, subMonitor.split(20));
 		createJavaProject(getDefaultProject(), subMonitor.split(10));
 		cleanupResources(getDefaultProject());
 		importProjects(rootPaths, subMonitor.split(70));
 		subMonitor.done();
 	}
 
-	private void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
@@ -161,7 +110,7 @@ public class ProjectsManager implements ISaveParticipant {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
 		Job[] removedJobs = Job.getJobManager().find(removedRootPaths);
 		for (Job removedJob : removedJobs) {
-			if (removedJob.belongsTo(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY) || removedJob.belongsTo(InitHandler.JAVA_LS_INITIALIZATION_JOBS)) {
+			if (removedJob.belongsTo(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY) || removedJob.belongsTo(BaseInitHandler.JAVA_LS_INITIALIZATION_JOBS)) {
 				removedJob.cancel();
 			}
 		}
@@ -195,7 +144,7 @@ public class ProjectsManager implements ISaveParticipant {
 						}
 					}
 					importProjects(addedRootPaths, subMonitor.split(addedRootPaths.size()));
-					registerWatcherJob.schedule();
+					registerWatchers(true);
 					long elapsed = System.currentTimeMillis() - start;
 
 					JavaLanguageServerPlugin.logInfo("Updated workspace folders in " + elapsed + " ms: Added " + addedRootPaths.size() + " folder(s), removed" + removedRootPaths.size() + " folders.");
@@ -206,7 +155,8 @@ public class ProjectsManager implements ISaveParticipant {
 					JavaLanguageServerPlugin.logError(msg);
 					status = StatusFactory.newErrorStatus(msg, e);
 				}
-				GradleBuildSupport.cleanGradleModels(monitor);
+
+				cleanInvalidProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
 				return status;
 			}
 		};
@@ -250,157 +200,8 @@ public class ProjectsManager implements ISaveParticipant {
 		});
 	}
 
-	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
-		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> ProjectUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
-		List<IProject> validGradleProjects = new ArrayList<>();
-		List<IProject> suspiciousGradleProjects = new ArrayList<>();
-		for (IProject project : getWorkspaceRoot().getProjects()) {
-			if (project.equals(this.getDefaultProject())) {
-				continue;
-			}
-			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project) || workspaceProjects.contains(project.getName()))) {
-				try {
-					project.getDescription();
-					if (ProjectUtils.isGradleProject(project)) {
-						if (ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
-							validGradleProjects.add(project);
-						} else {
-							suspiciousGradleProjects.add(project);
-						}
-					}
-				} catch (CoreException e) {
-					try {
-						project.delete(true, monitor);
-					} catch (CoreException e1) {
-						JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
-					}
-				}
-			} else {
-				try {
-					project.delete(false, true, monitor);
-				} catch (CoreException e1) {
-					JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
-				}
-			}
-		}
-
-		List<IProject> unrelatedProjects = findUnrelatedGradleProjects(suspiciousGradleProjects, validGradleProjects);
-		unrelatedProjects.forEach((project) -> {
-			try {
-				project.delete(false, true, monitor);
-			} catch (CoreException e1) {
-				JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
-			}
-		});
-	}
-
-	/**
-	 * Find those gradle projects not referenced by any gradle project in the current workspace.
-	 */
-	private List<IProject> findUnrelatedGradleProjects(List<IProject> suspiciousProjects, List<IProject> validProjects) {
-		suspiciousProjects.sort((IProject p1, IProject p2) -> p1.getLocation().toOSString().length() - p2.getLocation().toOSString().length());
-
-		List<IProject> unrelatedCandidates = new ArrayList<>();
-		Collection<IPath> validSubPaths = new ArrayList<>();
-		for (IProject suspiciousProject : suspiciousProjects) {
-			if (validSubPaths.contains(suspiciousProject.getFullPath().makeRelative())) {
-				continue;
-			}
-
-			// Check whether the suspicious gradle project is the parent project of the opening project.
-			boolean isParentProject = false;
-			Collection<IPath> subpaths = null;
-			PersistentModel model = CorePlugin.modelPersistence().loadModel(suspiciousProject);
-			if (model.isPresent()) {
-				subpaths = model.getSubprojectPaths();
-				if (!subpaths.isEmpty()) {
-					for (IProject validProject : validProjects) {
-						if (subpaths.contains(validProject.getFullPath().makeRelative())) {
-							isParentProject = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if (isParentProject) {
-				validSubPaths.addAll(subpaths);
-			} else {
-				unrelatedCandidates.add(suspiciousProject);
-			}
-		}
-
-		List<IProject> result = new ArrayList<>();
-		// Exclude those projects which are the subprojects of the verified parent project.
-		for (IProject candidate : unrelatedCandidates) {
-			if (!validSubPaths.contains(candidate.getFullPath().makeRelative())) {
-				result.add(candidate);
-			}
-		}
-
-		return result;
-	}
-
 	private static IWorkspaceRoot getWorkspaceRoot() {
 		return ResourcesPlugin.getWorkspace().getRoot();
-	}
-
-	public void fileChanged(String uriString, CHANGE_TYPE changeType) {
-		if (uriString == null) {
-			return;
-		}
-		IResource resource = JDTUtils.getFileOrFolder(uriString);
-		if (resource == null) {
-			return;
-		}
-		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
-		if (formatterUrl != null) {
-			try {
-				URL url = getUrl(formatterUrl);
-				if (url != null) {
-					URI formatterUri = url.toURI();
-					URI uri = JDTUtils.toURI(uriString);
-					if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
-						if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
-							registerWatchers();
-						}
-						FormatterManager.configureFormatter(preferenceManager, this);
-					}
-				}
-			} catch (URISyntaxException e) {
-				// ignore
-			}
-		}
-
-		try {
-			Optional<IBuildSupport> bs = getBuildSupport(resource.getProject());
-			if (bs.isPresent()) {
-				IBuildSupport buildSupport = bs.get();
-				boolean requireConfigurationUpdate = buildSupport.fileChanged(resource, changeType, new NullProgressMonitor());
-				if (requireConfigurationUpdate) {
-					FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
-					switch (status) {
-						case automatic:
-							// do not force the build, because it's not started by user and should be done only if build file has changed
-							updateProject(resource.getProject(), false);
-							break;
-						case disabled:
-							break;
-						default:
-							if (client != null) {
-								String cmd = "java.projectConfiguration.status";
-								TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
-								ActionableNotification updateProjectConfigurationNotification = new ActionableNotification().withSeverity(MessageType.Info)
-										.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Never", cmd, asList(uri, FeatureStatus.disabled)),
-												new Command("Now", cmd, asList(uri, FeatureStatus.interactive)), new Command("Always", cmd, asList(uri, FeatureStatus.automatic))));
-								client.sendActionableNotification(updateProjectConfigurationNotification);
-							}
-					}
-				}
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
-		}
 	}
 
 	public URL getUrl(String formatterUrl) {
@@ -436,7 +237,7 @@ public class ProjectsManager implements ISaveParticipant {
 		return null;
 	}
 
-	public IProject getDefaultProject() {
+	public static IProject getDefaultProject() {
 		return getWorkspaceRoot().getProject(DEFAULT_PROJECT_NAME);
 	}
 
@@ -455,11 +256,11 @@ public class ProjectsManager implements ISaveParticipant {
 		return importers.values();
 	}
 
-	public IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+	public static IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		return createJavaProject(project, null, "src", "bin", monitor);
 	}
 
-	public IProject createJavaProject(IProject project, IPath projectLocation, String src, String bin, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+	public static IProject createJavaProject(IProject project, IPath projectLocation, String src, String bin, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		if (project.exists()) {
 			return project;
 		}
@@ -535,7 +336,7 @@ public class ProjectsManager implements ISaveParticipant {
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
 						buildSupport.get().update(project, force, progress.split(95));
-						registerWatcherJob.schedule();
+						registerWatchers(true);
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
@@ -556,7 +357,7 @@ public class ProjectsManager implements ISaveParticipant {
 	}
 
 	private Stream<IBuildSupport> buildSupports() {
-		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport(), new InvisibleProjectBuildSupport(), new DefaultProjectBuildSupport(this), new EclipseBuildSupport());
+		return Stream.of(new EclipseBuildSupport());
 	}
 
 	public void setConnection(JavaLanguageClient client) {
@@ -623,9 +424,6 @@ public class ProjectsManager implements ISaveParticipant {
 	 */
 	@Override
 	public void prepareToSave(ISaveContext context) throws CoreException {
-		if (context.getKind() == ISaveContext.FULL_SAVE) {
-			GradleBuildSupport.saveModels();
-		}
 	}
 
 	/* (non-Javadoc)
@@ -642,7 +440,7 @@ public class ProjectsManager implements ISaveParticipant {
 	public void saving(ISaveContext context) throws CoreException {
 	}
 
-	public boolean setAutoBuilding(boolean enable) throws CoreException {
+	public static boolean setAutoBuilding(boolean enable) throws CoreException {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceDescription description = workspace.getDescription();
 		boolean changed = description.isAutoBuilding() != enable;
@@ -651,106 +449,6 @@ public class ProjectsManager implements ISaveParticipant {
 			workspace.setDescription(description);
 		}
 		return changed;
-	}
-
-	public List<FileSystemWatcher> registerWatchers() {
-		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
-		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
-			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
-			Set<IPath> sources = new HashSet<>();
-			try {
-				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-				for (IProject project : projects) {
-					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
-						continue;
-					}
-					IJavaProject javaProject = JavaCore.create(project);
-					if (javaProject != null && javaProject.exists()) {
-						IClasspathEntry[] classpath = javaProject.getRawClasspath();
-						for (IClasspathEntry entry : classpath) {
-							if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
-								IPath path = entry.getPath();
-								if (path != null && !path.toString().contains("/src/") && !path.toString().endsWith("/src")) {
-									IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
-									if (folder.exists() && !folder.isDerived()) {
-										IPath location = folder.getLocation();
-										if (location != null && !isContainedIn(location, sources)) {
-											sources.add(location);
-										}
-									}
-
-								}
-							}
-							if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
-								IPath path = entry.getPath();
-								IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
-								if (resource != null && !resource.isDerived()) {
-									IPath location = resource.getLocation();
-									if (location != null && !isContainedIn(location, sources)) {
-										sources.add(location);
-									}
-								}
-							}
-						}
-						if (!ProjectUtils.isVisibleProject(project)) { // Invisible project will watch referenced libraries' include patterns
-							IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
-							Set<String> libraries = preferenceManager.getPreferences().getReferencedLibraries().getInclude();
-							for (String pattern: libraries) {
-								patterns.add(ProjectUtils.resolveGlobPath(projectFolder, pattern).toPortableString());
-							}
-						}
-					}
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
-			String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
-			if (formatterUrl != null) {
-				File file = new File(formatterUrl);
-				if (!file.isFile()) {
-					file = findFile(formatterUrl);
-				}
-				if (file != null && file.isFile()) {
-					IPath formatterPath = new Path(file.getAbsolutePath());
-					if (!isContainedIn(formatterPath, sources)) {
-						sources.add(formatterPath);
-					}
-				}
-			}
-			patterns.addAll(sources.stream().map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
-
-			for (String pattern : patterns) {
-				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
-				fileWatchers.add(watcher);
-			}
-
-			if (!patterns.equals(watchers)) {
-				logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
-				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);
-				JavaLanguageServerPlugin.getInstance().unregisterCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES);
-				JavaLanguageServerPlugin.getInstance().registerCapability(Preferences.WORKSPACE_WATCHED_FILES_ID, Preferences.WORKSPACE_WATCHED_FILES, didChangeWatchedFilesRegistrationOptions);
-				watchers.clear();
-				watchers.addAll(patterns);
-			}
-			return fileWatchers;
-		}
-		return Collections.emptyList();
-	}
-
-	public void registerListeners() {
-		if (this.preferenceChangeListener == null) {
-			this.preferenceChangeListener = new IPreferencesChangeListener() {
-				@Override
-				public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
-					if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
-						registerWatcherJob.schedule(1000L);
-						UpdateClasspathJob.getInstance().updateClasspath();
-					}
-				}
-			};
-			this.preferenceManager.addPreferencesChangeListener(this.preferenceChangeListener);
-		}
 	}
 
 	public File findFile(String formatterUrl) {

@@ -13,5 +13,5 @@
 package org.eclipse.jdt.ls.core.internal;
 
 public enum ServiceStatus {
-	Starting, Started, Message, Error
+	Starting, Started, Message, Error, ServiceReady
 }

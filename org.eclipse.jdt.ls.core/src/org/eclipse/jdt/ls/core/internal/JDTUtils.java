@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -586,6 +587,21 @@ public final class JDTUtils {
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
+		return uriString;
+	}
+
+	public static String replaceUriFragment(String uriString, String fragment) {
+		if (uriString != null) {
+			URI uri = toURI(uriString);
+			if (uri != null && Objects.equals(JDT_SCHEME, uri.getScheme())) {
+				try {
+					return new URI(JDT_SCHEME, uri.getAuthority(), uri.getPath(), uri.getQuery(), fragment).toASCIIString();
+				} catch (URISyntaxException e) {
+					// do nothing
+				}
+			}
+		}
+
 		return uriString;
 	}
 

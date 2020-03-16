@@ -75,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -90,7 +91,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	private static final java.lang.String REFERENCE_PREFIX = "reference:";
 
 	protected IProgressMonitor monitor;
-	protected ProjectsManager projectsManager;
+	protected StandardProjectsManager projectsManager;
 	@Mock
 	protected PreferenceManager preferenceManager;
 
@@ -130,13 +131,13 @@ public abstract class AbstractProjectsManagerBasedTest {
 		preferences.setCodeGenerationTemplateGenerateComments(true);
 		preferences.setMavenDownloadSources(true);
 		if (preferenceManager == null) {
-			preferenceManager = mock(PreferenceManager.class);
+			preferenceManager = mock(StandardPreferenceManager.class);
 		}
 		initPreferenceManager(true);
 
 		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		projectsManager = new ProjectsManager(preferenceManager);
+		projectsManager = new StandardProjectsManager(preferenceManager);
 		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager);
 		progressManager.setReportThrottle(0);//disable throttling to ensure we capture all events
 		Job.getJobManager().setProgressProvider(progressManager);
@@ -155,7 +156,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
-		PreferenceManager.initialize();
+		StandardPreferenceManager.initialize();
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
