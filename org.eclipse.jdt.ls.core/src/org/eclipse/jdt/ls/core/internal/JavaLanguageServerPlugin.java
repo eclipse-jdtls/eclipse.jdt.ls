@@ -29,7 +29,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,21 +51,25 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
-import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
 import org.eclipse.jdt.internal.corext.template.java.VarResolver;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jface.text.templates.TemplateContextType;
+import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
+import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxProjectsManager;
 import org.eclipse.jface.text.templates.TemplateVariableResolver;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
@@ -118,7 +121,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private DigestStore digestStore;
 	private ContentProviderManager contentProviderManager;
 
-	private JDTLanguageServer protocol;
+	private BaseJDTLanguageServer protocol;
 
 	private PreferenceManager preferenceManager;
 
@@ -162,9 +165,16 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaLanguageServerPlugin.pluginInstance = this;
 		setPreferenceNodeId();
 
-		preferenceManager = new PreferenceManager();
+		if (JDTEnvironmentUtils.isSyntaxServer()) {
+			disableServices();
+			preferenceManager = new PreferenceManager();
+			projectsManager = new SyntaxProjectsManager(preferenceManager);
+		} else {
+			preferenceManager = new StandardPreferenceManager();
+			projectsManager = new StandardProjectsManager(preferenceManager);
+		}
+
 		digestStore = new DigestStore(getStateLocation().toFile());
-		projectsManager = new ProjectsManager(preferenceManager);
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(IConstants.PLUGIN_ID, projectsManager);
 		} catch (CoreException e) {
@@ -174,6 +184,19 @@ public class JavaLanguageServerPlugin extends Plugin {
 		nonProjectDiagnosticsState = new DiagnosticsState();
 		logInfo(getClass() + " is started");
 		configureProxy();
+	}
+
+	private void disableServices() {
+		try {
+			ProjectsManager.setAutoBuilding(false);
+		} catch (CoreException e1) {
+			JavaLanguageServerPlugin.logException(e1);
+		}
+
+		IndexManager indexManager = JavaModelManager.getIndexManager();
+		if (indexManager != null) {
+			indexManager.shutdown();
+		}
 	}
 
 	private void setPreferenceNodeId() {
@@ -306,7 +329,11 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private void startConnection() throws IOException {
 		Launcher<JavaLanguageClient> launcher;
 		ExecutorService executorService = Executors.newCachedThreadPool();
-		protocol = new JDTLanguageServer(projectsManager, preferenceManager);
+		if (JDTEnvironmentUtils.isSyntaxServer()) {
+			protocol = new SyntaxLanguageServer(contentProviderManager, projectsManager, preferenceManager);
+		} else {
+			protocol = new JDTLanguageServer(projectsManager, preferenceManager);
+		}
 		if (JDTEnvironmentUtils.inSocketStreamDebugMode()) {
 			String host = JDTEnvironmentUtils.getClientHost();
 			Integer port = JDTEnvironmentUtils.getClientPort();
@@ -503,7 +530,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		this.protocol = protocol;
 	}
 
-	public JDTLanguageServer getProtocol() {
+	public BaseJDTLanguageServer getProtocol() {
 		return protocol;
 	}
 

@@ -14,12 +14,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,16 +31,12 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.highlighting.SemanticHighlightingService;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
@@ -60,11 +53,8 @@ import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 /**
  * Handler for the VS Code extension initialization
  */
-final public class InitHandler {
-
-	public static final String JAVA_LS_INITIALIZATION_JOBS = "java-ls-initialization-jobs";
+final public class InitHandler extends BaseInitHandler {
 	private static final String BUNDLES_KEY = "bundles";
-	public static final String SETTINGS_KEY = "settings";
 
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
@@ -73,78 +63,17 @@ final public class InitHandler {
 	private WorkspaceExecuteCommandHandler commandHandler;
 
 	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection, WorkspaceExecuteCommandHandler commandHandler) {
+		super(preferenceManager);
 		this.projectsManager = manager;
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.commandHandler = commandHandler;
 	}
 
-	@SuppressWarnings("unchecked")
-	InitializeResult initialize(InitializeParams param) {
-		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
-		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
-		Map<String, Object> extendedClientCapabilities = getInitializationOption(initializationOptions, "extendedClientCapabilities", Map.class);
-		if (param.getCapabilities() == null) {
-			preferenceManager.updateClientPrefences(new ClientCapabilities(), extendedClientCapabilities);
-		} else {
-			preferenceManager.updateClientPrefences(param.getCapabilities(), extendedClientCapabilities);
-		}
+	@Override
+	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
+		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
 
-
-		Collection<IPath> rootPaths = new ArrayList<>();
-		Collection<String> workspaceFolders = getInitializationOption(initializationOptions, "workspaceFolders", Collection.class);
-		if (workspaceFolders != null && !workspaceFolders.isEmpty()) {
-			for (String uri : workspaceFolders) {
-				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
-				if (filePath != null) {
-					rootPaths.add(filePath);
-				}
-			}
-		} else {
-			String rootPath = param.getRootUri();
-			if (rootPath == null) {
-				rootPath = param.getRootPath();
-				if (rootPath != null) {
-					logInfo("In LSP 3.0, InitializeParams.rootPath is deprecated in favour of InitializeParams.rootUri!");
-				}
-			}
-			if (rootPath != null) {
-				IPath filePath = ResourceUtils.canonicalFilePathFromURI(rootPath);
-				if (filePath != null) {
-					rootPaths.add(filePath);
-				}
-			}
-		}
-		if (rootPaths.isEmpty()) {
-			IPath workspaceLocation = ResourcesPlugin.getWorkspace().getRoot().getLocation();
-			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
-			rootPaths.add(workspaceLocation);
-		}
-		if (initializationOptions.get(SETTINGS_KEY) instanceof Map) {
-			Object settings = initializationOptions.get(SETTINGS_KEY);
-			@SuppressWarnings("unchecked")
-			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
-			prefs.setRootPaths(rootPaths);
-			preferenceManager.update(prefs);
-		} else {
-			preferenceManager.getPreferences().setRootPaths(rootPaths);
-		}
-
-		Collection<IPath> triggerPaths = new ArrayList<>();
-		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
-		if (triggerFiles != null) {
-			for (String uri : triggerFiles) {
-				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
-				if (filePath != null) {
-					triggerPaths.add(filePath);
-				}
-			}
-		}
-		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
-		Integer processId = param.getProcessId();
-		if (processId != null) {
-			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
-		}
 		try {
 			Collection<String> bundleList = getInitializationOption(initializationOptions, BUNDLES_KEY, Collection.class);
 			BundleUtils.loadBundles(bundleList);
@@ -152,7 +81,12 @@ final public class InitHandler {
 			// The additional plug-ins should not affect the main language server loading.
 			JavaLanguageServerPlugin.logException("Failed to load extension bundles ", e);
 		}
-		InitializeResult result = new InitializeResult();
+
+		return initializationOptions;
+	}
+
+	@Override
+	public void registerCapabilities(InitializeResult initializeResult) {
 		ServerCapabilities capabilities = new ServerCapabilities();
 		if (!preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
 			capabilities.setCompletionProvider(CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
@@ -193,7 +127,7 @@ final public class InitHandler {
 		if (!preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			capabilities.setWorkspaceSymbolProvider(Boolean.TRUE);
 		}
-		if (!preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
+		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && !preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			capabilities.setDocumentSymbolProvider(Boolean.TRUE);
 		}
 		if (!preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
@@ -247,15 +181,10 @@ final public class InitHandler {
 		wsCapabilities.setWorkspaceFolders(wsFoldersOptions);
 		capabilities.setWorkspace(wsCapabilities);
 
-		result.setCapabilities(capabilities);
-
-		// At the end of the InitHandler, trigger a job to import the workspace. This is used to ensure ServiceStatus notification
-		// is not sent before the initialize response. See the bug https://github.com/redhat-developer/vscode-java/issues/1056
-		triggerInitialization(rootPaths);
-		return result;
+		initializeResult.setCapabilities(capabilities);
 	}
 
-	private void triggerInitialization(Collection<IPath> roots) {
+	public void triggerInitialization(Collection<IPath> roots) {
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
@@ -297,20 +226,4 @@ final public class InitHandler {
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule();
 	}
-
-	private Map<?, ?> getInitializationOptions(InitializeParams params) {
-		Map<?, ?> initOptions = JSONUtility.toModel(params.getInitializationOptions(), Map.class);
-		return initOptions == null ? Collections.emptyMap() : initOptions;
-	}
-
-	private <T> T getInitializationOption(Map<?, ?> initializationOptions, String key, Class<T> clazz) {
-		if (initializationOptions != null) {
-			Object bundleObject = initializationOptions.get(key);
-			if (clazz.isInstance(bundleObject)) {
-				return clazz.cast(bundleObject);
-			}
-		}
-		return null;
-	}
-
 }

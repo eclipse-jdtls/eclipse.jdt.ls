@@ -47,11 +47,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.lsp4j.ClientCapabilities;
-import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.IMavenConfiguration;
-import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
-import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.text.templates.ContextTypeRegistry;
 import org.eclipse.text.templates.TemplatePersistenceData;
 import org.eclipse.text.templates.TemplateReaderWriter;
@@ -67,10 +62,8 @@ import org.eclipse.text.templates.TemplateStoreCore;
 public class PreferenceManager {
 
 	private Preferences preferences ;
-	private static final String M2E_APT_ID = "org.jboss.tools.maven.apt";
 	private static final String CUSTOM_CODE_TEMPLATES = IConstants.PLUGIN_ID + ".custom_code_templates";
 	private ClientPreferences clientPreferences;
-	private IMavenConfiguration mavenConfig;
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
 	private IEclipsePreferences eclipsePrefs;
 
@@ -108,12 +101,6 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
 		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
-
-		IEclipsePreferences m2eAptPrefs = DefaultScope.INSTANCE.getNode(M2E_APT_ID);
-		if (m2eAptPrefs != null) {
-			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
-		}
-		initializeMavenPreferences();
 
 		// Initialize templates
 		Template [] templates = new Template [] {
@@ -161,11 +148,6 @@ public class PreferenceManager {
 		JavaManipulation.setCodeTemplateContextRegistry(registry);
 	}
 
-	private static void initializeMavenPreferences() {
-		IEclipsePreferences store = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
-		store.put(MavenPreferenceConstants.P_OUT_OF_DATE_PROJECT_CONFIG_PB, ProblemSeverity.warning.toString());
-	}
-
 	public void update(Preferences preferences) {
 		if(preferences == null){
 			throw new IllegalArgumentException("Preferences can not be null");
@@ -174,18 +156,6 @@ public class PreferenceManager {
 		this.preferences = preferences;
 		preferencesChanged(oldPreferences, preferences); // listener will get latest preference from getPreferences()
 
-		String newMavenSettings = preferences.getMavenUserSettings();
-		String oldMavenSettings = getMavenConfiguration().getUserSettingsFile();
-		if (!Objects.equals(newMavenSettings, oldMavenSettings)) {
-			try {
-				getMavenConfiguration().setUserSettingsFile(newMavenSettings);
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("failed to set Maven settings", e);
-				preferences.setMavenUserSettings(oldMavenSettings);
-			}
-		}
-
-		updateParallelBuild(this.preferences.getMaxConcurrentBuilds());
 		// TODO serialize preferences
 	}
 
@@ -204,26 +174,6 @@ public class PreferenceManager {
 			};
 			SafeRunner.run(job);
 		}
-	}
-
-	private void updateParallelBuild(int maxConcurrentBuilds) {
-		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IWorkspaceDescription description = workspace.getDescription();
-		if (description.getMaxConcurrentBuilds() == maxConcurrentBuilds) {
-			return;
-		}
-
-		description.setMaxConcurrentBuilds(maxConcurrentBuilds);
-		try {
-			workspace.setDescription(description);
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problems setting maxConcurrentBuilds from workspace.", e);
-		}
-
-		String stringValue = maxConcurrentBuilds != 1 ? Boolean.TRUE.toString() : Boolean.FALSE.toString();
-		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
-		pref.put(MavenPreferenceConstants.P_BUILDER_USE_NULL_SCHEDULING_RULE, stringValue);
-		pref = InstanceScope.INSTANCE.getNode(JavaCore.PLUGIN_ID);
 	}
 
 	/**
@@ -251,20 +201,6 @@ public class PreferenceManager {
 	 */
 	public void updateClientPrefences(ClientCapabilities clientCapabilities, Map<String, Object> extendedClientCapabilities) {
 		this.clientPreferences = new ClientPreferences(clientCapabilities, extendedClientCapabilities);
-	}
-
-	public IMavenConfiguration getMavenConfiguration() {
-		if (mavenConfig == null) {
-			mavenConfig = MavenPlugin.getMavenConfiguration();
-		}
-		return mavenConfig;
-	}
-
-	/**
-	 * public for testing purposes
-	 */
-	public void setMavenConfiguration(IMavenConfiguration mavenConfig) {
-		this.mavenConfig = mavenConfig;
 	}
 
 	public static Preferences getPrefs(IResource resource) {

@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +45,9 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public class InvisibleProjectImporter extends AbstractProjectImporter {
+	public static final String[][] SRC_PREFIXES = new String[][] {
+		{ "src" }
+	};
 
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
@@ -156,23 +160,31 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	}
 
 	private static String getPackageName(IPath javaFile, IPath workspaceRoot) {
+		return getPackageName(javaFile, workspaceRoot, SRC_PREFIXES);
+	}
+
+	private static String getPackageName(IPath javaFile, IPath workspaceRoot, String[][] srcPrefixes) {
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			return "";
 		}
 
 		IJavaProject javaProject = JavaCore.create(project);
-		return getPackageName(javaFile, workspaceRoot, javaProject);
+		return getPackageName(javaFile, workspaceRoot, javaProject, srcPrefixes);
 	}
 
 	public static String getPackageName(IPath javaFile, IPath workspaceRoot, IJavaProject javaProject) {
+		return getPackageName(javaFile, workspaceRoot, javaProject, SRC_PREFIXES);
+	}
+
+	public static String getPackageName(IPath javaFile, IPath workspaceRoot, IJavaProject javaProject, String[][] srcPrefixes) {
 		File nioFile = javaFile.toFile();
 		try {
 			String content = com.google.common.io.Files.toString(nioFile, StandardCharsets.UTF_8);
 			if (StringUtils.isBlank(content)) {
 				File found = findNearbyNonEmptyFile(nioFile);
 				if (found == null) {
-					return inferPackageNameFromPath(javaFile, workspaceRoot);
+					return inferPackageNameFromPath(javaFile, workspaceRoot, srcPrefixes);
 				}
 
 				nioFile = found;
@@ -203,16 +215,18 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		return null;
 	}
 
-	private static String inferPackageNameFromPath(IPath javaFile, IPath workspaceRoot) {
+	private static String inferPackageNameFromPath(IPath javaFile, IPath workspaceRoot, String[][] srcPrefixes) {
 		IPath parentPath = javaFile.removeTrailingSeparator().removeLastSegments(1);
-		List<String> segments = Arrays.asList(parentPath.segments());
-		int index = segments.lastIndexOf(JDTUtils.SRC);
-		if (index > -1) {
-			return String.join(JDTUtils.PERIOD, segments.subList(index + 1, segments.size()));
+		IPath relativePath = parentPath.makeRelativeTo(workspaceRoot);
+		List<String> segments = Arrays.asList(relativePath.segments());
+		for (int i = 0; i < srcPrefixes.length; i++) {
+			int index = Collections.indexOfSubList(segments, Arrays.asList(srcPrefixes[i]));
+			if (index > -1) {
+				return String.join(JDTUtils.PERIOD, segments.subList(index + srcPrefixes[i].length, segments.size()));
+			}
 		}
 
-		IPath relativePath = parentPath.makeRelativeTo(workspaceRoot);
-		return String.join(JDTUtils.PERIOD, relativePath.segments());
+		return String.join(JDTUtils.PERIOD, segments);
 	}
 
 	private static IPath inferSourceDirectory(java.nio.file.Path filePath, String packageName) {
@@ -230,5 +244,10 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		}
 
 		return null;
+	}
+
+	public static IPath tryResolveSourceDirectory(IPath javaFile, IPath rootPath, String[][] potentialSrcPrefixes) {
+		String packageName = getPackageName(javaFile, rootPath, potentialSrcPrefixes);
+		return inferSourceDirectory(javaFile.toFile().toPath(), packageName);
 	}
 }

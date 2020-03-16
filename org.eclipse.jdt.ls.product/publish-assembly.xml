@@ -14,6 +14,9 @@
         <include>config_linux/**</include>
         <include>config_mac/**</include>
         <include>config_win/**</include>
+        <include>config_ss_linux/**</include>
+        <include>config_ss_mac/**</include>
+        <include>config_ss_win/**</include>
         <include>features/**</include>
         <include>plugins/**</include>
       </includes>

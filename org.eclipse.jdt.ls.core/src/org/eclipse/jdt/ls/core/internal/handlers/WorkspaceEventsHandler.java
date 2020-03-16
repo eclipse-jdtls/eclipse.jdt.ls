@@ -44,9 +44,9 @@ public class WorkspaceEventsHandler {
 
 	private final ProjectsManager pm ;
 	private final JavaClientConnection connection;
-	private final DocumentLifeCycleHandler handler;
+	private final BaseDocumentLifeCycleHandler handler;
 
-	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection, DocumentLifeCycleHandler handler) {
+	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection, BaseDocumentLifeCycleHandler handler) {
 		this.pm = projects;
 		this.connection = connection;
 		this.handler = handler;
@@ -65,7 +65,7 @@ public class WorkspaceEventsHandler {
 		}
 	}
 
-	void didChangeWatchedFiles(DidChangeWatchedFilesParams param){
+	public void didChangeWatchedFiles(DidChangeWatchedFilesParams param){
 		List<FileEvent> changes = param.getChanges().stream().distinct().collect(Collectors.toList());
 		for (FileEvent fileEvent : changes) {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());

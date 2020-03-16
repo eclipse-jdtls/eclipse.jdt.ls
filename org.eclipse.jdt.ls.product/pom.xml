@@ -50,6 +50,9 @@
 						<product>
 							<id>languageServer.product</id>
 						</product>
+						<product>
+							<id>syntaxServer.product</id>
+						</product>
 					</products>
 				</configuration>
 				<executions>
@@ -106,6 +109,51 @@
 							<resources>
 								<resource>
 									<directory>${basedir}/target/products/languageServer.product/linux/gtk/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-mac-slim</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_ss_mac</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/syntaxServer.product/macosx/cocoa/x86_64/Eclipse.app/Contents/Eclipse/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-win-slim</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_ss_win</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/syntaxServer.product/win32/win32/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-linux-slim</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_ss_linux</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/syntaxServer.product/linux/gtk/x86_64/configuration</directory>
 								</resource>
 							</resources>
 						</configuration>

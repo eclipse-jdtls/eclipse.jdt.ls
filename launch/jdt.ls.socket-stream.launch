@@ -13,7 +13,7 @@
 <booleanAttribute key="clearwslog" value="false"/>
 <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream"/>
 <booleanAttribute key="default" value="false"/>
-<stringAttribute key="deselected_workspace_plugins" value="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ui"/>
+<stringAttribute key="deselected_workspace_plugins" value="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver,org.eclipse.jdt.ui"/>
 <stringAttribute key="featureDefaultLocation" value="workspace"/>
 <stringAttribute key="featurePluginResolution" value="workspace"/>
 <booleanAttribute key="includeOptional" value="false"/>
