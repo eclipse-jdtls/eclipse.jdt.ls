@@ -55,18 +55,8 @@ public class WorkspaceFolderChangeHandler {
 
 	private void updateRootPaths(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		Set<IPath> rootPathSet = new HashSet<>(preferenceManager.getPreferences().getRootPaths());
-
-		Set<IPath> removedSet = new HashSet<>(removedRootPaths);
-		for (IPath removed : removedSet) {
-			if (rootPathSet.contains(removed)) {
-				rootPathSet.remove(removed);
-			}
-		}
-
-		Set<IPath> addedSet = new HashSet<>(addedRootPaths);
-		for (IPath added : addedSet) {
-			rootPathSet.add(added);
-		}
+		rootPathSet.removeAll(removedRootPaths);
+		rootPathSet.addAll(addedRootPaths);
 		preferenceManager.getPreferences().setRootPaths(rootPathSet);
 	}
 }
