@@ -96,6 +96,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
@@ -771,7 +772,7 @@ public class LocalCorrectionsSubProcessor {
 			Statement curr = statements.get(i);
 			if (curr instanceof SwitchCase) {
 				SwitchCase switchCase = (SwitchCase) curr;
-				if (switchCase.getAST().isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST())) {
 					List<Expression> expressions = switchCase.expressions();
 					if (expressions.size() == 0) {
 						hasDefault = true;
@@ -815,7 +816,7 @@ public class LocalCorrectionsSubProcessor {
 			Statement curr = statements.get(i);
 			if (curr instanceof SwitchCase) {
 				SwitchCase switchCase = (SwitchCase) curr;
-				if (switchCase.getAST().isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST())) {
 					if (switchCase.expressions().size() == 0) {
 						defaultIndex = i;
 						break;
@@ -846,7 +847,7 @@ public class LocalCorrectionsSubProcessor {
 				SwitchCase newSwitchCase = ast.newSwitchCase();
 				String enumConstName = enumConstNames.get(i);
 				Name newName = ast.newName(enumConstName);
-				if (ast.isPreviewEnabled()) {
+				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(ast)) {
 					newSwitchCase.expressions().add(newName);
 				} else {
 					newSwitchCase.setExpression(newName);
@@ -854,7 +855,7 @@ public class LocalCorrectionsSubProcessor {
 				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
 				defaultIndex++;
 				if (!hasDefault) {
-					if (ast.isPreviewEnabled()) {
+					if (ASTHelper.isSwitchExpressionNodeSupportedInAST(ast)) {
 						if (statements.size() > 0) {
 							Statement firstStatement = statements.get(0);
 							SwitchCase switchCase = (SwitchCase) firstStatement;
@@ -882,7 +883,7 @@ public class LocalCorrectionsSubProcessor {
 				listRewrite.insertAt(newSwitchCase, defaultIndex, null);
 				defaultIndex++;
 
-				if (ast.isPreviewEnabled()) {
+				if (ASTHelper.isSwitchExpressionNodeSupportedInAST(ast)) {
 					if (statements.size() > 0) {
 						Statement firstStatement = statements.get(0);
 						SwitchCase switchCase = (SwitchCase) firstStatement;
@@ -978,7 +979,7 @@ public class LocalCorrectionsSubProcessor {
 		SwitchCase newSwitchCase = ast.newSwitchCase();
 		listRewrite.insertLast(newSwitchCase, null);
 
-		if (ast.isPreviewEnabled()) {
+		if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(ast)) {
 			if (statements.size() > 0) {
 				Statement firstStatement = statements.get(0);
 				SwitchCase switchCase = (SwitchCase) firstStatement;
