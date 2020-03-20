@@ -789,7 +789,7 @@ public class JDTLanguageServer implements LanguageServer, TextDocumentService, W
 	@Override
 	public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
 		logInfo(">> java/didChangeWorkspaceFolders");
-		WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm);
+		WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm, preferenceManager);
 		handler.update(params);
 	}
 
