@@ -149,6 +149,7 @@ public class PreferenceManager {
 		// Register additional context types
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE));
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE));
+		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE));
 
 		TemplateStoreCore tscore = new TemplateStoreCore(defEclipsePrefs, CUSTOM_CODE_TEMPLATES);
 		try {
