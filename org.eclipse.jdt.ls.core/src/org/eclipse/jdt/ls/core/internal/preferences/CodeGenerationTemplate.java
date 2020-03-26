@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation. and others.
+ * Copyright (c) 2017-2020 Microsoft Corporation. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
+ *     Red Hat, Inc. - added record snippet
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
@@ -142,7 +143,24 @@ public enum CodeGenerationTemplate {
 	INTERFACESNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
 			CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
-			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_INTERFACESNIPPET_DEFAULT),
+
+	/**
+	 * Snippet `public record` content template
+	 */
+	RECORDSNIPPET_PUBLIC(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_RECORDSNIPPET_PUBLIC),
+
+	/**
+	 * Snippet `record` content template
+	 */
+	RECORDSNIPPET_DEFAULT(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_RECORDSNIPPET_DEFAULT);
+
 
 	private final String preferenceId;
 	private final String contextType;
@@ -243,6 +261,8 @@ class CodeTemplatePreferences {
 
 	public static final String INTERFACESNIPPET_CONTEXTTYPE = "interfacesnippet_context"; //$NON-NLS-1$
 
+	public static final String RECORDSNIPPET_CONTEXTTYPE = "recordsnippet_context"; //$NON-NLS-1$
+
 	/**
 	 * Default value for field comments
 	 */
@@ -325,4 +345,13 @@ class CodeTemplatePreferences {
 	 * Default value for public interface snippet body content
 	 */
 	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
+	/**
+	 * Default value for record snippet body content
+	 */
+	public static final String CODETEMPLATE_RECORDSNIPPET_DEFAULT = "${package_header}record ${type_name}(${cursor}) {\n}";
+	/**
+	 * Default value for public record snippet body content
+	 */
+	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic record ${type_name}(${cursor}) {\n}";
+
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -68,6 +68,7 @@ import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ComparisonFailure;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -1341,6 +1342,132 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		String te = item.getInsertText();
 		assertNotNull(te);
 		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic class ${1:InnerTest_1} {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_no_record() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		int[] loc = findCompletionLocation(unit, "");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		//Not a Java 14 project => no snippet
+		assertFalse("No record snippet should be available", items.stream().anyMatch(i -> "record".equals(i.getLabel())));
+	}
+
+	@Test
+	public void testSnippet_record() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "");
+		int[] loc = findCompletionLocation(unit, "");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(10);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
+
+		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
+		assertSame(item, server.resolveCompletionItem(item).join());
+	}
+
+	@Test
+	public void testSnippet_record_with_package() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(9);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
+	}
+
+	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Test
+	public void testSnippet_inner_record() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(7);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("/**\n * ${1:InnerTest}\n */\npublic record ${1:InnerTest}(${0}) {\n}", te);
+	}
+
+	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Test
+	public void testSnippet_sibling_inner_record() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){}\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test {}\npublic record InnerTest(){}\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(7);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic record ${1:InnerTest_1}(${0) {\n}", te);
+	}
+
+	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Test
+	public void testSnippet_nested_inner_record() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(24);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic record ${1:InnerTest_1}(${0}) {\n}", te);
+	}
+
+	@Test
+	public void testSnippet_nested_inner_record_nosnippet() throws Exception {
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		mockLSP2Client();
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
+		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+
+		assertNotNull(list);
+		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
 	}
 
 	@Test
