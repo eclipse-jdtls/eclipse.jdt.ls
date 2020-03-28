@@ -395,23 +395,25 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void testJava12Project() throws Exception {
-		IProject project = importGradleProject("gradle-12");
-		assertIsJavaProject(project);
-		assertEquals("12", getJavaSourceLevel(project));
-		IJavaProject javaProject = JavaCore.create(project);
-		//Buildship/Gradle don't automatically execute the eclipseJdt task, so the default config is unchanged
-		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
-		assertEquals(JavaCore.WARNING, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+		testJavaProjectWithPreviewFeatures("12", false, JavaCore.WARNING);
 	}
 
 	@Test
 	public void testJava13Project() throws Exception {
-		IProject project = importGradleProject("gradle-13");
+		testJavaProjectWithPreviewFeatures("13", true /* The project has enabled preview features in the jdt setting*/, JavaCore.IGNORE);
+	}
+
+	@Test
+	public void testJava14Project() throws Exception {
+		testJavaProjectWithPreviewFeatures("14", true /* The project has enabled preview features in the jdt setting*/, JavaCore.IGNORE);
+	}
+
+	private void testJavaProjectWithPreviewFeatures(String javaVersion, boolean enabled, String severity) throws Exception {
+		IProject project = importGradleProject("gradle-" + javaVersion);
 		assertIsJavaProject(project);
-		assertEquals("13", getJavaSourceLevel(project));
+		assertEquals(javaVersion, getJavaSourceLevel(project));
 		IJavaProject javaProject = JavaCore.create(project);
-		//The project has enabled preview features in the jdt settings
-		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
-		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+		assertEquals((enabled) ? JavaCore.ENABLED : JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(severity, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
 	}
 }
