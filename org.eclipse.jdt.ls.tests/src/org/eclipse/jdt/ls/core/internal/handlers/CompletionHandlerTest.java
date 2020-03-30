@@ -464,6 +464,95 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_javadocCommentRecord() throws Exception {
+		importProjects("eclipse/java14");
+		IProject proj = WorkspaceHelper.getProject("java14");
+		IJavaProject javaProject = JavaCore.create(proj);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		ICompilationUnit unit = null;
+		try {
+			unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Foo.java"));
+			unit.becomeWorkingCopy(null);
+			String source =
+			//@formatter:off
+				"package foo.bar;\n"+
+				"/** */ \n"+
+				"public record Foo(String name, int age) {\n"+
+				"}\n";
+			//@formatter:on
+			changeDocument(unit, source, 1);
+			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+			int[] loc = findCompletionLocation(unit, "/**");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertEquals(1, list.getItems().size());
+			CompletionItem item = list.getItems().get(0);
+			assertNull(item.getInsertText());
+			assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
+			assertEquals(CompletionItemKind.Snippet, item.getKind());
+			assertEquals("999999999", item.getSortText());
+			assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+			assertNotNull(item.getTextEdit());
+			assertEquals("\n * ${0}\n * @param name\n * @param age\n", item.getTextEdit().getNewText());
+			Range range = item.getTextEdit().getRange();
+			assertEquals(1, range.getStart().getLine());
+			assertEquals(3, range.getStart().getCharacter());
+			assertEquals(1, range.getEnd().getLine());
+			assertEquals(" * @param name\n * @param age\n", item.getDocumentation().getLeft());
+		} finally {
+			unit.discardWorkingCopy();
+			proj.delete(true, monitor);
+		}
+	}
+
+	@Test
+	public void testCompletion_javadocCommentRecordNoSnippet() throws Exception {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
+		importProjects("eclipse/java14");
+		IProject proj = WorkspaceHelper.getProject("java14");
+		IJavaProject javaProject = JavaCore.create(proj);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		ICompilationUnit unit = null;
+		try {
+			unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Foo.java"));
+			unit.becomeWorkingCopy(null);
+			String source =
+			//@formatter:off
+				"package foo.bar;\n"+
+				"/** */ \n"+
+				"public record Foo(String name, int age) {\n"+
+				"}\n";
+			//@formatter:on
+			changeDocument(unit, source, 1);
+			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+			int[] loc = findCompletionLocation(unit, "/**");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertEquals(1, list.getItems().size());
+			CompletionItem item = list.getItems().get(0);
+			assertNull(item.getInsertText());
+			assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
+			assertEquals(CompletionItemKind.Snippet, item.getKind());
+			assertEquals("999999999", item.getSortText());
+			assertEquals(item.getInsertTextFormat(), InsertTextFormat.PlainText);
+			assertNotNull(item.getTextEdit());
+			assertEquals("\n * @param name\n * @param age\n", item.getTextEdit().getNewText());
+			Range range = item.getTextEdit().getRange();
+			assertEquals(1, range.getStart().getLine());
+			assertEquals(3, range.getStart().getCharacter());
+			assertEquals(1, range.getEnd().getLine());
+			assertEquals(" * @param name\n * @param age\n", item.getDocumentation().getLeft());
+		} finally {
+			unit.discardWorkingCopy();
+			proj.delete(true, monitor);
+		}
+	}
+
+	@Test
 	public void testCompletion_import_static() throws JavaModelException{
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
