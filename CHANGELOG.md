@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.53.0 (April 1st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/71?closed=1)
+ * enhancement - add Java 14 support. See [#1391](https://github.com/eclipse/eclipse.jdt.ls/pull/1391).
+ * enhancement - update Buildship for Java 14 support. See [#1397](https://github.com/eclipse/eclipse.jdt.ls/pull/1397).
+ * enhancement - provide `record` snippet. See [#1393](https://github.com/eclipse/eclipse.jdt.ls/issues/1393).
+ * enhancement - add Javadoc completion for `record`s. See [#1396](https://github.com/eclipse/eclipse.jdt.ls/issues/1396).
+ * enhancement - j.i.gradle.arguments and j.i.gradle.jvmArguments aren't properly defined. See [#1387](https://github.com/eclipse/eclipse.jdt.ls/pull/1387).
+ * enhancement - use stable lsp4j 0.9.0 release. See [#1382](https://github.com/eclipse/eclipse.jdt.ls/issues/1382).
+ * enhancement - enable syntax mode when importing a partial folder of maven/gradle project. See [#1364](https://github.com/eclipse/eclipse.jdt.ls/pull/1364).
+ * bug fix - root path in the preference manager won't update when workspace folder changes. See [#1388](https://github.com/eclipse/eclipse.jdt.ls/issues/1388).
+ * bug fix - fixed BadLocationException and diagnostic with negative line number send to client. See [#1374](https://github.com/eclipse/eclipse.jdt.ls/issues/1374).
+
 ## [0.52.0 (March 5th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/70?closed=1)
 * enhancement - provide diagnostics and quickfixes when opening non-project java files. See [#1366](https://github.com/eclipse/eclipse.jdt.ls/pull/1366).
 * enhancement - parallel downloads of jars, for Maven projects. See [#1369](https://github.com/eclipse/eclipse.jdt.ls/pull/1369).

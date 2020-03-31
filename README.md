@@ -25,7 +25,7 @@ Features
 * Type search
 * Code formatting (on-type/selection/file)
 * Maven pom.xml project support
-* Java 9/10/11 support
+* Supports compiling projects from Java 1.5 through 14
 * Limited Gradle support (Android projects are not supported)
 * Annotation processing support (automatic for Maven projects)
 
