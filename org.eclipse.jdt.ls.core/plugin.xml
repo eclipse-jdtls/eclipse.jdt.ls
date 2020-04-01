@@ -89,11 +89,15 @@
          <importer
             id = "gradleProjectImporter"
             order ="300"
-            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/>
          <importer
             id = "mavenProjectImporter"
             order = "400"
             class = "org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter"/>
+         <importer
+            id = "bazelProjectImporter"
+            order ="500"
+            class = "org.eclipse.jdt.ls.core.internal.managers.BazelProjectImporter"/>
          <importer
             id = "eclipseProjectImporter"
             order = "1000"

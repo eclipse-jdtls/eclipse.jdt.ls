@@ -46,6 +46,10 @@
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+        	<repository location="https://raw.githubusercontent.com/salesforce/bazel-eclipse-ls/gh-pages/p2/master/"/>
+            <unit id="com.salesforce.b2eclipse.jdt.ls" version="0.0.0"/>
+        </location>
+        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <repository location="https://download.eclipse.org/eclipse/updates/4.15-P-builds/P20200318-0455/"/>
             <unit id="org.eclipse.jdt.java14patch.feature.group" version="0.0.0"/>
         </location>

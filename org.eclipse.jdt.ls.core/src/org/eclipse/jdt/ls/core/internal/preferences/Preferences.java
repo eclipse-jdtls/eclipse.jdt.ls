@@ -209,6 +209,31 @@ public class Preferences {
 	public static final String SELECTIONRANGE_ENABLED_KEY = "java.selectionRange.enabled";
 
 	/**
+	 * Preference key to enable/disable bazel importer.
+	 */
+	public static final String IMPORT_BAZEL_ENABLED = "java.import.bazel.enabled";
+
+	/**
+	 * Preference key to change java classes src path for bazel importer.
+	 */
+	public static final String BAZEL_SRC_PATH = "java.import.bazel.src.path";
+
+	/**
+	 * Preference key to change java classes test path for bazel importer.
+	 */
+	public static final String BAZEL_TEST_PATH = "java.import.bazel.test.path";
+
+	/**
+	 * Default java class src path for bazel importer.
+	 */
+	public static final String BAZEL_DEFAULT_SRC_PATH = "/src/main/java";
+
+	/**
+	 * Default java class test path for bazel importer.
+	 */
+	public static final String BAZEL_DEFAULT_TEST_PATH = "/src/test/java";
+
+	/**
 	 * A named preference that holds the favorite static members.
 	 * <p>
 	 * Value is of type <code>String</code>: list of favorites.
@@ -383,6 +408,9 @@ public class Preferences {
 	private boolean generateToStringListArrayContents;
 	private int generateToStringLimitElements;
 	private List<String> preferredContentProviderIds;
+	private boolean importBazelEnabled;
+	private String importBazelSrcPath;
+	private String importBazelTestPath;
 
 	private String mavenUserSettings;
 
@@ -566,6 +594,10 @@ public class Preferences {
 		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 		maxCompletionResults = JAVA_COMPLETION_MAX_RESULTS_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
+		importBazelEnabled = false;
+		importBazelSrcPath = BAZEL_DEFAULT_SRC_PATH;
+		importBazelTestPath = BAZEL_DEFAULT_TEST_PATH;
+
 	}
 
 	/**
@@ -612,6 +644,13 @@ public class Preferences {
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
 		prefs.setImplementationCodelensEnabled(implementationCodeLensEnabled);
+
+		boolean importBazelEnabled = getBoolean(configuration, IMPORT_BAZEL_ENABLED, false);
+		prefs.setImportBazelEnabled(importBazelEnabled);
+		String importBazelSrcPath = getString(configuration, BAZEL_SRC_PATH, BAZEL_DEFAULT_SRC_PATH);
+		prefs.setImportBazelSrcPath(importBazelSrcPath);
+		String importBazelTestPath = getString(configuration, BAZEL_TEST_PATH, BAZEL_DEFAULT_TEST_PATH);
+		prefs.setImportBazelTestPath(importBazelTestPath);
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
@@ -896,6 +935,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setImportBazelEnabled(boolean enabled) {
+		this.importBazelEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setMavenDownloadSources(boolean enabled) {
 		this.mavenDownloadSources = enabled;
 		return this;
@@ -1041,6 +1085,24 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setImportBazelSrcPath(String importBazelSrcPath) {
+		this.importBazelSrcPath = importBazelSrcPath;
+		return this;
+	}
+
+	public Preferences setImportBazelTestPath(String importBazelTestPath) {
+		this.importBazelTestPath = importBazelTestPath;
+		return this;
+	}
+
+	public String getImportBazelSrcPath() {
+		return importBazelSrcPath;
+	}
+
+	public String getImportBazelTestPath() {
+		return importBazelTestPath;
+	}
+
 	public Severity getIncompleteClasspathSeverity() {
 		return incompleteClasspathSeverity;
 	}
@@ -1111,6 +1173,10 @@ public class Preferences {
 
 	public boolean isImportMavenEnabled() {
 		return importMavenEnabled;
+	}
+
+	public boolean isImportBazelEnabled() {
+		return importBazelEnabled;
 	}
 
 	public boolean isMavenDownloadSources() {
