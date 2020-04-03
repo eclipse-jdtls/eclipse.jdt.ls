@@ -65,10 +65,13 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 	private SyntaxLanguageServer server;
 	private CoreASTProvider sharedASTProvider;
 
+	private String oldServerMode = "";
 	private boolean oldBuildStatus = false;
 
 	@Before
 	public void setup() throws Exception {
+		oldServerMode = System.getProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID);
+		System.setProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID, "true");
 		oldBuildStatus = ResourcesPlugin.getWorkspace().getDescription().isAutoBuilding();
 		ProjectsManager.setAutoBuilding(false);
 		sharedASTProvider = CoreASTProvider.getInstance();
@@ -81,6 +84,11 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 
 	@After
 	public void tearDown() throws Exception {
+		if (oldServerMode == null) {
+			System.clearProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID);
+		} else {
+			System.setProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID, oldServerMode);
+		}
 		ProjectsManager.setAutoBuilding(oldBuildStatus);
 		server.getClientConnection().disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
@@ -208,6 +216,40 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertEquals(2, list.size());
 		assertTrue(list.get(1).isLeft());
 		assertEquals("Test", list.get(1).getLeft());
+	}
+
+	@Test
+	public void testHoverType() throws Exception {
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Foo.java");
+		String fileUri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(fileUri);
+		HoverParams params = new HoverParams(identifier, new Position(11, 9));
+		Hover result = server.hover(params).join();
+		assertNotNull(result);
+		assertNotNull(result.getContents());
+		assertTrue(result.getContents().isLeft());
+		List<Either<String, MarkedString>> list = result.getContents().getLeft();
+		assertNotNull(list);
+		assertEquals(2, list.size());
+		assertTrue(list.get(1).isLeft());
+		assertEquals("This is Bar.", list.get(1).getLeft());
+	}
+
+	@Test
+	public void testHoverUnresolvedType() throws Exception {
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Foo.java");
+		String fileUri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(fileUri);
+		HoverParams params = new HoverParams(identifier, new Position(7, 30));
+		Hover result = server.hover(params).join();
+		assertNotNull(result);
+		assertNotNull(result.getContents());
+		assertTrue(result.getContents().isLeft());
+		List<Either<String, MarkedString>> list = result.getContents().getLeft();
+		assertNotNull(list);
+		assertEquals(2, list.size());
+		assertTrue(list.get(1).isLeft());
+		assertEquals("This is interface IFoo.", list.get(1).getLeft());
 	}
 
 	private URI openFile(String basePath, String filePath) throws Exception {
