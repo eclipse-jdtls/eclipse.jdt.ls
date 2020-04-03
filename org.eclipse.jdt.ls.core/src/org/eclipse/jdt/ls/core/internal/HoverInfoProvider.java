@@ -116,8 +116,8 @@ public class HoverInfoProvider {
 			} else {
 				curr = elements[0];
 			}
-			boolean resolved = isResolved(curr, monitor);
-			if (resolved) {
+
+			if (JDTEnvironmentUtils.isSyntaxServer() || isResolved(curr, monitor)) {
 				IBuffer buffer = curr.getOpenable().getBuffer();
 				if (buffer == null && curr instanceof BinaryMember) {
 					IClassFile classFile = ((BinaryMember) curr).getClassFile();
