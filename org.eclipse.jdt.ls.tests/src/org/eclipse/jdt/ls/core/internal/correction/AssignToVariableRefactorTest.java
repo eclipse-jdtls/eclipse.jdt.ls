@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -57,7 +58,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToVariable() throws Exception {
-		setIgnoredCommands("Assign statement to new field");
+		setIgnoredCommands("Assign statement to new field", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -92,7 +93,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToField() throws Exception {
-		setIgnoredCommands("Assign statement to new local variable");
+		setIgnoredCommands("Assign statement to new local variable", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
