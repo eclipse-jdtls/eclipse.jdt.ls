@@ -77,6 +77,26 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 	}
 
 	@Test
+	public void testGenerateConstructorsQuickAssist() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	String name;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertNotNull(constructorAction);
+		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
+		Assert.assertNotNull(constructorCommand);
+		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, constructorCommand.getCommand());
+	}
+
+	@Test
 	public void testGenerateConstructorsEnabled_emptyFields() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +

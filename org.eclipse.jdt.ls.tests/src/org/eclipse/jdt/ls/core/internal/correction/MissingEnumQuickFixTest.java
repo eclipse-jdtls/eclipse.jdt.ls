@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
@@ -68,6 +69,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range range = new Range(new Position(5, 16), new Position(5, 17));
+		setIgnoredCommands(ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
 		assertEquals(2, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
@@ -103,6 +105,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range range = new Range(new Position(5, 16), new Position(5, 17));
+		setIgnoredCommands(ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
 		assertEquals(0, codeActions.size());
 		Map<String, String> options = fJProject.getOptions(true);

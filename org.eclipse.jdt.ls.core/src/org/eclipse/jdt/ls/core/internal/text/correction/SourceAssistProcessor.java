@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -93,6 +94,19 @@ public class SourceAssistProcessor {
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
 
+		// Generate Constructor quickassist
+		Optional<Either<Command, CodeAction>> generateConstructors = null;
+		try {
+			IJavaElement element = JDTUtils.findElementAtSelection(cu, params.getRange().getEnd().getLine(), params.getRange().getEnd().getCharacter(), this.preferenceManager, new NullProgressMonitor());
+			if (element instanceof IField) {
+				generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST);
+				addSourceActionCommand($, params.getContext(), generateConstructors);
+
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+
 		// Organize Imports
 		if (preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported()) {
 			Optional<Either<Command, CodeAction>> organizeImports = getOrganizeImportsAction(params);
@@ -140,7 +154,20 @@ public class SourceAssistProcessor {
 		}
 
 		// Generate Constructors
-		Optional<Either<Command, CodeAction>> generateConstructors = getGenerateConstructorsAction(params, context, type);
+		if (generateConstructors == null) {
+			generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+		} else if (generateConstructors.isPresent()) {
+			Command command = new Command(ActionMessages.GenerateConstructorsAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, Collections.singletonList(params));
+			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS)) {
+				CodeAction codeAction = new CodeAction(ActionMessages.GenerateConstructorsAction_ellipsisLabel);
+				codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+				codeAction.setCommand(command);
+				codeAction.setDiagnostics(Collections.emptyList());
+				generateConstructors = Optional.of(Either.forRight(codeAction));
+			} else {
+				generateConstructors = Optional.of(Either.forLeft(command));
+			}
+		}
 		addSourceActionCommand($, params.getContext(), generateConstructors);
 
 		// Generate Delegate Methods
@@ -292,7 +319,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type) {
+	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type, String kind) {
 		try {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
@@ -303,17 +330,20 @@ public class SourceAssistProcessor {
 
 		if (preferenceManager.getClientPreferences().isGenerateConstructorsPromptSupported()) {
 			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type);
+			if (status.constructors.length == 0) {
+				return Optional.empty();
+			}
 			if (status.constructors.length == 1 && status.fields.length == 0) {
 				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields);
-				return convertToWorkspaceEditAction(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, edit);
+				return convertToWorkspaceEditAction(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, kind, edit);
 			}
 
 			Command command = new Command(ActionMessages.GenerateConstructorsAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, Collections.singletonList(params));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS)) {
 				CodeAction codeAction = new CodeAction(ActionMessages.GenerateConstructorsAction_ellipsisLabel);
-				codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+				codeAction.setKind(kind);
 				codeAction.setCommand(command);
-				codeAction.setDiagnostics(Collections.EMPTY_LIST);
+				codeAction.setDiagnostics(Collections.emptyList());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
 				return Optional.of(Either.forLeft(command));
