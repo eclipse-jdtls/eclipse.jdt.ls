@@ -18,6 +18,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -28,11 +31,15 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.text.edits.InsertEdit;
 import org.junit.Before;
@@ -119,5 +126,56 @@ public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(edit.getDocumentChanges().size(), 2);
 		assertTrue(edit.getDocumentChanges().get(0).getRight() instanceof RenameFile);
 		assertTrue(edit.getDocumentChanges().get(1).getLeft() instanceof TextDocumentEdit);
+	}
+
+	@Test
+	public void testMergeChanges() {
+		WorkspaceEdit editA = new WorkspaceEdit();
+		String uriA = "uriA";
+		TextEdit textEdit = new TextEdit(
+			new Range(new Position(0, 0), new Position(0, 0)),
+			"package test;");
+		editA.getChanges().put(uriA, Arrays.asList(textEdit));
+
+		WorkspaceEdit root = ChangeUtil.mergeChanges(null, editA);
+		assertNotNull(root);
+		assertNotNull(root.getChanges());
+		assertNotNull(root.getChanges().get(uriA));
+		assertEquals(1, root.getChanges().size());
+		assertEquals(1, root.getChanges().get(uriA).size());
+
+		WorkspaceEdit editB = new WorkspaceEdit();
+		editB.getChanges().put(uriA, Arrays.asList(textEdit));
+		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = new ArrayList<>();
+		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(
+			new VersionedTextDocumentIdentifier(uriA, 1), Arrays.asList(textEdit));
+		documentChanges.add(Either.forLeft(textDocumentEdit));
+		ResourceOperation resourceOperation = new RenameFile("uriA", "uriB");
+		documentChanges.add(Either.forRight(resourceOperation));
+		editB.setDocumentChanges(documentChanges);
+
+		root = ChangeUtil.mergeChanges(editA, editB);
+		assertNotNull(root);
+		assertNotNull(root.getChanges());
+		assertNotNull(root.getChanges().get(uriA));
+		assertEquals(1, root.getChanges().size());
+		assertEquals(2, root.getChanges().get(uriA).size());
+		assertNotNull(root.getDocumentChanges());
+		assertEquals(2, root.getDocumentChanges().size());
+		assertTrue(root.getDocumentChanges().get(0).isLeft());
+		assertEquals(textDocumentEdit, root.getDocumentChanges().get(0).getLeft());
+		assertTrue(root.getDocumentChanges().get(1).isRight());
+		assertEquals(resourceOperation, root.getDocumentChanges().get(1).getRight());
+
+		root = ChangeUtil.mergeChanges(editA, editB, true);
+		assertNotNull(root);
+		assertNotNull(root.getChanges());
+		assertNotNull(root.getChanges().get(uriA));
+		assertEquals(1, root.getChanges().size());
+		assertEquals(2, root.getChanges().get(uriA).size());
+		assertNotNull(root.getDocumentChanges());
+		assertEquals(1, root.getDocumentChanges().size());
+		assertTrue(root.getDocumentChanges().get(0).isLeft());
+		assertEquals(textDocumentEdit, root.getDocumentChanges().get(0).getLeft());
 	}
 }

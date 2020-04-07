@@ -47,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameParams;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
@@ -741,6 +742,15 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public void didSave(DidSaveTextDocumentParams params) {
 		logInfo(">> document/didSave");
 		documentLifeCycleHandler.didSave(params);
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> didRenameFiles(FileRenameParams params) {
+		logInfo(">> document/didRenameFiles");
+		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return FileEventHandler.handleRenameFiles(params, monitor);
+		});
 	}
 
 	/* (non-Javadoc)
