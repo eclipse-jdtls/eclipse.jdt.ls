@@ -14,9 +14,12 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -389,4 +392,55 @@ public class ChangeUtil {
 		//@formatter:on
 	}
 
+	/**
+	 * Merge the changes of two workspace edits to a new edit.
+	 */
+	public static WorkspaceEdit mergeChanges(WorkspaceEdit editA, WorkspaceEdit editB) {
+		return mergeChanges(editA, editB, false);
+	}
+
+	/**
+	 * Merge the changes of two workspace edits to a new edit.
+	 */
+	public static WorkspaceEdit mergeChanges(WorkspaceEdit editA, WorkspaceEdit editB, boolean ignoreResourceChange) {
+		if (editA == null && editB == null) {
+			return null;
+		}
+
+		WorkspaceEdit result = new WorkspaceEdit();
+		appendChanges(result, editA, ignoreResourceChange);
+		appendChanges(result, editB, ignoreResourceChange);
+		return result;
+	}
+
+	private static void appendChanges(WorkspaceEdit root, WorkspaceEdit child, boolean ignoreResourceChange) {
+		if (root == null || child == null) {
+			return;
+		}
+
+		if (child.getChanges() != null && !child.getChanges().isEmpty()) {
+			if (root.getChanges() == null) {
+				root.setChanges(new LinkedHashMap<>());
+			}
+
+			for (Entry<String, List<org.eclipse.lsp4j.TextEdit>> entry : child.getChanges().entrySet()) {
+				root.getChanges().computeIfAbsent(entry.getKey(), (key -> new ArrayList<>()));
+				root.getChanges().get(entry.getKey()).addAll(entry.getValue());
+			}
+		}
+
+		if (child.getDocumentChanges() != null && !child.getDocumentChanges().isEmpty()) {
+			if (root.getDocumentChanges() == null) {
+				root.setDocumentChanges(new ArrayList<>());
+			}
+
+			if (ignoreResourceChange) {
+				root.getDocumentChanges().addAll(
+					child.getDocumentChanges().stream().filter((change) -> change.isLeft()).collect(Collectors.toList())
+				);
+			} else {
+				root.getDocumentChanges().addAll(child.getDocumentChanges());
+			}
+		}
+	}
 }
