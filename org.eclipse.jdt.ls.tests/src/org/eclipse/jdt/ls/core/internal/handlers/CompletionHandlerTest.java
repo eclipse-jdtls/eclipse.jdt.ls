@@ -27,6 +27,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -2613,6 +2614,58 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			if ("foo() : void".equals(it.getLabel())) {
 				fail("there is a proposal for foo()");
 			}
+		}
+	}
+
+	@Test
+	public void testStarImports() throws Exception {
+		List<String> favorites = new ArrayList<>();
+		favorites.add("java.lang.Math.*");
+		Preferences prefs = PreferenceManager.getPrefs(null);
+		List<String> oldFavorites = Arrays.asList(prefs.getJavaCompletionFavoriteMembers());
+		int onDemandThreshold = prefs.getImportOnDemandThreshold();
+		int staticOnDemandThreshold = prefs.getStaticImportOnDemandThreshold();
+		prefs.setJavaCompletionFavoriteMembers(favorites);
+		prefs.setImportOnDemandThreshold(2);
+		prefs.setStaticImportOnDemandThreshold(2);
+		try {
+			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
+			//@formatter:off
+			"package test1;\n" +
+			"import static java.lang.Math.sqrt;\n" +
+			"import java.util.List;\n" +
+			"public class B {\n" +
+			"    List<String> list = new ArrayL\n" +
+			"    public static void main(String[] args) {\n" +
+			"        double d1 = sqrt(4);\n" +
+			"        double d2 = abs\n" +
+			"    }\n" +
+			"}\n");
+			//@formatter:on
+			int[] loc = findCompletionLocation(unit, "new ArrayL");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertTrue(list.getItems().size() > 0);
+			CompletionItem item = list.getItems().stream().filter(i -> "ArrayList()".equals(i.getLabel())).collect(Collectors.toList()).get(0);
+			assertNotNull(item);
+			List<TextEdit> textEdits = item.getAdditionalTextEdits();
+			assertEquals(1, textEdits.size());
+			TextEdit textEdit = textEdits.get(0);
+			assertEquals("\n\nimport java.util.*;", textEdit.getNewText());
+			loc = findCompletionLocation(unit, "= abs");
+			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertTrue(list.getItems().size() > 0);
+			item = list.getItems().stream().filter(i -> i.getLabel().startsWith("abs(double")).collect(Collectors.toList()).get(0);
+			assertNotNull(item);
+			textEdits = item.getAdditionalTextEdits();
+			assertEquals(1, textEdits.size());
+			textEdit = textEdits.get(0);
+			assertEquals("import static java.lang.Math.*;\n\n", textEdit.getNewText());
+		} finally {
+			prefs.setJavaCompletionFavoriteMembers(oldFavorites);
+			prefs.setImportOnDemandThreshold(onDemandThreshold);
+			prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
 		}
 	}
 

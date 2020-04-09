@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 /**
  * Method implementations extracted from JDT UI. Mostly from
@@ -41,7 +42,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 public class TypeProposalUtils {
 
 	private static final String PACKAGE_INFO_JAVA = "package-info.java"; //$NON-NLS-1$
-	private static final int IMPORTS_THRESHOLD = 99;
 
 	static void createName(ITypeBinding type, boolean includePackage,
 			List<String> list) {
@@ -163,10 +163,10 @@ public class TypeProposalUtils {
 	static ImportRewrite createImportRewrite(ICompilationUnit compilationUnit) {
 		try {
 			ImportRewrite rewrite = ImportRewrite.create(compilationUnit, true);
-			String[] importOrder = JavaLanguageServerPlugin.getPreferencesManager() == null ? new String[0] : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getImportOrder();
-			rewrite.setImportOrder(importOrder);
-			rewrite.setOnDemandImportThreshold(IMPORTS_THRESHOLD);
-			rewrite.setStaticOnDemandImportThreshold(IMPORTS_THRESHOLD);
+			Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager() == null ? new Preferences() : JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+			rewrite.setImportOrder(preferences.getImportOrder());
+			rewrite.setOnDemandImportThreshold(preferences.getImportOnDemandThreshold());
+			rewrite.setStaticOnDemandImportThreshold(preferences.getStaticImportOnDemandThreshold());
 			return rewrite;
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
