@@ -151,6 +151,84 @@ public class OrganizeImportsActionTest extends AbstractQuickFixTest {
 	}
 
 	@Test
+	public void testOrganizeImportsOnDemandThreshold() throws Exception {
+		int onDemandTreshold = preferenceManager.getPreferences().getImportOnDemandThreshold();
+		try {
+			preferenceManager.getPreferences().setImportOnDemandThreshold(2);
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("import java.util.HashMap;\n");
+			buf.append("import java.util.ArrayList;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        ArrayList list = new ArrayList();\n");
+			buf.append("        HashMap<String, String> map = new HashMap<String, String>();\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+			buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("import java.util.*;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        ArrayList list = new ArrayList();\n");
+			buf.append("        HashMap<String, String> map = new HashMap<String, String>();\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			Expected e1 = new Expected("Organize imports", buf.toString());
+			assertCodeActions(cu, e1);
+		} finally {
+			preferenceManager.getPreferences().setImportOnDemandThreshold(onDemandTreshold);
+		}
+	}
+
+	@Test
+	public void testOrganizeImportsStaticOnDemandThreshold() throws Exception {
+		int staticOnDemandTreshold = preferenceManager.getPreferences().getStaticImportOnDemandThreshold();
+		try {
+			preferenceManager.getPreferences().setStaticImportOnDemandThreshold(2);
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("import static java.lang.Math.pow;\n");
+			buf.append("import static java.lang.Math.sqrt;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        double d1 = sqrt(4);\n");
+			buf.append("        double d2 = pow(2, 2);\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+			buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("\n");
+			buf.append("import static java.lang.Math.*;\n");
+			buf.append("\n");
+			buf.append("public class E {\n");
+			buf.append("\n");
+			buf.append("    public E() {\n");
+			buf.append("        double d1 = sqrt(4);\n");
+			buf.append("        double d2 = pow(2, 2);\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			Expected e1 = new Expected("Organize imports", buf.toString());
+			assertCodeActions(cu, e1);
+		} finally {
+			preferenceManager.getPreferences().setStaticImportOnDemandThreshold(staticOnDemandTreshold);
+		}
+	}
+
+	@Test
 	public void testOrganizeImportsAutomaticallyResolve() throws Exception {
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);

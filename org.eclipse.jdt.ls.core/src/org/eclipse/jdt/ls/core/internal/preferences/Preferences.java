@@ -32,6 +32,7 @@ import java.util.UUID;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
@@ -264,6 +265,30 @@ public class Preferences {
 	public static final String MEMBER_SORT_ORDER = "java.memberSortOrder"; //$NON-NLS-1$
 
 	/**
+	 * A named preference that specifies the number of imports added before a
+	 * star-import declaration is used.
+	 * <p>
+	 * Value is of type <code>Integer</code>: positive value specifying the number
+	 * of non star-import is used
+	 * </p>
+	 */
+	public static final String IMPORTS_ONDEMANDTHRESHOLD = "java.sources.organizeImports.starThreshold"; //$NON-NLS-1$
+
+	/**
+	 * A named preference that specifies the number of static imports added before a
+	 * star-import declaration is used.
+	 * <p>
+	 * Value is of type <code>Integer</code>: positive value specifying the number
+	 * of non star-import is used
+	 * </p>
+	 */
+	public static final String IMPORTS_STATIC_ONDEMANDTHRESHOLD = "java.sources.organizeImports.staticStarThreshold"; //$NON-NLS-1$
+
+	public static final int IMPORTS_ONDEMANDTHRESHOLD_DEFAULT = 99;
+
+	public static final int IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT = 99;
+
+	/**
 	 * Preference key for the id(s) of the preferred content provider(s).
 	 */
 	public static final String PREFERRED_CONTENT_PROVIDER_KEY = "java.contentProvider.preferred";
@@ -399,6 +424,8 @@ public class Preferences {
 	private Collection<IPath> triggerFiles;
 	private int parallelBuildsCount;
 	private int maxCompletionResults;
+	private int importOnDemandThreshold;
+	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 
 	static {
@@ -565,6 +592,8 @@ public class Preferences {
 		filteredTypes = JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
 		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
 		maxCompletionResults = JAVA_COMPLETION_MAX_RESULTS_DEFAULT;
+		importOnDemandThreshold = IMPORTS_ONDEMANDTHRESHOLD_DEFAULT;
+		staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 	}
 
@@ -735,6 +764,12 @@ public class Preferences {
 
 		int maxCompletions = getInt(configuration, JAVA_COMPLETION_MAX_RESULTS_KEY, JAVA_COMPLETION_MAX_RESULTS_DEFAULT);
 		prefs.setMaxCompletionResults(maxCompletions);
+
+		int onDemandThreshold = getInt(configuration, IMPORTS_ONDEMANDTHRESHOLD, IMPORTS_ONDEMANDTHRESHOLD_DEFAULT);
+		prefs.setImportOnDemandThreshold(onDemandThreshold);
+
+		int staticOnDemandThreshold = getInt(configuration, IMPORTS_STATIC_ONDEMANDTHRESHOLD, IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT);
+		prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
 
 		List<?> runtimeList = getList(configuration, JAVA_CONFIGURATION_RUNTIMES, JAVA_IMPORT_ORDER_DEFAULT);
 		Set<RuntimeEnvironment> runtimes = new HashSet<>();
@@ -1300,6 +1335,36 @@ public class Preferences {
 
 	public Preferences setRuntimes(Set<RuntimeEnvironment> runtimes) {
 		this.runtimes = runtimes;
+		return this;
+	}
+
+	public int getImportOnDemandThreshold() {
+		return importOnDemandThreshold;
+	}
+
+	public Preferences setImportOnDemandThreshold(int importOnDemandThreshold) {
+		if (importOnDemandThreshold < 0) {
+			this.importOnDemandThreshold = IMPORTS_ONDEMANDTHRESHOLD_DEFAULT;
+		} else {
+			this.importOnDemandThreshold = importOnDemandThreshold;
+		}
+		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_ONDEMANDTHRESHOLD, String.valueOf(this.importOnDemandThreshold));
+		return this;
+	}
+
+	public int getStaticImportOnDemandThreshold() {
+		return staticImportOnDemandThreshold;
+	}
+
+	public Preferences setStaticImportOnDemandThreshold(int staticImportOnDemandThreshold) {
+		if (staticImportOnDemandThreshold < 0) {
+			this.staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
+		} else {
+			this.staticImportOnDemandThreshold = staticImportOnDemandThreshold;
+		}
+		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, String.valueOf(this.staticImportOnDemandThreshold));
 		return this;
 	}
 }
