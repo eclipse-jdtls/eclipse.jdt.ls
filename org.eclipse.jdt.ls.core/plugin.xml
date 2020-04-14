@@ -81,6 +81,12 @@
             <command
                   id="java.project.refreshDiagnostics">
             </command>
+            <command
+                  id="java.project.provideSemanticTokens">
+            </command>
+            <command
+                  id="java.project.getSemanticTokensLegend">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
@@ -89,7 +95,7 @@
          <importer
             id = "gradleProjectImporter"
             order ="300"
-            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/> 
+            class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/>
          <importer
             id = "mavenProjectImporter"
             order = "400"
