@@ -134,7 +134,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
         }
 
         if (tokenType != null) {
-            List<ITokenModifier> modifierList = new ArrayList<>();
+            List<ITokenModifier> modifierList = new ArrayList<>(manager.getTokenModifiers().values().size());
             for (ITokenModifier tokenModifier : manager.getTokenModifiers().values()) {
                 if (tokenModifier.applies(binding)) {
                     modifierList.add(tokenModifier);
