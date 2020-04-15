@@ -1,5 +1,12 @@
 # Change Log
 
+# [0.54.0 (April 16th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/72?closed=1)
+ * enhancement - support semantic tokens. See [#1408](https://github.com/eclipse/eclipse.jdt.ls/pull/1408).
+ * enhancement - add threshold for organizing imports with the asterisk (*) wildcard character. See [#1407](https://github.com/eclipse/eclipse.jdt.ls/pull/1407).
+ * enhancement - compute the rename updates after files renamed. See [#1406](https://github.com/eclipse/eclipse.jdt.ls/pull/1406).
+ * enhancement - add 'Generate constructor' option to 'Show Fixes' options for fields. See [#1405](https://github.com/eclipse/eclipse.jdt.ls/pull/1405).
+ * enhancement - make syntax server support hovering over a type. See [#1403](https://github.com/eclipse/eclipse.jdt.ls/pull/1403).
+
 ## [0.53.0 (April 1st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/71?closed=1)
  * enhancement - add Java 14 support. See [#1391](https://github.com/eclipse/eclipse.jdt.ls/pull/1391).
  * enhancement - update Buildship for Java 14 support. See [#1397](https://github.com/eclipse/eclipse.jdt.ls/pull/1397).
