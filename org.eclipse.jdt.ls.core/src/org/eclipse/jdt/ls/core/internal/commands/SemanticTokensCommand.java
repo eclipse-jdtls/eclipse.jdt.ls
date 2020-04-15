@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
+import java.util.Collections;
+
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
@@ -40,6 +42,9 @@ public class SemanticTokensCommand {
             } catch (JavaModelException e) {
                 JavaLanguageServerPlugin.logException("Failed to provide semantic tokens for " + uri, e);
             }
+        }
+        if (document == null) {
+            return new SemanticTokens(Collections.emptyList());
         }
 
         SemanticTokensVisitor collector = new SemanticTokensVisitor(document, SemanticTokenManager.getInstance());

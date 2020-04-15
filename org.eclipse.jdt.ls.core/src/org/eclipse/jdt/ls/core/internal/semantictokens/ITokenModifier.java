@@ -16,6 +16,16 @@ package org.eclipse.jdt.ls.core.internal.semantictokens;
 import org.eclipse.jdt.core.dom.IBinding;
 
 public interface ITokenModifier {
+    /**
+     * Determine whether this modifier applies to a named entity.
+     * @param binding corresponding binding of the named entity.
+     * @return <code>true</code> if this modifier applies to the binding and
+	 *    <code>false</code> otherwise
+     */
     public boolean applies(IBinding binding);
+
+    /**
+     * identifier of the modifier
+     */
     public String toString();
 }
