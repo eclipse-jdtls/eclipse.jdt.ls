@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.core.internal.resources.Workspace;
@@ -149,6 +150,17 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		for (MavenProjectInfo projectInfo : files) {
 			File pom = projectInfo.getPomFile();
 			IContainer container = root.getContainerForLocation(new Path(pom.getAbsolutePath()));
+			// getContainerForLocation() will return the nearest container for the given path,
+			// if the project has been imported, container.getProject() will return the imported IProject
+			// otherwise, container.getProject() will return the root level project
+			if (container != null && projectInfo.getParent() != null) {
+				MavenProjectInfo parentInfo = projectInfo.getParent();
+				File parentPom = parentInfo.getPomFile();
+				IContainer parentContainer = root.getContainerForLocation(new Path(parentPom.getAbsolutePath()));
+				if (parentContainer != null && Objects.equals(container.getProject(), parentContainer.getProject())) {
+					container = null;
+				}
+			}
 			if (container == null) {
 				digestStore.updateDigest(pom.toPath());
 				toImport.add(projectInfo);

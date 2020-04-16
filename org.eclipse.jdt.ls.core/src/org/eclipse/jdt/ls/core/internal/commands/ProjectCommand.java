@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -54,7 +55,7 @@ public class ProjectCommand {
 
 	/**
 	 * Gets the project settings.
-	 * 
+	 *
 	 * @param uri
 	 *                        Uri of the source/class file that needs to be queried.
 	 * @param settingKeys
@@ -77,7 +78,7 @@ public class ProjectCommand {
 
 	/**
 	 * Gets the classpaths and modulepaths.
-	 * 
+	 *
 	 * @param uri
 	 *                    Uri of the source/class file that needs to be queried.
 	 * @param options
@@ -101,7 +102,7 @@ public class ProjectCommand {
 
 	/**
 	 * Checks if the input uri is a test source file or not.
-	 * 
+	 *
 	 * @param uri
 	 *                Uri of the source file that needs to be queried.
 	 * @return <code>true</code> if the input uri is a test file in its belonging
@@ -136,6 +137,10 @@ public class ProjectCommand {
 			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProject.getProject()).toFile().toURI());
 		}
 		return javaProjects;
+	}
+
+	public static void importProject(IProgressMonitor monitor) {
+		JavaLanguageServerPlugin.getProjectsManager().importProjects(monitor);
 	}
 
 	private static IPath[] listTestSourcePaths(IJavaProject project) throws JavaModelException {
@@ -181,13 +186,13 @@ public class ProjectCommand {
 			}
 			return javaProject;
 		}
-		
+
 		// check for project root uri
 		IContainer[] containers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(new URI(uri));
 		if (containers == null || containers.length == 0) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to any Java project."));
 		}
-		
+
 		// For multi-module scenario
 		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
 			return a.getFullPath().toPortableString().length() - b.getFullPath().toPortableString().length();

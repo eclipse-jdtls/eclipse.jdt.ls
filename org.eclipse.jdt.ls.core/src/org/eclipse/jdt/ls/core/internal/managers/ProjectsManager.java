@@ -106,6 +106,25 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
+	public void importProjects(IProgressMonitor monitor) {
+		WorkspaceJob job = new WorkspaceJob("Importing projects in workspace...") {
+
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				try {
+					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
+				} catch (OperationCanceledException e) {
+					return Status.CANCEL_STATUS;
+				} catch (CoreException e) {
+					return new Status(Status.ERROR, IConstants.PLUGIN_ID, "Importing projects failed.", e);
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.setRule(getWorkspaceRoot());
+		job.schedule();
+	}
+
 	@Override
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
@@ -227,6 +246,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
 
+	@Override
 	public boolean isBuildLikeFileName(String fileName) {
 		return buildSupports().filter(bs -> bs.isBuildLikeFileName(fileName)).findAny().isPresent();
 	}

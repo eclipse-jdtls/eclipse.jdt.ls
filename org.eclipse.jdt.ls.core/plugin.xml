@@ -90,6 +90,9 @@
             <command
                   id="java.project.getSemanticTokensLegend">
             </command>
+            <command
+                  id="java.project.import">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
