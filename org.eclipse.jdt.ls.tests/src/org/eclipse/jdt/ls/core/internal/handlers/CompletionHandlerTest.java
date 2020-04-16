@@ -2628,7 +2628,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		prefs.setJavaCompletionFavoriteMembers(favorites);
 		prefs.setImportOnDemandThreshold(2);
 		prefs.setStaticImportOnDemandThreshold(2);
+		long timeout = Long.getLong("completion.timeout", 5000);
+
 		try {
+			System.setProperty("completion.timeout", String.valueOf(60000));
 			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
 			//@formatter:off
 			"package test1;\n" +
@@ -2666,6 +2669,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			prefs.setJavaCompletionFavoriteMembers(oldFavorites);
 			prefs.setImportOnDemandThreshold(onDemandThreshold);
 			prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
+			System.setProperty("completion.timeout", String.valueOf(timeout));
 		}
 	}
 

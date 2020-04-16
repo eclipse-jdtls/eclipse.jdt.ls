@@ -129,7 +129,7 @@ public class CompletionHandler{
 			if (buffer != null && buffer.getLength() >= offset) {
 				IProgressMonitor subMonitor = new ProgressMonitorWrapper(monitor) {
 					private long timeLimit;
-					private static final long TIMEOUT = 5000;
+					private final long TIMEOUT = Long.getLong("completion.timeout", 5000);
 
 					@Override
 					public void beginTask(String name, int totalWork) {
