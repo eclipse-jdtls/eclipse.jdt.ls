@@ -21,7 +21,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,6 +85,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		this.preferenceManager = preferenceManager;
 	}
 
+	@Override
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		cleanInvalidProjects(rootPaths, subMonitor.split(20));
@@ -106,6 +106,26 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
+	public void importProjects(IProgressMonitor monitor) {
+		WorkspaceJob job = new WorkspaceJob("Importing projects in workspace...") {
+
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				try {
+					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
+				} catch (OperationCanceledException e) {
+					JavaLanguageServerPlugin.logInfo("Initialization has been cancelled.");
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+				}
+				return null;
+			}
+		};
+		job.setRule(getWorkspaceRoot());
+		job.schedule();
+	}
+
+	@Override
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
 		Job[] removedJobs = Job.getJobManager().find(removedRootPaths);
@@ -221,6 +241,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return url;
 	}
 
+	@Override
 	public boolean isBuildFile(IResource resource) {
 		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
@@ -313,6 +334,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return project;
 	}
 
+	@Override
 	public Job updateProject(IProject project, boolean force) {
 		if (project == null || (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project))) {
 			return null;
@@ -352,6 +374,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return job;
 	}
 
+	@Override
 	public Optional<IBuildSupport> getBuildSupport(IProject project) {
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}

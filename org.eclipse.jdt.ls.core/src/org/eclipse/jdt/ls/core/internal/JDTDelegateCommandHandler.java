@@ -73,6 +73,9 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return SemanticTokensCommand.provide((String) arguments.get(0));
 				case "java.project.getSemanticTokensLegend":
 					return SemanticTokensCommand.getLegend();
+				case "java.project.import":
+					ProjectCommand.importProject(monitor);
+					return null;
 				default:
 					break;
 			}
