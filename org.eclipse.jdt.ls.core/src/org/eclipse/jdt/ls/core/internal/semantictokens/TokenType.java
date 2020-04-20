@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.semantictokens;
 public enum TokenType {
     VARIABLE("variable"),
     METHOD("method"),
+    TYPE("type")
     ;
 
     private String literalString;
