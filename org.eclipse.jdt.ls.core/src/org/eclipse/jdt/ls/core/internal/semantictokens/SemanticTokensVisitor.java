@@ -30,6 +30,8 @@ public class SemanticTokensVisitor extends ASTVisitor {
     private SemanticTokenManager manager;
     private List<SemanticToken> tokens;
 
+    public final static ITokenModifier[] NO_MODIFIERS = {};
+
     public SemanticTokensVisitor(IDocument document, SemanticTokenManager manager) {
         this.manager = manager;
         this.document = document;
@@ -85,6 +87,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
                 currentColumn = 0;
             }
             int deltaColumn = column - currentColumn;
+            currentColumn = column;
             int tokenTypeIndex = manager.getTokenTypes().indexOf(token.getTokenType());
             ITokenModifier[] modifiers = token.getTokenModifiers();
             int encodedModifiers = 0;
@@ -129,20 +132,30 @@ public class SemanticTokensVisitor extends ASTVisitor {
                 tokenType = TokenType.METHOD;
                 break;
             }
+            case IBinding.TYPE: {
+                tokenType = TokenType.TYPE;
+                break;
+            }
             default:
                 break;
         }
 
-        if (tokenType != null) {
-            List<ITokenModifier> modifierList = new ArrayList<>(manager.getTokenModifiers().values().size());
-            for (ITokenModifier tokenModifier : manager.getTokenModifiers().values()) {
-                if (tokenModifier.applies(binding)) {
-                    modifierList.add(tokenModifier);
-                }
+        if (tokenType == null) {
+            return super.visit(node);
+        }
+
+        switch (tokenType) {
+            case METHOD:
+            case VARIABLE: {
+                ITokenModifier[] modifiers = getModifiers(binding);
+                addToken(node, tokenType, modifiers);
+                break;
             }
-            ITokenModifier[] modifiers = new ITokenModifier[modifierList.size()];
-            modifierList.toArray(modifiers);
-            addToken(node, tokenType, modifiers);
+            case TYPE:
+                addToken(node, tokenType, NO_MODIFIERS);
+                break;
+            default:
+                break;
         }
 
         return super.visit(node);
@@ -153,6 +166,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
         return super.visit(node);
     }
 
-
+    private ITokenModifier[] getModifiers(IBinding binding) {
+        List<ITokenModifier> modifierList = new ArrayList<>(manager.getTokenModifiers().values().size());
+        for (ITokenModifier tokenModifier : manager.getTokenModifiers().values()) {
+            if (tokenModifier.applies(binding)) {
+                modifierList.add(tokenModifier);
+            }
+        }
+        ITokenModifier[] modifiers = new ITokenModifier[modifierList.size()];
+        modifierList.toArray(modifiers);
+        return modifiers;
+    }
 
 }
