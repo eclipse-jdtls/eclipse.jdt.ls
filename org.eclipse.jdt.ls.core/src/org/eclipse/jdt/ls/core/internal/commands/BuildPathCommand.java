@@ -168,7 +168,11 @@ public class BuildPathCommand {
 						IPath relativePath = entryPath.makeRelativeTo(projectRoot.getFullPath());
 						IPath location = projectRoot.getRawLocation().append(relativePath);
 						IPath displayPath = getWorkspacePath(location);
-						sourcePathList.add(new SourcePath(location != null ? location.toOSString() : "", displayPath != null ? displayPath.toOSString() : entryPath.toOSString(), projectName, projectType));
+						sourcePathList.add(new SourcePath(location != null ? location.toOSString() : "",
+							displayPath != null ? displayPath.toOSString() : entryPath.toOSString(),
+							entryPath.toOSString(),
+							projectName,
+							projectType));
 					}
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.logException("Failed to resolve the existing source paths in current workspace.", e);
@@ -238,12 +242,14 @@ public class BuildPathCommand {
 	public static class SourcePath {
 		public String path;
 		public String displayPath;
+		public String classpathEntry;
 		public String projectName;
 		public String projectType;
 
-		SourcePath(String path, String displayPath, String projectName, String projectType) {
+		SourcePath(String path, String displayPath, String classpathEntry, String projectName, String projectType) {
 			this.path = path;
 			this.displayPath = displayPath;
+			this.classpathEntry = classpathEntry;
 			this.projectName = projectName;
 			this.projectType = projectType;
 		}

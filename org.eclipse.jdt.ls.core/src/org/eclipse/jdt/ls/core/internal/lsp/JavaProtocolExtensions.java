@@ -122,4 +122,7 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> didRenameFiles(FileRenameParams params);
+
+	@JsonRequest
+	CompletableFuture<WorkspaceEdit> willRenameFiles(FileRenameParams params);
 }

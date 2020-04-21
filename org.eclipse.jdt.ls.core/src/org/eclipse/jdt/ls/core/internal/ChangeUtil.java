@@ -164,8 +164,9 @@ public class ChangeUtil {
 		String oldPackageName = packDecls.length > 0 ? packDecls[0].getElementName() : "";
 		if (!Objects.equals(oldPackageName, newPackage.getElementName())) {
 			// update the package declaration
-			updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit);
-			convertTextEdit(edit, unit, rewrite.rewriteAST());
+			if (updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit)) {
+				convertTextEdit(edit, unit, rewrite.rewriteAST());
+			}
 		}
 
 		RenameFile cuResourceChange = new RenameFile();
@@ -188,41 +189,32 @@ public class ChangeUtil {
 
 	private static void convertRenamePackcageChange(WorkspaceEdit edit, RenamePackageChange packageChange) throws CoreException {
 		IPackageFragment pack = (IPackageFragment) packageChange.getModifiedElement();
-		List<ICompilationUnit> units = new ArrayList<>();
-		if (packageChange.getRenameSubpackages()) {
-			IPackageFragment[] allPackages = JavaElementUtil.getPackageAndSubpackages(pack);
-			for (IPackageFragment currentPackage : allPackages) {
-				units.addAll(Arrays.asList(currentPackage.getCompilationUnits()));
-			}
-		} else {
-			units.addAll(Arrays.asList(pack.getCompilationUnits()));
-		}
-
-		//update package's declaration
-		for (ICompilationUnit cu : units) {
-			CompilationUnit unit = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
-			ASTRewrite rewrite = ASTRewrite.create(unit.getAST());
-			updatePackageStatement(unit, packageChange.getNewName(), rewrite, cu);
-			TextEdit textEdit = rewrite.rewriteAST();
-			convertTextEdit(edit, cu, textEdit);
-		}
-
 		IPath newPackageFragment = new Path(packageChange.getNewName().replace('.', IPath.SEPARATOR));
 		IPath oldPackageFragment = new Path(packageChange.getOldName().replace('.', IPath.SEPARATOR));
 		IPath newPackagePath = pack.getResource().getLocation().removeLastSegments(oldPackageFragment.segmentCount()).append(newPackageFragment);
-
 		if (packageChange.getRenameSubpackages()) {
+			IPackageFragment[] allPackages = JavaElementUtil.getPackageAndSubpackages(pack);
+			String oldPrefix = packageChange.getOldName();
+			for (IPackageFragment currentPackage : allPackages) {
+				String newPkgName = packageChange.getNewName() + currentPackage.getElementName().substring(oldPrefix.length());
+				//update package's declaration
+				convertPackageUpdateEdit(currentPackage.getCompilationUnits(), newPkgName, edit);
+			}
+
 			RenameFile renameFile = new RenameFile();
 			renameFile.setNewUri(ResourceUtils.fixURI(newPackagePath.toFile().toURI()));
 			renameFile.setOldUri(ResourceUtils.fixURI(pack.getResource().getRawLocationURI()));
 			edit.getDocumentChanges().add(Either.forRight(renameFile));
 		} else {
+			//update package's declaration
+			convertPackageUpdateEdit(pack.getCompilationUnits(), packageChange.getNewName(), edit);
+		
 			CreateFile createFile = new CreateFile();
 			createFile.setUri(ResourceUtils.fixURI(newPackagePath.append(TEMP_FILE_NAME).toFile().toURI()));
 			createFile.setOptions(new CreateFileOptions(false, true));
 			edit.getDocumentChanges().add(Either.forRight(createFile));
 
-			for (ICompilationUnit unit : units) {
+			for (ICompilationUnit unit : pack.getCompilationUnits()) {
 				RenameFile cuResourceChange = new RenameFile();
 				cuResourceChange.setOldUri(ResourceUtils.fixURI(unit.getResource().getLocationURI()));
 				IPath newCUPath = newPackagePath.append(unit.getPath().lastSegment());
@@ -315,32 +307,54 @@ public class ChangeUtil {
 		return type.getDeclaringType() == null && JavaCore.removeJavaLikeExtension(cuName).equals(typeName);
 	}
 
-	private static void updatePackageStatement(CompilationUnit astCU, String pkgName, ASTRewrite rewriter, ICompilationUnit cu) throws JavaModelException {
+	private static void convertPackageUpdateEdit(ICompilationUnit[] cus, String newPkgName, WorkspaceEdit rootEdit) throws JavaModelException {
+		for (ICompilationUnit cu : cus) {
+			convertPackageUpdateEdit(cu, newPkgName, rootEdit);
+		}
+	}
+
+	private static void convertPackageUpdateEdit(ICompilationUnit cu, String newPkgName, WorkspaceEdit rootEdit) throws JavaModelException {
+		CompilationUnit unit = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);		
+		ASTRewrite rewrite = ASTRewrite.create(unit.getAST());
+		if (updatePackageStatement(unit, newPkgName, rewrite, cu)) {
+			TextEdit textEdit = rewrite.rewriteAST();
+			convertTextEdit(rootEdit, cu, textEdit);
+		}
+	}
+
+	private static boolean updatePackageStatement(CompilationUnit astCU, String pkgName, ASTRewrite rewriter, ICompilationUnit cu) throws JavaModelException {
 		boolean defaultPackage = pkgName.isEmpty();
 		AST ast = astCU.getAST();
 		if (defaultPackage) {
 			// remove existing package statement
 			PackageDeclaration pkg = astCU.getPackage();
-			if (pkg != null) {
-				int pkgStart;
-				Javadoc javadoc = pkg.getJavadoc();
-				if (javadoc != null) {
-					pkgStart = javadoc.getStartPosition() + javadoc.getLength() + 1;
-				} else {
-					pkgStart = pkg.getStartPosition();
-				}
-				int extendedStart = astCU.getExtendedStartPosition(pkg);
-				if (pkgStart != extendedStart) {
-					String commentSource = cu.getSource().substring(extendedStart, pkgStart);
-					ASTNode comment = rewriter.createStringPlaceholder(commentSource, ASTNode.PACKAGE_DECLARATION);
-					rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, comment, null);
-				} else {
-					rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, null, null);
-				}
+			if (pkg == null) {
+				return false;
+			}
+
+			int pkgStart;
+			Javadoc javadoc = pkg.getJavadoc();
+			if (javadoc != null) {
+				pkgStart = javadoc.getStartPosition() + javadoc.getLength() + 1;
+			} else {
+				pkgStart = pkg.getStartPosition();
+			}
+			int extendedStart = astCU.getExtendedStartPosition(pkg);
+			if (pkgStart != extendedStart) {
+				String commentSource = cu.getSource().substring(extendedStart, pkgStart);
+				ASTNode comment = rewriter.createStringPlaceholder(commentSource, ASTNode.PACKAGE_DECLARATION);
+				rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, comment, null);
+			} else {
+				rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, null, null);
 			}
 		} else {
 			org.eclipse.jdt.core.dom.PackageDeclaration pkg = astCU.getPackage();
 			if (pkg != null) {
+				// Skip if the new package name is same as the existing package name.
+				if (Objects.equals(pkg.getName().getFullyQualifiedName(), pkgName)) {
+					return false;
+				}
+
 				// rename package statement
 				Name name = ast.newName(pkgName);
 				rewriter.set(pkg, PackageDeclaration.NAME_PROPERTY, name, null);
@@ -351,6 +365,8 @@ public class ChangeUtil {
 				rewriter.set(astCU, CompilationUnit.PACKAGE_PROPERTY, pkg, null);
 			}
 		}
+
+		return true;
 	}
 
 	/**
