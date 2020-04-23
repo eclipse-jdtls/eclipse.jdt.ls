@@ -125,7 +125,11 @@ public class SemanticTokensVisitor extends ASTVisitor {
         TokenType tokenType = null;
         switch (binding.getKind()) {
             case IBinding.VARIABLE: {
-                tokenType = TokenType.VARIABLE;
+                if (((IVariableBinding) binding).isField()) {
+                    tokenType = TokenType.PROPERTY;
+                } else {
+                    tokenType = TokenType.VARIABLE;
+                }
                 break;
             }
             case IBinding.METHOD: {
@@ -151,6 +155,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
         switch (tokenType) {
             case FUNCTION:
             case VARIABLE:
+            case PROPERTY:
             case MEMBER: {
                 ITokenModifier[] modifiers = getModifiers(binding);
                 addToken(node, tokenType, modifiers);

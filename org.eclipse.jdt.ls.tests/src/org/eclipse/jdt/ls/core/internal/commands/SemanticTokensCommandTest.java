@@ -85,7 +85,7 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 
 
 	@Test
-	public void testSemanticTokens_variables() throws JavaModelException {
+	public void testSemanticTokens_properties() throws JavaModelException {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -103,12 +103,33 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
 		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
 		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
-		assertToken(decodedTokens, legend, 4, 18, 4, "variable", Arrays.asList("public"));
-		assertToken(decodedTokens, legend, 5, 16, 4, "variable", Arrays.asList("private"));
-		assertToken(decodedTokens, legend, 6, 22, 4, "variable", Arrays.asList("protected"));
-		assertToken(decodedTokens, legend, 7, 17, 4, "variable", Arrays.asList("readonly"));
-		assertToken(decodedTokens, legend, 8, 15, 4, "variable", Arrays.asList("static"));
-		assertToken(decodedTokens, legend, 9, 28, 4, "variable", Arrays.asList("static", "public", "readonly"));
+		assertToken(decodedTokens, legend, 4, 18, 4, "property", Arrays.asList("public"));
+		assertToken(decodedTokens, legend, 5, 16, 4, "property", Arrays.asList("private"));
+		assertToken(decodedTokens, legend, 6, 22, 4, "property", Arrays.asList("protected"));
+		assertToken(decodedTokens, legend, 7, 17, 4, "property", Arrays.asList("readonly"));
+		assertToken(decodedTokens, legend, 8, 15, 4, "property", Arrays.asList("static"));
+		assertToken(decodedTokens, legend, 9, 28, 4, "property", Arrays.asList("static", "public", "readonly"));
+	}
+
+	@Test
+	public void testSemanticTokens_variables() throws JavaModelException {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("\n");
+		buf.append("    public static void foo() {\n");
+		buf.append("      String bar1;\n");
+		buf.append("      final String bar2 = \"test\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
+		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
+		assertToken(decodedTokens, legend, 5, 13, 4, "variable", Arrays.asList());
+		assertToken(decodedTokens, legend, 6, 19, 4, "variable", Arrays.asList("readonly"));
 	}
 
 	@Test
