@@ -82,7 +82,7 @@ public class TokenModifiers {
 
         @Override
         public String toString() {
-            return "final";
+            return "readonly";
         }
     }
 

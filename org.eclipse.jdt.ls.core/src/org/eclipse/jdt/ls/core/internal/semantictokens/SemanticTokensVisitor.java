@@ -18,10 +18,12 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 
@@ -123,17 +125,19 @@ public class SemanticTokensVisitor extends ASTVisitor {
         TokenType tokenType = null;
         switch (binding.getKind()) {
             case IBinding.VARIABLE: {
-                if (((IVariableBinding) binding).isField()) {
-                    tokenType = TokenType.VARIABLE;
-                }
+                tokenType = TokenType.VARIABLE;
                 break;
             }
             case IBinding.METHOD: {
-                tokenType = TokenType.METHOD;
+                tokenType = TokenType.FUNCTION;
                 break;
             }
             case IBinding.TYPE: {
                 tokenType = TokenType.TYPE;
+                break;
+            }
+            case IBinding.PACKAGE: {
+                tokenType = TokenType.NAMESPACE;
                 break;
             }
             default:
@@ -145,13 +149,15 @@ public class SemanticTokensVisitor extends ASTVisitor {
         }
 
         switch (tokenType) {
-            case METHOD:
-            case VARIABLE: {
+            case FUNCTION:
+            case VARIABLE:
+            case MEMBER: {
                 ITokenModifier[] modifiers = getModifiers(binding);
                 addToken(node, tokenType, modifiers);
                 break;
             }
             case TYPE:
+            case NAMESPACE:
                 addToken(node, tokenType, NO_MODIFIERS);
                 break;
             default:
@@ -176,6 +182,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
         ITokenModifier[] modifiers = new ITokenModifier[modifierList.size()];
         modifierList.toArray(modifiers);
         return modifiers;
+    }
+
+    @Override
+    public boolean visit(SimpleType node) {
+        ASTNode parent = node.getParent();
+        if (parent instanceof ClassInstanceCreation) { // For ClassInstanceCreation "new E()", "E" should be highlighted as 'function' instead of 'type'
+            addToken(node, TokenType.FUNCTION, NO_MODIFIERS);
+            return false;
+        }
+        return super.visit(node);
     }
 
 }
