@@ -75,12 +75,12 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
 		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
 		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
-		assertToken(decodedTokens, legend, 4, 16, 4, "method", Arrays.asList("public"));
-		assertToken(decodedTokens, legend, 5, 17, 4, "method", Arrays.asList("private"));
-		assertToken(decodedTokens, legend, 6, 19, 4, "method", Arrays.asList("protected"));
-		assertToken(decodedTokens, legend, 7, 16, 4, "method", Arrays.asList("static"));
-		assertToken(decodedTokens, legend, 9, 9, 4, "method", Arrays.asList("deprecated"));
-		assertToken(decodedTokens, legend, 10, 23, 4, "method", Arrays.asList("public", "static"));
+		assertToken(decodedTokens, legend, 4, 16, 4, "function", Arrays.asList("public"));
+		assertToken(decodedTokens, legend, 5, 17, 4, "function", Arrays.asList("private"));
+		assertToken(decodedTokens, legend, 6, 19, 4, "function", Arrays.asList("protected"));
+		assertToken(decodedTokens, legend, 7, 16, 4, "function", Arrays.asList("static"));
+		assertToken(decodedTokens, legend, 9, 9, 4, "function", Arrays.asList("deprecated"));
+		assertToken(decodedTokens, legend, 10, 23, 4, "function", Arrays.asList("public", "static"));
 	}
 
 
@@ -106,9 +106,9 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		assertToken(decodedTokens, legend, 4, 18, 4, "variable", Arrays.asList("public"));
 		assertToken(decodedTokens, legend, 5, 16, 4, "variable", Arrays.asList("private"));
 		assertToken(decodedTokens, legend, 6, 22, 4, "variable", Arrays.asList("protected"));
-		assertToken(decodedTokens, legend, 7, 17, 4, "variable", Arrays.asList("final"));
+		assertToken(decodedTokens, legend, 7, 17, 4, "variable", Arrays.asList("readonly"));
 		assertToken(decodedTokens, legend, 8, 15, 4, "variable", Arrays.asList("static"));
-		assertToken(decodedTokens, legend, 9, 28, 4, "variable", Arrays.asList("static", "public", "final"));
+		assertToken(decodedTokens, legend, 9, 28, 4, "variable", Arrays.asList("static", "public", "readonly"));
 	}
 
 	@Test

@@ -14,9 +14,26 @@
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
 public enum TokenType {
+    COMMENT("comment"),
+    KEYWORD("keyword"),
+    STRING("string"),
+    NUMBER("number"),
+    REGEXP("regexp"),
+    OPERATOR("operator"),
+    NAMESPACE("namespace"),
+    TYPE("type"),
+    STRUCT("struct"),
+    CLASS("class"),
+    INTERFACE("interface"),
+    ENUM("enum"),
+    TYPE_PARAMETER("typeParameter"),
+    FUNCTION("function"),
+    MEMBER("member"),
+    PROPERTY("property"),
+    MACRO("macro"),
     VARIABLE("variable"),
-    METHOD("method"),
-    TYPE("type")
+    PARAMETER("parameter"),
+    LABEL("label")
     ;
 
     private String literalString;
