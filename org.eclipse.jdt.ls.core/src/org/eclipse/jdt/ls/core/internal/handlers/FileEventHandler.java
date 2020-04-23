@@ -148,7 +148,7 @@ public class FileEventHandler {
 						String oldPackageName = String.join(".", oldLocation.makeRelativeTo(sourceLocation).segments());
 						String newPackageName = String.join(".", newLocation.makeRelativeTo(sourceLocation).segments());
 						IPackageFragment oldPackageFragment = packageRoot.getPackageFragment(oldPackageName);
-						if (oldPackageFragment != null && oldPackageFragment.getResource() != null) {
+						if (oldPackageFragment != null && !oldPackageFragment.isDefaultPackage() && oldPackageFragment.getResource() != null) {
 							oldPackageFragment.getResource().refreshLocal(IResource.DEPTH_INFINITE, null);
 							if (oldPackageFragment.exists()) {
 								ResourcesPlugin.getWorkspace().run((pm) -> {
