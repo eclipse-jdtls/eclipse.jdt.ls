@@ -178,15 +178,9 @@ public class SemanticTokensVisitor extends ASTVisitor {
     }
 
     private ITokenModifier[] getModifiers(IBinding binding) {
-        List<ITokenModifier> modifierList = new ArrayList<>(manager.getTokenModifiers().values().size());
-        for (ITokenModifier tokenModifier : manager.getTokenModifiers().values()) {
-            if (tokenModifier.applies(binding)) {
-                modifierList.add(tokenModifier);
-            }
-        }
-        ITokenModifier[] modifiers = new ITokenModifier[modifierList.size()];
-        modifierList.toArray(modifiers);
-        return modifiers;
+        return manager.getTokenModifiers().values().stream()
+                      .filter(tm -> tm.applies(binding))
+                      .toArray(size -> new ITokenModifier[size]);
     }
 
     @Override
