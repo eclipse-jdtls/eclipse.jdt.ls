@@ -22,6 +22,8 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokenManager;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokens;
@@ -30,9 +32,12 @@ import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensVisitor;
 import org.eclipse.jface.text.IDocument;
 
 public class SemanticTokensCommand {
-
     public static SemanticTokens provide(String uri) {
+        JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, null);
+        return doProvide(uri);
+    }
 
+    private static SemanticTokens doProvide(String uri) {
         IDocument document = null;
 
         ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
