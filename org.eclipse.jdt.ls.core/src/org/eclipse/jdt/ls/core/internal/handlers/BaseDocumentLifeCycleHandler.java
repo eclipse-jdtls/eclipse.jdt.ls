@@ -120,6 +120,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 	protected void triggerValidation(ICompilationUnit cu, long delay) throws JavaModelException {
 		synchronized (toReconcile) {
 			toReconcile.add(cu);
+			if (!cu.equals(sharedASTProvider.getActiveJavaElement())) {
+				sharedASTProvider.disposeAST();
+			}
 			sharedASTProvider.setActiveJavaElement(cu);
 		}
 		if (validationTimer != null) {
@@ -359,7 +362,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
 
-				
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 
