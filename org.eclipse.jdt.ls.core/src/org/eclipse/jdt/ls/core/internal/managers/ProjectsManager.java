@@ -114,9 +114,9 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				try {
 					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
 				} catch (OperationCanceledException e) {
-					JavaLanguageServerPlugin.logInfo("Initialization has been cancelled.");
+					JavaLanguageServerPlugin.logInfo("Importing projects job has been cancelled.");
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+					JavaLanguageServerPlugin.logException("Importing projects failed.", e);
 				}
 				return null;
 			}
