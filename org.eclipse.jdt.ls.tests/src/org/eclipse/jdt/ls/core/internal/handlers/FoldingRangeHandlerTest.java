@@ -71,6 +71,16 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testInvalidInput() throws Exception {
+		String className = "org.sample.InvalidInputRange";
+		List<FoldingRange> foldingRanges = getFoldingRanges(className);
+		assertTrue(foldingRanges.size() == 3);
+		assertHasFoldingRange(2, 4, "comment", foldingRanges);
+		assertHasFoldingRange(5, 10, null, foldingRanges);
+		assertHasFoldingRange(7, 9, null, foldingRanges);
+	}
+
+	@Test
 	public void testRegionFoldingRanges() throws Exception {
 		String className = "org.sample.RegionFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
