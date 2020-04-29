@@ -1,5 +1,14 @@
 # Change Log
 
+# [0.55.0 (April 30th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/73?closed=1)
+ * enhancement - refine semantic highlighting. See [#1416](https://github.com/eclipse/eclipse.jdt.ls/pull/1416).
+ * enhancement - Organize Imports should resolve static imports as well. See [#1415](https://github.com/eclipse/eclipse.jdt.ls/pull/1415).
+ * enhancement - Support refactoring package name. See [#1414](https://github.com/eclipse/eclipse.jdt.ls/pull/1414).
+ * bug fix - Code folding is buggy. See [#1419](https://github.com/eclipse/eclipse.jdt.ls/issues/1419).
+ * bug fix - clean out-of-date fAST before updating new fActiveJavaElement. See [#1418](https://github.com/eclipse/eclipse.jdt.ls/pull/1418).
+ * bug fix - wait for lifecycle jobs before computing semantic tokens. See [#1412](https://github.com/eclipse/eclipse.jdt.ls/pull/1412).
+ * build - CompletionHandlerTest.testStarImports fails randomly . See [#1409](https://github.com/eclipse/eclipse.jdt.ls/issues/1409).
+
 # [0.54.0 (April 16th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/72?closed=1)
  * enhancement - support semantic tokens. See [#1408](https://github.com/eclipse/eclipse.jdt.ls/pull/1408).
  * enhancement - add threshold for organizing imports with the asterisk (*) wildcard character. See [#1407](https://github.com/eclipse/eclipse.jdt.ls/pull/1407).
