@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
@@ -862,12 +863,18 @@ public class RenamePackageProcessor extends JavaRenameProcessor implements
 			//TODO: also for both fReferencesTo...; only check each CU once!
 			RefactoringStatus result= new RefactoringStatus();
 			fOccurrences= Checks.excludeCompilationUnits(fOccurrences, result);
+			fOccurrences= excludeInvalidResult(fOccurrences);
 			if (result.hasFatalError()) {
 				return result;
 			}
 
 			result.merge(Checks.checkCompileErrorsInAffectedFiles(fOccurrences));
 			return result;
+		}
+
+		private SearchResultGroup[] excludeInvalidResult(SearchResultGroup[] grouped) {
+			return Stream.of(grouped).filter(group -> group.getResource() != null && group.getResource().exists())
+				.toArray(SearchResultGroup[]::new);
 		}
 
 		/**
