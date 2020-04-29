@@ -150,7 +150,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 
 		Optional<PublishDiagnosticsParams> taskDiags = allCalls.stream().filter(p -> p.getUri().endsWith("TaskMarkerTest.java")).findFirst();
 		assertTrue("No TaskMarkerTest.java markers were found", taskDiags.isPresent());
@@ -216,7 +216,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 
 		/* With Maven 3.6.2 (m2e 1.14), source folders are no longer configured if dependencies are malformed (missing version tag here)
 		Optional<PublishDiagnosticsParams> fooDiags = allCalls.stream().filter(p -> p.getUri().endsWith("Foo.java")).findFirst();
@@ -243,7 +243,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/broken")).findFirst();
 		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
@@ -277,7 +277,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 		Optional<PublishDiagnosticsParams> param = allCalls.stream().filter(p -> p.getUri().equals(uri)).findFirst();
 		assertTrue(param.isPresent());
 		List<Diagnostic> diags = param.get().getDiagnostics();
@@ -299,7 +299,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("eclipse/wtpproject")).findFirst();
 		assertTrue(projectDiags.isPresent());
 		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 0, projectDiags.get().getDiagnostics().size());
@@ -325,7 +325,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/salut")).findFirst();
 		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
@@ -354,7 +354,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
-		projectsManager.setConnection(client);
+		projectsManager.setConnection(connection);
 		testDiagnostic(allCalls);
 		// update project
 		reset(connection);

@@ -14,6 +14,8 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSettings;
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -61,13 +63,16 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.ClasspathUpdateHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
@@ -75,7 +80,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
 
 	private PreferenceManager preferenceManager;
-	protected JavaLanguageClient client;
+	protected JavaClientConnection client;
+	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
+	private ClasspathUpdateHandler classpathUpdateHandler;
+	private boolean projectsInitialized;
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
@@ -92,6 +100,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		createJavaProject(getDefaultProject(), subMonitor.split(10));
 		cleanupResources(getDefaultProject());
 		importProjects(rootPaths, subMonitor.split(70));
+		ProjectsManager.this.projectsInitialized = true;
 		subMonitor.done();
 	}
 
@@ -106,23 +115,123 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
+	public boolean needImport(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		boolean needImport = false;
+		Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+		for (IPath rootPath : rootPaths) {
+			File rootFolder = rootPath.toFile();
+			IProjectImporter importer = getImporter(rootFolder, monitor);
+			if (importer != null) {
+				needImport = true;
+				break;
+			}
+		}
+		return needImport;
+	}
+
 	public void importProjects(IProgressMonitor monitor) {
-		WorkspaceJob job = new WorkspaceJob("Importing projects in workspace...") {
+		if (this.projectsInitialized) {
+			WorkspaceJob job = new WorkspaceJob("Importing projects in workspace...") {
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					try {
+						importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
+					} catch (OperationCanceledException e) {
+						JavaLanguageServerPlugin.logInfo("Initialization has been cancelled.");
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException("Initialization failed ", e);
+					}
+					return null;
+				}
+			};
+			job.setRule(getWorkspaceRoot());
+			job.schedule();
+		} else {
+			triggerInitialization(preferenceManager.getPreferences().getRootPaths());
+		}
+	}
+
+	public void triggerInitialization(Collection<IPath> roots) {
+		Job job = new WorkspaceJob("Initialize Workspace") {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) {
+				long start = System.currentTimeMillis();
+				client.sendStatus(ServiceStatus.Starting, "Init...");
+				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+				try {
+					setAutoBuilding(false);
+					initializeProjects(roots, subMonitor);
+					setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
+					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
+					client.sendStatus(ServiceStatus.Started, "Ready");
+				} catch (OperationCanceledException e) {
+					client.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
+					return Status.CANCEL_STATUS;
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+					client.sendStatus(ServiceStatus.Error, e.getMessage());
+				}
+
+				return Status.OK_STATUS;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+			 */
+			@SuppressWarnings("unchecked")
+			@Override
+			public boolean belongsTo(Object family) {
+				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
+				boolean equalToRootPaths = false;
+				if (family instanceof Collection<?>) {
+					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				}
+				return BaseInitHandler.JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
+			}
+
+		};
+		job.setPriority(Job.BUILD);
+		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
+		job.schedule();
+
+
+		Job initializeWorkspace = new Job("Initialize workspace") {
 
 			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+			public IStatus run(IProgressMonitor monitor) {
 				try {
-					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
-				} catch (OperationCanceledException e) {
-					JavaLanguageServerPlugin.logInfo("Initialization has been cancelled.");
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+					logInfo(">> build jobs finished");
+					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(ProjectsManager.this.client, ProjectsManager.this, preferenceManager.getClientPreferences());
+					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+					workspaceDiagnosticsHandler.addResourceChangeListener();
+					classpathUpdateHandler = new ClasspathUpdateHandler(ProjectsManager.this.client);
+					classpathUpdateHandler.addElementChangeListener();
+					ProjectsManager.this.registerWatchers();
+					ProjectsManager.this.registerListeners();
+					logInfo(">> watchers registered");
+				} catch (OperationCanceledException | CoreException e) {
+					logException(e.getMessage(), e);
+					return Status.CANCEL_STATUS;
 				}
-				return null;
+				return Status.OK_STATUS;
 			}
 		};
-		job.setRule(getWorkspaceRoot());
-		job.schedule();
+		initializeWorkspace.setPriority(Job.BUILD);
+		initializeWorkspace.setSystem(true);
+		initializeWorkspace.schedule(200L);
+	}
+
+	public void shutDown() {
+		if (workspaceDiagnosticsHandler != null) {
+			workspaceDiagnosticsHandler.removeResourceChangeListener();
+			workspaceDiagnosticsHandler = null;
+		}
+		if (classpathUpdateHandler != null) {
+			classpathUpdateHandler.removeElementChangeListener();
+			classpathUpdateHandler = null;
+		}
 	}
 
 	@Override
@@ -383,7 +492,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return Stream.of(new EclipseBuildSupport());
 	}
 
-	public void setConnection(JavaLanguageClient client) {
+	public void setConnection(JavaClientConnection client) {
 		this.client = client;
 	}
 

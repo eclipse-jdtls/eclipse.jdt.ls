@@ -58,6 +58,7 @@ final public class InitHandler extends BaseInitHandler {
 
 	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
+
 	private PreferenceManager preferenceManager;
 
 	private WorkspaceExecuteCommandHandler commandHandler;
@@ -185,45 +186,5 @@ final public class InitHandler extends BaseInitHandler {
 	}
 
 	public void triggerInitialization(Collection<IPath> roots) {
-		Job job = new WorkspaceJob("Initialize Workspace") {
-			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor) {
-				long start = System.currentTimeMillis();
-				connection.sendStatus(ServiceStatus.Starting, "Init...");
-				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-				try {
-					projectsManager.setAutoBuilding(false);
-					projectsManager.initializeProjects(roots, subMonitor);
-					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
-					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
-					connection.sendStatus(ServiceStatus.Started, "Ready");
-				} catch (OperationCanceledException e) {
-					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
-					return Status.CANCEL_STATUS;
-				} catch (Exception e) {
-					JavaLanguageServerPlugin.logException("Initialization failed ", e);
-					connection.sendStatus(ServiceStatus.Error, e.getMessage());
-				}
-				return Status.OK_STATUS;
-			}
-
-			/* (non-Javadoc)
-			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
-			 */
-			@SuppressWarnings("unchecked")
-			@Override
-			public boolean belongsTo(Object family) {
-				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
-				boolean equalToRootPaths = false;
-				if (family instanceof Collection<?>) {
-					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
-				}
-				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
-			}
-
-		};
-		job.setPriority(Job.BUILD);
-		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
-		job.schedule();
 	}
 }

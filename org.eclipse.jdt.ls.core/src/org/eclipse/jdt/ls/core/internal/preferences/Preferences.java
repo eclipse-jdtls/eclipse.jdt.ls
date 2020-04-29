@@ -303,6 +303,8 @@ public class Preferences {
 	public static final String JAVA_IMPORT_ORDER_KEY = "java.completion.importOrder";
 	public static final List<String> JAVA_IMPORT_ORDER_DEFAULT;
 
+	public static final String JAVA_PROJECT_PROMPTIMPORTONSTARTUP_KEY = "java.project.promptImportOnStartup";
+
 	public static final String JAVA_COMPLETION_FILTERED_TYPES_KEY = "java.completion.filteredTypes";
 	public static final List<String> JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
 
@@ -372,6 +374,7 @@ public class Preferences {
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
+	private FeatureStatus promptImportOnStartup;
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
 	private boolean importGradleOfflineEnabled;
@@ -462,7 +465,7 @@ public class Preferences {
 				String val = value.toLowerCase();
 				try {
 					return valueOf(val);
-				} catch(Exception e) {
+				} catch (Exception e) {
 					//fall back to default severity
 				}
 			}
@@ -481,14 +484,14 @@ public class Preferences {
 	}
 
 	public static enum FeatureStatus {
-		disabled, interactive, automatic ;
+		disabled, interactive, automatic;
 
 		static FeatureStatus fromString(String value, FeatureStatus defaultStatus) {
 			if (value != null) {
 				String val = value.toLowerCase();
 				try {
 					return valueOf(val);
-				} catch(Exception e) {
+				} catch (Exception e) {
 					//fall back to default severity
 				}
 			}
@@ -549,6 +552,7 @@ public class Preferences {
 		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
+		promptImportOnStartup = null;
 		importGradleEnabled = true;
 		importGradleOfflineEnabled = false;
 		gradleWrapperEnabled = true;
@@ -597,6 +601,14 @@ public class Preferences {
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 	}
 
+	public FeatureStatus getPromptImportOnStartup() {
+		return promptImportOnStartup;
+	}
+
+	public void setPromptImportOnStartup(FeatureStatus promptImportOnStartup) {
+		this.promptImportOnStartup = promptImportOnStartup;
+	}
+
 	/**
 	 * Create a {@link Preferences} model from a {@link Map} configuration.
 	 */
@@ -614,6 +626,9 @@ public class Preferences {
 		String updateBuildConfiguration = getString(configuration, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, null);
 		prefs.setUpdateBuildConfigurationStatus(
 				FeatureStatus.fromString(updateBuildConfiguration, FeatureStatus.interactive));
+
+		String promptImportOnStartup = getString(configuration, JAVA_PROJECT_PROMPTIMPORTONSTARTUP_KEY, null);
+		prefs.setPromptImportOnStartup(FeatureStatus.fromString(promptImportOnStartup, null));
 
 		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
 		prefs.setImportGradleEnabled(importGradleEnabled);

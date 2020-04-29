@@ -12,12 +12,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.util.Arrays.asList;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +30,12 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -45,7 +45,6 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
-import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameParams;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
@@ -71,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
@@ -116,6 +116,7 @@ import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PrepareRenameParams;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
@@ -154,8 +155,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
-	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
-	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
 
@@ -184,7 +183,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		progressReporterManager = new ProgressReporterManager(client, preferenceManager);
 		Job.getJobManager().setProgressProvider(progressReporterManager);
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
-		pm.setConnection(client);
+		pm.setConnection(this.client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
 		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
 	}
@@ -261,32 +260,31 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		// still call to enable defaults in case client does not support configuration changes
 		syncCapabilitiesToSettings();
 
-		Job initializeWorkspace = new Job("Initialize workspace") {
-
-			@Override
-			public IStatus run(IProgressMonitor monitor) {
-				try {
-					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
-					logInfo(">> build jobs finished");
-					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
-					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences());
-					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-					workspaceDiagnosticsHandler.addResourceChangeListener();
-					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
-					classpathUpdateHandler.addElementChangeListener();
-					pm.registerWatchers();
-					pm.registerListeners();
-					logInfo(">> watchers registered");
-				} catch (OperationCanceledException | CoreException e) {
-					logException(e.getMessage(), e);
-					return Status.CANCEL_STATUS;
+		try {
+			FeatureStatus importOnStartUp = preferenceManager.getPreferences().getPromptImportOnStartup();
+			if (importOnStartUp == null || importOnStartUp == FeatureStatus.automatic) {
+				pm.importProjects(new NullProgressMonitor());
+			} else if (importOnStartUp == FeatureStatus.interactive) {
+				if (pm.needImport(new NullProgressMonitor())) {
+					String cmd = "java.project.import";
+					//@formatter:off
+					ActionableNotification importProjectNotification = new ActionableNotification().withSeverity(MessageType.Info).withMessage("The workspace contains Java projects, would you like to import them?")
+						.withCommands(asList(
+							new Command("Never", cmd, asList(FeatureStatus.disabled)), 
+							new Command("Now", cmd, asList(FeatureStatus.interactive)),
+							new Command("Always", cmd, asList(FeatureStatus.automatic))
+					));
+					//@formatter:on
+					client.sendActionableNotification(importProjectNotification);
 				}
-				return Status.OK_STATUS;
+			} else if (importOnStartUp == FeatureStatus.disabled) {
+				// do nothing
 			}
-		};
-		initializeWorkspace.setPriority(Job.BUILD);
-		initializeWorkspace.setSystem(true);
-		initializeWorkspace.schedule();
+		} catch (OperationCanceledException e) {
+			e.printStackTrace();
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -303,8 +301,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_RANGE_ID, Preferences.TEXT_DOCUMENT_RANGE_FORMATTING, null);
 		}
 		if (preferenceManager.getClientPreferences().isOnTypeFormattingDynamicRegistrationSupported()) {
-			toggleCapability(preferenceManager.getPreferences().isJavaFormatOnTypeEnabled(), Preferences.FORMATTING_ON_TYPE_ID, Preferences.TEXT_DOCUMENT_ON_TYPE_FORMATTING,
-					new DocumentOnTypeFormattingOptions(";", Arrays.asList("\n", "}")));
+			toggleCapability(preferenceManager.getPreferences().isJavaFormatOnTypeEnabled(), Preferences.FORMATTING_ON_TYPE_ID, Preferences.TEXT_DOCUMENT_ON_TYPE_FORMATTING, new DocumentOnTypeFormattingOptions(";", asList("\n", "}")));
 		}
 		if (preferenceManager.getClientPreferences().isCodeLensDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isCodeLensEnabled(), Preferences.CODE_LENS_ID, Preferences.TEXT_DOCUMENT_CODE_LENS, new CodeLensOptions(true));
@@ -351,14 +348,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return computeAsync((monitor) -> {
 			try {
 				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
-				if (workspaceDiagnosticsHandler != null) {
-					workspaceDiagnosticsHandler.removeResourceChangeListener();
-					workspaceDiagnosticsHandler = null;
-				}
-				if (classpathUpdateHandler != null) {
-					classpathUpdateHandler.removeElementChangeListener();
-					classpathUpdateHandler = null;
-				}
+				pm.shutDown();
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
