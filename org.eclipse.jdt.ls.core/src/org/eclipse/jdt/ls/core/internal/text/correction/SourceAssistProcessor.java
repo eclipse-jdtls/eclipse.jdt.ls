@@ -59,6 +59,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.Che
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -199,7 +200,12 @@ public class SourceAssistProcessor {
 		CompilationUnit astRoot = context.getASTRoot();
 		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, null);
 		try {
-			return op.createTextEdit(null);
+			TextEdit edit = op.createTextEdit(null);
+			TextEdit staticEdit = OrganizeImportsHandler.wrapStaticImports(edit, astRoot, unit);
+			if (staticEdit.getChildrenSize() > 0) {
+				return staticEdit;
+			}
+			return edit;
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Resolve organize imports source action", e);
 		}

@@ -110,7 +110,7 @@ public final class OrganizeImportsHandler {
 		return null;
 	}
 
-	private static TextEdit wrapStaticImports(TextEdit edit, CompilationUnit root, ICompilationUnit unit) throws MalformedTreeException, CoreException {
+	public static TextEdit wrapStaticImports(TextEdit edit, CompilationUnit root, ICompilationUnit unit) throws MalformedTreeException, CoreException {
 		String[] favourites = PreferenceManager.getPrefs(unit.getResource()).getJavaCompletionFavoriteMembers();
 		if (favourites.length == 0) {
 			return edit;

@@ -18,11 +18,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -79,6 +82,44 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Document doc = new Document();
 		doc.set(cu.getSource());
 		assertEquals(TextEditUtil.apply(doc, result), buf.toString());
+	}
+
+	@Test
+	public void testStaticWillSaveWaitUntil() throws Exception {
+		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
+		try {
+			List<String> list = new ArrayList<>();
+			list.add("java.lang.Math.*");
+			list.add("java.util.stream.Collectors.*");
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(list);
+			URI srcUri = project.getFile("src/org/sample/Foo6.java").getRawLocationURI();
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(srcUri);
+			/* @formatter:off */
+			String expected = "package org.sample;\n" +
+					"\n" +
+					"import static java.lang.Math.PI;\n" +
+					"import static java.lang.Math.abs;\n" +
+					"import static java.util.stream.Collectors.toList;\n" +
+					"\n" +
+					"import java.util.List;\n" +
+					"\n" +
+					"public class Foo6 {\n" +
+					"    List list = List.of(1).stream().collect(toList());\n" +
+					"    double i = abs(-1);\n" +
+					"    double pi = PI;\n" +
+					"}\n";
+			//@formatter:on
+			WillSaveTextDocumentParams params = new WillSaveTextDocumentParams();
+			TextDocumentIdentifier document = new TextDocumentIdentifier();
+			document.setUri(srcUri.toString());
+			params.setTextDocument(document);
+			List<TextEdit> result = handler.willSaveWaitUntil(params, monitor);
+			Document doc = new Document();
+			doc.set(cu.getSource());
+			assertEquals(expected, TextEditUtil.apply(doc, result));
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
+		}
 	}
 
 	@Test
