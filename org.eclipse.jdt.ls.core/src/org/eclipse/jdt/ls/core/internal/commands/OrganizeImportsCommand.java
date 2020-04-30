@@ -44,6 +44,7 @@ import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -180,7 +181,11 @@ public class OrganizeImportsCommand {
 				protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
 					CompilationUnit astRoot = context.getASTRoot();
 					OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, null);
-					editRoot.addChild(op.createTextEdit(null));
+					TextEdit edit = op.createTextEdit(null);
+					TextEdit staticEdit = OrganizeImportsHandler.wrapStaticImports(edit, astRoot, unit);
+					if (staticEdit.getChildrenSize() > 0) {
+						editRoot.addChild(staticEdit);
+					}
 				}
 			};
 
