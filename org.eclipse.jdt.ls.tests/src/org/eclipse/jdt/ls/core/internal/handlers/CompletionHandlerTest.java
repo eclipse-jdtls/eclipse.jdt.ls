@@ -12,6 +12,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertPosition;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -529,7 +530,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTextEdit(5, 4, 6, "put", resolvedItem.getTextEdit());
 		assertNotNull(resolvedItem.getAdditionalTextEdits());
 		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
-		assertEquals(3, edits.size());
+		assertEquals(2, edits.size());
 	}
 
 	@Test
@@ -569,7 +570,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		assertNotNull(resolvedItem.getAdditionalTextEdits());
 		List<TextEdit> edits = resolvedItem.getAdditionalTextEdits();
-		assertEquals(3, edits.size());
+		assertEquals(2, edits.size());
 	}
 
 	@Test
@@ -1192,11 +1193,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}";
 
 		assertEquals(expectedText, text);
-		assertEquals("Missing required imports", 4, oride.getAdditionalTextEdits().size());
+		assertEquals("Missing required imports", 1, oride.getAdditionalTextEdits().size());
 
-		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(0));
-		assertTextEdit(0, 19, 19, "import java.io.File;", oride.getAdditionalTextEdits().get(1));
-		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(2));
+		assertEquals("\n\nimport java.io.File;\n\n", oride.getAdditionalTextEdits().get(0).getNewText());
+		assertPosition(0, 19, oride.getAdditionalTextEdits().get(0).getRange().getStart());
+		assertPosition(2, 0, oride.getAdditionalTextEdits().get(0).getRange().getEnd());
 	}
 
 	@Test
@@ -1229,11 +1230,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}";
 
 		assertEquals(expectedText, text);
-		assertEquals("Missing required imports", 4, oride.getAdditionalTextEdits().size());
-
-		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(0));
-		assertTextEdit(0, 19, 19, "import java.io.IOException;", oride.getAdditionalTextEdits().get(1));
-		assertTextEdit(0, 19, 19, "\n\n", oride.getAdditionalTextEdits().get(2));
+		assertEquals("Missing required imports", 1, oride.getAdditionalTextEdits().size());
+		assertEquals("\n\nimport java.io.IOException;\n\n", oride.getAdditionalTextEdits().get(0).getNewText());
+		assertPosition(0, 19, oride.getAdditionalTextEdits().get(0).getRange().getStart());
+		assertPosition(2, 0, oride.getAdditionalTextEdits().get(0).getRange().getEnd());
 	}
 
 	public void testCompletion_plainTextDoc() throws Exception{
@@ -2092,6 +2092,29 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(resolvedItem.getDocumentation().getRight());
 		String doc = resolvedItem.getDocumentation().getRight().getValue();
 		assertTrue("Unexpected documentation content in " + doc, doc.contains("*  [Baz](file:/"));
+	}
+
+	@Test
+	public void testCompletion_additionalTextEdit() throws Exception {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	private Object o;\n"+
+						"	void foo() {\n"+
+						"		o.toStr\n"+
+						"	}\n"+
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "o.toStr");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+		CompletionItem ci = list.getItems().get(0);
+		assertNull(ci.getAdditionalTextEdits());
+		assertEquals("toString() : String", ci.getLabel());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNull(resolvedItem.getAdditionalTextEdits());
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {

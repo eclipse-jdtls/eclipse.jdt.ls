@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -33,6 +34,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -174,7 +176,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		while (iterator.hasNext()) {
 			IProject project = iterator.next();
 			project.open(monitor);
-			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			project.refreshLocal(IResource.DEPTH_ONE, monitor);
+			((Workspace) ResourcesPlugin.getWorkspace()).getRefreshManager().refresh(project);
 			if (!needsMavenUpdate(project, lastWorkspaceStateSaved)) {
 				iterator.remove();
 			}
@@ -183,7 +186,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		new WorkspaceJob("Update Maven project configuration") {
+		WorkspaceJob job = new WorkspaceJob("Update Maven project configuration") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 				MavenBuildSupport mavenBuildSupport = new MavenBuildSupport();
@@ -196,7 +199,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				}
 				return Status.OK_STATUS;
 			}
-		}.schedule();
+		};
+		job.setPriority(Job.BUILD);
+		job.setRule(null);
+		job.schedule();
 	}
 
 	private boolean needsMavenUpdate(IProject project, long lastWorkspaceStateSaved) {

@@ -22,6 +22,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.text.edits.CopySourceEdit;
 import org.eclipse.text.edits.CopyTargetEdit;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.ISourceModifier;
@@ -86,6 +87,31 @@ public class TextEditConverter extends TextEditVisitor{
 	}
 
 	/* (non-Javadoc)
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.CopySourceEdit)
+	 */
+	@Override
+	public boolean visit(CopySourceEdit edit) {
+		try {
+			if (edit.getTargetEdit() != null) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+				Document doc = new Document(compilationUnit.getSource());
+				edit.apply(doc, TextEdit.UPDATE_REGIONS);
+				String content = doc.get(edit.getOffset(), edit.getLength());
+				if (edit.getSourceModifier() != null) {
+					content = applySourceModifier(content, edit.getSourceModifier());
+				}
+				te.setNewText(content);
+				converted.add(te);
+			}
+			return false;
+		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return super.visit(edit);
+	}
+
+	/* (non-Javadoc)
 	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.DeleteEdit)
 	 */
 	@Override
@@ -96,6 +122,26 @@ public class TextEditConverter extends TextEditVisitor{
 			te.setRange(JDTUtils.toRange(compilationUnit,edit.getOffset(),edit.getLength()));
 			converted.add(te);
 		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
+		}
+		return super.visit(edit);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.text.edits.TextEditVisitor#visit(org.eclipse.text.edits.MultiTextEdit)
+	 */
+	@Override
+	public boolean visit(MultiTextEdit edit) {
+		try {
+			org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
+			Document doc = new Document(compilationUnit.getSource());
+			edit.apply(doc, TextEdit.UPDATE_REGIONS);
+			String content = doc.get(edit.getOffset(), edit.getLength());
+			te.setNewText(content);
+			converted.add(te);
+			return false;
+		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
 		return false;

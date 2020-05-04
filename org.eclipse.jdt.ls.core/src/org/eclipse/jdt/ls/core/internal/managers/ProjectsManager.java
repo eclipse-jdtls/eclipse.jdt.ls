@@ -222,6 +222,9 @@ public class ProjectsManager implements ISaveParticipant {
 	private void deleteInvalidProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) {
 		List<String> workspaceProjects = rootPaths.stream().map((IPath rootPath) -> ProjectUtils.getWorkspaceInvisibleProjectName(rootPath)).collect(Collectors.toList());
 		for (IProject project : getWorkspaceRoot().getProjects()) {
+			if (project.equals(this.getDefaultProject())) {
+				continue;
+			}
 			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project)) || workspaceProjects.contains(project.getName())) {
 				try {
 					project.getDescription();
