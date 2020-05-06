@@ -110,20 +110,20 @@ public class GetterSetterCompletionProposal extends InternalCompletionProposal {
 	 * @param offset
 	 * @param importRewrite
 	 * @param completionSnippetsSupported
+	 * @param addComments
 	 * @return
 	 * @throws CoreException
 	 * @throws BadLocationException
 	 */
-	public String updateReplacementString(IDocument document, int offset, ImportRewrite importRewrite, boolean completionSnippetsSupported) throws CoreException, BadLocationException {
+	public String updateReplacementString(IDocument document, int offset, ImportRewrite importRewrite, boolean completionSnippetsSupported, boolean addComments) throws CoreException, BadLocationException {
 		int flags= Flags.AccPublic | (fField.getFlags() & Flags.AccStatic);
-
 		String stub;
 		if (fIsGetter) {
 			String getterName= GetterSetterUtil.getGetterName(fField, null);
-			stub = GetterSetterUtil.getGetterStub(fField, getterName, true, flags);
+			stub = GetterSetterUtil.getGetterStub(fField, getterName, addComments, flags);
 		} else {
 			String setterName= GetterSetterUtil.getSetterName(fField, null);
-			stub = GetterSetterUtil.getSetterStub(fField, setterName, true, flags);
+			stub = GetterSetterUtil.getSetterStub(fField, setterName, addComments, flags);
 		}
 
 		// use the code formatter
