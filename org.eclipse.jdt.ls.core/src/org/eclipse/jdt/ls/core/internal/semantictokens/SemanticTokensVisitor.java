@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
@@ -113,6 +114,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
         int length = node.getLength();
         SemanticToken token = new SemanticToken(offset, length, tokenType, modifiers);
         tokens.add(token);
+    }
+
+    @Override
+    public boolean visit(QualifiedName node) {
+        IBinding binding = node.resolveBinding();
+        if (binding != null && binding.getKind() == IBinding.PACKAGE) {
+            addToken(node, TokenType.NAMESPACE, NO_MODIFIERS);
+            return false;
+        }
+        return super.visit(node);
     }
 
     @Override
