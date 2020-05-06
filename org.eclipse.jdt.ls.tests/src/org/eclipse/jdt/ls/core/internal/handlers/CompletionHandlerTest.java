@@ -1811,6 +1811,36 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	return strField;\n" +
 				"}", ci.getTextEdit());
 	}
+	
+	@Test
+	public void testCompletion_getterNoJavadoc() throws Exception {
+		preferences.setCodeGenerationTemplateGenerateComments(false);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private String strField;\n" +
+						"    get" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "get");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("getStrField() : String"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("getStrField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNotNull(ci.getTextEdit());
+		assertTextEdit(2, 4, 7, 
+				"public String getStrField() {\n" +
+				"	return strField;\n" +
+				"}", ci.getTextEdit());
+	}
 
 	@Test
 	public void testCompletion_booleangetter() throws Exception {
