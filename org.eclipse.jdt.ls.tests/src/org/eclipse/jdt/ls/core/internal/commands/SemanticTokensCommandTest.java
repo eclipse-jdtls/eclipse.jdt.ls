@@ -151,6 +151,24 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		assertToken(decodedTokens, legend, 4, 11, 6, "type", Arrays.asList());
 	}
 
+	@Test
+	public void testSemanticTokens_packages() throws JavaModelException {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("import java.nio.*;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
+		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
+		assertToken(decodedTokens, legend, 1, 7, 9, "namespace", Arrays.asList());
+		assertToken(decodedTokens, legend, 2, 7, 8, "namespace", Arrays.asList());
+	}
+
 	private void assertModifiers(List<String> tokenModifiers, int encodedModifiers, List<String> modifierStrings) {
 		int cnt = 0;
 		for (int i=0; i<tokenModifiers.size(); i++) {
@@ -178,7 +196,7 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		int total = data.size() / 5;
 		Map<Integer, Map<Integer, int[]>> decodedTokens = new HashMap<>();
 		int currentLine = 0;
-        int currentColumn = 0;
+		int currentColumn = 0;
 		for(int i = 0; i<total; i++) {
 			int offset = 5 * i;
 			int deltaLine = data.get(offset).intValue();
