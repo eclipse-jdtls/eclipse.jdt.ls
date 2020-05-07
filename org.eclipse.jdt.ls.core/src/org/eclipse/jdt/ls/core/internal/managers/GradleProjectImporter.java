@@ -34,7 +34,10 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -187,8 +190,14 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
-		String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
-		File javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
+		File javaHome;
+		if (javaDefaultRuntime != null && javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null) {
+			javaHome = javaDefaultRuntime.getInstallLocation();
+		} else {
+			String javaHomeStr = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaHome();
+			javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		}
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments() : new ArrayList<>();
 		List<String> gradleJvmArguments = JavaLanguageServerPlugin.getPreferencesManager() != null ? JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJvmArguments() : new ArrayList<>();
