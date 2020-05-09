@@ -24,9 +24,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.JavaModelManager;
+import org.eclipse.jdt.internal.core.OpenableElementInfo;
+import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -108,10 +109,11 @@ public class WorkspaceEventsHandler {
 			unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 			if (unit.getResource().exists()) {
 				IJavaElement parent = unit.getParent();
-				if (parent instanceof IPackageFragment) {
-					IPackageFragment pkg = (IPackageFragment) parent;
+				if (parent instanceof PackageFragment) {
+					PackageFragment pkg = (PackageFragment) parent;
 					if (JavaModelManager.determineIfOnClasspath(unit.getResource(), unit.getJavaProject()) != null) {
-						unit = pkg.createCompilationUnit(unit.getElementName(), unit.getSource(), true, new NullProgressMonitor());
+						OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
+						elementInfo.addChild(unit);
 					}
 				}
 			}

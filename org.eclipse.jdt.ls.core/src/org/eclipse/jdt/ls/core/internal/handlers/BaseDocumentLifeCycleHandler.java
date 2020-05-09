@@ -35,7 +35,6 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -43,6 +42,8 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.core.OpenableElementInfo;
+import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -299,9 +300,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 					if (unit.getResource().exists()) {
 						IJavaElement parent = unit.getParent();
-						if (parent instanceof IPackageFragment) {
-							IPackageFragment pkg = (IPackageFragment) parent;
-							unit = pkg.createCompilationUnit(unit.getElementName(), unit.getSource(), true, new NullProgressMonitor());
+						if (parent instanceof PackageFragment) {
+							PackageFragment pkg = (PackageFragment) parent;
+							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
+							elementInfo.addChild(unit);
 						}
 					}
 				} catch (CoreException e) {
