@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,10 +21,13 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.internal.core.OpenableElementInfo;
@@ -43,7 +47,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 public class WorkspaceEventsHandler {
 
-	private final ProjectsManager pm ;
+	private final ProjectsManager pm;
 	private final JavaClientConnection connection;
 	private final BaseDocumentLifeCycleHandler handler;
 
@@ -53,26 +57,27 @@ public class WorkspaceEventsHandler {
 		this.handler = handler;
 	}
 
-	private CHANGE_TYPE toChangeType(FileChangeType vtype){
+	private CHANGE_TYPE toChangeType(FileChangeType vtype) {
 		switch (vtype) {
-		case Created:
-			return CHANGE_TYPE.CREATED;
-		case Changed:
-			return CHANGE_TYPE.CHANGED;
-		case Deleted:
-			return CHANGE_TYPE.DELETED;
-		default:
-			throw new UnsupportedOperationException();
+			case Created:
+				return CHANGE_TYPE.CREATED;
+			case Changed:
+				return CHANGE_TYPE.CHANGED;
+			case Deleted:
+				return CHANGE_TYPE.DELETED;
+			default:
+				throw new UnsupportedOperationException();
 		}
 	}
 
-	public void didChangeWatchedFiles(DidChangeWatchedFilesParams param){
+	public void didChangeWatchedFiles(DidChangeWatchedFilesParams param) {
 		List<FileEvent> changes = param.getChanges().stream().distinct().collect(Collectors.toList());
 		for (FileEvent fileEvent : changes) {
 			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
-			if(changeType==CHANGE_TYPE.DELETED){
+			if (changeType == CHANGE_TYPE.DELETED) {
 				cleanUpDiagnostics(fileEvent.getUri());
 				handler.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(fileEvent.getUri())));
+				discardWorkingCopies(fileEvent.getUri());
 			}
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
 			if (unit != null && changeType == CHANGE_TYPE.CREATED && !unit.exists()) {
@@ -123,8 +128,29 @@ public class WorkspaceEventsHandler {
 		return unit;
 	}
 
-	private void cleanUpDiagnostics(String uri){
+	private void cleanUpDiagnostics(String uri) {
 		this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 	}
 
+	private void discardWorkingCopies(String parentUri) {
+		IPath parentPath = ResourceUtils.filePathFromURI(parentUri);
+		if (parentPath != null && !parentPath.lastSegment().endsWith(".java")) {
+			ICompilationUnit[] workingCopies = JavaCore.getWorkingCopies(null);
+			for (ICompilationUnit workingCopy : workingCopies) {
+				IResource resource = workingCopy.getResource();
+				if (resource == null) {
+					continue;
+				}
+
+				IPath cuPath = resource.getRawLocation() != null ? resource.getRawLocation() : resource.getLocation();
+				if (cuPath != null && parentPath.isPrefixOf(cuPath)) {
+					try {
+						workingCopy.discardWorkingCopy();
+					} catch (JavaModelException e) {
+						// do nothing.
+					}
+				}
+			}
+		}
+	}
 }
