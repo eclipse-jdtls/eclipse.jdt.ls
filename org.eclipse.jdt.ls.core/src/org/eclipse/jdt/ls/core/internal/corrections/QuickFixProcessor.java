@@ -35,6 +35,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CleanBuildSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
@@ -639,5 +640,12 @@ public class QuickFixProcessor {
 		// }
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
+
+		// Add proposals related with project steup, like: clean build, clean workspace, etc...
+		switch(id) {
+			case IProblem.ImportNotFound:
+			CleanBuildSubProcessor.cleanBuildForUnresolvedImportProposals(context, problem, proposals);
+				break;
+		}
 	}
 }

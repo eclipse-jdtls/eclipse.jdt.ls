@@ -31,8 +31,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -41,6 +45,8 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -240,6 +246,22 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return evaluateCodeActions(cu, range);
 	}
 
+	protected List<Either<Command, CodeAction>> evaluateCodeActionsForIMarker(ICompilationUnit cu) throws CoreException {
+		IMarker[] markers = cu.getUnderlyingResource().findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+		CodeActionParams parms = new CodeActionParams();
+
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+		textDocument.setUri(JDTUtils.toURI(cu));
+		parms.setTextDocument(textDocument);
+		parms.setRange(JDTUtils.toRange(cu, 0, 0));
+		CodeActionContext context = new CodeActionContext();
+		context.setDiagnostics(WorkspaceDiagnosticsHandler.toDiagnosticsArray(JsonRpcHelpers.toDocument(cu.getBuffer()), markers, true));
+		context.setOnly(onlyKinds);
+		parms.setContext(context);
+
+		return resolveCodeActions(parms);
+	}
+
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu, Range range) throws JavaModelException {
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
@@ -256,6 +278,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		context.setOnly(onlyKinds);
 		parms.setContext(context);
 
+		return resolveCodeActions(parms);
+	}
+
+	private List<Either<Command, CodeAction>> resolveCodeActions(CodeActionParams parms) {
 		List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(parms, new NullProgressMonitor());
 		if (onlyKinds != null && !onlyKinds.isEmpty()) {
 			for (Either<Command, CodeAction> codeAction : codeActions) {
