@@ -21,7 +21,9 @@ import java.util.Arrays;
 
 import com.google.common.io.Files;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -30,6 +32,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
@@ -95,6 +98,24 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		));
 		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
 		assertFalse(unit.isWorkingCopy());
+	}
+
+	@Test
+	public void testDeleteProjectFolder() throws Exception {
+		importProjects("maven/multimodule3");
+
+		IProject module2 = ProjectUtils.getProject("module2");
+		assertTrue(module2 != null && module2.exists());
+
+		String projectUri = JDTUtils.getFileURI(module2);
+		FileUtils.deleteDirectory(module2.getLocation().toFile());
+		assertTrue(module2.exists());
+
+		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(
+			new FileEvent(projectUri, FileChangeType.Deleted)
+		));
+		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		assertFalse(module2.exists());
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {

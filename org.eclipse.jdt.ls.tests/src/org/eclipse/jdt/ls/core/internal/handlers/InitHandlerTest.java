@@ -71,6 +71,7 @@ import org.eclipse.lsp4j.SynchronizationCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
+import org.eclipse.lsp4j.WatchKind;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.WorkspaceEditCapabilities;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -242,6 +243,15 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		importProjects(Arrays.asList("maven/salut", "gradle/simple-gradle"));
 		newEmptyProject();
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+		// 8 basic + 3 project roots
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 11, watchers.size());
+		List<FileSystemWatcher> projectWatchers = watchers.subList(8, 11);
+		assertTrue(projectWatchers.get(0).getGlobPattern().endsWith("/TestProject"));
+		assertTrue(WatchKind.Delete == projectWatchers.get(0).getKind());
+		assertTrue(projectWatchers.get(1).getGlobPattern().endsWith("/maven/salut"));
+		assertTrue(projectWatchers.get(2).getGlobPattern().endsWith("/gradle/simple-gradle"));
+
+		watchers = watchers.subList(0, 8);
 		Collections.sort(watchers, new Comparator<FileSystemWatcher>() {
 
 			@Override
@@ -249,7 +259,6 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 				return o1.getGlobPattern().compareTo(o2.getGlobPattern());
 			}
 		});
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 8, watchers.size());
 		assertEquals("**/*.gradle", watchers.get(0).getGlobPattern());
 		assertEquals("**/*.java", watchers.get(1).getGlobPattern());
 		assertEquals("**/.classpath", watchers.get(2).getGlobPattern());
@@ -279,6 +288,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).registerCapability(any());
 		List<FileSystemWatcher> newWatchers = projectsManager.registerWatchers();
 		verify(client, times(1)).registerCapability(any());
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 11, newWatchers.size());
+		projectWatchers = newWatchers.subList(8, 11);
+		assertTrue(projectWatchers.get(0).getGlobPattern().endsWith("/TestProject"));
+		assertTrue(projectWatchers.get(1).getGlobPattern().endsWith("/maven/salut"));
+		assertTrue(projectWatchers.get(2).getGlobPattern().endsWith("/gradle/simple-gradle"));
+
+		newWatchers = watchers.subList(0, 8);
 		Collections.sort(newWatchers, new Comparator<FileSystemWatcher>() {
 
 			@Override
