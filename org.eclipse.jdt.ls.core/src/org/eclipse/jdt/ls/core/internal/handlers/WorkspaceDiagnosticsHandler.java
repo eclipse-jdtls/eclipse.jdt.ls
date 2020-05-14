@@ -34,6 +34,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
@@ -128,7 +129,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (projectsManager.isBuildLikeFileName(resource.getName())) {
 				cleanUpDiagnostics(resource);
 				if(!resource.getParent().isAccessible()) { // Clean up the project folder diagnostics.
-					cleanUpDiagnostics(resource.getParent(), true);
+					cleanUpDiagnostics(resource.getParent(), Platform.OS_WIN32.equals(Platform.getOS()));
 				}
 			}
 

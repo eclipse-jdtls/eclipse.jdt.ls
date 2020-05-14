@@ -129,19 +129,27 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 
 		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
 		assertEquals(9L, diags.size());
-		assertTrue(diags.get(0).getUri().endsWith("/module2/"));
-		assertTrue(diags.get(1).getUri().endsWith("/multimodule3/"));
-		assertTrue(diags.get(2).getUri().endsWith("/multimodule3/pom.xml"));
-		assertTrue(diags.get(3).getUri().endsWith("/module2/pom.xml"));
+		assertEndsWith(diags.get(0).getUri(), "/module2");
+		assertEndsWith(diags.get(1).getUri(), "/multimodule3");
+		assertEndsWith(diags.get(2).getUri(), "/multimodule3/pom.xml");
+		assertEndsWith(diags.get(3).getUri(), "/module2/pom.xml");
 		assertEquals(0L, diags.get(3).getDiagnostics().size());
-		assertTrue(diags.get(4).getUri().endsWith("/module2/"));
+		assertEndsWith(diags.get(4).getUri(), "/module2");
 		assertEquals(0L, diags.get(4).getDiagnostics().size());
-		assertTrue(diags.get(5).getUri().endsWith("/App.java"));
+		assertEndsWith(diags.get(5).getUri(), "/App.java");
 		assertEquals(0L, diags.get(5).getDiagnostics().size());
-		assertTrue(diags.get(6).getUri().endsWith("/AppTest.java"));
+		assertEndsWith(diags.get(6).getUri(), "/AppTest.java");
 		assertEquals(0L, diags.get(6).getDiagnostics().size());
-		assertTrue(diags.get(7).getUri().endsWith("/multimodule3/"));
-		assertTrue(diags.get(8).getUri().endsWith("/multimodule3/pom.xml"));
+		assertEndsWith(diags.get(7).getUri(), "/multimodule3");
+		assertEndsWith(diags.get(8).getUri(), "/multimodule3/pom.xml");
+	}
+
+	private void assertEndsWith(String target, String suffix) {
+		if (target.endsWith("/")) {
+			target = target.substring(0, target.length() - 1);
+		}
+
+		assertTrue(target.endsWith(suffix));
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {
