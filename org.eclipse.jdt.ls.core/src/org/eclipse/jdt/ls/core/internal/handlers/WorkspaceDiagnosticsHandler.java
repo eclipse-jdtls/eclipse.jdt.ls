@@ -124,6 +124,14 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				return resource.getType() == IResource.PROJECT;
 			}
 
+			// If delete a project folder directly, make sure to clean up its build file diagnostics.
+			if (projectsManager.isBuildLikeFileName(resource.getName())) {
+				cleanUpDiagnostics(resource);
+				if(!resource.getParent().isAccessible()) { // Clean up the project folder diagnostics.
+					cleanUpDiagnostics(resource.getParent(), true);
+				}
+			}
+
 			return false;
 		}
 		if (resource.getType() == IResource.PROJECT) {
@@ -199,7 +207,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			diagnostics = toDiagnosticsArray(document, pom.findMarkers(null, true, IResource.DEPTH_ZERO), isDiagnosticTagSupported);
 			List<Diagnostic> diagnosicts2 = toDiagnosticArray(range, pomMarkers, isDiagnosticTagSupported);
 			diagnostics.addAll(diagnosicts2);
-			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + "/pom.xml"), diagnostics));
+			String pomSuffix = clientUri.endsWith("/") ? "pom.xml" : "/pom.xml";
+			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + pomSuffix), diagnostics));
 		}
 	}
 
@@ -410,8 +419,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	private void cleanUpDiagnostics(IResource resource) {
+		cleanUpDiagnostics(resource, false);
+	}
+
+	private void cleanUpDiagnostics(IResource resource, boolean addTrailingSlash) {
 		String uri = JDTUtils.getFileURI(resource);
 		if (uri != null) {
+			if (addTrailingSlash && !uri.endsWith("/")) {
+				uri = uri + "/";
+			}
 			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 		}
 	}

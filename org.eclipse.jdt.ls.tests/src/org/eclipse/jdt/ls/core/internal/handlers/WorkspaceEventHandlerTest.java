@@ -13,11 +13,14 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import com.google.common.io.Files;
 
@@ -39,6 +42,7 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +53,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 	private CoreASTProvider sharedASTProvider;
 	private DocumentLifeCycleHandler lifeCycleHandler;
 	private JavaClientConnection javaClient;
+	private WorkspaceDiagnosticsHandler handler;
 
 	@Mock
 	private ClientPreferences clientPreferences;
@@ -59,11 +64,14 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		sharedASTProvider.disposeAST();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
+		handler = new WorkspaceDiagnosticsHandler(javaClient, projectsManager, preferenceManager.getClientPreferences());
+		handler.addResourceChangeListener();
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		javaClient.disconnect();
+		handler.removeResourceChangeListener();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}
@@ -111,11 +119,29 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		FileUtils.deleteDirectory(module2.getLocation().toFile());
 		assertTrue(module2.exists());
 
+		clientRequests.clear();
 		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(
 			new FileEvent(projectUri, FileChangeType.Deleted)
 		));
 		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		waitForBackgroundJobs();
 		assertFalse(module2.exists());
+
+		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
+		assertEquals(9L, diags.size());
+		assertTrue(diags.get(0).getUri().endsWith("/module2/"));
+		assertTrue(diags.get(1).getUri().endsWith("/multimodule3/"));
+		assertTrue(diags.get(2).getUri().endsWith("/multimodule3/pom.xml"));
+		assertTrue(diags.get(3).getUri().endsWith("/module2/pom.xml"));
+		assertEquals(0L, diags.get(3).getDiagnostics().size());
+		assertTrue(diags.get(4).getUri().endsWith("/module2/"));
+		assertEquals(0L, diags.get(4).getDiagnostics().size());
+		assertTrue(diags.get(5).getUri().endsWith("/App.java"));
+		assertEquals(0L, diags.get(5).getDiagnostics().size());
+		assertTrue(diags.get(6).getUri().endsWith("/AppTest.java"));
+		assertEquals(0L, diags.get(6).getDiagnostics().size());
+		assertTrue(diags.get(7).getUri().endsWith("/multimodule3/"));
+		assertTrue(diags.get(8).getUri().endsWith("/multimodule3/pom.xml"));
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {
@@ -131,5 +157,10 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		textDocument.setVersion(version);
 		openParms.setTextDocument(textDocument);
 		lifeCycleHandler.didOpen(openParms);
+	}
+
+	private <T> List<T> getClientRequests(String name) {
+		List<?> requests = clientRequests.get(name);
+		return requests != null ? (List<T>) requests : Collections.emptyList();
 	}
 }

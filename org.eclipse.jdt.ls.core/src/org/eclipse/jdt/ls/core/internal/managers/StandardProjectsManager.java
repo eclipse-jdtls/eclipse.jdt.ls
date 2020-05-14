@@ -275,6 +275,11 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	@Override
+	public boolean isBuildLikeFileName(String fileName) {
+		return buildSupports().filter(bs -> bs.isBuildLikeFileName(fileName)).findAny().isPresent();
+	}
+
+	@Override
 	public void prepareToSave(ISaveContext context) throws CoreException {
 		if (context.getKind() == ISaveContext.FULL_SAVE) {
 			GradleBuildSupport.saveModels();
