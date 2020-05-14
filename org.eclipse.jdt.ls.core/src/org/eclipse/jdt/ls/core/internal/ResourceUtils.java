@@ -257,18 +257,39 @@ public final class ResourceUtils {
 		if (path == null) {
 			return null;
 		}
+
+		String baseName = path.lastSegment();
+		return toGlobPattern(path, !baseName.endsWith(".jar") && !baseName.endsWith(".zip"));
+	}
+
+	/**
+	 * Convert an {@link IPath} to a glob pattern.
+	 *
+	 * @param path
+	 *            the path to convert
+	 * @param recursive
+	 *            whether to end the glob with "/**"
+	 * @return a glob pattern prefixed with the path
+	 */
+	public static String toGlobPattern(IPath path, boolean recursive) {
+		if (path == null) {
+			return null;
+		}
+
 		String globPattern = path.toPortableString();
 		if (path.getDevice() != null) {
 			//This seems pretty hack-ish: need to remove device as it seems to break
 			// file detection, at least on vscode
 			globPattern = globPattern.replace(path.getDevice(), "**");
 		}
-		if (!globPattern.endsWith(".jar") && !globPattern.endsWith(".zip")) {
+
+		if (recursive) {
 			if (!globPattern.endsWith("/")) {
 				globPattern += "/";
 			}
 			globPattern += "**";
 		}
+
 		return globPattern;
 	}
 

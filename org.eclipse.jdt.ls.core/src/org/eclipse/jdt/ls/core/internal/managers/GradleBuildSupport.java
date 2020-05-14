@@ -80,6 +80,11 @@ public class GradleBuildSupport implements IBuildSupport {
 		return false;
 	}
 
+	@Override
+	public boolean isBuildLikeFileName(String fileName) {
+		return fileName.endsWith(GRADLE_SUFFIX) || fileName.equals(GRADLE_PROPERTIES);
+	}
+
 	/**
 	 * delete stale gradle project preferences
 	 *

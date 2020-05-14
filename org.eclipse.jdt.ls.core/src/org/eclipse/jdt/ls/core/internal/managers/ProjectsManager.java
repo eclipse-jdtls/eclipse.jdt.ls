@@ -227,6 +227,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return buildSupports().filter(bs -> bs.isBuildFile(resource)).findAny().isPresent();
 	}
 
+	public boolean isBuildLikeFileName(String fileName) {
+		return buildSupports().filter(bs -> bs.isBuildLikeFileName(fileName)).findAny().isPresent();
+	}
+
 	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		Collection<IProjectImporter> importers = importers();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());

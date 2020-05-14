@@ -32,6 +32,10 @@ public interface IBuildSupport {
 
 	boolean isBuildFile(IResource resource);
 
+	default boolean isBuildLikeFileName(String fileName) {
+		return false;
+	}
+
 	/**
 	 *
 	 * @param resource

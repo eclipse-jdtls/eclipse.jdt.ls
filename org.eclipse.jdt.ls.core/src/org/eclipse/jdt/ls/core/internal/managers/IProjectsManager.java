@@ -53,6 +53,11 @@ public interface IProjectsManager {
 	boolean isBuildFile(IResource resource);
 
 	/**
+	 * Check whether the file name is like a build file.
+	 */
+	boolean isBuildLikeFileName(String fileName);
+
+	/**
 	 * Get the build support provided by the given project.
 	 */
 	Optional<IBuildSupport> getBuildSupport(IProject project);
