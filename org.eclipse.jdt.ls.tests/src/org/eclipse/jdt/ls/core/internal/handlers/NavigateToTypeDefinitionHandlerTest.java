@@ -60,7 +60,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 
 	@Test
 	public void testLocalVariable() throws Exception {
-		testClass("java.Foo3", 18, 24);
+		testClass("java.Foo3", 19, 24);
 	}
 
 	@Test
