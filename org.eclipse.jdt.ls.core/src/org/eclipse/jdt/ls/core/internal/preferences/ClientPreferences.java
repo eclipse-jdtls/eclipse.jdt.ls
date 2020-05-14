@@ -221,6 +221,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("clientDocumentSymbolProvider", "false").toString());
 	}
 
+	public boolean isClientBuildCommandSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("buildCommandSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

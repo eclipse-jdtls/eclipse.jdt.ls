@@ -644,8 +644,8 @@ public class QuickFixProcessor {
 		// Add proposals related with project steup, like: clean build, clean workspace, etc...
 		switch(id) {
 			case IProblem.ImportNotFound:
-			CleanBuildSubProcessor.cleanBuildForUnresolvedImportProposals(context, problem, proposals);
-				break;
+				CleanBuildSubProcessor.cleanBuildForUnresolvedImportProposals(context, problem, proposals);
+					break;
 		}
 	}
 }

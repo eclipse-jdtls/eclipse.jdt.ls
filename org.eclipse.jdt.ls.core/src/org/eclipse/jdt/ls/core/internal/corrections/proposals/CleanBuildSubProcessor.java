@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -31,6 +32,10 @@ import org.eclipse.lsp4j.CodeActionKind;
 public class CleanBuildSubProcessor {
     public static void cleanBuildForUnresolvedImportProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<ChangeCorrectionProposal> proposals) {
+		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isClientBuildCommandSupported()) {
+			return;
+		}
+		
 		final ICompilationUnit cu= context.getCompilationUnit();
 		ASTNode coveringNode = problem.getCoveringNode(context.getASTRoot());
 		if (coveringNode instanceof Name) {
