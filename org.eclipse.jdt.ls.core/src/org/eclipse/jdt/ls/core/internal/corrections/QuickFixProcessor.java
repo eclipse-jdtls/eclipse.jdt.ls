@@ -641,7 +641,7 @@ public class QuickFixProcessor {
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
 
-		// Add proposals related with project steup, like: clean build, clean workspace, etc...
+		// Add proposals related with project setup, like: clean build, clean workspace, etc...
 		switch(id) {
 			case IProblem.ImportNotFound:
 				CleanBuildSubProcessor.cleanBuildForUnresolvedImportProposals(context, problem, proposals);

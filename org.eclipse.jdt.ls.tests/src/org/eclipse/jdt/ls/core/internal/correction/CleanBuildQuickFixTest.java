@@ -14,7 +14,10 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,6 +33,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -57,7 +61,17 @@ public class CleanBuildQuickFixTest extends AbstractQuickFixTest {
 		waitForBackgroundJobs();
 
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActionsForIMarker(cu);
-		Expected e1 = new Expected("Execute 'clean build'", "");
+		assertTrue(hasCleanBuildQuickFix(codeActions));
+
+		ClientPreferences clientPreferences = mock(ClientPreferences.class);
+		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		when(clientPreferences.isClientBuildCommandSupported()).thenReturn(false);
+		
+		codeActions = evaluateCodeActionsForIMarker(cu);
+		assertFalse("Should not have clean build quick fix when client does not support it", hasCleanBuildQuickFix(codeActions));
+	}
+
+	protected boolean hasCleanBuildQuickFix(List<Either<Command, CodeAction>> codeActions) {
 		for (Either<Command, CodeAction> c : codeActions) {
 			if (Objects.equals("Execute 'clean build'", getTitle(c))) {
 				Command commandInCodeAction = c.getRight().getCommand();
@@ -66,9 +80,9 @@ public class CleanBuildQuickFixTest extends AbstractQuickFixTest {
 				List<Object> argumentList = commandInCodeAction.getArguments();
 				assertEquals(1, argumentList.size());
 				assertEquals(true, argumentList.get(0));
-				return;
+				return true;
 			}
 		}
-		fail(e1.name + " not found");
+		return false;
 	}
 }
