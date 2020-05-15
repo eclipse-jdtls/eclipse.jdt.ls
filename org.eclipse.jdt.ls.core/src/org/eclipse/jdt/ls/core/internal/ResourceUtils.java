@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -300,4 +301,33 @@ public final class ResourceUtils {
 		return str;
 	}
 
+	/**
+	 * Returns the longest common path for an array of paths.
+	 */
+	public static IPath getLongestCommonPath(IPath[] paths) {
+		if (paths == null || paths.length == 0) {
+			return null;
+		}
+
+		int common = paths[0].segmentCount() - 1;
+		for (int i = 1; i < paths.length; i++) {
+			common = Math.min(paths[i].segmentCount() - 1, common);
+			if (common <= 0 || !Objects.equals(paths[0].getDevice(), paths[i].getDevice())) {
+				return  null;
+			}
+
+			for (int j = 0; j < common; j++) {
+				if (!Objects.equals(paths[i].segment(j), paths[0].segment(j))) {
+					common = j;
+					break;
+				}
+			}
+		}
+
+		if (common <= 0) {
+			return null;
+		}
+
+		return paths[0].uptoSegment(common);
+	}
 }

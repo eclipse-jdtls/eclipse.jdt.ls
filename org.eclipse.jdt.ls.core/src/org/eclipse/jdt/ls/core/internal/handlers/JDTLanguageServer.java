@@ -779,8 +779,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<WorkspaceEdit> didRenameFiles(FileRenameParams params) {
 		logInfo(">> document/didRenameFiles");
 		return computeAsyncWithClientProgress((monitor) -> {
-			waitForLifecycleJobs(monitor);
-			return FileEventHandler.handleRenameFiles(params, monitor);
+			// The rename refactorings are already handled by willRenameFiles, do nothing with didRenameFiles.
+			return null;
 		});
 	}
 
@@ -788,6 +788,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<WorkspaceEdit> willRenameFiles(FileRenameParams params) {
 		logInfo(">> document/willRenameFiles");
 		return computeAsyncWithClientProgress((monitor) -> {
+			waitForLifecycleJobs(monitor);
 			return FileEventHandler.handleWillRenameFiles(params, monitor);
 		});
 	}

@@ -340,6 +340,8 @@ public abstract class BaseDocumentLifeCycleHandler {
 							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
 							elementInfo.addChild(unit);
 						}
+					} else { // File not exists
+						return unit;
 					}
 				} catch (CoreException e) {
 					// ignored
@@ -422,7 +424,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			synchronized (toReconcile) {
 				toReconcile.remove(unit);
 			}
-			if (isSyntaxMode(unit) || unit.getResource().isDerived()) {
+			if (isSyntaxMode(unit) || !unit.exists() || unit.getResource().isDerived()) {
 				createDiagnosticsHandler(unit).clearDiagnostics();
 			} else if (hasUnsavedChanges(unit)) {
 				unit.discardWorkingCopy();

@@ -70,7 +70,7 @@ public class DocumentSymbolHandler {
 	public List<Either<SymbolInformation, DocumentSymbol>> documentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
 
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
-		if (unit == null) {
+		if (unit == null || !unit.exists()) {
 			return Collections.emptyList();
 		}
 
@@ -90,7 +90,11 @@ public class DocumentSymbolHandler {
 			collectChildren(unit, elements, symbols, monitor);
 			return symbols.toArray(new SymbolInformation[symbols.size()]);
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem getting outline for" + unit.getElementName(), e);
+			if (!unit.exists()) {
+				JavaLanguageServerPlugin.logError("Problem getting outline for " + unit.getElementName() + ": File not found.");
+			} else {
+				JavaLanguageServerPlugin.logException("Problem getting outline for " + unit.getElementName(), e);
+			}
 		}
 		return new SymbolInformation[0];
 	}
@@ -134,7 +138,11 @@ public class DocumentSymbolHandler {
 		} catch (OperationCanceledException e) {
 			logInfo("User abort while collecting the document symbols.");
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem getting outline for" + unit.getElementName(), e);
+			if (!unit.exists()) {
+				JavaLanguageServerPlugin.logError("Problem getting outline for " + unit.getElementName() + ": File not found.");
+			} else {
+				JavaLanguageServerPlugin.logException("Problem getting outline for " + unit.getElementName(), e);
+			}
 		}
 		return emptyList();
 	}

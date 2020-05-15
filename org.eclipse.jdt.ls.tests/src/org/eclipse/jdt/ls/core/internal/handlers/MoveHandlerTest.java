@@ -163,7 +163,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(refactorEdit);
 		assertNotNull(refactorEdit.edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
-		assertEquals(4, changes.size());
+		assertEquals(3, changes.size());
 
 		//@formatter:off
 		String expected = "package jdtls.test1;\r\n" +
@@ -186,12 +186,9 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
 		List<TextEdit> edits = new ArrayList<>(textEdit.getEdits());
-		textEdit = changes.get(2).getLeft();
-		assertNotNull(textEdit);
-		edits.addAll(textEdit.getEdits());
 		assertEquals(expected, TextEditUtil.apply(unitB.getSource(), edits));
 
-		RenameFile renameFile = (RenameFile) changes.get(3).getRight();
+		RenameFile renameFile = (RenameFile) changes.get(2).getRight();
 		assertNotNull(renameFile);
 		assertEquals(JDTUtils.toURI(unitB), renameFile.getOldUri());
 		assertEquals(ResourceUtils.fixURI(unitB.getResource().getRawLocationURI()).replace("test2", "test3"), renameFile.getNewUri());
@@ -221,43 +218,37 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(refactorEdit);
 		assertNotNull(refactorEdit.edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> changes = refactorEdit.edit.getDocumentChanges();
-		assertEquals(6, changes.size());
+		assertEquals(4, changes.size());
 
 		//@formatter:off
 		String expected = "package jdtls.test2;\r\n" +
 				"\r\n" +
-				"public class A {\r\n" +
-				"	private B b = new B();\r\n" +
+				"public class B {\r\n" +
 				"}";
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
 		List<TextEdit> edits = new ArrayList<>(textEdit.getEdits());
-		textEdit = changes.get(4).getLeft();
-		assertNotNull(textEdit);
-		edits.addAll(textEdit.getEdits());
-		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), edits));
-
-		//@formatter:off
-		expected = "package jdtls.test2;\r\n" +
-				"\r\n" +
-				"public class B {\r\n" +
-				"}";
-		//@formatter:on
-		textEdit = changes.get(1).getLeft();
-		assertNotNull(textEdit);
-		edits = new ArrayList<>(textEdit.getEdits());
-		textEdit = changes.get(2).getLeft();
-		assertNotNull(textEdit);
-		edits.addAll(textEdit.getEdits());
 		assertEquals(expected, TextEditUtil.apply(unitB.getSource(), edits));
 
-		RenameFile renameFileB = (RenameFile) changes.get(3).getRight();
+		RenameFile renameFileB = (RenameFile) changes.get(1).getRight();
 		assertNotNull(renameFileB);
 		assertEquals(JDTUtils.toURI(unitB), renameFileB.getOldUri());
 		assertEquals(ResourceUtils.fixURI(unitB.getResource().getRawLocationURI()).replace("test1", "test2"), renameFileB.getNewUri());
 
-		RenameFile renameFileA = (RenameFile) changes.get(5).getRight();
+		//@formatter:off
+		expected = "package jdtls.test2;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	private B b = new B();\r\n" +
+				"}";
+		//@formatter:on
+		textEdit = changes.get(2).getLeft();
+		assertNotNull(textEdit);
+		edits = new ArrayList<>(textEdit.getEdits());
+		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), edits));
+
+		RenameFile renameFileA = (RenameFile) changes.get(3).getRight();
 		assertNotNull(renameFileA);
 		assertEquals(JDTUtils.toURI(unitA), renameFileA.getOldUri());
 		assertEquals(ResourceUtils.fixURI(unitA.getResource().getRawLocationURI()).replace("test1", "test2"), renameFileA.getNewUri());
