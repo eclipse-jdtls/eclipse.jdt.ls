@@ -105,6 +105,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		this.preferenceManager = preferenceManager;
 	}
 
+	@Override
 	public void cleanInvalidProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 20);
 		deleteInvalidProjects(rootPaths, subMonitor.split(10));
@@ -202,6 +203,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		return result;
 	}
 
+	@Override
 	public void fileChanged(String uriString, CHANGE_TYPE changeType) {
 		if (uriString == null) {
 			return;
@@ -390,6 +392,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		return Collections.emptyList();
 	}
 
+	@Override
 	public void registerListeners() {
 		if (this.preferenceChangeListener == null) {
 			this.preferenceChangeListener = new IPreferencesChangeListener() {

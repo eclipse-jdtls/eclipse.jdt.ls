@@ -106,6 +106,25 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
+	public void importProjects(IProgressMonitor monitor) {
+		WorkspaceJob job = new WorkspaceJob("Importing projects in workspace...") {
+
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				try {
+					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
+				} catch (OperationCanceledException e) {
+					JavaLanguageServerPlugin.logInfo("Importing projects job has been cancelled.");
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Importing projects failed.", e);
+				}
+				return null;
+			}
+		};
+		job.setRule(getWorkspaceRoot());
+		job.schedule();
+	}
+
 	@Override
 	public Job updateWorkspaceFolders(Collection<IPath> addedRootPaths, Collection<IPath> removedRootPaths) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating workspace folders: Adding " + addedRootPaths.size() + " folder(s), removing " + removedRootPaths.size() + " folders.");
