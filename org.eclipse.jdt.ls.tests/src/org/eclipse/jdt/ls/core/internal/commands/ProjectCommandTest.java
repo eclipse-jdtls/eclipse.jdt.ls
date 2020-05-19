@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -162,5 +163,12 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         String testUri = project.getFile("src/test/java/LibraryTest.java").getLocationURI().toString();
         assertFalse(ProjectCommand.isTestFile(srcUri));
         assertTrue(ProjectCommand.isTestFile(testUri));
+    }
+
+    @Test
+    public void getAllJavaProject() throws Exception {
+        importProjects("maven/multimodule");
+        List<URI> projects = ProjectCommand.getAllJavaProject();
+        assertEquals(3, projects.size());
     }
 }

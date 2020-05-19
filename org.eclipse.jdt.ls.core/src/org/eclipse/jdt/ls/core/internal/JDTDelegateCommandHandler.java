@@ -67,6 +67,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
+				case "java.project.getAll":
+					return ProjectCommand.getAllJavaProject();
 				case "java.project.refreshDiagnostics":
 					return DiagnosticsCommand.refreshDiagnostics((String) arguments.get(0), (String) arguments.get(1), (boolean) arguments.get(2));
 				case "java.project.provideSemanticTokens":
