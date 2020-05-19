@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -39,9 +40,12 @@ import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -60,7 +64,7 @@ public class Preferences {
 	 * Specifies Java Execution Environments.
 	 */
 	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";
-	public static final Set<String> JAVA_CONFIGURATION_RUNTIMES_DEFAULT;
+	public static final List<String> JAVA_CONFIGURATION_RUNTIMES_DEFAULT;
 	/**
 	 * Specifies the file path to the formatter xml url.
 	 */
@@ -208,6 +212,15 @@ public class Preferences {
 	 * Preference key to enable/disable the selection range.
 	 */
 	public static final String SELECTIONRANGE_ENABLED_KEY = "java.selectionRange.enabled";
+
+	/**
+	 * A named preference that holds the allowed gradle wrapper sha256 checksums.
+	 * <p>
+	 * Value is of type <code>String</code>: list of checksums.
+	 * </p>
+	 */
+	public static final String JAVA_GRADLE_WRAPPER_SHA256_KEY = "java.imports.gradle.wrapper.checksums";
+	public static final List<String> JAVA_GRADLE_WRAPPER_SHA256_DEFAULT;
 
 	/**
 	 * A named preference that holds the favorite static members.
@@ -412,6 +425,8 @@ public class Preferences {
 	private String mavenUserSettings;
 
 	private List<String> javaCompletionFavoriteMembers;
+	private List<String> sha256Allowed;
+	private List<String> sha256Disallowed;
 
 	private List<String> javaImportExclusions = new LinkedList<>();
 	private ReferencedLibraries referencedLibraries;
@@ -430,7 +445,8 @@ public class Preferences {
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
-		JAVA_CONFIGURATION_RUNTIMES_DEFAULT = new HashSet<>();
+		JAVA_CONFIGURATION_RUNTIMES_DEFAULT = new ArrayList<>();
+		JAVA_GRADLE_WRAPPER_SHA256_DEFAULT = new ArrayList<>();
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/node_modules/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/.metadata/**");
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT.add("**/archetype-resources/**");
@@ -731,6 +747,43 @@ public class Preferences {
 		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
 
+		List<?> gradleWrapperList = getList(configuration, JAVA_GRADLE_WRAPPER_SHA256_KEY, JAVA_GRADLE_WRAPPER_SHA256_DEFAULT);
+		List<String> sha256Allowed = new ArrayList<>();
+		List<String> sha256Disallowed = new ArrayList<>();
+		for (Object object : gradleWrapperList) {
+			if (object instanceof Map) {
+				Map<?, ?> map = (Map<?, ?>) object;
+				final ChecksumWrapper sha256 = prefs.new ChecksumWrapper();
+				sha256.allowed = true;
+				map.forEach((k, v) -> {
+					if (k instanceof String) {
+						switch ((String) k) {
+							case "sha256":
+								if (v instanceof String) {
+									sha256.checksum = (String) v;
+								}
+								break;
+							case "allowed":
+								if (v instanceof Boolean) {
+									sha256.allowed = (Boolean) v;
+								}
+								break;
+							default:
+								break;
+						}
+					}
+				});
+				if (sha256.checksum != null) {
+					if (sha256.allowed) {
+						sha256Allowed.add(sha256.checksum);
+					} else {
+						sha256Disallowed.add(sha256.checksum);
+					}
+				}
+			}
+		}
+		prefs.putSha256(sha256Allowed, sha256Disallowed);
+
 		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
 
@@ -771,7 +824,7 @@ public class Preferences {
 		int staticOnDemandThreshold = getInt(configuration, IMPORTS_STATIC_ONDEMANDTHRESHOLD, IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT);
 		prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
 
-		List<?> runtimeList = getList(configuration, JAVA_CONFIGURATION_RUNTIMES, JAVA_IMPORT_ORDER_DEFAULT);
+		List<?> runtimeList = getList(configuration, JAVA_CONFIGURATION_RUNTIMES, JAVA_CONFIGURATION_RUNTIMES_DEFAULT);
 		Set<RuntimeEnvironment> runtimes = new HashSet<>();
 		boolean[] hasDefault = { false };
 		for (Object object : runtimeList) {
@@ -885,6 +938,24 @@ public class Preferences {
 
 	public Preferences setJavaCompletionFavoriteMembers(List<String> javaCompletionFavoriteMembers) {
 		this.javaCompletionFavoriteMembers = (javaCompletionFavoriteMembers == null || javaCompletionFavoriteMembers.isEmpty()) ? JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT : javaCompletionFavoriteMembers;
+		return this;
+	}
+
+	public Preferences putSha256(List<String> sha256Allowed, List<String> sha256Disallowed) {
+		List<String> oldAllowed = this.sha256Allowed;
+		List<String> oldDisallowed = this.sha256Disallowed;
+		WrapperValidator.clear();
+		this.sha256Allowed = sha256Allowed;
+		if (sha256Disallowed != null) {
+			WrapperValidator.disallow(sha256Disallowed);
+		}
+		this.sha256Disallowed = sha256Disallowed;
+		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
+		if (projectsManager != null && (!Objects.equals(oldAllowed, this.sha256Allowed) || !Objects.equals(oldDisallowed, this.sha256Disallowed))) {
+			for (IProject project : ProjectUtils.getGradleProjects()) {
+				projectsManager.updateProject(project, true);
+			}
+		}
 		return this;
 	}
 
@@ -1090,6 +1161,10 @@ public class Preferences {
 
 	public String[] getJavaCompletionFavoriteMembers() {
 		return javaCompletionFavoriteMembers.toArray(new String[0]);
+	}
+
+	public List<String> getSha256Allowed() {
+		return sha256Allowed;
 	}
 
 	public String getJavaHome() {
@@ -1366,5 +1441,10 @@ public class Preferences {
 		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_STATIC_ONDEMANDTHRESHOLD, String.valueOf(this.staticImportOnDemandThreshold));
 		return this;
+	}
+
+	class ChecksumWrapper {
+		private String checksum;
+		private boolean allowed;
 	}
 }

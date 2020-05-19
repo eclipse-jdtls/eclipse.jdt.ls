@@ -221,6 +221,14 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("clientDocumentSymbolProvider", "false").toString());
 	}
 
+	public boolean isActionableNotificationSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("actionableNotificationSupported", "false").toString());
+	}
+
+	public boolean isGradleChecksumWrapperPromptSupport() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("gradleChecksumWrapperPromptSupport", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null
