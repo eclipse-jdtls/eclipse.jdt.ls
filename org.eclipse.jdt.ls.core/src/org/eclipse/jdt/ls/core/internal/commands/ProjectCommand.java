@@ -130,15 +130,15 @@ public class ProjectCommand {
 		return false;
 	}
 
-	public static List<URI> getAllJavaProject() {
-		List<URI> javaProejcts = new LinkedList<>();
+	public static List<URI> getAllJavaProjects() {
+		List<URI> javaProjects = new LinkedList<>();
 		for (IJavaProject javaProejct : ProjectUtils.getJavaProjects()) {
 			if (ResourcesPlugin.getWorkspace().getRoot().getProject(ProjectsManager.DEFAULT_PROJECT_NAME).equals(javaProejct.getProject())) {
 				continue;
 			}
-			javaProejcts.add(ProjectUtils.getProjectRealFolder(javaProejct.getProject()).toFile().toURI());
+			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProejct.getProject()).toFile().toURI());
 		}
-		return javaProejcts;
+		return javaProjects;
 	}
 
 	private static IPath[] listTestSourcePaths(IJavaProject project) throws JavaModelException {
