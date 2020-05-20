@@ -54,6 +54,7 @@ import com.google.gson.reflect.TypeToken;
  */
 public class WrapperValidator {
 
+	private static final int QUEUE_LENGTH = 20;
 	private static final String WRAPPER_CHECKSUM_URL = "wrapperChecksumUrl";
 	private static final String GRADLE_WRAPPER_JAR = "gradle/wrapper/gradle-wrapper.jar";
 
@@ -61,9 +62,15 @@ public class WrapperValidator {
 	private static Set<String> disallowed = new HashSet<>();
 	private static AtomicBoolean downloaded = new AtomicBoolean(false);
 	private HashProvider hashProvider;
+	private int queueLength;
+
+	public WrapperValidator(int queueLength) {
+		this.hashProvider = new HashProvider();
+		queueLength = queueLength;
+	}
 
 	public WrapperValidator() {
-		this.hashProvider = new HashProvider();
+		this(QUEUE_LENGTH);
 	}
 
 	public ValidationResult checkWrapper(String baseDir) throws CoreException {
@@ -118,7 +125,7 @@ public class WrapperValidator {
 							File sha256File = new File(cacheDir, fileName);
 							if (!sha256File.exists() || sha256File.lastModified() < versionFile.lastModified()) {
 								count++;
-								if (count > 20) {
+								if (count > queueLength) {
 									downloadJob.schedule();
 									downloadJob = new DownloadChecksumJob();
 									count = 0;

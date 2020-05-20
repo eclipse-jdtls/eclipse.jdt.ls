@@ -29,7 +29,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.gradle.api.UncheckedIOException;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -69,8 +68,8 @@ public class DownloadChecksumJob extends Job {
 			final HttpURLConnection connection;
 			try {
 				connection = (HttpURLConnection) url.openConnection();
-				connection.setConnectTimeout(10000);
-				connection.setReadTimeout(10000);
+				connection.setConnectTimeout(30000);
+				connection.setReadTimeout(30000);
 			} catch (IOException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				continue;
@@ -82,7 +81,8 @@ public class DownloadChecksumJob extends Job {
 				WrapperValidator.allow(sha256);
 				subMonitor.worked(2);
 			} catch (Exception e) {
-				throw new UncheckedIOException("Cannot download Gradle sha256 checksum: " + url.toString(), e);
+				JavaLanguageServerPlugin.logException("Cannot download Gradle sha256 checksum: " + url.toString(), e);
+				continue;
 			}
 		}
 		subMonitor.done();
