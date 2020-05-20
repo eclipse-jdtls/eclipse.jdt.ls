@@ -1,6 +1,7 @@
 # Change Log
 
 # [0.56.0 (May 21st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/74?closed=1)
+ * enhancement - Recognize new maven, gradle, eclipse project(s) after first init. See [#144](https://github.com/eclipse/eclipse.jdt.ls/issues/144).
  * enhancement - Add a new command to get all Java projects. See [#1447](https://github.com/eclipse/eclipse.jdt.ls/pull/1447).
  * enhancement - Expand the API usages. See [#1446](https://github.com/eclipse/eclipse.jdt.ls/pull/1446).
  * enhancement - Use default JVM when importing gradle project. See [#1430](https://github.com/eclipse/eclipse.jdt.ls/pull/1430).
