@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +44,7 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 
@@ -126,6 +128,14 @@ public class ProjectCommand {
 			}
 		}
 		return false;
+	}
+
+	public static List<URI> getAllJavaProjects() {
+		List<URI> javaProjects = new LinkedList<>();
+		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProject.getProject()).toFile().toURI());
+		}
+		return javaProjects;
 	}
 
 	private static IPath[] listTestSourcePaths(IJavaProject project) throws JavaModelException {

@@ -79,6 +79,9 @@
                   id="java.project.isTestFile">
             </command>
             <command
+                  id="java.project.getAll">
+            </command>
+            <command
                   id="java.project.refreshDiagnostics">
             </command>
             <command
