@@ -372,6 +372,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		this.client = client;
 	}
 
+	public JavaLanguageClient getConnection() {
+		return this.client;
+	}
+
 	private String getWorkspaceInfo() {
 		StringBuilder b = new StringBuilder();
 		b.append("Projects:\n");

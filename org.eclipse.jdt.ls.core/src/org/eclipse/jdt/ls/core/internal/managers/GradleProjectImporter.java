@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
@@ -42,6 +44,11 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
+import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
+import org.eclipse.lsp4j.ExecuteCommandParams;
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
 
 /**
  * @author Fred Bricon
@@ -58,6 +65,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
 	public static final String IMPORTING_GRADLE_PROJECTS = "Importing Gradle project(s)";
+
+	//@formatter:off
+	public static final String GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE =
+			"Security Warning! The gradle wrapper '@wrapper@' could be malicious. "
+			+ "If you trust it, please add \n"
+			+ "`{\"sha256\": \"@checksum@\","
+			+ "\n\"allowed\": true}`"
+			+ "\n to the `java.import.gradle.wrapper.checksums` preference."
+			+ ""
+			.replaceAll("\n", System.lineSeparator());
+	//@formatter:on
 
 	private Collection<Path> directories;
 
@@ -107,13 +125,39 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
-		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGradleWrapperEnabled() && Files.exists(rootFolder.resolve("gradlew"))) {
-			return GradleDistribution.fromBuild();
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager != null && preferencesManager.getPreferences().isGradleWrapperEnabled() && Files.exists(rootFolder.resolve("gradlew"))) {
+			WrapperValidator validator = new WrapperValidator();
+			try {
+				ValidationResult result = validator.checkWrapper(rootFolder.toFile().getAbsolutePath());
+				if (result.isValid()) {
+					WrapperGradleDistribution gradleDistribution = GradleDistribution.fromBuild();
+					return gradleDistribution;
+				} else {
+					if (!WrapperValidator.contains(result.getChecksum())) {
+						ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
+						if (pm != null && pm.getConnection() != null) {
+							if (preferencesManager.getClientPreferences().isGradleChecksumWrapperPromptSupport()) {
+								String id = "gradle/checksum/prompt";
+								ExecuteCommandParams params = new ExecuteCommandParams(id, asList(result.getWrapperJar(), result.getChecksum()));
+								pm.getConnection().sendNotification(params);
+							} else {
+								//@formatter:off
+								String message = GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE.replaceAll("@wrapper@", result.getWrapperJar()).replaceAll("@checksum@", result.getChecksum());
+								//@formatter:on
+								pm.getConnection().showMessage(new MessageParams(MessageType.Error, message));
+							}
+						}
+					}
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 		}
-		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion() != null) {
+		if (preferencesManager != null && preferencesManager.getPreferences().getGradleVersion() != null) {
 			List<GradleVersion> versions = CorePlugin.publishedGradleVersions().getVersions();
 			GradleVersion gradleVersion = null;
-			String versionString = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleVersion();
+			String versionString = preferencesManager.getPreferences().getGradleVersion();
 			GradleVersion requiredVersion = GradleVersion.version(versionString);
 			for (GradleVersion version : versions) {
 				if (version.compareTo(requiredVersion) == 0) {
