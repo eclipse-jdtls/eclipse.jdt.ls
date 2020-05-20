@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -69,7 +70,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		assertTrue(pom.exists());
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.5</version>", "<version>3.6</version>"));
 
-		projectsManager.fileChanged(pom.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
+		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 		waitForBackgroundJobs();
 
 		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
