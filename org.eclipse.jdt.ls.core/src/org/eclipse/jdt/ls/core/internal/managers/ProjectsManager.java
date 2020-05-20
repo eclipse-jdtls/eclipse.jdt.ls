@@ -114,11 +114,11 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				try {
 					importProjects(preferenceManager.getPreferences().getRootPaths(), monitor);
 				} catch (OperationCanceledException e) {
-					JavaLanguageServerPlugin.logInfo("Importing projects job has been cancelled.");
+					return Status.CANCEL_STATUS;
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException("Importing projects failed.", e);
+					return new Status(Status.ERROR, IConstants.PLUGIN_ID, "Importing projects failed.", e);
 				}
-				return null;
+				return Status.OK_STATUS;
 			}
 		};
 		job.setRule(getWorkspaceRoot());
