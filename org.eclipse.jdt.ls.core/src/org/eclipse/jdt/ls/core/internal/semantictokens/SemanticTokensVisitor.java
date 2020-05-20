@@ -18,10 +18,13 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 
@@ -29,6 +32,8 @@ public class SemanticTokensVisitor extends ASTVisitor {
     private IDocument document;
     private SemanticTokenManager manager;
     private List<SemanticToken> tokens;
+
+    public final static ITokenModifier[] NO_MODIFIERS = {};
 
     public SemanticTokensVisitor(IDocument document, SemanticTokenManager manager) {
         this.manager = manager;
@@ -85,6 +90,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
                 currentColumn = 0;
             }
             int deltaColumn = column - currentColumn;
+            currentColumn = column;
             int tokenTypeIndex = manager.getTokenTypes().indexOf(token.getTokenType());
             ITokenModifier[] modifiers = token.getTokenModifiers();
             int encodedModifiers = 0;
@@ -111,6 +117,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
     }
 
     @Override
+    public boolean visit(QualifiedName node) {
+        IBinding binding = node.resolveBinding();
+        if (binding != null && binding.getKind() == IBinding.PACKAGE) {
+            addToken(node, TokenType.NAMESPACE, NO_MODIFIERS);
+            return false;
+        }
+        return super.visit(node);
+    }
+
+    @Override
     public boolean visit(SimpleName node) {
         IBinding binding = node.resolveBinding();
         if (binding == null) {
@@ -121,28 +137,47 @@ public class SemanticTokensVisitor extends ASTVisitor {
         switch (binding.getKind()) {
             case IBinding.VARIABLE: {
                 if (((IVariableBinding) binding).isField()) {
+                    tokenType = TokenType.PROPERTY;
+                } else {
                     tokenType = TokenType.VARIABLE;
                 }
                 break;
             }
             case IBinding.METHOD: {
-                tokenType = TokenType.METHOD;
+                tokenType = TokenType.FUNCTION;
+                break;
+            }
+            case IBinding.TYPE: {
+                tokenType = TokenType.TYPE;
+                break;
+            }
+            case IBinding.PACKAGE: {
+                tokenType = TokenType.NAMESPACE;
                 break;
             }
             default:
                 break;
         }
 
-        if (tokenType != null) {
-            List<ITokenModifier> modifierList = new ArrayList<>(manager.getTokenModifiers().values().size());
-            for (ITokenModifier tokenModifier : manager.getTokenModifiers().values()) {
-                if (tokenModifier.applies(binding)) {
-                    modifierList.add(tokenModifier);
-                }
+        if (tokenType == null) {
+            return super.visit(node);
+        }
+
+        switch (tokenType) {
+            case FUNCTION:
+            case VARIABLE:
+            case PROPERTY:
+            case MEMBER: {
+                ITokenModifier[] modifiers = getModifiers(binding);
+                addToken(node, tokenType, modifiers);
+                break;
             }
-            ITokenModifier[] modifiers = new ITokenModifier[modifierList.size()];
-            modifierList.toArray(modifiers);
-            addToken(node, tokenType, modifiers);
+            case TYPE:
+            case NAMESPACE:
+                addToken(node, tokenType, NO_MODIFIERS);
+                break;
+            default:
+                break;
         }
 
         return super.visit(node);
@@ -153,6 +188,20 @@ public class SemanticTokensVisitor extends ASTVisitor {
         return super.visit(node);
     }
 
+    private ITokenModifier[] getModifiers(IBinding binding) {
+        return manager.getTokenModifiers().values().stream()
+                      .filter(tm -> tm.applies(binding))
+                      .toArray(size -> new ITokenModifier[size]);
+    }
 
+    @Override
+    public boolean visit(SimpleType node) {
+        ASTNode parent = node.getParent();
+        if (parent instanceof ClassInstanceCreation) { // For ClassInstanceCreation "new E()", "E" should be highlighted as 'function' instead of 'type'
+            addToken(node, TokenType.FUNCTION, NO_MODIFIERS);
+            return false;
+        }
+        return super.visit(node);
+    }
 
 }

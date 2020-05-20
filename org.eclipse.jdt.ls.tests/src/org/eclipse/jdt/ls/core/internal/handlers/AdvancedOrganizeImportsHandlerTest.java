@@ -17,12 +17,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
@@ -79,5 +83,51 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 				"}";
 		//@formatter:on
 		compareSource(expected, unit.getSource());
+	}
+
+	@Test
+	public void testStaticImports() throws ValidateEditException, CoreException, IOException {
+		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
+		try {
+			List<String> list = new ArrayList<>();
+			list.add("java.lang.Math.*");
+			list.add("java.util.stream.Collectors.*");
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(list);
+			//@formatter:off
+			IPackageFragment pack = fRoot.createPackageFragment("p1", true, null);
+			ICompilationUnit unit = pack.createCompilationUnit("C.java",
+					"package p1;\n" +
+					"\n" +
+					"public class C {\n" +
+					"    List list = List.of(1).stream().collect(toList());\n" +
+					"    double i = abs(-1);\n" +
+					"    double pi = PI;\n" +
+					"}\n"
+					, true, null);
+			//@formatter:on
+			TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
+				return new ImportCandidate[0];
+			});
+			assertNotNull(edit);
+			JavaModelUtil.applyEdit(unit, edit, true, null);
+			/* @formatter:off */
+			String expected = "package p1;\n" +
+					"\n" +
+					"import static java.lang.Math.PI;\n" +
+					"import static java.lang.Math.abs;\n" +
+					"import static java.util.stream.Collectors.toList;\n" +
+					"\n" +
+					"import java.util.List;\n" +
+					"\n" +
+					"public class C {\n" +
+					"    List list = List.of(1).stream().collect(toList());\n" +
+					"    double i = abs(-1);\n" +
+					"    double pi = PI;\n" +
+					"}\n";
+			//@formatter:on
+			compareSource(expected, unit.getSource());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
+		}
 	}
 }

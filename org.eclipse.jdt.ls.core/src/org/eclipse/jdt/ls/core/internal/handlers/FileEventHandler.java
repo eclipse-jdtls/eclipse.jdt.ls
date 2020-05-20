@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,22 +24,31 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
+import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.ListCommandResult;
+import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.SourcePath;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenamePackageProcessor;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
-import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.ltk.core.refactoring.RefactoringTickProvider;
 import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
+import org.eclipse.ltk.internal.core.refactoring.NotCancelableProgressMonitor;
 
 public class FileEventHandler {
 
@@ -75,7 +85,7 @@ public class FileEventHandler {
 					}
 					unit = units[0];
 				}
-	
+
 				if (unit != null) {
 					String oldPrimaryType = getPrimaryTypeName(oldUri);
 					String newPrimaryType = getPrimaryTypeName(newUri);
@@ -95,12 +105,99 @@ public class FileEventHandler {
 		return root;
 	}
 
+	public static WorkspaceEdit handleWillRenameFiles(FileRenameParams params, IProgressMonitor monitor) {
+		if (params.files == null || params.files.isEmpty()) {
+			return null;
+		}
+
+		FileRenameEvent[] renamefolders = params.files.stream().filter(event -> isFolderRenameEvent(event)).toArray(FileRenameEvent[]::new);
+		if (renamefolders.length == 0) {
+			return null;
+		}
+
+		SourcePath[] sourcePaths = getSourcePaths();
+		if (sourcePaths == null || sourcePaths.length == 0) {
+			return null;
+		}
+
+		return computePackageRenameEdit(renamefolders, sourcePaths, monitor);
+	}
+
+	private static WorkspaceEdit computePackageRenameEdit(FileRenameEvent[] renameEvents, SourcePath[] sourcePaths, IProgressMonitor monitor) {
+		WorkspaceEdit[] root = new WorkspaceEdit[1];
+		SubMonitor submonitor = SubMonitor.convert(monitor, "Computing package rename updates...", 100 * renameEvents.length);
+		for (FileRenameEvent event : renameEvents) {
+			IPath oldLocation = ResourceUtils.filePathFromURI(event.oldUri);
+			IPath newLocation = ResourceUtils.filePathFromURI(event.newUri);
+			for (SourcePath sourcePath : sourcePaths) {
+				IPath sourceLocation = Path.fromOSString(sourcePath.path);
+				IPath sourceEntry = Path.fromOSString(sourcePath.classpathEntry);
+				if (sourceLocation.isPrefixOf(oldLocation)) {
+					SubMonitor renameMonitor = submonitor.split(100);
+					try {
+						IJavaProject javaProject = ProjectUtils.getJavaProject(sourcePath.projectName);
+						if (javaProject == null) {
+							break;
+						}
+
+						IPackageFragmentRoot packageRoot = javaProject.findPackageFragmentRoot(sourceEntry);
+						if (packageRoot == null) {
+							break;
+						}
+
+						String oldPackageName = String.join(".", oldLocation.makeRelativeTo(sourceLocation).segments());
+						String newPackageName = String.join(".", newLocation.makeRelativeTo(sourceLocation).segments());
+						IPackageFragment oldPackageFragment = packageRoot.getPackageFragment(oldPackageName);
+						if (oldPackageFragment != null && !oldPackageFragment.isDefaultPackage() && oldPackageFragment.getResource() != null) {
+							oldPackageFragment.getResource().refreshLocal(IResource.DEPTH_INFINITE, null);
+							if (oldPackageFragment.exists()) {
+								ResourcesPlugin.getWorkspace().run((pm) -> {
+									WorkspaceEdit edit = getRenameEdit(oldPackageFragment, newPackageName, pm);
+									root[0] = ChangeUtil.mergeChanges(root[0], edit, true);
+								}, oldPackageFragment.getSchedulingRule(), IResource.NONE, renameMonitor);
+							}
+						}
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException("Failed to compute the package rename update", e);
+					} finally {
+						renameMonitor.done();
+					}
+
+					break;
+				}
+			}
+		}
+
+		submonitor.done();
+		return ChangeUtil.hasChanges(root[0]) ? root[0] : null;
+	}
+
+	private static SourcePath[] getSourcePaths() {
+		SourcePath[] sourcePaths = new SourcePath[0];
+		ListCommandResult result = (ListCommandResult) BuildPathCommand.listSourcePaths();
+		if (result.status && result.data != null && result.data.length > 0) {
+			sourcePaths = result.data;
+		}
+
+		Arrays.sort(sourcePaths, (a, b) -> {
+			return b.path.length() - a.path.length();
+		});
+
+		return sourcePaths;
+	}
+
 	private static boolean isFileNameRenameEvent(FileRenameEvent event) {
 		IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
 		IPath newPath = ResourceUtils.filePathFromURI(event.newUri);
-		return oldPath.lastSegment().endsWith(".java")
+		return newPath.toFile().isFile() && oldPath.lastSegment().endsWith(".java")
 			&& newPath.lastSegment().endsWith(".java")
 			&& Objects.equals(oldPath.removeLastSegments(1), newPath.removeLastSegments(1));
+	}
+
+	private static boolean isFolderRenameEvent(FileRenameEvent event) {
+		IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
+		IPath newPath = ResourceUtils.filePathFromURI(event.newUri);
+		return (oldPath.toFile().isDirectory() || newPath.toFile().isDirectory()) && Objects.equals(oldPath.removeLastSegments(1), newPath.removeLastSegments(1));
 	}
 
 	private static String getPrimaryTypeName(String uri) {
@@ -137,16 +234,21 @@ public class FileEventHandler {
 			return null;
 		}
 
-		RenameRefactoring renameRefactoring = renameSupport.getRenameRefactoring();
-
-		CheckConditionsOperation check = new CheckConditionsOperation(renameRefactoring, CheckConditionsOperation.ALL_CONDITIONS);
-		CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-		create.run(monitor);
-		if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
-			JavaLanguageServerPlugin.logError(check.getStatus().getMessageMatchingSeverity(RefactoringStatus.ERROR));
+		if (targetElement instanceof IPackageFragment) {
+			((RenamePackageProcessor) renameSupport.getJavaRenameProcessor()).setRenameSubpackages(true);
 		}
 
-		Change change = create.getChange();
+		RenameRefactoring renameRefactoring = renameSupport.getRenameRefactoring();
+		RefactoringTickProvider rtp = renameRefactoring.getRefactoringTickProvider();
+		SubMonitor submonitor = SubMonitor.convert(monitor, "Creating rename changes...", rtp.getAllTicks());
+		CheckConditionsOperation checkConditionOperation = new CheckConditionsOperation(renameRefactoring, CheckConditionsOperation.ALL_CONDITIONS);
+		checkConditionOperation.run(submonitor.split(rtp.getCheckAllConditionsTicks()));
+		if (checkConditionOperation.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
+			JavaLanguageServerPlugin.logError(checkConditionOperation.getStatus().getMessageMatchingSeverity(RefactoringStatus.ERROR));
+		}
+
+		Change change = renameRefactoring.createChange(submonitor.split(rtp.getCreateChangeTicks()));
+		change.initializeValidationData(new NotCancelableProgressMonitor(submonitor.split(rtp.getInitializeChangeTicks())));
 		return ChangeUtil.convertToWorkspaceEdit(change);
 	}
 

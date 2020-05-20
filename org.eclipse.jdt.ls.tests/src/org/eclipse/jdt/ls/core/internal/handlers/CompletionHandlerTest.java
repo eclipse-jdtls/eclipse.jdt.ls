@@ -1811,6 +1811,36 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	return strField;\n" +
 				"}", ci.getTextEdit());
 	}
+	
+	@Test
+	public void testCompletion_getterNoJavadoc() throws Exception {
+		preferences.setCodeGenerationTemplateGenerateComments(false);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    private String strField;\n" +
+						"    get" +
+				"}\n");
+
+		int[] loc = findCompletionLocation(unit, "get");
+
+
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("getStrField() : String"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("getStrField", ci.getInsertText());
+		assertEquals(CompletionItemKind.Method, ci.getKind());
+		assertEquals("999999979", ci.getSortText());
+		assertNotNull(ci.getTextEdit());
+		assertTextEdit(2, 4, 7, 
+				"public String getStrField() {\n" +
+				"	return strField;\n" +
+				"}", ci.getTextEdit());
+	}
 
 	@Test
 	public void testCompletion_booleangetter() throws Exception {
@@ -2628,7 +2658,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		prefs.setJavaCompletionFavoriteMembers(favorites);
 		prefs.setImportOnDemandThreshold(2);
 		prefs.setStaticImportOnDemandThreshold(2);
+		long timeout = Long.getLong("completion.timeout", 5000);
+
 		try {
+			System.setProperty("completion.timeout", String.valueOf(60000));
 			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
 			//@formatter:off
 			"package test1;\n" +
@@ -2666,6 +2699,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			prefs.setJavaCompletionFavoriteMembers(oldFavorites);
 			prefs.setImportOnDemandThreshold(onDemandThreshold);
 			prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
+			System.setProperty("completion.timeout", String.valueOf(timeout));
 		}
 	}
 

@@ -14,12 +14,17 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -29,8 +34,10 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.ClasspathEntry;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
@@ -56,8 +63,9 @@ public class ProjectCommand {
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
 	 * @throws CoreException
+	 * @throws URISyntaxException
 	 */
-	public static Map<String, String> getProjectSettings(String uri, List<String> settingKeys) throws CoreException {
+	public static Map<String, String> getProjectSettings(String uri, List<String> settingKeys) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = getJavaProjectFromUri(uri);
 		Map<String, String> settings = new HashMap<>();
 		for (String key : settingKeys) {
@@ -76,8 +84,9 @@ public class ProjectCommand {
 	 * @return <code>ClasspathResult</code> containing both classpaths and
 	 *         modulepaths.
 	 * @throws CoreException
+	 * @throws URISyntaxException
 	 */
-	public static ClasspathResult getClasspaths(String uri, ClasspathOptions options) throws CoreException {
+	public static ClasspathResult getClasspaths(String uri, ClasspathOptions options) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = getJavaProjectFromUri(uri);
 		Optional<IBuildSupport> bs = JavaLanguageServerPlugin.getProjectsManager().getBuildSupport(javaProject.getProject());
 		if (!bs.isPresent()) {
@@ -148,23 +157,50 @@ public class ProjectCommand {
 			// attribute name could be "maven.scope" for Maven, "gradle_scope" or "gradle_used_by_scope" for Gradle
 			if (attributeName.contains("scope")) {
 				// the attribute value could be "test" or "integrationTest"
-				return attribute.getValue() != null && attribute.getValue().toLowerCase().contains(TEST_SCOPE_VALUE); 
+				return attribute.getValue() != null && attribute.getValue().toLowerCase().contains(TEST_SCOPE_VALUE);
 			}
 		}
 
 		return false;
 	}
 
-	private static IJavaProject getJavaProjectFromUri(String uri) throws CoreException {
+	/**
+	 * public visibility only for test purpose
+	 */
+	public static IJavaProject getJavaProjectFromUri(String uri) throws CoreException, URISyntaxException {
 		ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
-		if (typeRoot == null) {
-			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to an existing TypeRoot."));
+		if (typeRoot != null) {
+			IJavaProject javaProject = typeRoot.getJavaProject();
+			if (javaProject == null) {
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to an existing Java project."));
+			}
+			return javaProject;
 		}
-		IJavaProject javaProject = typeRoot.getJavaProject();
-		if (javaProject == null) {
-			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to an existing Java project."));
+		
+		// check for project root uri
+		IContainer[] containers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(new URI(uri));
+		if (containers == null || containers.length == 0) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to any Java project."));
 		}
-		return javaProject;
+		
+		// For multi-module scenario
+		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
+			return a.getFullPath().toPortableString().length() - b.getFullPath().toPortableString().length();
+		});
+
+		IJavaElement targetElement = null;
+		for (IContainer container : containers) {
+			targetElement = JavaCore.create(container);
+			if (targetElement != null) {
+				break;
+			}
+		}
+
+		if (targetElement == null || targetElement.getJavaProject() == null) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Given URI does not belong to any Java project."));
+		}
+
+		return targetElement.getJavaProject();
 	}
 
 	public static class ClasspathOptions {

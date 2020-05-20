@@ -753,6 +753,14 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		});
 	}
 
+	@Override
+	public CompletableFuture<WorkspaceEdit> willRenameFiles(FileRenameParams params) {
+		logInfo(">> document/willRenameFiles");
+		return computeAsyncWithClientProgress((monitor) -> {
+			return FileEventHandler.handleWillRenameFiles(params, monitor);
+		});
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#ClassFileContents(org.eclipse.lsp4j.TextDocumentIdentifier)
 	 */

@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.commands;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
@@ -57,6 +59,20 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         assertEquals(settingKeys.size(), options.size());
         assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.compliance"));
         assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.source"));
+    }
+
+    @Test
+    public void testGetProjectFromUri() throws Exception {
+        importProjects("maven/salut");
+        IProject project = WorkspaceHelper.getProject("salut");
+
+        String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
+        IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
+        assertNotNull("Can get project from java file uri", javaProject);
+
+        String projectUri = project.getLocationURI().toString();
+        javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
+        assertNotNull("Can get project from project uri", javaProject);
     }
 
     @Test

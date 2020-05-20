@@ -41,6 +41,7 @@ import org.eclipse.jdt.launching.PropertyChangeEvent;
 import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 /**
@@ -239,6 +240,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 				IJavaProject javaProject = JavaCore.create(project);
 				configureJVMSettings(javaProject, current);
 			}
+			ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
+			if (projectsManager != null) {
+				projectsManager.updateProject(project, true);
+			}
 		}
 	}
 
@@ -279,6 +284,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		} else {
 			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.DISABLED);
 		}
+
 	}
 
 }

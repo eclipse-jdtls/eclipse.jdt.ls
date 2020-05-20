@@ -82,7 +82,7 @@ public class FoldingRangeHandler {
 			scanner.resetTo(shift, shift + range.getLength());
 
 			int start = shift;
-			int token = scanner.getNextToken();
+			int token = 0;
 			Stack<Integer> regionStarts = new Stack<>();
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				start = scanner.getCurrentTokenStartPosition();
@@ -109,19 +109,29 @@ public class FoldingRangeHandler {
 					default:
 						break;
 				}
-				token = scanner.getNextToken();
+				token = getNextToken(scanner);
 			}
-
 			computeTypeRootRanges(foldingRanges, unit, scanner);
-		} catch (CoreException |
-
-				InvalidInputException e) {
+		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem with folding range for " + unit.getPath().toPortableString(), e);
 			monitor.setCanceled(true);
 		}
 	}
 
-	private void computeTypeRootRanges(List<FoldingRange> foldingRanges, ITypeRoot unit, IScanner scanner) throws CoreException, InvalidInputException {
+	private int getNextToken(IScanner scanner) {
+		int token = 0;
+		while (token == 0) {
+			try {
+				token = scanner.getNextToken();
+			} catch (InvalidInputException e) {
+				// ignore
+				// JavaLanguageServerPlugin.logException("Problem with folding range", e);
+			}
+		}
+		return token;
+	}
+
+	private void computeTypeRootRanges(List<FoldingRange> foldingRanges, ITypeRoot unit, IScanner scanner) throws CoreException {
 		if (unit.hasChildren()) {
 			for (IJavaElement child : unit.getChildren()) {
 				if (child instanceof IImportContainer) {
@@ -136,7 +146,7 @@ public class FoldingRangeHandler {
 		}
 	}
 
-	private void computeTypeRanges(List<FoldingRange> foldingRanges, IType unit, IScanner scanner) throws CoreException, InvalidInputException {
+	private void computeTypeRanges(List<FoldingRange> foldingRanges, IType unit, IScanner scanner) throws CoreException {
 		ISourceRange typeRange = unit.getSourceRange();
 		foldingRanges.add(new FoldingRange(scanner.getLineNumber(unit.getNameRange().getOffset()) - 1, scanner.getLineNumber(typeRange.getOffset() + typeRange.getLength()) - 1));
 		IJavaElement[] children = unit.getChildren();
@@ -149,7 +159,7 @@ public class FoldingRangeHandler {
 		}
 	}
 
-	private void computeMethodRanges(List<FoldingRange> foldingRanges, IMethod method, IScanner scanner) throws CoreException, InvalidInputException {
+	private void computeMethodRanges(List<FoldingRange> foldingRanges, IMethod method, IScanner scanner) throws CoreException {
 		ISourceRange sourceRange = method.getSourceRange();
 		final int shift = sourceRange.getOffset();
 		scanner.resetTo(shift, shift + sourceRange.getLength());
@@ -157,7 +167,7 @@ public class FoldingRangeHandler {
 		foldingRanges.add(new FoldingRange(scanner.getLineNumber(method.getNameRange().getOffset()) - 1, scanner.getLineNumber(shift + sourceRange.getLength()) - 1));
 
 		int start = shift;
-		int token = scanner.getNextToken();
+		int token = 0;
 		Stack<Integer> leftParens = null;
 		int prevCaseLine = -1;
 		Map<Integer, Integer> candidates = new HashMap<>();
@@ -208,7 +218,7 @@ public class FoldingRangeHandler {
 				default:
 					break;
 			}
-			token = scanner.getNextToken();
+			token = getNextToken(scanner);
 		}
 
 		for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {

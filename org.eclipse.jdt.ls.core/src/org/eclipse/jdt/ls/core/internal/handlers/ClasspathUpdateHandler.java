@@ -24,11 +24,12 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.lsp4j.MessageType;
 
 public class ClasspathUpdateHandler implements IElementChangedListener {
 
-	private static final String CLASSPATH_UPDATED_NOTIFICATION = "__CLASSPATH_UPDATED__";
+	public static final String CLASSPATH_UPDATED_NOTIFICATION = "__CLASSPATH_UPDATED__";
 
 	private final JavaClientConnection connetction;
 	
@@ -75,7 +76,7 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 					uris = new HashSet<String>();
 				}
 				IJavaProject javaProject = (IJavaProject) element;
-				uris.add(javaProject.getProject().getLocation().toOSString());
+				uris.add(ProjectUtils.getProjectRealFolder(javaProject.getProject()).toFile().toURI().toString());
 			}
 			break;
 		default:

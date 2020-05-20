@@ -41,14 +41,21 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.launching.StandardVMType;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Test;
@@ -177,6 +184,30 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHomePreference);
 			if (gradleUserHome != null) {
 				FileUtils.deleteDirectory(gradleUserHome);
+			}
+		}
+	}
+
+	@Test
+	public void testJavaHome() throws Exception {
+		Preferences prefs = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+		String javaHomePreference = prefs.getJavaHome();
+		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+		try {
+			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			IVMInstall[] vms = installType.getVMInstalls();
+			IVMInstall vm = vms[0];
+			JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
+			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "11").getAbsolutePath();
+			prefs.setJavaHome(javaHome);
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			IPath rootFolder = root.getLocation().append("/projects/gradle/simple-gradle");
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootFolder.toFile().toPath());
+			assertEquals(vm.getInstallLocation().getAbsolutePath(), build.getJavaHome().get().getAbsolutePath());
+		} finally {
+			prefs.setJavaHome(javaHomePreference);
+			if (defaultVM != null) {
+				JavaRuntime.setDefaultVMInstall(defaultVM, new NullProgressMonitor());
 			}
 		}
 	}

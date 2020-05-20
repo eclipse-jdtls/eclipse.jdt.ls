@@ -69,6 +69,7 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.WatchKind;
 
 public class StandardProjectsManager extends ProjectsManager {
 	private static final Set<String> watchers = new LinkedHashSet<>();
@@ -276,6 +277,11 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	@Override
+	public boolean isBuildLikeFileName(String fileName) {
+		return buildSupports().filter(bs -> bs.isBuildLikeFileName(fileName)).findAny().isPresent();
+	}
+
+	@Override
 	public void prepareToSave(ISaveContext context) throws CoreException {
 		if (context.getKind() == ISaveContext.FULL_SAVE) {
 			GradleBuildSupport.saveModels();
@@ -297,8 +303,8 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
 			Set<IPath> sources = new HashSet<>();
+			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
-				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 				for (IProject project : projects) {
 					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
 						continue;
@@ -362,6 +368,15 @@ public class StandardProjectsManager extends ProjectsManager {
 			for (String pattern : patterns) {
 				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
+			}
+
+			// Watch on project root folders.
+			for (IProject project : projects) {
+				if (ProjectUtils.isVisibleProject(project) && project.exists()) {
+					FileSystemWatcher watcher = new FileSystemWatcher(
+						ResourceUtils.toGlobPattern(project.getLocation(), false), WatchKind.Delete);
+					fileWatchers.add(watcher);
+				}
 			}
 
 			if (!patterns.equals(watchers)) {

@@ -13,8 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
-import java.util.Optional;
+import java.nio.file.Paths;
 
+import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
@@ -55,10 +56,10 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
-		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
-		if (build.isPresent()) {
-			build.get().synchronize(monitor);
-		}
+		String projectPath = project.getLocation().toFile().getAbsolutePath();
+		BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
+		GradleBuild build = GradleCore.getWorkspace().createBuild(buildConfiguration);
+		build.synchronize(monitor);
 	}
 
 	@Override
@@ -77,6 +78,11 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isBuildLikeFileName(String fileName) {
+		return fileName.endsWith(GRADLE_SUFFIX) || fileName.equals(GRADLE_PROPERTIES);
 	}
 
 	/**

@@ -128,6 +128,11 @@ public class MavenBuildSupport implements IBuildSupport {
 				&& resource.getProject().equals(resource.getParent());
 	}
 
+	@Override
+	public boolean isBuildLikeFileName(String fileName) {
+		return fileName.equals("pom.xml");
+	}
+
 	public boolean shouldCollectProjects() {
 		return shouldCollectProjects;
 	}

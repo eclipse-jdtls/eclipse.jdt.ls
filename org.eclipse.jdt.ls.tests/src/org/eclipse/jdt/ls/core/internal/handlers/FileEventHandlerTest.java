@@ -18,7 +18,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -33,7 +35,11 @@ import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenamePara
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.TextDocumentEdit;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -96,6 +102,128 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 				"		ANew a = new ANew();\n" +
 				"		a.foo();\n" +
 				"	}\n" +
+				"}\n"
+				);
+	}
+
+	@Test
+	public void testRenamePackage() throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("parent.pack1", false, null);
+		IPackageFragment pack2 = sourceFolder.createPackageFragment("parent.pack2", false, null);
+
+		StringBuilder codeA = new StringBuilder();
+		codeA.append("package parent.pack1;\n");
+		codeA.append("import parent.pack2.B;\n");
+		codeA.append("public class A {\n");
+		codeA.append("	public void foo() {\n");
+		codeA.append("		B b = new B();\n");
+		codeA.append("		b.foo();\n");
+		codeA.append("	}\n");
+		codeA.append("}\n");
+
+		StringBuilder codeB = new StringBuilder();
+		codeB.append("package parent.pack2;\n");
+		codeB.append("public class B {\n");
+		codeB.append("	public B() {}\n");
+		codeB.append("	public void foo() {}\n");
+		codeB.append("}\n");
+
+		ICompilationUnit cuA = pack1.createCompilationUnit("A.java", codeA.toString(), false, null);
+		ICompilationUnit cuB = pack2.createCompilationUnit("B.java", codeB.toString(), false, null);
+
+		String pack2Uri = JDTUtils.getFileURI(pack2.getResource());
+		String newPack2Uri = pack2Uri.replace("pack2", "newpack2");
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(pack2Uri, newPack2Uri))), new NullProgressMonitor());
+		assertNotNull(edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
+		assertEquals(2, documentChanges.size());
+
+		assertTrue(documentChanges.get(0).isLeft());
+		assertEquals(documentChanges.get(0).getLeft().getTextDocument().getUri(), JDTUtils.toURI(cuA));
+		assertEquals(TextEditUtil.apply(codeA.toString(), documentChanges.get(0).getLeft().getEdits()),
+				"package parent.pack1;\n" +
+				"import parent.newpack2.B;\n" +
+				"public class A {\n" +
+				"	public void foo() {\n" +
+				"		B b = new B();\n" +
+				"		b.foo();\n" +
+				"	}\n" +
+				"}\n"
+				);
+
+		assertTrue(documentChanges.get(1).isLeft());
+		assertEquals(documentChanges.get(1).getLeft().getTextDocument().getUri(), JDTUtils.toURI(cuB));
+		assertEquals(TextEditUtil.apply(codeB.toString(), documentChanges.get(1).getLeft().getEdits()),
+				"package parent.newpack2;\n" +
+				"public class B {\n" +
+				"	public B() {}\n" +
+				"	public void foo() {}\n" +
+				"}\n"
+				);
+	}
+
+	@Test
+	public void testRenameSubPackage() throws JavaModelException, BadLocationException {
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment parentPack = sourceFolder.createPackageFragment("parent", false, null);
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("parent.pack1", false, null);
+		IPackageFragment pack2 = sourceFolder.createPackageFragment("parent.pack2", false, null);
+
+		StringBuilder codeA = new StringBuilder();
+		codeA.append("package parent.pack1;\n");
+		codeA.append("import parent.pack2.B;\n");
+		codeA.append("public class A {\n");
+		codeA.append("	public void foo() {\n");
+		codeA.append("		B b = new B();\n");
+		codeA.append("		b.foo();\n");
+		codeA.append("	}\n");
+		codeA.append("}\n");
+
+		StringBuilder codeB = new StringBuilder();
+		codeB.append("package parent.pack2;\n");
+		codeB.append("public class B {\n");
+		codeB.append("	public B() {}\n");
+		codeB.append("	public void foo() {}\n");
+		codeB.append("}\n");
+
+		ICompilationUnit cuA = pack1.createCompilationUnit("A.java", codeA.toString(), false, null);
+		ICompilationUnit cuB = pack2.createCompilationUnit("B.java", codeB.toString(), false, null);
+
+		String parentPackUri = JDTUtils.getFileURI(parentPack.getResource());
+		String newParentPackUri = parentPackUri.replace("parent", "newparent");
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(parentPackUri, newParentPackUri))), new NullProgressMonitor());
+		assertNotNull(edit);
+		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
+		assertEquals(3, documentChanges.size());
+
+		assertTrue(documentChanges.get(0).isLeft());
+		assertEquals(documentChanges.get(0).getLeft().getTextDocument().getUri(), JDTUtils.toURI(cuA));
+		assertTrue(documentChanges.get(1).isLeft());
+		assertEquals(documentChanges.get(1).getLeft().getTextDocument().getUri(), JDTUtils.toURI(cuA));
+		List<TextEdit> edits = new ArrayList<>();
+		edits.addAll(documentChanges.get(0).getLeft().getEdits());
+		edits.addAll(documentChanges.get(1).getLeft().getEdits());
+		assertEquals(TextEditUtil.apply(codeA.toString(), edits),
+				"package newparent.pack1;\n" +
+				"import newparent.pack2.B;\n" +
+				"public class A {\n" +
+				"	public void foo() {\n" +
+				"		B b = new B();\n" +
+				"		b.foo();\n" +
+				"	}\n" +
+				"}\n"
+				);
+
+		assertTrue(documentChanges.get(2).isLeft());
+		assertEquals(documentChanges.get(2).getLeft().getTextDocument().getUri(), JDTUtils.toURI(cuB));
+		assertEquals(TextEditUtil.apply(codeB.toString(), documentChanges.get(2).getLeft().getEdits()),
+				"package newparent.pack2;\n" +
+				"public class B {\n" +
+				"	public B() {}\n" +
+				"	public void foo() {}\n" +
 				"}\n"
 				);
 	}

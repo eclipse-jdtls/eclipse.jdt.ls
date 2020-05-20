@@ -35,7 +35,6 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -43,9 +42,12 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.core.OpenableElementInfo;
+import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -272,6 +274,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didSave(DidSaveTextDocumentParams params) {
 		try {
+			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
@@ -297,9 +300,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 					if (unit.getResource().exists()) {
 						IJavaElement parent = unit.getParent();
-						if (parent instanceof IPackageFragment) {
-							IPackageFragment pkg = (IPackageFragment) parent;
-							unit = pkg.createCompilationUnit(unit.getElementName(), unit.getSource(), true, new NullProgressMonitor());
+						if (parent instanceof PackageFragment) {
+							PackageFragment pkg = (PackageFragment) parent;
+							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
+							elementInfo.addChild(unit);
 						}
 					}
 				} catch (CoreException e) {
@@ -361,7 +365,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
-
 				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 

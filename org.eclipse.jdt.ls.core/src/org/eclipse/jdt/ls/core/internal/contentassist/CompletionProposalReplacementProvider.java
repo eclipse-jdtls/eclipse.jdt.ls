@@ -50,7 +50,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -84,13 +84,15 @@ public class CompletionProposalReplacementProvider {
 	private final CompletionContext context;
 	private ImportRewrite importRewrite;
 	private final ClientPreferences client;
+	private Preferences preferences;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, ClientPreferences prefs){
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, Preferences preferences, ClientPreferences clientPrefs) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
 		this.offset = offset;
-		this.client = prefs;
+		this.preferences = preferences == null ? new Preferences() : preferences;
+		this.client = clientPrefs;
 	}
 
 	/**
@@ -140,8 +142,7 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		if (range == null) {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-			boolean completionOverwrite = preferenceManager == null || preferenceManager.getPreferences().isCompletionOverwrite();
+			boolean completionOverwrite = preferences.isCompletionOverwrite();
 			if (!completionOverwrite && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.LOCAL_VARIABLE_REF || proposal.getKind() == CompletionProposal.FIELD_REF)) {
 				// See https://github.com/redhat-developer/vscode-java/issues/462
 				int end = proposal.getReplaceEnd();
@@ -315,7 +316,7 @@ public class CompletionProposalReplacementProvider {
 			document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
 			int offset = proposal.getReplaceStart();
 			String replacement = proposal.updateReplacementString(document, offset, importRewrite,
-					client.isCompletionSnippetsSupported());
+					client.isCompletionSnippetsSupported(), preferences.isCodeGenerationTemplateGenerateComments());
 			completionBuffer.append(replacement);
 		} catch (BadLocationException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to compute potential replacement", e);
