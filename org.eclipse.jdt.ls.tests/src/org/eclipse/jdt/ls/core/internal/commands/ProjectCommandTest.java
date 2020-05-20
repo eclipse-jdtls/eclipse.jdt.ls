@@ -169,6 +169,6 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
     public void getAllJavaProject() throws Exception {
         importProjects("maven/multimodule");
         List<URI> projects = ProjectCommand.getAllJavaProjects();
-        assertEquals(3, projects.size());
+        assertEquals(4, projects.size());
     }
 }

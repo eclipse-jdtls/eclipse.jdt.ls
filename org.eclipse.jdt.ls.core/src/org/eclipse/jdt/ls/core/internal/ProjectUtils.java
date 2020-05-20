@@ -263,7 +263,7 @@ public final class ProjectUtils {
 	}
 
 	public static IPath getProjectRealFolder(IProject project) {
-		if (project.isAccessible() && !isVisibleProject(project)) {
+		if (project.isAccessible() && !isVisibleProject(project) && !project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject())) {
 			return project.getFolder(WORKSPACE_LINK).getLocation();
 		}
 		return project.getLocation();

@@ -132,11 +132,8 @@ public class ProjectCommand {
 
 	public static List<URI> getAllJavaProjects() {
 		List<URI> javaProjects = new LinkedList<>();
-		for (IJavaProject javaProejct : ProjectUtils.getJavaProjects()) {
-			if (ResourcesPlugin.getWorkspace().getRoot().getProject(ProjectsManager.DEFAULT_PROJECT_NAME).equals(javaProejct.getProject())) {
-				continue;
-			}
-			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProejct.getProject()).toFile().toURI());
+		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProject.getProject()).toFile().toURI());
 		}
 		return javaProjects;
 	}
