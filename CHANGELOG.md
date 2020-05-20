@@ -1,5 +1,16 @@
 # Change Log
 
+# [0.56.0 (May 21st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/74?closed=1)
+ * enhancement - Add a new command to get all Java projects. See [#1447](https://github.com/eclipse/eclipse.jdt.ls/pull/1447).
+ * enhancement - Expand the API usages. See [#1446](https://github.com/eclipse/eclipse.jdt.ls/pull/1446).
+ * enhancement - Use default JVM when importing gradle project. See [#1430](https://github.com/eclipse/eclipse.jdt.ls/pull/1430).
+ * enhancement - Check for suspicious gradle-wrapper.jar. See [#1434](https://github.com/eclipse/eclipse.jdt.ls/pull/1434).
+ * bug fix - Discard the stale workingcopies that belonged to the deleted folder. See [#1439](https://github.com/eclipse/eclipse.jdt.ls/pull/1439).
+ * bug fix - jdt.ls shouldn't modify disk file when handling newly created or renamed files. See [#1438](https://github.com/eclipse/eclipse.jdt.ls/pull/1438).
+ * bug fix - Respect 'java.codeGeneration.generateComments' when generating accessors on completion. See [#1437](https://github.com/eclipse/eclipse.jdt.ls/pull/1437).
+ * bug fix - highlight QualifiedName together in packages. See [#1435](https://github.com/eclipse/eclipse.jdt.ls/pull/1435).
+ * bug fix - Favorite static imports are ignored if server launched without advancedOrganizeImportsSupport:true . See [#1422](https://github.com/eclipse/eclipse.jdt.ls/issues/1422).
+
 # [0.55.0 (April 30th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/73?closed=1)
  * enhancement - refine semantic highlighting. See [#1416](https://github.com/eclipse/eclipse.jdt.ls/pull/1416).
  * enhancement - Organize Imports should resolve static imports as well. See [#1415](https://github.com/eclipse/eclipse.jdt.ls/pull/1415).
