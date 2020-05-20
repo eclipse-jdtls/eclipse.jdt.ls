@@ -14,19 +14,25 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectBuildSupport;
@@ -34,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -46,6 +53,14 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 	private JavaClientConnection connection;
 
 	private ClasspathUpdateHandler handler;
+
+	@BeforeClass
+	public static void download() throws FileNotFoundException, CoreException {
+		File commonsLang3Archive = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.6");
+		assertNotNull("commons-lang-3.6-sources.jar not found", commonsLang3Archive);
+		commonsLang3Archive = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5");
+		assertNotNull("commons-lang-3.5-sources.jar not found", commonsLang3Archive);
+	}
 
 	@Before
 	public void setup() throws Exception {
@@ -82,6 +97,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 	@Test
 	public void testClasspathUpdateForGradle() throws Exception {
 		importProjects("gradle/simple-gradle");
+		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, monitor);
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
 		IFile buildGradle = project.getFile("/build.gradle");
 		assertTrue(buildGradle.exists());
@@ -89,6 +105,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 
 		projectsManager.fileChanged(buildGradle.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
 		waitForBackgroundJobs();
+		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, monitor);
 
 		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
 		verify(connection, times(1)).sendActionableNotification(argument.capture());
@@ -130,6 +147,6 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		verify(connection, times(1)).sendActionableNotification(argument.capture());
 		assertEquals(ClasspathUpdateHandler.CLASSPATH_UPDATED_NOTIFICATION, argument.getValue().getMessage());
 		assertEquals(Paths.get(projectFolder.toURI().toString()), Paths.get((String) argument.getValue().getData()));
-		
+
 	}
 }
