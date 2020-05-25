@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -41,7 +42,9 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.ClasspathEntry;
+import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -51,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 
 public class ProjectCommand {
 
+	public static final String VM_LOCATION = IConstants.PLUGIN_ID + ".vm.location";
 	private static final String TEST_SCOPE_VALUE = "test";
 
 	/**
@@ -61,7 +65,9 @@ public class ProjectCommand {
 	 * @param settingKeys
 	 *                        the settings we want to query, for example:
 	 *                        ["org.eclipse.jdt.core.compiler.compliance",
-	 *                        "org.eclipse.jdt.core.compiler.source"]
+	 *                        "org.eclipse.jdt.core.compiler.source"].
+	 *                        Besides the options defined in JavaCore, the following keys can also be used:
+	 *                        - "org.eclipse.jdt.ls.vm.location": Get the location of the VM assigned to build the given Java project
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
 	 * @throws CoreException
@@ -71,7 +77,22 @@ public class ProjectCommand {
 		IJavaProject javaProject = getJavaProjectFromUri(uri);
 		Map<String, String> settings = new HashMap<>();
 		for (String key : settingKeys) {
-			settings.putIfAbsent(key, javaProject.getOption(key, true));
+			switch(key) {
+				case VM_LOCATION:
+					IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
+					if (vmInstall == null) {
+						continue;
+					}
+					File location = vmInstall.getInstallLocation();
+					if (location == null) {
+						continue;
+					}
+					settings.putIfAbsent(key, location.getAbsolutePath());
+					break;
+				default:
+					settings.putIfAbsent(key, javaProject.getOption(key, true));
+					break;
+			}
 		}
 		return settings;
 	}
