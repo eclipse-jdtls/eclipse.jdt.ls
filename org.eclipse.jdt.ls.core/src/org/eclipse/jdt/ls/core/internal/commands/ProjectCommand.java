@@ -67,7 +67,7 @@ public class ProjectCommand {
 	 *                        ["org.eclipse.jdt.core.compiler.compliance",
 	 *                        "org.eclipse.jdt.core.compiler.source"].
 	 *                        Besides the options defined in JavaCore, the following keys can also be used:
-	 *                        - "org.eclipse.jdt.ls.vm.location": Get the location of the VM assigned to build the given Java project
+	 *                        - "org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
 	 * @throws CoreException
