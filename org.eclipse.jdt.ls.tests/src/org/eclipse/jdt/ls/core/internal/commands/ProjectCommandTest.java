@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
@@ -63,10 +66,25 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
     }
 
     @Test
+    public void testGetProjectVMInstallation() throws Exception {
+        importProjects("maven/salut2");
+        IProject project = WorkspaceHelper.getProject("salut2");
+        String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
+        List<String> settingKeys = Arrays.asList(ProjectCommand.VM_LOCATION);
+        Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+
+        IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(uriString);
+        IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
+        assertNotNull(vmInstall);
+        File location = vmInstall.getInstallLocation();
+        assertNotNull(location);
+        assertEquals(location.getAbsolutePath(), options.get(ProjectCommand.VM_LOCATION));
+    }
+
+    @Test
     public void testGetProjectFromUri() throws Exception {
         importProjects("maven/salut");
         IProject project = WorkspaceHelper.getProject("salut");
-
         String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
         IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
         assertNotNull("Can get project from java file uri", javaProject);
