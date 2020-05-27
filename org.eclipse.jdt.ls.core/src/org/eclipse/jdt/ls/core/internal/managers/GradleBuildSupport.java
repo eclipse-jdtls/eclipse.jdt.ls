@@ -14,6 +14,8 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -45,6 +47,8 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	public static final String GRADLE_SUFFIX = ".gradle";
 	public static final String GRADLE_PROPERTIES = "gradle.properties";
+	public static final String GRADLE_SUFFIX_PATTERN = "**/*.gradle";
+	public static final String GRADLE_PROPERTIES_PATTERN = "**/gradle.properties";
 
 	@Override
 	public boolean applies(IProject project) {
@@ -131,4 +135,10 @@ public class GradleBuildSupport implements IBuildSupport {
 	public ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
 		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, GradleClasspathProvider.ID);
 	}
+
+	@Override
+	public List<String> getBasicWatchers() {
+		return Arrays.asList(GRADLE_SUFFIX_PATTERN, GRADLE_PROPERTIES_PATTERN);
+	}
+
 }

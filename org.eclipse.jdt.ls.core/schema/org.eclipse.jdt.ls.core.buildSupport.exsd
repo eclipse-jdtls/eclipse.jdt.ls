@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.jdt.ls.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.jdt.ls.core" id="org.eclipse.jdt.ls.core.buildSupport" name="Build Support"/>
+      </appinfo>
+      <documentation>
+         This extension point represents different kinds of project build supporters for the JDT LS.
+Each extension must implement &lt;code&gt;org.eclipse.jdt.ls.core.internal.managers.IBuildSupport&lt;/code&gt;.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="buildSupport" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="buildSupport">
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.jdt.ls.core.internal.managers.IBuildSupport"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="order" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of a language server content provider extension:
+
+&lt;pre&gt;
+   &lt;extension
+      id=&quot;buildSupport&quot;
+         point=&quot;org.eclipse.jdt.ls.core.buildSupport&quot;&gt;
+         &lt;buildSupport
+          id=&quot;someBuildSupport&quot;
+          order=&quot;200&quot;
+          class=&quot;com.example.SomeBuildSupport&quot; /&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+
+
+</schema>

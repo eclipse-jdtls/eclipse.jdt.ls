@@ -28,8 +28,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,11 +44,14 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISaveContext;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
@@ -55,6 +60,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -72,14 +78,12 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WatchKind;
 
 public class StandardProjectsManager extends ProjectsManager {
+	private static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
 	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
 	//@formatter:off
 	private static final List<String> basicWatchers = Arrays.asList(
 			"**/*.java",
-			"**/pom.xml",
-			"**/*.gradle",
-			"**/gradle.properties",
 			"**/.project",
 			"**/.classpath",
 			"**/.settings/*.prefs",
@@ -273,7 +277,18 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	private Stream<IBuildSupport> buildSupports() {
-		return Stream.of(new GradleBuildSupport(), new MavenBuildSupport(), new InvisibleProjectBuildSupport(), new DefaultProjectBuildSupport(this), new EclipseBuildSupport());
+		Map<Integer, IBuildSupport> supporters = new TreeMap<>();
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, BUILD_SUPPORT_EXTENSION_POINT_ID);
+		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
+		for (int i = 0; i < configs.length; i++) {
+			try {
+				Integer order = Integer.valueOf(configs[i].getAttribute("order"));
+				supporters.put(order, (IBuildSupport) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e.getStatus());
+			}
+		}
+		return supporters.values().stream();
 	}
 
 	@Override
@@ -302,6 +317,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
+			buildSupports().forEach(e -> e.getBasicWatchers().forEach(p -> patterns.add(p)));
 			Set<IPath> sources = new HashSet<>();
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
