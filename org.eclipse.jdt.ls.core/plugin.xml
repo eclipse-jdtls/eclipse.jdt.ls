@@ -4,6 +4,7 @@
    <extension-point id="org.eclipse.jdt.ls.core.delegateCommandHandler" name="delegateCommandHandler" schema="schema/org.eclipse.jdt.ls.core.delegateCommandHandler.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.importers" name="JDT LS Project Importer" schema="schema/org.eclipse.jdt.ls.core.importers.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.contentProvider" name="contentProvider" schema="schema/org.eclipse.jdt.ls.core.contentProvider.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.buildSupport" name="Build Support" schema="schema/org.eclipse.jdt.ls.core.buildSupport.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">
@@ -114,5 +115,29 @@
             id="invisibleProjectImporter"
             order="1500"
             class="org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter" />
+   </extension>
+   <extension
+   		 id="buildSuppor"
+         point="org.eclipse.jdt.ls.core.buildSupport">
+         <buildSupport
+         	id="gradleBuildSupport"
+         	order="300"
+         	class="org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport" />
+         <buildSupport
+         	id="mavenBuildSupport"
+         	order="400"
+         	class="org.eclipse.jdt.ls.core.internal.managers.MavenBuildSupport" />
+     	 <buildSupport
+	     	id="invisibleProjectBuildSupport"
+	     	order="1000"
+	     	class="org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectBuildSupport" />
+     	<buildSupport
+	     	id="defaultProjectBuildSupport"
+	     	order="1500"
+	     	class="org.eclipse.jdt.ls.core.internal.managers.DefaultProjectBuildSupport" />
+     	<buildSupport
+	     	id="eclipseBuildSupport"
+	     	order="2000"
+	     	class="org.eclipse.jdt.ls.core.internal.managers.EclipseBuildSupport" />
    </extension>
 </plugin>

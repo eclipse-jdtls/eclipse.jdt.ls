@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,6 +58,7 @@ import com.google.common.cache.CacheBuilder;
 public class MavenBuildSupport implements IBuildSupport {
 
 	private static final int MAX_TIME_MILLIS = 3000;
+	private static final String POM_FILE_PATTERN = "**/pom.xml";
 	private static Cache<String, Boolean> downloadRequestsCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterWrite(1, TimeUnit.HOURS).build();
 
 	private IProjectConfigurationManager configurationManager;
@@ -185,4 +187,10 @@ public class MavenBuildSupport implements IBuildSupport {
 	public ILaunchConfiguration getLaunchConfiguration(IJavaProject javaProject, String scope) throws CoreException {
 		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, MavenRuntimeClasspathProvider.MAVEN_CLASSPATH_PROVIDER);
 	}
+
+	@Override
+	public List<String> getBasicWatchers() {
+		return Arrays.asList(POM_FILE_PATTERN);
+	}
+
 }
