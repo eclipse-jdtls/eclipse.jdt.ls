@@ -173,6 +173,10 @@ public final class OrganizeImportsHandler {
 	private static void addImports(CompilationUnit root, ICompilationUnit unit, String[] favourites, ImportRewrite importRewrite, AST ast, ASTRewrite astRewrite, SimpleName node, boolean isMethod) throws JavaModelException {
 		String name = node.getIdentifier();
 		String[] imports = SimilarElementsRequestor.getStaticImportFavorites(unit, name, isMethod, favourites);
+		if (imports.length > 1) {
+			// See https://github.com/redhat-developer/vscode-java/issues/1472
+			return;
+		}
 		for (int i = 0; i < imports.length; i++) {
 			String curr = imports[i];
 			String qualifiedTypeName = Signature.getQualifier(curr);
