@@ -27,6 +27,8 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
@@ -34,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -68,7 +71,7 @@ public class CompletionHandler{
 		this.manager = manager;
 	}
 
-	Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
+	public Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
 			IProgressMonitor monitor) {
 		CompletionList $ = null;
 		try {
@@ -143,7 +146,11 @@ public class CompletionHandler{
 
 				};
 				try {
-					unit.codeComplete(offset, collector, subMonitor);
+					if (isIndexEngineEnabled()) {
+						unit.codeComplete(offset, collector, subMonitor);
+					} else {
+						ModelBasedCompletionEngine.codeComplete(unit, offset, collector, DefaultWorkingCopyOwner.PRIMARY, subMonitor);
+					}
 					proposals.addAll(collector.getCompletionItems());
 					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
@@ -171,5 +178,9 @@ public class CompletionHandler{
 	private boolean isSnippetStringSupported() {
 		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
+	}
+
+	public boolean isIndexEngineEnabled() {
+		return !JDTEnvironmentUtils.isSyntaxServer();
 	}
 }

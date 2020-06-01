@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.syntaxserver;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -22,20 +23,29 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -252,6 +262,128 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertEquals("This is interface IFoo.", list.get(1).getLeft());
 	}
 
+	@Test
+	public void testCompletionOnSingleName() throws Exception{
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Completion.java");
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(fileURI);
+		assertNotNull(cu);
+		cu.getBuffer().setContents("package java;\n\n" +
+			"public class Completion {\n" +
+			"	void foo() {\n" +
+			"		Objec\n" +
+			"	}\n" +
+			"}\n");
+		cu.makeConsistent(null);
+
+		int[] loc = findLocation(cu, "Objec");
+		String fileUri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(fileUri);
+		CompletionParams params = new CompletionParams(identifier, new Position(loc[0], loc[1]));
+		CompletionList list = server.completion(params).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found", list.getItems().isEmpty());
+
+		List<CompletionItem> items = list.getItems();
+		for (CompletionItem item : items) {
+			assertTrue(StringUtils.isNotBlank(item.getLabel()));
+			assertNotNull(item.getKind());
+			assertTrue(StringUtils.isNotBlank(item.getSortText()));
+			//text edits are set during calls to "completion"
+			assertNotNull(item.getTextEdit());
+			assertTrue(StringUtils.isNotBlank(item.getInsertText()));
+			assertNotNull(item.getFilterText());
+			assertFalse(item.getFilterText().contains(" "));
+			assertTrue(item.getLabel().startsWith(item.getInsertText()));
+			assertTrue(item.getFilterText().startsWith("Objec"));
+			//Check contains data used for completionItem resolution
+			@SuppressWarnings("unchecked")
+			Map<String,String> data = (Map<String, String>) item.getData();
+			assertNotNull(data);
+			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_URI)));
+			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID)));
+			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
+		}
+	}
+
+	@Test
+	public void testCompletionOnQualifiedName() throws Exception{
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Completion.java");
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(fileURI);
+		assertNotNull(cu);
+		cu.getBuffer().setContents("package java;\n\n" +
+			"public class Completion {\n" +
+			"	void foo() {\n" +
+			"		String str = new String(\"hello\");\n" +
+			"		str.starts" +
+			"	}\n" +
+			"}\n");
+		cu.makeConsistent(null);
+
+		int[] loc = findLocation(cu, "str.starts");
+		String fileUri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(fileUri);
+		CompletionParams params = new CompletionParams(identifier, new Position(loc[0], loc[1]));
+		CompletionList list = server.completion(params).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found", list.getItems().isEmpty());
+
+		List<CompletionItem> items = list.getItems();
+		for (CompletionItem item : items) {
+			assertTrue(StringUtils.isNotBlank(item.getLabel()));
+			assertTrue(item.getLabel().startsWith("starts"));
+			assertEquals(CompletionItemKind.Method, item.getKind());
+			assertTrue(StringUtils.isNotBlank(item.getSortText()));
+		}
+	}
+
+	@Test
+	public void testResolveCompletion() throws Exception {
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Completion.java");
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(fileURI);
+		assertNotNull(cu);
+		cu.getBuffer().setContents("package java;\n\n" +
+			"public class Completion {\n" +
+			"	public static void main(String[] args) {\n" +
+			"		fo\n" +
+			"		System.out.println(\"Hello World!\");\n" +
+			"	}\n\n" +
+			"	/**\n" +
+			"	* This method has Javadoc\n" +
+			"	*/\n" +
+			"	public static void foo(String bar) {\n" +
+			"	}\n" +
+			"	/**\n" +
+			"	* Another Javadoc\n" +
+			"	*/\n" +
+			"	public static void foo() {\n" +
+			"	}\n" +
+			"}\n");
+		cu.makeConsistent(null);
+
+		int[] loc = findLocation(cu, "\t\tfo");
+		String fileUri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(fileUri);
+		CompletionParams params = new CompletionParams(identifier, new Position(loc[0], loc[1]));
+		CompletionList list = server.completion(params).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("foo(String bar) : void")).findFirst().orElse(null);
+		assertNotNull(ci);
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem);
+		assertNotNull(resolvedItem.getDocumentation());
+		assertNotNull(resolvedItem.getDocumentation().getLeft());
+		String javadoc = resolvedItem.getDocumentation().getLeft();
+		assertEquals(javadoc, " This method has Javadoc ");
+		ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("foo() : void")).findFirst().orElse(null);
+		assertNotNull(ci);
+		resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem);
+		assertNotNull(resolvedItem.getDocumentation());
+		assertNotNull(resolvedItem.getDocumentation().getLeft());
+		javadoc = resolvedItem.getDocumentation().getLeft();
+		assertEquals(javadoc, " Another Javadoc ");
+	}
+
 	private URI openFile(String basePath, String filePath) throws Exception {
 		IPath rootPath = getWorkingTestPath(basePath);
 		preferences.setRootPaths(Collections.singletonList(rootPath));
@@ -291,5 +423,11 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		textDocument.setUri(uri);
 		textDocument.setVersion(1);
 		return textDocument;
+	}
+
+	private int[] findLocation(ICompilationUnit unit, String targetWord) throws JavaModelException {
+		String str= unit.getSource();
+		int cursorLocation = str.lastIndexOf(targetWord) + targetWord.length();
+		return JsonRpcHelpers.toLine(unit.getBuffer(), cursorLocation);
 	}
 }
