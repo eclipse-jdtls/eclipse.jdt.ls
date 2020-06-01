@@ -280,12 +280,12 @@ public class StandardProjectsManager extends ProjectsManager {
 		Map<Integer, IBuildSupport> supporters = new TreeMap<>();
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, BUILD_SUPPORT_EXTENSION_POINT_ID);
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
-		for (int i = 0; i < configs.length; i++) {
+		for (IConfigurationElement config : configs) {
 			try {
-				Integer order = Integer.valueOf(configs[i].getAttribute("order"));
-				supporters.put(order, (IBuildSupport) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+				Integer order = Integer.valueOf(config.getAttribute("order"));
+				supporters.put(order, (IBuildSupport) config.createExecutableExtension("class")); //$NON-NLS-1$
 			} catch (CoreException e) {
-				JavaLanguageServerPlugin.log(e.getStatus());
+				JavaLanguageServerPlugin.logError(config.getAttribute("class") + " implementation was skipped \n" + e.getStatus());
 			}
 		}
 		return supporters.values().stream();
@@ -317,7 +317,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
-			buildSupports().forEach(e -> e.getBasicWatchers().forEach(p -> patterns.add(p)));
+			buildSupports().forEach(e -> e.getWatchPatterns().forEach(p -> patterns.add(p)));
 			Set<IPath> sources = new HashSet<>();
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {

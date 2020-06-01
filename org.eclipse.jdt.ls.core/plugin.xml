@@ -117,7 +117,7 @@
             class="org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter" />
    </extension>
    <extension
-   		 id="buildSuppor"
+   		 id="buildSupport"
          point="org.eclipse.jdt.ls.core.buildSupport">
          <buildSupport
          	id="gradleBuildSupport"

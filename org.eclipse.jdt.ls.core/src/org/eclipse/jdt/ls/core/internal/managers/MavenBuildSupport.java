@@ -13,8 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +58,7 @@ import com.google.common.cache.CacheBuilder;
 public class MavenBuildSupport implements IBuildSupport {
 
 	private static final int MAX_TIME_MILLIS = 3000;
-	private static final String POM_FILE_PATTERN = "**/pom.xml";
+	private static final List<String> WATCH_FILE_PATTERNS = Collections.singletonList("**/pom.xml");
 	private static Cache<String, Boolean> downloadRequestsCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterWrite(1, TimeUnit.HOURS).build();
 
 	private IProjectConfigurationManager configurationManager;
@@ -189,8 +189,8 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	@Override
-	public List<String> getBasicWatchers() {
-		return Arrays.asList(POM_FILE_PATTERN);
+	public List<String> getWatchPatterns() {
+		return WATCH_FILE_PATTERNS;
 	}
 
 }
