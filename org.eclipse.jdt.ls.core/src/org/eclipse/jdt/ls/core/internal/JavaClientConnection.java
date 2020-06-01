@@ -59,6 +59,14 @@ public class JavaClientConnection {
 		void sendActionableNotification(ActionableNotification notification);
 
 		/**
+		 * The event notification is sent from a server to a client to notify the
+		 * client certain events happened on the server side, eg. classpath was
+		 * updated, projects were imported.
+		 */
+		@JsonNotification("language/eventNotification")
+		void sendEventNotification(EventNotification notification);
+
+		/**
 		 * The progress report notification is sent from a server to be handled by the
 		 * client.
 		 */
@@ -163,6 +171,15 @@ public class JavaClientConnection {
 	 */
 	public void sendActionableNotification(ActionableNotification notification) {
 		client.sendActionableNotification(notification);
+	}
+
+	/**
+	 * Send a notification to the client when some certain events happen.
+	 * @See {@link org.eclipse.jdt.ls.core.internal.EventType} for all
+	 * possible event types.
+	 */
+	public void sendEventNotification(EventNotification notification) {
+		client.sendEventNotification(notification);
 	}
 
 	public void publishDiagnostics(PublishDiagnosticsParams diagnostics){

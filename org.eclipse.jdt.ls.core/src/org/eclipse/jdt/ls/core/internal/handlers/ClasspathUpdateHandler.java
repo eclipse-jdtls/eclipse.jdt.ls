@@ -22,29 +22,27 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaElementDelta;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.lsp4j.MessageType;
 
 public class ClasspathUpdateHandler implements IElementChangedListener {
 
-	public static final String CLASSPATH_UPDATED_NOTIFICATION = "__CLASSPATH_UPDATED__";
+	private final JavaClientConnection connection;
 
-	private final JavaClientConnection connetction;
-	
 	public ClasspathUpdateHandler(JavaClientConnection client) {
-		this.connetction = client;
+		this.connection = client;
 	}
 
 	@Override
 	public void elementChanged(ElementChangedEvent event) {
 		// Collect project names which have classpath changed.
 		Set<String> uris = processDelta(event.getDelta(), null);
-		if (connetction != null && uris != null && !uris.isEmpty()) {
+		if (connection != null && uris != null && !uris.isEmpty()) {
 			for (String uri : uris) {
-				ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Log).withMessage(CLASSPATH_UPDATED_NOTIFICATION).withData(uri);
-				this.connetction.sendActionableNotification(notification);
+				EventNotification notification = new EventNotification().withType(EventType.ClasspathUpdated).withData(uri);
+				this.connection.sendEventNotification(notification);
 			}
 		}
 	}

@@ -12,16 +12,14 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -29,19 +27,17 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -52,37 +48,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
-	protected JDTLanguageServer server;
 	@Mock
 	private JavaLanguageClient client;
-	private Path projectDir;
-
-	@Before
-	public void setup() throws Exception {
-		server = new JDTLanguageServer(projectsManager, preferenceManager);
-		server.connectClient(client);
-		JavaLanguageServerPlugin.getInstance().setProtocol(server);
-		projectDir = Files.createTempDirectory("test");
-		Collection<IPath> rootPaths = new ArrayList<>();
-		IPath rootPath = new org.eclipse.core.runtime.Path(projectDir.toFile().getAbsolutePath());
-		rootPaths.add(rootPath);
-		preferenceManager.getPreferences().setRootPaths(rootPaths);
-		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), Collections.emptySet());
-		updateJob.join(20000, monitor);
-	}
-
-	@After
-	public void tearDown() {
-		server.disconnectClient();
-		JavaLanguageServerPlugin.getInstance().setProtocol(null);
-		try {
-			if (projectDir != null) {
-				FileUtils.deleteDirectory(projectDir.toFile());
-			}
-		} catch (IOException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
-	}
 
 	private void waitForJobs() {
 		JobHelpers.waitForJobsToComplete();
@@ -95,18 +62,15 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IWorkspace workspace = wsRoot.getWorkspace();
 		IProject[] projects = workspace.getRoot().getProjects();
 		assertEquals(0, projects.length);
-		File from = new File(getSourceProjectDirectory(), "maven/multimodule");
-		File projectBasePath = new File(projectDir.toFile(), "multimodule");
-		FileUtils.copyDirectory(from, projectBasePath);
-		projects = workspace.getRoot().getProjects();
-		assertEquals(0, projects.length);
-		projectsManager.importProjects(new NullProgressMonitor());
+
+		importProjects("maven/multimodule");
 		waitForJobs();
 		projects = workspace.getRoot().getProjects();
-		assertEquals(5, projects.length);
+		assertEquals(6, projects.length);
 
 		// Add new sub-module
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		File projectBasePath = project.getLocation().toFile();
 		IFile pom = project.getFile("/pom.xml");
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<module>module1</module>", "<module>module1</module>\n<module>module4</module>"));
 		File subModulePath = new File(projectBasePath, "module4");
@@ -133,15 +97,21 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 		// Verify no projects imported
 		projects = workspace.getRoot().getProjects();
-		assertEquals(5, projects.length);
+		assertEquals(6, projects.length);
 
 		// Verify import projects
+		projectsManager.setConnection(client);
 		projectsManager.importProjects(new NullProgressMonitor());
 		waitForJobs();
 		IProject newProject = workspace.getRoot().getProject("module4");
 		assertTrue(newProject.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(6, projects.length);
+		assertEquals(7, projects.length);
+
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(client, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
+		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
 	
 	@Test
@@ -150,19 +120,16 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IWorkspace workspace = wsRoot.getWorkspace();
 		IProject[] projects = workspace.getRoot().getProjects();
 		assertEquals(0, projects.length);
-		File from = new File(getSourceProjectDirectory(), "gradle/multi-module");
-		File projectBasePath = new File(projectDir.toFile(), "multi-module");
-		FileUtils.copyDirectory(from, projectBasePath);
-		projects = workspace.getRoot().getProjects();
-		assertEquals(0, projects.length);
-		projectsManager.importProjects(new NullProgressMonitor());
+
+
+		importProjects("gradle/multi-module");
 		waitForJobs();
-		IProject project = workspace.getRoot().getProject("multi-module");
-		assertTrue(project.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(3, projects.length);
+		assertEquals(4, projects.length);
 		
 		// Add new sub-module
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multi-module");
+		File projectBasePath = project.getLocation().toFile();
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(projectBasePath, "settings.gradle"), true));
 		writer.newLine();
 		writer.write("include 'test'");
@@ -174,14 +141,20 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 		// Verify no projects imported
 		projects = workspace.getRoot().getProjects();
-		assertEquals(3, projects.length);
+		assertEquals(4, projects.length);
 
 		// Verify import projects
+		projectsManager.setConnection(client);
 		projectsManager.importProjects(new NullProgressMonitor());
 		waitForJobs();
 		IProject newProject = workspace.getRoot().getProject("test");
 		assertTrue(newProject.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(4, projects.length);
+		assertEquals(5, projects.length);
+
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(client, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
+		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
 }

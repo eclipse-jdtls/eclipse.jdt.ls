@@ -17,6 +17,7 @@ import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSetti
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,8 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -73,6 +76,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
+	public static final String PROJECTS_IMPORTED = "__PROJECTS_IMPORTED__";
 
 	private PreferenceManager preferenceManager;
 	protected JavaLanguageClient client;
@@ -118,6 +122,11 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				} catch (CoreException e) {
 					return new Status(Status.ERROR, IConstants.PLUGIN_ID, "Importing projects failed.", e);
 				}
+				List<URI> projectUris = Arrays.stream(getWorkspaceRoot().getProjects())
+					.map(project -> ProjectUtils.getProjectRealFolder(project).toFile().toURI())
+					.collect(Collectors.toList());
+				EventNotification notification = new EventNotification().withType(EventType.ProjectsImported).withData(projectUris);
+				client.sendEventNotification(notification);
 				return Status.OK_STATUS;
 			}
 		};

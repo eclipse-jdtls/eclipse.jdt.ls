@@ -29,8 +29,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -87,9 +88,9 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		projectsManager.fileChanged(pom.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
 		waitForBackgroundJobs();
 
-		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
-		verify(connection, times(1)).sendActionableNotification(argument.capture());
-		assertEquals(ClasspathUpdateHandler.CLASSPATH_UPDATED_NOTIFICATION, argument.getValue().getMessage());
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(connection, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
 		// Use Paths.get() to normalize the URI: ignore the tailing slash, "/project/path" and "/project/path/" should be the same.
 		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
 	}
@@ -107,9 +108,9 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, monitor);
 
-		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
-		verify(connection, times(1)).sendActionableNotification(argument.capture());
-		assertEquals(ClasspathUpdateHandler.CLASSPATH_UPDATED_NOTIFICATION, argument.getValue().getMessage());
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(connection, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
 		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
 	}
 
@@ -124,9 +125,9 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		projectsManager.fileChanged(classpath.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
 		waitForBackgroundJobs();
 
-		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
-		verify(connection, times(1)).sendActionableNotification(argument.capture());
-		assertEquals(ClasspathUpdateHandler.CLASSPATH_UPDATED_NOTIFICATION, argument.getValue().getMessage());
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(connection, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
 		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
 	}
 
@@ -143,9 +144,9 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		projectsManager.fileChanged(jar.toUri().toString(), CHANGE_TYPE.CREATED);
 		waitForBackgroundJobs();
 
-		ArgumentCaptor<ActionableNotification> argument = ArgumentCaptor.forClass(ActionableNotification.class);
-		verify(connection, times(1)).sendActionableNotification(argument.capture());
-		assertEquals(ClasspathUpdateHandler.CLASSPATH_UPDATED_NOTIFICATION, argument.getValue().getMessage());
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(connection, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
 		assertEquals(Paths.get(projectFolder.toURI().toString()), Paths.get((String) argument.getValue().getData()));
 
 	}
