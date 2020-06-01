@@ -78,7 +78,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WatchKind;
 
 public class StandardProjectsManager extends ProjectsManager {
-	private static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
+	protected static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
 	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
 	//@formatter:off
@@ -276,7 +276,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}
 
-	private Stream<IBuildSupport> buildSupports() {
+	protected Stream<IBuildSupport> buildSupports() {
 		Map<Integer, IBuildSupport> supporters = new TreeMap<>();
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, BUILD_SUPPORT_EXTENSION_POINT_ID);
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
