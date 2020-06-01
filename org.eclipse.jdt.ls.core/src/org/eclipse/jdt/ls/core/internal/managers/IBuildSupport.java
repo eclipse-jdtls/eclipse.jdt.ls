@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -112,8 +112,8 @@ public interface IBuildSupport {
 		return new JavaApplicationLaunchConfiguration(javaProject.getProject(), scope, null);
 	}
 
-	default List<String> getBasicWatchers() {
-		return new ArrayList<>();
+	default List<String> getWatchPatterns() {
+		return Collections.emptyList();
 	}
 
 }

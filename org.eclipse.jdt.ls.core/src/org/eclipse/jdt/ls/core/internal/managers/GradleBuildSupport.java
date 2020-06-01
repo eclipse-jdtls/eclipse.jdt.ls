@@ -47,8 +47,7 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	public static final String GRADLE_SUFFIX = ".gradle";
 	public static final String GRADLE_PROPERTIES = "gradle.properties";
-	public static final String GRADLE_SUFFIX_PATTERN = "**/*.gradle";
-	public static final String GRADLE_PROPERTIES_PATTERN = "**/gradle.properties";
+	public static final List<String> WATCH_FILE_PATTERNS = Arrays.asList("**/*.gradle", "**/gradle.properties");
 
 	@Override
 	public boolean applies(IProject project) {
@@ -137,8 +136,8 @@ public class GradleBuildSupport implements IBuildSupport {
 	}
 
 	@Override
-	public List<String> getBasicWatchers() {
-		return Arrays.asList(GRADLE_SUFFIX_PATTERN, GRADLE_PROPERTIES_PATTERN);
+	public List<String> getWatchPatterns() {
+		return WATCH_FILE_PATTERNS;
 	}
 
 }
