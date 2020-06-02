@@ -228,7 +228,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		return createHoverRequest(uri, line, kar);
 	}
 
-	String createHoverRequest(URI file, int line, int kar) {
+	public static String createHoverRequest(URI file, int line, int kar) {
 		String fileURI = ResourceUtils.fixURI(file);
 		return HOVER_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))

@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
  */
 public class HashProvider {
 	public static final String SHA256 = "SHA-256";
+	public static final String SHA1 = "SHA-1";
 
 	private String alghorithm;
 

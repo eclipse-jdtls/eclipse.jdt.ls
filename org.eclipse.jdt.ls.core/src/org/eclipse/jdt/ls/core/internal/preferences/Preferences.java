@@ -130,6 +130,11 @@ public class Preferences {
 	 */
 	public static final String MAVEN_DOWNLOAD_SOURCES = "java.maven.downloadSources";
 	/**
+	 * Preference key to enable/disable downloading source artifacts for Eclipse
+	 * projects.
+	 */
+	public static final String ECLIPSE_DOWNLOAD_SOURCES = "java.eclipse.downloadSources";
+	/**
 	 * Preference key to force update of Snapshots/Releases.
 	 */
 	public static final String MAVEN_UPDATE_SNAPSHOTS = "java.maven.updateSnapshots";
@@ -419,6 +424,7 @@ public class Preferences {
 	private String gradleUserHome;
 	private boolean importMavenEnabled;
 	private boolean mavenDownloadSources;
+	private boolean eclipseDownloadSources;
 	private boolean mavenUpdateSnapshots;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
@@ -606,6 +612,7 @@ public class Preferences {
 		gradleUserHome = null;
 		importMavenEnabled = true;
 		mavenDownloadSources = false;
+		eclipseDownloadSources = false;
 		mavenUpdateSnapshots = false;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
@@ -684,8 +691,11 @@ public class Preferences {
 		prefs.setGradleUserHome(gradleUserHome);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
-		boolean downloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
-		prefs.setMavenDownloadSources(downloadSources);
+		boolean mavenDownloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
+		prefs.setMavenDownloadSources(mavenDownloadSources);
+		boolean eclipseDownloadSources = getBoolean(configuration, ECLIPSE_DOWNLOAD_SOURCES, false);
+		prefs.setEclipseDownloadSources(eclipseDownloadSources);
+
 		boolean updateSnapshots = getBoolean(configuration, MAVEN_UPDATE_SNAPSHOTS, false);
 		prefs.setMavenUpdateSnapshots(updateSnapshots);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
@@ -1497,4 +1507,13 @@ public class Preferences {
 	public boolean isIncludeAccessors() {
 		return this.includeAccessors;
 	}
+	public boolean isEclipseDownloadSources() {
+		return eclipseDownloadSources;
+	}
+
+	public Preferences setEclipseDownloadSources(boolean enabled) {
+		this.eclipseDownloadSources = enabled;
+		return this;
+	}
+
 }

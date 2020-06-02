@@ -14,21 +14,8 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.codehaus.plexus.util.StringUtils;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspaceRunnable;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 /**
  * Base class for Invisible project tests.
@@ -37,11 +24,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
  *
  */
 public abstract class AbstractInvisibleProjectBasedTest extends AbstractProjectsManagerBasedTest {
-
-	protected IProject copyAndImportFolder(String folder, String triggerFile) throws Exception {
-		File projectFolder = copyFiles(folder, true);
-		return importRootFolder(projectFolder, triggerFile);
-	}
 
 	/**
 	 * Creates a temporary folder prefixed with <code>name</code> containing sources
@@ -86,27 +68,5 @@ public abstract class AbstractInvisibleProjectBasedTest extends AbstractProjects
 		FileUtils.copyFileToDirectory(new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo-sources.jar"), libFile);
 	}
 
-	protected IProject importRootFolder(File projectFolder, String triggerFile) throws Exception {
-		IPath rootPath = Path.fromOSString(projectFolder.getAbsolutePath());
-		return importRootFolder(rootPath, triggerFile);
-	}
 
-	protected IProject importRootFolder(IPath rootPath, String triggerFile) throws Exception {
-		if (StringUtils.isNotBlank(triggerFile)) {
-			IPath triggerFilePath = rootPath.append(triggerFile);
-			Preferences preferences = preferenceManager.getPreferences();
-			preferences.setTriggerFiles(Arrays.asList(triggerFilePath));
-		}
-		final List<IPath> roots = Arrays.asList(rootPath);
-		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
-			@Override
-			public void run(IProgressMonitor monitor) throws CoreException {
-				projectsManager.initializeProjects(roots, monitor);
-			}
-		};
-		JavaCore.run(runnable, null, monitor);
-		waitForBackgroundJobs();
-		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
-		return ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
-	}
 }
