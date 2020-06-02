@@ -65,6 +65,8 @@ import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerT
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
+import org.eclipse.jdt.ls.core.internal.managers.ISourceDownloader;
+import org.eclipse.jdt.ls.core.internal.managers.MavenSourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -119,6 +121,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private static InputStream in;
 	private static PrintStream out;
 	private static PrintStream err;
+
+	private ISourceDownloader sourceDownloader;
 
 	private LanguageServer languageServer;
 	private ProjectsManager projectsManager;
@@ -592,7 +596,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 			fContextTypeRegistry = registry;
 		}
-
 		return fContextTypeRegistry;
 	}
 
@@ -626,5 +629,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 			typeFilter = new TypeFilter();
 		}
 		return typeFilter;
+	}
+
+	public static synchronized ISourceDownloader getDefaultSourceDownloader() {
+		if (pluginInstance.sourceDownloader == null) {
+			pluginInstance.sourceDownloader = new MavenSourceDownloader();
+		}
+		return pluginInstance.sourceDownloader;
 	}
 }

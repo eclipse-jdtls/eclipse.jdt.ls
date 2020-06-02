@@ -14,7 +14,9 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFolder;
@@ -98,5 +100,9 @@ public class JavaProjectHelper {
 
 	public static String toString(IClasspathEntry[] classpath) {
 		return Arrays.stream(classpath).map(cpe -> " - " + cpe.getPath().toString()).collect(Collectors.joining("\n"));
+	}
+
+	public static IClasspathEntry findJarEntry(IJavaProject jproject, String jarName) throws JavaModelException {
+		return Stream.of(jproject.getRawClasspath()).filter(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY || cpe.getPath() != null && Objects.equals(jarName, cpe.getPath().lastSegment())).findFirst().orElse(null);
 	}
 }

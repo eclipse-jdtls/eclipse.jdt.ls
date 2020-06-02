@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -21,11 +22,14 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 import com.google.common.collect.Sets;
 
@@ -84,6 +88,19 @@ public class EclipseBuildSupport implements IBuildSupport {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+		boolean shouldDiscoverSources = (classFile.getJavaProject() != null && Objects.equals(ProjectsManager.getDefaultProject(), classFile.getJavaProject().getProject()));
+
+		if (!shouldDiscoverSources) {
+			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+			shouldDiscoverSources = preferencesManager != null && preferencesManager.getPreferences().isEclipseDownloadSources();
+		}
+		if (shouldDiscoverSources) {
+			JavaLanguageServerPlugin.getDefaultSourceDownloader().discoverSource(classFile, monitor);
+		}
 	}
 
 
