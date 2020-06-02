@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -71,6 +72,11 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 		} else {
 			return SelectorUtils.matchPath(glob, path); // Case sensitive match in *nix
 		}
+	}
+
+	@Override
+	public void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+		JavaLanguageServerPlugin.getDefaultSourceDownloader().discoverSource(classFile, monitor);
 	}
 
 }

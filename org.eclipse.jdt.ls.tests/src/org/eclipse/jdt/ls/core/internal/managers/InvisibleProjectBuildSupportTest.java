@@ -429,4 +429,5 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			assertEquals("Configuration with sources", libraries, preferences.getReferencedLibraries());
 		}
 	}
+
 }

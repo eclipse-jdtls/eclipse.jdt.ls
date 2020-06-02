@@ -16,6 +16,7 @@ import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.IClassFile;
@@ -41,6 +44,7 @@ import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -228,7 +232,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		return createHoverRequest(uri, line, kar);
 	}
 
-	String createHoverRequest(URI file, int line, int kar) {
+	public static String createHoverRequest(URI file, int line, int kar) {
 		String fileURI = ResourceUtils.fixURI(file);
 		return HOVER_TEMPLATE.replace("${file}", fileURI)
 				.replace("${line}", String.valueOf(line))
@@ -614,6 +618,38 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
 		String javadoc = hover.getContents().getLeft().get(0).getRight().getValue();
 		assertEquals("String java.lang.String.toUpperCase()", javadoc);
+
+	}
+
+	@Test
+	public void testDynamicSourceLookups() throws Exception {
+			File remarkFile = DependencyUtil.getArtifact("com.kotcrab.remark", "remark", "1.2.0", null);
+
+			File localProject = new File(getSourceProjectDirectory(), "singlefile/downloadSources");
+
+			File remarkCopy = new File(localProject, "lib/remark.jar");
+			FileUtils.copyFile(remarkFile, remarkCopy);
+
+			project = copyAndImportFolder("singlefile/downloadSources", "UsingRemark.java");
+
+			waitForBackgroundJobs();
+
+			List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+			assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 0, errors.size());
+
+			IJavaProject javaProject = JavaCore.create(project);
+			IClasspathEntry remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
+			assertNotNull(remark);
+			assertNull(remark.getSourceAttachmentPath());
+
+			URI standalone = new File(localProject, "UsingRemark.java").toURI();
+			String payload = createHoverRequest(standalone, 2, 3);
+			TextDocumentPositionParams position = getParams(payload);
+			Hover hover = handler.hover(position, monitor);
+
+			assertNotNull(hover);
+			String javadoc = hover.getContents().getLeft().get(1).getLeft();
+			assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
 
 	}
 
