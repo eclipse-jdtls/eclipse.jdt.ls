@@ -317,7 +317,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
-			buildSupports().forEach(e -> e.getWatchPatterns().forEach(p -> patterns.add(p)));
+			buildSupports().forEach(e -> e.getWatchPatterns().forEach(patterns::add));
 			Set<IPath> sources = new HashSet<>();
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
