@@ -66,7 +66,7 @@ public class WrapperValidator {
 
 	public WrapperValidator(int queueLength) {
 		this.hashProvider = new HashProvider();
-		queueLength = queueLength;
+		this.queueLength = queueLength;
 	}
 
 	public WrapperValidator() {
