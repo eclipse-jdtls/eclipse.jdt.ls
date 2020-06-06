@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -40,12 +39,9 @@ import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -425,8 +421,7 @@ public class Preferences {
 	private String mavenUserSettings;
 
 	private List<String> javaCompletionFavoriteMembers;
-	private List<String> sha256Allowed;
-	private List<String> sha256Disallowed;
+	private List<?> gradleWrapperList;
 
 	private List<String> javaImportExclusions = new LinkedList<>();
 	private ReferencedLibraries referencedLibraries;
@@ -748,41 +743,7 @@ public class Preferences {
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
 
 		List<?> gradleWrapperList = getList(configuration, JAVA_GRADLE_WRAPPER_SHA256_KEY, JAVA_GRADLE_WRAPPER_SHA256_DEFAULT);
-		List<String> sha256Allowed = new ArrayList<>();
-		List<String> sha256Disallowed = new ArrayList<>();
-		for (Object object : gradleWrapperList) {
-			if (object instanceof Map) {
-				Map<?, ?> map = (Map<?, ?>) object;
-				final ChecksumWrapper sha256 = prefs.new ChecksumWrapper();
-				sha256.allowed = true;
-				map.forEach((k, v) -> {
-					if (k instanceof String) {
-						switch ((String) k) {
-							case "sha256":
-								if (v instanceof String) {
-									sha256.checksum = (String) v;
-								}
-								break;
-							case "allowed":
-								if (v instanceof Boolean) {
-									sha256.allowed = (Boolean) v;
-								}
-								break;
-							default:
-								break;
-						}
-					}
-				});
-				if (sha256.checksum != null) {
-					if (sha256.allowed) {
-						sha256Allowed.add(sha256.checksum);
-					} else {
-						sha256Disallowed.add(sha256.checksum);
-					}
-				}
-			}
-		}
-		prefs.putSha256(sha256Allowed, sha256Disallowed);
+		prefs.setGradleWrapperList(gradleWrapperList);
 
 		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
@@ -938,24 +899,6 @@ public class Preferences {
 
 	public Preferences setJavaCompletionFavoriteMembers(List<String> javaCompletionFavoriteMembers) {
 		this.javaCompletionFavoriteMembers = (javaCompletionFavoriteMembers == null || javaCompletionFavoriteMembers.isEmpty()) ? JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT : javaCompletionFavoriteMembers;
-		return this;
-	}
-
-	public Preferences putSha256(List<String> sha256Allowed, List<String> sha256Disallowed) {
-		List<String> oldAllowed = this.sha256Allowed;
-		List<String> oldDisallowed = this.sha256Disallowed;
-		WrapperValidator.clear();
-		this.sha256Allowed = sha256Allowed;
-		if (sha256Disallowed != null) {
-			WrapperValidator.disallow(sha256Disallowed);
-		}
-		this.sha256Disallowed = sha256Disallowed;
-		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
-		if (projectsManager != null && (!Objects.equals(oldAllowed, this.sha256Allowed) || !Objects.equals(oldDisallowed, this.sha256Disallowed))) {
-			for (IProject project : ProjectUtils.getGradleProjects()) {
-				projectsManager.updateProject(project, true);
-			}
-		}
 		return this;
 	}
 
@@ -1161,10 +1104,6 @@ public class Preferences {
 
 	public String[] getJavaCompletionFavoriteMembers() {
 		return javaCompletionFavoriteMembers.toArray(new String[0]);
-	}
-
-	public List<String> getSha256Allowed() {
-		return sha256Allowed;
 	}
 
 	public String getJavaHome() {
@@ -1443,8 +1382,13 @@ public class Preferences {
 		return this;
 	}
 
-	class ChecksumWrapper {
-		private String checksum;
-		private boolean allowed;
+	public Preferences setGradleWrapperList(List<?> gradleWrapperList) {
+		this.gradleWrapperList = gradleWrapperList;
+		return this;
 	}
+
+	public List<?> getGradleWrapperList() {
+		return this.gradleWrapperList == null ? Collections.emptyList() : this.gradleWrapperList;
+	}
+
 }

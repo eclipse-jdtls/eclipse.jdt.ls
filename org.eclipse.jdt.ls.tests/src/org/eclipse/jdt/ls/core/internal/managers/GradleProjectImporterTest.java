@@ -51,6 +51,7 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -437,6 +438,58 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testJava14Project() throws Exception {
 		testJavaProjectWithPreviewFeatures("14", true /* The project has enabled preview features in the jdt setting*/, JavaCore.IGNORE);
+	}
+
+	@Test
+	public void testSubprojects() throws Exception {
+		List<String> arguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments();
+		try {
+			// force overrideWorkspace
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(ImmutableList.of("--stacktrace"));
+			List<IProject> projects = importProjects("gradle/subprojects");
+			assertEquals(4, projects.size());//default + 3 gradle projects
+			IProject root = WorkspaceHelper.getProject("subprojects");
+			assertIsGradleProject(root);
+			IProject project1 = WorkspaceHelper.getProject("project1");
+			assertIsGradleProject(project1);
+			IProject project2 = WorkspaceHelper.getProject("project2");
+			assertIsGradleProject(project2);
+			projectsManager.updateProject(root, true);
+			projectsManager.updateProject(project1, true);
+			projectsManager.updateProject(project2, true);
+			JobHelpers.waitForJobsToComplete();
+			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+			ProjectConfiguration configuration = getProjectConfiguration(root);
+			// check the children .settings/org.eclipse.buildship.core.prefs
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			configuration = getProjectConfiguration(project1);
+			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			configuration = getProjectConfiguration(project2);
+			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(ImmutableList.of("--stacktrace"));
+			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project1);
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project2);
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
+			projectsManager.updateProject(root, true);
+			JobHelpers.waitForJobsToComplete();
+			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+			configuration = CorePlugin.configurationManager().loadProjectConfiguration(root);
+			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			// check that the children are updated
+			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project1);
+			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project2);
+			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
+		}
+	}
+
+	private ProjectConfiguration getProjectConfiguration(IProject project) {
+		org.eclipse.buildship.core.internal.configuration.BuildConfiguration buildConfig = CorePlugin.configurationManager().loadBuildConfiguration(project.getLocation().toFile());
+		return CorePlugin.configurationManager().createProjectConfiguration(buildConfig, project.getLocation().toFile());
 	}
 
 	private void testJavaProjectWithPreviewFeatures(String javaVersion, boolean enabled, String severity) throws Exception {
