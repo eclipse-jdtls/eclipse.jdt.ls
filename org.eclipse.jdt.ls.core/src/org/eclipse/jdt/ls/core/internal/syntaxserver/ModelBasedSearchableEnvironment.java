@@ -38,7 +38,7 @@ public class ModelBasedSearchableEnvironment extends SearchableEnvironment {
 			throw new OperationCanceledException();
 		}
 
-		JavaLanguageServerPlugin.logInfo("Search Engined disabled. search directly.");
+		JavaLanguageServerPlugin.logInfo("Search engine disabled, searching directly.");
 		// Look for types in the model instead of a search request
 		findTypes(new String(prefix), storage, convertSearchFilterToModelFilter(searchFor));
 	}
