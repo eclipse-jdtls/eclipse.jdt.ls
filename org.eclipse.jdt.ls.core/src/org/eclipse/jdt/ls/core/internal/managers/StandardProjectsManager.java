@@ -422,5 +422,12 @@ public class StandardProjectsManager extends ProjectsManager {
 			};
 			this.preferenceManager.addPreferencesChangeListener(this.preferenceChangeListener);
 		}
+		buildSupports().forEach(p -> {
+			try {
+				p.registerPreferencesChangeListener(this.preferenceManager);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		});
 	}
 }

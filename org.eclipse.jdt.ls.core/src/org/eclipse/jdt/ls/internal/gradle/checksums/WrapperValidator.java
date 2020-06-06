@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,6 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -79,10 +79,6 @@ public class WrapperValidator {
 			throw ExceptionFactory.newException(wrapperJar.toString() + " doesn't exist.");
 		}
 		if (!downloaded.get() || allowed.isEmpty()) {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-			if (preferenceManager != null && preferenceManager.getPreferences().getSha256Allowed() != null) {
-				allow(preferenceManager.getPreferences().getSha256Allowed());
-			}
 			File versionFile = getVersionCacheFile();
 			if (!versionFile.exists()) {
 				JobHelpers.waitForLoadingGradleVersionJob();
@@ -225,6 +221,14 @@ public class WrapperValidator {
 
 	public static int size() {
 		return allowed.size() + disallowed.size();
+	}
+
+	public static Set<String> getAllowed() {
+		return Collections.unmodifiableSet(allowed);
+	}
+
+	public static Set<String> getDisallowed() {
+		return Collections.unmodifiableSet(allowed);
 	}
 
 }

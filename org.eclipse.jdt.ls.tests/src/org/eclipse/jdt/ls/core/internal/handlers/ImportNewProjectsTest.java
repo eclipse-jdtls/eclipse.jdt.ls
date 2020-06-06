@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
@@ -54,6 +55,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 	private void waitForJobs() {
 		JobHelpers.waitForJobsToComplete();
 		JobHelpers.waitForInitializeJobs();
+		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, null);
 	}
 
 	@Test
@@ -81,7 +83,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		writer.newLine();
 		//@formatter:off
 		writer.write(
-		"<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" + 
+		"<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
 			"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
 			"xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
 			"<modelVersion>4.0.0</modelVersion>" +
@@ -113,7 +115,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
-	
+
 	@Test
 	public void testImportNewGradleProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -126,7 +128,6 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		waitForJobs();
 		projects = workspace.getRoot().getProjects();
 		assertEquals(4, projects.length);
-		
 		// Add new sub-module
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multi-module");
 		File projectBasePath = project.getLocation().toFile();

@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 /**
  * @author Fred Bricon
@@ -114,6 +115,26 @@ public interface IBuildSupport {
 
 	default List<String> getWatchPatterns() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * Register the listener(s) for notification of preferences changes. The given
+	 * preferenceManager argument must not be <code>null</code>.
+	 *
+	 * @param preferenceManager
+	 *            the preferences manager
+	 */
+	default void registerPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+	}
+
+	/**
+	 * Un-register the listener(s) from receiving notification of preferences
+	 * changes. The given preferenceManager argument must not be <code>null</code>.
+	 *
+	 * @param preferenceManager
+	 *            the preferences manager
+	 */
+	default void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
 	}
 
 }

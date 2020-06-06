@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,8 @@ import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
+import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
+import org.eclipse.buildship.core.internal.workspace.InternalGradleBuild;
 import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -38,6 +41,11 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.model.eclipse.EclipseProject;
 
 /**
  * @author Fred Bricon
@@ -48,6 +56,8 @@ public class GradleBuildSupport implements IBuildSupport {
 	public static final String GRADLE_SUFFIX = ".gradle";
 	public static final String GRADLE_PROPERTIES = "gradle.properties";
 	public static final List<String> WATCH_FILE_PATTERNS = Arrays.asList("**/*.gradle", "**/gradle.properties");
+
+	private static IPreferencesChangeListener listener = new GradlePreferenceChangeListener();
 
 	@Override
 	public boolean applies(IProject project) {
@@ -60,19 +70,35 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
-		if (force) {
-			String projectPath = project.getLocation().toFile().getAbsolutePath();
-			BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
-			GradleBuild build = GradleCore.getWorkspace().createBuild(buildConfiguration);
-			build.synchronize(monitor);
-		} else {
-			Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
-			if (build.isPresent()) {
-				build.get().synchronize(monitor);
+		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
+		if (build.isPresent()) {
+			GradleBuild gradleBuild = build.get();
+			boolean isRoot = isRoot(project, gradleBuild, monitor);
+			if (force && isRoot) {
+				String projectPath = project.getLocation().toFile().getAbsolutePath();
+				BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
+				gradleBuild = GradleCore.getWorkspace().createBuild(buildConfiguration);
+			}
+			if (isRoot) {
+				gradleBuild.synchronize(monitor);
 			}
 		}
 	}
 
+	private boolean isRoot(IProject project, GradleBuild gradleBuild, IProgressMonitor monitor) {
+		if (gradleBuild instanceof InternalGradleBuild) {
+			CancellationTokenSource tokenSource = GradleConnector.newCancellationTokenSource();
+			Collection<EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
+			for (EclipseProject eclipseProject : eclipseProjects) {
+				File eclipseProjectDirectory = eclipseProject.getProjectDirectory();
+				File projectDirectory = project.getLocation().toFile();
+				if (eclipseProjectDirectory.equals(projectDirectory)) {
+					return eclipseProject.getParent() == null;
+				}
+			}
+		}
+		return false;
+	}
 	@Override
 	public boolean isBuildFile(IResource resource) {
 		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
@@ -140,4 +166,19 @@ public class GradleBuildSupport implements IBuildSupport {
 		return WATCH_FILE_PATTERNS;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.IBuildSupport.registerPreferencesChangeListener(PreferenceManager)
+	 */
+	@Override
+	public void registerPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+		preferenceManager.addPreferencesChangeListener(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.IBuildSupport.unregisterPreferencesChangeListener(PreferenceManager)
+	 */
+	@Override
+	public void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+		preferenceManager.removePreferencesChangeListener(listener);
+	}
 }

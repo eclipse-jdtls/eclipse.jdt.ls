@@ -24,10 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.junit.After;
@@ -73,26 +72,29 @@ public class WrapperValidatorTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void testMissingSha256() throws Exception {
-		Preferences prefs = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
-		List<String> allowed = prefs.getSha256Allowed();
-		int size = WrapperValidator.size();
 		WrapperValidator wrapperValidator = new WrapperValidator(100);
+		Set<String> allowed = WrapperValidator.getAllowed();
+		Set<String> disallowed = WrapperValidator.getDisallowed();
 		File file = new File(getSourceProjectDirectory(), "gradle/gradle-4.0");
+		wrapperValidator.checkWrapper(file.getAbsolutePath());
+		int size = WrapperValidator.size();
 		List<String> sha256 = new ArrayList<>();
 		try {
 			sha256.add("41c8aa7a337a44af18d8cda0d632ebba469aef34f3041827624ef5c1a4e4419d");
-			prefs.putSha256(null, sha256);
+			WrapperValidator.clear();
+			WrapperValidator.disallow(sha256);
 			assertTrue(file.isDirectory());
 			ValidationResult result = wrapperValidator.checkWrapper(file.getAbsolutePath());
 			assertFalse(result.isValid());
-			size = WrapperValidator.size();
 			assertNotNull(result.getChecksum());
-			prefs.putSha256(sha256, null);
+			WrapperValidator.clear();
+			WrapperValidator.allow(sha256);
 			result = wrapperValidator.checkWrapper(file.getAbsolutePath());
 			assertTrue(result.isValid());
 		} finally {
-			prefs.putSha256(allowed, null);
-			prefs.putSha256(sha256, null);
+			WrapperValidator.clear();
+			WrapperValidator.allow(allowed);
+			WrapperValidator.disallow(disallowed);
 			wrapperValidator.checkWrapper(file.getAbsolutePath());
 			assertEquals(size, WrapperValidator.size());
 		}
