@@ -37,6 +37,7 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FoldingRangeHandler;
@@ -154,6 +155,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		} catch (OperationCanceledException | InterruptedException e) {
 			logException(e.getMessage(), e);
 		}
+		this.client.sendStatus(ServiceStatus.Started, "LightWeightServiceReady");
 		logInfo(">> initialization job finished");
 
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
