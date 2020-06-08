@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.InitializeResult;
@@ -65,6 +66,9 @@ public class SyntaxInitHandler extends BaseInitHandler {
 		}
 		if (!preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
 			capabilities.setHoverProvider(Boolean.TRUE);
+		}
+		if (!preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
+			capabilities.setCompletionProvider(CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
 		}
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);

@@ -39,6 +39,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FoldingRangeHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
@@ -51,6 +53,9 @@ import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -81,6 +86,8 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class SyntaxLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, IExtendedProtocol {
+	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
+
 	private SyntaxDocumentLifeCycleHandler documentLifeCycleHandler;
 	private ContentProviderManager contentProviderManager;
 	private ProjectsManager projectsManager;
@@ -159,6 +166,10 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		logInfo(">> initialization job finished");
 
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
+			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+		}
+
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL, null);
 		}
@@ -314,6 +325,50 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		logInfo(">> document/hover");
 		HoverHandler handler = new HoverHandler(this.preferenceManager);
 		return computeAsync((monitor) -> handler.hover(position, monitor));
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#completion(org.eclipse.lsp4j.CompletionParams)
+	 */
+	@Override
+	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
+		logInfo(">> document/completion");
+		CompletionHandler handler = new CompletionHandler(preferenceManager);
+		final IProgressMonitor[] monitors = new IProgressMonitor[1];
+		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
+			monitors[0] = monitor;
+			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
+				waitForLifecycleJobs(monitor);
+			}
+			return handler.completion(position, monitor);
+		});
+		result.join();
+		if (monitors[0].isCanceled()) {
+			result.cancel(true);
+		}
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.lsp4j.services.TextDocumentService#resolveCompletionItem(org.eclipse.lsp4j.CompletionItem)
+	 */
+	@Override
+	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
+		logInfo(">> document/resolveCompletionItem");
+		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
+		final IProgressMonitor[] monitors = new IProgressMonitor[1];
+		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
+			monitors[0] = monitor;
+			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
+				waitForLifecycleJobs(monitor);
+			}
+			return handler.resolve(unresolved, monitor);
+		});
+		result.join();
+		if (monitors[0].isCanceled()) {
+			result.cancel(true);
+		}
+		return result;
 	}
 
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
