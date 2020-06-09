@@ -180,24 +180,19 @@ public abstract class BaseDocumentLifeCycleHandler {
 		this.sharedASTProvider.disposeAST();
 		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
 		SubMonitor progress = SubMonitor.convert(monitor, toValidate.size() + 1);
-		List<CompilationUnit> astRoots = new ArrayList<>();
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
 		}
 		for (ICompilationUnit rootToValidate : toValidate) {
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
 			CompilationUnit astRoot = this.sharedASTProvider.getAST(rootToValidate, CoreASTProvider.WAIT_YES, monitor);
-			astRoots.add(astRoot);
-			if (monitor.isCanceled()) {
-				return Status.CANCEL_STATUS;
+			if (astRoot != null) {
+				// report errors, even if there are no problems in the file: The client need to know that they got fixed.
+				ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
+				publishDiagnostics(unit, progress.newChild(1));
 			}
-		}
-		for (CompilationUnit astRoot : astRoots) {
-			if (monitor.isCanceled()) {
-				return Status.CANCEL_STATUS;
-			}
-			// report errors, even if there are no problems in the file: The client need to know that they got fixed.
-			ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
-			publishDiagnostics(unit, progress.newChild(1));
 		}
 		JavaLanguageServerPlugin.logInfo("Validated " + toValidate.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		return Status.OK_STATUS;
