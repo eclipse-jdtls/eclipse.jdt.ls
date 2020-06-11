@@ -169,6 +169,57 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		assertToken(decodedTokens, legend, 2, 7, 8, "namespace", Arrays.asList());
 	}
 
+	@Test
+	public void testSemanticTokens_annotation_normal() throws JavaModelException {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    @SuppressWarnings(value=\"all\")\n");
+		buf.append("    public void foo {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
+		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
+		assertToken(decodedTokens, legend, 2, 5, 16, "annotation", Arrays.asList());
+	}
+
+	@Test
+	public void testSemanticTokens_annotation_single_member() throws JavaModelException {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    @SuppressWarnings(\"all\")\n");
+		buf.append("    public void foo {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
+		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
+		assertToken(decodedTokens, legend, 2, 5, 16, "annotation", Arrays.asList());
+	}
+
+	@Test
+	public void testSemanticTokens_annotation_marker() throws JavaModelException {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    @Deprecated\n");
+		buf.append("    public void foo {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
+		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
+		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
+		assertToken(decodedTokens, legend, 2, 5, 10, "annotation", Arrays.asList());
+	}
+
 	private void assertModifiers(List<String> tokenModifiers, int encodedModifiers, List<String> modifierStrings) {
 		int cnt = 0;
 		for (int i=0; i<tokenModifiers.size(); i++) {

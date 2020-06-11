@@ -26,6 +26,7 @@ public enum TokenType {
     CLASS("class"),
     INTERFACE("interface"),
     ENUM("enum"),
+    ANNOTATION("annotation"),
     TYPE_PARAMETER("typeParameter"),
     FUNCTION("function"),
     MEMBER("member"),
