@@ -1493,8 +1493,13 @@ public final class ReorgPolicyFactory {
 				if (fChangeManager == null) {
 					fChangeManager= createChangeManager(new SubProgressMonitor(pm, 1), new RefactoringStatus());
 					// TODO: non-CU matches silently dropped
-					RefactoringStatus status= Checks.validateModifiesFiles(getAllModifiedFiles(), null);
-					if (status.hasFatalError()) {
+					RefactoringStatus status;
+					try {
+						status = Checks.validateModifiesFiles(getAllModifiedFiles(), null, pm);
+						if (status.hasFatalError()) {
+							fChangeManager = new TextChangeManager();
+						}
+					} catch (CoreException e) {
 						fChangeManager= new TextChangeManager();
 					}
 				}

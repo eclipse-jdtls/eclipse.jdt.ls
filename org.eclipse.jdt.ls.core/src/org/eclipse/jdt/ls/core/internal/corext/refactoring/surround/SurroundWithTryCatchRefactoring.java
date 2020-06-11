@@ -185,7 +185,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 	 */
 	@Override
 	public RefactoringStatus checkFinalConditions(IProgressMonitor pm) throws CoreException {
-		return Checks.validateModifiesFiles(ResourceUtil.getFiles(new ICompilationUnit[] { fCUnit }), getValidationContext());
+		return Checks.validateModifiesFiles(ResourceUtil.getFiles(new ICompilationUnit[] { fCUnit }), getValidationContext(), pm);
 	}
 
 	/* non Java-doc

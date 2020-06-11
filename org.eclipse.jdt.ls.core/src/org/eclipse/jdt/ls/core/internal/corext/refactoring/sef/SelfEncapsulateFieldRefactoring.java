@@ -417,7 +417,7 @@ public class SelfEncapsulateFieldRefactoring extends Refactoring {
 
 		sub.done();
 		IFile[] filesToBeModified = ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits());
-		result.merge(Checks.validateModifiesFiles(filesToBeModified, getValidationContext()));
+		result.merge(Checks.validateModifiesFiles(filesToBeModified, getValidationContext(), pm));
 		if (result.hasFatalError()) {
 			return result;
 		}

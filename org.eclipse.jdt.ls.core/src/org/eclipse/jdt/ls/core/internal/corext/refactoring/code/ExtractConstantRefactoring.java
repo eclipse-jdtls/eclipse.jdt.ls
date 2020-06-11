@@ -293,7 +293,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		try {
 			pm.beginTask("", 7); //$NON-NLS-1$
 
-			RefactoringStatus result = Checks.validateEdit(fCu, getValidationContext());
+			RefactoringStatus result = Checks.validateEdit(fCu, getValidationContext(), pm);
 			if (result.hasFatalError()) {
 				return result;
 			}

@@ -338,7 +338,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 		}
 
 		IFile[] changedFiles = ResourceUtil.getFiles(new ICompilationUnit[] { fCUnit });
-		result.merge(Checks.validateModifiesFiles(changedFiles, getValidationContext()));
+		result.merge(Checks.validateModifiesFiles(changedFiles, getValidationContext(), pm));
 		if (result.hasFatalError()) {
 			return result;
 		}

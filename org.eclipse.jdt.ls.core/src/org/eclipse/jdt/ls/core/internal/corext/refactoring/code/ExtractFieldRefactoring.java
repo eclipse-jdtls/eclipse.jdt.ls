@@ -246,7 +246,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 		try {
 			pm.beginTask("", 16); //$NON-NLS-1$
 
-			RefactoringStatus result = Checks.validateModifiesFiles(ResourceUtil.getFiles(new ICompilationUnit[] { fCu }), getValidationContext());
+			RefactoringStatus result = Checks.validateModifiesFiles(ResourceUtil.getFiles(new ICompilationUnit[] { fCu }), getValidationContext(), pm);
 			if (result.hasFatalError()) {
 				return result;
 			}

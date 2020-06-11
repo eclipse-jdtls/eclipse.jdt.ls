@@ -894,8 +894,9 @@ public class RefactorProcessor {
 					return null;
 				}
 				boolean convertForLoops = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+				boolean checkIfLoopVarUsed = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
 				return ConvertLoopFixCore.createCleanUp(compilationUnit, convertForLoops, convertForLoops,
-						isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL) && isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES));
+						isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL) && isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES), checkIfLoopVarUsed);
 			}
 
 			@Override
@@ -903,6 +904,9 @@ public class RefactorProcessor {
 				List<String> result = new ArrayList<>();
 				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
 					result.add(MultiFixMessages.Java50CleanUp_ConvertToEnhancedForLoop_description);
+					if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
+						result.add(MultiFixMessages.Java50CleanUp_ConvertLoopOnlyIfLoopVarUsed_description);
+					}
 				}
 				return result.toArray(new String[result.size()]);
 			}
@@ -919,6 +923,15 @@ public class RefactorProcessor {
 					buf.append("for (int i = 0; i < ids.length; i++) {\n"); //$NON-NLS-1$
 					buf.append("    double value= ids[i] / 2; \n"); //$NON-NLS-1$
 					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
+					buf.append("}\n"); //$NON-NLS-1$
+				}
+				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED) && !isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
+					buf.append("for (int id : ids) {\n"); //$NON-NLS-1$
+					buf.append("    System.out.println(\"here\");\n"); //$NON-NLS-1$
+					buf.append("}\n"); //$NON-NLS-1$
+				} else {
+					buf.append("for (int i = 0; i < ids.length; i++) {\n"); //$NON-NLS-1$
+					buf.append("    System.out.println(\"here\");\n"); //$NON-NLS-1$
 					buf.append("}\n"); //$NON-NLS-1$
 				}
 				return buf.toString();

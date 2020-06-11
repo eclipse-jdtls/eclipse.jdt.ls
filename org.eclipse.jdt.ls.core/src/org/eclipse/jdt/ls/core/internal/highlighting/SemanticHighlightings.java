@@ -46,7 +46,6 @@ import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
-import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingsCore;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticToken;
 
 import com.google.common.collect.ImmutableListMultimap;
@@ -58,7 +57,7 @@ import com.google.common.collect.ListMultimap;
  * @since 3.0
  */
 @SuppressWarnings("restriction")
-public class SemanticHighlightings extends SemanticHighlightingsCore {
+public class SemanticHighlightings {
 
 	private static final ImmutableListMultimap.Builder<String, String> SCOPES_BUILDER = ImmutableListMultimap.builder();
 
