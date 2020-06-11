@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -91,22 +92,29 @@ public class SemanticTokensVisitor extends ASTVisitor {
             }
             int deltaColumn = column - currentColumn;
             currentColumn = column;
-            int tokenTypeIndex = manager.getTokenTypes().indexOf(token.getTokenType());
-            ITokenModifier[] modifiers = token.getTokenModifiers();
-            int encodedModifiers = 0;
-            for (ITokenModifier modifier : modifiers) {
-                int bit = manager.getTokenModifiers().indexOf(modifier);
-                if (bit >= 0) {
-                    encodedModifiers = encodedModifiers | (0b00000001 << bit);
+            // Disallow duplicate/conflict token (if exists)
+            if (deltaLine != 0 || deltaColumn != 0) {
+                int tokenTypeIndex = manager.getTokenTypes().indexOf(token.getTokenType());
+                ITokenModifier[] modifiers = token.getTokenModifiers();
+                int encodedModifiers = 0;
+                for (ITokenModifier modifier : modifiers) {
+                    int bit = manager.getTokenModifiers().indexOf(modifier);
+                    if (bit >= 0) {
+                        encodedModifiers = encodedModifiers | (0b00000001 << bit);
+                    }
                 }
+                data.add(deltaLine);
+                data.add(deltaColumn);
+                data.add(token.getLength());
+                data.add(tokenTypeIndex);
+                data.add(encodedModifiers);
             }
-            data.add(deltaLine);
-            data.add(deltaColumn);
-            data.add(token.getLength());
-            data.add(tokenTypeIndex);
-            data.add(encodedModifiers);
         }
         return data;
+    }
+
+    private void addToken(ASTNode node, TokenType tokenType) {
+        addToken(node, tokenType, NO_MODIFIERS);
     }
 
     private void addToken(ASTNode node, TokenType tokenType, ITokenModifier[] modifiers) {
@@ -128,6 +136,12 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(SimpleName node) {
+        ASTNode parent = node.getParent();
+        if (parent instanceof Annotation) {
+            addToken(node, TokenType.ANNOTATION);
+            return false;
+        }
+
         IBinding binding = node.resolveBinding();
         if (binding == null) {
             return super.visit(node);
