@@ -60,18 +60,24 @@ public class NavigateToDefinitionHandler {
 	}
 
 	public List<? extends Location> definition(TextDocumentPositionParams position, IProgressMonitor monitor) {
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		Location location = null;
 		if (unit != null && !monitor.isCanceled()) {
 			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
 					position.getPosition().getCharacter(), monitor);
 		}
-		return location == null ? Collections.emptyList() : Arrays.asList(location);
+		return location == null || monitor.isCanceled() ? Collections.emptyList() : Arrays.asList(location);
 	}
 
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
+			if (monitor.isCanceled()) {
+				return null;
+			}
 			if (element == null) {
 				return computeBreakContinue(unit, line, column);
 			}

@@ -18,8 +18,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Iterables;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -51,6 +49,8 @@ import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+
+import com.google.common.collect.Iterables;
 
 public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
@@ -86,19 +86,20 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 			unit = JDTUtils.resolveCompilationUnit(resource);
 		} else { // Open the standalone files.
 			IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
-			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
-			Optional<IPath> belongedRootPath = rootPaths.stream().filter(rootPath -> rootPath.isPrefixOf(filePath)).findFirst();
-			boolean invisibleProjectEnabled = false;
-			if (belongedRootPath.isPresent()) {
-				IPath rootPath = belongedRootPath.get();
-				invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false);
-				if (invisibleProjectEnabled) {
-					unit = JDTUtils.resolveCompilationUnit(uri);
+			if (filePath != null) {
+				Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+				Optional<IPath> belongedRootPath = rootPaths.stream().filter(rootPath -> rootPath.isPrefixOf(filePath)).findFirst();
+				boolean invisibleProjectEnabled = false;
+				if (belongedRootPath.isPresent()) {
+					IPath rootPath = belongedRootPath.get();
+					invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false);
+					if (invisibleProjectEnabled) {
+						unit = JDTUtils.resolveCompilationUnit(uri);
+					}
 				}
-			}
-
-			if (!invisibleProjectEnabled) {
-				unit = JDTUtils.getFakeCompilationUnit(uri);
+				if (!invisibleProjectEnabled) {
+					unit = JDTUtils.getFakeCompilationUnit(uri);
+				}
 			}
 		}
 
@@ -193,6 +194,7 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 		return unit;
 	}
 
+	@Override
 	public ICompilationUnit handleClosed(DidCloseTextDocumentParams params) {
 		ICompilationUnit unit = super.handleClosed(params);
 		uninstallSemanticHighlightings(params.getTextDocument().getUri());

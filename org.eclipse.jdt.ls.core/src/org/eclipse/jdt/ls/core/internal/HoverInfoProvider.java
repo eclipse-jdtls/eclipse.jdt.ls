@@ -91,10 +91,12 @@ public class HoverInfoProvider {
 	public List<Either<String, MarkedString>> computeHover(int line, int column, IProgressMonitor monitor) {
 		List<Either<String, MarkedString>> res = new LinkedList<>();
 		try {
+			if (monitor.isCanceled()) {
+				return cancelled(res);
+			}
 			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column, this.preferenceManager, monitor);
-			if(elements == null || elements.length == 0) {
-				res.add(Either.forLeft(""));
-				return res;
+			if (elements == null || elements.length == 0 || monitor.isCanceled()) {
+				return cancelled(res);
 			}
 			IJavaElement curr = null;
 			if (elements.length != 1) {
@@ -116,7 +118,9 @@ public class HoverInfoProvider {
 			} else {
 				curr = elements[0];
 			}
-
+			if (monitor.isCanceled()) {
+				return cancelled(res);
+			}
 			if (JDTEnvironmentUtils.isSyntaxServer() || isResolved(curr, monitor)) {
 				IBuffer buffer = curr.getOpenable().getBuffer();
 				if (buffer == null && curr instanceof BinaryMember) {
@@ -128,9 +132,15 @@ public class HoverInfoProvider {
 						}
 					}
 				}
+				if (monitor.isCanceled()) {
+					return cancelled(res);
+				}
 				MarkedString signature = computeSignature(curr);
 				if (signature != null) {
 					res.add(Either.forRight(signature));
+				}
+				if (monitor.isCanceled()) {
+					return cancelled(res);
 				}
 				MarkedString javadoc = computeJavadoc(curr);
 				if (javadoc != null && javadoc.getValue() != null) {
@@ -140,6 +150,15 @@ public class HoverInfoProvider {
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException("Error computing hover", e);
 		}
+		if (monitor.isCanceled()) {
+			return cancelled(res);
+		}
+		return res;
+	}
+
+	private List<Either<String, MarkedString>> cancelled(List<Either<String, MarkedString>> res) {
+		res.clear();
+		res.add(Either.forLeft(""));
 		return res;
 	}
 

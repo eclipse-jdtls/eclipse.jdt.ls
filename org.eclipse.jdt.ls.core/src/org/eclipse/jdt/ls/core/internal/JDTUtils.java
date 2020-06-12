@@ -45,6 +45,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IAnnotatable;
@@ -703,14 +704,14 @@ public final class JDTUtils {
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
 		IJavaElement[] elements = findElementsAtSelection(unit, line, column, preferenceManager, monitor);
-		if (elements != null && elements.length == 1) {
+		if ((elements != null && elements.length == 1) || monitor.isCanceled()) {
 			return elements[0];
 		}
 		return null;
 	}
 
 	public static IJavaElement[] findElementsAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
-		if (unit == null) {
+		if (unit == null || monitor.isCanceled()) {
 			return null;
 		}
 		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
@@ -799,6 +800,14 @@ public final class JDTUtils {
 
 	public static IFile findFile(String uriString) {
 		return (IFile) findResource(toURI(uriString), ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
+	}
+
+	public static ISchedulingRule getRule(String uri) {
+		IResource resource = JDTUtils.findFile(uri);
+		if (resource != null) {
+			return ResourcesPlugin.getWorkspace().getRuleFactory().createRule(resource);
+		}
+		return null;
 	}
 
 	public static IContainer findFolder(String uriString) {
