@@ -77,16 +77,20 @@ public class CodeActionHandler {
 	}
 
 	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
-		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-		if (unit == null) {
+		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
-
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (unit == null || monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
 		context.setASTRoot(getASTRoot(unit));
-
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<String> codeActionKinds = new ArrayList<>();
@@ -115,6 +119,9 @@ public class CodeActionHandler {
 				JavaLanguageServerPlugin.logException("Problem resolving quick fix code actions", e);
 			}
 		}
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 
 		if (containsKind(codeActionKinds, CodeActionKind.Refactor)) {
 			try {
@@ -125,7 +132,9 @@ public class CodeActionHandler {
 				JavaLanguageServerPlugin.logException("Problem resolving refactor code actions", e);
 			}
 		}
-
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		if (containsKind(codeActionKinds, JavaCodeActionKind.QUICK_ASSIST)) {
 			try {
 				List<ChangeCorrectionProposal> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
@@ -135,7 +144,9 @@ public class CodeActionHandler {
 				JavaLanguageServerPlugin.logException("Problem resolving quick assist code actions", e);
 			}
 		}
-
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		try {
 			for (ChangeCorrectionProposal proposal : proposals) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
@@ -146,9 +157,14 @@ public class CodeActionHandler {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
-
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		if (containsKind(codeActionKinds, CodeActionKind.Source)) {
 			codeActions.addAll(sourceAssistProcessor.getSourceActionCommands(params, context, locations));
+		}
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
 		}
 		return codeActions;
 	}

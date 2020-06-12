@@ -22,6 +22,8 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceRuleFactory;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -32,6 +34,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -90,7 +94,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 					return DOCUMENT_LIFE_CYCLE_JOBS.equals(family);
 				}
 			};
-			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
 			this.publishDiagnosticsJob = new WorkspaceJob("Publish Diagnostics") {
 				@Override
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
@@ -105,7 +108,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 					return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
 				}
 			};
-			this.validationTimer.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		}
 	}
 
@@ -129,30 +131,53 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 		if (validationTimer != null) {
 			validationTimer.cancel();
+			ISchedulingRule rule = getRule(toReconcile);
 			if (publishDiagnosticsJob != null) {
 				publishDiagnosticsJob.cancel();
+				publishDiagnosticsJob.setRule(rule);
 			}
+			validationTimer.setRule(rule);
 			validationTimer.schedule(delay);
 		} else {
 			performValidation(new NullProgressMonitor());
 		}
 	}
 
+	private ISchedulingRule getRule(Set<ICompilationUnit> units) {
+		ISchedulingRule result = null;
+		IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
+		for (ICompilationUnit unit : units) {
+			if (unit.getResource() != null) {
+				ISchedulingRule rule = ruleFactory.createRule(unit.getResource());
+				result = MultiRule.combine(rule, result);
+			}
+		}
+		return result;
+	}
+
 	private IStatus performValidation(IProgressMonitor monitor) throws JavaModelException {
 		long start = System.currentTimeMillis();
 
-		List<ICompilationUnit> cusToReconcile = new ArrayList<>();
+		List<ICompilationUnit> cusToReconcile;
 		synchronized (toReconcile) {
+			if (toReconcile.isEmpty()) {
+				return Status.OK_STATUS;
+			}
+			cusToReconcile = new ArrayList<>(toReconcile.size());
 			cusToReconcile.addAll(toReconcile);
 			toReconcile.clear();
 		}
-		if (cusToReconcile.isEmpty()) {
-			return Status.OK_STATUS;
+		if (monitor.isCanceled()) {
+			return Status.CANCEL_STATUS;
 		}
 		// first reconcile all units with content changes
 		SubMonitor progress = SubMonitor.convert(monitor, cusToReconcile.size() + 1);
 		for (ICompilationUnit cu : cusToReconcile) {
-			cu.reconcile(ICompilationUnit.NO_AST, true, null, progress.newChild(1));
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
+			cu.makeConsistent(progress);
+			//cu.reconcile(ICompilationUnit.NO_AST, false, null, progress.newChild(1));
 		}
 		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		if (monitor.isCanceled()) {
@@ -164,6 +189,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 				publishDiagnosticsJob.join();
 			} catch (InterruptedException e) {
 				// ignore
+			}
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
 			}
 			publishDiagnosticsJob.schedule(400);
 		} else {
@@ -179,6 +207,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 		this.sharedASTProvider.disposeAST();
 		List<ICompilationUnit> toValidate = Arrays.asList(JavaCore.getWorkingCopies(null));
+		if (toValidate.isEmpty()) {
+			return Status.OK_STATUS;
+		}
 		SubMonitor progress = SubMonitor.convert(monitor, toValidate.size() + 1);
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
@@ -188,6 +219,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 				return Status.CANCEL_STATUS;
 			}
 			CompilationUnit astRoot = this.sharedASTProvider.getAST(rootToValidate, CoreASTProvider.WAIT_YES, monitor);
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
 			if (astRoot != null) {
 				// report errors, even if there are no problems in the file: The client need to know that they got fixed.
 				ICompilationUnit unit = (ICompilationUnit) astRoot.getTypeRoot();
@@ -207,10 +241,12 @@ public abstract class BaseDocumentLifeCycleHandler {
 			 */
 			@Override
 			public IBuffer createBuffer(ICompilationUnit workingCopy) {
-				ICompilationUnit original = workingCopy.getPrimary();
-				IResource resource = original.getResource();
-				if (resource instanceof IFile) {
-					return new DocumentAdapter(workingCopy, (IFile) resource);
+				if (!monitor.isCanceled()) {
+					ICompilationUnit original = workingCopy.getPrimary();
+					IResource resource = original.getResource();
+					if (resource instanceof IFile) {
+						return new DocumentAdapter(workingCopy, (IFile) resource);
+					}
 				}
 				return DocumentAdapter.Null;
 			}
@@ -229,45 +265,49 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
+		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleClosed(params);
 				}
-			}, new NullProgressMonitor());
+			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document close ", e);
 		}
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
+		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleOpen(params);
 				}
-			}, new NullProgressMonitor());
+			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document open ", e);
 		}
 	}
 
 	public void didChange(DidChangeTextDocumentParams params) {
+		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleChanged(params);
 				}
-			}, new NullProgressMonitor());
+			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document change ", e);
 		}
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
+		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -275,7 +315,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleSaved(params);
 				}
-			}, new NullProgressMonitor());
+			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document save ", e);
 		}

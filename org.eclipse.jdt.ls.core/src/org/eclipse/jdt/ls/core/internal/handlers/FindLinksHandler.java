@@ -34,16 +34,19 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 public class FindLinksHandler {
 
 	public static List<? extends Location> findLinks(String linkType, TextDocumentPositionParams position, IProgressMonitor monitor) {
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
 		if (unit != null && !monitor.isCanceled()) {
 			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
 			try {
 				IJavaElement element = JDTUtils.findElementAtSelection(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), preferenceManager, monitor);
-				if (Objects.equals(linkType, "superImplementation")) {
+				if (!monitor.isCanceled() && Objects.equals(linkType, "superImplementation")) {
 					IMethod overriddenMethod = findOverriddenMethod(element, monitor);
-					if (overriddenMethod != null) {
+					if (!monitor.isCanceled() && overriddenMethod != null) {
 						Location location = NavigateToDefinitionHandler.computeDefinitionNavigation(overriddenMethod, element.getJavaProject());
-						if (location != null) {
+						if (!monitor.isCanceled() && location != null) {
 							String declaringTypeName = overriddenMethod.getDeclaringType().getFullyQualifiedName();
 							String methodName = overriddenMethod.getElementName();
 							String displayName = declaringTypeName + "." + methodName;
