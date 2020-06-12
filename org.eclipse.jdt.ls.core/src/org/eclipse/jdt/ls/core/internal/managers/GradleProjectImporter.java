@@ -15,14 +15,16 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static java.util.Arrays.asList;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleCore;
@@ -30,14 +32,12 @@ import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.SynchronizationResult;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
-import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
@@ -91,13 +91,31 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (preferencesManager != null && !preferencesManager.getPreferences().isImportGradleEnabled()) {
 			return false;
 		}
+
 		if (directories == null) {
 			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR)
 					.includeNested(false)
 					.addExclusions("**/build");//default gradle build dir
 			directories = gradleDetector.scan(monitor);
 		}
-		return !directories.isEmpty();
+
+		Set<File> existingProjectFolders = new HashSet<>();
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			if (GradleBuildSupport.shouldSynchronize(project)) {
+				return true;
+			}
+			existingProjectFolders.add(new File(project.getLocationURI()));
+		}
+
+		Iterator<Path> iter = directories.iterator();
+		while (iter.hasNext()) {
+			Path directory = iter.next();
+			if (!existingProjectFolders.contains(directory.toFile())) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	/* (non-Javadoc)
@@ -121,7 +139,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (monitor.isCanceled()) {
 			return;
 		}
-		startSynchronization(rootFolder, monitor);
+
+		BuildConfiguration build = getBuildConfiguration(rootFolder);
+		SynchronizationResult result = GradleCore.getWorkspace().createBuild(build).synchronize(monitor);
+		if (!result.getStatus().isOK()) {
+			JavaLanguageServerPlugin.log(result.getStatus());
+		}
 	}
 
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
@@ -212,26 +235,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return (gradleUserHome == null || gradleUserHome.isEmpty()) ? null : new File(gradleUserHome);
 	}
 
-	protected void startSynchronization(Path rootFolder, IProgressMonitor monitor) {
-		File location = rootFolder.toFile();
-		boolean shouldSynchronize = shouldSynchronize(location);
-		List<IProject> projects = ProjectUtils.getGradleProjects();
-		for (IProject project : projects) {
-			File projectDir = project.getLocation() == null ? null : project.getLocation().toFile();
-			if (location.equals(projectDir)) {
-				shouldSynchronize = checkGradlePersistence(shouldSynchronize, project, projectDir);
-				break;
-			}
-		}
-		if (shouldSynchronize) {
-			BuildConfiguration build = getBuildConfiguration(rootFolder);
-			SynchronizationResult result = GradleCore.getWorkspace().createBuild(build).synchronize(monitor);
-			if (!result.getStatus().isOK()) {
-				JavaLanguageServerPlugin.log(result.getStatus());
-			}
-		}
-	}
-
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
 		IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
@@ -260,46 +263,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				.build();
 		// @formatter:on
 		return build;
-	}
-
-	public static boolean shouldSynchronize(File location) {
-		boolean shouldSynchronize = true;
-		List<IProject> projects = ProjectUtils.getGradleProjects();
-		for (IProject project : projects) {
-			File projectDir = project.getLocation() == null ? null : project.getLocation().toFile();
-			if (location.equals(projectDir)) {
-				shouldSynchronize = checkGradlePersistence(shouldSynchronize, project, projectDir);
-				break;
-			}
-		}
-		return shouldSynchronize;
-	}
-
-	private static boolean checkGradlePersistence(boolean shouldSynchronize, IProject project, File projectDir) {
-		if (!ProjectUtils.isJavaProject(project) || !project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists()) {
-			return true;
-		}
-		PersistentModel model = CorePlugin.modelPersistence().loadModel(project);
-		if (model.isPresent()) {
-			File persistentFile = CorePlugin.getInstance().getStateLocation().append("project-preferences").append(project.getName()).toFile();
-			if (persistentFile.exists()) {
-				long modified = persistentFile.lastModified();
-				if (projectDir.exists()) {
-					File[] files = projectDir.listFiles(new FilenameFilter() {
-
-						@Override
-						public boolean accept(File dir, String name) {
-							if (name != null && name.endsWith(GradleBuildSupport.GRADLE_SUFFIX)) {
-								return new File(dir, name).lastModified() > modified;
-							}
-							return false;
-						}
-					});
-					shouldSynchronize = files != null && files.length > 0;
-				}
-			}
-		}
-		return shouldSynchronize;
 	}
 
 	@Override

@@ -105,6 +105,10 @@ public final class ProjectUtils {
 		return Stream.of(getAllProjects()).filter(ProjectUtils::isGradleProject).collect(Collectors.toList());
 	}
 
+	public static List<IProject> getMavenProjects() {
+		return Stream.of(getAllProjects()).filter(ProjectUtils::isMavenProject).collect(Collectors.toList());
+	}
+
 	public static IJavaProject[] getJavaProjects() {
 		//@formatter:off
 		return Stream.of(getAllProjects())

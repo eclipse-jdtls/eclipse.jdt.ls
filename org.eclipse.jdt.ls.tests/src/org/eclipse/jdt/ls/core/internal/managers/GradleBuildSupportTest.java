@@ -15,12 +15,20 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.net.URI;
+import java.util.List;
 
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.junit.Test;
 
 /**
@@ -60,6 +68,24 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 		waitForBackgroundJobs();
 		assertNoErrors(project);
 		assertEquals("1.7", ProjectUtils.getJavaSourceLevel(project));
+	}
+
+	@Test
+	public void testGradlePersistence() throws Exception {
+		importProjects("gradle/nested");
+		List<IProject> projects = ProjectUtils.getGradleProjects();
+		for (IProject project : projects) {
+			assertTrue(GradleBuildSupport.shouldSynchronize(project));
+		}
+		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+		GradleBuildSupport.saveModels();
+		for (IProject project : projects) {
+			assertFalse(GradleBuildSupport.shouldSynchronize(project));
+		}
+		IProject project = WorkspaceHelper.getProject("gradle1");
+		File gradleBuild = new File(project.getLocation().toFile(), "build.gradle");
+		gradleBuild.setLastModified(System.currentTimeMillis() + 1000);
+		assertTrue(GradleBuildSupport.shouldSynchronize(project));
 	}
 
 }

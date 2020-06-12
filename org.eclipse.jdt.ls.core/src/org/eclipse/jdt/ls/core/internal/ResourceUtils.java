@@ -132,7 +132,7 @@ public final class ResourceUtils {
 			content = "";
 		}
 		try {
-			Files.write(content, toFile(fileURI), Charsets.UTF_8);
+			Files.asCharSink(toFile(fileURI), Charsets.UTF_8).write(content);
 		} catch (IOException e) {
 			throw new CoreException(StatusFactory.newErrorStatus("Can not write to " + fileURI, e));
 		}

@@ -22,14 +22,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -51,7 +54,10 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -80,6 +86,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	private PreferenceManager preferenceManager;
 	protected JavaLanguageClient client;
+	private boolean projectsInitialized;
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
@@ -89,12 +96,30 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		this.preferenceManager = preferenceManager;
 	}
 
-	@Override
+	public boolean isProjectsInitialized() {
+		return projectsInitialized;
+	}
+
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 		cleanInvalidProjects(rootPaths, subMonitor.split(20));
 		createJavaProject(getDefaultProject(), subMonitor.split(10));
 		cleanupResources(getDefaultProject());
+
+		IJobChangeListener listener = new JobChangeAdapter() {
+			@Override
+			public void done(IJobChangeEvent event) {
+				if (!event.getJob().getName().contains("Update project")) {
+					return;
+				}
+				
+				if (Job.getJobManager().find(IConstants.UPDATE_PROJECT_FAMILY).length == 0) {
+					ProjectsManager.this.projectsInitialized = true;
+					Job.getJobManager().removeJobChangeListener(this);
+				}
+			}
+		};
+		Job.getJobManager().addJobChangeListener(listener);
 		importProjects(rootPaths, subMonitor.split(70));
 		subMonitor.done();
 	}
@@ -107,6 +132,9 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			if (importer != null) {
 				importer.importToWorkspace(subMonitor.split(70));
 			}
+		}
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			updateProject(project, false);
 		}
 	}
 
@@ -368,11 +396,22 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				SubMonitor progress = SubMonitor.convert(monitor, 100).checkCanceled();
 				try {
 					long start = System.currentTimeMillis();
-					project.refreshLocal(IResource.DEPTH_INFINITE, progress.split(5));
+
+					project.open(monitor);
+					if (Platform.OS_WIN32.equals(Platform.getOS())) {
+						project.refreshLocal(IResource.DEPTH_ONE, monitor);
+						((Workspace) ResourcesPlugin.getWorkspace()).getRefreshManager().refresh(project);
+					} else {
+						project.refreshLocal(IResource.DEPTH_INFINITE, progress.split(5));
+					}
+
 					Optional<IBuildSupport> buildSupport = getBuildSupport(project);
 					if (buildSupport.isPresent()) {
 						buildSupport.get().update(project, force, progress.split(95));
-						registerWatchers(true);
+						if (ProjectsManager.this.projectsInitialized) {
+							// Watchers will be initialized during the 'initialized' LSP request
+							registerWatchers(true);
+						}
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");

@@ -25,7 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFile;
@@ -33,17 +35,15 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -57,28 +57,6 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	private static final String INVALID = "invalid";
 	private static final String MAVEN_INVALID = "maven/invalid";
 	private static final String PROJECT1_PATTERN = "**/project1";
-
-	private MavenUpdateProjectJobSpy jobSpy;
-
-	private void attachJobSpy() {
-		jobSpy = new MavenUpdateProjectJobSpy();
-		Job.getJobManager().addJobChangeListener(jobSpy);
-	}
-
-	@After
-	public void removeJobSpy() {
-		if (jobSpy != null) {
-			Job.getJobManager().removeJobChangeListener(jobSpy);
-		}
-	}
-
-	@Test
-	public void testImportSimpleJavaProject() throws Exception {
-		attachJobSpy();
-		importSimpleJavaProject();
-		assertEquals("New Projects should not be updated", 0, jobSpy.updateProjectJobCalled);
-		assertTaskCompleted(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS);
-	}
 
 	@Test
 	public void testJavaImportExclusions() throws Exception {
@@ -152,28 +130,6 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IFile bin = project.getFile("bin");
 		assertFalse(bin.getRawLocation().toFile().exists());
 		assertTrue(dotClasspath.exists());
-	}
-
-	@Test
-	public void testUnchangedProjectShouldNotBeUpdated() throws Exception {
-		attachJobSpy();
-		String name = "salut";
-		importMavenProject(name);
-		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
-		importExistingMavenProject(name);
-		assertEquals("Unchanged Project should not be updated", 0, jobSpy.updateProjectJobCalled);
-	}
-
-	@Test
-	public void testChangedProjectShouldBeUpdated() throws Exception {
-		attachJobSpy();
-		String name = "salut";
-		IProject salut = importMavenProject(name);
-		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
-		File pom = salut.getFile(MavenProjectImporter.POM_FILE).getRawLocation().toFile();
-		pom.setLastModified(System.currentTimeMillis() + 1000);
-		importExistingMavenProject(name);
-		assertEquals("Changed Project should be updated", 1, jobSpy.updateProjectJobCalled);
 	}
 
 	@Test
@@ -293,17 +249,13 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertNoErrors(project);
 	}
 
-	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
-
-		int updateProjectJobCalled;
-
-		@Override
-		public void scheduled(IJobChangeEvent event) {
-			String jobName = event.getJob().getName();
-			if ("Update Maven project configuration".equals(jobName)) {
-				updateProjectJobCalled++;
-			}
+	@Test
+	public void testImportedProjectWontBeApplied() throws Exception {
+		importMavenProject("salut");
+		for (IPath rootFolder : preferenceManager.getPreferences().getRootPaths()) {
+			MavenProjectImporter mavenImporter = new MavenProjectImporter();
+			mavenImporter.initialize(rootFolder.toFile());
+			assertFalse("Won't apply for imported Maven project", mavenImporter.applies(new NullProgressMonitor()));
 		}
 	}
-
 }

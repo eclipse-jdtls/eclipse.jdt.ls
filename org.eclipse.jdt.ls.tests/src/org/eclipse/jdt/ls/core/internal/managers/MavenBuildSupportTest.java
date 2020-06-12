@@ -234,6 +234,17 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
+	@Test
+	public void testChangedProjectShouldBeUpdated() throws Exception {
+		String name = "salut";
+		IProject salut = importMavenProject(name);
+		MavenBuildSupport mavenBuildSupport = new MavenBuildSupport();
+		assertFalse("New Project should not be updated", mavenBuildSupport.needsMavenUpdate(salut));
+		File pom = salut.getFile(MavenProjectImporter.POM_FILE).getRawLocation().toFile();
+		pom.setLastModified(System.currentTimeMillis() + 1000);
+		assertTrue("Changed should not be updated", mavenBuildSupport.needsMavenUpdate(salut));
+	}
+
 	protected void testNonStandardCompilerId(String projectName) throws Exception {
 		IProject project = importMavenProject(projectName);
 		assertIsJavaProject(project);

@@ -16,6 +16,8 @@ import static org.eclipse.core.resources.IProjectDescription.DESCRIPTION_FILE_NA
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
@@ -33,6 +35,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
 
@@ -45,7 +48,16 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/bin");//default Eclipse build dir
 			directories = eclipseDetector.scan(monitor);
 		}
-		directories = directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
+		Set<File> existingProjectFolders = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			existingProjectFolders.add(new File(project.getLocationURI()));
+		}
+		//@formatter:off
+		directories = directories.stream()
+			.filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists()) &&
+					!existingProjectFolders.contains(path.toFile()))
+			.collect(Collectors.toList());
+		//@formatter:on
 		return !directories.isEmpty();
 	}
 

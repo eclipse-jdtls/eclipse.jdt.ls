@@ -128,7 +128,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertFalse(module2.exists());
 
 		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
-		assertEquals(9L, diags.size());
+		assertEquals(7L, diags.size());
 		assertEndsWith(diags.get(0).getUri(), "/module2");
 		assertEndsWith(diags.get(1).getUri(), "/multimodule3");
 		assertEndsWith(diags.get(2).getUri(), "/multimodule3/pom.xml");
@@ -140,8 +140,6 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(0L, diags.get(5).getDiagnostics().size());
 		assertEndsWith(diags.get(6).getUri(), "/AppTest.java");
 		assertEquals(0L, diags.get(6).getDiagnostics().size());
-		assertEndsWith(diags.get(7).getUri(), "/multimodule3");
-		assertEndsWith(diags.get(8).getUri(), "/multimodule3/pom.xml");
 	}
 
 	private void assertEndsWith(String target, String suffix) {

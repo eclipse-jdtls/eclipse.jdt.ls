@@ -23,13 +23,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -215,6 +219,15 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertFalse(ProjectUtils.isJavaProject(project));
 		IFile bin = project.getFile("bin");
 		assertFalse(bin.getRawLocation().toFile().exists());
+	}
+
+	@Test
+	public void testImportedProjectWontBeApplied() throws Exception {
+		importSimpleJavaProject();
+		for (IPath rootFolder : preferenceManager.getPreferences().getRootPaths()) {
+			importer.initialize(rootFolder.toFile());
+			assertFalse("Won't apply for imported Eclipse project", importer.applies(new NullProgressMonitor()));
+		}
 	}
 
 	@After

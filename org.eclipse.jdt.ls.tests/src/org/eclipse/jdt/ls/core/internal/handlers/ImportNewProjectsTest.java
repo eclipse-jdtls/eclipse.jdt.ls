@@ -113,7 +113,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(client, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
-		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
+		assertEquals(projects.length, ((List<URI>) argument.getValue().getData()).size());
 	}
 
 	@Test
@@ -156,6 +156,6 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(client, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
-		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
+		assertEquals(projects.length, ((List<URI>) argument.getValue().getData()).size());
 	}
 }

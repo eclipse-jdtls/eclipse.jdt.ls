@@ -12,13 +12,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -39,7 +42,6 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
-import org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
@@ -48,31 +50,26 @@ import org.eclipse.m2e.jdt.IClasspathManager;
 import org.eclipse.m2e.jdt.MavenJdtPlugin;
 import org.eclipse.m2e.jdt.internal.launch.MavenRuntimeClasspathProvider;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
 /**
  * @author Fred Bricon
  *
  */
 public class MavenBuildSupport implements IBuildSupport {
 
+	public static final String POM_FILE = "pom.xml";
+
 	private static final int MAX_TIME_MILLIS = 3000;
 	private static final List<String> WATCH_FILE_PATTERNS = Collections.singletonList("**/pom.xml");
 	private static Cache<String, Boolean> downloadRequestsCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterWrite(1, TimeUnit.HOURS).build();
 
 	private IProjectConfigurationManager configurationManager;
-	private ProjectRegistryManager projectManager;
 	private DigestStore digestStore;
 	private IMavenProjectRegistry registry;
-	private boolean shouldCollectProjects;
 
 	public MavenBuildSupport() {
 		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
-		this.projectManager = MavenPluginActivator.getDefault().getMavenProjectManagerImpl();
 		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
 		this.registry = MavenPlugin.getMavenProjectRegistry();
-		this.shouldCollectProjects = true;
 	}
 
 	@Override
@@ -85,20 +82,23 @@ public class MavenBuildSupport implements IBuildSupport {
 		if (!applies(project)) {
 			return;
 		}
-		Path pomPath = project.getFile("pom.xml").getLocation().toFile().toPath();
-		if (digestStore.updateDigest(pomPath) || force) {
-			JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
-			boolean updateSnapshots = JavaLanguageServerPlugin.getPreferencesManager() == null ? false : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenUpdateSnapshots();
-			if (shouldCollectProjects()) {
-				Set<IProject> projectSet = new LinkedHashSet<>();
-				collectProjects(projectSet, project, monitor);
-				IProject[] projects = projectSet.toArray(new IProject[0]);
-				MavenUpdateRequest request = new MavenUpdateRequest(projects, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
-				((ProjectConfigurationManager) configurationManager).updateProjectConfiguration(request, true, true, monitor);
-			} else {
-				MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
-				configurationManager.updateProjectConfiguration(request, monitor);
-			}
+
+		if (!needsMavenUpdate(project) && !force) {
+			return;
+		}
+
+		JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
+		boolean updateSnapshots = JavaLanguageServerPlugin.getPreferencesManager() == null ? false : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenUpdateSnapshots();
+		if (JavaLanguageServerPlugin.getProjectsManager().isProjectsInitialized()) {
+			Set<IProject> projectSet = new LinkedHashSet<>();
+			collectProjects(projectSet, project, monitor);
+			IProject[] projects = projectSet.toArray(new IProject[0]);
+			MavenUpdateRequest request = new MavenUpdateRequest(projects, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
+			((ProjectConfigurationManager) configurationManager).updateProjectConfiguration(request, true, true, monitor);
+		} else {
+			// Every Maven project will be updated during initialization, no need to collect them.
+			MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
+			configurationManager.updateProjectConfiguration(request, monitor);
 		}
 	}
 
@@ -133,14 +133,6 @@ public class MavenBuildSupport implements IBuildSupport {
 	@Override
 	public boolean isBuildLikeFileName(String fileName) {
 		return fileName.equals("pom.xml");
-	}
-
-	public boolean shouldCollectProjects() {
-		return shouldCollectProjects;
-	}
-
-	public void setShouldCollectProjects(boolean shouldCollectProjects) {
-		this.shouldCollectProjects = shouldCollectProjects;
 	}
 
 	@Override
@@ -193,4 +185,14 @@ public class MavenBuildSupport implements IBuildSupport {
 		return WATCH_FILE_PATTERNS;
 	}
 
+	public boolean needsMavenUpdate(IProject project) throws CoreException {
+		File pomFile = project.getFile("pom.xml").getLocation().toFile();
+		return pomFile.lastModified() > getLastWorkspaceStateModified() || digestStore.updateDigest(pomFile.toPath()) ||
+			!project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists();
+	}
+
+	private static long getLastWorkspaceStateModified() {
+		File workspaceStateFile = MavenPluginActivator.getDefault().getMavenProjectManager().getWorkspaceStateFile();
+		return workspaceStateFile.lastModified();
+	}
 }

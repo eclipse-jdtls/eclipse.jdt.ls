@@ -25,9 +25,14 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -59,12 +64,10 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
 
 /**
  * @author Fred Bricon
@@ -226,24 +229,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(enabled);
 		}
-	}
-
-	@Test
-	public void testGradlePersistence() throws Exception {
-		importProjects("gradle/nested");
-		List<IProject> projects = ProjectUtils.getGradleProjects();
-		for (IProject project : projects) {
-			assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
-		}
-		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
-		GradleBuildSupport.saveModels();
-		for (IProject project : projects) {
-			assertFalse(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
-		}
-		IProject project = WorkspaceHelper.getProject("gradle1");
-		File gradleBuild = new File(project.getLocation().toFile(), "build.gradle");
-		gradleBuild.setLastModified(System.currentTimeMillis() + 1000);
-		assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
 	}
 
 	@Test
@@ -484,6 +469,17 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
+		}
+	}
+
+	@Test
+	@Ignore
+	public void testImportedProjectWontBeApplied() throws Exception {
+		importGradleProject("multi-module");
+		for (IPath rootFolder : preferenceManager.getPreferences().getRootPaths()) {
+			GradleProjectImporter gradleImporter = new GradleProjectImporter();
+			gradleImporter.initialize(rootFolder.toFile());
+			assertFalse("Won't apply for imported Gradle project", gradleImporter.applies(new NullProgressMonitor()));
 		}
 	}
 

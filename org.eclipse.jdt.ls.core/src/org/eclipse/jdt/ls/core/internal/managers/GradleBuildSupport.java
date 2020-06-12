@@ -18,12 +18,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.io.FilenameFilter;
 
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
+import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
 import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
 import org.eclipse.buildship.core.internal.workspace.InternalGradleBuild;
@@ -69,6 +71,11 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (!applies(project)) {
 			return;
 		}
+
+		if (!shouldSynchronize(project) && !force) {
+			return;
+		}
+
 		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
 		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
 		if (build.isPresent()) {
@@ -180,5 +187,38 @@ public class GradleBuildSupport implements IBuildSupport {
 	@Override
 	public void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
 		preferenceManager.removePreferencesChangeListener(listener);
+	}
+	
+	public static boolean shouldSynchronize(IProject project) {
+		if (!ProjectUtils.isJavaProject(project) || !project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists()) {
+			return true;
+		}
+
+		File projectDir = project.getLocation() == null ? null : project.getLocation().toFile();
+		if (projectDir == null) {
+			return true;
+		}
+
+		PersistentModel model = CorePlugin.modelPersistence().loadModel(project);
+		if (model.isPresent()) {
+			File persistentFile = CorePlugin.getInstance().getStateLocation().append("project-preferences").append(project.getName()).toFile();
+			if (persistentFile.exists()) {
+				long modified = persistentFile.lastModified();
+				if (projectDir.exists()) {
+					File[] files = projectDir.listFiles(new FilenameFilter() {
+
+						@Override
+						public boolean accept(File dir, String name) {
+							if (name != null && name.endsWith(GradleBuildSupport.GRADLE_SUFFIX)) {
+								return new File(dir, name).lastModified() > modified;
+							}
+							return false;
+						}
+					});
+					return files != null && files.length > 0;
+				}
+			}
+		}
+		return true;
 	}
 }
