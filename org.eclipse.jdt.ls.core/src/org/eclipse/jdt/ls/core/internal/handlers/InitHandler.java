@@ -56,15 +56,13 @@ import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 final public class InitHandler extends BaseInitHandler {
 	private static final String BUNDLES_KEY = "bundles";
 
-	private ProjectsManager projectsManager;
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 
 	private WorkspaceExecuteCommandHandler commandHandler;
 
 	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection, WorkspaceExecuteCommandHandler commandHandler) {
-		super(preferenceManager);
-		this.projectsManager = manager;
+		super(manager, preferenceManager);
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.commandHandler = commandHandler;
@@ -184,6 +182,7 @@ final public class InitHandler extends BaseInitHandler {
 		initializeResult.setCapabilities(capabilities);
 	}
 
+	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override

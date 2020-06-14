@@ -41,7 +41,7 @@ public class SyntaxInitHandler extends BaseInitHandler {
 	private PreferenceManager preferenceManager;
 
 	public SyntaxInitHandler(ProjectsManager projectsManager, PreferenceManager preferenceManager) {
-		super(preferenceManager);
+		super(projectsManager, preferenceManager);
 		this.projectsManager = projectsManager;
 		this.preferenceManager = preferenceManager;
 	}
@@ -86,6 +86,7 @@ public class SyntaxInitHandler extends BaseInitHandler {
 		initializeResult.setCapabilities(capabilities);
 	}
 
+	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
 
 		Job job = new WorkspaceJob("Initialize Workspace") {

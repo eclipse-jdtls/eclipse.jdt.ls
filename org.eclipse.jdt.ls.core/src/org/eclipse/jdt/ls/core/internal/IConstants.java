@@ -25,6 +25,11 @@ public interface IConstants {
 	public static final String PLUGIN_ID = "org.eclipse.jdt.ls.core";
 
 	/**
+	 * Is workspace initialized
+	 */
+	public static final String WORKSPACE_INITIALIZED = "workspaceInitialized";
+
+	/**
 	 * Jobs family id
 	 */
 	public static final String JOBS_FAMILY = PLUGIN_ID + ".jobs";

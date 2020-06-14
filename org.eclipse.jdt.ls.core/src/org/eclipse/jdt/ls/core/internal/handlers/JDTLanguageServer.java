@@ -275,7 +275,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
 					classpathUpdateHandler.addElementChangeListener();
 					pm.registerWatchers();
-					pm.registerListeners();
 					logInfo(">> watchers registered");
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
