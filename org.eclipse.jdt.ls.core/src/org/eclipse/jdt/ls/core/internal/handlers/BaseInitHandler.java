@@ -22,15 +22,22 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Handler for the VS Code extension initialization
@@ -42,8 +49,12 @@ public abstract class BaseInitHandler {
 
 	private PreferenceManager preferenceManager;
 
-	public BaseInitHandler(PreferenceManager preferenceManager) {
+	protected ProjectsManager projectsManager;
+
+	public BaseInitHandler(ProjectsManager projectsManager, PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+		this.projectsManager = projectsManager;
+		this.projectsManager.registerListeners();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -103,6 +114,15 @@ public abstract class BaseInitHandler {
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
+			if (!isWorkspaceInitialized()) {
+				// We don't care about triggering a full build here, like in onDidChangeConfiguration
+				try {
+					JVMConfigurator.configureDefaultVM(prefs);
+					registerWorkspaceInitialized();
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Failed to configure Java Runtimes", e);
+				}
+			}
 		} else {
 			preferenceManager.getPreferences().setRootPaths(rootPaths);
 		}
@@ -126,6 +146,21 @@ public abstract class BaseInitHandler {
 		return initializationOptions;
 	}
 
+	private void registerWorkspaceInitialized() {
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		prefs.putBoolean(IConstants.WORKSPACE_INITIALIZED, true);
+		try {
+			prefs.flush();
+		} catch (BackingStoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
+	private boolean isWorkspaceInitialized() {
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		return prefs.getBoolean(IConstants.WORKSPACE_INITIALIZED, false);
+	}
+
 	public abstract void registerCapabilities(InitializeResult initializeResult);
 
 	public abstract void triggerInitialization(Collection<IPath> roots);
@@ -144,4 +179,5 @@ public abstract class BaseInitHandler {
 		}
 		return null;
 	}
+
 }

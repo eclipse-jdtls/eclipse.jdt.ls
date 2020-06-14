@@ -44,15 +44,24 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallChangedListener;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.PropertyChangeEvent;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -208,6 +217,61 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
 		verify(client, times(9)).registerCapability(any());
+	}
+
+	@Test
+	public void testConfigureJVMs() throws Exception {
+		InitHandler handler = new InitHandler(projectsManager, preferenceManager, server.getClientConnection(), commandHandler);
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		boolean isWorkspaceInitialized = isWorkspaceInitialized(prefs);
+		boolean[] changed = new boolean[] { false };
+		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+		IVMInstallChangedListener listener = new IVMInstallChangedListener() {
+
+			@Override
+			public void defaultVMInstallChanged(IVMInstall previous, IVMInstall current) {
+				changed[0] = true;
+			}
+
+			@Override
+			public void vmChanged(PropertyChangeEvent event) {
+			}
+
+			@Override
+			public void vmAdded(IVMInstall vm) {
+			}
+
+			@Override
+			public void vmRemoved(IVMInstall vm) {
+			}
+
+		};
+		try {
+			prefs.putBoolean(IConstants.WORKSPACE_INITIALIZED, false);
+			InitializeParams params = new InitializeParams();
+			Map<String, Object> initializationOptions = new HashMap<>();
+			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
+			HashMap<String, Object> homeMap = getMap("home", javaHome);
+			Map<String, Object> javaMap = getMap("java", homeMap);
+			initializationOptions.put(InitHandler.SETTINGS_KEY, javaMap);
+			params.setInitializationOptions(initializationOptions);
+			assertFalse(isWorkspaceInitialized(prefs));
+			JavaRuntime.addVMInstallChangedListener(listener);
+			handler.handleInitializationOptions(params);
+			assertTrue(isWorkspaceInitialized(prefs));
+			assertTrue(changed[0]);
+			changed[0] = false;
+			handler.handleInitializationOptions(params);
+			assertFalse(changed[0]);
+		} finally {
+			prefs.putBoolean(IConstants.WORKSPACE_INITIALIZED, isWorkspaceInitialized);
+			JavaRuntime.removeVMInstallChangedListener(listener);
+			JavaRuntime.setDefaultVMInstall(defaultVM, new NullProgressMonitor());
+		}
+	}
+
+	private boolean isWorkspaceInitialized(IEclipsePreferences prefs) {
+		return prefs.getBoolean(IConstants.WORKSPACE_INITIALIZED, false);
 	}
 
 	@Test
