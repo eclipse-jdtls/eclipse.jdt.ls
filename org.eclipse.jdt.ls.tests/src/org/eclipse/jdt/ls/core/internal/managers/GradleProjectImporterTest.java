@@ -473,7 +473,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	@Ignore
 	public void testImportedProjectWontBeApplied() throws Exception {
 		importGradleProject("multi-module");
 		for (IPath rootFolder : preferenceManager.getPreferences().getRootPaths()) {

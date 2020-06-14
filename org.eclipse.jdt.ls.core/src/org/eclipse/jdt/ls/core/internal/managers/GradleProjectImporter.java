@@ -101,9 +101,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 		Set<File> existingProjectFolders = new HashSet<>();
 		for (IProject project : ProjectUtils.getGradleProjects()) {
-			if (GradleBuildSupport.shouldSynchronize(project)) {
-				return true;
-			}
 			existingProjectFolders.add(new File(project.getLocationURI()));
 		}
 
@@ -114,7 +111,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
