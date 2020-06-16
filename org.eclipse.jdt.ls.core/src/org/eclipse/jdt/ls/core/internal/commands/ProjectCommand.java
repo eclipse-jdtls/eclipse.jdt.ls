@@ -26,12 +26,17 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -117,8 +122,29 @@ public class ProjectCommand {
 		}
 		ILaunchConfiguration launchConfig = bs.get().getLaunchConfiguration(javaProject, options.scope);
 		JavaLaunchDelegate delegate = new JavaLaunchDelegate();
-		String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
-		return new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
+		ClasspathResult[] result = new ClasspathResult[1];
+
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		ISchedulingRule currentRule = Job.getJobManager().currentRule();
+		ISchedulingRule schedulingRule;
+		if (currentRule != null && currentRule.contains(javaProject.getSchedulingRule())) {
+			schedulingRule = null;
+		} else {
+			schedulingRule = javaProject.getSchedulingRule();
+		}
+		workspace.run(new IWorkspaceRunnable() {
+			@Override
+			public void run(IProgressMonitor monitor) throws CoreException {
+				String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
+				result[0] = new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
+			}
+		}, schedulingRule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+
+		if (result[0] != null) {
+			return result[0];
+		}
+
+		throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to get the classpaths."));
 	}
 
 	/**
