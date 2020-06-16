@@ -71,10 +71,8 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
 	@Test
 	public void testDefaultVM() throws CoreException {
-		Preferences prefs = new Preferences();
 		String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
-		prefs.setJavaHome(javaHome);
-		boolean changed = JVMConfigurator.configureDefaultVM(prefs);
+		boolean changed = JVMConfigurator.configureDefaultVM(javaHome);
 		IVMInstall newDefaultVM = JavaRuntime.getDefaultVMInstall();
 		assertTrue("A VM hasn't been changed", changed);
 		assertNotEquals(originalVm, newDefaultVM);

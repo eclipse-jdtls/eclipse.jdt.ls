@@ -117,7 +117,7 @@ public abstract class BaseInitHandler {
 			if (!isWorkspaceInitialized()) {
 				// We don't care about triggering a full build here, like in onDidChangeConfiguration
 				try {
-					JVMConfigurator.configureDefaultVM(prefs);
+					JVMConfigurator.configureJVMs(prefs);
 					registerWorkspaceInitialized();
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException("Failed to configure Java Runtimes", e);
