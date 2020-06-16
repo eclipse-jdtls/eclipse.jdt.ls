@@ -117,6 +117,27 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
     }
 
     @Test
+    public void testGetClasspathsForMavenWhenUpdating() throws Exception {
+        importProjects("maven/classpathtest");
+        IProject project = WorkspaceHelper.getProject("classpathtest");
+        String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
+        ClasspathOptions options = new ClasspathOptions();
+        options.scope = "test";
+
+        projectsManager.updateProject(project, true);
+
+        for (int i = 0; i < 10; i++) {
+            ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
+            assertEquals(4, result.classpaths.length);
+            assertEquals(0, result.modulepaths.length);
+            boolean containsJunit = Arrays.stream(result.classpaths).anyMatch(element -> {
+                return element.indexOf("junit") > -1;
+            });
+            assertTrue(containsJunit);
+        }
+    }
+
+    @Test
     public void testGetClasspathsForGradle() throws Exception {
         importProjects("gradle/simple-gradle");
         IProject project = WorkspaceHelper.getProject("simple-gradle");
