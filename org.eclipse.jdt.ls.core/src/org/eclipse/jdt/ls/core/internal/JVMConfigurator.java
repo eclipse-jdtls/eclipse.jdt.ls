@@ -52,55 +52,45 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
  */
 public class JVMConfigurator implements IVMInstallChangedListener {
 
-	public static boolean configureDefaultVM(Preferences preferences) throws CoreException {
-		if (preferences == null) {
+	public static boolean configureDefaultVM(String javaHome) throws CoreException {
+		if (StringUtils.isBlank(javaHome)) {
 			return false;
 		}
-		String javaHome = preferences.getJavaHome();
-		boolean changed = false;
-		if (javaHome != null) {
-			File jvmHome = new File(javaHome);
-			if (jvmHome.isDirectory()) {
-				IVMInstall vm = findVM(jvmHome, null);
-				if (vm == null) {
-					IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
-					long unique = System.currentTimeMillis();
-					while (installType.findVMInstall(String.valueOf(unique)) != null) {
-						unique++;
-					}
-					String vmId = String.valueOf(unique);
-					VMStandin vmStandin = new VMStandin(installType, vmId);
-					String name = StringUtils.defaultIfBlank(jvmHome.getName(), "JRE");
-					vmStandin.setName(name);
-					vmStandin.setInstallLocation(jvmHome);
-					vm = vmStandin.convertToRealVM();
-					JDTUtils.setCompatibleVMs(vm.getId());
-					changed = true;
-				}
-				boolean hasDefault = false;
-				for (RuntimeEnvironment runtime : preferences.getRuntimes()) {
-					if (runtime.isDefault()) {
-						hasDefault = true;
-						break;
-					}
-				}
-				if (!hasDefault) {
-					IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
-					File location = defaultVM.getInstallLocation();
-					if (!location.equals(jvmHome)) {
-						JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
-						JDTUtils.setCompatibleVMs(vm.getId());
-						changed = true;
-					}
-				}
+		File jvmHome = new File(javaHome);
+		if (jvmHome.isDirectory()) {
+			IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+			if (defaultVM != null && jvmHome.equals(defaultVM.getInstallLocation())) {
+				return false;
 			}
+		} else {
+			JavaLanguageServerPlugin.logInfo("java.home " + jvmHome + " is not a directory");
+			return false;
 		}
-		boolean jvmChanged = configureJVMs(preferences);
-		return changed || jvmChanged;
+
+		IVMInstall vm = findVM(jvmHome, null);
+		if (vm == null) {
+			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			long unique = System.currentTimeMillis();
+			while (installType.findVMInstall(String.valueOf(unique)) != null) {
+				unique++;
+			}
+			String vmId = String.valueOf(unique);
+			VMStandin vmStandin = new VMStandin(installType, vmId);
+			String name = StringUtils.defaultIfBlank(jvmHome.getName(), "JRE");
+			vmStandin.setName(name);
+			vmStandin.setInstallLocation(jvmHome);
+			vm = vmStandin.convertToRealVM();
+		}
+		JavaLanguageServerPlugin.logInfo("Setting java.home " + jvmHome + " as default global VM");
+		JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
+		JDTUtils.setCompatibleVMs(vm.getId());
+
+		return true;
 	}
 
 	public static boolean configureJVMs(Preferences preferences) throws CoreException {
 		boolean changed = false;
+		boolean defaultVMSet = false;
 		Set<RuntimeEnvironment> runtimes = preferences.getRuntimes();
 		for (RuntimeEnvironment runtime : runtimes) {
 			if (runtime.isValid()) {
@@ -123,13 +113,16 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						vmStandin = new VMStandin(vm);
 						changed = changed || !runtime.getName().equals(vm.getName()) || !runtime.getInstallationFile().equals(vm.getInstallLocation());
 					}
+
 					IStatus status = installType.validateInstallLocation(file);
 					if (!status.isOK()) {
 						JavaLanguageServerPlugin.log(status);
 						continue;
 					}
+
 					vmStandin.setName(runtime.getName());
 					vmStandin.setInstallLocation(file);
+
 					if (sourcePath != null || javadocURL != null) {
 						LibraryLocation[] libs;
 						if (vm != null && vm.getLibraryLocations() != null) {
@@ -157,8 +150,12 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 					}
 					vm = vmStandin.convertToRealVM();
 					if (runtime.isDefault()) {
-						JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
-						JavaLanguageServerPlugin.logInfo("Runtime " + runtime.getName() + " set as default");
+						defaultVMSet = true;
+						if (!Objects.equals(vm, JavaRuntime.getDefaultVMInstall())) {
+							JavaLanguageServerPlugin.logInfo("Setting runtime " + runtime.getName() + "-" + runtime.getInstallationFile() + " as default global VM");
+							JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
+							changed = true;
+						}
 					}
 					if (!setDefaultEnvironmentVM(vm, runtime.getName())) {
 						JavaLanguageServerPlugin.logError("Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment");
@@ -168,6 +165,11 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 				}
 			}
 		}
+
+		if (!defaultVMSet) {
+			changed = configureDefaultVM(preferences.getJavaHome()) || changed;
+		}
+
 		if (changed) {
 			JavaLanguageServerPlugin.logInfo("JVM Runtimes changed, saving new configuration");
 			JavaRuntime.saveVMConfiguration();
@@ -178,6 +180,9 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 	private static boolean setDefaultEnvironmentVM(IVMInstall vm, String name) {
 		IExecutionEnvironment environment = getExecutionEnvironment(name);
 		if (environment != null) {
+			if (Objects.equals(vm, environment.getDefaultVM())) {
+				return true;
+			}
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
 			for (IVMInstall compatibleVM : compatibleVMs) {
 				if (compatibleVM.equals(vm)) {
@@ -225,12 +230,16 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		if (Objects.equals(previous, current)) {
 			return;
 		}
+		String prev = (previous == null) ? null : previous.getId() + "-" + previous.getInstallLocation();
+		String curr = (current == null) ? null : current.getId() + "-" + current.getInstallLocation();
+
+		JavaLanguageServerPlugin.logInfo("Default VM Install changed from  " + prev + " to " + curr);
 
 		//Reset global compliance settings
-		Hashtable<String, String> options = JavaCore.getOptions();
 		AbstractVMInstall jvm = (AbstractVMInstall) current;
 		long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
 		String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
+		Hashtable<String, String> options = JavaCore.getOptions();
 		JavaCore.setComplianceOptions(compliance, options);
 		JavaCore.setOptions(options);
 
@@ -242,6 +251,8 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			}
 			ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
 			if (projectsManager != null) {
+				//TODO Only trigger update if the project uses the default JVM
+				JavaLanguageServerPlugin.logInfo("defaultVMInstallChanged -> force update of " + project.getName());
 				projectsManager.updateProject(project, true);
 			}
 		}

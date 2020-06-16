@@ -428,7 +428,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		syncCapabilitiesToSettings();
 		boolean jvmChanged = false;
 		try {
-			jvmChanged = jvmConfigurator.configureDefaultVM(preferenceManager.getPreferences());
+			jvmChanged = jvmConfigurator.configureJVMs(preferenceManager.getPreferences());
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
