@@ -1,5 +1,20 @@
 # Change Log
 
+# [0.57.0 (June 18th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/75?closed=1)
+ * enhancement - Avoid unnecessary Gradle re-synch on restart. See [#1485](https://github.com/eclipse/eclipse.jdt.ls/pull/1485).
+ * enhancement - Optimize default VM management to avoid unnecessary project updates. See [#1484](https://github.com/eclipse/eclipse.jdt.ls/pull/1484).
+ * enhancement - Update to Eclipse 4.16. See [#1478](https://github.com/eclipse/eclipse.jdt.ls/pull/1478).
+ * enhancement - Support annotations in semantic highlighting. See [#1477](https://github.com/eclipse/eclipse.jdt.ls/pull/1477).
+ * enhancement - Wait for jobs to complete when resolving the classpaths. See [#1476](https://github.com/eclipse/eclipse.jdt.ls/pull/1476).
+ * enhancement - Java runtimes should be configured before projects are imported. See [#1474](https://github.com/eclipse/eclipse.jdt.ls/issues/1474).
+ * enhancement - Send started status when light weight server is ready. See [#1472](https://github.com/eclipse/eclipse.jdt.ls/pull/1472).
+ * enhancement - Enable code completion for syntax server. See [#1463](https://github.com/eclipse/eclipse.jdt.ls/pull/1463).
+ * enhancement - IBuildSupport extension point. See [#1455](https://github.com/eclipse/eclipse.jdt.ls/pull/1455).
+ * enhancement - Can get VM installation path through ProjectCommand.getProjectSettings(). See [#1454](https://github.com/eclipse/eclipse.jdt.ls/pull/1454).
+ * bug fix - Fix NPE in BaseDocumentLifeCycleHandler.publishDiagnostics. See [#1473](https://github.com/eclipse/eclipse.jdt.ls/pull/1473).
+ * bug fix - Correctly assign the queueLength in WrapperValidator. See [#1470](https://github.com/eclipse/eclipse.jdt.ls/pull/1470).
+ * bug fix - Organize import on save should not select ambiguous static import. See [#1459](https://github.com/eclipse/eclipse.jdt.ls/pull/1459).
+
 # [0.56.0 (May 21st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/74?closed=1)
  * enhancement - Recognize new maven, gradle, eclipse project(s) after first init. See [#144](https://github.com/eclipse/eclipse.jdt.ls/issues/144).
  * enhancement - Add a new command to get all Java projects. See [#1447](https://github.com/eclipse/eclipse.jdt.ls/pull/1447).
