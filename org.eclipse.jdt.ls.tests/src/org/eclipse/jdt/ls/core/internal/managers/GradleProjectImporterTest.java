@@ -94,11 +94,14 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void importNestedGradleProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/nested");
-		assertEquals(3, projects.size());//default + 2 gradle projects
+		assertEquals(4, projects.size());//default + 3 gradle projects
 		IProject gradle1 = WorkspaceHelper.getProject("gradle1");
 		assertIsGradleProject(gradle1);
 		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
 		assertIsGradleProject(gradle2);
+		IProject gradle3 = WorkspaceHelper.getProject("gradle3");
+		assertIsGradleProject(gradle3);
+		assertFalse(ProjectUtils.isJavaProject(gradle3));
 	}
 
 	@Test
@@ -124,11 +127,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			javaImportExclusions.add(GRADLE1_PATTERN);
 			List<IProject> projects = importProjects("gradle/nested");
-			assertEquals(2, projects.size());//default + 1 gradle projects
+			assertEquals(3, projects.size());//default + 2 gradle projects
 			IProject gradle1 = WorkspaceHelper.getProject("gradle1");
 			assertNull(gradle1);
 			IProject gradle2 = WorkspaceHelper.getProject("gradle2");
 			assertIsGradleProject(gradle2);
+			IProject gradle3 = WorkspaceHelper.getProject("gradle3");
+			assertIsGradleProject(gradle3);
 		} finally {
 			javaImportExclusions.remove(GRADLE1_PATTERN);
 		}
@@ -233,12 +238,12 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		importProjects("gradle/nested");
 		List<IProject> projects = ProjectUtils.getGradleProjects();
 		for (IProject project : projects) {
-			assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+			assertTrue(project.getName() + " should synchronize", GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
 		}
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 		GradleBuildSupport.saveModels();
 		for (IProject project : projects) {
-			assertFalse(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+			assertFalse(project.getName() + " should not synchronize", GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
 		}
 		IProject project = WorkspaceHelper.getProject("gradle1");
 		File gradleBuild = new File(project.getLocation().toFile(), "build.gradle");
