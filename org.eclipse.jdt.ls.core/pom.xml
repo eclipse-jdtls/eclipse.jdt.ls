@@ -30,6 +30,53 @@
 					</artifactItems>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.gmaven</groupId>
+				<artifactId>groovy-maven-plugin</artifactId>
+				<version>2.1.1</version>
+				<executions>
+					<execution>
+						<?m2e execute onConfiguration?>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<source>
+								import groovy.json.JsonSlurper
+								import groovy.json.JsonOutput
+
+								def versionUrl = new URL("https://services.gradle.org/versions/all")
+								def versionStr = versionUrl.text;
+								def versionsFile = new File("${basedir}/gradle/checksums/versions.json")
+								versionsFile.parentFile.mkdirs() //just in case
+								versionsFile.write(versionStr)
+
+								def versions = new JsonSlurper().parseText(versionStr);
+								class Checksum { String wrapperChecksumUrl; String sha256 }
+
+								def checksums = []
+								versions.each {
+									if (it.wrapperChecksumUrl) {
+										def sha256url = new URL(it.wrapperChecksumUrl)
+										try {
+											println "Fetching ${it.wrapperChecksumUrl}"
+											def sha256 = sha256url.text
+											def checksum = new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: sha256);
+											checksums.add(checksum)
+										} catch(Exception e) {
+											println e.message
+										}
+									}
+								}
+								def json = JsonOutput.toJson(checksums)
+								def checksumsFile = new File("${basedir}/gradle/checksums/checksums.json")
+								checksumsFile.write(JsonOutput.prettyPrint(json))
+							</source>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

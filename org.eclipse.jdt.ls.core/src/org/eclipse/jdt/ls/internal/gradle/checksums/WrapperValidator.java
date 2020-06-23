@@ -12,10 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.internal.gradle.checksums;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +35,15 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.osgi.framework.Bundle;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -45,6 +54,9 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
 /**
@@ -54,12 +66,15 @@ import com.google.gson.reflect.TypeToken;
  */
 public class WrapperValidator {
 
+	public static final String GRADLE_CHECKSUMS = "/gradle/checksums/checksums.json";
+	public static final String GRADLE_VERSIONS = "/gradle/checksums/versions.json";
 	private static final int QUEUE_LENGTH = 20;
 	private static final String WRAPPER_CHECKSUM_URL = "wrapperChecksumUrl";
 	private static final String GRADLE_WRAPPER_JAR = "gradle/wrapper/gradle-wrapper.jar";
 
 	private static Set<String> allowed = new HashSet<>();
 	private static Set<String> disallowed = new HashSet<>();
+	private static Set<String> wrapperChecksumUrls = new HashSet<>();
 	private static AtomicBoolean downloaded = new AtomicBoolean(false);
 	private HashProvider hashProvider;
 	private int queueLength;
@@ -79,6 +94,7 @@ public class WrapperValidator {
 			throw ExceptionFactory.newException(wrapperJar.toString() + " doesn't exist.");
 		}
 		if (!downloaded.get() || allowed.isEmpty()) {
+			loadInternalChecksums();
 			File versionFile = getVersionCacheFile();
 			if (!versionFile.exists()) {
 				JobHelpers.waitForLoadingGradleVersionJob();
@@ -93,7 +109,7 @@ public class WrapperValidator {
 					};
 					List<Map<String, String>> versions = gson.fromJson(json, typeToken.getType());
 					//@formatter:off
-					ImmutableList<String> wrapperChecksumUrls = FluentIterable
+					ImmutableList<String> urls = FluentIterable
 						.from(versions)
 						.filter(new Predicate<Map<String, String>>() {
 							@Override
@@ -112,8 +128,11 @@ public class WrapperValidator {
 					DownloadChecksumJob downloadJob = new DownloadChecksumJob();
 					int count = 0;
 					File cacheDir = getSha256CacheFile();
-					for (String wrapperChecksumUrl : wrapperChecksumUrls) {
+					for (String wrapperChecksumUrl : urls) {
 						try {
+							if (WrapperValidator.wrapperChecksumUrls.contains(wrapperChecksumUrl)) {
+								continue;
+							}
 							String fileName = getFileName(wrapperChecksumUrl);
 							if (fileName == null) {
 								continue;
@@ -149,6 +168,8 @@ public class WrapperValidator {
 						// ignore
 					}
 				}
+			} else {
+				updateGradleVersionsFile();
 			}
 		}
 		try {
@@ -156,6 +177,55 @@ public class WrapperValidator {
 			return new ValidationResult(wrapperJar.toString(), sha256, allowed.contains(sha256));
 		} catch (IOException e) {
 			throw ExceptionFactory.newException(e);
+		}
+	}
+
+	private void loadInternalChecksums() {
+		Bundle bundle = Platform.getBundle(IConstants.PLUGIN_ID);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path(GRADLE_CHECKSUMS));
+		if (url != null) {
+			try (InputStream inputStream = url.openStream(); InputStreamReader inputStreamReader = new InputStreamReader(inputStream); Reader reader = new BufferedReader(inputStreamReader)) {
+				JsonElement jsonElement = new JsonParser().parse(reader);
+				if (jsonElement instanceof JsonArray) {
+					JsonArray array = (JsonArray) jsonElement;
+					for (JsonElement json : array) {
+						String sha256 = json.getAsJsonObject().get("sha256").getAsString();
+						String wrapperChecksumUrl = json.getAsJsonObject().get("wrapperChecksumUrl").getAsString();
+						if (sha256 != null) {
+							allowed.add(sha256);
+						}
+						if (wrapperChecksumUrl != null) {
+							wrapperChecksumUrls.add(wrapperChecksumUrl);
+						}
+					}
+				}
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+	}
+
+	private void updateGradleVersionsFile() {
+		File file = getVersionCacheFile();
+		if (file.isFile()) {
+			return;
+		}
+		file.getParentFile().mkdirs();
+		Bundle bundle = Platform.getBundle(IConstants.PLUGIN_ID);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path(GRADLE_VERSIONS));
+		if (url != null) {
+			try (InputStream is = url.openStream(); InputStreamReader isr = new InputStreamReader(is); BufferedReader br = new BufferedReader(isr); FileOutputStream os = new FileOutputStream(file.getAbsolutePath())) {
+				br.lines().forEach(l -> {
+					try {
+						os.write(l.getBytes(StandardCharsets.UTF_8));
+						os.write("\n".getBytes(StandardCharsets.UTF_8));
+					} catch (IOException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				});
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 		}
 	}
 
@@ -201,6 +271,7 @@ public class WrapperValidator {
 	public static void clear() {
 		allowed.clear();
 		disallowed.clear();
+		wrapperChecksumUrls.clear();
 	}
 
 	public static void allow(Collection<String> c) {
