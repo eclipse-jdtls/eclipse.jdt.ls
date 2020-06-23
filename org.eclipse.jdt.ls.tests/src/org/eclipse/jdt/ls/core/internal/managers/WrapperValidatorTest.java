@@ -17,8 +17,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,6 +32,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.junit.After;
@@ -34,6 +43,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.osgi.framework.Bundle;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 /**
  * @author snjeza
@@ -63,10 +77,34 @@ public class WrapperValidatorTest extends AbstractGradleBasedTest{
 		assertTrue(result.isValid());
 		// test cache
 		assertTrue(sha256Directory.isDirectory());
-		String message = Files.list(Paths.get(sha256Directory.getAbsolutePath())).collect(Collectors.toList()).toString();
-		file = new File(sha256Directory, "gradle-6.3-wrapper.jar.sha256");
-		assertTrue(message, file.isFile());
-		String sha256 = Files.lines(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8).findFirst().get();
+		String fileName = "gradle-6.3-wrapper.jar.sha256";
+		Bundle bundle = Platform.getBundle(IConstants.PLUGIN_ID);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path(WrapperValidator.GRADLE_CHECKSUMS));
+		String sha256 = null;
+		if (url == null) {
+			String message = Files.list(Paths.get(sha256Directory.getAbsolutePath())).collect(Collectors.toList()).toString();
+			file = new File(sha256Directory, fileName);
+			if (file.isFile()) {
+				assertTrue(message, file.isFile());
+				sha256 = Files.lines(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8).findFirst().get();
+			}
+		} else {
+			try (InputStream inputStream = url.openStream(); InputStreamReader inputStreamReader = new InputStreamReader(inputStream); Reader reader = new BufferedReader(inputStreamReader)) {
+				JsonElement jsonElement = new JsonParser().parse(reader);
+				if (jsonElement instanceof JsonArray) {
+					JsonArray array = (JsonArray) jsonElement;
+					for (JsonElement json : array) {
+						String wrapperChecksumUrl = json.getAsJsonObject().get("wrapperChecksumUrl").getAsString();
+						if (wrapperChecksumUrl != null && wrapperChecksumUrl.endsWith("/" + fileName)) {
+							sha256 = json.getAsJsonObject().get("sha256").getAsString();
+							break;
+						}
+					}
+				}
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+		}
 		assertEquals("1cef53de8dc192036e7b0cc47584449b0cf570a00d560bfaa6c9eabe06e1fc06", sha256);
 	}
 
