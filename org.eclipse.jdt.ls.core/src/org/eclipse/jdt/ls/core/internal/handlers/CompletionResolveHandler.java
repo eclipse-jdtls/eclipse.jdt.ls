@@ -38,6 +38,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
@@ -102,6 +103,10 @@ public class CompletionResolveHandler {
 		if (monitor.isCanceled()) {
 			param.setData(null);
 			return param;
+		}
+		if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
+			CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset(), manager.getPreferences(), manager.getClientPreferences());
+			proposalProvider.updateAdditionalTextEdits(completionResponse.getProposals().get(proposalId), param, '\0');
 		}
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			String typeName = stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));

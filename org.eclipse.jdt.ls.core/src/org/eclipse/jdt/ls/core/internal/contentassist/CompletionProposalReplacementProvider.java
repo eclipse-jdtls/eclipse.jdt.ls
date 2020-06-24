@@ -77,8 +77,8 @@ public class CompletionProposalReplacementProvider {
 	private static final char RPAREN = ')';
 	private static final char SEMICOLON = ';';
 	private static final char COMMA = ',';
-	private static final char LESS= '<';
-	private static final char GREATER= '>';
+	private static final char LESS = '<';
+	private static final char GREATER = '>';
 	private final ICompilationUnit compilationUnit;
 	private final int offset;
 	private final CompletionContext context;
@@ -96,13 +96,28 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	/**
-	 * Updates the replacement and any additional replacement for the given item.
+	 * Update the replacement together with additionalTextEdits for the given item.
+	 * It's originally designed to defer expensive calculation of the imports into completion/resolve stage.
+	 * @param proposal
+	 * @param item
+	 * @param trigger
+	 */
+	public void updateAdditionalTextEdits(CompletionProposal proposal, CompletionItem item, char trigger) {
+		updateReplacement(proposal, item, trigger, true);
+	}
+
+	/**
+	 * Updates the replacement but NO additional replacement for the given item.
 	 *
 	 * @param proposal
 	 * @param item
 	 * @param trigger
 	 */
 	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger) {
+		updateReplacement(proposal, item, trigger, false);
+	}
+
+	private void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, boolean isResolving) {
 		// reset importRewrite
 		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 
@@ -111,10 +126,10 @@ public class CompletionProposalReplacementProvider {
 		StringBuilder completionBuffer = new StringBuilder();
 		Range range = null;
 		if (isSupportingRequiredProposals(proposal)) {
-			CompletionProposal[] requiredProposals= proposal.getRequiredProposals();
+			CompletionProposal[] requiredProposals = proposal.getRequiredProposals();
 			if (requiredProposals != null) {
 				for (CompletionProposal requiredProposal : requiredProposals) {
-					switch(requiredProposal.getKind()) {
+					switch (requiredProposal.getKind()) {
 					case CompletionProposal.TYPE_IMPORT:
 					case CompletionProposal.METHOD_IMPORT:
 					case CompletionProposal.FIELD_IMPORT:
@@ -122,10 +137,11 @@ public class CompletionProposalReplacementProvider {
 						break;
 					case CompletionProposal.TYPE_REF:
 						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context));
-							if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
-									|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
-							completionBuffer.append(edit.getNewText());
-							range = edit.getRange();
+						if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
+							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
+							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
+								completionBuffer.append(edit.getNewText());
+								range = edit.getRange();
 						} else {
 							additionalTextEdits.add(edit);
 						}
@@ -152,7 +168,7 @@ public class CompletionProposalReplacementProvider {
 			}
 			range = toReplacementRange(proposal);
 		}
-		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
+		if (proposal.getKind() == CompletionProposal.METHOD_DECLARATION) {
 			appendMethodOverrideReplacement(completionBuffer, proposal);
 		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
 			appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
@@ -162,21 +178,24 @@ public class CompletionProposalReplacementProvider {
 			appendReplacementString(completionBuffer, proposal);
 		}
 		//select insertTextFormat.
-		if( client.isCompletionSnippetsSupported()){
+		if (client.isCompletionSnippetsSupported()) {
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
-		}else{
+		} else {
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
 		}
 		String text = completionBuffer.toString();
-		if(range != null){
+		if (range != null) {
 			item.setTextEdit(new org.eclipse.lsp4j.TextEdit(range, text));
-		}else{
+		} else {
 			// fallback
 			item.setInsertText(text);
 		}
-		addImports(additionalTextEdits);
-		if(!additionalTextEdits.isEmpty()){
-			item.setAdditionalTextEdits(additionalTextEdits);
+
+		if (!client.isResolveAdditionalTextEditsSupport() || isResolving) {
+			addImports(additionalTextEdits);
+			if(!additionalTextEdits.isEmpty()){
+				item.setAdditionalTextEdits(additionalTextEdits);
+			}
 		}
 	}
 

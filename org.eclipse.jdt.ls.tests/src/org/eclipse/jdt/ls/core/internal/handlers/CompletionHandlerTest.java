@@ -1811,7 +1811,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	return strField;\n" +
 				"}", ci.getTextEdit());
 	}
-	
+
 	@Test
 	public void testCompletion_getterNoJavadoc() throws Exception {
 		preferences.setCodeGenerationTemplateGenerateComments(false);
@@ -1836,7 +1836,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Method, ci.getKind());
 		assertEquals("999999979", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
-		assertTextEdit(2, 4, 7, 
+		assertTextEdit(2, 4, 7,
 				"public String getStrField() {\n" +
 				"	return strField;\n" +
 				"}", ci.getTextEdit());
@@ -2762,6 +2762,34 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("toString() : String", ci.getLabel());
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNull(resolvedItem.getAdditionalTextEdits());
+	}
+
+	@Test
+	public void testCompletion_resolveAdditionalTextEdits() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isResolveAdditionalTextEditsSupport()).thenReturn(true);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						"		HashMa\n"+
+						"	}\n"+
+				"}\n");
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "HashMa");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+		CompletionItem ci = list.getItems().get(0);
+		assertNull(ci.getAdditionalTextEdits());
+		assertEquals("HashMap - java.util", ci.getLabel());
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		List<TextEdit> additionalEdits = resolvedItem.getAdditionalTextEdits();
+		assertNotNull(additionalEdits);
+		assertEquals(1, additionalEdits.size());
+		assertEquals("import java.util.HashMap;\n\n", additionalEdits.get(0).getNewText());
 	}
 
 	@Test
