@@ -91,10 +91,10 @@ public class AnonymousTypeCompletionProposal {
 	 * @see JavaTypeCompletionProposal#updateReplacementString(IDocument,char,int,ImportRewrite)
 	 */
 	public String updateReplacementString(IDocument document, int offset, ImportRewrite impRewrite) throws CoreException, BadLocationException {
-		String newBody = createNewBody(impRewrite);
-		if (newBody == null) {
-			return null;
-		}
+		// Construct empty body for performance concern
+		// See https://github.com/microsoft/language-server-protocol/issues/1032#issuecomment-648748013
+		String newBody = "{\n\t${0}\n}";
+
 		StringBuffer buf = new StringBuffer("new A()"); //$NON-NLS-1$
 		buf.append(newBody);
 		// use the code formatter
