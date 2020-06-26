@@ -1932,11 +1932,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999998684", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 23, 23, "IFoo(){\n" +
-				"\n" +
-				"		@Override\n" +
-				"		public String getName() {\n" +
-				"			${0:// TODO Auto-generated method stub\n\t\t\treturn null;}\n" +
-				"		}\n" +
+				"	${0}\n" +
 				"};", ci.getTextEdit());
 	}
 
@@ -1967,15 +1963,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999998684", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 23, 23, "IFoo(){\n" +
-				"\n		@Override\n" +
-				"		public void setName(String name) {\n" +
-				"			${0:// TODO Auto-generated method stub\n\t\t\t}\n" +
-				"		}\n" +
-				"\n		@Override\n" +
-				"		public String getName() {\n" +
-				"			// TODO Auto-generated method stub\n" +
-				"			return null;\n" +
-				"		}\n" +
+				"	${0}\n" +
 				"};", ci.getTextEdit());
 	}
 
@@ -2002,11 +1990,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 20, 22, "(){\n" +
-				"\n" +
-				"	@Override\n" +
-				"	public void run() {\n" +
-				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
-				"	}\n" +
+				"	${0}\n" +
 				"}", ci.getTextEdit());
 	}
 
@@ -2033,11 +2017,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 20, 24, "(){\n" +
-				"\n" +
-				"	@Override\n" +
-				"	public void run() {\n" +
-				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
-				"	}\n" +
+				"	${0}\n" +
 				"}", ci.getTextEdit());
 	}
 
@@ -2066,11 +2046,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 32, 33, "(){\n" +
-				"\n" +
-				"	@Override\n" +
-				"	public void run() {\n" +
-				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
-				"	}\n" +
+				"	${0}\n" +
 				"}", ci.getTextEdit());
 	}
 
@@ -2100,11 +2076,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 32, 33, "(){\n" +
-				"\n" +
-				"	@Override\n" +
-				"	public void run() {\n" +
-				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
-				"	}\n" +
+				"	${0}\n" +
 				"}", ci.getTextEdit());
 	}
 
@@ -2129,11 +2101,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit());
 		assertTextEdit(2, 33, 33, "(){\n" +
-				"\n" +
-				"	@Override\n" +
-				"	public void run() {\n" +
-				"		${0:// TODO Auto-generated method stub\n\t\t}\n" +
-				"	}\n" +
+				"	${0}\n" +
 				"}", ci.getTextEdit());
 	}
 
