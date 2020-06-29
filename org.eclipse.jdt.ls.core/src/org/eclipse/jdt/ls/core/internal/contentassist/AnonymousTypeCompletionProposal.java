@@ -93,9 +93,9 @@ public class AnonymousTypeCompletionProposal {
 	public String updateReplacementString(IDocument document, int offset, ImportRewrite impRewrite) throws CoreException, BadLocationException {
 		// Construct empty body for performance concern
 		// See https://github.com/microsoft/language-server-protocol/issues/1032#issuecomment-648748013
-		String newBody = "{\n\t${0}\n}";
+		String newBody = fSnippetSupport ? "{\n\t${0}\n}" : "{\n\n}";
 
-		StringBuffer buf = new StringBuffer("new A()"); //$NON-NLS-1$
+		StringBuilder buf = new StringBuilder("new A()"); //$NON-NLS-1$
 		buf.append(newBody);
 		// use the code formatter
 		String lineDelim = TextUtilities.getDefaultLineDelimiter(document);

@@ -2106,6 +2106,37 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_AnonymousDeclarationType_noSnippet() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"    public static void main(String[] args) {\n" +
+						"        new Runnable()\n" +
+						"    }\n" +
+				"}\n");
+		waitForBackgroundJobs();
+		int[] loc = findCompletionLocation(unit, "Runnable(");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("Runnable", ci.getInsertText());
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("999999372", ci.getSortText());
+		assertNotNull(ci.getTextEdit());
+		assertTextEdit(2, 20, 22, "() {\n" +
+				"\n" +
+				"}", ci.getTextEdit());
+	}
+
+	@Test
 	public void testCompletion_type() throws Exception {
 		ICompilationUnit unit = getWorkingCopy(
 				"src/org/sample/Foo.java",
