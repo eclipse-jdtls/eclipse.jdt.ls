@@ -30,6 +30,7 @@ import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 
 public class BaseJDTLanguageServer {
 	protected JavaClientConnection client;
+	protected boolean shutdownReceived = false;
 	private Set<String> registeredCapabilities = new HashSet<>(3);
 
 	public void connectClient(JavaLanguageClient client) {
