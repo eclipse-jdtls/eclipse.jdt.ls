@@ -29,7 +29,9 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -92,6 +94,19 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	private ContentProviderManager contentProviderManager;
 	private ProjectsManager projectsManager;
 	private PreferenceManager preferenceManager;
+	private Job shutdownJob = new Job("Shutdown...") {
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			try {
+				ResourcesPlugin.getWorkspace().save(true, monitor);
+			} catch (CoreException e) {
+				logException(e.getMessage(), e);
+			}
+			return Status.OK_STATUS;
+		}
+
+	};
 
 	public SyntaxLanguageServer(ContentProviderManager contentProviderManager,
 								ProjectsManager projectsManager,
@@ -120,12 +135,8 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
-			try {
-				ResourcesPlugin.getWorkspace().save(true, monitor);
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
-			}
-
+			shutdownJob.schedule();
+			shutdownReceived = true;
 			return new Object();
 		});
 	}
@@ -133,6 +144,14 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public void exit() {
 		logInfo(">> exit");
+		if (!shutdownReceived) {
+			shutdownJob.schedule();
+		}
+		try {
+			shutdownJob.join();
+		} catch (InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 		JavaLanguageServerPlugin.getLanguageServer().exit();
 		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 			System.exit(1);

@@ -161,6 +161,29 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 	private ProgressReporterManager progressReporterManager;
 
+	private Job shutdownJob = new Job("Shutdown...") {
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			try {
+				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
+				if (workspaceDiagnosticsHandler != null) {
+					workspaceDiagnosticsHandler.removeResourceChangeListener();
+					workspaceDiagnosticsHandler = null;
+				}
+				if (classpathUpdateHandler != null) {
+					classpathUpdateHandler.removeElementChangeListener();
+					classpathUpdateHandler = null;
+				}
+				ResourcesPlugin.getWorkspace().save(true, monitor);
+			} catch (CoreException e) {
+				logException(e.getMessage(), e);
+			}
+			return Status.OK_STATUS;
+		}
+
+	};
+
 	@Override
 	public LanguageServerWorkingCopyOwner getWorkingCopyOwner() {
 		return workingCopyOwner;
@@ -348,20 +371,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
-			try {
-				JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
-				if (workspaceDiagnosticsHandler != null) {
-					workspaceDiagnosticsHandler.removeResourceChangeListener();
-					workspaceDiagnosticsHandler = null;
-				}
-				if (classpathUpdateHandler != null) {
-					classpathUpdateHandler.removeElementChangeListener();
-					classpathUpdateHandler = null;
-				}
-				ResourcesPlugin.getWorkspace().save(true, monitor);
-			} catch (CoreException e) {
-				logException(e.getMessage(), e);
-			}
+			shutdownJob.schedule();
+			shutdownReceived = true;
 			return new Object();
 		});
 	}
@@ -372,6 +383,14 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public void exit() {
 		logInfo(">> exit");
+		if (!shutdownReceived) {
+			shutdownJob.schedule();
+		}
+		try {
+			shutdownJob.join();
+		} catch (InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 		JavaLanguageServerPlugin.getLanguageServer().exit();
 		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 			logInfo("Forcing exit after 1 min.");
