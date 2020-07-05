@@ -48,7 +48,7 @@
 
 								def versionUrl = new URL("https://services.gradle.org/versions/all")
 								def versionStr = versionUrl.text;
-								def versionsFile = new File("${basedir}/gradle/checksums/versions.json")
+								def versionsFile = new File(project.basedir.absolutePath + "/gradle/checksums/versions.json")
 								versionsFile.parentFile.mkdirs() //just in case
 								versionsFile.write(versionStr)
 
@@ -70,7 +70,7 @@
 									}
 								}
 								def json = JsonOutput.toJson(checksums)
-								def checksumsFile = new File("${basedir}/gradle/checksums/checksums.json")
+								def checksumsFile = new File(project.basedir.absolutePath + "/gradle/checksums/checksums.json")
 								checksumsFile.write(JsonOutput.prettyPrint(json))
 							</source>
 						</configuration>
