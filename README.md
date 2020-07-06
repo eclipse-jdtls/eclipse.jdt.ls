@@ -58,7 +58,7 @@ Note: currently, the build can only run when launched with JDK 8. JDK 9 or more 
 
 Running from the command line
 ------------------------------
-1. Choose a connection type from "Managing connection types" section below, and then set those environment variables in your terminal prior to continuing
+1. Choose a connection type from "Managing connection types" section below, and then set those environment variables in your terminal or specify them as system properties with `-D` prior to continuing
 
 2. Make sure to build the server using the steps above in the "Building from command line" section
 
@@ -87,9 +87,9 @@ Managing connection types
 -------------------------
 The Java Language server supports sockets, named pipes, and standard streams of the server process
 to communicate with the client. Client can communicate its preferred connection methods
-by setting up environment variables.
+by setting up environment variables or alternatively using system properties (e.g. `-DCLIENT_PORT=...`)
 
-* To use a **plain socket**, set the following environment variables before starting the server:
+* To use a **plain socket**, set the following environment variables or system properties before starting the server:
    * `CLIENT_PORT`: the port of the socket to connect to
    * `CLIENT_HOST`: the host name to connect to. If not set, defaults to `localhost`.
 
