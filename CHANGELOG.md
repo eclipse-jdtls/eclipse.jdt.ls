@@ -1,5 +1,14 @@
 # Change Log
 
+# [0.58.0 (July 7th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/76?closed=1)
+ * enhancement - jdt.ls should store gradle wrapper checksums at build time, so it can work offline. See [#1486](https://github.com/eclipse/eclipse.jdt.ls/issues/1486).
+ * enhancement - fill additionalTextEdits during completionItem/resolve . See [#1487](https://github.com/eclipse/eclipse.jdt.ls/pull/1487).
+ * enhancement - Update Buildship to 3.1.5. See [#1494](https://github.com/eclipse/eclipse.jdt.ls/pull/1494).
+ * enhancement - Improve Java LS shutdown. See [#1495](https://github.com/eclipse/eclipse.jdt.ls/pull/1495).
+ * bug fix - Prepare rename breaks if you have edited the symbol just before the call. See [#1483](https://github.com/eclipse/eclipse.jdt.ls/issues/1483).
+ * build - Build from command line failure involving "org.codehaus.gmaven:groovy-maven-plugin:2.1.1". See [#1497](https://github.com/eclipse/eclipse.jdt.ls/issues/1497).
+ * other - README: mention system props for configuring the connection mode (#1496). See [#1499](https://github.com/eclipse/eclipse.jdt.ls/pull/1499).
+
 # [0.57.0 (June 18th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/75?closed=1)
  * enhancement - Avoid unnecessary Gradle re-synch on restart. See [#1485](https://github.com/eclipse/eclipse.jdt.ls/pull/1485).
  * enhancement - Optimize default VM management to avoid unnecessary project updates. See [#1484](https://github.com/eclipse/eclipse.jdt.ls/pull/1484).
