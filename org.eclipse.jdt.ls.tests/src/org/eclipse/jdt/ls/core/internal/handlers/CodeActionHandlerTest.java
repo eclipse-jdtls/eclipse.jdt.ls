@@ -384,6 +384,28 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCodeAction_ignoringOtherDiagnosticWithoutCode() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "import java.sql.*; \n" + "public class Foo {\n" + "	void foo() {\n" + "	}\n" + "}\n");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "java.sql");
+		params.setRange(range);
+
+		Diagnostic diagnosticWithoutCode = new Diagnostic(new Range(new Position(0, 0), new Position(0, 1)), "fake dignostic without code");
+
+		params.setContext(new CodeActionContext(Arrays.asList(diagnosticWithoutCode, getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(codeActions.size() >= 3);
+		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		Command c = codeActions.get(0).getRight().getCommand();
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
 		return server.codeAction(params).join();
 	}

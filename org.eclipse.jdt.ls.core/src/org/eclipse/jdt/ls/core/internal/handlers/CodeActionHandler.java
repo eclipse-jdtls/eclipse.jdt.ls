@@ -218,10 +218,13 @@ public class CodeActionHandler {
 	private static int getProblemId(Diagnostic diagnostic) {
 		int $ = 0;
 		try {
-			if (diagnostic.getCode().getLeft() != null) {
-				$ = Integer.parseInt(diagnostic.getCode().getLeft());
-			} else if (diagnostic.getCode().getRight() != null) {
-				$ = diagnostic.getCode().getRight().intValue();
+			Either<String, Number> code = diagnostic.getCode();
+			if (code != null) {
+				if (code.getLeft() != null) {
+					$ = Integer.parseInt(code.getLeft());
+				} else if (code.getRight() != null) {
+					$ = code.getRight().intValue();
+				}
 			}
 		} catch (NumberFormatException e) {
 			// return 0
