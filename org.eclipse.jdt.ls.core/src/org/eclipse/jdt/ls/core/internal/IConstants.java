@@ -43,4 +43,6 @@ public interface IConstants {
 	 * Update workspace folders job family id
 	 */
 	public static final String UPDATE_WORKSPACE_FOLDERS_FAMILY = JOBS_FAMILY + ".updateWorkspaceFolders";
+
+	public static final String CHANGE_METHOD_SIGNATURE = "org.eclipse.jdt.ls.change.method.signature";
 }

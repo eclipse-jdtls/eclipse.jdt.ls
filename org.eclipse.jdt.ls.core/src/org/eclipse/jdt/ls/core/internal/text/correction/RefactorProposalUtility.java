@@ -59,10 +59,12 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -87,6 +89,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
 	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
 	public static final String MOVE_TYPE_COMMAND = "moveType";
+	public static final String INTRODUCE_PARAMETER_COMMAND = "introduceParameter";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
 		String label = ActionMessages.MoveRefactoringAction_label;
@@ -660,6 +663,26 @@ public class RefactorProposalUtility {
 			return proposal;
 		}
 
+		return null;
+	}
+
+	public static CUCorrectionProposal getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocationCore[] problemLocations)
+			throws CoreException {
+		final ICompilationUnit cu = context.getCompilationUnit();
+		final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
+		LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+		introduceParameterRefactoring.setLinkedProposalModel(linkedProposalModel);
+		if (introduceParameterRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			introduceParameterRefactoring.setParameterName(introduceParameterRefactoring.guessedParameterName());
+			String label = RefactoringCoreMessages.IntroduceParameterRefactoring_name + "...";
+			int relevance = (problemLocations != null && problemLocations.length > 0) ? IProposalRelevance.EXTRACT_CONSTANT_ERROR : IProposalRelevance.EXTRACT_CONSTANT;
+			if (returnAsCommand) {
+				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(INTRODUCE_PARAMETER_COMMAND, params));
+			}
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, cu, introduceParameterRefactoring, relevance);
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			return proposal;
+		}
 		return null;
 	}
 

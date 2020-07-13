@@ -49,7 +49,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		fJProject.setOptions(TestOptions.getDefaultOptions());
 		fSourceFolder = fJProject.getPackageFragmentRoot(fJProject.getProject().getFolder("src"));
 		setIgnoredKind(CodeActionKind.Refactor, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD,
-				JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, CodeActionKind.RefactorInline);
+				JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, CodeActionKind.RefactorInline);
 	}
 
 	@Test
