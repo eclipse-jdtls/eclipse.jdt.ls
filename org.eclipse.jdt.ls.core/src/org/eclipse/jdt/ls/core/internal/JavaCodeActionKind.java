@@ -94,6 +94,11 @@ public interface JavaCodeActionKind {
 	public static final String REFACTOR_ASSIGN_FIELD = CodeActionKind.Refactor + ".assign.field";
 
 	/**
+	 * Introduce parameter
+	 */
+	public static final String REFACTOR_INTRODUCE_PARAMETER = CodeActionKind.Refactor + ".introduce.parameter";
+
+	/**
 	 * Base kind for "quickassist" code actions
 	 */
 	public static final String QUICK_ASSIST = "quickassist";

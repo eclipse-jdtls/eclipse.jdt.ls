@@ -153,10 +153,22 @@ public class RefactorProcessor {
 
 				getConvertForLoopProposal(context, coveringNode, proposals);
 				getAssignToVariableProposals(context, coveringNode, locations, proposals, params);
+				getIntroduceParameterProposals(params, context, coveringNode, locations, proposals);
 			}
 			return proposals;
 		}
 		return Collections.emptyList();
+	}
+
+	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) throws CoreException {
+		if (resultingCollections == null) {
+			return false;
+		}
+		CUCorrectionProposal proposal = RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params, context, coveringNode, this.preferenceManager.getClientPreferences().isAdvancedIntroduceParameterRefactoringSupported(), locations);
+		if (proposal != null) {
+			return resultingCollections.add(proposal);
+		}
+		return false;
 	}
 
 	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {

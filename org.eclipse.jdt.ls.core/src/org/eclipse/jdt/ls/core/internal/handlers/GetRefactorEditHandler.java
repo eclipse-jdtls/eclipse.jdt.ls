@@ -28,6 +28,8 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.ParameterInfo;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
@@ -35,6 +37,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -82,6 +85,18 @@ public class GetRefactorEditHandler {
 			} else if (RefactorProcessor.CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND.equals(params.command)) {
 				proposal = RefactorProcessor.getConvertAnonymousToNestedProposal(params.context, context, context.getCoveringNode(), false);
 				positionKey = "type_name";
+			} else if (RefactorProposalUtility.INTRODUCE_PARAMETER_COMMAND.equals(params.command)) {
+				// String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params.context, context, context.getCoveringNode(), false, locations);
+				positionKey = null;
+				if (proposal instanceof RefactoringCorrectionProposal) {
+					RefactoringCorrectionProposal rcp = (RefactoringCorrectionProposal) proposal;
+					IntroduceParameterRefactoring refactoring = (IntroduceParameterRefactoring) rcp.getRefactoring();
+					ParameterInfo parameterInfo = refactoring.getAddedParameterInfo();
+					if (parameterInfo != null) {
+						positionKey = parameterInfo.getNewName();
+					}
+				}
 			}
 
 			if (proposal == null) {
