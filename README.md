@@ -32,6 +32,8 @@ Features
 
 First Time Setup
 --------------
+**Pre-requisite: Java 11 must be installed on your machine and configured in Eclipse.**
+
 0. Fork and clone the repository
 1. Install [Eclipse IDE for Eclipse Committers](https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-eclipse-committers) that will have the most needed plugins already installed. Alternatively,
 you can get the [Eclipse IDE for Java developers](https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-java-developers)
@@ -48,13 +50,13 @@ detect the projects and import it properly.
 
 Building from the command line
 ----------------------------
+**Pre-requisite: Java 11 must be installed on your machine and accessible in the PATH.**
 
 The following command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
+
 ```bash
     $ ./mvnw clean verify
 ````
-Note: currently, the build can only run when launched with JDK 8. JDK 9 or more recent versions can be used to run the server though.
-
 
 Running from the command line
 ------------------------------
