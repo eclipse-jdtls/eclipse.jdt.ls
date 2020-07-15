@@ -4,7 +4,7 @@ Bundle-Name: testbundle
 Bundle-SymbolicName: testbundle;singleton:=true
 Bundle-Version: 0.6.0.qualifier
 Bundle-Activator: testbundle.Activator
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Import-Package: org.eclipse.core.runtime;version="3.5.0",
  org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
