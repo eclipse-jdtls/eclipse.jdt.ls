@@ -408,6 +408,9 @@ public class CompletionProposalReplacementProvider {
 			String str = proposal.getKind() == CompletionProposal.TYPE_REF ? computeJavaTypeReplacementString(proposal) : String.valueOf(proposal.getCompletion());
 			if (client.isCompletionSnippetsSupported()) {
 				str = CompletionUtils.sanitizeCompletion(str);
+				if (proposal.getKind() == CompletionProposal.PACKAGE_REF && str != null && str.endsWith(".*;")) {
+					str = str.replace(".*;", ".${0:*};");
+				}
 			}
 			buffer.append(str);
 			return;

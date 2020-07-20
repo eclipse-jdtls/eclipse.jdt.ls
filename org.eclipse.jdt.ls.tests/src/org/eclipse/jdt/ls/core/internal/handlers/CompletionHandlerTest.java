@@ -339,7 +339,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(item.getTextEdit());
 		TextEdit te = item.getTextEdit();
 		assertNotNull(te);
-		assertEquals("java.sql.*;",te.getNewText());
+		assertEquals("java.sql.${0:*};", te.getNewText());
 		assertNotNull(te.getRange());
 		Range range = te.getRange();
 		assertEquals(0, range.getStart().getLine());
