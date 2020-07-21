@@ -1,5 +1,14 @@
 # Change Log
 
+# [0.59.0 (July 22nd, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/77?closed=1)
+ * enhancement - Expose the 'java.import.gradle.java.home' preference. See [#1512](https://github.com/eclipse/eclipse.jdt.ls/pull/1512).
+ * enhancement - Provide semantic tokens for class files. See [#1511](https://github.com/eclipse/eclipse.jdt.ls/pull/1511).
+ * enhancement - Keep typing after the 1st tab when completing imports. See [#1510](https://github.com/eclipse/eclipse.jdt.ls/pull/1510).
+ * enhancement - Semantic highlighting improvements. See [#1501](https://github.com/eclipse/eclipse.jdt.ls/pull/1501).
+ * enhancement - Add "Introduce parameter..." code action. See [#1420](https://github.com/eclipse/eclipse.jdt.ls/issues/1420).
+ * bug fix - NPE in CodeActionHandler.getProblemId L.221. See [#1502](https://github.com/eclipse/eclipse.jdt.ls/issues/1502).
+ * build - Require Java 11 to build/run. See [#1509](https://github.com/eclipse/eclipse.jdt.ls/pull/1509).
+
 # [0.58.0 (July 7th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/76?closed=1)
  * enhancement - jdt.ls should store gradle wrapper checksums at build time, so it can work offline. See [#1486](https://github.com/eclipse/eclipse.jdt.ls/issues/1486).
  * enhancement - fill additionalTextEdits during completionItem/resolve . See [#1487](https://github.com/eclipse/eclipse.jdt.ls/pull/1487).
