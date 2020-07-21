@@ -219,6 +219,30 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void testGradleJavaHome() throws Exception {
+		Preferences prefs = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+		String gradleJavaHomePreference = prefs.getGradleJavaHome();
+		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+		try {
+			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			IVMInstall[] vms = installType.getVMInstalls();
+			IVMInstall vm = vms[0];
+			JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
+			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "1.8").getAbsolutePath();
+			prefs.setGradleJavaHome(javaHome);
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			IPath rootFolder = root.getLocation().append("/projects/gradle/simple-gradle");
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootFolder.toFile().toPath());
+			assertEquals(javaHome, build.getJavaHome().get().getAbsolutePath());
+		} finally {
+			prefs.setJavaHome(gradleJavaHomePreference);
+			if (defaultVM != null) {
+				JavaRuntime.setDefaultVMInstall(defaultVM, new NullProgressMonitor());
+			}
+		}
+	}
+
+	@Test
 	public void testDisableImportGradle() throws Exception {
 		boolean enabled = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isImportGradleEnabled();
 		try {
