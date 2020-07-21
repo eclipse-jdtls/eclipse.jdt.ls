@@ -9,26 +9,26 @@
  *
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
+ *     0dinD - Semantic highlighting improvements - https://github.com/eclipse/eclipse.jdt.ls/pull/1501
  *******************************************************************************/
-
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
 import java.util.List;
 
 public class SemanticTokensLegend {
-    private final List<String> tokenTypes;
-    private final List<String> tokenModifiers;
+	private final List<String> tokenTypes;
+	private final List<String> tokenModifiers;
 
-    public SemanticTokensLegend(List<String> tokenTypes, List<String> tokenModifiers){
-        this.tokenTypes = tokenTypes;
-        this.tokenModifiers = tokenModifiers;
-    };
+	public SemanticTokensLegend(List<String> tokenTypes, List<String> tokenModifiers){
+		this.tokenTypes = tokenTypes;
+		this.tokenModifiers = tokenModifiers;
+	};
 
-    public List<String> getTokenTypes() {
-        return this.tokenTypes;
-    }
+	public List<String> getTokenTypes() {
+		return this.tokenTypes;
+	}
 
-    public List<String> getTokenModifiers() {
-        return this.tokenModifiers;
-    }
+	public List<String> getTokenModifiers() {
+		return this.tokenModifiers;
+	}
 }

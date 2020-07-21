@@ -9,8 +9,8 @@
  *
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
+ *     0dinD - Semantic highlighting improvements - https://github.com/eclipse/eclipse.jdt.ls/pull/1501
  *******************************************************************************/
-
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
 import java.util.Arrays;
@@ -18,36 +18,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SemanticTokenManager {
-    private TokenModifiers tokenModifiers;
-    private List<TokenType> tokenTypes;
-    private SemanticTokensLegend legend;
+	private List<TokenType> tokenTypes;
+	private List<TokenModifier> tokenModifiers;
+	private SemanticTokensLegend legend;
 
-    private SemanticTokenManager() {
-        this.tokenModifiers = new TokenModifiers();
-        this.tokenTypes = Arrays.asList(TokenType.values());
-        List<String> modifiers = tokenModifiers.list().stream().map(mod -> mod.toString()).collect(Collectors.toList());
-        List<String> types = tokenTypes.stream().map(TokenType::toString).collect(Collectors.toList());
-        this.legend = new SemanticTokensLegend(types, modifiers);
-    }
+	private SemanticTokenManager() {
+		this.tokenTypes = Arrays.asList(TokenType.values());
+		this.tokenModifiers = Arrays.asList(TokenModifier.values());
+		List<String> types = tokenTypes.stream().map(TokenType::toString).collect(Collectors.toList());
+		List<String> modifiers = tokenModifiers.stream().map(TokenModifier::toString).collect(Collectors.toList());
+		this.legend = new SemanticTokensLegend(types, modifiers);
+	}
 
-    private static class SingletonHelper{
-        private static final SemanticTokenManager INSTANCE = new SemanticTokenManager();
-    }
+	private static class SingletonHelper{
+		private static final SemanticTokenManager INSTANCE = new SemanticTokenManager();
+	}
 
-    public static SemanticTokenManager getInstance(){
-        return SingletonHelper.INSTANCE;
-    }
+	public static SemanticTokenManager getInstance(){
+		return SingletonHelper.INSTANCE;
+	}
 
-    public SemanticTokensLegend getLegend() {
-        return this.legend;
-    }
+	public SemanticTokensLegend getLegend() {
+		return this.legend;
+	}
 
-    public TokenModifiers getTokenModifiers() {
-        return tokenModifiers;
-    }
+	public List<TokenType> getTokenTypes() {
+		return tokenTypes;
+	}
 
-    public List<TokenType> getTokenTypes() {
-        return tokenTypes;
-    }
+	public List<TokenModifier> getTokenModifiers() {
+		return tokenModifiers;
+	}
 
 }
