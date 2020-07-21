@@ -16,7 +16,7 @@ package org.eclipse.jdt.ls.core.internal.commands;
 import java.util.Collections;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -32,35 +32,33 @@ import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensVisitor;
 import org.eclipse.jface.text.IDocument;
 
 public class SemanticTokensCommand {
-    public static SemanticTokens provide(String uri) {
-        JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, null);
-        return doProvide(uri);
-    }
+	public static SemanticTokens provide(String uri) {
+		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, null);
+		return doProvide(uri);
+	}
 
-    private static SemanticTokens doProvide(String uri) {
-        IDocument document = null;
+	private static SemanticTokens doProvide(String uri) {
+		IDocument document = null;
 
-        ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-        if (cu != null) {
-            try {
-                document = JsonRpcHelpers.toDocument(cu.getBuffer());
-            } catch (JavaModelException e) {
-                JavaLanguageServerPlugin.logException("Failed to provide semantic tokens for " + uri, e);
-            }
-        }
-        if (document == null) {
-            return new SemanticTokens(Collections.emptyList());
-        }
+		ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
+		if (typeRoot != null) {
+			try {
+				document = JsonRpcHelpers.toDocument(typeRoot.getBuffer());
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Failed to provide semantic tokens for " + uri, e);
+			}
+		}
+		if (document == null) {
+			return new SemanticTokens(Collections.emptyList());
+		}
 
-        SemanticTokensVisitor collector = new SemanticTokensVisitor(document, SemanticTokenManager.getInstance());
-        CompilationUnit root = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
-        root.accept(collector);
-        return collector.getSemanticTokens();
-    }
+		SemanticTokensVisitor collector = new SemanticTokensVisitor(document, SemanticTokenManager.getInstance());
+		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		root.accept(collector);
+		return collector.getSemanticTokens();
+	}
 
-    public static SemanticTokensLegend getLegend() {
-        return SemanticTokenManager.getInstance().getLegend();
-    }
-
-
+	public static SemanticTokensLegend getLegend() {
+		return SemanticTokenManager.getInstance().getLegend();
+	}
 }
