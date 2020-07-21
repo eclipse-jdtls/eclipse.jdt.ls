@@ -219,6 +219,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return (gradleUserHome == null || gradleUserHome.isEmpty()) ? null : new File(gradleUserHome);
 	}
 
+	public static File getGradleJavaHomeFile() {
+		Preferences preferences = getPreferences();
+		if (StringUtils.isNotBlank(preferences.getGradleJavaHome())) {
+			File file = new File(preferences.getGradleJavaHome());
+			if (file.isDirectory()) {
+				return file;
+			}
+		}
+		return null;
+	}
+
 	protected void startSynchronization(Path projectFolder, IProgressMonitor monitor) {
 		File location = projectFolder.toFile();
 		boolean shouldSynchronize = shouldSynchronize(location);
@@ -233,14 +244,16 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
-		IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
-		File javaHome;
+		File javaHome = getGradleJavaHomeFile();
 		Preferences preferences = getPreferences();
-		if (javaDefaultRuntime != null && javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null) {
-			javaHome = javaDefaultRuntime.getInstallLocation();
-		} else {
-			String javaHomeStr = preferences.getJavaHome();
-			javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+		if (javaHome == null) {
+			IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
+			if (javaDefaultRuntime != null && javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null) {
+				javaHome = javaDefaultRuntime.getInstallLocation();
+			} else {
+				String javaHomeStr = preferences.getJavaHome();
+				javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+			}
 		}
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = preferences.getGradleArguments();

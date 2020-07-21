@@ -42,23 +42,24 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 	public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
 		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
 		if (projectsManager != null) {
-			if (hasAllowedChecksumsChanged(oldPreferences, newPreferences)) {
+			boolean gradleJavaHomeChanged = !Objects.equals(oldPreferences.getGradleJavaHome(), newPreferences.getGradleJavaHome());
+			if (gradleJavaHomeChanged || hasAllowedChecksumsChanged(oldPreferences, newPreferences)) {
 				for (IProject project : ProjectUtils.getGradleProjects()) {
-					if (newPreferences.isGradleWrapperEnabled()) {
-						updateProject(projectsManager, project);
+					if (newPreferences.isGradleWrapperEnabled() || gradleJavaHomeChanged) {
+						updateProject(projectsManager, project, gradleJavaHomeChanged);
 					}
 				}
 			}
 		}
 	}
 
-	private void updateProject(ProjectsManager projectsManager, IProject project) {
+	private void updateProject(ProjectsManager projectsManager, IProject project, boolean gradleJavaHomeChanged) {
 		String projectDir = project.getLocation().toFile().getAbsolutePath();
 		Path projectPath = Paths.get(projectDir);
-		if (Files.exists(projectPath.resolve("gradlew"))) {
+		if (gradleJavaHomeChanged || Files.exists(projectPath.resolve("gradlew"))) {
 			ProjectConfiguration configuration = CorePlugin.configurationManager().loadProjectConfiguration(project);
 			GradleDistribution distribution = configuration.getBuildConfiguration().getGradleDistribution();
-			if (!(distribution instanceof WrapperGradleDistribution)) {
+			if (gradleJavaHomeChanged || !(distribution instanceof WrapperGradleDistribution)) {
 				projectsManager.updateProject(project, true);
 			} else {
 				try {
