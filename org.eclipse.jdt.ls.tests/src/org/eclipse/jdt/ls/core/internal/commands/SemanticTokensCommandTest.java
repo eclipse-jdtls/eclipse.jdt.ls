@@ -82,11 +82,11 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 	public void testSemanticTokens_Constructors() throws JavaModelException {
 		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Constructors.java");
 
-		assertToken(decodedTokens, 4, 9, 12, "function", "private", "declaration");
-		assertToken(decodedTokens, 5, 23, 12, "function", "private");
-		assertToken(decodedTokens, 6, 48, 10, "function", "protected");
-		assertToken(decodedTokens, 7, 64, 10, "function", "protected");
-		assertToken(decodedTokens, 8, 56, 10, "function", "protected");
+		assertToken(decodedTokens, 4, 9, 12, "constructor", "private", "declaration");
+		assertToken(decodedTokens, 5, 23, 12, "constructor", "private");
+		assertToken(decodedTokens, 6, 48, 10, "constructor", "protected");
+		assertToken(decodedTokens, 7, 64, 10, "constructor", "protected");
+		assertToken(decodedTokens, 8, 56, 10, "constructor", "protected");
 	}
 
 	@Test

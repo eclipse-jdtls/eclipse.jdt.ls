@@ -280,13 +280,13 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			}
 
 			if (simpleType.getName() instanceof SimpleName) {
-				addToken(simpleType.getName(), TokenType.METHOD,
+				addToken(simpleType.getName(), TokenType.CONSTRUCTOR,
 					TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
 			}
 			else {
 				QualifiedName qualifiedName = (QualifiedName) simpleType.getName();
 				qualifiedName.getQualifier().accept(this);
-				addToken(qualifiedName.getName(), TokenType.METHOD,
+				addToken(qualifiedName.getName(), TokenType.CONSTRUCTOR,
 					TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
 			}
 		}
@@ -299,7 +299,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 				((ASTNode) annotation).accept(this);
 			}
 
-			addToken(qualifiedType.getName(), TokenType.METHOD,
+			addToken(qualifiedType.getName(), TokenType.CONSTRUCTOR,
 				TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
 		}
 		else if (type instanceof NameQualifiedType) {
@@ -311,7 +311,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 				((ASTNode) annotation).accept(this);
 			}
 
-			addToken(nameQualifiedType.getName(), TokenType.METHOD,
+			addToken(nameQualifiedType.getName(), TokenType.CONSTRUCTOR,
 				TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
 		}
 		else if (type instanceof ParameterizedType) {

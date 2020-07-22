@@ -29,6 +29,7 @@ public enum TokenType {
 	ANNOTATION("annotation"),
 	ANNOTATION_MEMBER("annotationMember"),
 	METHOD("function"),
+	CONSTRUCTOR("constructor"),
 	PROPERTY("property"),
 	VARIABLE("variable"),
 	PARAMETER("parameter");
@@ -83,6 +84,9 @@ public enum TokenType {
 			}
 			case IBinding.METHOD: {
 				IMethodBinding methodBinding = (IMethodBinding) binding;
+				if (methodBinding.isConstructor()) {
+					return TokenType.CONSTRUCTOR;
+				}
 				if (methodBinding.isAnnotationMember()) {
 					return TokenType.ANNOTATION_MEMBER;
 				}
