@@ -137,6 +137,12 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		assertToken(decodedTokens, 5, 7, 4, "namespace");
 		assertToken(decodedTokens, 5, 12, 3, "namespace");
 		assertToken(decodedTokens, 6, 7, 4, "namespace");
+		assertToken(decodedTokens, 7, 7, 4, "namespace");
+		assertToken(decodedTokens, 7, 12, 4, "namespace");
+		assertToken(decodedTokens, 7, 17, 4, "class", "public", "readonly");
+		assertToken(decodedTokens, 8, 14, 4, "namespace");
+		assertToken(decodedTokens, 8, 19, 4, "namespace");
+		assertToken(decodedTokens, 8, 24, 4, "class", "public", "readonly");
 	}
 
 	@Test

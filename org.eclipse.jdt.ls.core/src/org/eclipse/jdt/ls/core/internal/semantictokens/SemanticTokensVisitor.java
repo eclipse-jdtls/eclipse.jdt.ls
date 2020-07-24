@@ -151,7 +151,8 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(ImportDeclaration node) {
-		if (node.isOnDemand()) {
+		IBinding binding = node.resolveBinding();
+		if (binding == null || binding instanceof IPackageBinding) {
 			visitPackageName(node.getName());
 		}
 		else {
