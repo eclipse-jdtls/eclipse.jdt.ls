@@ -24,16 +24,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.resources.FileInfoMatcherDescription;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceFilterDescription;
 import org.eclipse.core.resources.ISaveContext;
 import org.eclipse.core.resources.ISaveParticipant;
 import org.eclipse.core.resources.IWorkspace;
@@ -77,6 +80,9 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
 	public static final String PROJECTS_IMPORTED = "__PROJECTS_IMPORTED__";
+	private static final String CORE_RESOURCES_MATCHER_ID = "org.eclipse.core.resources.regexFilterMatcher";
+	public static final String CREATED_BY_JAVA_LANGUAGE_SERVER = "__CREATED_BY_JAVA_LANGUAGE_SERVER__";
+	private static final int JDTLS_FILTER_TYPE = IResourceFilterDescription.EXCLUDE_ALL | IResourceFilterDescription.INHERITABLE | IResourceFilterDescription.FILES | IResourceFilterDescription.FOLDERS;
 
 	private PreferenceManager preferenceManager;
 	protected JavaLanguageClient client;
@@ -507,6 +513,40 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			}
 		}
 		return null;
+	}
+
+	public void configureFilters(IProgressMonitor monitor) throws CoreException {
+		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
+		if (resourceFilters != null && !resourceFilters.isEmpty()) {
+			resourceFilters = new ArrayList<>(resourceFilters);
+			resourceFilters.add(CREATED_BY_JAVA_LANGUAGE_SERVER);
+		}
+		String resourceFilter = resourceFilters == null ? null : String.join("|", resourceFilters);
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (project.equals(getDefaultProject())) {
+				continue;
+			}
+			List<IResourceFilterDescription> filters = Stream.of(project.getFilters())
+					.filter(f -> {
+						FileInfoMatcherDescription matcher = f.getFileInfoMatcherDescription();
+								return CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && (matcher.getArguments() instanceof String) && ((String) matcher.getArguments()).contains(CREATED_BY_JAVA_LANGUAGE_SERVER);
+					})
+					.collect(Collectors.toList());
+			boolean filterExists = false;
+			for (IResourceFilterDescription filter : filters) {
+				if (resourceFilter == null || resourceFilter.isEmpty()) {
+					filter.delete(IResource.BACKGROUND_REFRESH, monitor);
+				} else if (!Objects.equals(resourceFilter, filter.getFileInfoMatcherDescription().getArguments())) {
+					filter.delete(IResource.BACKGROUND_REFRESH, monitor);
+				} else {
+					filterExists = true;
+					break;
+				}
+			}
+			if (!filterExists && resourceFilter != null && !resourceFilter.isEmpty()) {
+				project.createFilter(JDTLS_FILTER_TYPE, new FileInfoMatcherDescription(CORE_RESOURCES_MATCHER_ID, resourceFilter), IResource.BACKGROUND_REFRESH, monitor);
+			}
+		}
 	}
 
 }

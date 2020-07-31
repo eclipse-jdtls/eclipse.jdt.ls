@@ -193,6 +193,7 @@ final public class InitHandler extends BaseInitHandler {
 				try {
 					projectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
+					projectsManager.configureFilters(monitor);
 					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");

@@ -19,6 +19,7 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,6 +74,12 @@ public class Preferences {
 	 * Preference key used to include the comments during the formatting.
 	 */
 	public static final String JAVA_FORMAT_COMMENTS = "java.format.comments.enabled";
+	/**
+	 * Specifies filter applied on projects to exclude some file system objects
+	 * while populating the resources tree.
+	 */
+	public static final String JAVA_RESOURCE_FILTERS = "java.project.resourceFilters";
+	public static final List<String> JAVA_RESOURCE_FILTERS_DEFAULT;
 	/**
 	 * Preference key to enable/disable gradle importer.
 	 */
@@ -442,6 +449,7 @@ public class Preferences {
 	private int importOnDemandThreshold;
 	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
+	private List<String> resourceFilters;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -468,6 +476,7 @@ public class Preferences {
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT = new ArrayList<>();
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("java.awt.*");
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("com.sun.*");
+		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
 	}
 
 	public static enum Severity {
@@ -612,6 +621,7 @@ public class Preferences {
 		importOnDemandThreshold = IMPORTS_ONDEMANDTHRESHOLD_DEFAULT;
 		staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
+		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
 	}
 
 	/**
@@ -768,6 +778,9 @@ public class Preferences {
 		String formatterUrl = getString(configuration, JAVA_FORMATTER_URL);
 		prefs.setFormatterUrl(formatterUrl);
 
+		List<String> resourceFilters = getList(configuration, JAVA_RESOURCE_FILTERS);
+		prefs.setResourceFilters(resourceFilters);
+
 		String formatterProfileName = getString(configuration, JAVA_FORMATTER_PROFILE_NAME);
 		prefs.setFormatterProfileName(formatterProfileName);
 
@@ -888,6 +901,11 @@ public class Preferences {
 
 	public Preferences setFormatterUrl(String formatterUrl) {
 		this.formatterUrl = formatterUrl;
+		return this;
+	}
+
+	public Preferences setResourceFilters(List<String> resourceFilters) {
+		this.resourceFilters = resourceFilters == null ? new ArrayList<>() : resourceFilters;
 		return this;
 	}
 
@@ -1149,6 +1167,10 @@ public class Preferences {
 
 	public String getFormatterUrl() {
 		return formatterUrl;
+	}
+
+	public List<String> getResourceFilters() {
+		return resourceFilters;
 	}
 
 	public String getFormatterProfileName() {
