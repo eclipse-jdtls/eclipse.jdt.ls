@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -417,6 +418,13 @@ public class StandardProjectsManager extends ProjectsManager {
 					if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
 						registerWatcherJob.schedule(1000L);
 						UpdateClasspathJob.getInstance().updateClasspath();
+					}
+					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
+						try {
+							configureFilters(new NullProgressMonitor());
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
 					}
 				}
 			};

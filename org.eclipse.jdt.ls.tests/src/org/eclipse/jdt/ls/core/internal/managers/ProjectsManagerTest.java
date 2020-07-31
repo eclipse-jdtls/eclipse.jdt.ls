@@ -13,21 +13,26 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.JobHelpers.waitForJobsToComplete;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.internal.resources.Resource;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -127,6 +132,44 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.updateWorkspaceFolders(Collections.emptySet(), addedRootPaths);
 		waitForBackgroundJobs();
 		assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
+	}
+
+	@SuppressWarnings("restriction")
+	@Test
+	public void testResourceFilters() throws Exception {
+		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
+		try {
+			String name = "salut";
+			importProjects("maven/" + name);
+			IProject project = getProject(name);
+			assertIsJavaProject(project);
+			Resource nodeModules = (Resource) project.getFolder("/node_modules");
+			assertFalse(nodeModules.isFiltered());
+			Resource git = (Resource) project.getFolder("/.git");
+			assertFalse(git.isFiltered());
+			Resource src = (Resource) project.getFolder("/src");
+			assertFalse(src.isFiltered());
+			preferenceManager.getPreferences().setResourceFilters(Arrays.asList("node_modules", ".git"));
+			projectsManager.configureFilters(new NullProgressMonitor());
+			waitForJobsToComplete();
+			nodeModules = (Resource) project.getFolder("/node_modules");
+			assertTrue(nodeModules.isFiltered());
+			git = (Resource) project.getFolder("/.git");
+			assertTrue(git.isFiltered());
+			src = (Resource) project.getFolder("/src");
+			assertFalse(src.isFiltered());
+			preferenceManager.getPreferences().setResourceFilters(null);
+			projectsManager.configureFilters(new NullProgressMonitor());
+			waitForJobsToComplete();
+			nodeModules = (Resource) project.getFolder("/node_modules");
+			assertFalse(nodeModules.isFiltered());
+			git = (Resource) project.getFolder("/.git");
+			assertFalse(git.isFiltered());
+			src = (Resource) project.getFolder("/src");
+			assertFalse(src.isFiltered());
+		} finally {
+			preferenceManager.getPreferences().setResourceFilters(resourceFilters);
+		}
 	}
 
 }
