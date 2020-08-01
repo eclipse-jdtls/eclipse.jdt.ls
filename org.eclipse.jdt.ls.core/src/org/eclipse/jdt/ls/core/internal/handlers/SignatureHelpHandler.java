@@ -52,7 +52,7 @@ import org.eclipse.lsp4j.SignatureInformation;
 public class SignatureHelpHandler {
 
 	public static SignatureHelpOptions createOptions() {
-		return new SignatureHelpOptions(Arrays.asList("("));
+		return new SignatureHelpOptions(Arrays.asList("(", ","));
 	}
 
 	private static final int SEARCH_BOUND = 2000;
