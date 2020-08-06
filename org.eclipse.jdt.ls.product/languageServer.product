@@ -23,6 +23,7 @@
    <plugins>
       <plugin id="com.ibm.icu"/>
       <plugin id="javax.xml"/>
+      <plugin id="org.apache.felix.scr"/>
       <plugin id="org.eclipse.ant.core"/>
       <plugin id="org.eclipse.buildship.core"/>
       <plugin id="org.eclipse.compare.core"/>
@@ -46,6 +47,7 @@
       <plugin id="org.eclipse.equinox.security.linux.x86_64" fragment="true"/>
       <plugin id="org.eclipse.equinox.security.macosx" fragment="true"/>
       <plugin id="org.eclipse.equinox.security.win32.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.jdt.apt.pluggable.core"/>
       <plugin id="org.eclipse.jdt.compiler.apt" fragment="true"/>
       <plugin id="org.eclipse.jdt.compiler.tool" fragment="true"/>
       <plugin id="org.eclipse.jdt.core"/>
@@ -57,17 +59,18 @@
       <plugin id="org.eclipse.m2e.lifecyclemapping.defaults"/>
       <plugin id="org.eclipse.m2e.maven.runtime"/>
       <plugin id="org.eclipse.m2e.workspace.cli"/>
-      <plugin id="org.eclipse.jdt.apt.pluggable.core"/>
-      <plugin id="org.jboss.tools.maven.apt.core"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
+      <plugin id="org.jboss.tools.maven.apt.core"/>
    </plugins>
 
    <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.jdt.core" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.launching" autoStart="false" startLevel="0" />
       <plugin id="org.eclipse.jdt.ls.core" autoStart="true" startLevel="0" />

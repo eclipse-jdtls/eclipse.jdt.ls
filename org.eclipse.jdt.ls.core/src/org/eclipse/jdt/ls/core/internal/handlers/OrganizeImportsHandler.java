@@ -99,6 +99,7 @@ public final class OrganizeImportsHandler {
 			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			TextEdit edit = op.createTextEdit(null);
 			// See https://bugs.eclipse.org/bugs/show_bug.cgi?id=283287
+			// and https://github.com/redhat-developer/vscode-java/issues/1472
 			TextEdit staticEdit = wrapStaticImports(edit, astRoot, unit);
 			if (staticEdit.getChildrenSize() == 0) {
 				return null;

@@ -454,11 +454,11 @@ public class Preferences {
 		JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT = new ReferencedLibraries();
 		JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT.getInclude().add("lib/**");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT = new ArrayList<>();
-		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assert.*:");
-		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assume.*:");
-		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assertions.*:");
-		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assumptions.*:");
-		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicContainer.*:");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assert.*");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.Assume.*");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assertions.*");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assumptions.*");
+		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicContainer.*");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicTest.*");
 		JAVA_IMPORT_ORDER_DEFAULT = new ArrayList<>();
 		JAVA_IMPORT_ORDER_DEFAULT.add("java");

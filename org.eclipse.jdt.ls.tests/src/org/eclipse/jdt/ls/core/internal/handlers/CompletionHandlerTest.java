@@ -44,6 +44,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -240,7 +241,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(item.getFilterText());
 			assertFalse(item.getFilterText().contains(" "));
 			assertTrue(item.getLabel().startsWith(item.getInsertText()));
-			assertTrue(item.getFilterText().startsWith("Objec"));
+			assertTrue(item.getFilterText().contains("Objec"));
 			//Check contains data used for completionItem resolution
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
@@ -876,7 +877,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 
 		assertNotNull(list);
-		assertEquals(1, list.getItems().size());
+		assertFalse(list.getItems().isEmpty());
 		CompletionItem item = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Interface, item.getKind());
 		assertEquals("Map", item.getInsertText());
@@ -1152,15 +1153,19 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		);
 		//@formatter:on
 		int[] loc = findCompletionLocation(unit, "if");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
-
-		assertNotNull(list);
-
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		CompletionItem item = items.get(5);
-		assertEquals("if", item.getLabel());
-		String insertText = item.getInsertText();
-		assertEquals("if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		String substringMatch = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
+		try {
+			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "true");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			List<CompletionItem> items = new ArrayList<>(list.getItems());
+			CompletionItem item = items.get(5);
+			assertEquals("if", item.getLabel());
+			String insertText = item.getInsertText();
+			assertEquals("if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		} finally {
+			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, substringMatch);
+		}
 	}
 
 	@Test
@@ -1459,7 +1464,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(10);
+		CompletionItem item = items.get(11);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
@@ -1481,7 +1486,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(9);
+		CompletionItem item = items.get(10);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
@@ -2544,7 +2549,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<String> favorites = new ArrayList<>();
 		favorites.add("test1.A.foo");
 		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(favorites);
+		long timeout = Long.getLong("completion.timeout", 5000);
 		try {
+			System.setProperty("completion.timeout", String.valueOf(60000));
 			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
 			//@formatter:off
 				"package test1;\n" +
@@ -2564,6 +2571,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertTrue("no proposal for foo()", "foo() : void".equals(list.getItems().get(0).getLabel()));
 		} finally {
 			PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
+			System.setProperty("completion.timeout", String.valueOf(timeout));
 		}
 	}
 
@@ -2622,8 +2630,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testStaticImports2() throws Exception {
 		PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
-		ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
-		//@formatter:off
+		long timeout = Long.getLong("completion.timeout", 5000);
+		try {
+			System.setProperty("completion.timeout", String.valueOf(60000));
+			ICompilationUnit unit = getWorkingCopy("src/test1/B.java",
+			//@formatter:off
 					"package test1;\n" +
 					"\n" +
 					"public class B {\n" +
@@ -2633,16 +2644,19 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 					"    public void foo(int x) {\n" + // conflicting method, no static import possible
 					"    }\n" +
 					"}\n");
-		//@formatter:on
+			//@formatter:on
 
-		int[] loc = findCompletionLocation(unit, "/* */fo");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
-		assertNotNull(list);
-		assertTrue(list.getItems().size() > 0);
-		for (CompletionItem it : list.getItems()) {
-			if ("foo() : void".equals(it.getLabel())) {
-				fail("there is a proposal for foo()");
+			int[] loc = findCompletionLocation(unit, "/* */fo");
+			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			assertNotNull(list);
+			assertTrue(list.getItems().size() > 0);
+			for (CompletionItem it : list.getItems()) {
+				if ("foo() : void".equals(it.getLabel())) {
+					fail("there is a proposal for foo()");
+				}
 			}
+		} finally {
+			System.setProperty("completion.timeout", String.valueOf(timeout));
 		}
 	}
 
@@ -2846,10 +2860,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"}\n");
 		//@formatter:on
 		int[] loc = findCompletionLocation(unit, "List");
-
 		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 		assertNotNull(list);
-		assertEquals(3, list.getItems().size());
+		assertTrue(list.getItems().stream().anyMatch(i -> "java.util.List".equals(i.getDetail())));
 		//@formatter:off
 		boolean present = list.getItems()
 				.stream()
@@ -2864,7 +2877,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
 			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 			assertNotNull(list);
-			assertEquals(0, list.getItems().size());
+			assertFalse(list.getItems().stream().anyMatch(i -> "java.util.List".equals(i.getDetail())));
 		} finally {
 			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
 		}

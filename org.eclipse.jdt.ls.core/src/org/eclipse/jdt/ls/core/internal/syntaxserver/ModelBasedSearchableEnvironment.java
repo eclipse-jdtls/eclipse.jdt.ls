@@ -33,7 +33,7 @@ public class ModelBasedSearchableEnvironment extends SearchableEnvironment {
 	}
 
 	@Override
-	public void findTypes(char[] prefix, final boolean findMembers, boolean camelCaseMatch, int searchFor, final ISearchRequestor storage, IProgressMonitor monitor) {
+	public void findTypes(char[] prefix, final boolean findMembers, int matchRule, int searchFor, final ISearchRequestor storage, IProgressMonitor monitor) {
 		if (monitor != null && monitor.isCanceled()) {
 			throw new OperationCanceledException();
 		}
@@ -77,9 +77,11 @@ public class ModelBasedSearchableEnvironment extends SearchableEnvironment {
 			IPackageFragment[] fragments = elementRequestor.getPackageFragments();
 			if (fragments != null) {
 				String className = prefix.substring(index + 1);
-				for (int i = 0, length = fragments.length; i < length; i++)
-					if (fragments[i] != null)
-						this.nameLookup.seekTypes(className, fragments[i], true, type, requestor);
+				for (IPackageFragment fragment : fragments) {
+					if (fragment != null) {
+						this.nameLookup.seekTypes(className, fragment, true, type, requestor);
+					}
+				}
 			}
 		}
 	}

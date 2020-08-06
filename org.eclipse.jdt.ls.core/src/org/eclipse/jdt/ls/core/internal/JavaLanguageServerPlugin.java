@@ -51,6 +51,7 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
@@ -62,12 +63,12 @@ import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
-import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
+import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxProjectsManager;
 import org.eclipse.jface.text.templates.TemplateVariableResolver;
@@ -173,6 +174,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 			preferenceManager = new StandardPreferenceManager();
 			projectsManager = new StandardProjectsManager(preferenceManager);
 		}
+		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
+		fDefaultPreferenceStore.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, "");
 
 		digestStore = new DigestStore(getStateLocation().toFile());
 		try {
@@ -184,6 +187,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 		nonProjectDiagnosticsState = new DiagnosticsState();
 		logInfo(getClass() + " is started");
 		configureProxy();
+		// turn off substring code completion if isn't explicitly set
+		if (System.getProperty(AssistOptions.PROPERTY_SubstringMatch) == null) {
+			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
+		}
 	}
 
 	private void disableServices() {
