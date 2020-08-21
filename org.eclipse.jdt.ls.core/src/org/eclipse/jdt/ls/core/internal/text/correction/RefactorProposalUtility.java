@@ -58,6 +58,7 @@ import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefact
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
+import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
@@ -72,6 +73,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAs
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 
@@ -92,15 +94,13 @@ public class RefactorProposalUtility {
 	public static final String INTRODUCE_PARAMETER_COMMAND = "introduceParameter";
 
 	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
-		String label = ActionMessages.MoveRefactoringAction_label;
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
+		List<String> kindOfActions = params.getContext().getOnly();
+		boolean alwaysShowMove = kindOfActions != null && kindOfActions.contains(CodeActionKind.Refactor);
 		ASTNode node = context.getCoveredNode();
 		if (node == null) {
-			node = context.getCoveringNode();
-		}
-
-		while (node != null && !(node instanceof BodyDeclaration)) {
-			node = node.getParent();
+			ASTNode coveringNode = context.getCoveringNode();
+			node = getDeclarationNode(coveringNode, alwaysShowMove);
 		}
 
 		ICompilationUnit cu = context.getCompilationUnit();
@@ -109,6 +109,7 @@ public class RefactorProposalUtility {
 			try {
 				if (node instanceof MethodDeclaration || node instanceof FieldDeclaration || node instanceof AbstractTypeDeclaration) {
 					String displayName = getDisplayName(node);
+					String label = alwaysShowMove ? ActionMessages.MoveRefactoringAction_label : Messages.format(ActionMessages.MoveRefactoringAction_templateLabel, displayName);
 					int memberType = node.getNodeType();
 					String enclosingTypeName = getEnclosingType(node);
 					String projectName = cu.getJavaProject().getProject().getName();
@@ -149,12 +150,37 @@ public class RefactorProposalUtility {
 			} catch (JavaModelException e) {
 				// do nothing.
 			}
-
 			return Collections.emptyList();
 		}
+		return alwaysShowMove ? Collections.singletonList((new CUCorrectionCommandProposal(ActionMessages.MoveRefactoringAction_label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+				Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))))) : Collections.emptyList();
 
-		return Collections.singletonList(
-				(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+	}
+
+	private static ASTNode getDeclarationNode(ASTNode node, boolean alwaysShowMove) {
+		if (node == null) {
+			return null;
+		}
+
+		if (alwaysShowMove) {
+			while (node != null && !(node instanceof BodyDeclaration)) {
+				node = node.getParent();
+			}
+		} else {
+			/**
+			 * When selection is within a Block but not within other ASTNode (where we don't
+			 * want to provide this refactoring), its covering node is the whole
+			 * BodyDeclaration. See
+			 * https://github.com/redhat-developer/vscode-java/issues/1074#issuecomment-672520911
+			 */
+			if (node instanceof BodyDeclaration) {
+				return null;
+			}
+			while (node != null && !(node instanceof BodyDeclaration) && !(node instanceof Statement)) {
+				node = node.getParent();
+			}
+		}
+		return node;
 	}
 
 	private static boolean isMoveMethodAvailable(MethodDeclaration declaration) throws JavaModelException {
