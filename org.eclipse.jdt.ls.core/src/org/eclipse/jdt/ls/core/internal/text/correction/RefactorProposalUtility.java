@@ -99,9 +99,9 @@ public class RefactorProposalUtility {
 		boolean alwaysShowMove = kindOfActions != null && kindOfActions.contains(CodeActionKind.Refactor);
 		ASTNode node = context.getCoveredNode();
 		if (node == null) {
-			ASTNode coveringNode = context.getCoveringNode();
-			node = getDeclarationNode(coveringNode, alwaysShowMove);
+			node = context.getCoveringNode();
 		}
+		node = getDeclarationNode(node, alwaysShowMove);
 
 		ICompilationUnit cu = context.getCompilationUnit();
 		String uri = JDTUtils.toURI(cu);
