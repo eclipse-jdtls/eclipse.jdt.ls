@@ -250,4 +250,5 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		String packageName = getPackageName(javaFile, rootPath, potentialSrcPrefixes);
 		return inferSourceDirectory(javaFile.toFile().toPath(), packageName);
 	}
+
 }

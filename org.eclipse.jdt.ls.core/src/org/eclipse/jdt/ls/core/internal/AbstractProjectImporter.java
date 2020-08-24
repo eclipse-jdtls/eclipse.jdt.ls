@@ -13,15 +13,18 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 public abstract class AbstractProjectImporter implements IProjectImporter {
 
 	protected File rootFolder;
+	protected Collection<java.nio.file.Path> directories;
 
 	@Override
 	public void initialize(File rootFolder) {
@@ -35,9 +38,18 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 	public abstract boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	@Override
+	public boolean isResolved(File folder) throws OperationCanceledException, CoreException {
+		return directories != null && directories.contains(folder.toPath());
+	};
+
+	@Override
 	public abstract void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	@Override
 	public abstract void reset();
+
+	protected static Preferences getPreferences() {
+		return (JavaLanguageServerPlugin.getPreferencesManager() == null || JavaLanguageServerPlugin.getPreferencesManager().getPreferences() == null) ? new Preferences() : JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+	}
 
 }

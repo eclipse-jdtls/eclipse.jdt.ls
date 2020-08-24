@@ -139,7 +139,7 @@ public class BasicFileDetector {
 	}
 
 	private void scanDir(Path dir, final IProgressMonitor monitor) throws IOException {
-		FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+		FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 				if (monitor.isCanceled()) {

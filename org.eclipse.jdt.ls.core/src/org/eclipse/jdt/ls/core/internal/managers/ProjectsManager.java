@@ -109,9 +109,14 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
-			IProjectImporter importer = getImporter(rootFolder, subMonitor.split(30));
-			if (importer != null) {
-				importer.importToWorkspace(subMonitor.split(70));
+			for (IProjectImporter importer : importers()) {
+				importer.initialize(rootFolder);
+				if (importer.applies(subMonitor.split(1))) {
+					importer.importToWorkspace(subMonitor.split(70));
+					if (importer.isResolved(rootFolder)) {
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -266,23 +271,11 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return buildSupports().filter(bs -> bs.isBuildLikeFileName(fileName)).findAny().isPresent();
 	}
 
-	private IProjectImporter getImporter(File rootFolder, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
-		Collection<IProjectImporter> importers = importers();
-		SubMonitor subMonitor = SubMonitor.convert(monitor, importers.size());
-		for (IProjectImporter importer : importers) {
-			importer.initialize(rootFolder);
-			if (importer.applies(subMonitor.split(1))) {
-				return importer;
-			}
-		}
-		return null;
-	}
-
 	public static IProject getDefaultProject() {
 		return getWorkspaceRoot().getProject(DEFAULT_PROJECT_NAME);
 	}
 
-	private Collection<IProjectImporter> importers() {
+	public static Collection<IProjectImporter> importers() {
 		Map<Integer, IProjectImporter> importers = new TreeMap<>();
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, "importers");
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();

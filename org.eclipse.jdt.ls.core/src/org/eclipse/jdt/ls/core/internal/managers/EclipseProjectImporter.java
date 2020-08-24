@@ -33,16 +33,19 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 public class EclipseProjectImporter extends AbstractProjectImporter {
-
-	private Collection<java.nio.file.Path> directories;
 
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws CoreException {
 		if (directories == null) {
 			BasicFileDetector eclipseDetector = new BasicFileDetector(rootFolder.toPath(), DESCRIPTION_FILE_NAME)
 					.addExclusions("**/bin");//default Eclipse build dir
+			for (IProject project : ProjectUtils.getAllProjects(false)) {
+				File projectFile = project.getLocation().toFile();
+				eclipseDetector.addExclusions(projectFile.getAbsolutePath());
+			}
 			directories = eclipseDetector.scan(monitor);
 		}
 		directories = directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());

@@ -315,7 +315,7 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	@Override
 	public List<FileSystemWatcher> registerWatchers() {
-		logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
+		logInfo(">> registerWatchers'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
 			buildSupports().forEach(e -> e.getWatchPatterns().forEach(patterns::add));

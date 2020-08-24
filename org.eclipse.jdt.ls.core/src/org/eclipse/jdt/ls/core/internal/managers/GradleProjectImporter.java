@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -79,8 +78,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			.replaceAll("\n", System.lineSeparator());
 	//@formatter:on
 
-	private Collection<Path> directories;
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.managers.IProjectImporter#applies(org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -98,6 +95,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					.includeNested(false)
 					.addExclusions("**/build")//default gradle build dir
 					.addExclusions("**/bin");
+			for (IProject project : ProjectUtils.getAllProjects()) {
+				if (!ProjectUtils.isGradleProject(project)) {
+					String path = project.getLocation().toOSString();
+					gradleDetector.addExclusions(path);
+				}
+			}
 			directories = gradleDetector.scan(monitor);
 		}
 		return !directories.isEmpty();
@@ -320,10 +323,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public void reset() {
-	}
-
-	private static Preferences getPreferences() {
-		return (JavaLanguageServerPlugin.getPreferencesManager() == null || JavaLanguageServerPlugin.getPreferencesManager().getPreferences() == null) ? new Preferences() : JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 	}
 
 }
