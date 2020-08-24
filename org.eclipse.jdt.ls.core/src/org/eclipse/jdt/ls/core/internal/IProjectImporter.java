@@ -24,6 +24,10 @@ public interface IProjectImporter {
 
 	boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
+	default boolean isResolved(File folder) throws OperationCanceledException, CoreException {
+		return false;
+	};
+
 	void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	void reset();

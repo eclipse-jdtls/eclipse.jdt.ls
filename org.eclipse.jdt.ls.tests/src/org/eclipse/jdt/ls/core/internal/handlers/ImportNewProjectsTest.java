@@ -11,6 +11,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -157,5 +158,18 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
+	}
+
+	@Test
+	public void testImportMixedProjects() throws Exception {
+		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
+		IWorkspace workspace = wsRoot.getWorkspace();
+		IProject[] projects = workspace.getRoot().getProjects();
+		assertEquals(0, projects.length);
+		importProjects("mixed");
+		assertEquals(4, wsRoot.getProjects().length);
+		IProject hello = wsRoot.getProject("hello");
+		assertNotNull(hello);
+		assertIsJavaProject(hello);
 	}
 }

@@ -119,6 +119,15 @@ public final class ProjectUtils {
 		return ResourcesPlugin.getWorkspace().getRoot().getProjects();
 	}
 
+	public static IProject[] getAllProjects(boolean includeInvisibleProjects) {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		if (includeInvisibleProjects) {
+			return projects;
+		} else {
+			return Stream.of(projects).filter(p -> isVisibleProject(p)).collect(Collectors.toList()).toArray(new IProject[0]);
+		}
+	}
+
 	public static IProject getProject(String projectName) {
 		if (StringUtils.isBlank(projectName)) {
 			return null;

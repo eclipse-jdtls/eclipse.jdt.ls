@@ -84,6 +84,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
+		directories = new ArrayList<>();
 		if (files != null) {
 			Iterator<MavenProjectInfo> iter = files.iterator();
 			while (iter.hasNext()) {
@@ -91,6 +92,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				File dir = projectInfo.getPomFile() == null ? null : projectInfo.getPomFile().getParentFile();
 				if (dir != null && exclude(dir.toPath())) {
 					iter.remove();
+					continue;
+				}
+				if (dir != null) {
+					directories.add(dir.toPath());
 				}
 			}
 		}
@@ -110,6 +115,19 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
 				if (matcher.matches(path)) {
 					excluded = includePattern ? false : true;
+				}
+			}
+		}
+		if (!excluded) {
+			for (IProject project : ProjectUtils.getAllProjects()) {
+				if (ProjectUtils.isMavenProject(project)) {
+					continue;
+				}
+				String pattern = project.getLocation().toOSString();
+				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+				if (matcher.matches(path)) {
+					excluded = true;
+					break;
 				}
 			}
 		}
