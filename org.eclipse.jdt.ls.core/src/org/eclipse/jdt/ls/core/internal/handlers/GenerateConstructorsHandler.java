@@ -54,9 +54,7 @@ import org.eclipse.text.edits.TextEdit;
 public class GenerateConstructorsHandler {
 	// For test purpose
 	public static CheckConstructorsResponse checkConstructorsStatus(CodeActionParams params) {
-		IProgressMonitor monitor = new NullProgressMonitor();
-		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
-		return checkConstructorStatus(type, monitor);
+		return checkConstructorsStatus(params, new NullProgressMonitor());
 	}
 
 	public static CheckConstructorsResponse checkConstructorsStatus(CodeActionParams params, IProgressMonitor monitor) {

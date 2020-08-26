@@ -84,15 +84,20 @@ public class CodeActionHandler {
 		if (unit == null || monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
-		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
-		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
-		InnovationContext context = new InnovationContext(unit, start, end - start);
+
 		CompilationUnit astRoot = getASTRoot(unit, monitor);
-		context.setASTRoot(astRoot);
 		if (astRoot == null || monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
+
+		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
+		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(astRoot);
 		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 
 		List<String> codeActionKinds = new ArrayList<>();
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
