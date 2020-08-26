@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,18 +17,19 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore.CustomBuilderSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
@@ -42,20 +43,33 @@ public class GenerateToStringHandler {
 	private static final String METHODNAME_TOSTRING = "toString";
 	public static final String DEFAULT_TEMPLATE = "${object.className} [${member.name()}=${member.value}, ${otherMembers}]";
 
+	// For test purpose
 	public static CheckToStringResponse checkToStringStatus(CodeActionParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params);
-		return checkToStringStatus(type);
+		return checkToStringStatus(params, new NullProgressMonitor());
 	}
 
+	public static CheckToStringResponse checkToStringStatus(CodeActionParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
+		return checkToStringStatus(type, monitor);
+	}
+
+	// For test purpose
 	public static CheckToStringResponse checkToStringStatus(IType type) {
+		return checkToStringStatus(type, new NullProgressMonitor());
+	}
+
+	public static CheckToStringResponse checkToStringStatus(IType type, IProgressMonitor monitor) {
 		CheckToStringResponse response = new CheckToStringResponse();
 		if (type == null) {
 			return response;
 		}
 
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return response;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
@@ -69,17 +83,17 @@ public class GenerateToStringHandler {
 		return response;
 	}
 
-	public static WorkspaceEdit generateToString(GenerateToStringParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
+	public static WorkspaceEdit generateToString(GenerateToStringParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
 		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
 
-		TextEdit edit = generateToString(type, params.fields);
+		TextEdit edit = generateToString(type, params.fields, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	public static TextEdit generateToString(IType type, LspVariableBinding[] fields) {
+	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
@@ -102,17 +116,25 @@ public class GenerateToStringHandler {
 			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
 		}
 
-		return generateToString(type, fields, settings);
+		return generateToString(type, fields, settings, monitor);
 	}
 
+	// For test purpose
 	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings) {
+		return generateToString(type, fields, new NullProgressMonitor());
+	}
+
+	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings, IProgressMonitor monitor) {
 		if (type == null) {
 			return null;
 		}
 
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return null;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				IVariableBinding[] selectedFields = JdtDomModels.convertToVariableBindings(typeBinding, fields);

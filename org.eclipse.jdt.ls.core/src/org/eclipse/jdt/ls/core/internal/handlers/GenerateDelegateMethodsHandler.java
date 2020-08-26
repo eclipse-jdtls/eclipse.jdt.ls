@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -29,13 +31,12 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.AddDelegateMethodsOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.AddDelegateMethodsOperation.DelegateEntry;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
@@ -73,15 +74,23 @@ public class GenerateDelegateMethodsHandler {
 		return Signature.getArrayCount(field.getTypeSignature()) > 0;
 	}
 
+	// For test purpose.
 	public static CheckDelegateMethodsResponse checkDelegateMethodsStatus(CodeActionParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params);
+		return checkDelegateMethodsStatus(params, new NullProgressMonitor());
+	}
+
+	public static CheckDelegateMethodsResponse checkDelegateMethodsStatus(CodeActionParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
 		if (type == null || type.getCompilationUnit() == null) {
 			return new CheckDelegateMethodsResponse();
 		}
 
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return new CheckDelegateMethodsResponse();
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
 				return new CheckDelegateMethodsResponse();
@@ -107,23 +116,31 @@ public class GenerateDelegateMethodsHandler {
 		return new CheckDelegateMethodsResponse();
 	}
 
-	public static WorkspaceEdit generateDelegateMethods(GenerateDelegateMethodsParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
+	public static WorkspaceEdit generateDelegateMethods(GenerateDelegateMethodsParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = preferences.isCodeGenerationTemplateGenerateComments();
-		TextEdit edit = generateDelegateMethods(type, params.delegateEntries, settings);
+		TextEdit edit = generateDelegateMethods(type, params.delegateEntries, settings, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
+	// For test purpose.
 	public static TextEdit generateDelegateMethods(IType type, LspDelegateEntry[] delegateEntries, CodeGenerationSettings settings) {
+		return generateDelegateMethods(type, delegateEntries, settings, new NullProgressMonitor());
+	}
+
+	public static TextEdit generateDelegateMethods(IType type, LspDelegateEntry[] delegateEntries, CodeGenerationSettings settings, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null || delegateEntries == null || delegateEntries.length == 0) {
 			return null;
 		}
 
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return null;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
 				return null;

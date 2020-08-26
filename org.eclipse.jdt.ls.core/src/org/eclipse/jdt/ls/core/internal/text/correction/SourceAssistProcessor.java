@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017-2019 Microsoft Corporation and others.
+* Copyright (c) 2017-2020 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -38,8 +39,6 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -90,7 +89,7 @@ public class SourceAssistProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<Either<Command, CodeAction>> getSourceActionCommands(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) {
+	public List<Either<Command, CodeAction>> getSourceActionCommands(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations, IProgressMonitor monitor) {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
@@ -100,9 +99,8 @@ public class SourceAssistProcessor {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(cu, params.getRange().getEnd().getLine(), params.getRange().getEnd().getCharacter(), this.preferenceManager, new NullProgressMonitor());
 			if (element instanceof IField) {
-				generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST);
+				generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
 				addSourceActionCommand($, params.getContext(), generateConstructors);
-
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException(e);
@@ -130,7 +128,7 @@ public class SourceAssistProcessor {
 		addSourceActionCommand($, params.getContext(), getterSetter);
 
 		// Generate hashCode() and equals()
-		if (supportsHashCodeEquals(context, type)) {
+		if (supportsHashCodeEquals(context, type, monitor)) {
 			Optional<Either<Command, CodeAction>> hashCodeEquals = getHashCodeEqualsAction(params);
 			addSourceActionCommand($, params.getContext(), hashCodeEquals);
 		}
@@ -147,7 +145,7 @@ public class SourceAssistProcessor {
 				Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
 			} else {
-				TextEdit toStringEdit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0]);
+				TextEdit toStringEdit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0], monitor);
 				Optional<Either<Command, CodeAction>> generateToStringCommand = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
 						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, toStringEdit);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
@@ -156,7 +154,7 @@ public class SourceAssistProcessor {
 
 		// Generate Constructors
 		if (generateConstructors == null) {
-			generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+			generateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, monitor);
 		} else if (generateConstructors.isPresent()) {
 			Command command = new Command(ActionMessages.GenerateConstructorsAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, Collections.singletonList(params));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS)) {
@@ -267,13 +265,17 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private boolean supportsHashCodeEquals(IInvocationContext context, IType type) {
+	private boolean supportsHashCodeEquals(IInvocationContext context, IType type, IProgressMonitor monitor) {
 		try {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
 				return false;
 			}
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+
+			CompilationUnit astRoot = context.getASTRoot();
+			if (astRoot == null) {
+				return false;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			return (typeBinding == null) ? false : Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> !Modifier.isStatic(f.getModifiers())).findAny().isPresent();
 		} catch (JavaModelException e) {
@@ -325,7 +327,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type, String kind) {
+	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type, String kind, IProgressMonitor monitor) {
 		try {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
@@ -335,12 +337,12 @@ public class SourceAssistProcessor {
 		}
 
 		if (preferenceManager.getClientPreferences().isGenerateConstructorsPromptSupported()) {
-			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type);
+			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type, monitor);
 			if (status.constructors.length == 0) {
 				return Optional.empty();
 			}
 			if (status.constructors.length == 1 && status.fields.length == 0) {
-				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields);
+				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields, monitor);
 				return convertToWorkspaceEditAction(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, kind, edit);
 			}
 
@@ -448,11 +450,15 @@ public class SourceAssistProcessor {
 	}
 
 	public static IType getSelectionType(CodeActionParams params) {
-		InnovationContext context = getInnovationContext(params);
+		return getSelectionType(params, new NullProgressMonitor());
+	}
+
+	public static IType getSelectionType(CodeActionParams params, IProgressMonitor monitor) {
+		InnovationContext context = getInnovationContext(params, monitor);
 		return (context == null) ? null : getSelectionType(context);
 	}
 
-	public static InnovationContext getInnovationContext(CodeActionParams params) {
+	public static InnovationContext getInnovationContext(CodeActionParams params, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return null;
@@ -460,7 +466,11 @@ public class SourceAssistProcessor {
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+		if (astRoot == null) {
+			return null;
+		}
+
 		context.setASTRoot(astRoot);
 		return context;
 	}
