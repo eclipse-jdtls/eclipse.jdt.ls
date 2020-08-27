@@ -121,7 +121,7 @@ public class GenerateToStringHandler {
 
 	// For test purpose
 	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings) {
-		return generateToString(type, fields, new NullProgressMonitor());
+		return generateToString(type, fields, settings, new NullProgressMonitor());
 	}
 
 	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings, IProgressMonitor monitor) {
