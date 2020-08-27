@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperation.OverridableMethod;
@@ -25,16 +26,16 @@ import org.eclipse.text.edits.TextEdit;
 
 public class OverrideMethodsHandler {
 
-	public static OverridableMethodsResponse listOverridableMethods(CodeActionParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params);
+	public static OverridableMethodsResponse listOverridableMethods(CodeActionParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
 		String typeName = type == null ? "" : type.getTypeQualifiedName();
-		List<OverridableMethod> methods = OverrideMethodsOperation.listOverridableMethods(type);
+		List<OverridableMethod> methods = OverrideMethodsOperation.listOverridableMethods(type, monitor);
 		return new OverridableMethodsResponse(typeName, methods);
 	}
 
-	public static WorkspaceEdit addOverridableMethods(AddOverridableMethodParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
-		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, params.overridableMethods);
+	public static WorkspaceEdit addOverridableMethods(AddOverridableMethodParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
+		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, params.overridableMethods, monitor);
 		if (edit == null) {
 			return null;
 		}

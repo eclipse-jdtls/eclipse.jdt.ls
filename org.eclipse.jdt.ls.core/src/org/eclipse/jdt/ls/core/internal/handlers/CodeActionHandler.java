@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2019 Red Hat Inc. and others.
+ * Copyright (c) 2017-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -84,14 +84,20 @@ public class CodeActionHandler {
 		if (unit == null || monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
+
+		CompilationUnit astRoot = getASTRoot(unit, monitor);
+		if (astRoot == null || monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
+
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		context.setASTRoot(getASTRoot(unit));
+		context.setASTRoot(astRoot);
+		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
-		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
 
 		List<String> codeActionKinds = new ArrayList<>();
 		if (params.getContext().getOnly() != null && !params.getContext().getOnly().isEmpty()) {
@@ -161,7 +167,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 		if (containsKind(codeActionKinds, CodeActionKind.Source)) {
-			codeActions.addAll(sourceAssistProcessor.getSourceActionCommands(params, context, locations));
+			codeActions.addAll(sourceAssistProcessor.getSourceActionCommands(params, context, locations, monitor));
 		}
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
@@ -233,7 +239,11 @@ public class CodeActionHandler {
 	}
 
 	public static CompilationUnit getASTRoot(ICompilationUnit unit) {
-		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		return getASTRoot(unit, new NullProgressMonitor());
+	}
+
+	public static CompilationUnit getASTRoot(ICompilationUnit unit, IProgressMonitor monitor) {
+		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 	}
 
 	private static class ChangeCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {

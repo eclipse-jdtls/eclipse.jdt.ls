@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,17 +17,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.GenerateHashCodeEqualsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -40,19 +41,27 @@ public class HashCodeEqualsHandler {
 	private static final String METHODNAME_HASH_CODE = "hashCode";
 	private static final String METHODNAME_EQUALS = "equals";
 
+	// For test purpose
 	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(CodeActionParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params);
-		return checkHashCodeEqualsStatus(type);
+		return checkHashCodeEqualsStatus(params, new NullProgressMonitor());
 	}
 
-	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(IType type) {
+	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(CodeActionParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
+		return checkHashCodeEqualsStatus(type, monitor);
+	}
+
+	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(IType type, IProgressMonitor monitor) {
 		CheckHashCodeEqualsResponse response = new CheckHashCodeEqualsResponse();
 		if (type == null) {
 			return response;
 		}
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return response;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
@@ -65,29 +74,37 @@ public class HashCodeEqualsHandler {
 		return response;
 	}
 
-	public static WorkspaceEdit generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
+	public static WorkspaceEdit generateHashCodeEquals(GenerateHashCodeEqualsParams params, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		boolean useJava7Objects = preferences.isHashCodeEqualsTemplateUseJava7Objects();
 		boolean useInstanceof = preferences.isHashCodeEqualsTemplateUseInstanceof();
 		boolean useBlocks = preferences.isCodeGenerationTemplateUseBlocks();
 		boolean generateComments = preferences.isCodeGenerationTemplateGenerateComments();
-		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
+		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
+	// For test purpose
 	public static TextEdit generateHashCodeEqualsTextEdit(GenerateHashCodeEqualsParams params, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
-		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments);
+		return generateHashCodeEqualsTextEdit(params, useJava7Objects, useInstanceof, useBlocks, generateComments, new NullProgressMonitor());
 	}
 
-	public static TextEdit generateHashCodeEqualsTextEdit(IType type, LspVariableBinding[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments) {
+	public static TextEdit generateHashCodeEqualsTextEdit(GenerateHashCodeEqualsParams params, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments, IProgressMonitor monitor) {
+		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
+		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, monitor);
+	}
+
+	public static TextEdit generateHashCodeEqualsTextEdit(IType type, LspVariableBinding[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments, IProgressMonitor monitor) {
 		if (type == null) {
 			return null;
 		}
 		try {
-			RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-			CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+			if (astRoot == null) {
+				return null;
+			}
+
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				IVariableBinding[] variableBindings = JdtDomModels.convertToVariableBindings(typeBinding, fields);

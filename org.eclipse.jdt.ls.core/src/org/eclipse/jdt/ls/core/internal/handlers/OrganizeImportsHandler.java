@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -36,12 +37,11 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.ImportReferencesCollector;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
@@ -64,12 +64,21 @@ import com.google.gson.Gson;
 public final class OrganizeImportsHandler {
 	public static final String CLIENT_COMMAND_ID_CHOOSEIMPORTS = "java.action.organizeImports.chooseImports";
 
+	// For test purpose
 	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports) {
+		return organizeImports(unit, chooseImports, new NullProgressMonitor());
+	}
+
+	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports, IProgressMonitor monitor) {
 		if (unit == null) {
 			return null;
 		}
-		RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-		CompilationUnit astRoot = astParser.parse(unit, true);
+
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+		if (astRoot == null) {
+			return null;
+		}
+
 		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, (TypeNameMatch[][] openChoices, ISourceRange[] ranges) -> {
 			List<ImportSelection> selections = new ArrayList<>();
 			for (int i = 0; i < openChoices.length; i++) {
@@ -96,7 +105,7 @@ public final class OrganizeImportsHandler {
 			return Stream.of(chosens).filter(chosen -> chosen != null && typeMaps.containsKey(chosen.id)).map(chosen -> typeMaps.get(chosen.id)).toArray(TypeNameMatch[]::new);
 		});
 		try {
-			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 			TextEdit edit = op.createTextEdit(null);
 			// See https://bugs.eclipse.org/bugs/show_bug.cgi?id=283287
 			// and https://github.com/redhat-developer/vscode-java/issues/1472
@@ -191,7 +200,7 @@ public final class OrganizeImportsHandler {
 		}
 	}
 
-	public static WorkspaceEdit organizeImports(JavaClientConnection connection, CodeActionParams params) {
+	public static WorkspaceEdit organizeImports(JavaClientConnection connection, CodeActionParams params, IProgressMonitor monitor) {
 		String uri = params.getTextDocument().getUri();
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
@@ -202,7 +211,7 @@ public final class OrganizeImportsHandler {
 			Object commandResult = connection.executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, uri, selections);
 			String json = commandResult == null ? null : new Gson().toJson(commandResult);
 			return JSONUtility.toModel(json, ImportCandidate[].class);
-		});
+		}, monitor);
 		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
 	}
 

@@ -858,43 +858,43 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params) {
 		logInfo(">> java/listOverridableMethods");
-		return computeAsync((monitor) -> OverrideMethodsHandler.listOverridableMethods(params));
+		return computeAsync((monitor) -> OverrideMethodsHandler.listOverridableMethods(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> addOverridableMethods(AddOverridableMethodParams params) {
 		logInfo(">> java/addOverridableMethods");
-		return computeAsync((monitor) -> OverrideMethodsHandler.addOverridableMethods(params));
+		return computeAsync((monitor) -> OverrideMethodsHandler.addOverridableMethods(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<CheckHashCodeEqualsResponse> checkHashCodeEqualsStatus(CodeActionParams params) {
 		logInfo(">> java/checkHashCodeEqualsStatus");
-		return computeAsync((monitor) -> HashCodeEqualsHandler.checkHashCodeEqualsStatus(params));
+		return computeAsync((monitor) -> HashCodeEqualsHandler.checkHashCodeEqualsStatus(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> generateHashCodeEquals(GenerateHashCodeEqualsParams params) {
 		logInfo(">> java/generateHashCodeEquals");
-		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params));
+		return computeAsync((monitor) -> HashCodeEqualsHandler.generateHashCodeEquals(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<CheckToStringResponse> checkToStringStatus(CodeActionParams params) {
 		logInfo(">> java/checkToStringStatus");
-		return computeAsync((monitor) -> GenerateToStringHandler.checkToStringStatus(params));
+		return computeAsync((monitor) -> GenerateToStringHandler.checkToStringStatus(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> generateToString(GenerateToStringParams params) {
 		logInfo(">> java/generateToString");
-		return computeAsync((monitor) -> GenerateToStringHandler.generateToString(params));
+		return computeAsync((monitor) -> GenerateToStringHandler.generateToString(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
 		logInfo(">> java/organizeImports");
-		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params));
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params, monitor));
 	}
 
 	@Override
@@ -912,25 +912,25 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CheckConstructorsResponse> checkConstructorsStatus(CodeActionParams params) {
 		logInfo(">> java/checkConstructorsStatus");
-		return computeAsync((monitor) -> GenerateConstructorsHandler.checkConstructorsStatus(params));
+		return computeAsync((monitor) -> GenerateConstructorsHandler.checkConstructorsStatus(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> generateConstructors(GenerateConstructorsParams params) {
 		logInfo(">> java/generateConstructors");
-		return computeAsync((monitor) -> GenerateConstructorsHandler.generateConstructors(params));
+		return computeAsync((monitor) -> GenerateConstructorsHandler.generateConstructors(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<CheckDelegateMethodsResponse> checkDelegateMethodsStatus(CodeActionParams params) {
 		logInfo(">> java/checkDelegateMethodsStatus");
-		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.checkDelegateMethodsStatus(params));
+		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.checkDelegateMethodsStatus(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<WorkspaceEdit> generateDelegateMethods(GenerateDelegateMethodsParams params) {
 		logInfo(">> java/generateDelegateMethods");
-		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.generateDelegateMethods(params));
+		return computeAsync((monitor) -> GenerateDelegateMethodsHandler.generateDelegateMethods(params, monitor));
 	}
 
 	@Override

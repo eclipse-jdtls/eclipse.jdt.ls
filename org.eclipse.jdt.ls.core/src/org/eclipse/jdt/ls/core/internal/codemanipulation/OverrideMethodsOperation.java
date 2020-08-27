@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
@@ -38,6 +40,7 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
@@ -45,23 +48,28 @@ import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRe
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
-import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
 
 public class OverrideMethodsOperation {
-
+	// For test purpose
 	public static List<OverridableMethod> listOverridableMethods(IType type) {
+		return listOverridableMethods(type, new NullProgressMonitor());
+	}
+
+	public static List<OverridableMethod> listOverridableMethods(IType type, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return Collections.emptyList();
 		}
 
 		List<OverridableMethod> overridables = new ArrayList<>();
-		RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-		CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+		if (astRoot == null) {
+			return Collections.emptyList();
+		}
+
 		try {
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
@@ -89,13 +97,21 @@ public class OverrideMethodsOperation {
 		return overridables;
 	}
 
+	// For test purpose
 	public static TextEdit addOverridableMethods(IType type, OverridableMethod[] overridableMethods) {
+		return addOverridableMethods(type, overridableMethods, new NullProgressMonitor());
+	}
+
+	public static TextEdit addOverridableMethods(IType type, OverridableMethod[] overridableMethods, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null || overridableMethods == null || overridableMethods.length == 0) {
 			return null;
 		}
 
-		RefactoringASTParser astParser = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL);
-		CompilationUnit astRoot = astParser.parse(type.getCompilationUnit(), true);
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+		if (astRoot == null) {
+			return null;
+		}
+
 		try {
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
