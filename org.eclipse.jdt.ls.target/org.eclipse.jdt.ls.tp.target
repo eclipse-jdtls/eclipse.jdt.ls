@@ -16,7 +16,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/buildship/updates/e415/snapshots/3.x/3.1.5.v20200623-1251-s/"/>
+            <repository location="https://download.eclipse.org/buildship/updates/e415/snapshots/3.x/3.1.5.v20200806-2157-s/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
@@ -32,7 +32,7 @@
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2020-09/202008071000/"/>
+            <repository location="https://download.eclipse.org/releases/2020-09/202008281000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
