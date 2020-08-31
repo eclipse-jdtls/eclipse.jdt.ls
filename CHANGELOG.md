@@ -1,5 +1,12 @@
 # Change Log
 
+# [0.60.0 (September 1st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/78?closed=1)
+ * enhancement - Update to Eclipse 2020-09-M3. See [#1534](https://github.com/eclipse/eclipse.jdt.ls/pull/1534).
+ * enhancement - Use `,` as signature trigger char. See [#1522](https://github.com/eclipse/eclipse.jdt.ls/pull/1522).
+ * enhancement - Add `java.import.resourceFilter` preference. See [#1508](https://github.com/eclipse/eclipse.jdt.ls/issues/1508).
+ * performance - Use ASTProvider to getAST for source action handlers. See [#1533](https://github.com/eclipse/eclipse.jdt.ls/pull/1533).
+ * bug fix - Fixed wildcard import semantic tokens. See [#1518](https://github.com/eclipse/eclipse.jdt.ls/pull/1518).
+
 # [0.59.0 (July 22nd, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/77?closed=1)
  * enhancement - Expose the 'java.import.gradle.java.home' preference. See [#1512](https://github.com/eclipse/eclipse.jdt.ls/pull/1512).
  * enhancement - Provide semantic tokens for class files. See [#1511](https://github.com/eclipse/eclipse.jdt.ls/pull/1511).
