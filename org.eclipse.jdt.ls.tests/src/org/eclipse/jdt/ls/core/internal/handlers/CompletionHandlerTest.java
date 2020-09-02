@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -49,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
@@ -2999,6 +3001,21 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Method, resolvedItem.getKind());
 		String documentation = resolvedItem.getDocumentation().getLeft();
 		assertEquals(" Test ", documentation);
+	}
+
+	@Test
+	public void testCompletion_Nullable() throws Exception {
+		importProjects("eclipse/testnullable");
+		IProject proj = ProjectUtils.getProject("testnullable");
+		assertTrue(ProjectUtils.isJavaProject(proj));
+		IFile file = proj.getFile("/src/org/sample/Main.java");
+		ICompilationUnit unit = JavaCore.createCompilationUnitFrom(file);
+		int[] loc = findCompletionLocation(unit, "ru");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("run() : void")).findFirst().orElse(null);
+		assertNotNull(ci);
+		assertEquals("public void run() {};", ci.getTextEdit().getNewText());
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
