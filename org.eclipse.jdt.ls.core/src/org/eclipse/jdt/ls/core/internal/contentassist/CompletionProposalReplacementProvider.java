@@ -319,7 +319,9 @@ public class CompletionProposalReplacementProvider {
 					completion);
 			String replacement = overrider.updateReplacementString(document, offset, importRewrite,
 					client.isCompletionSnippetsSupported());
-			completionBuffer.append(replacement);
+			if (replacement != null) {
+				completionBuffer.append(replacement);
+			}
 		} catch (BadLocationException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to compute override replacement", e);
 		}

@@ -63,6 +63,7 @@ public class OverrideCompletionProposal {
 	private String fMethodName;
 	private String[] fParamTypes;
 	private ICompilationUnit fCompilationUnit;
+	private String replacementString;
 
 	public OverrideCompletionProposal(ICompilationUnit cu, String methodName, String[] paramTypes, String completionProposal) {
 		this.fCompilationUnit = cu;
@@ -74,6 +75,10 @@ public class OverrideCompletionProposal {
 		fParamTypes= paramTypes;
 		fMethodName= methodName;
 		fJavaProject= cu.getJavaProject();
+		StringBuilder buffer = new StringBuilder();
+		buffer.append(completionProposal);
+		buffer.append(" {};");
+		replacementString = buffer.toString();
 	}
 
 	private CompilationUnit getRecoveredAST(IDocument document, int offset, Document recoveredDocument) {
@@ -164,6 +169,9 @@ public class OverrideCompletionProposal {
 					JavaLanguageServerPlugin.logException("Unable to compute override proposal", exception);
 				}
 			}
+		}
+		if (result == null) {
+			return replacementString;
 		}
 		return result;
 	}
