@@ -413,7 +413,7 @@ public class SnippetCompletionProposal {
 
 	private static String getSnippetContent(SnippetCompletionContext scc, CodeGenerationTemplate templateSetting, boolean snippetStringSupport) throws CoreException {
 		ICompilationUnit cu = scc.getCompilationUnit();
-		Template template = templateSetting.createTemplate(cu.getJavaProject());
+		Template template = templateSetting.createTemplate();
 		if (template == null) {
 			return null;
 		}

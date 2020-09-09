@@ -189,7 +189,7 @@ public class FormatterManager {
 				javaOptions.put(k, v);
 			});
 			JavaCore.setOptions(javaOptions);
-			JavaLanguageServerPlugin.getPreferencesManager().initialize();
+			JavaLanguageServerPlugin.getPreferencesManager().initializeJavaCoreOptions();
 		}
 	}
 
