@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -335,6 +335,11 @@ public class Preferences {
 	// A named preference that defines whether to generate method comments when generating the methods.
 	public static final String JAVA_CODEGENERATION_GENERATECOMMENTS = "java.codeGeneration.generateComments";
 
+	// Specifies the file header snippets for new Java file.
+	public static final String JAVA_TEMPLATES_FILEHEADER = "java.templates.fileHeader";
+	// Specifies the type comment snippets for new Java type.
+	public static final String JAVA_TEMPLATES_TYPECOMMENT = "java.templates.typeComment";
+
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -450,6 +455,9 @@ public class Preferences {
 	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 	private List<String> resourceFilters;
+
+	private List<String> fileHeaderTemplate = new LinkedList<>();
+	private List<String> typeCommentTemplate = new LinkedList<>();
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -861,6 +869,12 @@ public class Preferences {
 			}
 		}
 		prefs.setRuntimes(runtimes);
+
+		List<String> fileHeader = getList(configuration, JAVA_TEMPLATES_FILEHEADER);
+		prefs.setFileHeaderTemplate(fileHeader);
+		List<String> typeComment = getList(configuration, JAVA_TEMPLATES_TYPECOMMENT);
+		prefs.setTypeCommentTemplate(typeComment);
+
 		return prefs;
 	}
 
@@ -1430,4 +1444,21 @@ public class Preferences {
 		return this.gradleWrapperList == null ? Collections.emptyList() : this.gradleWrapperList;
 	}
 
+	public List<String> getFileHeaderTemplate() {
+		return fileHeaderTemplate;
+	}
+
+	public Preferences setFileHeaderTemplate(List<String> fileHeaderTemplate) {
+		this.fileHeaderTemplate = fileHeaderTemplate;
+		return this;
+	}
+
+	public List<String> getTypeCommentTemplate() {
+		return typeCommentTemplate;
+	}
+
+	public Preferences setTypeCommentTemplate(List<String> typeCommentTemplate) {
+		this.typeCommentTemplate = typeCommentTemplate;
+		return this;
+	}
 }

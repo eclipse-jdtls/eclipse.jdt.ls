@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -15,11 +15,15 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Objects;
+
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ISafeRunnable;
@@ -62,6 +66,7 @@ public class PreferenceManager {
 	private ClientPreferences clientPreferences;
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
 	private IEclipsePreferences eclipsePrefs;
+	private static Map<String, Template> templates = new LinkedHashMap<>();
 
 	public PreferenceManager() {
 		preferences = new Preferences();
@@ -76,15 +81,7 @@ public class PreferenceManager {
 	 */
 	public static void initialize() {
 		// Update JavaCore options
-		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
-		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
-		javaCoreOptions.put(JavaCore.COMPILER_RELEASE, JavaCore.ENABLED);
-		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
-		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, DefaultCodeFormatterConstants.TRUE);
-		javaCoreOptions.put(JavaCore.COMPILER_PB_UNHANDLED_WARNING_TOKEN, JavaCore.IGNORE);
-		javaCoreOptions.put(JavaCore.COMPILER_PB_REDUNDANT_SUPERINTERFACE, JavaCore.WARNING);
-		javaCoreOptions.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.DISABLED);
-		JavaCore.setOptions(javaCoreOptions);
+		initializeJavaCoreOptions();
 
 		// Initialize default preferences
 		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
@@ -97,34 +94,6 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
 
-		// Initialize templates
-		Template [] templates = new Template [] {
-				CodeGenerationTemplate.FIELDCOMMENT.createTemplate(null),
-				CodeGenerationTemplate.METHODCOMMENT.createTemplate(null),
-				CodeGenerationTemplate.CONSTRUCTORCOMMENT.createTemplate(null),
-				CodeGenerationTemplate.CONSTRUCTORBODY.createTemplate(null),
-				CodeGenerationTemplate.DELEGATECOMMENT.createTemplate(null),
-				CodeGenerationTemplate.OVERRIDECOMMENT.createTemplate(null),
-				CodeGenerationTemplate.TYPECOMMENT.createTemplate(null),
-				CodeGenerationTemplate.GETTERCOMMENT.createTemplate(null),
-				CodeGenerationTemplate.SETTERCOMMENT.createTemplate(null),
-				CodeGenerationTemplate.GETTERBODY.createTemplate(null),
-				CodeGenerationTemplate.SETTERBOY.createTemplate(null),
-				CodeGenerationTemplate.CATCHBODY.createTemplate(null),
-				CodeGenerationTemplate.METHODBODY.createTemplate(null)
-		};
-
-		TemplatePersistenceData[] templateData = Arrays.asList(templates).stream()
-				.map(t -> new TemplatePersistenceData(t, true, t.getDescription()))
-				.collect(Collectors.toList()).toArray(new TemplatePersistenceData[0]);
-
-		TemplateReaderWriter trw = new TemplateReaderWriter();
-		try (Writer wrt = new StringWriter()) {
-			trw.save(templateData, wrt);
-			defEclipsePrefs.put(CUSTOM_CODE_TEMPLATES, wrt.toString());
-		} catch (IOException e) {
-		}
-
 		ContextTypeRegistry registry = new ContextTypeRegistry();
 		// Register standard context types from JDT
 		CodeTemplateContextType.registerContextTypes(registry);
@@ -133,6 +102,50 @@ public class PreferenceManager {
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE));
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE));
 
+		JavaManipulation.setCodeTemplateContextRegistry(registry);
+
+		// Initialize templates
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT, CodeGenerationTemplate.FIELDCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT, CodeGenerationTemplate.METHODCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT, CodeGenerationTemplate.CONSTRUCTORCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY, CodeGenerationTemplate.CONSTRUCTORBODY.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT, CodeGenerationTemplate.DELEGATECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT, CodeGenerationTemplate.OVERRIDECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, CodeGenerationTemplate.TYPECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT, CodeGenerationTemplate.GETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT, CodeGenerationTemplate.SETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERBODY, CodeGenerationTemplate.GETTERBODY.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERBODY, CodeGenerationTemplate.SETTERBOY.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, CodeGenerationTemplate.CATCHBODY.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODBODY, CodeGenerationTemplate.METHODBODY.createTemplate());
+		reloadTemplateStore();
+	}
+
+	public static void initializeJavaCoreOptions() {
+		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+		javaCoreOptions.put(JavaCore.CODEASSIST_VISIBILITY_CHECK, JavaCore.ENABLED);
+		javaCoreOptions.put(JavaCore.COMPILER_RELEASE, JavaCore.ENABLED);
+		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
+		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, DefaultCodeFormatterConstants.TRUE);
+		javaCoreOptions.put(JavaCore.COMPILER_PB_UNHANDLED_WARNING_TOKEN, JavaCore.IGNORE);
+		javaCoreOptions.put(JavaCore.COMPILER_PB_REDUNDANT_SUPERINTERFACE, JavaCore.WARNING);
+		javaCoreOptions.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.DISABLED);
+		JavaCore.setOptions(javaCoreOptions);
+	}
+
+	private static void reloadTemplateStore() {
+		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		TemplatePersistenceData[] templateData = templates.values().stream()
+			.map(t -> new TemplatePersistenceData(t, true, t.getDescription()))
+			.collect(Collectors.toList()).toArray(new TemplatePersistenceData[0]);
+
+		TemplateReaderWriter trw = new TemplateReaderWriter();
+		try (Writer wrt = new StringWriter()) {
+			trw.save(templateData, wrt);
+			defEclipsePrefs.put(CUSTOM_CODE_TEMPLATES, wrt.toString());
+		} catch (IOException e) {
+		}
+
 		TemplateStoreCore tscore = new TemplateStoreCore(defEclipsePrefs, CUSTOM_CODE_TEMPLATES);
 		try {
 			tscore.load();
@@ -140,7 +153,22 @@ public class PreferenceManager {
 		}
 
 		JavaManipulation.setCodeTemplateStore(tscore);
-		JavaManipulation.setCodeTemplateContextRegistry(registry);
+	}
+
+	private static boolean updateTemplate(String templateId, String content) {
+		Template template = templates.get(templateId);
+		if ((StringUtils.isEmpty(content) && template == null)
+			|| (template != null && Objects.equal(content, template.getPattern()))) {
+			return false;
+		}
+
+		CodeGenerationTemplate codeTemplate = CodeGenerationTemplate.getValueById(templateId);
+		if (codeTemplate == null) {
+			return false;
+		}
+
+		templates.put(templateId, codeTemplate.createTemplate(content));
+		return true;
 	}
 
 	public void update(Preferences preferences) {
@@ -150,6 +178,19 @@ public class PreferenceManager {
 		Preferences oldPreferences = this.preferences;
 		this.preferences = preferences;
 		preferencesChanged(oldPreferences, preferences); // listener will get latest preference from getPreferences()
+
+		// Update the templates according to the new preferences.
+		boolean templateChanged = false;
+		List<String> fileHeader = preferences.getFileHeaderTemplate();
+		String content = fileHeader == null ? "" : String.join("\n", fileHeader);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_FILECOMMENT, content);
+
+		List<String> typeComment = preferences.getTypeCommentTemplate();
+		content = typeComment == null ? "" : String.join("\n", typeComment);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
+		if (templateChanged) {
+			reloadTemplateStore();
+		}
 
 		// TODO serialize preferences
 	}

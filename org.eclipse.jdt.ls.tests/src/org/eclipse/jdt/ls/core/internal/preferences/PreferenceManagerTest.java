@@ -14,6 +14,8 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -21,9 +23,13 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jface.text.templates.Template;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,5 +103,36 @@ public class PreferenceManagerTest {
 		assertFalse("A listener has been called", called[0]);
 	}
 
+	@Test
+	public void testUpdateFileHeaderTemplate() {
+		preferenceManager.initialize();
 
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.FILECOMMENT_ID);
+		assertNull(template);
+
+		Preferences preferences = new Preferences();
+		preferences.setFileHeaderTemplate(Arrays.asList("/** */"));
+		preferenceManager.update(preferences);
+
+		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.FILECOMMENT_ID);
+		assertNotNull(template);
+		assertEquals("/** */", template.getPattern());
+	}
+
+	@Test
+	public void testUpdateTypeCommentTemplate() {
+		preferenceManager.initialize();
+
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.TYPECOMMENT_ID);
+		assertNotNull(template);
+		assertEquals(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_DEFAULT, template.getPattern());
+
+		Preferences preferences = new Preferences();
+		preferences.setTypeCommentTemplate(Arrays.asList("/** */"));
+		preferenceManager.update(preferences);
+
+		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.TYPECOMMENT_ID);
+		assertNotNull(template);
+		assertEquals("/** */", template.getPattern());
+	}
 }
