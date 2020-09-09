@@ -188,4 +188,97 @@ public class AnonymousClassToNestedTest extends AbstractSelectionTest {
 		Range range = CodeActionUtil.getRange(cu, "Foo() {", 0);
 		assertCodeActions(cu, range, expected);
 	}
+
+	@Test
+	public void testConvertToNestedCursor1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new Foo(/*cursor*/) {};\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    private final class FooExtension extends Foo {\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new FooExtension();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected expected = new Expected(CONVERT_ANONYMOUS_TO_NESTED, buf.toString(), CodeActionKind.Refactor);
+
+		Range range = CodeActionUtil.getRange(cu, "/*cursor*/", 0);
+		assertCodeActions(cu, range, expected);
+	}
+
+	@Test
+	public void testConvertToNestedCursor2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new Foo() /*cursor*/{};\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    private final class FooExtension extends Foo {\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new FooExtension();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected expected = new Expected(CONVERT_ANONYMOUS_TO_NESTED, buf.toString(), CodeActionKind.Refactor);
+
+		Range range = CodeActionUtil.getRange(cu, "/*cursor*/", 0);
+		assertCodeActions(cu, range, expected);
+	}
+
+	@Test
+	public void testConvertToNestedCursor3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new Foo() {/*cursor*/};\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class Foo {}\n");
+		buf.append("public class E {\n");
+		buf.append("    private final class FooExtension extends Foo {\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    public void test() {\n");
+		buf.append("        Foo foo = new FooExtension();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected expected = new Expected(CONVERT_ANONYMOUS_TO_NESTED, buf.toString(), CodeActionKind.Refactor);
+
+		Range range = CodeActionUtil.getRange(cu, "/*cursor*/", 0);
+		assertCodeActions(cu, range, expected);
+	}
 }

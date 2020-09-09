@@ -379,11 +379,7 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, final ASTNode node, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
-		if (!(node instanceof Name)) {
-			return false;
-		}
-
+	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -405,12 +401,11 @@ public class RefactorProcessor {
 
 	public static RefactoringCorrectionProposal getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContext context, final ASTNode node, boolean returnAsCommand) throws CoreException {
 		String label = CorrectionMessages.QuickAssistProcessor_convert_anonym_to_nested;
-		ASTNode normalized = ASTNodes.getNormalizedNode(node);
-		if (normalized.getLocationInParent() != ClassInstanceCreation.TYPE_PROPERTY) {
+		ClassInstanceCreation cic = getClassInstanceCreation(node);
+		if (cic == null) {
 			return null;
 		}
-
-		final AnonymousClassDeclaration anonymTypeDecl = ((ClassInstanceCreation) normalized.getParent()).getAnonymousClassDeclaration();
+		final AnonymousClassDeclaration anonymTypeDecl = cic.getAnonymousClassDeclaration();
 		if (anonymTypeDecl == null || anonymTypeDecl.resolveBinding() == null) {
 			return null;
 		}
@@ -425,7 +420,7 @@ public class RefactorProcessor {
 					Arrays.asList(CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND, params));
 		}
 
-		String extTypeName = ASTNodes.getSimpleNameIdentifier((Name) node);
+		String extTypeName = ASTNodes.getTypeName(cic.getType());
 		ITypeBinding anonymTypeBinding = anonymTypeDecl.resolveBinding();
 		String className;
 		if (anonymTypeBinding.getInterfaces().length == 0) {
@@ -448,27 +443,26 @@ public class RefactorProcessor {
 		RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.Refactor, cu, refactoring, IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED);
 		proposal.setLinkedProposalModel(linkedProposalModel);
 		return proposal;
+	}
 
+	private static ClassInstanceCreation getClassInstanceCreation(ASTNode node) {
+		while (node instanceof Name || node instanceof Type || node instanceof Dimension || node.getParent() instanceof MethodDeclaration
+				|| node.getLocationInParent() == AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY) {
+			node = node.getParent();
+		}
+
+		if (node instanceof ClassInstanceCreation) {
+			return (ClassInstanceCreation) node;
+		} else if (node.getLocationInParent() == ClassInstanceCreation.ANONYMOUS_CLASS_DECLARATION_PROPERTY) {
+			return (ClassInstanceCreation) node.getParent();
+		} else {
+			return null;
+		}
 	}
 
 	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
-		while (covering instanceof Name || covering instanceof Type || covering instanceof Dimension || covering.getParent() instanceof MethodDeclaration
-				|| covering.getLocationInParent() == AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY) {
-			covering = covering.getParent();
-		}
-
-		ClassInstanceCreation cic;
-		if (covering instanceof ClassInstanceCreation) {
-			cic = (ClassInstanceCreation) covering;
-		} else if (covering.getLocationInParent() == ClassInstanceCreation.ANONYMOUS_CLASS_DECLARATION_PROPERTY) {
-			cic = (ClassInstanceCreation) covering.getParent();
-		} else if (covering instanceof Name) {
-			ASTNode normalized = ASTNodes.getNormalizedNode(covering);
-			if (normalized.getLocationInParent() != ClassInstanceCreation.TYPE_PROPERTY) {
-				return false;
-			}
-			cic = (ClassInstanceCreation) normalized.getParent();
-		} else {
+		ClassInstanceCreation cic = getClassInstanceCreation(covering);
+		if (cic == null) {
 			return false;
 		}
 
