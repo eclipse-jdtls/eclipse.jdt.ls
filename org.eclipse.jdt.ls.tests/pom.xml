@@ -56,6 +56,11 @@
 										<version>0.0.0</version>
 										<type>eclipse-feature</type>
 									</dependency>
+									<dependency>
+										<artifactId>org.eclipse.jdt.java15patch</artifactId>
+										<version>0.0.0</version>
+										<type>eclipse-feature</type>
+									</dependency>
 								</dependencies>
 							</configuration>
 						</plugin>

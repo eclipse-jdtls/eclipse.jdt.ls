@@ -32,7 +32,7 @@
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2020-09/202008281000/"/>
+            <repository location="https://download.eclipse.org/releases/2020-09/202009161000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
@@ -41,6 +41,10 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.9.0/"/>
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
+        </location>
+        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+            <repository location="https://download.eclipse.org/eclipse/updates/4.17-P-builds/P20200916-1110"/>
+	        <unit id="org.eclipse.jdt.java15patch.feature.group" version="0.0.0"/>
         </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
