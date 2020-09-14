@@ -525,10 +525,11 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		if (!(node instanceof SimpleName)) {
+		SimpleName name = getSimpleNameForVariable(node);
+		if (name == null) {
 			return false;
 		}
-		SimpleName name = (SimpleName) node;
+
 		IBinding binding = name.resolveBinding();
 		if (!(binding instanceof IVariableBinding)) {
 			return false;
@@ -569,6 +570,26 @@ public class RefactorProcessor {
 		return true;
 	}
 
+	private static SimpleName getSimpleNameForVariable(ASTNode node) {
+		if (!(node instanceof SimpleName)) {
+			return null;
+		}
+		SimpleName name = (SimpleName) node;
+		if (!name.isDeclaration()) {
+			while (node instanceof Name || node instanceof Type) {
+				node = node.getParent();
+			}
+			if (node instanceof VariableDeclarationStatement) {
+				List<VariableDeclarationFragment> fragments = ((VariableDeclarationStatement) node).fragments();
+				if (fragments.size() > 0) {
+					// var is not allowed in a compound declaration
+					name = fragments.get(0).getName();
+				}
+			}
+		}
+		return name;
+	}
+
 	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
@@ -583,10 +604,11 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		if (!(node instanceof SimpleName)) {
+		SimpleName name = getSimpleNameForVariable(node);
+		if (name == null) {
 			return false;
 		}
-		SimpleName name = (SimpleName) node;
+
 		IBinding binding = name.resolveBinding();
 		if (!(binding instanceof IVariableBinding)) {
 			return false;
