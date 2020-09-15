@@ -1,5 +1,13 @@
 # Change Log
 
+# [0.61.0 (September 16th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/79?closed=1)
+ * enhancement - Importing mixed (maven,gradle,eclipse) projects. See [#1532](https://github.com/eclipse/eclipse.jdt.ls/pull/1532).
+ * enhancement - Allow to customize fileHeader and typeComment for the new Java file. See [#1540](https://github.com/eclipse/eclipse.jdt.ls/pull/1540).
+ * enhancement - Better expose the "Anonymous to nested class" refactoring. See [#1541](https://github.com/eclipse/eclipse.jdt.ls/pull/1541).
+ * enhancement - Can trigger 'convert var' and 'convert resolved type' on types. See [#1544](https://github.com/eclipse/eclipse.jdt.ls/pull/1544).
+ * bug fix - Fixed override method proposal. See [#1537](https://github.com/eclipse/eclipse.jdt.ls/pull/1537).
+ * build - Update TP to use Eclipse 2020-09 RC2. See [#1546](https://github.com/eclipse/eclipse.jdt.ls/pull/1546).
+
 # [0.60.0 (September 1st, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/78?closed=1)
  * enhancement - Update to Eclipse 2020-09-M3. See [#1534](https://github.com/eclipse/eclipse.jdt.ls/pull/1534).
  * enhancement - Use `,` as signature trigger char. See [#1522](https://github.com/eclipse/eclipse.jdt.ls/pull/1522).
