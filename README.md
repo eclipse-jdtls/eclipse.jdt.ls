@@ -123,6 +123,7 @@ This repository only contains the server implementation. Here are some known cli
 * [Eclipse Theia](https://github.com/theia-ide/theia) : Theia is a cloud & desktop IDE framework implemented in TypeScript
 * [coc-java](https://github.com/neoclide/coc-java) : an extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [MS Paint IDE](https://github.com/MSPaintIDE/MSPaintIDE) : an IDE for programming in MS Paint
+* [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls) : an extension for Neovim
 
 Continuous Integration Builds
 -----------------------------
