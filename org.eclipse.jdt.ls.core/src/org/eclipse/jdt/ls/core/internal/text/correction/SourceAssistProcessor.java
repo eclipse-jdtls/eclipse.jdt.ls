@@ -39,6 +39,8 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -52,6 +54,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
@@ -172,6 +176,10 @@ public class SourceAssistProcessor {
 		// Generate Delegate Methods
 		Optional<Either<Command, CodeAction>> generateDelegateMethods = getGenerateDelegateMethodsAction(params, context, type);
 		addSourceActionCommand($, params.getContext(), generateDelegateMethods);
+
+		// Add final modifiers where possible
+		Optional<Either<Command, CodeAction>> generateFinalModifiers = addFinalModifierWherePossibleAction(context);
+		addSourceActionCommand($, params.getContext(), generateFinalModifiers);
 
 		return $;
 	}
@@ -374,6 +382,37 @@ public class SourceAssistProcessor {
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateDelegateMethodsAction_label);
 			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
+			codeAction.setCommand(command);
+			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			return Optional.of(Either.forRight(codeAction));
+		} else {
+			return Optional.of(Either.forLeft(command));
+		}
+	}
+
+	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleAction(IInvocationContext context) {
+		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
+
+		if (fix == null) {
+			return Optional.empty();
+		}
+
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context, JavaCodeActionKind.SOURCE_GENERATE_FINAL_MODIFIERS);
+		WorkspaceEdit edit;
+		try {
+			edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
+			return Optional.empty();
+		}
+
+		if (!ChangeUtil.hasChanges(edit)) {
+			return Optional.empty();
+		}
+		Command command = new Command(ActionMessages.GenerateFinalModifiersAction_label, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+			CodeAction codeAction = new CodeAction(ActionMessages.GenerateFinalModifiersAction_label);
+			codeAction.setKind(proposal.getKind());
 			codeAction.setCommand(command);
 			codeAction.setDiagnostics(Collections.EMPTY_LIST);
 			return Optional.of(Either.forRight(codeAction));
