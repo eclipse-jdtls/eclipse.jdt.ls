@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Objects;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -1161,10 +1163,17 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 			assertNotNull(list);
 			List<CompletionItem> items = new ArrayList<>(list.getItems());
-			CompletionItem item = items.get(5);
-			assertEquals("if", item.getLabel());
-			String insertText = item.getInsertText();
-			assertEquals("if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+			boolean hasIfSnippet = false;
+			for (CompletionItem item : items) {
+				if (!Objects.equal(item.getLabel(), "if")) {
+					continue;
+				}
+				if (Objects.equal(item.getInsertText(), "if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}")) {
+					hasIfSnippet = true;
+					break;
+				}
+			}
+			assertTrue(hasIfSnippet);
 		} finally {
 			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, substringMatch);
 		}
