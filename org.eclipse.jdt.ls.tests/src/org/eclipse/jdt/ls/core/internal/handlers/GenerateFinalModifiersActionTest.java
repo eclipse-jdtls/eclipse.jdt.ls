@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2020 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
