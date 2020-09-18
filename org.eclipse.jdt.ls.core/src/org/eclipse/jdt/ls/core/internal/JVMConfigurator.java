@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
+ * Copyright (c) 2019-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -42,7 +42,11 @@ import org.eclipse.jdt.launching.VMStandin;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.MessageType;
 
 /**
  * Configures and listens to JVM changes.
@@ -89,6 +93,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 	}
 
 	public static boolean configureJVMs(Preferences preferences) throws CoreException {
+		return configureJVMs(preferences, null);
+	}
+
+	public static boolean configureJVMs(Preferences preferences, JavaClientConnection connection) throws CoreException {
 		boolean changed = false;
 		boolean defaultVMSet = false;
 		Set<RuntimeEnvironment> runtimes = preferences.getRuntimes();
@@ -116,10 +124,16 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 
 					IStatus status = installType.validateInstallLocation(file);
 					if (!status.isOK()) {
+						if (Objects.equals(file.getName(), "bin")) {
+							sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path(" + runtime.getPath() + ")");
+						} else {
+							sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": The path (" + runtime.getPath() + ") does not point to a JDK.");
+						}
 						JavaLanguageServerPlugin.log(status);
 						continue;
 					}
 
+					
 					vmStandin.setName(runtime.getName());
 					vmStandin.setInstallLocation(file);
 
@@ -158,9 +172,11 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						}
 					}
 					if (!setDefaultEnvironmentVM(vm, runtime.getName())) {
+						sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment.");
 						JavaLanguageServerPlugin.logError("Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment");
 					}
 				} else {
+					sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": The path points to a missing or inaccessible folder (" + runtime.getPath() + ")");
 					JavaLanguageServerPlugin.logInfo("Invalid runtime: " + runtime);
 				}
 			}
@@ -175,6 +191,26 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			JavaRuntime.saveVMConfiguration();
 		}
 		return changed;
+	}
+
+	private static void sendNotification(JavaClientConnection connection, String message) {
+		if (connection == null) {
+			return;
+		}
+
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager != null && preferencesManager.getClientPreferences().isActionableRuntimeNotificationSupport()) {
+			ActionableNotification runtimeNotification = new ActionableNotification()
+							.withSeverity(Severity.error.toMessageType())
+							.withMessage(message)
+							.withCommands(Arrays.asList(
+								new Command("Open Settings", "java.runtimeValidation.open", null)
+							));
+			connection.sendActionableNotification(runtimeNotification);
+			return;
+		}
+		
+		connection.showNotificationMessage(MessageType.Error, message);
 	}
 
 	private static boolean setDefaultEnvironmentVM(IVMInstall vm, String name) {
@@ -287,7 +323,6 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			Map<String, String> options = javaProject.getOptions(false);
 			JavaCore.setComplianceOptions(compliance, options);
 		}
-		;
 		if (JavaCore.compareJavaVersions(version, JavaCore.latestSupportedJavaVersion()) >= 0) {
 			//Enable Java preview features for the latest JDK release by default and stfu about it
 			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);

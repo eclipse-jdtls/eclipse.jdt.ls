@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
+ * Copyright (c) 2019-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,10 +17,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
@@ -41,11 +44,14 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.LibraryLocation;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.MessageType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.framework.Bundle;
 
@@ -57,16 +63,22 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
 	private static final String ENVIRONMENT_NAME = "JavaSE-11";
 	private IVMInstall originalVm;
+	private JavaClientConnection javaClient;
+
+	@Mock
+	private ClientPreferences clientPreferences;
 
 	@Before
 	public void setup() {
 		originalVm = JavaRuntime.getDefaultVMInstall();
+		javaClient = new JavaClientConnection(client);
 	}
 
 	@Override
 	@After
 	public void cleanUp() throws CoreException {
 		JavaRuntime.setDefaultVMInstall(originalVm, new NullProgressMonitor());
+		javaClient.disconnect();
 	}
 
 	@Test
@@ -160,14 +172,43 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
 			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
 
-
 		} finally {
 			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
 		}
 	}
 
+	@Test
+	public void testInvalidRuntime() throws Exception {
+		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		when(clientPreferences.isActionableRuntimeNotificationSupport()).thenReturn(true);
+
+		Preferences prefs = new Preferences();
+		File file = new File("fakejdk2", "11a_nonexist");
+		String path = file.getAbsolutePath();
+		Set<RuntimeEnvironment> runtimes = new HashSet<>();
+		RuntimeEnvironment runtime = new RuntimeEnvironment();
+		runtime.setPath(path);
+		runtime.setName(ENVIRONMENT_NAME);
+		runtimes.add(runtime);
+		prefs.setRuntimes(runtimes);
+
+		JVMConfigurator.configureJVMs(prefs, javaClient);
+
+		List<ActionableNotification> notifications = getClientRequests("sendActionableNotification");
+		assertEquals(1, notifications.size());
+		ActionableNotification notification = notifications.get(0);
+		assertEquals(MessageType.Error, notification.getSeverity());
+		assertEquals(1, notification.getCommands().size());
+	}
+
 	private void assertComplianceAndPreviewSupport(IJavaProject javaProject, String compliance, boolean previewEnabled) {
 		assertEquals(previewEnabled ? JavaCore.ENABLED : JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		assertEquals(compliance, javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> List<T> getClientRequests(String name) {
+		List<?> requests = clientRequests.get(name);
+		return requests != null ? (List<T>) requests : Collections.emptyList();
 	}
 }
