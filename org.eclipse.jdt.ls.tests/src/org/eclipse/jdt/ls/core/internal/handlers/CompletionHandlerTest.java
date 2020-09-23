@@ -32,9 +32,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
-import com.google.common.base.Objects;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -1165,10 +1164,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			List<CompletionItem> items = new ArrayList<>(list.getItems());
 			boolean hasIfSnippet = false;
 			for (CompletionItem item : items) {
-				if (!Objects.equal(item.getLabel(), "if")) {
+				if (!Objects.equals(item.getLabel(), "if")) {
 					continue;
 				}
-				if (Objects.equal(item.getInsertText(), "if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}")) {
+				if (Objects.equals(item.getInsertText(), "if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}")) {
 					hasIfSnippet = true;
 					break;
 				}
