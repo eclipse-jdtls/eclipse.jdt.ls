@@ -54,6 +54,11 @@ public interface JavaCodeActionKind {
 	public static final String SOURCE_GENERATE_DELEGATE_METHODS = SOURCE_GENERATE + ".delegateMethods";
 
 	/**
+	 * Generate final modifiers where possible
+	 */
+	public static final String SOURCE_GENERATE_FINAL_MODIFIERS = SOURCE_GENERATE + ".finalModifiers";
+
+	/**
 	 * Override/Implement methods kind
 	 */
 	public static final String SOURCE_OVERRIDE_METHODS = CodeActionKind.Source + ".overrideMethods";

@@ -30,6 +30,7 @@ public final class ActionMessages extends NLS {
 	public static String GenerateConstructorsAction_label;
 	public static String GenerateConstructorsAction_ellipsisLabel;
 	public static String GenerateDelegateMethodsAction_label;
+	public static String GenerateFinalModifiersAction_label;
 	public static String MoveRefactoringAction_label;
 	public static String MoveRefactoringAction_templateLabel;
 	public static String InlineMethodRefactoringAction_label;
