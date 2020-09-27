@@ -19,6 +19,7 @@ import java.util.List;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -31,17 +32,15 @@ import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
-import org.eclipse.jface.text.IDocument;
 
 public class SemanticTokensVisitor extends ASTVisitor {
-	private IDocument document;
+	private CompilationUnit cu;
 	private SemanticTokenManager manager;
 	private List<SemanticToken> tokens;
 
-	public SemanticTokensVisitor(IDocument document, SemanticTokenManager manager) {
+	public SemanticTokensVisitor(CompilationUnit cu, SemanticTokenManager manager) {
 		this.manager = manager;
-		this.document = document;
+		this.cu = cu;
 		this.tokens = new ArrayList<>();
 	}
 
@@ -85,9 +84,8 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		int currentLine = 0;
 		int currentColumn = 0;
 		for (SemanticToken token : this.tokens) {
-			int[] lineAndColumn = JsonRpcHelpers.toLine(this.document, token.getOffset());
-			int line = lineAndColumn[0];
-			int column = lineAndColumn[1];
+			int line = cu.getLineNumber(token.getOffset()) - 1;
+			int column = cu.getColumnNumber(token.getOffset());
 			int deltaLine = line - currentLine;
 			if (deltaLine != 0) {
 				currentLine = line;
