@@ -46,6 +46,7 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.junit.After;
 import org.junit.Before;
@@ -178,7 +179,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	@Test
-	public void testInvalidRuntime() throws Exception {
+	public void testInvalidRuntimeWithActionableNotification() throws Exception {
 		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isActionableRuntimeNotificationSupport()).thenReturn(true);
 
@@ -199,6 +200,30 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		ActionableNotification notification = notifications.get(0);
 		assertEquals(MessageType.Error, notification.getSeverity());
 		assertEquals(1, notification.getCommands().size());
+	}
+
+	@Test
+	public void testInvalidRuntime() throws Exception {
+		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		when(clientPreferences.isActionableRuntimeNotificationSupport()).thenReturn(false);
+
+		Preferences prefs = new Preferences();
+		File file = new File("fakejdk2", "11a" + File.separator + "bin");
+		String path = file.getAbsolutePath();
+		Set<RuntimeEnvironment> runtimes = new HashSet<>();
+		RuntimeEnvironment runtime = new RuntimeEnvironment();
+		runtime.setPath(path);
+		runtime.setName(ENVIRONMENT_NAME);
+		runtimes.add(runtime);
+		prefs.setRuntimes(runtimes);
+
+		JVMConfigurator.configureJVMs(prefs, javaClient);
+
+		List<MessageParams> notifications = getClientRequests("showMessage");
+		assertEquals(1, notifications.size());
+		MessageParams notification = notifications.get(0);
+		assertEquals(MessageType.Error, notification.getType());
+		assertEquals("Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path (" + runtime.getPath() + ").", notification.getMessage());	
 	}
 
 	private void assertComplianceAndPreviewSupport(IJavaProject javaProject, String compliance, boolean previewEnabled) {

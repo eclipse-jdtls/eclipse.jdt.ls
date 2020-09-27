@@ -125,7 +125,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 					IStatus status = installType.validateInstallLocation(file);
 					if (!status.isOK()) {
 						if (Objects.equals(file.getName(), "bin")) {
-							sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path(" + runtime.getPath() + ")");
+							sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path (" + runtime.getPath() + ").");
 						} else {
 							sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": The path (" + runtime.getPath() + ") does not point to a JDK.");
 						}
@@ -176,7 +176,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						JavaLanguageServerPlugin.logError("Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment");
 					}
 				} else {
-					sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": The path points to a missing or inaccessible folder (" + runtime.getPath() + ")");
+					sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": The path points to a missing or inaccessible folder (" + runtime.getPath() + ").");
 					JavaLanguageServerPlugin.logInfo("Invalid runtime: " + runtime);
 				}
 			}
