@@ -12,10 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1202,5 +1207,52 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 		Expected e1 = new Expected("Remove 'final' modifier of 'X'", buf.toString());
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddSealedMissingClassModifierProposal() throws Exception {
+		Map<String, String> options15 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options15, JavaCore.VERSION_15);
+		options15.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options15.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options15);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		assertNoErrors(fJProject.getResource());
+
+		StringBuilder buf = new StringBuilder();
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("class Square extends Shape {}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("Shape.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("final class Square extends Shape {}\n");
+		Expected e1 = new Expected("Change 'Square' to 'final'", buf.toString());
+		assertCodeActions(cu, e1);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("non-sealed class Square extends Shape {}\n");
+		Expected e2 = new Expected("Change 'Square' to 'non-sealed'", buf.toString());
+		assertCodeActions(cu, e2);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("sealed class Square extends Shape {}\n");
+		Expected e3 = new Expected("Change 'Square' to 'sealed'", buf.toString());
+		assertCodeActions(cu, e3);
 	}
 }

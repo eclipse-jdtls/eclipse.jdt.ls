@@ -147,6 +147,9 @@ public final class CorrectionMessages extends NLS {
 	public static String RenameRefactoringProposal_additionalInfo;
 	public static String RenameRefactoringProposal_name;
 
+	public static String ModifierCorrectionSubProcessor_changemodifierto_final_description;
+	public static String ModifierCorrectionSubProcessor_changemodifierto_sealed_description;
+	public static String ModifierCorrectionSubProcessor_changemodifierto_nonsealed_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertoabstract_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertostatic_description;
 	public static String ModifierCorrectionSubProcessor_changemodifiertononstatic_description;

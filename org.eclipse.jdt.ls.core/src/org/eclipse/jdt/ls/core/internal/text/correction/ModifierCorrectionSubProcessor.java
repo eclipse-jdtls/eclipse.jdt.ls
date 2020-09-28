@@ -962,4 +962,38 @@ public class ModifierCorrectionSubProcessor {
 		return null;
 	}
 
+	public static void addSealedMissingModifierProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		if (proposals == null) {
+			return;
+		}
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if (!(selectedNode instanceof SimpleName)) {
+			return;
+		}
+		if (!(((SimpleName) selectedNode).getParent() instanceof TypeDeclaration)) {
+			return;
+		}
+		TypeDeclaration typeDecl = (TypeDeclaration) ((SimpleName) selectedNode).getParent();
+		boolean isInterface = typeDecl.isInterface();
+
+		ICompilationUnit cu = context.getCompilationUnit();
+		ITypeBinding typeDeclBinding = typeDecl.resolveBinding();
+		int relevance = IProposalRelevance.CHANGE_MODIFIER_TO_FINAL;
+		String label;
+
+		if (!isInterface) {
+			// Add final modifier
+			label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_final_description, typeDecl.getName());
+			proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.FINAL, 0, relevance));
+		}
+
+		// Add sealed modifier
+		label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_sealed_description, typeDecl.getName());
+		proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.SEALED, 0, relevance));
+
+		// Add non-sealed modifier
+		label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifierto_nonsealed_description, typeDecl.getName());
+		proposals.add(new ModifierChangeCorrectionProposal(label, cu, typeDeclBinding, typeDecl, Modifier.NON_SEALED, 0, relevance));
+	}
+
 }
