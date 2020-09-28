@@ -31,7 +31,8 @@ public enum TokenType {
 	METHOD("function"),
 	PROPERTY("property"),
 	VARIABLE("variable"),
-	PARAMETER("parameter");
+	PARAMETER("parameter"),
+	MODIFIER("modifier");
 
 	/**
 	 * This is the name of the token type given to the client, so it

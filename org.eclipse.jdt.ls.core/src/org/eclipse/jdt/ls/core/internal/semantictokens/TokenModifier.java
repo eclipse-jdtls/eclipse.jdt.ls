@@ -13,14 +13,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
-import java.util.Arrays;
-
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotationTypeMemberDeclaration;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -31,54 +31,21 @@ import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 public enum TokenModifier {
-	STATIC("static") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isStatic(binding.getModifiers());
-		}
-	},
-	FINAL("readonly") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isFinal(binding.getModifiers());
-		}
-	},
-	DEPRECATED("deprecated") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return binding.isDeprecated();
-		}
-	},
-	PUBLIC("public") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isPublic(binding.getModifiers());
-		}
-	},
-	PRIVATE("private") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isPrivate(binding.getModifiers());
-		}
-	},
-	PROTECTED("protected") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isProtected(binding.getModifiers());
-		}
-	},
-	ABSTRACT("abstract") {
-		@Override
-		protected boolean applies(IBinding binding) {
-			return Modifier.isAbstract(binding.getModifiers());
-		}
-	},
-	DECLARATION("declaration") {
-		@Override
-		protected boolean applies(SimpleName simpleName) {
-			return isDeclaration(simpleName);
-		}
-	};
+	// Standard Java modifiers
+	PUBLIC("public"),
+	PRIVATE("private"),
+	PROTECTED("protected"),
+	ABSTRACT("abstract"),
+	STATIC("static"),
+	FINAL("readonly"),
+	NATIVE("native"),
+
+	// Additional semantic modifiers
+	DEPRECATED("deprecated"),
+	GENERIC("generic"),
+	TYPE_ARGUMENT("typeArgument"),
+	DECLARATION("declaration"),
+	IMPORT_DECLARATION("importDeclaration");
 
 	/**
 	 * This is the name of the token modifier given to the client, so it
@@ -90,7 +57,13 @@ public enum TokenModifier {
 	 *
 	 * @see https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
 	 */
-	private String genericName;
+	private final String genericName;
+
+	/**
+	 * The bitmask for this semantic token modifier.
+	 * Use bitwise OR to combine with other token modifiers.
+	 */
+	public final int bitmask = 1 << ordinal();
 
 	TokenModifier(String genericName) {
 		this.genericName = genericName;
@@ -102,45 +75,105 @@ public enum TokenModifier {
 	}
 
 	/**
-	* Returns an array of all the semantic token modifiers that apply to a binding.
-	* Used when the desired binding can't be found by calling
-	* {@link SimpleName#resolveBinding()}, as is the case
-	* for the simple name of a constructor invocation.
-	*
-	* @param binding A binding.
-	* @return An array of all the applicable modifiers for the binding.
-	*
-	* @apiNote The declaration modifier never applies to a binding, use
-	* {@link #getApplicableModifiers(SimpleName)} to check for declarations.
-	*/
-	public static TokenModifier[] getApplicableModifiers(IBinding binding) {
-		if (binding == null) return new TokenModifier[0];
+	 * Returns the bitwise OR of all the semantic token modifiers that can
+	 * be easily figured out from a given binding. No modifiers (the value 0)
+	 * are returned if the binding is {@code null}.
+	 *
+	 * @param binding A binding.
+	 * @return The bitwise OR of the applicable modifiers for the binding.
+	 */
+	public static int getApplicableModifiers(IBinding binding) {
+		if (binding == null) {
+			return 0;
+		}
 
-		return Arrays.stream(TokenModifier.values())
-			.filter(tm -> tm.applies(binding))
-			.toArray(size -> new TokenModifier[size]);
+		int modifiers = 0;
+		int bindingModifiers = binding.getModifiers();
+		if (Modifier.isPublic(bindingModifiers)) {
+			modifiers |= PUBLIC.bitmask;
+		}
+		if (Modifier.isPrivate(bindingModifiers)) {
+			modifiers |= PRIVATE.bitmask;
+		}
+		if (Modifier.isProtected(bindingModifiers)) {
+			modifiers |= PROTECTED.bitmask;
+		}
+		if (Modifier.isAbstract(bindingModifiers)) {
+			modifiers |= ABSTRACT.bitmask;
+		}
+		if (Modifier.isStatic(bindingModifiers)) {
+			modifiers |= STATIC.bitmask;
+		}
+		if (Modifier.isFinal(bindingModifiers)) {
+			modifiers |= FINAL.bitmask;
+		}
+		if (Modifier.isNative(bindingModifiers)) {
+			modifiers |= NATIVE.bitmask;
+		}
+		if (binding.isDeprecated()) {
+			modifiers |= DEPRECATED.bitmask;
+		}
+		return modifiers;
 	}
 
 	/**
-	* Returns an array of all the semantic token modifiers that apply to a simple name.
-	*
-	* @param simpleName A simple name.
-	* @return An array of all the applicable modifiers for the simple name.
-	*/
-	public static TokenModifier[] getApplicableModifiers(SimpleName simpleName) {
-		if (simpleName == null) return new TokenModifier[0];
+	 * Returns whether or not a given binding corresponds to
+	 * a generic (or parameterized) type or method. {@code false}
+	 * is returned if the binding is {@code null}.
+	 *
+	 * @param binding A binding.
+	 * @return {@code true} if the binding corresponds to a generic
+	 * type or method, {@code false} otherwise.
+	 */
+	public static boolean isGeneric(IBinding binding) {
+		if (binding == null) {
+			return false;
+		}
 
-		return Arrays.stream(TokenModifier.values())
-			.filter(tm -> tm.applies(simpleName))
-			.toArray(size -> new TokenModifier[size]);
+		switch (binding.getKind()) {
+			case IBinding.TYPE: {
+				return isGeneric((ITypeBinding) binding);
+			}
+			case IBinding.METHOD: {
+				return isGeneric((IMethodBinding) binding);
+			}
+			default:
+			return false;
+		}
 	}
 
-	protected boolean applies(IBinding binding) {
-		return false;
+	/**
+	 * Returns whether or not a given type binding corresponds to
+	 * a generic (or parameterized) type. {@code false}
+	 * is returned if the type binding is {@code null}.
+	 *
+	 * @param typeBinding A type binding.
+	 * @return {@code true} if the type binding corresponds to a generic
+	 * type, {@code false} otherwise.
+	 */
+	public static boolean isGeneric(ITypeBinding typeBinding) {
+		if (typeBinding == null) {
+			return false;
+		}
+
+		return typeBinding.isGenericType() || typeBinding.isParameterizedType();
 	}
 
-	protected boolean applies(SimpleName simpleName) {
-		return applies(simpleName.resolveBinding());
+	/**
+	 * Returns whether or not a given method binding corresponds to
+	 * a generic (or parameterized) method. {@code false}
+	 * is returned if the method binding is {@code null}.
+	 *
+	 * @param methodBinding A method binding.
+	 * @return {@code true} if the method binding corresponds to a generic
+	 * method, {@code false} otherwise.
+	 */
+	public static boolean isGeneric(IMethodBinding methodBinding) {
+		if (methodBinding == null) {
+			return false;
+		}
+
+		return methodBinding.isGenericMethod() || methodBinding.isParameterizedMethod();
 	}
 
 	/**
@@ -154,7 +187,7 @@ public enum TokenModifier {
 	*
 	* @see SimpleName#isDeclaration()
 	*/
-	private static boolean isDeclaration(SimpleName simpleName) {
+	public static boolean isDeclaration(SimpleName simpleName) {
 		StructuralPropertyDescriptor d = simpleName.getLocationInParent();
 		if (d == null) {
 			return false;

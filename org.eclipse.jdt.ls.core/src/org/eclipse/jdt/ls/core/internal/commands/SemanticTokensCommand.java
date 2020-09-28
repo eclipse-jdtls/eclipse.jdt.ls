@@ -13,8 +13,6 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import java.util.Collections;
-
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -22,9 +20,7 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
-import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokenManager;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokens;
-import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensLegend;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensVisitor;
 
 public class SemanticTokensCommand {
@@ -36,20 +32,16 @@ public class SemanticTokensCommand {
 	private static SemanticTokens doProvide(String uri) {
 		ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
 		if (typeRoot == null) {
-			return new SemanticTokens(Collections.emptyList());
+			return new SemanticTokens(new int[0]);
 		}
 
 		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		if (root == null) {
-			return new SemanticTokens(Collections.emptyList());
+			return new SemanticTokens(new int[0]);
 		}
 
-		SemanticTokensVisitor collector = new SemanticTokensVisitor(root, SemanticTokenManager.getInstance());
+		SemanticTokensVisitor collector = new SemanticTokensVisitor(root);
 		root.accept(collector);
 		return collector.getSemanticTokens();
-	}
-
-	public static SemanticTokensLegend getLegend() {
-		return SemanticTokenManager.getInstance().getLegend();
 	}
 }

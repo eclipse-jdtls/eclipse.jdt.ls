@@ -9,5 +9,5 @@ import java.lang.Math.*;
 import static java.lang.Math.*;
 
 public class Packages {
-
+	public java.lang.String string = new java.lang.String();
 }

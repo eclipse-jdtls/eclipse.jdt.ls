@@ -13,22 +13,26 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
-import java.util.List;
+import java.util.Arrays;
 
-public class SemanticTokensLegend {
-	private final List<String> tokenTypes;
-	private final List<String> tokenModifiers;
+public final class SemanticTokensLegend {
+	private final String[] tokenTypes;
+	private final String[] tokenModifiers;
 
-	public SemanticTokensLegend(List<String> tokenTypes, List<String> tokenModifiers){
-		this.tokenTypes = tokenTypes;
-		this.tokenModifiers = tokenModifiers;
-	};
-
-	public List<String> getTokenTypes() {
-		return this.tokenTypes;
+	public SemanticTokensLegend() {
+		tokenTypes = Arrays.stream(TokenType.values())
+			.map(TokenType::toString)
+			.toArray(String[]::new);
+		tokenModifiers = Arrays.stream(TokenModifier.values())
+			.map(TokenModifier::toString)
+			.toArray(String[]::new);
 	}
 
-	public List<String> getTokenModifiers() {
-		return this.tokenModifiers;
+	public String[] getTokenTypes() {
+		return tokenTypes;
+	}
+
+	public String[] getTokenModifiers() {
+		return tokenModifiers;
 	}
 }
