@@ -21,9 +21,11 @@ import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
@@ -35,22 +37,20 @@ import org.eclipse.jdt.core.dom.Type;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
-	private SemanticTokenManager manager;
 	private List<SemanticToken> tokens;
 
-	public SemanticTokensVisitor(CompilationUnit cu, SemanticTokenManager manager) {
-		this.manager = manager;
+	public SemanticTokensVisitor(CompilationUnit cu) {
 		this.cu = cu;
 		this.tokens = new ArrayList<>();
 	}
 
 	private class SemanticToken {
 		private final TokenType tokenType;
-		private final TokenModifier[] tokenModifiers;
+		private final int tokenModifiers;
 		private final int offset;
 		private final int length;
 
-		public SemanticToken(int offset, int length, TokenType tokenType, TokenModifier[] tokenModifiers) {
+		public SemanticToken(int offset, int length, TokenType tokenType, int tokenModifiers) {
 			this.offset = offset;
 			this.length = length;
 			this.tokenType = tokenType;
@@ -61,7 +61,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			return tokenType;
 		}
 
-		public TokenModifier[] getTokenModifiers() {
+		public int getTokenModifiers() {
 			return tokenModifiers;
 		}
 
@@ -75,15 +75,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	public SemanticTokens getSemanticTokens() {
-		List<Integer> data = encodedTokens();
-		return new SemanticTokens(data);
+		return new SemanticTokens(encodedTokens());
 	}
 
-	private List<Integer> encodedTokens() {
-		List<Integer> data = new ArrayList<>();
+	private int[] encodedTokens() {
+		int numTokens = tokens.size();
+		int[] data = new int[numTokens * 5];
 		int currentLine = 0;
 		int currentColumn = 0;
-		for (SemanticToken token : this.tokens) {
+		for (int i = 0; i < numTokens; i++) {
+			SemanticToken token = tokens.get(i);
 			int line = cu.getLineNumber(token.getOffset()) - 1;
 			int column = cu.getColumnNumber(token.getOffset());
 			int deltaLine = line - currentLine;
@@ -95,18 +96,15 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			currentColumn = column;
 			// Disallow duplicate/conflict token (if exists)
 			if (deltaLine != 0 || deltaColumn != 0) {
-				int tokenTypeIndex = manager.getTokenTypes().indexOf(token.getTokenType());
-				TokenModifier[] modifiers = token.getTokenModifiers();
-				int encodedModifiers = 0;
-				for (TokenModifier modifier : modifiers) {
-					int bit = manager.getTokenModifiers().indexOf(modifier);
-					encodedModifiers = encodedModifiers | (0b00000001 << bit);
-				}
-				data.add(deltaLine);
-				data.add(deltaColumn);
-				data.add(token.getLength());
-				data.add(tokenTypeIndex);
-				data.add(encodedModifiers);
+				int tokenTypeIndex = token.getTokenType().ordinal();
+				int tokenModifiers = token.getTokenModifiers();
+
+				int offset = i * 5;
+				data[offset] = deltaLine;
+				data[offset + 1] = deltaColumn;
+				data[offset + 2] = token.getLength();
+				data[offset + 3] = tokenTypeIndex;
+				data[offset + 4] = tokenModifiers;
 			}
 		}
 		return data;
@@ -118,13 +116,13 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 *
 	 * @param node The AST node representing the location of the semantic token.
 	 * @param tokenType The type of the semantic token.
-	 * @param modifiers The modifiers of the semantic token.
+	 * @param modifiers The bitwise OR of the semantic token modifiers, see {@link TokenModifier#bitmask}.
 	 *
 	 * @apiNote This method is order-dependent because of {@link #encodedTokens()}.
 	 * If semantic tokens are not added in the order they appear in the document,
 	 * the encoding algorithm might discard them.
 	 */
-	private void addToken(ASTNode node, TokenType tokenType, TokenModifier[] modifiers) {
+	private void addToken(ASTNode node, TokenType tokenType, int modifiers) {
 		int offset = node.getStartPosition();
 		int length = node.getLength();
 		SemanticToken token = new SemanticToken(offset, length, tokenType, modifiers);
@@ -132,23 +130,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	/**
-	 * Adds a semantic token to the list of tokens being collected by this
-	 * semantic token provider. Overload for {@link #addToken(ASTNode, TokenType, TokenModifier[])}
-	 * that adds no modifiers to the semantic token.
-	 *
-	 * @param node The AST node representing the location of the semantic token.
-	 * @param tokenType The type of the semantic token.
-	 *
-	 * @apiNote This method is order-dependent because of {@link #encodedTokens()}.
-	 * If semantic tokens are not added in the order they appear in the document,
-	 * the encoding algorithm might discard them.
+	 * Indicates that the visitor is currently inside an {@link ImportDeclaration} node.
 	 */
-	private void addToken(ASTNode node, TokenType tokenType) {
-		addToken(node, tokenType, new TokenModifier[0]);
-	}
+	private boolean isInsideImportDeclaration = false;
 
 	@Override
 	public boolean visit(ImportDeclaration node) {
+		isInsideImportDeclaration = true;
+
 		IBinding binding = node.resolveBinding();
 		if (binding == null || binding instanceof IPackageBinding) {
 			visitPackageName(node.getName());
@@ -157,6 +146,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			visitNonPackageName(node.getName());
 		}
 
+		isInsideImportDeclaration = false;
 		return false;
 	}
 
@@ -169,13 +159,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 * @param packageName The package name node to recursively visit.
 	 */
 	private void visitPackageName(Name packageName) {
+		int modifiers = isInsideImportDeclaration ? TokenModifier.IMPORT_DECLARATION.bitmask : 0;
 		if (packageName instanceof SimpleName) {
-			addToken(packageName, TokenType.PACKAGE);
+			addToken(packageName, TokenType.PACKAGE, modifiers);
 		}
 		else {
 			QualifiedName qualifiedName = (QualifiedName) packageName;
 			visitPackageName(qualifiedName.getQualifier());
-			addToken(qualifiedName.getName(), TokenType.PACKAGE);
+			addToken(qualifiedName.getName(), TokenType.PACKAGE, modifiers);
 		}
 	}
 
@@ -229,13 +220,39 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	@Override
+	public boolean visit(Modifier node) {
+		addToken(node, TokenType.MODIFIER, 0);
+		return super.visit(node);
+	}
+
+	@Override
 	public boolean visit(SimpleName node) {
-		TokenType tokenType = TokenType.getApplicableType(node.resolveBinding());
+		IBinding binding = node.resolveBinding();
+		TokenType tokenType = TokenType.getApplicableType(binding);
 		if (tokenType != null) {
-			addToken(node, tokenType, TokenModifier.getApplicableModifiers(node));
+			int modifiers = TokenModifier.getApplicableModifiers(binding);
+			if (TokenModifier.isGeneric(binding)) {
+				modifiers |= TokenModifier.GENERIC.bitmask;
+			}
+			if (isInsideImportDeclaration) {
+				modifiers |= TokenModifier.IMPORT_DECLARATION.bitmask;
+			}
+			else if (TokenModifier.isDeclaration(node)) {
+				modifiers |= TokenModifier.DECLARATION.bitmask;
+			}
+			addToken(node, tokenType, modifiers);
 		}
 
 		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(ParameterizedType node) {
+		node.getType().accept(this);
+		for (Object typeArgument : node.typeArguments()) {
+			visitTypeArgument((Type) typeArgument);
+		}
+		return false;
 	}
 
 	@Override
@@ -248,7 +265,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			((ASTNode) typeArgument).accept(this);
 		}
 
-		visitClassInstanceCreationType(node, node.getType());
+		visitSimpleNameOfType(node.getType(), (simpleName) -> {
+			IMethodBinding constructorBinding = node.resolveConstructorBinding();
+			int modifiers = TokenModifier.getApplicableModifiers(constructorBinding);
+			if (TokenModifier.isGeneric(constructorBinding) || node.getType().isParameterizedType()) {
+				modifiers |= TokenModifier.GENERIC.bitmask;
+			}
+			addToken(simpleName, TokenType.METHOD, modifiers);
+		});
 
 		for (Object argument : node.arguments()) {
 			((ASTNode) argument).accept(this);
@@ -262,68 +286,88 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	/**
-	 * Visits the type node of a class instance creation, and recursively tries to find
-	 * a simple name which represents the constructor method binding. If it does,
-	 * a {@link TokenType#METHOD} is added to the simple name, with the modifiers
-	 * of the constructor method binding.
+	 * Visits the given type argument, making sure to add the
+	 * {@link TokenModifier#TYPE_ARGUMENT} modifier to its simple name.
 	 *
-	 * @param classInstanceCreation The class instance creation which parents the type node.
-	 * @param type The type node to visit.
+	 * @param typeArgument A type node that is known to be a type argument.
 	 */
-	private void visitClassInstanceCreationType(ClassInstanceCreation classInstanceCreation, Type type) {
-		if (type instanceof SimpleType) {
+	private void visitTypeArgument(Type typeArgument) {
+		visitSimpleNameOfType(typeArgument, (simpleName) -> {
+			IBinding binding = simpleName.resolveBinding();
+			TokenType tokenType = TokenType.getApplicableType(binding);
+			if (tokenType != null) {
+				int modifiers = TokenModifier.getApplicableModifiers(binding);
+				if (TokenModifier.isGeneric((ITypeBinding) binding)) {
+					modifiers |= TokenModifier.GENERIC.bitmask;
+				}
+				modifiers |= TokenModifier.TYPE_ARGUMENT.bitmask;
+				addToken(simpleName, tokenType, modifiers);
+			}
+		});
+	}
+
+	/**
+	 * Visits the given type node, making sure to exaustively visit
+	 * its child nodes, until the simple name of the type is found or
+	 * until there are no more child nodes. If and when the simple name
+	 * is found, the given {@link NodeVisitor} is called with the simple
+	 * name as its argument.
+	 *
+	 * @param type A type node.
+	 * @param visitor A node visitor which might get called if the simple
+	 * name of the given type node is found.
+	 */
+	private void visitSimpleNameOfType(Type type, NodeVisitor<SimpleName> visitor) {
+		if (type == null) {
+			return;
+		}
+		else if (type instanceof SimpleType) {
 			SimpleType simpleType = (SimpleType) type;
 
 			for (Object annotation : simpleType.annotations()) {
 				((ASTNode) annotation).accept(this);
 			}
 
-			if (simpleType.getName() instanceof SimpleName) {
-				addToken(simpleType.getName(), TokenType.METHOD,
-					TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
+			Name simpleTypeName = simpleType.getName();
+			if (simpleTypeName instanceof SimpleName) {
+				visitor.visit((SimpleName) simpleTypeName);
 			}
 			else {
-				QualifiedName qualifiedName = (QualifiedName) simpleType.getName();
+				QualifiedName qualifiedName = (QualifiedName) simpleTypeName;
 				qualifiedName.getQualifier().accept(this);
-				addToken(qualifiedName.getName(), TokenType.METHOD,
-					TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
+				visitor.visit(qualifiedName.getName());
 			}
 		}
 		else if (type instanceof QualifiedType) {
 			QualifiedType qualifiedType = (QualifiedType) type;
-
 			qualifiedType.getQualifier().accept(this);
-
 			for (Object annotation : qualifiedType.annotations()) {
 				((ASTNode) annotation).accept(this);
 			}
-
-			addToken(qualifiedType.getName(), TokenType.METHOD,
-				TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
+			visitor.visit(qualifiedType.getName());
 		}
 		else if (type instanceof NameQualifiedType) {
 			NameQualifiedType nameQualifiedType = (NameQualifiedType) type;
-
 			nameQualifiedType.getQualifier().accept(this);
-
 			for (Object annotation : nameQualifiedType.annotations()) {
 				((ASTNode) annotation).accept(this);
 			}
-
-			addToken(nameQualifiedType.getName(), TokenType.METHOD,
-				TokenModifier.getApplicableModifiers(classInstanceCreation.resolveConstructorBinding()));
+			visitor.visit(nameQualifiedType.getName());
 		}
 		else if (type instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) type;
-
-			visitClassInstanceCreationType(classInstanceCreation, parameterizedType.getType());
-
-			for (Object typeParameter : parameterizedType.typeArguments()) {
-				((ASTNode) typeParameter).accept(this);
+			visitSimpleNameOfType(parameterizedType.getType(), visitor);
+			for (Object typeArgument : parameterizedType.typeArguments()) {
+				visitTypeArgument((Type) typeArgument);
 			}
 		}
 		else {
 			type.accept(this);
 		}
+	}
+
+	@FunctionalInterface
+	private interface NodeVisitor<T extends ASTNode> {
+		public void visit(T node);
 	}
 }

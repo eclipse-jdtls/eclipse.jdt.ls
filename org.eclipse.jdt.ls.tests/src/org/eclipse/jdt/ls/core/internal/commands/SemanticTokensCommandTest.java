@@ -13,15 +13,14 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
@@ -29,6 +28,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokens;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensLegend;
@@ -41,7 +41,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest {
 	private IJavaProject semanticTokensProject;
 	private IPackageFragment fooPackage;
-	private SemanticTokensLegend legend = SemanticTokensCommand.getLegend();
 	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsemantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
 
 	@Before
@@ -55,158 +54,292 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	@Test
-	public void testSemanticTokens_SourceAttachment() {
-		SemanticTokens tokens = SemanticTokensCommand.provide(classFileUri);
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decode(tokens);
-
-		assertToken(decodedTokens, 0, 8, 3, "namespace");
-		assertToken(decodedTokens, 2, 13, 3, "class", "public", "declaration");
-		assertToken(decodedTokens, 3, 22, 3, "function", "public", "static", "declaration");
-		assertToken(decodedTokens, 3, 33, 1, "parameter", "declaration");
-		assertToken(decodedTokens, 4, 12, 3, "variable", "declaration");
+	public void testSemanticTokens_SourceAttachment() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(classFileUri)
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("bar", "class", "public", "declaration")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("static", "modifier")
+			.assertNextToken("add", "function", "public", "static", "declaration")
+			.assertNextToken("a", "parameter", "declaration")
+			.assertNextToken("sum", "variable", "declaration")
+			.assertNextToken("element", "variable", "declaration")
+			.assertNextToken("a", "parameter")
+			.assertNextToken("sum", "variable")
+			.assertNextToken("element", "variable")
+			.assertNextToken("sum", "variable")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Methods() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Methods.java");
+		TokenAssertionHelper.beginAssertion(getURI("Methods.java"), "function")
+			.assertNextToken("foo1", "function", "public", "generic", "declaration")
+			.assertNextToken("foo2", "function", "private", "declaration")
+			.assertNextToken("foo3", "function", "protected", "declaration")
+			.assertNextToken("foo4", "function", "static", "declaration")
+			.assertNextToken("foo5", "function", "native", "declaration")
+			.assertNextToken("foo6", "function", "deprecated", "declaration")
 
-		assertToken(decodedTokens, 4, 13, 4, "function", "public", "declaration");
-		assertToken(decodedTokens, 5, 14, 4, "function", "private", "declaration");
-		assertToken(decodedTokens, 6, 16, 4, "function", "protected", "declaration");
-		assertToken(decodedTokens, 7, 13, 4, "function", "static", "declaration");
-		assertToken(decodedTokens, 9, 6, 4, "function", "deprecated", "declaration");
-		assertToken(decodedTokens, 10, 20, 4, "function", "public", "static", "declaration");
+			.assertNextToken("main", "function", "public", "static", "declaration")
+			.assertNextToken("Methods", "function", "public")
+
+			.assertNextToken("foo1", "function", "public", "generic")
+			.assertNextToken("foo2", "function", "private")
+			.assertNextToken("foo3", "function", "protected")
+			.assertNextToken("foo4", "function", "static")
+			.assertNextToken("foo5", "function", "native")
+			.assertNextToken("foo6", "function", "deprecated")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Constructors() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Constructors.java");
-
-		assertToken(decodedTokens, 4, 9, 12, "function", "private", "declaration");
-		assertToken(decodedTokens, 5, 23, 12, "function", "private");
-		assertToken(decodedTokens, 6, 48, 10, "function", "protected");
-		assertToken(decodedTokens, 7, 64, 10, "function", "protected");
-		assertToken(decodedTokens, 8, 56, 10, "function", "protected");
+		TokenAssertionHelper.beginAssertion(getURI("Constructors.java"), "function")
+			.assertNextToken("Constructors", "function", "private", "declaration")
+			.assertNextToken("Constructors", "function", "private")
+			.assertNextToken("InnerClass", "function", "protected")
+			.assertNextToken("InnerClass", "function", "protected")
+			.assertNextToken("InnerClass", "function", "protected", "generic")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Properties() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Properties.java");
-
-		assertToken(decodedTokens, 4, 15, 4, "property", "public", "declaration");
-		assertToken(decodedTokens, 5, 13, 4, "property", "private", "declaration");
-		assertToken(decodedTokens, 6, 19, 4, "property", "protected", "declaration");
-		assertToken(decodedTokens, 7, 14, 4, "property", "readonly", "declaration");
-		assertToken(decodedTokens, 8, 12, 4, "property", "static", "declaration");
-		assertToken(decodedTokens, 9, 25, 4, "property", "static", "public", "readonly", "declaration");
-		assertToken(decodedTokens, 12, 2, 5, "enumMember", "static", "public", "readonly", "declaration");
-		assertToken(decodedTokens, 13, 2, 6, "enumMember", "static", "public", "readonly", "declaration");
+		TokenAssertionHelper.beginAssertion(getURI("Properties.java"), "property", "enumMember")
+			.assertNextToken("bar1", "property", "public", "declaration")
+			.assertNextToken("bar2", "property", "private", "declaration")
+			.assertNextToken("bar3", "property", "protected", "declaration")
+			.assertNextToken("bar2", "property", "private")
+			.assertNextToken("bar4", "property", "readonly", "declaration")
+			.assertNextToken("bar5", "property", "static", "declaration")
+			.assertNextToken("bar6", "property", "public", "static", "readonly", "declaration")
+			.assertNextToken("FIRST", "enumMember", "public", "static", "readonly", "declaration")
+			.assertNextToken("SECOND", "enumMember", "public", "static", "readonly", "declaration")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Variables() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Variables.java");
-
-		assertToken(decodedTokens, 4, 31, 6, "parameter", "declaration");
-		assertToken(decodedTokens, 5, 16, 6, "parameter");
-		assertToken(decodedTokens, 6, 9, 4, "variable", "declaration");
-		assertToken(decodedTokens, 7, 15, 4, "variable", "readonly", "declaration");
+		TokenAssertionHelper.beginAssertion(getURI("Variables.java"), "variable", "parameter")
+			.assertNextToken("string", "parameter", "declaration")
+			.assertNextToken("bar1", "variable", "declaration")
+			.assertNextToken("string", "parameter")
+			.assertNextToken("bar2", "variable", "declaration")
+			.assertNextToken("bar1", "variable")
+			.assertNextToken("bar3", "variable", "readonly", "declaration")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Types() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Types.java");
+		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "typeParameter")
+			.assertNextToken("Types", "class", "public", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
 
-		assertToken(decodedTokens, 4, 8, 6, "class", "public", "readonly");
-		assertToken(decodedTokens, 7, 7, 9, "class", "declaration");
-		assertToken(decodedTokens, 7, 17, 1, "typeParameter", "declaration");
-		assertToken(decodedTokens, 8, 11, 13, "interface", "declaration", "static");
-		assertToken(decodedTokens, 9, 6, 8, "enum", "declaration", "static", "readonly");
-		assertToken(decodedTokens, 10, 12, 14, "annotation", "declaration", "static");
+			.assertNextToken("SomeClass", "class", "generic")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("SomeClass", "class", "generic", "typeArgument")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("Integer", "class", "public", "readonly", "typeArgument")
+
+			.assertNextToken("SomeClass", "class", "generic", "declaration")
+			.assertNextToken("T1", "typeParameter", "declaration")
+			.assertNextToken("T2", "typeParameter", "declaration")
+			.assertNextToken("T1", "typeParameter")
+			.assertNextToken("T2", "typeParameter")
+
+			.assertNextToken("SomeInterface", "interface", "static", "declaration")
+			.assertNextToken("SomeEnum", "enum", "static", "readonly", "declaration")
+			.assertNextToken("SomeAnnotation", "annotation", "static", "declaration")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Packages() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Packages.java");
+		TokenAssertionHelper.beginAssertion(getURI("Packages.java"), "namespace", "class", "property")
+			.assertNextToken("foo", "namespace")
 
-		assertToken(decodedTokens, 2, 14, 4, "namespace");
-		assertToken(decodedTokens, 2, 19, 4, "namespace");
-		assertToken(decodedTokens, 3, 7, 4, "namespace");
-		assertToken(decodedTokens, 3, 12, 4, "namespace");
-		assertToken(decodedTokens, 4, 7, 4, "namespace");
-		assertToken(decodedTokens, 5, 7, 4, "namespace");
-		assertToken(decodedTokens, 5, 12, 3, "namespace");
-		assertToken(decodedTokens, 6, 7, 4, "namespace");
-		assertToken(decodedTokens, 7, 7, 4, "namespace");
-		assertToken(decodedTokens, 7, 12, 4, "namespace");
-		assertToken(decodedTokens, 7, 17, 4, "class", "public", "readonly");
-		assertToken(decodedTokens, 8, 14, 4, "namespace");
-		assertToken(decodedTokens, 8, 19, 4, "namespace");
-		assertToken(decodedTokens, 8, 24, 4, "class", "public", "readonly");
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("lang", "namespace", "importDeclaration")
+			.assertNextToken("Math", "class", "public", "readonly", "importDeclaration")
+			.assertNextToken("PI", "property", "public", "static", "readonly", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("util", "namespace", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("NonExistentClass", "class", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("nio", "namespace", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("lang", "namespace", "importDeclaration")
+			.assertNextToken("Math", "class", "public", "readonly", "importDeclaration")
+
+			.assertNextToken("java", "namespace", "importDeclaration")
+			.assertNextToken("lang", "namespace", "importDeclaration")
+			.assertNextToken("Math", "class", "public", "readonly", "importDeclaration")
+
+			.assertNextToken("Packages", "class", "public", "declaration")
+
+			.assertNextToken("java", "namespace")
+			.assertNextToken("lang", "namespace")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("string", "property", "public", "declaration")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("lang", "namespace")
+		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Annotations() throws JavaModelException {
-		Map<Integer, Map<Integer, int[]>> decodedTokens = decodeSourceFile("Annotations.java");
-
-		assertToken(decodedTokens, 4, 2, 16, "annotation", "public");
-		assertToken(decodedTokens, 7, 2, 16, "annotation", "public");
-		assertToken(decodedTokens, 10, 2, 16, "annotation", "public");
-		assertToken(decodedTokens, 10, 19, 5, "annotationMember", "public", "abstract");
+		TokenAssertionHelper.beginAssertion(getURI("Annotations.java"), "annotation", "annotationMember")
+			.assertNextToken("SuppressWarnings", "annotation", "public")
+			.assertNextToken("SuppressWarnings", "annotation", "public")
+			.assertNextToken("SuppressWarnings", "annotation", "public")
+			.assertNextToken("value", "annotationMember", "public", "abstract")
+		.endAssertion();
 	}
 
-	private void assertModifiers(List<String> tokenModifiers, int encodedModifiers, List<String> modifierStrings) {
-		int cnt = 0;
-		for (int i=0; i<tokenModifiers.size(); i++) {
-			if((encodedModifiers & (0b00000001 << i)) != 0) {
-				String current = tokenModifiers.get(i);
-				assertTrue(modifierStrings.contains(current));
-				cnt += 1;
-			}
+	private String getURI(String compilationUnitName) {
+		return JDTUtils.toURI(fooPackage.getCompilationUnit(compilationUnitName));
+	}
+
+	/**
+	 * Helper class for asserting semantic tokens provided by the {@link SemanticTokensCommand},
+	 * using the builder pattern. Call {@link #beginAssertion(String, String...)} to get an instance
+	 * of the helper, then chain calls to {@link #assertNextToken(String, String, String...)} until no
+	 * more tokens are expected, at which point {@link #endAssertion()} should finally be called.
+	 */
+	private static class TokenAssertionHelper {
+
+		private static final SemanticTokensLegend LEGEND = new SemanticTokensLegend();
+
+		private IBuffer buffer;
+		private int currentLine = 0;
+		private int currentColumn = 0;
+
+		private int[] semanticTokensData;
+		private int currentDataIndex = 0;
+
+		private List<String> tokenTypeFilter;
+
+		private TokenAssertionHelper(IBuffer buffer, int[] semanticTokensData, List<String> tokenTypeFilter) {
+			this.buffer = buffer;
+			this.semanticTokensData = semanticTokensData;
+			this.tokenTypeFilter = tokenTypeFilter;
 		}
-		assertEquals(cnt, modifierStrings.size());
-	}
 
-	private void assertToken(Map<Integer, Map<Integer, int[]>> decodedTokens, int line, int column, int length, String tokenTypeString, String... modifierStrings) {
-		Map<Integer, int[]> tokensOfTheLine = decodedTokens.get(line);
-		assertNotNull(tokensOfTheLine);
-		int[] token = tokensOfTheLine.get(column); // 0: length, 1: typeIndex, 2: encodedModifiers
-		assertNotNull(token);
-		assertEquals(length, token[0]);
-		assertEquals(tokenTypeString, legend.getTokenTypes().get(token[1]));
-		assertModifiers(legend.getTokenModifiers(), token[2], Arrays.asList(modifierStrings));
-	}
+		/**
+		 * Begins an assertion for semantic tokens (calling {@link SemanticTokensCommand#provide(String)}),
+		 * optionally providing a filter describing which token types to assert.
+		 *
+		 * @param uri The URI to assert provided semantic tokens for.
+		 * @param tokenTypeFilter Specifies the type of semantic tokens to assert. Only token types
+		 * matching the filter will be asserted. If the filter is empty, all tokens will be asserted.
+		 * @return A new instace of {@link TokenAssertionHelper}.
+		 * @throws JavaModelException
+		 */
+		public static TokenAssertionHelper beginAssertion(String uri, String... tokenTypeFilter) throws JavaModelException {
+			SemanticTokens semanticTokens = SemanticTokensCommand.provide(uri);
+			assertNotNull("Provided semantic tokens should not be null", semanticTokens);
+			assertNotNull("Semantic tokens data should not be null", semanticTokens.getData());
+			assertTrue("Semantic tokens data should contain 5 integers per token", semanticTokens.getData().length % 5 == 0);
+			return new TokenAssertionHelper(JDTUtils.resolveTypeRoot(uri).getBuffer(), semanticTokens.getData(), Arrays.asList(tokenTypeFilter));
+		}
 
-	private Map<Integer, Map<Integer, int[]>> decodeSourceFile(String name) {
-		ICompilationUnit cu = fooPackage.getCompilationUnit(name);
-		SemanticTokens tokens = SemanticTokensCommand.provide(JDTUtils.toURI(cu));
-		return decode(tokens);
-	}
+		/**
+		 * Asserts the next semantic token in the data provided by {@link SemanticTokensCommand}.
+		 *
+		 * @param expectedText The expected text at the location of the next semantic token.
+		 * @param expectedType The expected type of the next semantic token.
+		 * @param expectedModifiers The expected modifiers of the next semantic token.
+		 * @return Itself.
+		 */
+		public TokenAssertionHelper assertNextToken(String expectedText, String expectedType, String... expectedModifiers) {
+			assertTrue("Token of type '" + expectedType + "' should be present in the semantic tokens data",
+				currentDataIndex < semanticTokensData.length);
 
-	private Map<Integer, Map<Integer, int[]>> decode(SemanticTokens tokens) {
-		List<Integer> data = tokens.getData();
-		int total = data.size() / 5;
-		Map<Integer, Map<Integer, int[]>> decodedTokens = new HashMap<>();
-		int currentLine = 0;
-		int currentColumn = 0;
-		for(int i = 0; i<total; i++) {
-			int offset = 5 * i;
-			int deltaLine = data.get(offset).intValue();
-			int deltaColumn = data.get(offset+1).intValue();
-			int length = data.get(offset+2).intValue();
-			int typeIndex = data.get(offset+3).intValue();
-			int encodedModifiers = data.get(offset+4).intValue();
+			int deltaLine = semanticTokensData[currentDataIndex];
+			int deltaColumn = semanticTokensData[currentDataIndex + 1];
+			int length = semanticTokensData[currentDataIndex + 2];
+			int typeIndex = semanticTokensData[currentDataIndex + 3];
+			int encodedModifiers = semanticTokensData[currentDataIndex + 4];
 
-			if (deltaLine > 0) {
-				currentLine += deltaLine;
-				currentColumn = deltaColumn;
-			} else {
+			assertTrue("Token deltaLine should not be negative", deltaLine >= 0);
+			assertTrue("Token deltaColumn should not be negative", deltaColumn >= 0);
+			assertTrue("Token length should be greater than zero", length > 0);
+
+			if (deltaLine == 0) {
 				currentColumn += deltaColumn;
 			}
-			Map<Integer, int[]> tokensOfTheLine = decodedTokens.getOrDefault(currentLine, new HashMap<>());
-			tokensOfTheLine.put(currentColumn, new int[] {length, typeIndex, encodedModifiers});
-			decodedTokens.putIfAbsent(currentLine, tokensOfTheLine);
+			else {
+				currentLine += deltaLine;
+				currentColumn = deltaColumn;
+			}
+
+			currentDataIndex += 5;
+
+			if (tokenTypeFilter.isEmpty() || tokenTypeFilter.contains(LEGEND.getTokenTypes()[typeIndex])) {
+				assertTextMatchInBuffer(length, expectedText);
+				assertTokenType(typeIndex, expectedType);
+				assertTokenModifiers(encodedModifiers, Arrays.asList(expectedModifiers));
+
+				return this;
+			}
+			else {
+				return assertNextToken(expectedText, expectedType, expectedModifiers);
+			}
 		}
-		return decodedTokens;
+
+		/**
+		 * Asserts that there are no more unexpected semantic tokens present in the data
+		 * provided by {@link SemanticTokensCommand}.
+		 */
+		public void endAssertion() {
+			if (tokenTypeFilter.isEmpty()) {
+				assertTrue("There should be no more tokens", currentDataIndex == semanticTokensData.length);
+			}
+			else {
+				while (currentDataIndex < semanticTokensData.length) {
+					int currentTypeIndex = semanticTokensData[currentDataIndex + 3];
+					String currentType = LEGEND.getTokenTypes()[currentTypeIndex];
+					assertFalse(
+						"There should be no more tokens matching the filter, but found '" + currentType + "' token",
+						tokenTypeFilter.contains(currentType)
+					);
+					currentDataIndex += 5;
+				}
+			}
+		}
+
+		private void assertTextMatchInBuffer(int length, String expectedText) {
+			String tokenTextInBuffer = buffer.getText(JsonRpcHelpers.toOffset(buffer, currentLine, currentColumn), length);
+			assertEquals("Token text should match the token text range in the buffer.", expectedText, tokenTextInBuffer);
+		}
+
+		private void assertTokenType(int typeIndex, String expectedType) {
+			assertEquals("Token type should be correct.", expectedType, LEGEND.getTokenTypes()[typeIndex]);
+		}
+
+		private void assertTokenModifiers(int encodedModifiers, List<String> expectedModifiers) {
+			for (int i = 0; i < LEGEND.getTokenModifiers().length; i++) {
+				String modifier = LEGEND.getTokenModifiers()[i];
+				boolean modifierIsEncoded = ((encodedModifiers >>> i) & 1) == 1;
+				boolean modifierIsExpected = expectedModifiers.contains(modifier);
+
+				assertTrue(
+					modifierIsExpected
+						? "Expected modifier '" + modifier + "' to be encoded"
+						: "Did not expect modifier '" + modifier + "' to be encoded",
+					modifierIsExpected == modifierIsEncoded
+				);
+			}
+		}
 	}
 }

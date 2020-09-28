@@ -13,8 +13,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
-import java.util.List;
-
 import org.eclipse.lsp4j.util.Preconditions;
 
 public class SemanticTokens {
@@ -74,7 +72,7 @@ public class SemanticTokens {
 	*    [  2,5,3,0,3,  0,5,4,1,0,  3,2,7,2,0 ]
 	* ```
 	*/
-	private final List<Integer> data;
+	private final int[] data;
 
 	/**
 	* The result id of the tokens (optional).
@@ -83,12 +81,12 @@ public class SemanticTokens {
 	*/
 	private final String resultId;
 
-	public SemanticTokens(List<Integer> data) {
+	public SemanticTokens(int[] data) {
 		this(data, null);
 	}
 
-	public SemanticTokens(List<Integer> data, String resultId) {
-		this.data = Preconditions.<List<Integer>>checkNotNull(data, "data");
+	public SemanticTokens(int[] data, String resultId) {
+		this.data = Preconditions.<int[]>checkNotNull(data, "data");
 		this.resultId = resultId;
 	}
 
@@ -96,7 +94,7 @@ public class SemanticTokens {
 		return resultId;
 	}
 
-	public List<Integer> getData() {
+	public int[] getData() {
 		return data;
 	}
 }

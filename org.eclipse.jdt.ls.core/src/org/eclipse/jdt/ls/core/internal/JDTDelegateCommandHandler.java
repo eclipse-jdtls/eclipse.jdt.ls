@@ -21,9 +21,10 @@ import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.SemanticTokensCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
-import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
+import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensLegend;
 import org.eclipse.lsp4j.WorkspaceEdit;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
@@ -74,7 +75,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.provideSemanticTokens":
 					return SemanticTokensCommand.provide((String) arguments.get(0));
 				case "java.project.getSemanticTokensLegend":
-					return SemanticTokensCommand.getLegend();
+					return new SemanticTokensLegend();
 				case "java.project.import":
 					ProjectCommand.importProject(monitor);
 					return null;
