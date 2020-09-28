@@ -190,6 +190,10 @@ public class QuickFixProcessor {
 			case IProblem.IndirectAccessToStaticMethod:
 				LocalCorrectionsSubProcessor.addCorrectAccessToStaticProposals(context, problem, proposals);
 				break;
+			case IProblem.SealedMissingClassModifier:
+			case IProblem.SealedMissingInterfaceModifier:
+				ModifierCorrectionSubProcessor.addSealedMissingModifierProposal(context, problem, proposals);
+				break;
 			case IProblem.StaticMethodRequested:
 			case IProblem.NonStaticFieldFromStaticInvocation:
 			case IProblem.InstanceMethodDuringConstructorInvocation:
