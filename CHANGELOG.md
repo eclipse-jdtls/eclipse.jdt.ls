@@ -1,5 +1,12 @@
 # Change Log
 
+# [0.62.0 (September 30th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/80?closed=1)
+ * enhancement - Add JavaFX support. See [#1536](https://github.com/eclipse/eclipse.jdt.ls/pull/1536).
+ * enhancement - Add support for Java 15. See [#1543](https://github.com/eclipse/eclipse.jdt.ls/issues/1543).
+ * enhancement - Report invalid runtime config back to the client. See [#1550](https://github.com/eclipse/eclipse.jdt.ls/pull/1550).
+ * enhancement - Move the code action 'Change modifiers to final where possible' to a source action. See [#1547](https://github.com/eclipse/eclipse.jdt.ls/pull/1547).
+ * bug fix - Fix semantic tokens offset due to document updates. See [#1552](https://github.com/eclipse/eclipse.jdt.ls/pull/1552).
+
 # [0.61.0 (September 16th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/79?closed=1)
  * enhancement - Importing mixed (maven,gradle,eclipse) projects. See [#1532](https://github.com/eclipse/eclipse.jdt.ls/pull/1532).
  * enhancement - Allow to customize fileHeader and typeComment for the new Java file. See [#1540](https://github.com/eclipse/eclipse.jdt.ls/pull/1540).
