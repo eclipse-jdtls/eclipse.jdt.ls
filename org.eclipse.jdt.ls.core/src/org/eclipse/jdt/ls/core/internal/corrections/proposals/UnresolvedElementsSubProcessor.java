@@ -550,6 +550,23 @@ public class UnresolvedElementsSubProcessor {
 
 	private static int evauateTypeKind(ASTNode node, IJavaProject project) {
 		int kind = ASTResolving.getPossibleTypeKinds(node, JavaModelUtil.is50OrHigher(project));
+
+		/*
+		 *  TODO : This code block should be contributed to ASTResolving.getPossibleTypeKinds(..)
+		 *  Support determining type of the 'permits' node type.
+		 */
+		ASTNode parent = node.getParent();
+		if (parent instanceof Type) {
+			Type type = (Type) parent;
+			TypeDeclaration typeDecl = ASTNodes.getParent(node, TypeDeclaration.class);
+			if (type.getLocationInParent() == TypeDeclaration.PERMITS_TYPES_PROPERTY) {
+				kind = TypeKinds.CLASSES;
+				if (typeDecl != null && typeDecl.isInterface()) {
+					kind |= TypeKinds.INTERFACES;
+				}
+			}
+		}
+
 		return kind;
 	}
 
