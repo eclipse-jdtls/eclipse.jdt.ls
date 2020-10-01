@@ -16,8 +16,10 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathAttribute;
@@ -26,6 +28,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1398,6 +1401,32 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		pack2.createCompilationUnit("Tests.java", buf2.toString(), false, null);
 
 		assertCodeActionNotExists(cu1, "Import 'Tests' (pt)");
+	}
+
+	@Test
+	public void testTypeInSealedTypeDeclaration() throws Exception {
+		Map<String, String> options15 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options15, JavaCore.VERSION_15);
+		options15.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options15.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject1.setOptions(options15);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public sealed interface E permits F {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public final class F implements E {\n");
+		buf.append("\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create class 'F'", buf.toString());
+
+		assertCodeActions(cu, e1);
 	}
 
 }

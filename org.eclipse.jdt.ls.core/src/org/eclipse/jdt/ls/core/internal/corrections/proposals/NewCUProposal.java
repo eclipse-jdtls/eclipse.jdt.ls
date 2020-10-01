@@ -17,6 +17,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Objects;
@@ -76,8 +77,6 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 	private int fTypeKind;
 	private IJavaElement fTypeContainer; // IType or IPackageFragment
 	private String fTypeNameWithParameters;
-	private IType fCreatedType;
-
 	/**
 	 * Construct a new compilation unit proposal.
 	 *
@@ -391,22 +390,33 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 	 * Called from createType to construct the source for this type
 	 */
 	private String constructTypeStub(ICompilationUnit parentCU, String name, int modifiers, String lineDelimiter) throws CoreException {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 
 		buf.append(Flags.toString(modifiers));
 		if (modifiers != 0) {
 			buf.append(' ');
 		}
+
+		IType cuType = fCompilationUnit.findPrimaryType();
+		String[] permittedNames = cuType.getPermittedSubtypeNames();
+		boolean isPermitted = Arrays.asList(permittedNames).stream().anyMatch(p -> name.equals(p));
+		if (isPermitted) {
+			buf.append("final ");
+		}
+
 		String type = ""; //$NON-NLS-1$
 		String templateID = ""; //$NON-NLS-1$
+		String superType = ""; //$NON-NLS-1$
 		switch (fTypeKind) {
 			case K_CLASS:
 				type = "class "; //$NON-NLS-1$
 				templateID = CodeGeneration.CLASS_BODY_TEMPLATE_ID;
+				superType = cuType.isInterface() ? "implements " : "extends ";
 				break;
 			case K_INTERFACE:
 				type = "interface "; //$NON-NLS-1$
 				templateID = CodeGeneration.INTERFACE_BODY_TEMPLATE_ID;
+				superType = "extends ";
 				break;
 			case K_ENUM:
 				type = "enum "; //$NON-NLS-1$
@@ -419,6 +429,11 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 		}
 		buf.append(type);
 		buf.append(name);
+		if (isPermitted) {
+			buf.append(' ');
+			buf.append(superType);
+			buf.append(cuType.getElementName());
+		}
 
 		buf.append(" {").append(lineDelimiter); //$NON-NLS-1$
 		String typeBody = CodeGeneration.getTypeBody(templateID, parentCU, name, lineDelimiter);
