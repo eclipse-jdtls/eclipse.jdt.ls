@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.contentassist.ChainCompletionProposalComputer;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
@@ -279,6 +280,8 @@ public class CompletionHandler{
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector, subMonitor));
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
+					ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector);
+					proposals.addAll(chain.computeCompletionProposals());
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
