@@ -58,6 +58,11 @@ public class Preferences {
 	 */
 	public static final String JAVA_HOME = "java.home";
 	/**
+	 * Preference key used to include getter, setter and builder/constructor when
+	 * finding references.
+	 */
+	public static final String JAVA_REFERENCES_INCLUDE_GETTERSETTER = "java.references.includeGetterSetter";
+	/**
 	 * Specifies Java Execution Environments.
 	 */
 	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";
@@ -434,6 +439,7 @@ public class Preferences {
 	private boolean generateToStringListArrayContents;
 	private int generateToStringLimitElements;
 	private List<String> preferredContentProviderIds;
+	private boolean includeGetterSetter;
 
 	private String mavenUserSettings;
 
@@ -630,6 +636,7 @@ public class Preferences {
 		staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
+		includeGetterSetter = false;
 	}
 
 	/**
@@ -874,7 +881,8 @@ public class Preferences {
 		prefs.setFileHeaderTemplate(fileHeader);
 		List<String> typeComment = getList(configuration, JAVA_TEMPLATES_TYPECOMMENT);
 		prefs.setTypeCommentTemplate(typeComment);
-
+		boolean includeGetterSetter = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_GETTERSETTER, false);
+		prefs.setIncludeGetterSetter(includeGetterSetter);
 		return prefs;
 	}
 
@@ -1460,5 +1468,14 @@ public class Preferences {
 	public Preferences setTypeCommentTemplate(List<String> typeCommentTemplate) {
 		this.typeCommentTemplate = typeCommentTemplate;
 		return this;
+	}
+
+	public Preferences setIncludeGetterSetter(boolean includeGetterSetter) {
+		this.includeGetterSetter = includeGetterSetter;
+		return this;
+	}
+
+	public boolean isIncludeGetterSetter() {
+		return this.includeGetterSetter;
 	}
 }
