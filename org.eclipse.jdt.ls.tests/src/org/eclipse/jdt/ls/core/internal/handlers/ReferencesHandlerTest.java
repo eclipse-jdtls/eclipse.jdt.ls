@@ -26,7 +26,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.ReferenceContext;
@@ -49,7 +48,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
 		preferenceManager = mock(PreferenceManager.class);
-		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		handler = new ReferencesHandler(preferenceManager);
 	}
 
@@ -79,6 +78,34 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		Location l = references.get(0);
 		String refereeUri = ResourceUtils.fixURI(project.getFile("src/java/Foo3.java").getRawLocationURI());
 		assertEquals(refereeUri, l.getUri());
+	}
+
+	@Test
+	public void testIncludeGetterSetter() {
+		boolean includeGetterSetter = preferenceManager.getPreferences().isIncludeGetterSetter();
+		try {
+			URI uri = project.getFile("src/org/ref/Apple.java").getRawLocationURI();
+			String fileURI = ResourceUtils.fixURI(uri);
+			ReferenceParams param = new ReferenceParams();
+			param.setPosition(new Position(3, 18));
+			param.setContext(new ReferenceContext(true));
+			param.setTextDocument(new TextDocumentIdentifier(fileURI));
+			List<Location> references = handler.findReferences(param, monitor);
+			assertNotNull("findReferences should not return null", references);
+			assertEquals(3, references.size());
+			preferenceManager.getPreferences().setIncludeGetterSetter(true);
+			references = handler.findReferences(param, monitor);
+			assertNotNull("findReferences should not return null", references);
+			assertEquals(5, references.size());
+			Location l = references.get(0);
+			String refereeUri = ResourceUtils.fixURI(project.getFile("src/org/ref/Apple.java").getRawLocationURI());
+			assertEquals(refereeUri, l.getUri());
+			l = references.get(4);
+			refereeUri = ResourceUtils.fixURI(project.getFile("src/org/ref/Test.java").getRawLocationURI());
+			assertEquals(refereeUri, l.getUri());
+		} finally {
+			preferenceManager.getPreferences().setIncludeGetterSetter(includeGetterSetter);
+		}
 	}
 
 }
