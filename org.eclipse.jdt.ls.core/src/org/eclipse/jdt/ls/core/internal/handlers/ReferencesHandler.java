@@ -77,7 +77,7 @@ public final class ReferencesHandler {
 				return locations;
 			}
 			search(elementToSearch, locations, monitor);
-			if (preferenceManager.getPreferences().isIncludeGetterSetter() && elementToSearch instanceof IField) { // IField
+			if (preferenceManager.getPreferences().isIncludeAccessors() && elementToSearch instanceof IField) { // IField
 				IField field = (IField) elementToSearch;
 				IMethod getter = GetterSetterUtil.getGetter(field);
 				if (getter != null) {

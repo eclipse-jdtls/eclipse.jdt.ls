@@ -81,8 +81,8 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 	}
 
 	@Test
-	public void testIncludeGetterSetter() {
-		boolean includeGetterSetter = preferenceManager.getPreferences().isIncludeGetterSetter();
+	public void testIncludeAccessors() {
+		boolean includeAccessors = preferenceManager.getPreferences().isIncludeAccessors();
 		try {
 			URI uri = project.getFile("src/org/ref/Apple.java").getRawLocationURI();
 			String fileURI = ResourceUtils.fixURI(uri);
@@ -90,10 +90,11 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 			param.setPosition(new Position(3, 18));
 			param.setContext(new ReferenceContext(true));
 			param.setTextDocument(new TextDocumentIdentifier(fileURI));
+			preferenceManager.getPreferences().setIncludeAccessors(false);
 			List<Location> references = handler.findReferences(param, monitor);
 			assertNotNull("findReferences should not return null", references);
 			assertEquals(3, references.size());
-			preferenceManager.getPreferences().setIncludeGetterSetter(true);
+			preferenceManager.getPreferences().setIncludeAccessors(true);
 			references = handler.findReferences(param, monitor);
 			assertNotNull("findReferences should not return null", references);
 			assertEquals(5, references.size());
@@ -104,7 +105,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 			refereeUri = ResourceUtils.fixURI(project.getFile("src/org/ref/Test.java").getRawLocationURI());
 			assertEquals(refereeUri, l.getUri());
 		} finally {
-			preferenceManager.getPreferences().setIncludeGetterSetter(includeGetterSetter);
+			preferenceManager.getPreferences().setIncludeAccessors(includeAccessors);
 		}
 	}
 
