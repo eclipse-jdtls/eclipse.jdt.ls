@@ -51,6 +51,10 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.fix.AddUnimplementedMethodsOperation;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
@@ -389,6 +393,31 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		String typeStub = constructTypeStub(cu, fTypeNameWithParameters, Flags.AccPublic, lineDelimiter);
 		String cuContent = constructCUContent(cu, typeStub, lineDelimiter);
 		CompilationUnitChange cuChange = new CompilationUnitChange("", cu);
+
+		String[] permittedNames = fCompilationUnit.findPrimaryType().getPermittedSubtypeNames();
+		boolean isPermitted = Arrays.asList(permittedNames).contains(fTypeNameWithParameters);
+
+		if (isPermitted && fTypeKind != K_INTERFACE) {
+			cu.becomeWorkingCopy(null);
+			cu.getBuffer().setContents(cuContent);
+
+			ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+			parser.setSource(cu);
+			parser.setResolveBindings(true);
+			CompilationUnit cuNode = (CompilationUnit) parser.createAST(null);
+
+			if (!cuNode.types().isEmpty()) {
+				AddUnimplementedMethodsOperation operation = new AddUnimplementedMethodsOperation((ASTNode) cuNode.types().get(0), null);
+				if (operation.getMethodsToImplement().length > 0) {
+					IProposableFix fix = new UnimplementedCodeFixCore(CorrectionMessages.UnimplementedMethodsCorrectionProposal_description, cuNode, new CompilationUnitRewriteOperation[] { operation });
+					CompilationUnitChange addUnimplementedChange = fix.createChange(null);
+					cuContent = addUnimplementedChange.getPreviewContent(null);
+				}
+			}
+
+			cu.discardWorkingCopy();
+		}
+
 		cuChange.setEdit(new InsertEdit(0, cuContent));
 		return cuChange;
 	}
@@ -438,7 +467,11 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		boolean isInterface = cuType != null ? cuType.isInterface() : false;
 		boolean isPermitted = Arrays.asList(permittedNames).stream().anyMatch(p -> name.equals(p));
 		if (isPermitted) {
-			buf.append("final ");
+			if (fTypeKind == K_INTERFACE) {
+				buf.append("non-sealed ");
+			} else {
+				buf.append("final ");
+			}
 		}
 
 		String type = ""; //$NON-NLS-1$
@@ -466,16 +499,20 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 			case K_RECORD:
 				type = "record "; //$NON-NLS-1$
 				templateID = CodeGeneration.RECORD_BODY_TEMPLATE_ID;
+				superType = isInterface ? "implements " : "extends ";
 				break;
 		}
 		buf.append(type);
 		buf.append(name);
+
+		if (fTypeKind == K_RECORD) {
+			buf.append("()");
+		}
+
 		if (isPermitted) {
 			buf.append(' ');
 			buf.append(superType);
 			buf.append(cuType.getElementName());
-		} else if (fTypeKind == K_RECORD) {
-			buf.append("() ");
 		}
 
 		buf.append(" {").append(lineDelimiter); //$NON-NLS-1$
