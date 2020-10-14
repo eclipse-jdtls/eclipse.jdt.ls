@@ -1,4 +1,11 @@
 # Change Log
+# [0.63.0 (October 15th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/81?closed=1)
+ * enhancement - Embed m2e 1.17. See [#1562](https://github.com/eclipse/eclipse.jdt.ls/pull/1562).
+ * enhancement - Add code actions to add sealed/final/non-sealed modifier on a permitted type declaration. See [#1555](https://github.com/eclipse/eclipse.jdt.ls/issues/1555).
+ * enhancement - Created type doesn't implement sealed interface. See [#1553](https://github.com/eclipse/eclipse.jdt.ls/issues/1553).
+ * enhancement - Find references to fields via getters/setters. See [#1548](https://github.com/eclipse/eclipse.jdt.ls/issues/1548).
+ * enhancement - Improve semantic token modifiers. See [#1539](https://github.com/eclipse/eclipse.jdt.ls/pull/1539).
+ * bug fix - Update 4.17-P-builds to P20201001-0300. See [#1559](https://github.com/eclipse/eclipse.jdt.ls/pull/1559).
 
 # [0.62.0 (September 30th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/80?closed=1)
  * enhancement - Add JavaFX support. See [#1536](https://github.com/eclipse/eclipse.jdt.ls/pull/1536).
