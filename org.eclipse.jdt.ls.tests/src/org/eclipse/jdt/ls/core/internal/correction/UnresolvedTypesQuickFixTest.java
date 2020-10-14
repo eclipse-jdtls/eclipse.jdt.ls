@@ -1490,7 +1490,8 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public sealed interface E permits F {\n");
-		buf.append("}\n");
+		buf.append("void methodE();\n");
+		buf.append("}");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		buf = new StringBuilder();
@@ -1500,6 +1501,12 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf.append(" * F\n");
 		buf.append(" */\n");
 		buf.append("public final class F implements E {\n");
+		buf.append("\n");
+		buf.append("\t@Override\n");
+		buf.append("\tpublic void methodE() {\n");
+		buf.append("\t\t// TODO Auto-generated method stub\n");
+		buf.append("\t\tthrow new UnsupportedOperationException(\"Unimplemented method 'methodE'\");\n");
+		buf.append("\t}\n");
 		buf.append("\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Create class 'F'", buf.toString());
