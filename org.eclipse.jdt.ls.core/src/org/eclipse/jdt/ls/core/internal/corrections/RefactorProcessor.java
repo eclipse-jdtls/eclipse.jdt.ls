@@ -346,7 +346,7 @@ public class RefactorProcessor {
 				// Inline Local Variable
 				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
 					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
-					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences().length > 0) {
 						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
 						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
