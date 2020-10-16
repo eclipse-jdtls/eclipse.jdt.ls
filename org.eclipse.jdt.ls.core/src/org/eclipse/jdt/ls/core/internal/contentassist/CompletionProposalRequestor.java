@@ -302,7 +302,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return CompletionItemKind.Class;
 		case CompletionProposal.FIELD_IMPORT:
 		case CompletionProposal.METHOD_IMPORT:
-		case CompletionProposal.METHOD_NAME_REFERENCE:
 		case CompletionProposal.PACKAGE_REF:
 		case CompletionProposal.TYPE_IMPORT:
 		case CompletionProposal.MODULE_DECLARATION:
@@ -328,6 +327,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.METHOD_DECLARATION:
 		case CompletionProposal.METHOD_REF:
 		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+		case CompletionProposal.METHOD_NAME_REFERENCE:
 		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 			return CompletionItemKind.Method;
 			//text

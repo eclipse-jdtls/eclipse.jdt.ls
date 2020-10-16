@@ -604,7 +604,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		// Check completion item
 		assertEquals("valueOf", valuesMethodItem.getInsertText());
 		assertEquals("valueOf(String) : TimeUnit", valuesMethodItem.getLabel());
-		assertEquals(CompletionItemKind.Module, valuesMethodItem.getKind());
+		assertEquals(CompletionItemKind.Method, valuesMethodItem.getKind());
 		assertEquals("999999211", valuesMethodItem.getSortText());
 		TextEdit teValues = valuesMethodItem.getTextEdit();
 		assertNotNull(teValues);
