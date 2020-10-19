@@ -109,4 +109,18 @@ public class InlineConstantTest extends AbstractSelectionTest {
 		Expected expected = new Expected(INLINE_CONSTANT, buf.toString(), CodeActionKind.RefactorInline);
 		assertCodeActions(cu, expected);
 	}
+
+	@Test
+	public void testInlineConstant_NoReference() throws Exception {
+		IPackageFragment pack1 = testSourceFolder.createPackageFragment("test", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class E {\n");
+		buf.append("    private static final String /*]*/LOGGER_NAME/*[*/ = \"TEST.E\";\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionNotExists(cu, INLINE_CONSTANT);
+	}
 }
