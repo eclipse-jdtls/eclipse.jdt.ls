@@ -336,7 +336,7 @@ public class RefactorProcessor {
 							for (Change refactoringChange : refactoringChanges) {
 								referenceCount += ((CompilationUnitChange)refactoringChange).getChangeGroups().length;
 							}
-							if (referenceCount == 1 && refactoring.isDeclarationSelected()) {
+							if (referenceCount <= 1 && refactoring.isDeclarationSelected()) {
 								return true;
 							}
 							String label = ActionMessages.InlineConstantRefactoringAction_label;
