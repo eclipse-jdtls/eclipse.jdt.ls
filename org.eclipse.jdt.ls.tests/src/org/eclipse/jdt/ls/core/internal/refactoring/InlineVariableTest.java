@@ -71,4 +71,22 @@ public class InlineVariableTest extends AbstractSelectionTest {
 		Expected expected = new Expected(INLINE_LOCAL_VARIABLE, buf.toString(), CodeActionKind.RefactorInline);
 		assertCodeActions(cu, expected);
 	}
+
+	@Test
+	public void testInlineLocalVariableWithNoReferences() throws Exception {
+		IPackageFragment pack1 = testSourceFolder.createPackageFragment("test", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo(String[] parameters, int j) {\n");
+		buf.append("        int temp = parameters.length + j;\n");
+		buf.append("        int /*]*/temp1/*[*/ = temp;\n");
+		buf.append("        System.out.println(temp);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionNotExists(cu, INLINE_LOCAL_VARIABLE);
+	}
 }
