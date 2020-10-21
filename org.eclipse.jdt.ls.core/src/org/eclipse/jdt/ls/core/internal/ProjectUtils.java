@@ -349,6 +349,7 @@ public final class ProjectUtils {
 		if (!Arrays.equals(rawClasspath, newClasspath)) {
 			javaProject.setRawClasspath(newClasspath, monitor);
 		}
+		javaProject.getProject().refreshLocal(IResource.DEPTH_ZERO, monitor);
 	}
 
 	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
