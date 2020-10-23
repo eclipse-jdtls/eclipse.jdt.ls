@@ -441,8 +441,14 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 	@Test
 	public void testUpdateReferencedLibraries() throws Exception {
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(preferenceManager);
+		String uri = ClassFileUtil.getURI(project, "App");
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
+		
+		// // The original mylib.jar is an empty jar, so the GTD is not available
+		assertEquals(0, definitions.size());
 
-		// The original mylib.jar is an empty jar,
 		// replace it which contains the class 'mylib.A'
 		IPath projectRealPath = ProjectUtils.getProjectRealFolder(project);
 		IPath newLibPath = projectRealPath.append("mylib.jar");
@@ -454,10 +460,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
 		waitForBackgroundJobs();
 
-		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(preferenceManager);
-		String uri = ClassFileUtil.getURI(project, "App");
-		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
-		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
+		definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
 		assertEquals(1, definitions.size());
 	}
 }

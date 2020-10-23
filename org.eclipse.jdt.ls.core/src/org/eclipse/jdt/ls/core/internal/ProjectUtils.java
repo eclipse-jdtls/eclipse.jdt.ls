@@ -41,6 +41,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -348,8 +349,9 @@ public final class ProjectUtils {
 		IClasspathEntry[] newClasspath = newEntries.toArray(new IClasspathEntry[newEntries.size()]);
 		if (!Arrays.equals(rawClasspath, newClasspath)) {
 			javaProject.setRawClasspath(newClasspath, monitor);
+		} else {
+			javaProject.getJavaModel().refreshExternalArchives(new IJavaElement[]{javaProject}, monitor);
 		}
-		javaProject.getProject().refreshLocal(IResource.DEPTH_ZERO, monitor);
 	}
 
 	public static Set<Path> collectBinaries(IPath projectDir, Set<String> include, Set<String> exclude, IProgressMonitor monitor) throws CoreException {
