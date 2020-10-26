@@ -28,7 +28,7 @@ import org.eclipse.jdt.internal.core.NameLookup;
 
 class CompletionResultRequestor extends JavaElementRequestor {
 	protected ISearchRequestor requestor;
-	protected ICompilationUnit unitToSkip;
+	protected Object unitToSkip;
 	protected IJavaProject project;
 	protected NameLookup nameLookup;
 	protected boolean checkAccessRestrictions;
@@ -69,7 +69,7 @@ class CompletionResultRequestor extends JavaElementRequestor {
 	@Override
 	public void acceptType(IType type) {
 		try {
-			if (this.unitToSkip != null && this.unitToSkip.equals(type.getCompilationUnit())){
+			if (this.unitToSkip != null && this.unitToSkip.equals(type.getCompilationUnit())) {
 				return;
 			}
 
