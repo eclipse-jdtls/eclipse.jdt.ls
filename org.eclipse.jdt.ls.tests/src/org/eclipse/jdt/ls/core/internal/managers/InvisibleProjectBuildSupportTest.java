@@ -30,6 +30,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -37,11 +38,18 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.NavigateToDefinitionHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -428,5 +436,31 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(), sources);
 			assertEquals("Configuration with sources", libraries, preferences.getReferencedLibraries());
 		}
+	}
+
+	@Test
+	public void testUpdateReferencedLibraries() throws Exception {
+		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+		NavigateToDefinitionHandler handler = new NavigateToDefinitionHandler(preferenceManager);
+		String uri = ClassFileUtil.getURI(project, "App");
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
+
+		// The original mylib.jar is an empty jar, so the GTD is not available
+		assertEquals(0, definitions.size());
+
+		// replace it which contains the class 'mylib.A'
+		IPath projectRealPath = ProjectUtils.getProjectRealFolder(project);
+		IPath newLibPath = projectRealPath.append("mylib.jar");
+		IPath referencedLibraryPath = projectRealPath.append("lib/mylib.jar");
+		FileUtils.copyFile(newLibPath.toFile(), referencedLibraryPath.toFile());
+
+		List<String> include = Arrays.asList("lib/**/*.jar");
+		ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include));
+		UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
+		waitForBackgroundJobs();
+
+		definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
+		assertEquals(1, definitions.size());
 	}
 }

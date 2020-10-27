@@ -3,6 +3,7 @@
 target/
 bin/
 **/lib/
+!org.eclipse.jdt.ls.tests/projects/singlefile/simple/lib/
 maven-wrapper.jar
 *.iml
 .idea
