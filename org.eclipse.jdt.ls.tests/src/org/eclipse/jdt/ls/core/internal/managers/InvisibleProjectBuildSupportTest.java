@@ -445,8 +445,8 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		String uri = ClassFileUtil.getURI(project, "App");
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(0, 13)), monitor);
-		
-		// // The original mylib.jar is an empty jar, so the GTD is not available
+
+		// The original mylib.jar is an empty jar, so the GTD is not available
 		assertEquals(0, definitions.size());
 
 		// replace it which contains the class 'mylib.A'
