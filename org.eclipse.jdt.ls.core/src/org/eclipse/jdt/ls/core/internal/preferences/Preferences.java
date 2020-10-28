@@ -211,6 +211,11 @@ public class Preferences {
 	public static final String MAVEN_USER_SETTINGS_KEY = "java.configuration.maven.userSettings";
 
 	/**
+	 * Preference key for Maven global settings.xml location.
+	 */
+	public static final String MAVEN_GLOBAL_SETTINGS_KEY = "java.configuration.maven.globalSettings";
+
+	/**
 	 * Preference key to enable/disable the 'completion'.
 	 */
 	public static final String COMPLETION_ENABLED_KEY = "java.completion.enabled";
@@ -442,6 +447,7 @@ public class Preferences {
 	private boolean includeAccessors;
 
 	private String mavenUserSettings;
+	private String mavenGlobalSettings;
 
 	private List<String> javaCompletionFavoriteMembers;
 	private List<?> gradleWrapperList;
@@ -780,6 +786,9 @@ public class Preferences {
 
 		String mavenUserSettings = getString(configuration, MAVEN_USER_SETTINGS_KEY, null);
 		prefs.setMavenUserSettings(mavenUserSettings);
+
+		String mavenGlobalSettings = getString(configuration, MAVEN_GLOBAL_SETTINGS_KEY, null);
+		prefs.setMavenGlobalSettings(mavenGlobalSettings);
 
 		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
@@ -1326,6 +1335,15 @@ public class Preferences {
 
 	public String getMavenUserSettings() {
 		return mavenUserSettings;
+	}
+
+	public Preferences setMavenGlobalSettings(String mavenGlobalSettings) {
+		this.mavenGlobalSettings = ResourceUtils.expandPath(mavenGlobalSettings);
+		return this;
+	}
+
+	public String getMavenGlobalSettings() {
+		return mavenGlobalSettings;
 	}
 
 	public String[] getImportOrder() {

@@ -74,6 +74,27 @@ public class PreferenceManagerTest {
 	}
 
 	@Test
+	public void testUpdateMavenGlobalSettings() throws Exception {
+		String path = "/foo/bar.xml";
+		Preferences preferences = Preferences.createFrom(Collections.singletonMap(Preferences.MAVEN_GLOBAL_SETTINGS_KEY, path));
+		preferenceManager.update(preferences);
+		verify(mavenConfig).setGlobalSettingsFile(path);
+
+		//check setting the same path doesn't call Maven's config update
+		reset(mavenConfig);
+		when(mavenConfig.getGlobalSettingsFile()).thenReturn(path);
+		preferenceManager.update(preferences);
+		verify(mavenConfig, never()).setGlobalSettingsFile(anyString());
+
+		//check setting null is allowed
+		reset(mavenConfig);
+		when(mavenConfig.getGlobalSettingsFile()).thenReturn(path);
+		preferences.setMavenGlobalSettings(null);
+		preferenceManager.update(preferences);
+		verify(mavenConfig).setGlobalSettingsFile(null);
+	}
+
+	@Test
 	public void testInitialize() throws Exception {
 		preferenceManager.initialize();
 		assertEquals(JavaCore.ENABLED, JavaCore.getOptions().get(JavaCore.CODEASSIST_VISIBILITY_CHECK));
