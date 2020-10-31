@@ -56,7 +56,7 @@ public class StandardPreferenceManager extends PreferenceManager {
 		if (m2eAptPrefs != null) {
 			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
 		}
-		
+
 		IEclipsePreferences store = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
 		store.put(MavenPreferenceConstants.P_OUT_OF_DATE_PROJECT_CONFIG_PB, ProblemSeverity.warning.toString());
 	}
@@ -72,6 +72,17 @@ public class StandardPreferenceManager extends PreferenceManager {
 				getMavenConfiguration().setUserSettingsFile(newMavenSettings);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("failed to set Maven settings", e);
+				preferences.setMavenUserSettings(oldMavenSettings);
+			}
+		}
+
+		String newMavenGlobalSettings = preferences.getMavenGlobalSettings();
+		String oldMavenGlobalSettings = getMavenConfiguration().getGlobalSettingsFile();
+		if (!Objects.equals(newMavenGlobalSettings, oldMavenGlobalSettings)) {
+			try {
+				getMavenConfiguration().setGlobalSettingsFile(newMavenGlobalSettings);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("failed to set Maven global settings", e);
 				preferences.setMavenUserSettings(oldMavenSettings);
 			}
 		}
