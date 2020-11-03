@@ -94,6 +94,9 @@
             <command
                   id="java.project.import">
             </command>
+            <command
+                  id="java.project.resolveStackTraceLocation">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
