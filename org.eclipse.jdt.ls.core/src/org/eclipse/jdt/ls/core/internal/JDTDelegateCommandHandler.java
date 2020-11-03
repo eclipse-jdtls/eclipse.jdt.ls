@@ -80,12 +80,12 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.import":
 					ProjectCommand.importProject(monitor);
 					return null;
-				case "java.project.resolveSourceUri":
+				case "java.project.resolveStackTraceLocation":
 					List<String> projectNames = null;
 					if (arguments.size() > 1) {
 						projectNames = (ArrayList<String>) arguments.get(1);
 					}
-					return ResolveSourceMappingHandler.resolveSourceUri((String) arguments.get(0), projectNames);
+					return ResolveSourceMappingHandler.resolveStackTraceLocation((String) arguments.get(0), projectNames);
 				default:
 					break;
 			}

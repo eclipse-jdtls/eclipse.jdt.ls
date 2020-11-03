@@ -95,7 +95,7 @@
                   id="java.project.import">
             </command>
             <command
-                  id="java.project.resolveSourceUri">
+                  id="java.project.resolveStackTraceLocation">
             </command>
       </delegateCommandHandler>
    </extension>

@@ -33,7 +33,7 @@ public class ResolveSourceMappingHandler {
      * 
      * @return the uri of the associated source file or class file.
      */
-    public static String resolveSourceUri(String lineText, List<String> projectNames) {
+    public static String resolveStackTraceLocation(String lineText, List<String> projectNames) {
         if (lineText == null) {
             return null;
         }
