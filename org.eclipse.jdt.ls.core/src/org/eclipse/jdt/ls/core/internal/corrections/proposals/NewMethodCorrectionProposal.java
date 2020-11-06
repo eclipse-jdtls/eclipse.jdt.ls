@@ -71,7 +71,7 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 			return 0;
 		}
 		boolean isTargetInterface= getSenderBinding().isInterface();
-		if (isTargetInterface && !JavaModelUtil.is18OrHigher(getCompilationUnit().getJavaProject())) {
+		if (isTargetInterface && !JavaModelUtil.is1d8OrHigher(getCompilationUnit().getJavaProject())) {
 			// only abstract methods are allowed for interface present in less than Java 1.8
 			return getInterfaceMethodModifiers(targetTypeDecl, true);
 		}

@@ -33,7 +33,7 @@
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2020-12/202010161000/"/>
+            <repository location="https://download.eclipse.org/releases/2020-12/202011061000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>

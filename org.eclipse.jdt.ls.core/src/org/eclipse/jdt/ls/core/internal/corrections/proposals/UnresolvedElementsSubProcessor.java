@@ -148,7 +148,7 @@ public class UnresolvedElementsSubProcessor {
 			if (locationInParent == ExpressionMethodReference.EXPRESSION_PROPERTY) {
 				typeKind= TypeKinds.REF_TYPES;
 			} else if (locationInParent == MethodInvocation.EXPRESSION_PROPERTY) {
-				if (JavaModelUtil.is18OrHigher(cu.getJavaProject())) {
+				if (JavaModelUtil.is1d8OrHigher(cu.getJavaProject())) {
 					typeKind= TypeKinds.CLASSES | TypeKinds.INTERFACES | TypeKinds.ENUMS;
 				} else {
 					typeKind= TypeKinds.CLASSES;
@@ -550,23 +550,6 @@ public class UnresolvedElementsSubProcessor {
 
 	private static int evauateTypeKind(ASTNode node, IJavaProject project) {
 		int kind = ASTResolving.getPossibleTypeKinds(node, JavaModelUtil.is50OrHigher(project));
-
-		/*
-		 *  TODO : This code block should be contributed to ASTResolving.getPossibleTypeKinds(..)
-		 *  Support determining type of the 'permits' node type.
-		 */
-		ASTNode parent = node.getParent();
-		if (parent instanceof Type) {
-			Type type = (Type) parent;
-			TypeDeclaration typeDecl = ASTNodes.getParent(node, TypeDeclaration.class);
-			if (type.getLocationInParent() == TypeDeclaration.PERMITS_TYPES_PROPERTY) {
-				kind = TypeKinds.CLASSES;
-				if (typeDecl != null && typeDecl.isInterface()) {
-					kind |= TypeKinds.INTERFACES;
-				}
-			}
-		}
-
 		return kind;
 	}
 
@@ -1039,7 +1022,7 @@ public class UnresolvedElementsSubProcessor {
 				ITypeBinding[] parameterTypes= getParameterTypes(arguments);
 				if (parameterTypes != null) {
 					String sig = org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodName, parameterTypes, false);
-					boolean is18OrHigher= JavaModelUtil.is18OrHigher(targetCU.getJavaProject());
+					boolean is1d8OrHigher= JavaModelUtil.is1d8OrHigher(targetCU.getJavaProject());
 
 					boolean isSenderBindingInterface= senderDeclBinding.isInterface();
 					if (nodeParentType == senderDeclBinding) {
@@ -1047,7 +1030,7 @@ public class UnresolvedElementsSubProcessor {
 					} else {
 						label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, new Object[] { sig, BasicElementLabels.getJavaElementName(senderDeclBinding.getName()) } );
 					}
-					if (is18OrHigher || !isSenderBindingInterface
+					if (is1d8OrHigher || !isSenderBindingInterface
 							|| (nodeParentType != senderDeclBinding && (!(sender instanceof SimpleName) || !((SimpleName) sender).getIdentifier().equals(senderDeclBinding.getName())))) {
 						proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode, arguments,
 								senderDeclBinding, IProposalRelevance.CREATE_METHOD));
@@ -1059,7 +1042,7 @@ public class UnresolvedElementsSubProcessor {
 							senderDeclBinding= Bindings.getBindingOfParentType(anonymDecl.getParent());
 							isSenderBindingInterface= senderDeclBinding.isInterface();
 							if (!senderDeclBinding.isAnonymous()) {
-								if (is18OrHigher || !isSenderBindingInterface) {
+								if (is1d8OrHigher || !isSenderBindingInterface) {
 									String[] args = new String[] { sig,
 											org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(senderDeclBinding) };
 									label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, args);

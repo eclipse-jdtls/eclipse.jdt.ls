@@ -207,7 +207,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 	boolean isValidDestination(ASTNode node) {
 		boolean isInterface = node instanceof TypeDeclaration && ((TypeDeclaration) node).isInterface();
-		return !(node instanceof AnnotationTypeDeclaration) && !(isInterface && !JavaModelUtil.is18OrHigher(fCUnit.getJavaProject()));
+		return !(node instanceof AnnotationTypeDeclaration) && !(isInterface && !JavaModelUtil.is1d8OrHigher(fCUnit.getJavaProject()));
 	}
 
 	public RefactoringStatus checkInitialConditions(ImportRewrite rewriter) {
