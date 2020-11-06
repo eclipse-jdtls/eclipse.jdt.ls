@@ -52,7 +52,7 @@ public class TypeAnnotationRewrite {
 	 */
 	public static void removePureTypeAnnotations(ASTNode node, ChildListPropertyDescriptor childListProperty, ASTRewrite rewrite, TextEditGroup editGroup) {
 		CompilationUnit root= (CompilationUnit) node.getRoot();
-		if (!JavaModelUtil.is18OrHigher(root.getJavaElement().getJavaProject())) {
+		if (!JavaModelUtil.is1d8OrHigher(root.getJavaElement().getJavaProject())) {
 			return;
 		}
 		ListRewrite listRewrite= rewrite.getListRewrite(node, childListProperty);

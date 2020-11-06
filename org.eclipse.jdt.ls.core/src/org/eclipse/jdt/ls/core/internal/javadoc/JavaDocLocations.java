@@ -290,15 +290,15 @@ public class JavaDocLocations {
 		 * This breaks all clients that directly create such URLs.
 		 * We can't know what format is required, so we just guess by the project's compiler compliance.
 		 */
-		boolean is18OrHigher = JavaModelUtil.is18OrHigher(meth.getJavaProject());
-		buf.append(is18OrHigher ? '-' : '(');
+		boolean is1d8OrHigher = JavaModelUtil.is1d8OrHigher(meth.getJavaProject());
+		buf.append(is1d8OrHigher ? '-' : '(');
 		String[] params = meth.getParameterTypes();
 		IType declaringType = meth.getDeclaringType();
 		boolean isVararg = Flags.isVarargs(meth.getFlags());
 		int lastParam = params.length - 1;
 		for (int i = 0; i <= lastParam; i++) {
 			if (i != 0) {
-				buf.append(is18OrHigher ? "-" : ", "); //$NON-NLS-1$ //$NON-NLS-2$
+				buf.append(is1d8OrHigher ? "-" : ", "); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			String curr = Signature.getTypeErasure(params[i]);
 			String fullName = JavaModelUtil.getResolvedTypeName(curr, declaringType);
@@ -312,7 +312,7 @@ public class JavaDocLocations {
 					dim--;
 				}
 				while (dim > 0) {
-					buf.append(is18OrHigher ? ":A" : "[]"); //$NON-NLS-1$ //$NON-NLS-2$
+					buf.append(is1d8OrHigher ? ":A" : "[]"); //$NON-NLS-1$ //$NON-NLS-2$
 					dim--;
 				}
 				if (i == lastParam && isVararg) {
@@ -320,7 +320,7 @@ public class JavaDocLocations {
 				}
 			}
 		}
-		buf.append(is18OrHigher ? '-' : ')');
+		buf.append(is1d8OrHigher ? '-' : ')');
 	}
 
 	/**

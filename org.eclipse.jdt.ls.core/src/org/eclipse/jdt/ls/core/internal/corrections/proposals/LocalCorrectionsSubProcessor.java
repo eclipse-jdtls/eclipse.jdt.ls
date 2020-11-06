@@ -154,7 +154,7 @@ public class LocalCorrectionsSubProcessor {
 			proposals.add(proposal);
 		}
 
-		if (JavaModelUtil.is17OrHigher(cu.getJavaProject())) {
+		if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
 			refactoring = SurroundWithTryCatchRefactoring.create(cu, offset, length, true);
 			if (refactoring == null) {
 				return;
@@ -226,7 +226,7 @@ public class LocalCorrectionsSubProcessor {
 				proposals.add(proposal);
 			}
 
-			if (JavaModelUtil.is17OrHigher(cu.getJavaProject())) {
+			if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
 				List<CatchClause> catchClauses = surroundingTry.catchClauses();
 
 				if (catchClauses != null && catchClauses.size() == 1) {

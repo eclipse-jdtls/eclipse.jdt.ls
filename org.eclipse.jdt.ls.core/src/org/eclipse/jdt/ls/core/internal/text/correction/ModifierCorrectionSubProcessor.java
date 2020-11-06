@@ -576,7 +576,7 @@ public class ModifierCorrectionSubProcessor {
 				proposals.add(proposal);
 			}
 
-			if (JavaModelUtil.is18OrHigher(cu.getJavaProject()) && parentIsInterface) {
+			if (JavaModelUtil.is1d8OrHigher(cu.getJavaProject()) && parentIsInterface) {
 				{
 					// insert proposal to add static modifier
 					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, decl.getName());
