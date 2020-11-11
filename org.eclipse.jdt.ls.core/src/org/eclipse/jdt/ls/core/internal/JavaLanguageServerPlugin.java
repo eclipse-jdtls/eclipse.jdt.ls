@@ -97,6 +97,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 	public static final String HTTPS_PROXY_USER = "https.proxyUser";
 	public static final String HTTP_PROXY_USER = "http.proxyUser";
 
+	private static final String LOGBACK_CONFIG_FILE_PROPERTY = "logback.configurationFile";
+	private static final String LOGBACK_DEFAULT_FILENAME = "logback.xml";
+
 	/**
 	 * Source string send to clients for messages such as diagnostics.
 	 **/
@@ -157,8 +160,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 		} catch (BundleException e) {
 			logException(e.getMessage(), e);
 		}
+		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
 		try {
-			redirectStandardStreams();
+			redirectStandardStreams(isDebug);
 		} catch (FileNotFoundException e) {
 			logException(e.getMessage(), e);
 		}
@@ -190,6 +194,24 @@ public class JavaLanguageServerPlugin extends Plugin {
 		// turn off substring code completion if isn't explicitly set
 		if (System.getProperty(AssistOptions.PROPERTY_SubstringMatch) == null) {
 			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
+		}
+
+		if (isDebug && System.getProperty(LOGBACK_CONFIG_FILE_PROPERTY) == null) {
+			File stateDir = getStateLocation().toFile();
+			File configFile = new File(stateDir, LOGBACK_DEFAULT_FILENAME);
+			if (!configFile.isFile()) {
+				try (InputStream is = bundleContext.getBundle().getEntry(LOGBACK_DEFAULT_FILENAME).openStream(); FileOutputStream fos = new FileOutputStream(configFile)) {
+					for (byte[] buffer = new byte[1024 * 4];;) {
+						int n = is.read(buffer);
+						if (n < 0) {
+							break;
+						}
+						fos.write(buffer, 0, n);
+					}
+				}
+			}
+			// ContextInitializer.CONFIG_FILE_PROPERTY
+			System.setProperty(LOGBACK_CONFIG_FILE_PROPERTY, configFile.getAbsolutePath());
 		}
 	}
 
@@ -474,12 +496,11 @@ public class JavaLanguageServerPlugin extends Plugin {
 		return context == null ? "Unknown" : context.getBundle().getVersion().toString();
 	}
 
-	private static void redirectStandardStreams() throws FileNotFoundException {
+	private static void redirectStandardStreams(boolean isDebug) throws FileNotFoundException {
 		in = System.in;
 		out = System.out;
 		err = System.err;
 		System.setIn(new ByteArrayInputStream(new byte[0]));
-		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
 		if (isDebug) {
 			String id = "jdt.ls-" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();

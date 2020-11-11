@@ -36,6 +36,9 @@
 <stringAttribute key="product" value="org.eclipse.sdk.ide"/>
 <setAttribute key="selected_features"/>
 <setAttribute key="selected_target_bundles">
+<setEntry value="ch.qos.logback.classic@default:default"/>
+<setEntry value="ch.qos.logback.core@default:default"/>
+<setEntry value="ch.qos.logback.slf4j@default:default"/>
 <setEntry value="com.google.gson*2.8.2.v20180104-1110@default:default"/>
 <setEntry value="com.google.guava@default:default"/>
 <setEntry value="com.ibm.icu@default:default"/>
@@ -91,6 +94,7 @@
 <setEntry value="org.eclipse.m2e.core@default:default"/>
 <setEntry value="org.eclipse.m2e.jdt@default:default"/>
 <setEntry value="org.eclipse.m2e.lifecyclemapping.defaults@default:default"/>
+<setEntry value="org.eclipse.m2e.logback.configuration@default:default"/>
 <setEntry value="org.eclipse.m2e.maven.indexer@default:default"/>
 <setEntry value="org.eclipse.m2e.maven.runtime.slf4j.simple@default:default"/>
 <setEntry value="org.eclipse.m2e.maven.runtime@default:default"/>
