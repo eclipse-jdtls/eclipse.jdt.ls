@@ -26,6 +26,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSelectionParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -107,6 +109,9 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params);
+
+	@JsonRequest
+	CompletableFuture<List<SelectionInfo>> inferSelection(InferSelectionParams params);
 
 	@JsonRequest
 	CompletableFuture<MoveDestinationsResponse> getMoveDestinations(MoveParams params);

@@ -56,6 +56,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSelectionParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
@@ -937,6 +939,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params) {
 		logInfo(">> java/getRefactorEdit");
 		return computeAsync((monitor) -> GetRefactorEditHandler.getEditsForRefactor(params));
+	}
+
+	@Override
+	public CompletableFuture<List<SelectionInfo>> inferSelection(InferSelectionParams params) {
+		logInfo(">> java/inferSelection");
+		return computeAsync((monitor) -> InferSelectionHandler.inferSelectionsForRefactor(params));
 	}
 
 	@Override

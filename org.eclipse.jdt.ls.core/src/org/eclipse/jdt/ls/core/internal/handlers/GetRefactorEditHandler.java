@@ -38,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -73,6 +74,10 @@ public class GetRefactorEditHandler {
 			} else if (RefactorProposalUtility.ASSIGN_FIELD_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getAssignFieldProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
 			} else if (RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
+				SelectionInfo info = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), SelectionInfo.class) : null;
+				if (info != null) {
+					context = new InnovationContext(unit, info.offset, info.length);
+				}
 				proposal = (LinkedCorrectionProposal) getExtractMethodProposal(params.context, context, context.getCoveringNode(), problemsAtLocation, formatterOptions);
 			} else if (RefactorProposalUtility.CONVERT_VARIABLE_TO_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
@@ -184,7 +189,7 @@ public class GetRefactorEditHandler {
 	}
 
 	private static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
-		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
+		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false, false);
 	}
 
 	public static class RenamePosition {
