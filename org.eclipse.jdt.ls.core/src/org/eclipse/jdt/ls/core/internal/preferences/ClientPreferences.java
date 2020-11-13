@@ -14,7 +14,9 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.lsp4j.ClientCapabilities;
@@ -207,6 +209,14 @@ public class ClientPreferences {
 
 	public boolean isAdvancedExtractRefactoringSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedExtractRefactoringSupport", "false").toString());
+	}
+
+	public boolean isExtractMethodInferSelectionSupport() {
+		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
+		if (supportList instanceof List<?>) {
+			return ((List<?>)supportList).contains("extractMethod");
+		}
+		return false;
 	}
 
 	public boolean isAdvancedIntroduceParameterRefactoringSupported() {

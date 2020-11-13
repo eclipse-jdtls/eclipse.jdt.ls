@@ -43,6 +43,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -260,12 +261,12 @@ public class RefactorProposalUtility {
 		return getExtractVariableProposals(params, context, problemsAtLocation, true);
 	}
 
-	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation) throws CoreException {
-		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, false);
+	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, false, inferSelectionSupport);
 	}
 
-	public static CUCorrectionProposal getExtractMethodCommandProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation) throws CoreException {
-		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, true);
+	public static CUCorrectionProposal getExtractMethodCommandProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, true, inferSelectionSupport);
 	}
 
 	private static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean returnAsCommand) throws CoreException {
@@ -655,7 +656,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand) throws CoreException {
+	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
 			return null;
 		}
@@ -675,9 +676,26 @@ public class RefactorProposalUtility {
 		final ExtractMethodRefactoring extractMethodRefactoring = new ExtractMethodRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formattingOptions);
 		String uniqueMethodName = getUniqueMethodName(coveringNode, "extracted");
 		extractMethodRefactoring.setMethodName(uniqueMethodName);
-		if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
-			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
+		String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
+		int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
+		if (context.getSelectionLength() == 0) {
+			if (!inferSelectionSupport) {
+				return null;
+			}
+			ASTNode parent = coveringNode;
+			while (parent != null && parent instanceof Expression) {
+				if (parent instanceof ParenthesizedExpression) {
+					parent = parent.getParent();
+					continue;
+				}
+				ExtractMethodRefactoring refactoring = new ExtractMethodRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength(), formattingOptions);
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
+				}
+				parent = parent.getParent();
+			}
+			return null;
+		} else if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
 				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
 			}
@@ -844,4 +862,5 @@ public class RefactorProposalUtility {
 			return !supportedDestinationKinds.isEmpty();
 		}
 	}
+
 }
