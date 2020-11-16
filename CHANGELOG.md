@@ -1,4 +1,10 @@
 # Change Log
+
+# [0.65.0 (November 18th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/83?closed=1)
+ * bug fix - Update m2e to 1.17.0.20201112-0751. See [#1596](https://github.com/eclipse/eclipse.jdt.ls/pull/1596).
+ * other - Improve tracing capability of m2e through m2e.logback.configuration. See [#1589](https://github.com/eclipse/eclipse.jdt.ls/pull/1589).
+ * other - Infer expressions if there is no selection range when extracting method. See [#1585](https://github.com/eclipse/eclipse.jdt.ls/pull/1585).
+
 # [0.64.0 (November 4th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/82?closed=1)
  * enhancement - Provide method for converting callstack entry to location. See [#1202](https://github.com/eclipse/eclipse.jdt.ls/issues/1202).
  * enhancement - Hide inline variable/constant commands when no reference found. See [#1573](https://github.com/eclipse/eclipse.jdt.ls/pull/1573) and [#1575](https://github.com/eclipse/eclipse.jdt.ls/pull/1575).
