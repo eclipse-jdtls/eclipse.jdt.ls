@@ -1,6 +1,6 @@
 # Change Log
 
-# [0.65.0 (November 18th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/83?closed=1)
+# [0.65.0 (November 19th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/83?closed=1)
  * bug fix - Update m2e to 1.17.0.20201112-0751. See [#1596](https://github.com/eclipse/eclipse.jdt.ls/pull/1596).
  * other - Improve tracing capability of m2e through m2e.logback.configuration. See [#1589](https://github.com/eclipse/eclipse.jdt.ls/pull/1589).
  * other - Infer expressions if there is no selection range when extracting method. See [#1585](https://github.com/eclipse/eclipse.jdt.ls/pull/1585).
