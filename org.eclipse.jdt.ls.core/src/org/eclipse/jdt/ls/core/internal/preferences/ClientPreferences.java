@@ -347,4 +347,14 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCallHierarchy());
 	}
 
+	public boolean isResolveCodeActionSupported() {
+		//@formatter:off
+		return v3supported && capabilities.getTextDocument().getCodeAction() != null
+			&& capabilities.getTextDocument().getCodeAction().getDataSupport() != null
+			&& capabilities.getTextDocument().getCodeAction().getDataSupport().booleanValue()
+			&& capabilities.getTextDocument().getCodeAction().getResolveSupport() != null
+			&& capabilities.getTextDocument().getCodeAction().getResolveSupport().getProperties() != null
+			&& capabilities.getTextDocument().getCodeAction().getResolveSupport().getProperties().contains("edit");
+		//@formatter:on
+	}
 }

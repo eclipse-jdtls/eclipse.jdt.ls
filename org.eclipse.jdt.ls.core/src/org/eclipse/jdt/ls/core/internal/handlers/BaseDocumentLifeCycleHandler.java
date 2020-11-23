@@ -179,7 +179,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			cu.makeConsistent(progress);
 			//cu.reconcile(ICompilationUnit.NO_AST, false, null, progress.newChild(1));
 		}
-		JavaLanguageServerPlugin.logInfo("Reconciled " + toReconcile.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
+		JavaLanguageServerPlugin.logInfo("Reconciled " + cusToReconcile.size() + ". Took " + (System.currentTimeMillis() - start) + " ms");
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
 		}

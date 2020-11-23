@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,7 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
+import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -574,7 +575,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 		Change change = refactoring.createChange(new NullProgressMonitor());
 		WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
 		assertNotNull(change);
-		String actual = evaluateChanges(edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(edit);
 		assertEquals(expected, actual);
 		return true;
 	}
