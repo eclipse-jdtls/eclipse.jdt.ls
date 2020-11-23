@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -36,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
@@ -106,7 +107,13 @@ final public class InitHandler extends BaseInitHandler {
 			capabilities.setRenameProvider(RenameHandler.createOptions());
 		}
 		if (!preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			capabilities.setCodeActionProvider(Boolean.TRUE);
+			if (preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
+				CodeActionOptions codeActionOptions = new CodeActionOptions();
+				codeActionOptions.setResolveProvider(Boolean.TRUE);
+				capabilities.setCodeActionProvider(codeActionOptions);
+			} else {
+				capabilities.setCodeActionProvider(Boolean.TRUE);
+			}
 		}
 		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			Set<String> commands = commandHandler.getAllCommands();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -306,6 +306,10 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	public static String evaluateWorkspaceEdit(WorkspaceEdit edit) throws JavaModelException, BadLocationException {
+		if (edit == null) {
+			return null;
+		}
+
 		if (edit.getDocumentChanges() != null) {
 			return ResourceUtils.dos2Unix(evaluateChanges(edit.getDocumentChanges()));
 		}

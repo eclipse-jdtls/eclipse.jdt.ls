@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
+import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler;
@@ -69,7 +70,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
-		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -106,7 +107,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
-		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -143,7 +144,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
-		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -181,7 +182,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
-		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -228,7 +229,7 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
 		Assert.assertNotNull(refactorEdit);
 		Assert.assertNotNull(refactorEdit.edit);
-		String actual = evaluateChanges(refactorEdit.edit.getChanges());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
