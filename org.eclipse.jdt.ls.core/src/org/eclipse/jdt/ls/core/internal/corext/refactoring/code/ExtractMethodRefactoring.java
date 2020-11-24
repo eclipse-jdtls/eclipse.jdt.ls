@@ -330,6 +330,22 @@ public class ExtractMethodRefactoring extends Refactoring {
 	 */
 	@Override
 	public RefactoringStatus checkInitialConditions(IProgressMonitor pm) throws CoreException {
+		RefactoringStatus result = this.internalCheckInitialConditions(pm);
+		if (fSelectionStart < 0 || fSelectionLength == 0 || result.hasFatalError()) {
+			return result;
+		}
+		initializeParameterInfos();
+		initializeUsedNames();
+		initializeDuplicates();
+		initializeDestinations();
+		return result;
+	}
+
+	public RefactoringStatus checkInferConditions(IProgressMonitor pm) throws CoreException {
+		return this.internalCheckInitialConditions(pm);
+	}
+
+	private RefactoringStatus internalCheckInitialConditions(IProgressMonitor pm) throws CoreException {
 		RefactoringStatus result = new RefactoringStatus();
 		pm.beginTask("", 100); //$NON-NLS-1$
 
@@ -362,10 +378,6 @@ public class ExtractMethodRefactoring extends Refactoring {
 		if (fVisibility == -1) {
 			setVisibility(Modifier.PRIVATE);
 		}
-		initializeParameterInfos();
-		initializeUsedNames();
-		initializeDuplicates();
-		initializeDestinations();
 		return result;
 	}
 
