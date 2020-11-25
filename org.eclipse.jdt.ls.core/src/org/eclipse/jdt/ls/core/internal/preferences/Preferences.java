@@ -496,6 +496,7 @@ public class Preferences {
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT = new ArrayList<>();
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("java.awt.*");
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("com.sun.*");
+		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("sun.*");
 		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
 	}
 
