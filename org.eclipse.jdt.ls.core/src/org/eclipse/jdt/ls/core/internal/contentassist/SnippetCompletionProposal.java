@@ -133,7 +133,9 @@ public class SnippetCompletionProposal {
 								return false;
 							}
 						} catch (CoreException e) {
-							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+							if (e.getStatus().getCode() != TokenScanner.END_OF_FILE) {
+								JavaLanguageServerPlugin.logException(e.getMessage(), e);
+							}
 						}
 						if (node instanceof CompletionOnSingleNameReference) {
 							CompilationUnit ast = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
