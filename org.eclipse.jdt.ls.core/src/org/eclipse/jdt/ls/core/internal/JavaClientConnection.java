@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
@@ -220,6 +221,13 @@ public class JavaClientConnection {
 	 */
 	public void semanticHighlighting(SemanticHighlightingParams params) {
 		client.semanticHighlighting(params);
+	}
+
+	/**
+	 * @see {@link LanguageClient#configuration(ConfigurationParams)}
+	 */
+	public List<Object> configuration(ConfigurationParams configurationParams) {
+		return this.client.configuration(configurationParams).join();
 	}
 
 	public void disconnect() {
