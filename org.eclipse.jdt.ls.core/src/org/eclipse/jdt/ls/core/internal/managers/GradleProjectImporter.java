@@ -62,6 +62,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final String GRADLE_USER_HOME = "GRADLE_USER_HOME";
 
 	public static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
+	public static final String SETTINGS_GRADLE_DESCRIPTOR = "settings.gradle";
 
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
@@ -91,7 +92,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 		if (directories == null) {
-			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR)
+			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR,
+					SETTINGS_GRADLE_DESCRIPTOR)
 					.includeNested(false)
 					.addExclusions("**/build")//default gradle build dir
 					.addExclusions("**/bin");
@@ -120,6 +122,21 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
 		subMonitor.worked(1);
 		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
+		// store the digest for the imported gradle projects.
+		ProjectUtils.getGradleProjects().forEach(project -> {
+			File buildFile = project.getFile(BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
+			File settingsFile = project.getFile(SETTINGS_GRADLE_DESCRIPTOR).getLocation().toFile();
+			try {
+				if (buildFile.exists()) {
+					JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath());
+				}
+				if (settingsFile.exists()) {
+					JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath());
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to update digest for gradle build file", e);
+			}
+		});
 		subMonitor.done();
 	}
 

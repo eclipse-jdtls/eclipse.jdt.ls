@@ -79,7 +79,11 @@ public class GradleBuildSupport implements IBuildSupport {
 				BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
 				gradleBuild = GradleCore.getWorkspace().createBuild(buildConfiguration);
 			}
-			if (isRoot) {
+			File buildFile = project.getFile(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
+			File settingsFile = project.getFile(GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR).getLocation().toFile();
+			boolean shouldUpdate = (buildFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath()))
+					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath()));
+			if (isRoot || shouldUpdate) {
 				gradleBuild.synchronize(monitor);
 			}
 		}
@@ -89,9 +93,9 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (gradleBuild instanceof InternalGradleBuild) {
 			CancellationTokenSource tokenSource = GradleConnector.newCancellationTokenSource();
 			Collection<EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
+			File projectDirectory = project.getLocation().toFile();
 			for (EclipseProject eclipseProject : eclipseProjects) {
 				File eclipseProjectDirectory = eclipseProject.getProjectDirectory();
-				File projectDirectory = project.getLocation().toFile();
 				if (eclipseProjectDirectory.equals(projectDirectory)) {
 					return eclipseProject.getParent() == null;
 				}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2020 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -514,6 +516,28 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
 		}
+	}
+
+	@Test
+	public void testSettingsGradle() throws Exception {
+			List<IProject> projects = importProjects("gradle/sample");
+			assertEquals(3, projects.size());//default, app, sample
+			IProject root = WorkspaceHelper.getProject("sample");
+			assertIsGradleProject(root);
+			IProject project = WorkspaceHelper.getProject("app");
+			assertIsGradleProject(project);
+			assertIsJavaProject(project);
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+			assertNull(type);
+			IFile build2 = project.getFile("/build.gradle2");
+			InputStream contents = build2.getContents();
+			IFile build = project.getFile("/build.gradle");
+			build.setContents(contents, true, false, null);
+			projectsManager.updateProject(project, false);
+			JobHelpers.waitForJobsToComplete();
+			type = javaProject.findType("org.apache.commons.lang3.StringUtils");
+			assertNotNull(type);
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
