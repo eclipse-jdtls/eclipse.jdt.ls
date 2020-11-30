@@ -253,12 +253,12 @@ public class RefactorProposalUtility {
 		return type == null ? null : type.getQualifiedName();
 	}
 
-	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
-		return getExtractVariableProposals(params, context, problemsAtLocation, false);
+	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+		return getExtractVariableProposals(params, context, problemsAtLocation, false, inferSelectionSupport);
 	}
 
-	public static List<CUCorrectionProposal> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation) throws CoreException {
-		return getExtractVariableProposals(params, context, problemsAtLocation, true);
+	public static List<CUCorrectionProposal> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+		return getExtractVariableProposals(params, context, problemsAtLocation, true, inferSelectionSupport);
 	}
 
 	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
@@ -269,23 +269,23 @@ public class RefactorProposalUtility {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, true, inferSelectionSupport);
 	}
 
-	private static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean returnAsCommand) throws CoreException {
+	private static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
 		}
 
 		List<CUCorrectionProposal> proposals = new ArrayList<>();
-		CUCorrectionProposal proposal = getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, null, returnAsCommand);
+		CUCorrectionProposal proposal = getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, null, returnAsCommand, inferSelectionSupport);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
 
-		proposal = getExtractVariableProposal(params, context, problemsAtLocation, null, returnAsCommand);
+		proposal = getExtractVariableProposal(params, context, problemsAtLocation, null, returnAsCommand, inferSelectionSupport);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
 
-		proposal = getExtractConstantProposal(params, context, problemsAtLocation, null, returnAsCommand);
+		proposal = getExtractConstantProposal(params, context, problemsAtLocation, null, returnAsCommand, inferSelectionSupport);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
@@ -315,20 +315,34 @@ public class RefactorProposalUtility {
 		return true;
 	}
 
-	public static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
+		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
+		int relevance;
+		if (context.getSelectionLength() == 0) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ZERO_SELECTION;
+		} else if (problemsAtLocation) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ERROR;
+		} else {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
+		}
+		if (inferSelectionSupport && context.getSelectionLength() == 0) {
+			ASTNode parent = context.getCoveringNode();
+			while (parent != null && parent instanceof Expression) {
+				if (parent instanceof ParenthesizedExpression) {
+					parent = parent.getParent();
+					continue;
+				}
+				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
+				}
+				parent = parent.getParent();
+			}
+			return null;
+		}
 		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
-			}
-
 			if (returnAsCommand) {
 				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
 			}
@@ -351,21 +365,35 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
+		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
+		int relevance;
+		if (context.getSelectionLength() == 0) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+		} else if (problemsAtLocation) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+		} else {
+			relevance = IProposalRelevance.EXTRACT_LOCAL;
+		}
+		if (inferSelectionSupport && context.getSelectionLength() == 0) {
+			ASTNode parent = context.getCoveringNode();
+			while (parent != null && parent instanceof Expression) {
+				if (parent instanceof ParenthesizedExpression) {
+					parent = parent.getParent();
+					continue;
+				}
+				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
+				}
+				parent = parent.getParent();
+			}
+			return null;
+		}
 		ExtractTempRefactoring extractTempRefactoringSelectedOnly = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
 		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_LOCAL;
-			}
-
 			if (returnAsCommand) {
 				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
 			}
@@ -546,20 +574,34 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
+		String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
+		int relevance;
+		if (context.getSelectionLength() == 0) {
+			relevance = IProposalRelevance.EXTRACT_CONSTANT_ZERO_SELECTION;
+		} else if (problemsAtLocation) {
+			relevance = IProposalRelevance.EXTRACT_CONSTANT_ERROR;
+		} else {
+			relevance = IProposalRelevance.EXTRACT_CONSTANT;
+		}
+		if (inferSelectionSupport && context.getSelectionLength() == 0) {
+			ASTNode parent = context.getCoveringNode();
+			while (parent != null && parent instanceof Expression) {
+				if (parent instanceof ParenthesizedExpression) {
+					parent = parent.getParent();
+					continue;
+				}
+				ExtractConstantRefactoring refactoring = new ExtractConstantRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
+				}
+				parent = parent.getParent();
+			}
+			return null;
+		}
 		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		if (extractConstRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_CONSTANT;
-			}
-
 			if (returnAsCommand) {
 				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
 			}

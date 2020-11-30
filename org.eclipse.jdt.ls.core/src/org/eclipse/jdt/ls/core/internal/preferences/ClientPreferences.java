@@ -219,6 +219,14 @@ public class ClientPreferences {
 		return false;
 	}
 
+	public boolean isExtractVariableInferSelectionSupported() {
+		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
+		if (supportList instanceof List<?>) {
+			return ((List<?>)supportList).contains("extractVariable");
+		}
+		return false;
+	}
+
 	public boolean isAdvancedIntroduceParameterRefactoringSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedIntroduceParameterRefactoringSupport", "false").toString());
 	}
