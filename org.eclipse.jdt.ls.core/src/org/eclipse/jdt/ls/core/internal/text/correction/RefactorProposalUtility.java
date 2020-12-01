@@ -315,7 +315,11 @@ public class RefactorProposalUtility {
 		return true;
 	}
 
-	public static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	public static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+		return getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
+	}
+
+	private static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
 		int relevance;
@@ -365,7 +369,11 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	public static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+		return getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
+	}
+
+	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
 		int relevance;
@@ -574,7 +582,11 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+		return getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
+	}
+
+	private static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
 		int relevance;

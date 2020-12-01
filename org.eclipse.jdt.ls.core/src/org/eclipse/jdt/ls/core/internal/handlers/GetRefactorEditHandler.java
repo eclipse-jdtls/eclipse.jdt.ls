@@ -167,15 +167,15 @@ public class GetRefactorEditHandler {
 
 	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
 		if (RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(refactorType)) {
-			return RefactorProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false, false);
+			return RefactorProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
 		if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(refactorType)) {
-			return RefactorProposalUtility.getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, false, false);
+			return RefactorProposalUtility.getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
 		if (RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(refactorType)) {
-			return RefactorProposalUtility.getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, false, false);
+			return RefactorProposalUtility.getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
 
 		return null;
