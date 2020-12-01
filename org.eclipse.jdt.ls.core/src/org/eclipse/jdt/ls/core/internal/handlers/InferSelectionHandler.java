@@ -23,7 +23,9 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
@@ -39,7 +41,7 @@ public class InferSelectionHandler {
 		int start = DiagnosticsHelper.getStartOffset(unit, params.context.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.context.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		List<SelectionInfo> extractMethodInfos = new ArrayList<SelectionInfo>();
+		List<SelectionInfo> selectionCandidates = new ArrayList<SelectionInfo>();
 		ASTNode parent = context.getCoveringNode();
 		try {
 			if (RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {
@@ -50,7 +52,31 @@ public class InferSelectionHandler {
 					}
 					ExtractMethodRefactoring refactoring = new ExtractMethodRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
 					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-						extractMethodInfos.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength()));
+						selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength()));
+					}
+					parent = parent.getParent();
+				}
+			} else if (RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command) || RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command)) {
+				while (parent != null && parent instanceof Expression) {
+					if (parent instanceof ParenthesizedExpression) {
+						parent = parent.getParent();
+						continue;
+					}
+					ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength()));
+					}
+					parent = parent.getParent();
+				}
+			} else if (RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
+				while (parent != null && parent instanceof Expression) {
+					if (parent instanceof ParenthesizedExpression) {
+						parent = parent.getParent();
+						continue;
+					}
+					ExtractConstantRefactoring refactoring = new ExtractConstantRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength()));
 					}
 					parent = parent.getParent();
 				}
@@ -60,10 +86,10 @@ public class InferSelectionHandler {
 			// do nothing.
 		}
 
-		if (extractMethodInfos.size() == 0) {
+		if (selectionCandidates.size() == 0) {
 			return null;
 		}
-		return extractMethodInfos;
+		return selectionCandidates;
 	}
 
 	public static class SelectionInfo {

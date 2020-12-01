@@ -86,6 +86,74 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		Assert.assertEquals(infos.get(2).length, 21);
 	}
 
+	@Test
+	public void testInferSelectionWhenExtractVariable() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        boolean b1 = true;\n");
+		buf.append("        boolean b2 = false;\n");
+		buf.append("        boolean b3 = true && !b2;\n");
+		buf.append("        boolean b4 = b3 || /*|*/b2 && b1;\n");
+		buf.append("        if ((b1||b4) && (b2||b3))\n");
+		buf.append("            return 1;\n");
+		buf.append("        \n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getVerticalBarRange(cu);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
+		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
+		Assert.assertNotNull(infos);
+		Assert.assertEquals(infos.size(), 3);
+		Assert.assertEquals(infos.get(0).name, "b2");
+		Assert.assertEquals(infos.get(0).length, 2);
+		Assert.assertEquals(infos.get(1).name, "b2 && b1");
+		Assert.assertEquals(infos.get(1).length, 8);
+		Assert.assertEquals(infos.get(2).name, "b3 || b2 && b1");
+		Assert.assertEquals(infos.get(2).length, 19);
+	}
+
+	@Test
+	public void testInferSelectionWhenExtractConstant() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        boolean b1 = true;\n");
+		buf.append("        boolean b2 = false;\n");
+		buf.append("        boolean b3 = /*|*/true || false;\n");
+		buf.append("        boolean b4 = b3 || b2 && b1;\n");
+		buf.append("        if ((b1||b4) && (b2||b3))\n");
+		buf.append("            return 1;\n");
+		buf.append("        \n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getVerticalBarRange(cu);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, params);
+		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
+		Assert.assertNotNull(infos);
+		Assert.assertEquals(infos.size(), 2);
+		Assert.assertEquals(infos.get(0).name, "true");
+		Assert.assertEquals(infos.get(0).length, 4);
+		Assert.assertEquals(infos.get(1).name, "true || false");
+		Assert.assertEquals(infos.get(1).length, 13);
+	}
+
 	/**
 	 * Find the last position of vertical bar comment.
 	 * @param cu the ICompilationUnit containing source

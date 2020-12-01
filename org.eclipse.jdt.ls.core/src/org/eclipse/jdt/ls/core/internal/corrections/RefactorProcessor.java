@@ -234,9 +234,9 @@ public class RefactorProcessor {
 
 		List<CUCorrectionProposal> newProposals = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			newProposals = RefactorProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation);
+			newProposals = RefactorProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractVariableInferSelectionSupported());
 		} else {
-			newProposals = RefactorProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation);
+			newProposals = RefactorProposalUtility.getExtractVariableProposals(params, context, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractVariableInferSelectionSupported());
 		}
 
 		if (newProposals == null || newProposals.isEmpty()) {

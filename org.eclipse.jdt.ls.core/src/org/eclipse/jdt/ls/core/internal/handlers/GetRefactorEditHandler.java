@@ -68,6 +68,10 @@ public class GetRefactorEditHandler {
 			LinkedCorrectionProposal proposal = null;
 			if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
 					|| RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
+				SelectionInfo info = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), SelectionInfo.class) : null;
+				if (info != null) {
+					context = new InnovationContext(unit, info.offset, info.length);
+				}
 				proposal = (LinkedCorrectionProposal) getExtractVariableProposal(params.context, context, problemsAtLocation, params.command, formatterOptions);
 			} else if (RefactorProposalUtility.ASSIGN_VARIABLE_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) getAssignVariableProposal(params, context, problemsAtLocation, params.command, formatterOptions, locations);
