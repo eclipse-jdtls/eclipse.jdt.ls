@@ -559,7 +559,7 @@ public class RefactorProposalUtility {
 						refactoring.setInitializeIn(scope.ordinal());
 					}
 					List<String> scopes = getInitializeScopes(refactoring);
-					if (scopes.size() > 0) {
+					if (!scopes.isEmpty()) {
 						return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params));
 					}
 				}

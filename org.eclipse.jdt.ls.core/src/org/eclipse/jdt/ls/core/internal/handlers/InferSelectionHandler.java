@@ -90,7 +90,9 @@ public class InferSelectionHandler {
 					ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
 					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 						List<String> scopes = RefactorProposalUtility.getInitializeScopes(refactoring);
-						selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength(), scopes));
+						if (!scopes.isEmpty()) {
+							selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength(), scopes));
+						}
 					}
 					parent = parent.getParent();
 				}
