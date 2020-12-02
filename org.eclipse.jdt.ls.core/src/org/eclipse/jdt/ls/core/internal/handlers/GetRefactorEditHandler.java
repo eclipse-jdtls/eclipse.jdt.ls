@@ -88,6 +88,10 @@ public class GetRefactorEditHandler {
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getConvertVariableToFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			} else if (RefactorProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
 				String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
+				SelectionInfo info = (params.commandArguments != null && params.commandArguments.size() > 1) ? JSONUtility.toModel(params.commandArguments.get(1), SelectionInfo.class) : null;
+				if (info != null) {
+					context = new InnovationContext(unit, info.offset, info.length);
+				}
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getExtractFieldProposal(params.context, context, problemsAtLocation, formatterOptions, initializeIn, false);
 			} else if (InvertBooleanUtility.INVERT_VARIABLE_COMMAND.equals(params.command)) {
 				proposal = (LinkedCorrectionProposal) InvertBooleanUtility.getInvertVariableProposal(params.context, context, context.getCoveringNode(), false);
@@ -193,7 +197,7 @@ public class GetRefactorEditHandler {
 	}
 
 	private static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
-		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false, false);
+		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
 	}
 
 	public static class RenamePosition {

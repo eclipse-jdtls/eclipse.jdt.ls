@@ -154,6 +154,34 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		Assert.assertEquals(infos.get(1).length, 13);
 	}
 
+	@Test
+	public void testInferSelectionWhenExtractField() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    private String test = \"test\";\n");
+		buf.append("    public int foo() {\n");
+		buf.append("        int hashCode = this./*|*/test.hashCode();\n");
+		buf.append("        return 0;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getVerticalBarRange(cu);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, params);
+		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
+		Assert.assertNotNull(infos);
+		Assert.assertEquals(infos.size(), 2);
+		Assert.assertEquals(infos.get(0).name, "this.test");
+		Assert.assertEquals(infos.get(0).length, 14);
+		Assert.assertEquals(infos.get(1).name, "this.test.hashCode()");
+		Assert.assertEquals(infos.get(1).length, 25);
+	}
+
 	/**
 	 * Find the last position of vertical bar comment.
 	 * @param cu the ICompilationUnit containing source
