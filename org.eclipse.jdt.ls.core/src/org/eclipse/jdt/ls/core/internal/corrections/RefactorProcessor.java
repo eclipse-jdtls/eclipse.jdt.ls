@@ -273,9 +273,9 @@ public class RefactorProcessor {
 
 		CUCorrectionProposal proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
-			proposal = RefactorProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractMethodInferSelectionSupport());
+			proposal = RefactorProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractMethodInferSelectionSupported());
 		} else {
-			proposal = RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractMethodInferSelectionSupport());
+			proposal = RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractMethodInferSelectionSupported());
 		}
 
 		if (proposal == null) {
@@ -291,7 +291,7 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		CUCorrectionProposal proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported());
+		CUCorrectionProposal proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), this.preferenceManager.getClientPreferences().isExtractFieldInferSelectionSupported());
 
 		if (proposal == null) {
 			return false;

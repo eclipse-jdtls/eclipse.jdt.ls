@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
@@ -80,6 +81,21 @@ public class InferSelectionHandler {
 					}
 					parent = parent.getParent();
 				}
+			} else if (RefactorProposalUtility.EXTRACT_FIELD_COMMAND.equals(params.command)) {
+				while (parent != null && parent instanceof Expression) {
+					if (parent instanceof ParenthesizedExpression) {
+						parent = parent.getParent();
+						continue;
+					}
+					ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						List<String> scopes = RefactorProposalUtility.getInitializeScopes(refactoring);
+						if (!scopes.isEmpty()) {
+							selectionCandidates.add(new SelectionInfo(parent.toString(), parent.getStartPosition(), parent.getLength(), scopes));
+						}
+					}
+					parent = parent.getParent();
+				}
 			}
 
 		} catch (CoreException e) {
@@ -96,11 +112,17 @@ public class InferSelectionHandler {
 		public String name;
 		public int offset;
 		public int length;
+		public List<String> params;
 
 		public SelectionInfo(String name, int offset, int length) {
+			this(name, offset, length, null);
+		}
+
+		public SelectionInfo(String name, int offset, int length, List<String> params) {
 			this.name = name;
 			this.offset = offset;
 			this.length = length;
+			this.params = params;
 		}
 	}
 

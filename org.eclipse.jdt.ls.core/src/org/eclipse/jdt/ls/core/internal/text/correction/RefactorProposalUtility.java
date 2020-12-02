@@ -517,22 +517,56 @@ public class RefactorProposalUtility {
 	 * Merge the "Extract to Field" and "Convert Local Variable to Field" to a
 	 * generic "Extract to Field".
 	 */
-	public static CUCorrectionProposal getGenericExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+	public static CUCorrectionProposal getGenericExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand, boolean inferSelectionSupport)
 			throws CoreException {
 		CUCorrectionProposal proposal = getConvertVariableToFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
 		if (proposal != null) {
 			return proposal;
 		}
 
-		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
+		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, inferSelectionSupport);
 	}
 
 	public static CUCorrectionProposal getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand) throws CoreException {
+		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, false);
+	}
+
+	private static CUCorrectionProposal getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
 		}
-
 		final ICompilationUnit cu = context.getCompilationUnit();
+		String label = CorrectionMessages.QuickAssistProcessor_extract_to_field_description;
+		int relevance;
+		if (context.getSelectionLength() == 0) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
+		} else if (problemsAtLocation) {
+			relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
+		} else {
+			relevance = IProposalRelevance.EXTRACT_LOCAL;
+		}
+		if (context.getSelectionLength() == 0 && inferSelectionSupport) {
+			ASTNode parent = context.getCoveringNode();
+			while (parent != null && parent instanceof Expression) {
+				if (parent instanceof ParenthesizedExpression) {
+					parent = parent.getParent();
+					continue;
+				}
+				ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					InitializeScope scope = InitializeScope.fromName(initializeIn);
+					if (scope != null) {
+						refactoring.setInitializeIn(scope.ordinal());
+					}
+					List<String> scopes = getInitializeScopes(refactoring);
+					if (!scopes.isEmpty()) {
+						return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params));
+					}
+				}
+				parent = parent.getParent();
+			}
+			return null;
+		}
 		ExtractFieldRefactoring extractFieldRefactoringSelectedOnly = new ExtractFieldRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
 		extractFieldRefactoringSelectedOnly.setFormatterOptions(formatterOptions);
 		if (extractFieldRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
@@ -540,32 +574,10 @@ public class RefactorProposalUtility {
 			if (scope != null) {
 				extractFieldRefactoringSelectedOnly.setInitializeIn(scope.ordinal());
 			}
-			String label = CorrectionMessages.QuickAssistProcessor_extract_to_field_description;
-			int relevance;
-			if (context.getSelectionLength() == 0) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ZERO_SELECTION;
-			} else if (problemsAtLocation) {
-				relevance = IProposalRelevance.EXTRACT_LOCAL_ERROR;
-			} else {
-				relevance = IProposalRelevance.EXTRACT_LOCAL;
-			}
-
 			if (returnAsCommand) {
-				List<String> scopes = new ArrayList<>();
-				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInMethod()) {
-					scopes.add(InitializeScope.CURRENT_METHOD.getName());
-				}
-
-				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInFieldDeclaration()) {
-					scopes.add(InitializeScope.FIELD_DECLARATION.getName());
-				}
-
-				if (extractFieldRefactoringSelectedOnly.canEnableSettingDeclareInConstructors()) {
-					scopes.add(InitializeScope.CLASS_CONSTRUCTORS.getName());
-				}
+				List<String> scopes = getInitializeScopes(extractFieldRefactoringSelectedOnly);
 				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
 			}
-
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractFieldRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
 			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, extractFieldRefactoringSelectedOnly, relevance) {
@@ -580,6 +592,22 @@ public class RefactorProposalUtility {
 		}
 
 		return null;
+	}
+
+	public static List<String> getInitializeScopes(ExtractFieldRefactoring refactoring) throws CoreException {
+		List<String> scopes = new ArrayList<>();
+		if (refactoring.canEnableSettingDeclareInMethod()) {
+			scopes.add(InitializeScope.CURRENT_METHOD.getName());
+		}
+
+		if (refactoring.canEnableSettingDeclareInFieldDeclaration()) {
+			scopes.add(InitializeScope.FIELD_DECLARATION.getName());
+		}
+
+		if (refactoring.canEnableSettingDeclareInConstructors()) {
+			scopes.add(InitializeScope.CLASS_CONSTRUCTORS.getName());
+		}
+		return scopes;
 	}
 
 	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
@@ -710,7 +738,11 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand) throws CoreException {
+		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formattingOptions, returnAsCommand, false);
+	}
+
+	private static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
 			return null;
 		}

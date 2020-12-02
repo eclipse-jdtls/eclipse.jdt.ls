@@ -211,7 +211,7 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("advancedExtractRefactoringSupport", "false").toString());
 	}
 
-	public boolean isExtractMethodInferSelectionSupport() {
+	public boolean isExtractMethodInferSelectionSupported() {
 		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
 		if (supportList instanceof List<?>) {
 			return ((List<?>)supportList).contains("extractMethod");
@@ -223,6 +223,14 @@ public class ClientPreferences {
 		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
 		if (supportList instanceof List<?>) {
 			return ((List<?>)supportList).contains("extractVariable");
+		}
+		return false;
+	}
+
+	public boolean isExtractFieldInferSelectionSupported() {
+		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
+		if (supportList instanceof List<?>) {
+			return ((List<?>)supportList).contains("extractField");
 		}
 		return false;
 	}
