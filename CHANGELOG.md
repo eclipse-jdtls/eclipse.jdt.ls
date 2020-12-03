@@ -1,5 +1,14 @@
 # Change Log
 
+# [0.66.0 (December 2nd, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/84?closed=1)
+ * enhancement - Support inferSelection when extract to field. See [#1619](https://github.com/eclipse/eclipse.jdt.ls/pull/1619).
+ * enhancement - Support inferSelection when extract to variable. See [#1615](https://github.com/eclipse/eclipse.jdt.ls/pull/1615).
+ * bug fix - jdt.ls distro is 10MB heavier because of com.ibm.icu_64.2.0.v20190507-1337.jar. See [#1351](https://github.com/eclipse/eclipse.jdt.ls/issues/1351).
+ * bug fix - Java LS crashes on WSL Alpine. See [#1612](https://github.com/eclipse/eclipse.jdt.ls/pull/1612).
+ * bug fix - End of File exception when opening completion in empty file. See [#1611](https://github.com/eclipse/eclipse.jdt.ls/issues/1611).
+ * other - Update Target Platform to use Eclipse 2020-12 M3. See [#1616](https://github.com/eclipse/eclipse.jdt.ls/pull/1616).
+ * other - Improve the performance of inferSelection. See [#1609](https://github.com/eclipse/eclipse.jdt.ls/pull/1609).
+
 # [0.65.0 (November 19th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/83?closed=1)
  * bug fix - Update m2e to 1.17.0.20201112-0751. See [#1596](https://github.com/eclipse/eclipse.jdt.ls/pull/1596).
  * other - Improve tracing capability of m2e through m2e.logback.configuration. See [#1589](https://github.com/eclipse/eclipse.jdt.ls/pull/1589).
