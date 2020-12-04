@@ -20,6 +20,7 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionProposal;
@@ -168,7 +169,7 @@ public class CompletionResolveHandler {
 							}
 							return reader == null? null:CharStreams.toString(reader);
 						}, 500, TimeUnit.MILLISECONDS);
-					} catch (UncheckedTimeoutException tooSlow) {
+					} catch (UncheckedTimeoutException | TimeoutException tooSlow) {
 						//Ignore error for now as it's spamming clients on content assist.
 						//TODO cache javadoc resolution results?
 						//JavaLanguageServerPlugin.logError("Unable to get documentation under 500ms");
