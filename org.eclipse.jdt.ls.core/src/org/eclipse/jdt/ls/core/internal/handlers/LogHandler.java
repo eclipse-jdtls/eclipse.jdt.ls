@@ -68,6 +68,8 @@ public class LogHandler {
 			return -1;
 		case "ERROR":
 			return IStatus.ERROR;
+		case "INFO":
+			return IStatus.ERROR | IStatus.WARNING | IStatus.INFO;
 		case "WARNING":
 		default:
 			return IStatus.ERROR | IStatus.WARNING;
