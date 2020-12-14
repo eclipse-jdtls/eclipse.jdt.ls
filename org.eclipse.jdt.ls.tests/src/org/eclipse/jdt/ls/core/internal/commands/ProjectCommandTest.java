@@ -28,16 +28,17 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
-import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.junit.Test;
 
 /**
  * ProjectCommandTest
  */
-public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
+public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 
     @Test
     public void testGetProjectSettingsForMavenJava7() throws Exception {
@@ -82,7 +83,7 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
     }
 
     @Test
-    public void testGetProjectFromUri() throws Exception {
+    public void testGetMavenProjectFromUri() throws Exception {
         importProjects("maven/salut");
         IProject project = WorkspaceHelper.getProject("salut");
         String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
@@ -92,6 +93,15 @@ public class ProjectCommandTest extends AbstractProjectsManagerBasedTest {
         String projectUri = project.getLocationURI().toString();
         javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
         assertNotNull("Can get project from project uri", javaProject);
+    }
+
+    @Test
+    public void testGetInvisibleProjectFromUri() throws Exception {
+        importProjects("singlefile/simple");
+        IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+        String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
+        IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(linkedFolder);
+        assertNotNull("Can get project from linked folder uri", javaProject);
     }
 
     @Test

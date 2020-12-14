@@ -247,7 +247,7 @@ public class ProjectCommand {
 
 		IJavaElement targetElement = null;
 		for (IContainer container : containers) {
-			targetElement = JavaCore.create(container);
+			targetElement = JavaCore.create(container.getProject());
 			if (targetElement != null) {
 				break;
 			}
