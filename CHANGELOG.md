@@ -1,4 +1,11 @@
 # Change Log
+# [0.67.0 (December 17th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/85?closed=1)
+ * bug fix - Detect Gradle project by settings.gradle as well. See [#1617](https://github.com/eclipse/eclipse.jdt.ls/pull/1617).
+ * bug fix - Should update Gradle project properly after the build file of a sub Gradle project is updated. See [#1617](https://github.com/eclipse/eclipse.jdt.ls/pull/1617).
+ * bug fix - Long completionItem/resolve and TimeoutException. See [#1624](https://github.com/eclipse/eclipse.jdt.ls/issues/1624).
+ * bug fix - Disable module results for autocomplete. See [#1613](https://github.com/eclipse/eclipse.jdt.ls/issues/1613).
+ * bug fix - Get the project from the linked folder uri. See [#1630](https://github.com/eclipse/eclipse.jdt.ls/pull/1630).
+ * bug fix - Add support to INFO log level. See [#1623](https://github.com/eclipse/eclipse.jdt.ls/pull/1623).
 
 # [0.66.0 (December 2nd, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/84?closed=1)
  * enhancement - Support inferSelection when extract to field. See [#1619](https://github.com/eclipse/eclipse.jdt.ls/pull/1619).
