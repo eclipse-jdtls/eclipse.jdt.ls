@@ -55,21 +55,25 @@ public class BasicFileDetector {
 	private static final Set<FileVisitOption> FOLLOW_LINKS_OPTION = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
 	private List<Path> directories;
 	private Path rootDir;
-	private String fileName;
+	private List<String> fileNames;
 	private int maxDepth = 5;
 	private boolean includeNested = true;
 	private Set<String> exclusions = new LinkedHashSet<>(1);
 
 	/**
-	 * Constructs a new BasicFileDetector for the given root directory, searching for a fileName.
-	 * By default, the search depth is limited to 5. Sub-directories of a found directory will be walked through.
-	 * The ".metadata" folder is excluded.
-	 * @param rootDir the root directory to search for files
-	 * @param fileName the name of the file to search
+	 * Constructs a new BasicFileDetector for the given root directory, searching
+	 * for fileNames. By default, the search depth is limited to 5. Sub-directories
+	 * of a found directory will be walked through. The ".metadata" folder is
+	 * excluded.
+	 *
+	 * @param rootDir
+	 *            the root directory to search for files
+	 * @param fileNames
+	 *            the names of the file to search
 	 */
-	public BasicFileDetector(Path rootDir, String fileName) {
+	public BasicFileDetector(Path rootDir, String... fileNames) {
 		this.rootDir = rootDir;
-		this.fileName = fileName;
+		this.fileNames = fileNames == null ? new ArrayList<>() : Arrays.asList(fileNames);
 		directories = new ArrayList<>();
 		addExclusions(METADATA_FOLDER);
 		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
@@ -190,7 +194,12 @@ public class BasicFileDetector {
 	}
 
 	private boolean hasTargetFile(Path dir) {
-		return Files.isRegularFile(dir.resolve(fileName));
+		for (String fileName : fileNames) {
+			if (Files.isRegularFile(dir.resolve(fileName))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
