@@ -33,6 +33,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -42,7 +43,9 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,6 +97,35 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			javaImportExclusions.remove(PROJECT1_PATTERN);
 		}
+	}
+
+	@Test
+	public void testNodeModules() throws Exception {
+		ProgressReporter progressReporter = new ProgressReporter();
+		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager) {
+
+			@Override
+			public IProgressMonitor getDefaultMonitor() {
+				return progressReporter;
+			}
+
+			@Override
+			public IProgressMonitor createMonitor(Job job) {
+				return progressReporter;
+			}
+
+			@Override
+			public IProgressMonitor getProgressReporter(CancelChecker checker) {
+				return progressReporter;
+			}
+
+		};
+		Job.getJobManager().setProgressProvider(progressManager);
+		monitor = progressManager.getDefaultMonitor();
+		importProjects("maven/salut5");
+		IProject proj = WorkspaceHelper.getProject("proj");
+		assertIsMavenProject(proj);
+		assertFalse("node_modules has been scanned", progressReporter.isScanned());
 	}
 
 	@Test
@@ -314,6 +346,31 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 			if ("Update Maven project configuration".equals(jobName)) {
 				updateProjectJobCalled++;
 			}
+		}
+
+	}
+
+	private static class ProgressReporter extends NullProgressMonitor {
+		private boolean scanned = false;
+
+		public boolean isScanned() {
+			return scanned;
+		}
+
+		public ProgressReporter() {
+			super();
+		}
+
+		@Override
+		public void subTask(String name) {
+			if (name != null && name.endsWith("node_modules/sub")) {
+				scanned = true;
+			}
+		}
+
+		@Override
+		public boolean isCanceled() {
+			return false;
 		}
 	}
 
