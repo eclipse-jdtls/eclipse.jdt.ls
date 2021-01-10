@@ -2,7 +2,7 @@ package foo;
 
 public class Annotations {
 
-	@SuppressWarnings
+	@SomeAnnotation
 	public void foo() {}
 
 	@SuppressWarnings("all")

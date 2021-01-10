@@ -19,20 +19,24 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
 public enum TokenType {
-	PACKAGE("namespace"),
+	// Standard LSP token types, see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
+	NAMESPACE("namespace"),
 	CLASS("class"),
 	INTERFACE("interface"),
 	ENUM("enum"),
 	ENUM_MEMBER("enumMember"),
 	TYPE("type"),
 	TYPE_PARAMETER("typeParameter"),
-	ANNOTATION("annotation"),
-	ANNOTATION_MEMBER("annotationMember"),
 	METHOD("function"),
 	PROPERTY("property"),
 	VARIABLE("variable"),
 	PARAMETER("parameter"),
-	MODIFIER("modifier");
+	MODIFIER("modifier"),
+	KEYWORD("keyword"),
+
+	// Custom token types
+	ANNOTATION("annotation"),
+	ANNOTATION_MEMBER("annotationMember");
 
 	/**
 	 * This is the name of the token type given to the client, so it
@@ -42,7 +46,7 @@ public enum TokenType {
 	 * but declared on a class. This makes life easier for theme authors, since
 	 * they don't need to think about Java-specific terminology.
 	 *
-	 * @see https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
+	 * @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
 	 */
 	private String genericName;
 
@@ -108,8 +112,9 @@ public enum TokenType {
 				}
 				return TokenType.TYPE;
 			}
-			case IBinding.PACKAGE: {
-				return TokenType.PACKAGE;
+			case IBinding.PACKAGE:
+			case IBinding.MODULE: {
+				return TokenType.NAMESPACE;
 			}
 			default:
 			return null;

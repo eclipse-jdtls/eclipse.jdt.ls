@@ -19,27 +19,39 @@ import java.util.List;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ExportsDirective;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Javadoc;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.ModuleDeclaration;
+import org.eclipse.jdt.core.dom.ModulePackageAccess;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.OpensDirective;
+import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.RequiresDirective;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeLiteral;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
 	private List<SemanticToken> tokens;
 
 	public SemanticTokensVisitor(CompilationUnit cu) {
+		super(true);
 		this.cu = cu;
 		this.tokens = new ArrayList<>();
 	}
@@ -111,6 +123,33 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	/**
+	 * "Static" modifiers which are always added by {@link #addToken(int, int, TokenType, int)}.
+	 * Modifiers can be set or removed at any time during the visitation process, and as such
+	 * will be applied for all nodes visited during the time a static modifier is set.
+	 *
+	 * Setting and removing the modifiers is done via bitwise OR/AND, see
+	 * {@link TokenModifier#bitmask} and {@link TokenModifier#inverseBitmask}
+	 */
+	private int staticModifiers = 0;
+
+	/**
+	 * Adds a semantic token to the list of tokens being collected by this
+	 * semantic token visitor.
+	 *
+	 * @param offset The document offset of the semantic token.
+	 * @param length The length of the semantic token.
+	 * @param tokenType The type of the semantic token.
+	 * @param modifiers The bitwise OR of the semantic token modifiers, see {@link TokenModifier#bitmask}.
+	 *
+	 * @apiNote This method is order-dependent because of {@link #encodedTokens()}.
+	 * If semantic tokens are not added in the order they appear in the document,
+	 * the encoding algorithm might discard them.
+	 */
+	private void addToken(int offset, int length, TokenType tokenType, int modifiers) {
+		tokens.add(new SemanticToken(offset, length, tokenType, modifiers | staticModifiers));
+	}
+
+	/**
 	 * Adds a semantic token to the list of tokens being collected by this
 	 * semantic token visitor.
 	 *
@@ -123,62 +162,86 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 * the encoding algorithm might discard them.
 	 */
 	private void addToken(ASTNode node, TokenType tokenType, int modifiers) {
-		int offset = node.getStartPosition();
-		int length = node.getLength();
-		SemanticToken token = new SemanticToken(offset, length, tokenType, modifiers);
-		tokens.add(token);
+		addToken(node.getStartPosition(), node.getLength(), tokenType, modifiers);
 	}
 
 	/**
-	 * Indicates that the visitor is currently inside an {@link ImportDeclaration} node.
+	 * Adds a semantic token to the list of tokens being collected by this
+	 * semantic token visitor.
+	 *
+	 * @param node The AST node representing the location of the semantic token.
+	 * @param tokenType The type of the semantic token.
+	 *
+	 * @apiNote This method is order-dependent because of {@link #encodedTokens()}.
+	 * If semantic tokens are not added in the order they appear in the document,
+	 * the encoding algorithm might discard them.
 	 */
-	private boolean isInsideImportDeclaration = false;
+	private void addToken(ASTNode node, TokenType tokenType) {
+		addToken(node, tokenType, 0);
+	}
+
+	@Override
+	public boolean visit(TypeLiteral node) {
+		acceptNode(node.getType());
+		// The last 5 characters of a TypeLiteral are the "class" keyword
+		int offset = node.getStartPosition() + node.getLength() - 5;
+		addToken(offset, 5, TokenType.KEYWORD, 0);
+		return false;
+	}
+
+	@Override
+	public boolean visit(Javadoc node) {
+		staticModifiers |= TokenModifier.DOCUMENTATION.bitmask;
+		return super.visit(node);
+	}
+
+	@Override
+	public void endVisit(Javadoc node) {
+		staticModifiers &= TokenModifier.DOCUMENTATION.inverseBitmask;
+		super.endVisit(node);
+	}
+
+	@Override
+	public boolean visit(TagElement node) {
+		if (node.getTagName() != null) {
+			// If the token is nested, we need to skip the { character
+			int offset = node.isNested() ? node.getStartPosition() + 1 : node.getStartPosition();
+			addToken(offset, node.getTagName().length(), TokenType.KEYWORD, 0);
+		}
+		acceptNodeList(node.fragments());
+		return false;
+	}
+
+	@Override
+	public boolean visit(PackageDeclaration node) {
+		acceptNode(node.getJavadoc());
+		acceptNodeList(node.annotations());
+		addTokenToSimpleNamesOfName(node.getName(), TokenType.NAMESPACE);
+		return false;
+	}
 
 	@Override
 	public boolean visit(ImportDeclaration node) {
-		isInsideImportDeclaration = true;
+		staticModifiers |= TokenModifier.IMPORT_DECLARATION.bitmask;
 
 		IBinding binding = node.resolveBinding();
 		if (binding == null || binding instanceof IPackageBinding) {
-			visitPackageName(node.getName());
+			addTokenToSimpleNamesOfName(node.getName(), TokenType.NAMESPACE);
 		}
 		else {
-			visitNonPackageName(node.getName());
+			nonPackageNameOfImportDeclarationVisitor(node.getName());
 		}
 
-		isInsideImportDeclaration = false;
+		staticModifiers &= TokenModifier.IMPORT_DECLARATION.inverseBitmask;
 		return false;
 	}
 
 	/**
-	 * Visits a name node that represents a package name, giving it
-	 * the semantic token type {@link TokenType#PACKAGE}. Also recursively
-	 * visits qualifying name nodes, adding the same token type, since
-	 * the qualifier of a package name should always be another package name.
-	 *
-	 * @param packageName The package name node to recursively visit.
-	 */
-	private void visitPackageName(Name packageName) {
-		int modifiers = isInsideImportDeclaration ? TokenModifier.IMPORT_DECLARATION.bitmask : 0;
-		if (packageName instanceof SimpleName) {
-			addToken(packageName, TokenType.PACKAGE, modifiers);
-		}
-		else {
-			QualifiedName qualifiedName = (QualifiedName) packageName;
-			visitPackageName(qualifiedName.getQualifier());
-			addToken(qualifiedName.getName(), TokenType.PACKAGE, modifiers);
-		}
-	}
-
-	/**
-	 * Visits a name node that does not represent a package name, making sure to
-	 * call {@link #visitPackageName(Name)} on its qualifier if the qualifier is
-	 * a package name. Uses {@link #hasPackageQualifier(QualifiedName)} to test
-	 * whether or not the qualifier is a package name.
+	 * {@link NodeVisitor} for {@link Name} nodes inside an import declaration that are not package names.
 	 *
 	 * @param nonPackageName
 	 */
-	private void visitNonPackageName(Name nonPackageName) {
+	private void nonPackageNameOfImportDeclarationVisitor(Name nonPackageName) {
 		if (nonPackageName instanceof SimpleName) {
 			nonPackageName.accept(this);
 		}
@@ -187,10 +250,10 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			Name qualifier = qualifiedName.getQualifier();
 
 			if (hasPackageQualifier(qualifiedName)) {
-				visitPackageName(qualifier);
+				addTokenToSimpleNamesOfName(qualifier, TokenType.NAMESPACE);
 			}
 			else {
-				visitNonPackageName(qualifier);
+				nonPackageNameOfImportDeclarationVisitor(qualifier);
 			}
 
 			qualifiedName.getName().accept(this);
@@ -199,7 +262,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
 	/**
 	 * Returns whether a qualified name has a package name as its qualifier,
-	 * and makes an "educated guess" if the qualifier's binding cannot be resolved.
+	 * even if the qualifier's binding cannot be resolved.
 	 * This is in order to work around an issue where package names in import statements
 	 * cannot have their bindings resolved when their corresponding package is not explicitely
 	 * exported and is part of a module.
@@ -214,15 +277,15 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			return qualifierBinding instanceof IPackageBinding;
 		}
 		else {
-			IBinding parentBinding = qualifiedName.resolveBinding();
-			return parentBinding instanceof IPackageBinding || parentBinding instanceof ITypeBinding;
+			IBinding binding = qualifiedName.resolveBinding();
+			return binding instanceof IPackageBinding || binding instanceof ITypeBinding;
 		}
 	}
 
 	@Override
 	public boolean visit(Modifier node) {
-		addToken(node, TokenType.MODIFIER, 0);
-		return super.visit(node);
+		addToken(node, TokenType.MODIFIER);
+		return false;
 	}
 
 	@Override
@@ -234,64 +297,97 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			if (TokenModifier.isGeneric(binding)) {
 				modifiers |= TokenModifier.GENERIC.bitmask;
 			}
-			if (isInsideImportDeclaration) {
-				modifiers |= TokenModifier.IMPORT_DECLARATION.bitmask;
-			}
-			else if (TokenModifier.isDeclaration(node)) {
+			if (TokenModifier.isDeclaration(node)) {
 				modifiers |= TokenModifier.DECLARATION.bitmask;
 			}
 			addToken(node, tokenType, modifiers);
 		}
 
-		return super.visit(node);
-	}
-
-	@Override
-	public boolean visit(ParameterizedType node) {
-		node.getType().accept(this);
-		for (Object typeArgument : node.typeArguments()) {
-			visitTypeArgument((Type) typeArgument);
-		}
 		return false;
 	}
 
 	@Override
-	public boolean visit(ClassInstanceCreation node) {
-		if (node.getExpression() != null) {
-			node.getExpression().accept(this);
-		}
-
-		for (Object typeArgument : node.typeArguments()) {
-			((ASTNode) typeArgument).accept(this);
-		}
-
-		visitSimpleNameOfType(node.getType(), (simpleName) -> {
-			IMethodBinding constructorBinding = node.resolveConstructorBinding();
-			int modifiers = TokenModifier.getApplicableModifiers(constructorBinding);
-			if (TokenModifier.isGeneric(constructorBinding) || node.getType().isParameterizedType()) {
-				modifiers |= TokenModifier.GENERIC.bitmask;
-			}
-			addToken(simpleName, TokenType.METHOD, modifiers);
-		});
-
-		for (Object argument : node.arguments()) {
-			((ASTNode) argument).accept(this);
-		}
-
-		if (node.getAnonymousClassDeclaration() != null) {
-			node.getAnonymousClassDeclaration().accept(this);
-		}
-
+	public boolean visit(ModuleDeclaration node) {
+		acceptJavdocOfModuleDeclaration(node);
+		acceptNodeList(node.annotations());
+		addTokenToSimpleNamesOfName(node.getName(), TokenType.NAMESPACE);
+		acceptNodeList(node.moduleStatements());
 		return false;
 	}
 
 	/**
-	 * Visits the given type argument, making sure to add the
-	 * {@link TokenModifier#TYPE_ARGUMENT} modifier to its simple name.
+	 * Accepts into the Javadoc of a module declaration.
+	 * This method attempts to work around an issue where {@link ModuleDeclaration#getJavadoc()}
+	 * always returns {@code null}, even if there is an associated Javadoc comment. This is done by
+	 * retrieving the Javadoc from {@link CompilationUnit#getCommentList()} instead.
+	 * This method should be removed once the compiler supports resolving the Javadoc
+	 * for module declarations.
 	 *
-	 * @param typeArgument A type node that is known to be a type argument.
+	 * @param moduleDeclaration The module declaration.
 	 */
-	private void visitTypeArgument(Type typeArgument) {
+	private void acceptJavdocOfModuleDeclaration(ModuleDeclaration moduleDeclaration) {
+		for (Comment comment : this.<Comment>castNodeList(cu.getCommentList())) {
+			// The start position of the module declaration still includes the Javadoc,
+			// so we just need to look for a comment with the same start position.
+			if (comment.getStartPosition() == moduleDeclaration.getStartPosition()) {
+				comment.accept(this);
+				break;
+			}
+		}
+	}
+
+	@Override
+	public boolean visit(RequiresDirective node) {
+		addTokenToSimpleNamesOfName(node.getName(), TokenType.NAMESPACE);
+		return false;
+	}
+
+	@Override
+	public boolean visit(ExportsDirective node) {
+		modulePackageAccessVisitor(node);
+		return false;
+	}
+
+	@Override
+	public boolean visit(OpensDirective node) {
+		modulePackageAccessVisitor(node);
+		return false;
+	}
+
+	/**
+	 * {@link NodeVisitor} for {@link ModulePackageAccess} nodes.
+	 *
+	 * @param modulePackageAccess
+	 */
+	private void modulePackageAccessVisitor(ModulePackageAccess modulePackageAccess) {
+		acceptNode(modulePackageAccess.getName());
+		this.<Name>visitNodeList(modulePackageAccess.modules(), module -> {
+			addTokenToSimpleNamesOfName(module, TokenType.NAMESPACE);
+		});
+	}
+
+	@Override
+	public boolean visit(ParameterizedType node) {
+		acceptNode(node.getType());
+		visitNodeList(node.typeArguments(), this::typeArgumentVisitor);
+		return false;
+	}
+
+	@Override
+	public boolean visit(MethodInvocation node) {
+		acceptNode(node.getExpression());
+		visitNodeList(node.typeArguments(), this::typeArgumentVisitor);
+		acceptNode(node.getName());
+		acceptNodeList(node.arguments());
+		return false;
+	}
+
+	/**
+	 * {@link NodeVisitor} for {@link Type} nodes that are type arguments.
+	 *
+	 * @param typeArgument
+	 */
+	private void typeArgumentVisitor(Type typeArgument) {
 		visitSimpleNameOfType(typeArgument, (simpleName) -> {
 			IBinding binding = simpleName.resolveBinding();
 			TokenType tokenType = TokenType.getApplicableType(binding);
@@ -306,16 +402,132 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		});
 	}
 
+	@Override
+	public boolean visit(ClassInstanceCreation node) {
+		acceptNode(node.getExpression());
+		visitNodeList(node.typeArguments(), this::typeArgumentVisitor);
+
+		visitSimpleNameOfType(node.getType(), (simpleName) -> {
+			IMethodBinding constructorBinding = node.resolveConstructorBinding();
+			int modifiers = TokenModifier.getApplicableModifiers(constructorBinding);
+			if (TokenModifier.isGeneric(constructorBinding) || node.getType().isParameterizedType()) {
+				modifiers |= TokenModifier.GENERIC.bitmask;
+			}
+			addToken(simpleName, TokenType.METHOD, modifiers);
+		});
+
+		acceptNodeList(node.arguments());
+		acceptNode(node.getAnonymousClassDeclaration());
+		return false;
+	}
+
 	/**
-	 * Visits the given type node, making sure to exaustively visit
-	 * its child nodes, until the simple name of the type is found or
-	 * until there are no more child nodes. If and when the simple name
-	 * is found, the given {@link NodeVisitor} is called with the simple
-	 * name as its argument.
+	 * A node visitor may be used by helpers like {@link #visitSimpleNameOfType(Name, NodeVisitor)},
+	 * and is responsible for the visitation logic of a special kind of node.
+	 */
+	@FunctionalInterface
+	private interface NodeVisitor<T extends ASTNode> {
+		public void visit(T node);
+	}
+
+	/**
+	 * Helper method to make an unchecked cast from a raw list of AST nodes
+	 * to a generic list of a certain type. The caller is responsible for
+	 * making sure that the cast is safe. An example use case is for
+	 * {@link CompilationUnit#getCommentList()}, which returns a raw list,
+	 * but whose Javadoc states that the element type is {@link Comment}.
 	 *
-	 * @param type A type node.
-	 * @param visitor A node visitor which might get called if the simple
-	 * name of the given type node is found.
+	 * @param <T> The type of {@link ASTNode} expected in the node list.
+	 * @param nodeList The node list to be cast.
+	 * @return The cast node list.
+	 */
+	@SuppressWarnings("unchecked")
+	private <T extends ASTNode> List<T> castNodeList(List<?> nodeList) {
+		return (List<T>) nodeList;
+	}
+
+	/**
+	 * Helper method which visits the nodes in a raw list of AST nodes
+	 * using a {@link NodeVisitor}. An unchecked cast is made via
+	 * {@link #castNodeList(List)}, so the caller is responsible for
+	 * making sure that the cast is safe.
+	 *
+	 * @param <T> The type of {@link ASTNode} expected in the node list.
+	 * @param nodeList The node list to visit (may be {@code null}).
+	 * @param visitor A {@link NodeVisitor}.
+	 */
+	private <T extends ASTNode> void visitNodeList(List<?> nodeList, NodeVisitor<T> visitor) {
+		if (nodeList != null) {
+			for (T node : this.<T>castNodeList(nodeList)) {
+				visitor.visit(node);
+			}
+		}
+	}
+
+	/**
+	 * Helper method which accepts into the nodes in a raw list of AST nodes.
+	 * An unchecked cast is made via {@link #castNodeList(List)},
+	 * so the caller is responsible for making sure that the cast is safe.
+	 *
+	 * @param nodeList The node list to accept into (may be {@code null}).
+	 */
+	private void acceptNodeList(List<?> nodeList) {
+		if (nodeList != null) {
+			for (ASTNode node : this.<ASTNode>castNodeList(nodeList)) {
+				node.accept(this);
+			}
+		}
+	}
+
+	/**
+	 * Helper method which performs a null-check on and then accepts into an AST node.
+	 *
+	 * @param node The AST node to accept into (may be {@code null}).
+	 */
+	private void acceptNode(ASTNode node) {
+		if (node != null) {
+			node.accept(this);
+		}
+	}
+
+	/**
+	 * Helper method to recursively visit all the simple names of a {@link Name} node
+	 * using the specified {@link NodeVisitor}.
+	 *
+	 * @param name A {@link Name} node (may be {@code null}).
+	 * @param visitor The {@link NodeVisitor} to use.
+	 */
+	private void visitSimpleNamesOfName(Name name, NodeVisitor<SimpleName> visitor) {
+		if (name == null) {
+			return;
+		}
+		if (name instanceof SimpleName) {
+			visitor.visit((SimpleName) name);
+		}
+		else {
+			QualifiedName qualifiedName = (QualifiedName) name;
+			visitSimpleNamesOfName(qualifiedName.getQualifier(), visitor);
+			visitor.visit(qualifiedName.getName());
+		}
+	}
+
+	/**
+	 * Helper method to recursively add a token of the specified type to
+	 * all the simple names of a name.
+	 *
+	 * @param name A {@link Name} node (may be {@code null}).
+	 * @param tokenType The {@link TokenType} to add for all the simple names.
+	 */
+	private void addTokenToSimpleNamesOfName(Name name, TokenType tokenType) {
+		visitSimpleNamesOfName(name, simpleName -> addToken(simpleName, tokenType));
+	}
+
+	/**
+	 * Helper method to find and visit the simple name of a {@code Type} node
+	 * using the specified {@link NodeVisitor}.
+	 *
+	 * @param type A type node (may be {@code null}).
+	 * @param visitor The {@link NodeVisitor} to use.
 	 */
 	private void visitSimpleNameOfType(Type type, NodeVisitor<SimpleName> visitor) {
 		if (type == null) {
@@ -323,10 +535,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		}
 		else if (type instanceof SimpleType) {
 			SimpleType simpleType = (SimpleType) type;
-
-			for (Object annotation : simpleType.annotations()) {
-				((ASTNode) annotation).accept(this);
-			}
+			acceptNodeList(simpleType.annotations());
 
 			Name simpleTypeName = simpleType.getName();
 			if (simpleTypeName instanceof SimpleName) {
@@ -341,33 +550,22 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		else if (type instanceof QualifiedType) {
 			QualifiedType qualifiedType = (QualifiedType) type;
 			qualifiedType.getQualifier().accept(this);
-			for (Object annotation : qualifiedType.annotations()) {
-				((ASTNode) annotation).accept(this);
-			}
+			acceptNodeList(qualifiedType.annotations());
 			visitor.visit(qualifiedType.getName());
 		}
 		else if (type instanceof NameQualifiedType) {
 			NameQualifiedType nameQualifiedType = (NameQualifiedType) type;
 			nameQualifiedType.getQualifier().accept(this);
-			for (Object annotation : nameQualifiedType.annotations()) {
-				((ASTNode) annotation).accept(this);
-			}
+			acceptNodeList(nameQualifiedType.annotations());
 			visitor.visit(nameQualifiedType.getName());
 		}
 		else if (type instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) type;
 			visitSimpleNameOfType(parameterizedType.getType(), visitor);
-			for (Object typeArgument : parameterizedType.typeArguments()) {
-				visitTypeArgument((Type) typeArgument);
-			}
+			visitNodeList(parameterizedType.typeArguments(), this::typeArgumentVisitor);
 		}
 		else {
 			type.accept(this);
 		}
-	}
-
-	@FunctionalInterface
-	private interface NodeVisitor<T extends ASTNode> {
-		public void visit(T node);
 	}
 }

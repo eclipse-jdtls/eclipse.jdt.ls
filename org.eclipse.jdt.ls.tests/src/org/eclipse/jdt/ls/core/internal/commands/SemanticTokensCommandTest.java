@@ -18,11 +18,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -42,19 +45,41 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 	private IJavaProject semanticTokensProject;
 	private IPackageFragment fooPackage;
 	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsemantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
+	private String moduleInfoUri;
 
 	@Before
 	public void setup() throws Exception {
-		importProjects("eclipse/semantic-tokens");
+		importProjects("maven/semantic-tokens");
 		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("semantic-tokens"));
-		semanticTokensProject.setOptions(TestOptions.getDefaultOptions());
-		fooPackage = semanticTokensProject.getPackageFragmentRoot(
-			semanticTokensProject.getProject().getFolder("src")
-		).getPackageFragment("foo");
+		setOptions();
+
+		IPackageFragmentRoot root = semanticTokensProject.getPackageFragmentRoot(
+			semanticTokensProject.getProject().getFolder("src/main/java")
+		);
+		fooPackage = root.getPackageFragment("foo");
+		moduleInfoUri = JDTUtils.toURI(root.getPackageFragment("").getCompilationUnit("module-info.java"));
+	}
+
+	private void setOptions() {
+		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		JavaCore.setComplianceOptions("11", options); // Otherwise we can't test module-info.java
+		semanticTokensProject.setOptions(options);
+	}
+
+	private void addTestLibraryToClasspath() throws JavaModelException {
+		IClasspathEntry[] oldEntries = semanticTokensProject.getRawClasspath();
+		IClasspathEntry[] newEntries = Arrays.copyOf(oldEntries, oldEntries.length + 1);
+		newEntries[oldEntries.length] = JavaCore.newLibraryEntry(
+			semanticTokensProject.getProject().getFile("foo.jar").getFullPath(),
+			semanticTokensProject.getProject().getFile("foo-sources.jar").getFullPath(),
+			null
+		);
+		semanticTokensProject.setRawClasspath(newEntries, null);
 	}
 
 	@Test
 	public void testSemanticTokens_SourceAttachment() throws JavaModelException {
+		addTestLibraryToClasspath();
 		TokenAssertionHelper.beginAssertion(classFileUri)
 			.assertNextToken("foo", "namespace")
 			.assertNextToken("public", "modifier")
@@ -74,40 +99,80 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Methods() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Methods.java"), "function")
+		TokenAssertionHelper.beginAssertion(getURI("Methods.java"), "function", "class")
+			.assertNextToken("Methods", "class", "public", "declaration")
 			.assertNextToken("foo1", "function", "public", "generic", "declaration")
 			.assertNextToken("foo2", "function", "private", "declaration")
 			.assertNextToken("foo3", "function", "protected", "declaration")
 			.assertNextToken("foo4", "function", "static", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
 			.assertNextToken("foo5", "function", "native", "declaration")
 			.assertNextToken("foo6", "function", "deprecated", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
 
 			.assertNextToken("main", "function", "public", "static", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("Methods", "class", "public")
 			.assertNextToken("Methods", "function", "public")
-
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("foo1", "function", "public", "generic")
 			.assertNextToken("foo2", "function", "private")
 			.assertNextToken("foo3", "function", "protected")
 			.assertNextToken("foo4", "function", "static")
-			.assertNextToken("foo5", "function", "native")
+			.assertNextToken("Integer", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("foo6", "function", "deprecated")
+			.assertNextToken("foo5", "function", "native")
 		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Constructors() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Constructors.java"), "function")
+		TokenAssertionHelper.beginAssertion(getURI("Constructors.java"))
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("Constructors", "class", "public", "declaration")
+			.assertNextToken("private", "modifier")
 			.assertNextToken("Constructors", "function", "private", "declaration")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("c1", "variable", "declaration")
 			.assertNextToken("Constructors", "function", "private")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("c2", "variable", "declaration")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("Constructors", "function", "private")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("InnerClass", "class", "protected")
+			.assertNextToken("i1", "variable", "declaration")
+			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "function", "protected")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("InnerClass", "class", "protected")
+			.assertNextToken("i2", "variable", "declaration")
+			.assertNextToken("SomeAnnotation", "annotation", "public")
+			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "function", "protected")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("InnerClass", "class", "protected", "generic")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("i3", "variable", "declaration")
+			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "function", "protected", "generic")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+
+			.assertNextToken("protected", "modifier")
+			.assertNextToken("InnerClass", "class", "protected", "generic", "declaration")
+			.assertNextToken("T", "typeParameter", "declaration")
 		.endAssertion();
 	}
 
 	@Test
 	public void testSemanticTokens_Properties() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Properties.java"), "property", "enumMember")
+		TokenAssertionHelper.beginAssertion(getURI("Fields.java"), "property", "enumMember")
 			.assertNextToken("bar1", "property", "public", "declaration")
 			.assertNextToken("bar2", "property", "private", "declaration")
 			.assertNextToken("bar3", "property", "protected", "declaration")
@@ -134,9 +199,13 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Types() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "typeParameter")
+		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "typeParameter", "keyword")
 			.assertNextToken("Types", "class", "public", "declaration")
 			.assertNextToken("String", "class", "public", "readonly")
+
+			.assertNextToken("Class", "class", "public", "readonly", "generic")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("class", "keyword")
 
 			.assertNextToken("SomeClass", "class", "generic")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
@@ -170,7 +239,7 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("util", "namespace", "importDeclaration")
 
 			.assertNextToken("java", "namespace", "importDeclaration")
-			.assertNextToken("NonExistentClass", "class", "importDeclaration")
+			.assertNextToken("NonExistentClass", "namespace", "importDeclaration")
 
 			.assertNextToken("java", "namespace", "importDeclaration")
 			.assertNextToken("nio", "namespace", "importDeclaration")
@@ -199,10 +268,99 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 	@Test
 	public void testSemanticTokens_Annotations() throws JavaModelException {
 		TokenAssertionHelper.beginAssertion(getURI("Annotations.java"), "annotation", "annotationMember")
-			.assertNextToken("SuppressWarnings", "annotation", "public")
+			.assertNextToken("SomeAnnotation", "annotation", "public")
 			.assertNextToken("SuppressWarnings", "annotation", "public")
 			.assertNextToken("SuppressWarnings", "annotation", "public")
 			.assertNextToken("value", "annotationMember", "public", "abstract")
+		.endAssertion();
+	}
+
+	@Test
+	public void testSemanticTokens_Modules() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(moduleInfoUri)
+			.assertNextToken("@code", "keyword", "documentation")
+			.assertNextToken("@uses", "keyword", "documentation")
+			.assertNextToken("@moduleGraph", "keyword", "documentation")
+
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("bar", "namespace")
+			.assertNextToken("baz", "namespace")
+
+			.assertNextToken("java", "namespace")
+			.assertNextToken("base", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("desktop", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("net", "namespace")
+			.assertNextToken("http", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("sql", "namespace")
+
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("base", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("desktop", "namespace")
+
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("base", "namespace")
+			.assertNextToken("java", "namespace")
+			.assertNextToken("net", "namespace")
+			.assertNextToken("http", "namespace")
+
+			.assertNextToken("java", "namespace")
+			.assertNextToken("sql", "namespace")
+			.assertNextToken("Driver", "interface", "public")
+		.endAssertion();
+	}
+
+	@Test
+	public void testSemanticTokens_Javadoc() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(getURI("Javadoc.java"))
+			.assertNextToken("foo", "namespace")
+			.assertNextToken("@implNote", "keyword", "documentation")
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("java", "namespace", "documentation")
+			.assertNextToken("lang", "namespace", "documentation")
+			.assertNextToken("String", "class", "public", "readonly", "documentation")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("Javadoc", "class", "public", "declaration")
+
+			.assertNextToken("@code", "keyword", "documentation")
+			.assertNextToken("@param", "keyword", "documentation")
+			.assertNextToken("arg1", "parameter", "documentation")
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("Integer", "class", "public", "readonly", "documentation")
+			.assertNextToken("@param", "keyword", "documentation")
+			.assertNextToken("arg2", "parameter", "documentation")
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("Double", "class", "public", "readonly", "documentation")
+			.assertNextToken("@return", "keyword", "documentation")
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("String", "class", "public", "readonly", "documentation")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("getString", "function", "public", "declaration")
+			.assertNextToken("Integer", "class", "public", "readonly")
+			.assertNextToken("arg1", "parameter", "declaration")
+			.assertNextToken("Double", "class", "public", "readonly")
+			.assertNextToken("arg2", "parameter", "declaration")
+
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("Javadoc", "class", "public", "documentation")
+			.assertNextToken("getString", "function", "public", "documentation")
+			.assertNextToken("Integer", "class", "public", "readonly", "documentation")
+			.assertNextToken("Double", "class", "public", "readonly", "documentation")
+			.assertNextToken("@see", "keyword", "documentation")
+			.assertNextToken("getString", "function", "public", "documentation")
+			.assertNextToken("Integer", "class", "public", "readonly", "documentation")
+			.assertNextToken("Double", "class", "public", "readonly", "documentation")
+			.assertNextToken("@return", "keyword", "documentation")
+			.assertNextToken("@link", "keyword", "documentation")
+			.assertNextToken("Integer", "class", "public", "readonly", "documentation")
+			.assertNextToken("private", "modifier")
+			.assertNextToken("getInt", "function", "private", "declaration")
 		.endAssertion();
 	}
 
