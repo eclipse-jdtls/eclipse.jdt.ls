@@ -13,8 +13,6 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
@@ -46,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
@@ -83,55 +83,21 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		if (preferencesManager != null && !preferencesManager.getPreferences().isImportMavenEnabled()) {
 			return false;
 		}
-		Set<MavenProjectInfo> files = getMavenProjectInfo(monitor);
-		directories = new ArrayList<>();
-		if (files != null) {
-			Iterator<MavenProjectInfo> iter = files.iterator();
-			while (iter.hasNext()) {
-				MavenProjectInfo projectInfo = iter.next();
-				File dir = projectInfo.getPomFile() == null ? null : projectInfo.getPomFile().getParentFile();
-				if (dir != null && exclude(dir.toPath())) {
-					iter.remove();
-					continue;
-				}
-				if (dir != null) {
-					directories.add(dir.toPath());
-				}
-			}
-		}
-		return files != null && !files.isEmpty();
-	}
-
-	private boolean exclude(java.nio.file.Path path) {
-		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
-		boolean excluded = false;
-		if (javaImportExclusions != null) {
-			for (String pattern : javaImportExclusions) {
-				boolean includePattern = false;
-				if (pattern.startsWith("!")) {
-					includePattern = true;
-					pattern = pattern.substring(1);
-				}
-				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
-				if (matcher.matches(path)) {
-					excluded = includePattern ? false : true;
-				}
-			}
-		}
-		if (!excluded) {
+		if (directories == null) {
+			//@formatter:off
+			BasicFileDetector mavenDetector = new BasicFileDetector(rootFolder.toPath(), IMavenConstants.POM_FILE_NAME)
+					.includeNested(false)
+					.addExclusions("**/target"); //default maven build dir
+			//@formatter:on
 			for (IProject project : ProjectUtils.getAllProjects()) {
-				if (ProjectUtils.isMavenProject(project)) {
-					continue;
-				}
-				String pattern = project.getLocation().toOSString();
-				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
-				if (matcher.matches(path)) {
-					excluded = true;
-					break;
+				if (!ProjectUtils.isMavenProject(project)) {
+					String path = project.getLocation().toOSString();
+					mavenDetector.addExclusions(path);
 				}
 			}
+			directories = mavenDetector.scan(monitor);
 		}
-		return excluded;
+		return !directories.isEmpty();
 	}
 
 	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws OperationCanceledException {
@@ -285,11 +251,12 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws OperationCanceledException {
-		if (directory == null) {
+		if (directory == null || directories == null || directories.isEmpty()) {
 			return Collections.emptySet();
 		}
 		try {
-			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), directory.toString(), false, modelManager);
+			List<String> folders = directories.stream().map(java.nio.file.Path::toAbsolutePath).map(Object::toString).collect(Collectors.toList());
+			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), folders, false, modelManager);
 			scanner.run(monitor);
 			return collectProjects(scanner.getProjects());
 		} catch (InterruptedException e) {
