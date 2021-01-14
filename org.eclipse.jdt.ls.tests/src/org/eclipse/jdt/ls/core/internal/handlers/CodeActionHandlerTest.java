@@ -32,6 +32,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -168,6 +169,39 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setRange(range);
 		CodeActionContext context = new CodeActionContext(
 			Arrays.asList(getDiagnostic(Integer.toString(IProblem.LocalVariableIsNeverUsed), range)),
+			Collections.singletonList(CodeActionKind.Refactor)
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> refactorActions = getCodeActions(params);
+
+		Assert.assertNotNull(refactorActions);
+		Assert.assertFalse("No refactor actions were found", refactorActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : refactorActions) {
+			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.Refactor));
+		}
+	}
+
+	@Test
+	public void testCodeAction_errorFromOtherSources() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		Integer bar = 2000;"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "bar");
+		params.setRange(range);
+		Diagnostic diagnostic = new Diagnostic();
+		diagnostic.setCode("MagicNumberCheck");
+		diagnostic.setRange(range);
+		diagnostic.setSeverity(DiagnosticSeverity.Error);
+		diagnostic.setMessage("'2000' is a magic number.");
+		diagnostic.setSource("Checkstyle");
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(diagnostic),
 			Collections.singletonList(CodeActionKind.Refactor)
 		);
 		params.setContext(context);
@@ -420,6 +454,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		$.setRange(range);
 		$.setSeverity(DiagnosticSeverity.Error);
 		$.setMessage("Test Diagnostic");
+		$.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 		return $;
 	}
 

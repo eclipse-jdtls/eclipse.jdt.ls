@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -94,7 +95,11 @@ public class CodeActionHandler {
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
 		context.setASTRoot(astRoot);
-		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, params.getContext().getDiagnostics());
+
+		List<Diagnostic> diagnostics = params.getContext().getDiagnostics().stream().filter((d) -> {
+			return JavaLanguageServerPlugin.SERVER_SOURCE_ID.equals(d.getSource());
+		}).collect(Collectors.toList());
+		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, diagnostics);
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
