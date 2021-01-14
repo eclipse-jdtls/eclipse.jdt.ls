@@ -32,6 +32,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -453,6 +454,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		$.setRange(range);
 		$.setSeverity(DiagnosticSeverity.Error);
 		$.setMessage("Test Diagnostic");
+		$.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 		return $;
 	}
 
