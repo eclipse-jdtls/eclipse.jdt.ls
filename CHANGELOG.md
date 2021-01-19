@@ -1,4 +1,11 @@
 # Change Log
+# [0.68.0 (January 20th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/86?closed=1)
+ * enhancement - Download sources for the masses. See [#1628](https://github.com/eclipse/eclipse.jdt.ls/pull/1628).
+ * bug fix - Some refactors are missing when the location has diagnostics. See [#1642](https://github.com/eclipse/eclipse.jdt.ls/issues/1642).
+ * bug fix - Should not enable preview compiler options if the tooling doesn't support the early access JDK. See [#1644](https://github.com/eclipse/eclipse.jdt.ls/issues/1644).
+ * bug fix - Enhance MavenProjectImporter to stop scanning the specified exclusion list. See [#1636](https://github.com/eclipse/eclipse.jdt.ls/pull/1636).
+ * build - Update target platform to use Eclipse 2020-12 Release. See [#1639](https://github.com/eclipse/eclipse.jdt.ls/pull/1639).
+
 # [0.67.0 (December 17th, 2020)](https://github.com/eclipse/eclipse.jdt.ls/milestone/85?closed=1)
  * bug fix - Detect Gradle project by settings.gradle as well. See [#1617](https://github.com/eclipse/eclipse.jdt.ls/pull/1617).
  * bug fix - Should update Gradle project properly after the build file of a sub Gradle project is updated. See [#1617](https://github.com/eclipse/eclipse.jdt.ls/pull/1617).
