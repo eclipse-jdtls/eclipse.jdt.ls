@@ -306,14 +306,6 @@ public class ClientPreferences {
 		//@formatter:on
 	}
 
-	public boolean isSemanticHighlightingSupported() {
-		//@formatter:off
-		return v3supported && capabilities.getTextDocument().getSemanticHighlightingCapabilities() != null
-				&& capabilities.getTextDocument().getSemanticHighlightingCapabilities().getSemanticHighlighting() != null
-				&& capabilities.getTextDocument().getSemanticHighlightingCapabilities().getSemanticHighlighting().booleanValue();
-		//@formatter:on
-	}
-
 	/**
 	 * {@code true} if the client has explicitly set the
 	 * {@code textDocument.codeAction.codeActionLiteralSupport.codeActionKind.valueSet}

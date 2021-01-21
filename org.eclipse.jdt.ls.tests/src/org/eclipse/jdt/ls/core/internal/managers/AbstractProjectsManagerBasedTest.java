@@ -164,7 +164,6 @@ public abstract class AbstractProjectsManagerBasedTest {
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
 		ClientPreferences clientPreferences = mock(ClientPreferences.class);
 		when(clientPreferences.isProgressReportSupported()).thenReturn(true);
-		when(clientPreferences.isSemanticHighlightingSupported()).thenReturn(true);
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
 		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
