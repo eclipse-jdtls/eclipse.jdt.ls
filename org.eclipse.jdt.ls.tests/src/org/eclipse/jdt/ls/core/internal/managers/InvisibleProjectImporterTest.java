@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018-2019 Microsoft Corporation and others.
+ * Copyright (c) 2018-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -32,6 +33,7 @@ import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.junit.Test;
 
@@ -206,5 +208,61 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
+	}
+
+	@Test
+	public void testSpecifyingOutputPath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath("output");
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		assertEquals(String.join("/", "", javaProject.getElementName(), ProjectUtils.WORKSPACE_LINK, "output"), javaProject.getOutputLocation().toString());
+	}
+
+	@Test
+	public void testSpecifyingOutputPathInsideSourcePath() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "output", true /*isUpdate*/, null);
+		boolean isOutputExcluded = false;
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
+				continue;
+			}
+			for (IPath excludePath : entry.getExclusionPatterns()) {
+				if (excludePath.toString().equals("output/")) {
+					isOutputExcluded = true;
+					break;
+				}
+			}
+		}
+		assertTrue("Output path should be excluded from source path", isOutputExcluded);
+	}
+
+	@Test(expected = CoreException.class)
+	public void testSpecifyingOutputPathEqualToSourcePath() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "src", true /*isUpdate*/, null);
+	}
+
+	@Test(expected = CoreException.class)
+	public void testSpecifyingOutputPathToUnEmptyFolder() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "lib", true /*isUpdate*/, null);
+	}
+
+	@Test
+	public void testSpecifyingEmptyOutputPath() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "", true /*isUpdate*/, null);
+		assertEquals(String.join("/", "", javaProject.getElementName(), "bin"), javaProject.getOutputLocation().toString());
 	}
 }

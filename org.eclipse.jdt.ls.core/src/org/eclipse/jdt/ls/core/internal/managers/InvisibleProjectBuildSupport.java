@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
+ * Copyright (c) 2019-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
 
 /**
@@ -30,6 +32,8 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibrar
  *
  */
 public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements IBuildSupport {
+
+	private static IPreferencesChangeListener listener = new InvisibleProjectPreferenceChangeListener();
 
 	public static final String LIB_FOLDER = "lib";
 
@@ -77,6 +81,22 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 	@Override
 	public void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 		JavaLanguageServerPlugin.getDefaultSourceDownloader().discoverSource(classFile, monitor);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.IBuildSupport.registerPreferencesChangeListener(PreferenceManager)
+	 */
+	@Override
+	public void registerPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+		preferenceManager.addPreferencesChangeListener(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.managers.IBuildSupport.unregisterPreferencesChangeListener(PreferenceManager)
+	 */
+	@Override
+	public void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+		preferenceManager.removePreferencesChangeListener(listener);
 	}
 
 }

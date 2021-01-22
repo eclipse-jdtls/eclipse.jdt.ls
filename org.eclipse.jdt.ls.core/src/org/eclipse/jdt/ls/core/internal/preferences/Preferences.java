@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -199,6 +199,11 @@ public class Preferences {
 	 */
 	public static final String JAVA_PROJECT_REFERENCED_LIBRARIES_KEY = "java.project.referencedLibraries";
 	public static final ReferencedLibraries JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
+
+	/**
+	 * Preference key to specify the output path of the invisible project
+	 */
+	public static final String JAVA_PROJECT_OUTPUT_PATH_KEY = "java.project.outputPath";
 
 	/**
 	 * Preference key for project build/configuration update settings.
@@ -460,6 +465,7 @@ public class Preferences {
 
 	private List<String> javaImportExclusions = new LinkedList<>();
 	private ReferencedLibraries referencedLibraries;
+	private String invisibleProjectOutputPath;
 	private String javaHome;
 	private List<String> importOrder;
 	private List<String> filteredTypes;
@@ -788,6 +794,9 @@ public class Preferences {
 				prefs.setReferencedLibraries(JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT);
 			}
 		}
+
+		String invisibleProjectOutputPath = getString(configuration, JAVA_PROJECT_OUTPUT_PATH_KEY, "");
+		prefs.setInvisibleProjectOutputPath(invisibleProjectOutputPath);
 
 		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
@@ -1516,4 +1525,12 @@ public class Preferences {
 		return this;
 	}
 
+
+	public String getInvisibleProjectOutputPath() {
+		return invisibleProjectOutputPath;
+	}
+
+	public void setInvisibleProjectOutputPath(String invisibleProjectOutputPath) {
+		this.invisibleProjectOutputPath = invisibleProjectOutputPath;
+	}
 }
