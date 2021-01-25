@@ -6,6 +6,8 @@ public class Types {
 		s1 = "happy",
 		s2, s3;
 
+	protected final Class<?> clazz = java.lang.String.class;
+
 	public SomeClass<String, SomeClass<String, Integer>> someClass;
 
 	class SomeClass<T1, T2> {

@@ -31,20 +31,21 @@ import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 public enum TokenModifier {
-	// Standard Java modifiers
-	PUBLIC("public"),
-	PRIVATE("private"),
-	PROTECTED("protected"),
+	// Standard LSP token modifiers, see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
 	ABSTRACT("abstract"),
 	STATIC("static"),
 	FINAL("readonly"),
-	NATIVE("native"),
-
-	// Additional semantic modifiers
 	DEPRECATED("deprecated"),
+	DECLARATION("declaration"),
+	DOCUMENTATION("documentation"),
+
+	// Custom token modifiers
+	PUBLIC("public"),
+	PRIVATE("private"),
+	PROTECTED("protected"),
+	NATIVE("native"),
 	GENERIC("generic"),
 	TYPE_ARGUMENT("typeArgument"),
-	DECLARATION("declaration"),
 	IMPORT_DECLARATION("importDeclaration");
 
 	/**
@@ -55,7 +56,7 @@ public enum TokenModifier {
 	 * meaning. This makes life easier for theme authors, since
 	 * they don't need to think about Java-specific terminology.
 	 *
-	 * @see https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-classification
+	 * @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
 	 */
 	private final String genericName;
 
@@ -64,6 +65,12 @@ public enum TokenModifier {
 	 * Use bitwise OR to combine with other token modifiers.
 	 */
 	public final int bitmask = 1 << ordinal();
+
+	/**
+	 * The inverse bitmask for this semantic token modifier.
+	 * Use bitwise AND to remove from other token modifiers.
+	 */
+	public final int inverseBitmask = ~bitmask;
 
 	TokenModifier(String genericName) {
 		this.genericName = genericName;
