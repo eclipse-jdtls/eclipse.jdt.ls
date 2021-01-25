@@ -27,7 +27,7 @@ public enum TokenType {
 	ENUM_MEMBER("enumMember"),
 	TYPE("type"),
 	TYPE_PARAMETER("typeParameter"),
-	METHOD("function"),
+	METHOD("method"),
 	PROPERTY("property"),
 	VARIABLE("variable"),
 	PARAMETER("parameter"),
@@ -40,11 +40,11 @@ public enum TokenType {
 
 	/**
 	 * This is the name of the token type given to the client, so it
-	 * should be as generic as possible and follow the "standard" (see below)
-	 * token type names where applicable. For example, the generic name of a
-	 * method type should be "function", since methods are essentially functions,
-	 * but declared on a class. This makes life easier for theme authors, since
-	 * they don't need to think about Java-specific terminology.
+	 * should be as generic as possible and follow the standard LSP (see below)
+	 * token type names where applicable. For example, the generic name of the
+	 * {@link #PACKAGE} type is "namespace", since it has similar meaning.
+	 * Using standardized names makes life easier for theme authors, since
+	 * they don't need to know about language-specific terminology.
 	 *
 	 * @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
 	 */
