@@ -50,11 +50,11 @@ public enum TokenModifier {
 
 	/**
 	 * This is the name of the token modifier given to the client, so it
-	 * should be as generic as possible and follow the "standard" (see below)
-	 * token modifier names where applicable. For example, the generic name of
-	 * the final modifier should be "readonly", since it has essentially the same
-	 * meaning. This makes life easier for theme authors, since
-	 * they don't need to think about Java-specific terminology.
+	 * should be as generic as possible and follow the standard LSP (see below)
+	 * token modifier names where applicable. For example, the generic name of the
+	 * {@link #FINAL} modifier is "readonly", since it has similar meaning.
+	 * Using standardized names makes life easier for theme authors, since
+	 * they don't need to know about language-specific terminology.
 	 *
 	 * @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_semanticTokens
 	 */
