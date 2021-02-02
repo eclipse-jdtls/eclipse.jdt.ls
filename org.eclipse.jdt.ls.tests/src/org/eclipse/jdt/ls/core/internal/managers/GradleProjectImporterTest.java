@@ -488,8 +488,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			projectsManager.updateProject(root, true);
 			projectsManager.updateProject(project1, true);
 			projectsManager.updateProject(project2, true);
-			JobHelpers.waitForJobsToComplete();
-			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+			waitForBackgroundJobs();
 			ProjectConfiguration configuration = getProjectConfiguration(root);
 			// check the children .settings/org.eclipse.buildship.core.prefs
 			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
@@ -535,7 +534,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			IFile build = project.getFile("/build.gradle");
 			build.setContents(contents, true, false, null);
 			projectsManager.updateProject(project, false);
-			JobHelpers.waitForJobsToComplete();
+			waitForBackgroundJobs();
 			type = javaProject.findType("org.apache.commons.lang3.StringUtils");
 			assertNotNull(type);
 	}
