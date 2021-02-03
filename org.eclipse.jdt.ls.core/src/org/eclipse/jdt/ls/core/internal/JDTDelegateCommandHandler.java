@@ -25,7 +25,13 @@ import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.commands.SemanticTokensCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
+import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensLegend;
+import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.TypeHierarchyDirection;
+import org.eclipse.lsp4j.TypeHierarchyItem;
+import org.eclipse.lsp4j.TypeHierarchyParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
@@ -86,6 +92,29 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						projectNames = (ArrayList<String>) arguments.get(1);
 					}
 					return ResolveSourceMappingHandler.resolveStackTraceLocation((String) arguments.get(0), projectNames);
+				case "java.action.resolveTypeHierarchy":
+					TypeHierarchyCommand resolveTypeHierarchyCommand = new TypeHierarchyCommand();
+					TypeHierarchyItem toResolve = JSONUtility.toModel(arguments.get(0), TypeHierarchyItem.class);
+					TypeHierarchyDirection resolveDirection = TypeHierarchyDirection.forValue(JSONUtility.toModel(arguments.get(1), Integer.class));
+					int resolveDepth = JSONUtility.toModel(arguments.get(2), Integer.class);
+					ResolveTypeHierarchyItemParams resolveParams = new ResolveTypeHierarchyItemParams();
+					resolveParams.setItem(toResolve);
+					resolveParams.setDirection(resolveDirection);
+					resolveParams.setResolve(resolveDepth);
+					TypeHierarchyItem resolveItem = resolveTypeHierarchyCommand.resolveTypeHierarchy(resolveParams, monitor);
+					return resolveItem;
+				case "java.action.openTypeHierarchy":
+					TypeHierarchyCommand typeHierarchyCommand = new TypeHierarchyCommand();
+					TypeHierarchyParams params = new TypeHierarchyParams();
+					TextDocumentPositionParams textParams = JSONUtility.toModel(arguments.get(0), TextDocumentPositionParams.class);
+					TypeHierarchyDirection direction = TypeHierarchyDirection.forValue(JSONUtility.toModel(arguments.get(1), Integer.class));
+					int resolve = JSONUtility.toModel(arguments.get(2), Integer.class);
+					params.setResolve(resolve);
+					params.setDirection(direction);
+					params.setTextDocument(textParams.getTextDocument());
+					params.setPosition(textParams.getPosition());
+					TypeHierarchyItem typeHierarchyItem = typeHierarchyCommand.typeHierarchy(params, monitor);
+					return typeHierarchyItem;
 				default:
 					break;
 			}
