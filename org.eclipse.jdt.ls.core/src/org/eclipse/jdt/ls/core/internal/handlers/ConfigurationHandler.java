@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ConfigurationItem;
 import org.eclipse.lsp4j.ConfigurationParams;
 
@@ -36,8 +37,10 @@ public class ConfigurationHandler {
 		};
 
 		List<ConfigurationItem> configurationItems = new ArrayList<>();
-		// TODO: extract to const once it's available in Preferences.java
-		String[] settingKeys = {"java.format.tabSize", "java.format.insertSpaces"};
+		String[] settingKeys = {
+			Preferences.JAVA_CONFIGURATION_TABSIZE,
+			Preferences.JAVA_CONFIGURATION_INSERTSPACES
+		};
 		
 		ConfigurationItem tabSizeItem = new ConfigurationItem();
 		tabSizeItem.setScopeUri(uri);

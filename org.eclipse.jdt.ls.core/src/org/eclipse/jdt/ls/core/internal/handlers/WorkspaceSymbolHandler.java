@@ -64,6 +64,9 @@ public class WorkspaceSymbolHandler{
 				@Override
 				public void acceptTypeNameMatch(TypeNameMatch match) {
 					try {
+						if (maxResults > 0 && symbols.size() >= maxResults) {
+							return;
+						}
 						Location location = null;
 						try {
 							if (!sourceOnly && match.getType().isBinary()) {

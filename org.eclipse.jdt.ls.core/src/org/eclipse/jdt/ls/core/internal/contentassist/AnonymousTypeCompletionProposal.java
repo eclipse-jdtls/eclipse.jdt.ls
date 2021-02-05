@@ -99,9 +99,8 @@ public class AnonymousTypeCompletionProposal {
 		buf.append(newBody);
 		// use the code formatter
 		String lineDelim = TextUtilities.getDefaultLineDelimiter(document);
-		final IJavaProject project = fCompilationUnit.getJavaProject();
 		IRegion lineInfo = document.getLineInformationOfOffset(fReplacementOffset);
-		Map<String, String> options = project != null ? project.getOptions(true) : JavaCore.getOptions();
+		Map<String, String> options = fCompilationUnit.getOptions(true);
 		String replacementString = CodeFormatterUtil.format(CodeFormatter.K_EXPRESSION, buf.toString(), 0, lineDelim, options);
 		int lineEndOffset = lineInfo.getOffset() + lineInfo.getLength();
 		int p = offset;

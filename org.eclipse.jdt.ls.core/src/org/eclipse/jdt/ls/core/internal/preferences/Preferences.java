@@ -69,6 +69,14 @@ public class Preferences {
 	 */
 	public static final String JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES = "java.references.includeDecompiledSources";
 	/**
+	 * Insert spaces when pressing Tab
+	 */
+	public static final String JAVA_CONFIGURATION_INSERTSPACES = "java.format.insertSpaces";
+	/**
+	 * Tab Size
+	 */
+	public static final String JAVA_CONFIGURATION_TABSIZE = "java.format.tabSize";
+	/**
 	 * Specifies Java Execution Environments.
 	 */
 	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";

@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -26,7 +28,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
@@ -40,6 +44,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
@@ -84,6 +89,32 @@ public class CodeActionHandler {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null || monitor.isCanceled()) {
 			return Collections.emptyList();
+		}
+
+		Map<String, Object> formattingOptions = ConfigurationHandler.getFormattingOptions(params.getTextDocument().getUri());
+		if (formattingOptions != null && !formattingOptions.isEmpty()) {
+			Object tabSizeValue = formattingOptions.get(Preferences.JAVA_CONFIGURATION_TABSIZE);
+			Object insertSpacesValue = formattingOptions.get(Preferences.JAVA_CONFIGURATION_INSERTSPACES);
+			Map<String, String> customOptions = new HashMap<>();
+			if (tabSizeValue != null) {
+				try {
+					int tabSize = Integer.parseInt(String.valueOf(tabSizeValue));
+					if (tabSize > 0) {
+						customOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, Integer.toString(tabSize));
+					}
+				} catch (Exception ex) {
+					// do nothing
+				}
+			}
+
+			if (insertSpacesValue != null) {
+				boolean insertSpaces = Boolean.parseBoolean(String.valueOf(insertSpacesValue));
+				customOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
+			}
+
+			if (!customOptions.isEmpty()) {
+				unit.setOptions(customOptions);
+			}
 		}
 
 		CompilationUnit astRoot = getASTRoot(unit, monitor);

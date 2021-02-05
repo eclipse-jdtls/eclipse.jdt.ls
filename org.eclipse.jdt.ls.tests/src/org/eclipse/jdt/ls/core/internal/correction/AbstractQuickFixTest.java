@@ -302,13 +302,17 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		Assert.assertNotNull(c.getArguments());
 		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-		if (we.getDocumentChanges() != null) {
-			return ResourceUtils.dos2Unix(evaluateChanges(we.getDocumentChanges()));
-		}
-		return ResourceUtils.dos2Unix(evaluateChanges(we.getChanges()));
+		return evaluateWorkspaceEdit(we);
 	}
 
-	private String evaluateChanges(List<Either<TextDocumentEdit, ResourceOperation>> documentChanges) throws BadLocationException, JavaModelException {
+	public static String evaluateWorkspaceEdit(WorkspaceEdit edit) throws JavaModelException, BadLocationException {
+		if (edit.getDocumentChanges() != null) {
+			return ResourceUtils.dos2Unix(evaluateChanges(edit.getDocumentChanges()));
+		}
+		return ResourceUtils.dos2Unix(evaluateChanges(edit.getChanges()));
+	}
+
+	public static String evaluateChanges(List<Either<TextDocumentEdit, ResourceOperation>> documentChanges) throws BadLocationException, JavaModelException {
 		List<TextDocumentEdit> changes = documentChanges.stream().filter(e -> e.isLeft()).map(e -> e.getLeft()).collect(Collectors.toList());
 		assertFalse("No edits generated", changes.isEmpty());
 		Set<String> uris = changes.stream().map(tde -> tde.getTextDocument().getUri()).distinct().collect(Collectors.toSet());
@@ -318,7 +322,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return ResourceUtils.dos2Unix(evaluateChanges(uri, edits));
 	}
 
-	protected String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
+	public static String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
 		Iterator<Entry<String, List<TextEdit>>> editEntries = changes.entrySet().iterator();
 		Entry<String, List<TextEdit>> entry = editEntries.next();
 		assertNotNull("No edits generated", entry);
@@ -326,7 +330,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		return ResourceUtils.dos2Unix(evaluateChanges(entry.getKey(), entry.getValue()));
 	}
 
-	private String evaluateChanges(String uri, List<TextEdit> edits) throws BadLocationException, JavaModelException {
+	private static String evaluateChanges(String uri, List<TextEdit> edits) throws BadLocationException, JavaModelException {
 		assertFalse("No edits generated: " + edits, edits == null || edits.isEmpty());
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 		assertNotNull("CU not found: " + uri, cu);
