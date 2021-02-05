@@ -45,6 +45,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
@@ -376,7 +377,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		{ // Test import of referenced libraries object with include and sources
 			List<String> include = Arrays.asList("libraries/**/*.jar");
-			Map<String, String> sources = new HashMap<String, String>() {{
+			Map<String, String> sources = new HashMap<>() {{
 				put("libraries/foo.jar", "libraries/foo-src.jar");
 			}};
 			Map<String, Object> configuration = new HashMap<>();
@@ -392,7 +393,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		{ // Test import of referenced libraries object with include, exclude and sources
 			List<String> include = Arrays.asList("libraries/**/*.jar");
 			List<String> exclude = Arrays.asList("libraries/sources/**");
-			Map<String, String> sources = new HashMap<String, String>() {{
+			Map<String, String> sources = new HashMap<>() {{
 				put("libraries/foo.jar", "libraries/foo-src.jar");
 			}};
 			Map<String, Object> configuration = new HashMap<>();
@@ -408,7 +409,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		{ // Test import of referenced libraries with exclude and sources
 			List<String> exclude = Arrays.asList("libraries/sources/**");
-			Map<String, String> sources = new HashMap<String, String>() {{
+			Map<String, String> sources = new HashMap<>() {{
 				put("libraries/foo.jar", "libraries/foo-src.jar");
 			}};
 			Map<String, Object> configuration = new HashMap<>();
@@ -433,7 +434,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		}
 
 		{ // Test import of referenced libraries with only sources
-			Map<String, String> sources = new HashMap<String, String>() {{
+			Map<String, String> sources = new HashMap<>() {{
 				put("libraries/foo.jar", "libraries/foo-src.jar");
 			}};
 			Map<String, Object> configuration = new HashMap<>();
@@ -500,6 +501,10 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 
 		HoverHandler handler = new HoverHandler(preferenceManager);
 		Hover hover = handler.hover(position, monitor);
+		if (hover.getContents().getLeft().size() < 2) {
+			JobHelpers.waitForDownloadSourcesJobs(60000);
+			hover = handler.hover(position, monitor);
+		}
 
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();

@@ -62,6 +62,12 @@ public class Preferences {
 	 * finding references.
 	 */
 	public static final String JAVA_REFERENCES_INCLUDE_ACCESSORS = "java.references.includeAccessors";
+
+	/**
+	 * Preference key used to include the decompiled sources when finding
+	 * references.
+	 */
+	public static final String JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES = "java.references.includeDecompiledSources";
 	/**
 	 * Specifies Java Execution Environments.
 	 */
@@ -456,6 +462,7 @@ public class Preferences {
 	private int generateToStringLimitElements;
 	private List<String> preferredContentProviderIds;
 	private boolean includeAccessors;
+	private boolean includeDecompiledSources;
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
@@ -657,6 +664,7 @@ public class Preferences {
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
 		includeAccessors = true;
+		includeDecompiledSources = true;
 	}
 
 	/**
@@ -912,6 +920,8 @@ public class Preferences {
 		prefs.setTypeCommentTemplate(typeComment);
 		boolean includeAccessors = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_ACCESSORS, true);
 		prefs.setIncludeAccessors(includeAccessors);
+		boolean includeDecompiledSources = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES, true);
+		prefs.setIncludeDecompiledSources(includeDecompiledSources);
 		return prefs;
 	}
 
@@ -1525,7 +1535,6 @@ public class Preferences {
 		return this;
 	}
 
-
 	public String getInvisibleProjectOutputPath() {
 		return invisibleProjectOutputPath;
 	}
@@ -1533,4 +1542,14 @@ public class Preferences {
 	public void setInvisibleProjectOutputPath(String invisibleProjectOutputPath) {
 		this.invisibleProjectOutputPath = invisibleProjectOutputPath;
 	}
+
+	public Preferences setIncludeDecompiledSources(boolean includeDecompiledSources) {
+		this.includeDecompiledSources = includeDecompiledSources;
+		return this;
+	}
+
+	public boolean isIncludeDecompiledSources() {
+		return this.includeDecompiledSources;
+	}
+
 }

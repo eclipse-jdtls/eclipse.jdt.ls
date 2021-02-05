@@ -34,17 +34,22 @@ public class HoverHandler {
 	}
 
 	public Hover hover(TextDocumentPositionParams position, IProgressMonitor monitor) {
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
-
-		List<Either<String, MarkedString>> content = null;
-		if (unit != null && !monitor.isCanceled()) {
-			content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), monitor);
-		} else {
-			content = Collections.singletonList(Either.forLeft(""));
+		ITypeRoot unit = null;
+		try {
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri(), returnCompilationUnit, monitor);
+			List<Either<String, MarkedString>> content = null;
+			if (unit != null && !monitor.isCanceled()) {
+				content = computeHover(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), monitor);
+			} else {
+				content = Collections.singletonList(Either.forLeft(""));
+			}
+			Hover $ = new Hover();
+			$.setContents(content);
+			return $;
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(unit);
 		}
-		Hover $ = new Hover();
-		$.setContents(content);
-		return $;
 	}
 
 	private List<Either<String, MarkedString>> computeHover(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {

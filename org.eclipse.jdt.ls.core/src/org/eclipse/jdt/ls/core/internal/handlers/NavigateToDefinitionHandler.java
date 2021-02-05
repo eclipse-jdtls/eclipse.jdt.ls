@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -63,13 +64,18 @@ public class NavigateToDefinitionHandler {
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
-		Location location = null;
-		if (unit != null && !monitor.isCanceled()) {
-			location = computeDefinitionNavigation(unit, position.getPosition().getLine(),
-					position.getPosition().getCharacter(), monitor);
+		ITypeRoot unit = null;
+		try {
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri(), returnCompilationUnit, monitor);
+			Location location = null;
+			if (unit != null && !monitor.isCanceled()) {
+				location = computeDefinitionNavigation(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), monitor);
+			}
+			return location == null || monitor.isCanceled() ? Collections.emptyList() : Arrays.asList(location);
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(unit);
 		}
-		return location == null || monitor.isCanceled() ? Collections.emptyList() : Arrays.asList(location);
 	}
 
 	private Location computeDefinitionNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
@@ -163,10 +169,24 @@ public class NavigateToDefinitionHandler {
 		ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		if (compilationUnit != null || (cf != null && cf.getSourceRange() != null)) {
+			if (compilationUnit != null && compilationUnit.getResource() != null && !compilationUnit.getResource().exists()) {
+				IClassFile classFile = JDTUtils.getClassFile(compilationUnit);
+				if (classFile != null) {
+					String uriString = JDTUtils.toUri(classFile);
+					Location location = fixLocation(element, JDTUtils.toLocation(element), compilationUnit.getJavaProject());
+					location.setUri(uriString);
+					return location;
+				}
+				return null;
+			}
 			return fixLocation(element, JDTUtils.toLocation(element), javaProject);
 		}
 
 		if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+			List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
+			if (!locations.isEmpty()) {
+				return fixLocation(element, locations.get(0), javaProject);
+			}
 			return fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), javaProject);
 		}
 

@@ -62,7 +62,8 @@ public class ImplementationsHandler {
 		ITypeRoot typeRoot = null;
 		IRegion region = null;
 		try {
-			typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri(), returnCompilationUnit, monitor);
 			if (typeRoot != null) {
 				elementToSearch = JDTUtils.findElementAtSelection(typeRoot, param.getPosition().getLine(), param.getPosition().getCharacter(), this.preferenceManager, monitor);
 			}
@@ -78,22 +79,19 @@ public class ImplementationsHandler {
 			ImplementationToLocationMapper mapper = new ImplementationToLocationMapper(preferenceManager.isClientSupportsClassFileContent(), useDefaultLocation);
 			ImplementationCollector<Location> collector = new ImplementationCollector<>(typeRoot, region, elementToSearch, mapper);
 			locations = collector.findImplementations(monitor);
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Find implementations failure ", e);
-		}
-
-		if (shouldIncludeDefinition(typeRoot, region, elementToSearch, locations)) {
-			try {
+			if (shouldIncludeDefinition(typeRoot, region, elementToSearch, locations)) {
 				Location definition = NavigateToDefinitionHandler.computeDefinitionNavigation(elementToSearch, typeRoot.getJavaProject());
 				if (definition != null) {
 					locations = locations == null ? new ArrayList<>() : new ArrayList<>(locations);
 					locations.add(0, definition);
 				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException("Problem computing definition for" + typeRoot.getElementName(), e);
 			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem computing definition for" + typeRoot.getElementName(), e);
+			return Collections.emptyList();
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(typeRoot);
 		}
-
 		return locations;
 	}
 

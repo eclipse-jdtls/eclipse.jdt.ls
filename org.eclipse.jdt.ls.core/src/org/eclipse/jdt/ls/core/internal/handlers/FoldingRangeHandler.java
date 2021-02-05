@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeKind;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
@@ -56,12 +57,19 @@ public class FoldingRangeHandler {
 
 	public List<FoldingRange> foldingRange(FoldingRangeRequestParams params, IProgressMonitor monitor) {
 		List<FoldingRange> $ = new ArrayList<>();
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
-		if (unit == null) {
+		ITypeRoot unit = null;
+		try {
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri(), returnCompilationUnit, monitor);
+			if (unit == null || (monitor != null && monitor.isCanceled())) {
+				return $;
+			}
+			computeFoldingRanges($, unit, monitor);
 			return $;
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(unit);
 		}
-		computeFoldingRanges($, unit, monitor);
-		return $;
 	}
 
 	private void computeFoldingRanges(List<FoldingRange> foldingRanges, ITypeRoot unit, IProgressMonitor monitor) {

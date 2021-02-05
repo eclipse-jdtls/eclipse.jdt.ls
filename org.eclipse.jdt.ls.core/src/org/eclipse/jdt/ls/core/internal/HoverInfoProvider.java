@@ -143,7 +143,7 @@ public class HoverInfoProvider {
 					return cancelled(res);
 				}
 				MarkedString javadoc = computeJavadoc(curr);
-				if (javadoc != null && javadoc.getValue() != null) {
+				if (javadoc != null && javadoc.getValue() != null && !javadoc.getValue().isBlank()) {
 					res.add(Either.forLeft(javadoc.getValue()));
 				}
 			}
@@ -170,6 +170,9 @@ public class HoverInfoProvider {
 			return false;
 		}
 		if (element.getElementType() != IJavaElement.TYPE) {
+			return true;
+		}
+		if (unit.getResource() != null && !unit.getResource().exists()) {
 			return true;
 		}
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.ALL_OCCURRENCES);
@@ -213,9 +216,9 @@ public class HoverInfoProvider {
 		}
 		String elementLabel = null;
 		if (element instanceof ILocalVariable) {
-			elementLabel = JavaElementLabels.getElementLabel(element,LOCAL_VARIABLE_FLAGS);
+			elementLabel = JavaElementLabels.getElementLabel(element, LOCAL_VARIABLE_FLAGS);
 		} else {
-			elementLabel = JavaElementLabels.getElementLabel(element,COMMON_SIGNATURE_FLAGS);
+			elementLabel = JavaElementLabels.getElementLabel(element, COMMON_SIGNATURE_FLAGS);
 		}
 		if (element instanceof IField) {
 			IField field = (IField) element;
