@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018-2019 Microsoft Corporation and others.
+ * Copyright (c) 2018-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,11 +34,17 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -92,6 +99,82 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		// do nothing
 	}
 
+	public static boolean setInvisibleProjectOutputPath(IJavaProject javaProject, String outputPath, boolean isUpdate, IProgressMonitor monitor) throws CoreException {
+		IProject project = javaProject.getProject();
+		if (ProjectUtils.isVisibleProject(project)) {
+			return false;
+		}
+	
+		if (outputPath == null) {
+			outputPath = "";
+		} else {
+			outputPath = outputPath.trim();
+		}
+		
+		if (new org.eclipse.core.runtime.Path(outputPath).isAbsolute()) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The output path must be a relative path to the workspace."));
+		}
+	
+		if (StringUtils.isEmpty(outputPath)) {
+			// blank means using default output path
+			javaProject.setOutputLocation(project.getFolder("bin").getFullPath(), monitor);
+			return true;
+		}
+
+		outputPath = ProjectUtils.WORKSPACE_LINK + IPath.SEPARATOR + outputPath;
+		IPath outputFullPath = project.getFolder(outputPath).getFullPath();
+		if (javaProject.getOutputLocation().equals(outputFullPath)) {
+			return false;
+		}
+	
+		File outputDirectory = project.getFolder(outputPath).getLocation().toFile();
+		// Avoid popping too much dialog during activation, only show error dialog when it's updated
+		if (isUpdate && outputDirectory.exists() && outputDirectory.list().length != 0) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Cannot set the output path to a folder which is not empty, please provide a new path."));
+		}
+
+		IClasspathEntry[] existingEntries = javaProject.getRawClasspath();
+		List<IClasspathEntry> newEntries = new ArrayList<>();
+		for (IClasspathEntry entry : existingEntries) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
+				newEntries.add(entry);
+			} else {
+				IPath entryPath = entry.getPath();
+				if (entryPath.equals(outputFullPath)) {
+					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,
+							"The output path cannot be equal to the source folder path, please provide a new path."));
+				} else if (entryPath.isPrefixOf(outputFullPath)) {
+					List<IPath> exclusionPatterns = new ArrayList<>(Arrays.asList(entry.getExclusionPatterns()));
+					IPath excludePath = outputFullPath.makeRelativeTo(entryPath);
+					boolean hasExcluded = false;
+					for (IPath exclusionPattern : exclusionPatterns) {
+						if (exclusionPattern.isPrefixOf(excludePath)) {
+							hasExcluded = true;
+							break;
+						}
+					}
+					if (!hasExcluded) {
+						exclusionPatterns.add(excludePath.addTrailingSeparator());
+					}
+					newEntries.add(JavaCore.newSourceEntry(entryPath, exclusionPatterns.toArray(new IPath[0])));
+					continue;
+				} else if (outputFullPath.isPrefixOf(entryPath)) {
+					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,
+							"The specified output path contains source folders, please provide a new path instead."));
+				} else {
+					newEntries.add(entry);
+				}
+			}
+		}
+	
+		try {
+			javaProject.setRawClasspath(newEntries.toArray(new IClasspathEntry[0]), outputFullPath, monitor);
+		} catch (JavaModelException e) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to set the output path.", e));
+		}
+		return true;
+	}
+
 	/**
 	 * Based on the trigger file, check whether to load the invisible project to manage it.
 	 * Return true if an invisible project is enabled.
@@ -126,6 +209,8 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				subProjectPaths.add(libFolder);
 				IJavaProject javaProject = JavaCore.create(invisibleProject);
 				ProjectUtils.addSourcePath(sourcePath, subProjectPaths.toArray(new IPath[0]), javaProject);
+				setInvisibleProjectOutputPath(javaProject,  JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getInvisibleProjectOutputPath(),
+						false /*isUpdate*/, new NullProgressMonitor());
 				JavaLanguageServerPlugin.logInfo("Successfully created a workspace invisible project " + invisibleProjectName);
 				forceUpdateLibPath = true;
 			} catch (CoreException e) {
