@@ -141,7 +141,7 @@ public class FormatterHandler {
 	}
 
 	public static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
-		Map<String, String> eclipseOptions = cu.getJavaProject().getOptions(true);
+		Map<String, String> eclipseOptions = cu.getOptions(true);
 
 		Map<String, String> customOptions = options.entrySet().stream().filter(map -> chekIfValueIsNotNull(map.getValue())).collect(toMap(e -> e.getKey(), e -> getOptionValue(e.getValue())));
 

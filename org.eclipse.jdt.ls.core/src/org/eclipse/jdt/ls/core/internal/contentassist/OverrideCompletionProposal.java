@@ -147,7 +147,7 @@ public class OverrideCompletionProposal {
 
 				ITrackedNodePosition position= rewrite.track(stub);
 				try {
-					Map<String, String> options = fJavaProject.getOptions(true);
+					Map<String, String> options = fCompilationUnit.getOptions(true);
 
 					rewrite.rewriteAST(recoveredDocument, options).apply(recoveredDocument);
 

@@ -113,7 +113,7 @@ public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 							if (expression != null) {
 								ReturnStatement returnStatement = ast.newReturnStatement();
 								returnStatement.setExpression(expression);
-								bodyStatement = ASTNodes.asFormattedString(returnStatement, 0, delimiter, unit.getJavaProject().getOptions(true));
+								bodyStatement = ASTNodes.asFormattedString(returnStatement, 0, delimiter, unit.getOptions(true));
 							}
 						}
 						String placeHolder = CodeGeneration.getMethodBodyContent(unit, methodBinding.getDeclaringClass().getName(), methodBinding.getName(), false, bodyStatement, delimiter);

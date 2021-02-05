@@ -14,27 +14,38 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
+import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -54,6 +65,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
@@ -65,7 +77,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Mock
 	private JavaClientConnection connection;
-
+	private ClientPreferences clientPreferences;
 
 	@Override
 	@Before
@@ -74,6 +86,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		project = WorkspaceHelper.getProject("hello");
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
 		server = new JDTLanguageServer(projectsManager, this.preferenceManager);
+	}
+
+	@Override
+	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
+		clientPreferences = super.initPreferenceManager(supportClassFileContents);
+		return clientPreferences;
 	}
 
 	@Test
@@ -438,6 +456,73 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+	}
+
+	@Test
+	public void testCodeAction_customFileFormattingOptions() throws Exception {
+		when(clientPreferences.isWorkspaceConfigurationSupported()).thenReturn(true);
+		when(connection.configuration(Mockito.any())).thenReturn(Arrays.asList(4, true/*Indent using Spaces*/));
+		server.setClientConnection(connection);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		IJavaProject javaProject = ProjectUtils.getJavaProject(project);
+		Map<String, String> projectOptions = javaProject.getOptions(false);
+		projectOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.TAB); // Indent using Tabs
+		projectOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
+		javaProject.setOptions(projectOptions);
+
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(project.getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder builder = new StringBuilder();
+		builder.append("package test1;\n");
+		builder.append("interface I {\n");
+		builder.append("	void method();\n");
+		builder.append("}\n");
+		builder.append("public class E {\n");
+		builder.append("	void bar(I i) {\n");
+		builder.append("	}\n");
+		builder.append("	void foo() {\n");
+		builder.append("		bar(() /*[*//*]*/-> {\n");
+		builder.append("		});\n");
+		builder.append("	}\n");
+		builder.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(cu)));
+		final Range range = CodeActionUtil.getRange(cu, "/*[*//*]*/");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Collections.emptyList(), Arrays.asList(CodeActionKind.Refactor)));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Optional<Either<Command, CodeAction>> found = codeActions.stream().filter((codeAction) -> {
+			return codeAction.isRight() && Objects.equals("Convert to anonymous class creation", codeAction.getRight().getTitle());
+		}).findAny();
+		Assert.assertTrue(found.isPresent());
+
+		Either<Command, CodeAction> codeAction = found.get();
+		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+		Assert.assertNotNull(c.getArguments());
+		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+		WorkspaceEdit edit = (WorkspaceEdit) c.getArguments().get(0);
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(edit);
+		builder = new StringBuilder();
+		builder.append("package test1;\n");
+		builder.append("interface I {\n");
+		builder.append("	void method();\n");
+		builder.append("}\n");
+		builder.append("public class E {\n");
+		builder.append("	void bar(I i) {\n");
+		builder.append("	}\n");
+		builder.append("	void foo() {\n");
+		builder.append("		bar(new I() {\n");
+		builder.append("            @Override\n");
+		builder.append("            public void method() {\n");
+		builder.append("            }\n");
+		builder.append("        });\n");
+		builder.append("	}\n");
+		builder.append("}\n");
+		AbstractSourceTestCase.compareSource(builder.toString(), actual);
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {

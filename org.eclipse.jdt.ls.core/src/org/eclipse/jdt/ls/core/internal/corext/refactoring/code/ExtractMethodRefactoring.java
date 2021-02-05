@@ -600,7 +600,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 				result.addTextEditGroup(new TextEditGroup(RefactoringCoreMessages.ExtractMethodRefactoring_organize_imports, new TextEdit[] { edit }));
 			}
 			try {
-				Map formatter = this.fFormatterOptions == null ? fCUnit.getJavaProject().getOptions(true) : this.fFormatterOptions;
+				Map formatter = this.fFormatterOptions == null ? fCUnit.getOptions(true) : this.fFormatterOptions;
 				IDocument document = new Document(fCUnit.getSource());
 				root.addChild(fRewriter.rewriteAST(document, formatter));
 			} catch (JavaModelException e) {

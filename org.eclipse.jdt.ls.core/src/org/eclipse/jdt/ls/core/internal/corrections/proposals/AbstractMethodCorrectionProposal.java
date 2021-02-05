@@ -154,7 +154,7 @@ public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrect
 			if (!isAbstractMethod && !isVoid) {
 				ReturnStatement returnStatement= ast.newReturnStatement();
 				returnStatement.setExpression(ASTNodeFactory.newDefaultExpression(ast, returnType, 0));
-				bodyStatement= ASTNodes.asFormattedString(returnStatement, 0, String.valueOf('\n'), getCompilationUnit().getJavaProject().getOptions(true));
+				bodyStatement= ASTNodes.asFormattedString(returnStatement, 0, String.valueOf('\n'), getCompilationUnit().getOptions(true));
 			}
 		}
 

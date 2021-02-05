@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -158,7 +159,8 @@ public class GenerateGetterSetterOperation {
 			stub = GetterSetterUtil.getSetterStub(field, name, generateComments, flags);
 		}
 
-		String formattedStub = CodeFormatterUtil.format(CodeFormatter.K_CLASS_BODY_DECLARATIONS, stub, 0, delimiter, type.getJavaProject().getOptions(true));
+		Map<String, String> options = type.getCompilationUnit() != null ? type.getCompilationUnit().getOptions(true) : type.getJavaProject().getOptions(true);
+		String formattedStub = CodeFormatterUtil.format(CodeFormatter.K_CLASS_BODY_DECLARATIONS, stub, 0, delimiter, options);
 		MethodDeclaration declaration = (MethodDeclaration) rewrite.getASTRewrite().createStringPlaceholder(formattedStub, ASTNode.METHOD_DECLARATION);
 		rewrite.insertLast(declaration, null);
 	}
