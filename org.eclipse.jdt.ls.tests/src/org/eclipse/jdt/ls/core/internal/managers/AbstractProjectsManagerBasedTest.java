@@ -132,9 +132,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		logListener = new SimpleLogListener();
 		Platform.addLogListener(logListener);
 		preferences = new Preferences();
-		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
-		preferences.setCodeGenerationTemplateGenerateComments(true);
-		preferences.setMavenDownloadSources(true);
+		initPreferences(preferences);
 		if (preferenceManager == null) {
 			preferenceManager = mock(StandardPreferenceManager.class);
 		}
@@ -158,6 +156,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 				return DocumentAdapter.Null;
 			}
 		});
+	}
+
+	protected void initPreferences(Preferences preferences) throws IOException {
+		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
+		preferences.setCodeGenerationTemplateGenerateComments(true);
+		preferences.setMavenDownloadSources(true);
 	}
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {

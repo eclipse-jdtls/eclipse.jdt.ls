@@ -34,7 +34,6 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -509,17 +508,5 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
 		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
-	}
-
-	public void testUpdateOutputPath() throws Exception {
-		preferenceManager.getPreferences().setInvisibleProjectOutputPath("");
-		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
-		IJavaProject javaProject = JavaCore.create(project);
-		assertEquals(String.join("/", "", javaProject.getElementName(), "bin"), javaProject.getOutputLocation().toString());
-
-		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "bin", true /*isUpdate*/, new NullProgressMonitor());
-		waitForBackgroundJobs();
-
-		assertEquals(String.join("/", "", javaProject.getElementName(), ProjectUtils.WORKSPACE_LINK, "bin"), javaProject.getOutputLocation().toString());
 	}
 }

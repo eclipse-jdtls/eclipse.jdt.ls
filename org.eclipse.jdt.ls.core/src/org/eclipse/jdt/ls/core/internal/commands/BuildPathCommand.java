@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Microsoft Corporation and others.
+ * Copyright (c) 2018-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -81,7 +82,9 @@ public class BuildPathCommand {
 		IJavaProject javaProject = JavaCore.create(targetProject);
 		try {
 			if (ProjectUtils.addSourcePath(sourcePath, exclusionPath, javaProject)) {
-				return new Result(true, Messages.format("Successfully added ''{0}'' to the project {1}''s source path.", new String[] { getWorkspacePath(sourceFolderPath).toOSString(), targetProject.getName() }));
+				Result result = new Result(true, Messages.format("Successfully added ''{0}'' to the project {1}''s source path.", new String[] { getWorkspacePath(sourceFolderPath).toOSString(), targetProject.getName() }));
+				result.sourcePaths = getInvisibleProjectRelativeSourcePaths(javaProject);
+				return result;
 			} else {
 				return new Result(true, Messages.format("No need to add it to source path again, because the folder ''{0}'' is already in the project {1}''s source path.",
 						new String[] { getWorkspacePath(sourceFolderPath).toOSString(), targetProject.getName() }));
@@ -126,7 +129,9 @@ public class BuildPathCommand {
 		IJavaProject javaProject = JavaCore.create(targetProject);
 		try {
 			if (ProjectUtils.removeSourcePath(sourcePath, javaProject)) {
-				return new Result(true, Messages.format("Successfully removed ''{0}'' from the project {1}''s source path.", new String[] { getWorkspacePath(sourceFolderPath).toOSString(), targetProject.getName() }));
+				Result result = new Result(true, Messages.format("Successfully removed ''{0}'' from the project {1}''s source path.", new String[] { getWorkspacePath(sourceFolderPath).toOSString(), targetProject.getName() }));
+				result.sourcePaths = getInvisibleProjectRelativeSourcePaths(javaProject);
+				return result;
 			} else {
 				return new Result(true, Messages.format("No need to remove it from source path, because the folder ''{0}'' isn''t on any project''s source path.", getWorkspacePath(sourceFolderPath).toOSString()));
 			}
@@ -184,6 +189,20 @@ public class BuildPathCommand {
 		return new ListCommandResult(true, null, sourcePathList.toArray(new SourcePath[0]));
 	}
 
+	private static String[] getInvisibleProjectRelativeSourcePaths(IJavaProject javaProject) throws JavaModelException {
+		if (ProjectUtils.isVisibleProject(javaProject.getProject())) {
+			return null;
+		}
+		IFolder workspaceLinkFolder = javaProject.getProject().getFolder(ProjectUtils.WORKSPACE_LINK);
+		if (!workspaceLinkFolder.isLinked()) {
+			return null;
+		}
+		IPath[] paths = ProjectUtils.listSourcePaths(javaProject);
+		return Arrays.stream(paths)
+				.map(p -> p.makeRelativeTo(workspaceLinkFolder.getFullPath()).toString())
+				.toArray(String[]::new);
+	}
+
 	private static IProject findBelongedProject(IPath sourceFolder) {
 		List<IProject> projects = Stream.of(ProjectUtils.getAllProjects()).filter(ProjectUtils::isJavaProject).sorted(new Comparator<IProject>() {
 			@Override
@@ -218,6 +237,7 @@ public class BuildPathCommand {
 	public static class Result {
 		public boolean status;
 		public String message;
+		public String[] sourcePaths;
 
 		Result(boolean status, String message) {
 			this.status = status;
