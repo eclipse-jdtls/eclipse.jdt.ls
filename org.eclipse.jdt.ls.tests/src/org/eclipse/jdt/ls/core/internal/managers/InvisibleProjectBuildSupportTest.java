@@ -476,11 +476,13 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 	public void testDynamicSourceLookups() throws Exception {
 		IProject project = copyAndImportFolder("singlefile/downloadSources", "UsingRemark.java");
 
+		// place remark artifact in lib folder
 		File remarkFile = DependencyUtil.getArtifact("com.kotcrab.remark", "remark", "1.2.0", null);
 		IPath projectRealPath = ProjectUtils.getProjectRealFolder(project);
 		IPath remarkCopy = projectRealPath.append("lib/remark.jar");
 		FileUtils.copyFile(remarkFile, remarkCopy.toFile());
 
+		// update classpath
 		List<String> include = Arrays.asList("lib/**/*.jar");
 		ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include));
 		UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
@@ -492,12 +494,13 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		IJavaProject javaProject = JavaCore.create(project);
 		IClasspathEntry remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
 		assertNotNull(remark);
-		assertNull(remark.getSourceAttachmentPath());
 
+		// construct hover request
 		URI standalone = new File(projectRealPath.toFile(), "UsingRemark.java").toURI();
 		String payload = HoverHandlerTest.createHoverRequest(standalone, 2, 3);
 		TextDocumentPositionParams position = getParams(payload);
 
+		// perform hover
 		HoverHandler handler = new HoverHandler(preferenceManager);
 		Hover hover = handler.hover(position, monitor);
 		if (hover.getContents().getLeft().size() < 2) {
@@ -505,8 +508,34 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			hover = handler.hover(position, monitor);
 		}
 
+		// verify library has source attachment
+		remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
+		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
 		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
+
+		// add another artifact to lib folder
+		File jsoupFile = DependencyUtil.getArtifact("org.jsoup", "jsoup", "1.9.2", null);
+		IPath jsoupCopy = projectRealPath.append("lib/jsoup.jar");
+		FileUtils.copyFile(jsoupFile, jsoupCopy.toFile());
+
+		// update classpath
+		UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
+		waitForBackgroundJobs();
+
+		// perform hover
+		hover = handler.hover(position, monitor);
+		if (hover.getContents().getLeft().size() < 2) {
+			JobHelpers.waitForDownloadSourcesJobs(60000);
+			hover = handler.hover(position, monitor);
+		}
+
+		// verify original library source attachment persists
+		assertNotNull(remark.getSourceAttachmentPath());
+		assertNotNull(hover);
+		javadoc = hover.getContents().getLeft().get(1).getLeft();
+		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
+
 	}
 }

@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -366,6 +367,8 @@ public final class ProjectUtils {
 		}
 		IClasspathEntry[] rawClasspath = javaProject.getRawClasspath();
 		List<IClasspathEntry> newEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() != IClasspathEntry.CPE_LIBRARY).collect(Collectors.toCollection(ArrayList::new));
+		List<IClasspathEntry> libEntries = Arrays.stream(rawClasspath).filter(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && cpe.getSourceAttachmentPath() != null && cpe.getSourceAttachmentPath().toFile().exists())
+				.collect(Collectors.toCollection(ArrayList::new));
 
 		for (Map.Entry<Path, IPath> library : libraries.entrySet()) {
 			if (monitor.isCanceled()) {
@@ -373,6 +376,10 @@ public final class ProjectUtils {
 			}
 			IPath binary = new org.eclipse.core.runtime.Path(library.getKey().toString());
 			IPath source = library.getValue();
+			if (source == null && !libEntries.isEmpty()) {
+				Optional<IClasspathEntry> result = libEntries.stream().filter(cpe -> cpe.getPath().equals(binary)).findAny();
+				source = result.isPresent() ? result.get().getSourceAttachmentPath() : null;
+			}
 			IClasspathEntry newEntry = JavaCore.newLibraryEntry(binary, source, null);
 			JavaLanguageServerPlugin.logInfo(">> Adding " + binary + " to the classpath");
 			newEntries.add(newEntry);
