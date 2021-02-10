@@ -1,4 +1,10 @@
 # Change Log
+# [0.69.0 (February 11th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/87?closed=1)
+ * enhancement - Specify output path for invisible project. See [#1593](https://github.com/eclipse/eclipse.jdt.ls/issues/1593).
+ * other - Remove legacy Semantic Highlighting implementation. See [#1649](https://github.com/eclipse/eclipse.jdt.ls/pull/1649).
+ * other - Further semantic tokens improvements. See [#1641](https://github.com/eclipse/eclipse.jdt.ls/pull/1641).
+ * other - Rename 'function' semantic token to 'method'. See [#1608](https://github.com/eclipse/eclipse.jdt.ls/pull/1608).
+
 # [0.68.0 (January 20th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/86?closed=1)
  * enhancement - Download sources for the masses. See [#1628](https://github.com/eclipse/eclipse.jdt.ls/pull/1628).
  * bug fix - Some refactors are missing when the location has diagnostics. See [#1642](https://github.com/eclipse/eclipse.jdt.ls/issues/1642).
