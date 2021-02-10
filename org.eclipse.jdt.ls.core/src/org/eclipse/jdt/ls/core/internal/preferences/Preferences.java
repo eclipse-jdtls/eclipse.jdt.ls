@@ -226,6 +226,11 @@ public class Preferences {
 	public static final String MAVEN_GLOBAL_SETTINGS_KEY = "java.configuration.maven.globalSettings";
 
 	/**
+	 * Preference key for Maven lifecycle-mapping-metadata.xml location.
+	 */
+	public static final String MAVEN_LIFECYCLE_MAPPING_METADATA_KEY = "java.configuration.maven.lifeCycleMappingMetadata";
+
+	/**
 	 * Preference key to enable/disable the 'completion'.
 	 */
 	public static final String COMPLETION_ENABLED_KEY = "java.completion.enabled";
@@ -459,6 +464,7 @@ public class Preferences {
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
+	private String workspaceLifecycleMappingMetadataFile;
 
 	private List<String> javaCompletionFavoriteMembers;
 	private List<?> gradleWrapperList;
@@ -809,6 +815,9 @@ public class Preferences {
 
 		String mavenGlobalSettings = getString(configuration, MAVEN_GLOBAL_SETTINGS_KEY, null);
 		prefs.setMavenGlobalSettings(mavenGlobalSettings);
+
+		String mavenLifecycleMappingMetadata = getString(configuration, MAVEN_LIFECYCLE_MAPPING_METADATA_KEY, null);
+		prefs.setWorkspaceLifecycleMappingMetadataFile(mavenLifecycleMappingMetadata);
 
 		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
@@ -1364,6 +1373,15 @@ public class Preferences {
 
 	public String getMavenGlobalSettings() {
 		return mavenGlobalSettings;
+	}
+
+	public Preferences setWorkspaceLifecycleMappingMetadataFile(String mavenLifecycleMetadataMapping) {
+		this.workspaceLifecycleMappingMetadataFile = ResourceUtils.expandPath(mavenLifecycleMetadataMapping);
+		return this;
+	}
+
+	public String getWorkspaceLifecycleMappingMetadataFile() {
+		return workspaceLifecycleMappingMetadataFile;
 	}
 
 	public String[] getImportOrder() {
