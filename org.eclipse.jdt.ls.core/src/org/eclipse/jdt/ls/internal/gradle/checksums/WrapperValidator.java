@@ -105,7 +105,7 @@ public class WrapperValidator {
 					reader = new InputStreamReader(new FileInputStream(versionFile), Charsets.UTF_8);
 					String json = CharStreams.toString(reader);
 					Gson gson = new GsonBuilder().create();
-					TypeToken<List<Map<String, String>>> typeToken = new TypeToken<List<Map<String, String>>>() {
+					TypeToken<List<Map<String, String>>> typeToken = new TypeToken<>() {
 					};
 					List<Map<String, String>> versions = gson.fromJson(json, typeToken.getType());
 					//@formatter:off
@@ -253,14 +253,24 @@ public class WrapperValidator {
 	}
 
 	private static File getVersionCacheFile() {
-		return new File(System.getProperty("user.home"), ".tooling/gradle/versions.json");
+		String xdgCache = getXdgCache();
+		return new File(xdgCache, "tooling/gradle/versions.json");
+	}
+
+	private static String getXdgCache() {
+		String xdgCache = System.getenv("XDG_CACHE_HOME");
+		if (xdgCache == null) {
+			xdgCache = System.getProperty("user.home") + "/.cache/";
+		}
+		return xdgCache;
 	}
 
 	public static File getSha256CacheFile() {
 		String checksumCache = System.getProperty("gradle.checksum.cacheDir");
 		File file;
 		if (checksumCache == null || checksumCache.isEmpty()) {
-			file = new File(System.getProperty("user.home"), ".tooling/gradle/checksums");
+			String xdgCache = getXdgCache();
+			file = new File(xdgCache, "tooling/gradle/checksums");
 		} else {
 			file = new File(checksumCache);
 		}

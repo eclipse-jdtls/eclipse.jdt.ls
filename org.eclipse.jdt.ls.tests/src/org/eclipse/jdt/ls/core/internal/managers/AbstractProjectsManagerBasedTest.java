@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.util.StringUtils;
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -235,6 +236,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected void waitForBackgroundJobs() throws Exception {
 		JobHelpers.waitForJobsToComplete(monitor);
+		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 	}
 
 	protected File getSourceProjectDirectory() {
@@ -256,7 +258,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		WorkspaceHelper.deleteAllProjects();
 		FileUtils.forceDelete(getWorkingProjectDirectory());
 		Job.getJobManager().setProgressProvider(null);
-		JobHelpers.waitForJobsToComplete();
+		waitForBackgroundJobs();
 	}
 
 	protected void assertIsJavaProject(IProject project) {

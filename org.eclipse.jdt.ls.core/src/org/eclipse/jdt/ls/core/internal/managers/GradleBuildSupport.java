@@ -15,8 +15,8 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -92,9 +92,9 @@ public class GradleBuildSupport implements IBuildSupport {
 	private boolean isRoot(IProject project, GradleBuild gradleBuild, IProgressMonitor monitor) {
 		if (gradleBuild instanceof InternalGradleBuild) {
 			CancellationTokenSource tokenSource = GradleConnector.newCancellationTokenSource();
-			Collection<EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
+			Map<String, EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
 			File projectDirectory = project.getLocation().toFile();
-			for (EclipseProject eclipseProject : eclipseProjects) {
+			for (EclipseProject eclipseProject : eclipseProjects.values()) {
 				File eclipseProjectDirectory = eclipseProject.getProjectDirectory();
 				if (eclipseProjectDirectory.equals(projectDirectory)) {
 					return eclipseProject.getParent() == null;
