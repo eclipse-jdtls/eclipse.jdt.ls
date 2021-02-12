@@ -49,7 +49,6 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.eclipse.m2e.core.internal.Messages;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -244,7 +243,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/broken")).findFirst();
+		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/broken"))||p.getUri().endsWith("maven/broken/")))).findFirst();
 		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
@@ -300,7 +299,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("eclipse/wtpproject")).findFirst();
+		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> (p.getUri().endsWith("eclipse/wtpproject")) || p.getUri().endsWith("eclipse/wtpproject/")).findFirst();
 		assertTrue(projectDiags.isPresent());
 		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 0, projectDiags.get().getDiagnostics().size());
 	}
@@ -326,7 +325,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> p.getUri().endsWith("maven/salut")).findFirst();
+		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/salut"))||p.getUri().endsWith("maven/salut/")))).findFirst();
 		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		assertEquals(diags.toString(), 2, diags.size());
@@ -388,7 +387,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<Diagnostic> projectDiags = new ArrayList<>();
 		List<Diagnostic> pomDiags = new ArrayList<>();
 		for (PublishDiagnosticsParams diag : allCalls) {
-			if (diag.getUri().endsWith("maven/salut")) {
+			if (diag.getUri().endsWith("maven/salut") || diag.getUri().endsWith("maven/salut/")) {
 				projectDiags.addAll(diag.getDiagnostics());
 			} else if (diag.getUri().endsWith("pom.xml")) {
 				pomDiags.addAll(diag.getDiagnostics());

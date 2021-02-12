@@ -421,7 +421,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testCodeAction_ignoringOtherDiagnosticWithoutCode() throws Exception {
 		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "import java.sql.*; \n" + "public class Foo {\n" + "	void foo() {\n" + "	}\n" + "}\n");
-
+		//unit.save(new NullProgressMonitor(), true);
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
 		final Range range = CodeActionUtil.getRange(unit, "java.sql");

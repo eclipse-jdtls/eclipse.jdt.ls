@@ -293,4 +293,11 @@ public final class ResourceUtils {
 		return globPattern;
 	}
 
+	public static String dos2Unix(String str) {
+		if (str != null && Platform.OS_WIN32.equals(Platform.getOS())) {
+			str = str.replaceAll("\\r", "");
+		}
+		return str;
+	}
+
 }

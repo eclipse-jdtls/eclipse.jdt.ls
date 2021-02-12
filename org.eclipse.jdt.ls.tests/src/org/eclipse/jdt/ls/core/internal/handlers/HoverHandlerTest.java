@@ -457,7 +457,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		project = WorkspaceHelper.getProject("salut");
 		handler = new HoverHandler(preferenceManager);
 		//given
-		String payload = createHoverRequest("src/main/java/java/Foo2.java", 44, 24);
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 44, 25);
 		TextDocumentPositionParams position = getParams(payload);
 
 		// when
@@ -498,7 +498,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				"     \\*  This is a note";
 
 		//@formatter:on
-		assertMatches(expectedJavadoc, content);
+		assertMatches(expectedJavadoc, ResourceUtils.dos2Unix(content));
 	}
 
 	@Test
@@ -508,7 +508,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		handler = new HoverHandler(preferenceManager);
 
 		//given
-		String payload = createHoverRequest("src/main/java/java/Foo2.java", 51, 25);
+		String payload = createHoverRequest("src/main/java/java/Foo2.java", 51, 26);
 		TextDocumentPositionParams position = getParams(payload);
 
 		// when
@@ -553,7 +553,9 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				"     *  java.sql.Driver\n" +
 				" *  **@moduleGraph**";
 		//@formatter:on
-		assertEquals("Unexpected hover ", expectedJavadoc, hover.getContents().getLeft().get(1).getLeft());
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
 	}
 
 	@Test

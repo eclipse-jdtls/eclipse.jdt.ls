@@ -52,6 +52,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
@@ -1267,7 +1268,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(9);
 		assertEquals("interface", item.getLabel());
 		String te = item.getInsertText();
-		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic interface Test {\n\n\t${0}\n}", te);
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic interface Test {\n\n\t${0}\n}", ResourceUtils.dos2Unix(te));
 
 		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
 		assertSame(item, server.resolveCompletionItem(item).join());
@@ -1366,7 +1367,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(8);
 		assertEquals("class", item.getLabel());
 		String te = item.getInsertText();
-		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic class Test {\n\n\t${0}\n}", te);
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic class Test {\n\n\t${0}\n}", ResourceUtils.dos2Unix(te));
 	}
 
 	@Test
@@ -1477,7 +1478,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(11);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
-		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", ResourceUtils.dos2Unix(te));
 
 		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
 		assertSame(item, server.resolveCompletionItem(item).join());

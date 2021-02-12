@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -92,7 +93,12 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		verify(connection, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
 		// Use Paths.get() to normalize the URI: ignore the tailing slash, "/project/path" and "/project/path/" should be the same.
-		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
+		// Paths.get(URI) doesn't work on Windows
+		assertEquals(Paths.get(project.getLocation().toOSString()), Paths.get(getData(argument)));
+	}
+
+	private String getData(ArgumentCaptor<EventNotification> argument) {
+		return new org.eclipse.core.runtime.Path(URI.create((String) argument.getValue().getData()).getPath()).toOSString();
 	}
 
 	@Test
@@ -111,7 +117,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(connection, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
-		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
+		assertEquals(Paths.get(project.getLocation().toOSString()), Paths.get(getData(argument)));
 	}
 
 	@Test
@@ -128,7 +134,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(connection, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
-		assertEquals(Paths.get(project.getLocationURI().toString()), Paths.get((String) argument.getValue().getData()));
+		assertEquals(Paths.get(project.getLocation().toOSString()), Paths.get(getData(argument)));
 	}
 
 	@Test
@@ -147,7 +153,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(connection, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ClasspathUpdated, argument.getValue().getType());
-		assertEquals(Paths.get(projectFolder.toURI().toString()), Paths.get((String) argument.getValue().getData()));
-
+		assertEquals(Paths.get(projectFolder.getAbsolutePath()), Paths.get(getData(argument)));
+		// assertEquals(projectFolder.toURI(), URI.create((String) argument.getValue().getData()));
 	}
 }

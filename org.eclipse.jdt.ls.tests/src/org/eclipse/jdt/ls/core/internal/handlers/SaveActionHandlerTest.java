@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -81,7 +82,7 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		Document doc = new Document();
 		doc.set(cu.getSource());
-		assertEquals(TextEditUtil.apply(doc, result), buf.toString());
+		assertEquals(buf.toString(), ResourceUtils.dos2Unix(TextEditUtil.apply(doc, result)));
 	}
 
 	@Test
@@ -116,7 +117,7 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 			List<TextEdit> result = handler.willSaveWaitUntil(params, monitor);
 			Document doc = new Document();
 			doc.set(cu.getSource());
-			assertEquals(expected, TextEditUtil.apply(doc, result));
+			assertEquals(expected, ResourceUtils.dos2Unix(TextEditUtil.apply(doc, result)));
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
 		}

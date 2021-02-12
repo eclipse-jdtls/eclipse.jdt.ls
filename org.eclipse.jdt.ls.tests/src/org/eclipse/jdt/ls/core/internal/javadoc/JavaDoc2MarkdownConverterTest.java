@@ -22,6 +22,7 @@ import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.Util;
 import org.junit.Test;
 
@@ -174,7 +175,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_SEE);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  **See Also:**\n    \n     *  [Online docs for java](https://docs.oracle.com/javase/7/docs/api/)", convertedMarkdown);
+		assertEquals(" *  **See Also:**\n    \n     *  [Online docs for java](https://docs.oracle.com/javase/7/docs/api/)", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 
 	@Test
@@ -182,7 +183,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_PARAM);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  **Parameters:**\n    \n     *  **someString** the string to enter", convertedMarkdown);
+		assertEquals(" *  **Parameters:**\n    \n     *  **someString** the string to enter", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 
 	@Test
@@ -190,7 +191,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_SINCE);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  **Since:**\n    \n     *  0.0.1", convertedMarkdown);
+		assertEquals(" *  **Since:**\n    \n     *  0.0.1", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 
 	@Test
@@ -198,7 +199,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_VERSION);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  @version\n    \n     *  0.0.1", convertedMarkdown);
+		assertEquals(" *  @version\n    \n     *  0.0.1", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 
 	@Test
@@ -206,7 +207,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_THROWS);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  **Throws:**\n    \n     *  IOException", convertedMarkdown);
+		assertEquals(" *  **Throws:**\n    \n     *  IOException", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 
 	@Test
@@ -214,6 +215,6 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 		JavaDoc2MarkdownConverter converter = new JavaDoc2MarkdownConverter(RAW_JAVADOC_HTML_AUTHOR);
 		String convertedMarkdown = converter.getAsString();
 
-		assertEquals(" *  **Author:**\n    \n     *  someAuthor", convertedMarkdown);
+		assertEquals(" *  **Author:**\n    \n     *  someAuthor", ResourceUtils.dos2Unix(convertedMarkdown));
 	}
 }
