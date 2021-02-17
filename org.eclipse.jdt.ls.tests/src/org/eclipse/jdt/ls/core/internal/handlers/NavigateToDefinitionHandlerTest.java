@@ -74,7 +74,22 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testDisassembledSource() throws Exception {
-		testClass("javax.tools.Tool", 6, 44);
+		testClass("javax.tools.Tool", 6, 57);
+	}
+
+	@Test
+	public void testSourceVersion() throws Exception {
+		String className = "javax.tools.Tool";
+		int line = 6;
+		int column = 57;
+		String uri = ClassFileUtil.getURI(project, className);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
+		assertNotNull(definitions);
+		assertEquals("No definition found for " + className, 1, definitions.size());
+		assertNotNull(definitions.get(0).getUri());
+		assertEquals(3, definitions.get(0).getRange().getStart().getLine());
+		assertEquals(12, definitions.get(0).getRange().getStart().getCharacter());
 	}
 
 	@Test

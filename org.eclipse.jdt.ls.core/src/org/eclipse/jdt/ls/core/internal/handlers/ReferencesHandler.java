@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -63,8 +64,10 @@ public final class ReferencesHandler {
 
 	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
 		final List<Location> locations = new ArrayList<>();
+		ITypeRoot typeRoot = null;
 		try {
-			ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri());
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			typeRoot = JDTUtils.resolveTypeRoot(param.getTextDocument().getUri(), returnCompilationUnit, monitor);
 			if (typeRoot == null) {
 				return locations;
 			}
@@ -77,18 +80,30 @@ public final class ReferencesHandler {
 				return locations;
 			}
 			search(elementToSearch, locations, monitor);
+			if (monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
 			if (preferenceManager.getPreferences().isIncludeAccessors() && elementToSearch instanceof IField) { // IField
 				IField field = (IField) elementToSearch;
 				IMethod getter = GetterSetterUtil.getGetter(field);
 				if (getter != null) {
 					search(getter, locations, monitor);
 				}
+				if (monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				IMethod setter = GetterSetterUtil.getSetter(field);
 				if (setter != null) {
 					search(setter, locations, monitor);
 				}
+				if (monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				String builderName = getBuilderName(field);
 				IType builder = field.getJavaProject().findType(builderName);
+				if (monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				if (builder != null) {
 					String fieldSignature = field.getTypeSignature();
 					for (IMethod method : builder.getMethods()) {
@@ -98,9 +113,14 @@ public final class ReferencesHandler {
 						}
 					}
 				}
+				if (monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Find references failure ", e);
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(typeRoot);
 		}
 		return locations;
 	}
@@ -131,6 +151,7 @@ public final class ReferencesHandler {
 
 	private void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor) throws CoreException, JavaModelException {
 		boolean includeClassFiles = preferenceManager.isClientSupportsClassFileContent();
+		boolean includeDecompiledSources = preferenceManager.getPreferences().isIncludeDecompiledSources();
 		SearchEngine engine = new SearchEngine();
 		SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
 		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
@@ -141,18 +162,20 @@ public final class ReferencesHandler {
 				if (o instanceof IJavaElement) {
 					IJavaElement element = (IJavaElement) o;
 					ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
-					Location location = null;
 					if (compilationUnit != null) {
-						location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
+						Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());
+						locations.add(location);
 					} else if (includeClassFiles) {
 						IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 						if (cf != null && cf.getSourceRange() != null) {
-							location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
+							Location location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
+							locations.add(location);
+						} else if (includeDecompiledSources && cf != null) {
+							List<Location> result = JDTUtils.searchDecompiledSources(element, cf, false, false, monitor);
+							locations.addAll(result);
 						}
 					}
-					if (location != null) {
-						locations.add(location);
-					}
+
 				}
 			}
 		}, monitor);

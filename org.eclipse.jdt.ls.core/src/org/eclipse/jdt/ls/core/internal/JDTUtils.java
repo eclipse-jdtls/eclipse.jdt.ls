@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -71,9 +73,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.SourceRange;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
@@ -85,23 +89,26 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.LambdaExpression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
-import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
-import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
-import org.eclipse.jdt.core.search.SearchPattern;
-import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
+import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
+import org.eclipse.jdt.internal.core.util.Util;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
@@ -118,7 +125,6 @@ import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -386,6 +392,7 @@ public final class JDTUtils {
 		}
 		return null;
 	}
+
 	/**
 	 * Convenience method that combines {@link #resolveClassFile(String)} and
 	 * {@link #resolveCompilationUnit(String)}.
@@ -394,14 +401,226 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString) {
+		return resolveTypeRoot(uriString, false, null);
+	}
+
+	/**
+	 * Convenience method that combines {@link #resolveClassFile(String)} and
+	 * {@link #resolveCompilationUnit(String)}.
+	 *
+	 * @param uri
+	 * @param returnCompilationUnit
+	 * @param monitor
+	 * @return either a class file or compilation unit
+	 */
+	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return null;
 		}
 		if (JDT_SCHEME.equals(uri.getScheme())) {
-			return resolveClassFile(uri);
+			IClassFile classFile = resolveClassFile(uri);
+			try {
+				if (returnCompilationUnit && classFile != null && classFile.getSourceRange() == null) {
+					ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
+					if (monitor == null) {
+						monitor = new NullProgressMonitor();
+					}
+					String contents;
+					try {
+						contents = contentProvider.getSource(classFile, monitor);
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						return classFile;
+					}
+					if (contents != null && !contents.isBlank()) {
+						return getWorkingCopy(classFile, contents, monitor);
+					}
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return classFile;
 		}
 		return resolveCompilationUnit(uri);
+	}
+
+	public static void discardClassFileWorkingCopy(ITypeRoot unit) {
+		try {
+			if (getClassFile(unit) != null) {
+				((ICompilationUnit) unit).discardWorkingCopy();
+			}
+		} catch (JavaModelException e) {
+			// do nothing
+		}
+	}
+
+	public static IClassFile getClassFile(ITypeRoot unit) throws JavaModelException {
+		if (unit instanceof ICompilationUnit && unit.getResource() != null && !unit.getResource().exists()) {
+			IType primaryType = unit.findPrimaryType();
+			if (primaryType != null) {
+				String fqn = primaryType.getFullyQualifiedName();
+				IType type = unit.getJavaProject().findType(fqn);
+				return type.getClassFile();
+			}
+		}
+		return null;
+	}
+
+	private static final class ClassFileVisitor extends ASTVisitor {
+		private final IJavaElement element;
+		private final IProgressMonitor monitor;
+		private final ASTNode[] nodes;
+
+		private ClassFileVisitor(IJavaElement element, ASTNode[] nodes, IProgressMonitor monitor) {
+			this.element = element;
+			this.monitor = monitor;
+			this.nodes = nodes;
+		}
+
+		@Override
+		public boolean visit(SimpleName node) {
+			if (element.getElementName().equals(node.getIdentifier())) {
+				if (find(element, nodes, node)) {
+					return false;
+				}
+			}
+			if (monitor != null && monitor.isCanceled()) {
+				return false;
+			}
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(MethodInvocation node) {
+			if (element.getElementName().equals(node.getName().getIdentifier())) {
+				if (element instanceof IMethod) {
+					IMethod method = (IMethod) element;
+					String[] parameters = method.getParameterTypes();
+					List astParameters = node.typeArguments();
+					if (parameters.length == astParameters.size()) {
+						int size = astParameters.size();
+						String[] astParameterTypes = new String[size];
+						Iterator iterator = astParameters.iterator();
+						for (int i = 0; i < size; i++) {
+							Type parameter = (Type) iterator.next();
+							astParameterTypes[i] = getSignature(parameter);
+						}
+						if (equals(parameters, astParameterTypes)) {
+							nodes[0] = node;
+							return false;
+						}
+					}
+				}
+
+			}
+			if (monitor != null && monitor.isCanceled()) {
+				return false;
+			}
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(MethodDeclaration node) {
+			if (element.getElementName().equals(node.getName().getIdentifier())) {
+				if (element instanceof IMethod) {
+					IMethod method = (IMethod) element;
+					String[] parameters = method.getParameterTypes();
+					IMethodBinding binding = node.resolveBinding();
+					if (binding != null) {
+						ITypeBinding[] types = binding.getParameterTypes();
+						if (types.length != parameters.length) {
+							return false;
+						}
+						String[] astParameterTypes = new String[types.length];
+						for (int i = 0; i < types.length; i++) {
+							ITypeBinding type = types[i];
+							String fullName = type.getQualifiedName();
+							astParameterTypes[i] = Signature.createTypeSignature(fullName, true);
+						}
+						if (equals(parameters, astParameterTypes)) {
+							nodes[0] = node;
+							return false;
+						}
+					}
+					List astParameters = node.parameters();
+					if (parameters.length == astParameters.size()) {
+						int size = astParameters.size();
+						String[] astParameterTypes = new String[size];
+						Iterator iterator = astParameters.iterator();
+						for (int i = 0; i < size; i++) {
+							SingleVariableDeclaration parameter = (SingleVariableDeclaration) iterator.next();
+							String typeSig = getSignature(parameter.getType());
+							int extraDimensions = parameter.getExtraDimensions();
+							if (node.isVarargs() && i == size - 1) {
+								extraDimensions++;
+							}
+							astParameterTypes[i] = Signature.createArraySignature(typeSig, extraDimensions);
+						}
+						if (equals(parameters, astParameterTypes)) {
+							nodes[0] = node;
+							return false;
+						}
+					}
+				}
+			}
+			if (monitor != null && monitor.isCanceled()) {
+				return false;
+			}
+			return super.visit(node);
+		}
+
+		private boolean equals(String[] parameters, String[] parameterTypes) {
+			boolean isSame = true;
+			for (int i = 0; i < parameters.length; i++) {
+				if (!parameters[i].equals(parameterTypes[i])) {
+					isSame = false;
+					break;
+				}
+			}
+			return isSame;
+		}
+
+		private String getSignature(Type type) {
+			String signature = Util.getSignature(type);
+			final String packageName = Signature.getSignatureQualifier(signature);
+			final String typeName = Signature.getSignatureSimpleName(signature);
+			final String fullName = "".equals(packageName) ? typeName : packageName + "." + typeName;
+			signature = Signature.createTypeSignature(fullName, true);
+			return signature;
+		}
+
+		private boolean find(IJavaElement element, final ASTNode[] nodes, SimpleName node) {
+			ASTNode parent = node.getParent();
+			boolean found = false;
+			switch (parent.getNodeType()) {
+				case ASTNode.ANNOTATION_TYPE_DECLARATION:
+				case ASTNode.ANNOTATION_TYPE_MEMBER_DECLARATION:
+					found = element.getElementType() == IJavaElement.ANNOTATION;
+					break;
+				case ASTNode.FIELD_DECLARATION:
+				case ASTNode.ENUM_CONSTANT_DECLARATION:
+				case ASTNode.ENUM_DECLARATION:
+				case ASTNode.FIELD_ACCESS:
+					found = element.getElementType() == IJavaElement.FIELD || element.getElementType() == IJavaElement.TYPE;
+					break;
+				case ASTNode.EXPRESSION_METHOD_REFERENCE:
+					found = element.getElementType() == IJavaElement.METHOD;
+					break;
+				case ASTNode.TYPE_DECLARATION:
+				case ASTNode.VARIABLE_DECLARATION_FRAGMENT:
+				case ASTNode.VARIABLE_DECLARATION_STATEMENT:
+				case ASTNode.VARIABLE_DECLARATION_EXPRESSION:
+					found = element.getElementType() == IJavaElement.TYPE || element.getElementType() == IJavaElement.FIELD || element.getElementType() == IJavaElement.METHOD;
+					break;
+				default:
+					break;
+			}
+			if (found) {
+				nodes[0] = node;
+			}
+			return found;
+		}
 	}
 
 	/**
@@ -704,7 +923,10 @@ public final class JDTUtils {
 
 	public static IJavaElement findElementAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
 		IJavaElement[] elements = findElementsAtSelection(unit, line, column, preferenceManager, monitor);
-		if ((elements != null && elements.length == 1) || monitor.isCanceled()) {
+		if (monitor.isCanceled()) {
+			return null;
+		}
+		if (elements != null && elements.length == 1) {
 			return elements[0];
 		}
 		return null;
@@ -715,71 +937,32 @@ public final class JDTUtils {
 			return null;
 		}
 		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+		if (monitor != null && monitor.isCanceled()) {
+			return null;
+		}
 		if (offset > -1) {
 			return unit.codeSelect(offset, 0);
 		}
-		if (unit instanceof IClassFile) {
-			IClassFile classFile = (IClassFile) unit;
-			ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
-			String contents = contentProvider.getSource(classFile, monitor);
-			if (contents != null) {
-				IDocument document = new Document(contents);
-				try {
-					offset = document.getLineOffset(line) + column;
-					if (offset > -1) {
-						String name = parse(contents, offset);
-						if (name == null) {
-							return null;
-						}
-						SearchPattern pattern = SearchPattern.createPattern(name, IJavaSearchConstants.TYPE,
-								IJavaSearchConstants.DECLARATIONS, SearchPattern.R_FULL_MATCH);
+		return null;
+	}
 
-						IJavaSearchScope scope = createSearchScope(unit.getJavaProject(), preferenceManager);
-
-						List<IJavaElement> elements = new ArrayList<>();
-						SearchRequestor requestor = new SearchRequestor() {
-							@Override
-							public void acceptSearchMatch(SearchMatch match) {
-								if (match.getElement() instanceof IJavaElement) {
-									elements.add((IJavaElement) match.getElement());
-								}
-							}
-						};
-						SearchEngine searchEngine = new SearchEngine();
-						searchEngine.search(pattern,
-								new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope,
-								requestor, null);
-						return elements.toArray(new IJavaElement[0]);
-					}
-				} catch (BadLocationException | CoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+	public static boolean isSameParameters(IMethod method1, IMethod method2) {
+		if (method1 == null || method2 == null) {
+			return false;
+		}
+		String[] params1 = method1.getParameterTypes();
+		String[] params2 = method2.getParameterTypes();
+		if (params2.length == params1.length) {
+			for (int i = 0; i < params2.length; i++) {
+				String t1 = Signature.getSimpleName(Signature.toString(params2[i]));
+				String t2 = Signature.getSimpleName(Signature.toString(params1[i]));
+				if (!t1.equals(t2)) {
+					return false;
 				}
 			}
+			return true;
 		}
-		return null;
-	}
-
-	private static String parse(String contents, int offset) {
-		if (contents == null || offset < 0 || contents.length() < offset
-				|| !isJavaIdentifierOrPeriod(contents.charAt(offset))) {
-			return null;
-		}
-		int start = offset;
-		while (start - 1 > -1 && isJavaIdentifierOrPeriod(contents.charAt(start - 1))) {
-			start--;
-		}
-		int end = offset;
-		while (end <= contents.length() && isJavaIdentifierOrPeriod(contents.charAt(end))) {
-			end++;
-		}
-		if (end >= start) {
-			return contents.substring(start, end);
-		}
-		return null;
-	}
-
-	private static boolean isJavaIdentifierOrPeriod(char ch) {
-		return Character.isJavaIdentifierPart(ch) || ch == '.';
+		return false;
 	}
 
 	public static boolean isFolder(String uriString) {
@@ -1401,6 +1584,130 @@ public final class JDTUtils {
 		}
 
 		return null;
+	}
+
+	public static List<Location> searchDecompiledSources(IJavaElement element, IClassFile classFile, boolean ignoreMethodBody, boolean declaration, IProgressMonitor monitor) throws JavaModelException {
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager == null || !preferencesManager.isClientSupportsClassFileContent() || !preferencesManager.getPreferences().isIncludeDecompiledSources()) {
+			return Collections.emptyList();
+		}
+		ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
+		String contents;
+		try {
+			contents = contentProvider.getSource(classFile, new NullProgressMonitor());
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			return Collections.emptyList();
+		}
+		if (monitor != null && monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
+		List<Location> locations = new ArrayList<>();
+		if (contents != null && !contents.isBlank()) {
+			ICompilationUnit workingCopy = workingCopy = getWorkingCopy(classFile, contents, monitor);
+			try {
+				final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+				parser.setResolveBindings(true);
+				parser.setKind(ASTParser.K_COMPILATION_UNIT);
+				parser.setStatementsRecovery(false);
+				parser.setBindingsRecovery(false);
+				parser.setSource(workingCopy);
+				parser.setIgnoreMethodBodies(ignoreMethodBody);
+				CompilationUnit unit = (CompilationUnit) parser.createAST(monitor);
+				final ASTNode[] nodes = new ASTNode[1];
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+				unit.accept(new ClassFileVisitor(element, nodes, monitor));
+				ASTNode node = nodes[0];
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+				Location location;
+				if (node != null) {
+					String uriString = JDTUtils.toUri(classFile);
+					IDocument document = new Document(contents);
+					if (declaration) {
+						int offset = node.getStartPosition();
+						int length = node.getLength();
+						Range range;
+						if (offset >= 0 && length > 0 && offset + length <= contents.length()) {
+							int[] start = JsonRpcHelpers.toLine(document, offset);
+							int[] end = JsonRpcHelpers.toLine(document, offset + length);
+							range = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
+						} else {
+							range = new Range();
+						}
+						location = new Location(uriString, range);
+						locations.add(location);
+						return locations;
+					}
+					OccurrencesFinder finder = new OccurrencesFinder();
+					if (node instanceof MethodDeclaration) {
+						SimpleName name = ((MethodDeclaration) node).getName();
+						finder.initialize(unit, name);
+					} else if (node instanceof Name) {
+						finder.initialize(unit, node);
+					} else if (node instanceof MethodInvocation) {
+						SimpleName name = ((MethodInvocation) node).getName();
+					} else {
+						return locations;
+					}
+					OccurrenceLocation[] occurrences = finder.getOccurrences();
+					for (OccurrenceLocation occurrence : occurrences) {
+						int offset = occurrence.getOffset();
+						int length = occurrence.getLength();
+						Range range;
+						if (offset >= 0 && length > 0 && offset + length <= contents.length()) {
+							int[] start = JsonRpcHelpers.toLine(document, offset);
+							int[] end = JsonRpcHelpers.toLine(document, offset + length);
+							range = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
+						} else {
+							range = new Range();
+						}
+						location = new Location(uriString, range);
+						locations.add(location);
+					}
+				} else {
+					location = JDTUtils.toLocation(classFile, 0, 0);
+					locations.add(location);
+				}
+			} finally {
+				if (workingCopy != null) {
+					workingCopy.discardWorkingCopy();
+				}
+			}
+		}
+		return locations;
+	}
+
+	public static ICompilationUnit getWorkingCopy(IClassFile classFile, String contents, IProgressMonitor monitor) throws JavaModelException {
+		String name = classFile.getElementName().replace(".class", ".java");
+		IPackageFragment fragment = (IPackageFragment) classFile.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
+		if (!fragment.getElementName().isEmpty()) {
+			name = fragment.getElementName().replace(".", "/") + "/" + name;
+		}
+		IClasspathEntry[] existingEntries = classFile.getJavaProject().getRawClasspath();
+		IPath path = new Path(name);
+		for (IClasspathEntry entry : existingEntries) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				IPath srcPath = entry.getPath();
+				path = srcPath.append(name).makeRelative().removeFirstSegments(1);
+				break;
+			}
+		}
+		IFile file = classFile.getJavaProject().getProject().getFile(path);
+		ICompilationUnit sourceUnit = JavaCore.createCompilationUnitFrom(file);
+		ICompilationUnit workingCopy = sourceUnit.getWorkingCopy(new WorkingCopyOwner() {
+		}, monitor);
+		workingCopy.getBuffer().setContents(contents);
+		workingCopy.becomeWorkingCopy(monitor);
+		workingCopy.reconcile(ICompilationUnit.NO_AST, false, null, monitor);
+		if (monitor.isCanceled()) {
+			workingCopy.discardWorkingCopy();
+			return null;
+		}
+		return workingCopy;
 	}
 
 }

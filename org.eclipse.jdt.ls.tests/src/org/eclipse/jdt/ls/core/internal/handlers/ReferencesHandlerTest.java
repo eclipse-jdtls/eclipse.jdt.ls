@@ -22,6 +22,12 @@ import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -107,6 +113,30 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		} finally {
 			preferenceManager.getPreferences().setIncludeAccessors(includeAccessors);
 		}
+	}
+
+	@Test
+	public void testEnumInClassFile() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		importProjects("eclipse/reference");
+		IProject referenceProject = WorkspaceHelper.getProject("reference");
+		IJavaProject javaProject = JavaCore.create(referenceProject);
+		IType element = javaProject.findType("org.sample.Foo");
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		URI uri = JDTUtils.toURI(JDTUtils.toUri(cf));
+		String fileURI = ResourceUtils.fixURI(uri);
+		ReferenceParams param = new ReferenceParams();
+		param.setPosition(new Position(7, 6));
+		param.setContext(new ReferenceContext(true));
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<Location> references = handler.findReferences(param, monitor);
+		assertNotNull("findReferences should not return null", references);
+		assertEquals(2, references.size());
+		Location l = references.get(0);
+		String refereeUri = ResourceUtils.fixURI(referenceProject.getFile("src/org/reference/Main.java").getRawLocationURI());
+		assertEquals(refereeUri, l.getUri());
+		l = references.get(1);
+		assertEquals(fileURI, l.getUri());
 	}
 
 }

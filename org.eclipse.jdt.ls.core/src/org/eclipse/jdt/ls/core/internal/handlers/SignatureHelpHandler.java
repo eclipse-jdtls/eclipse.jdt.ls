@@ -113,7 +113,7 @@ public class SignatureHelpHandler {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
 										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-										if (isSameParameters(m, method)) {
+										if (JDTUtils.isSameParameters(m, method)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
@@ -141,7 +141,7 @@ public class SignatureHelpHandler {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
 										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-										if (isSameParameters(method, m)) {
+										if (JDTUtils.isSameParameters(method, m)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
@@ -191,28 +191,9 @@ public class SignatureHelpHandler {
 		for (int i = 0; i < infos.size(); i++) {
 			CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
 			IMethod method = JDTUtils.resolveMethod(proposal, javaProject);
-			if (isSameParameters(method, m)) {
+			if (JDTUtils.isSameParameters(method, m)) {
 				return true;
 			}
-		}
-		return false;
-	}
-
-	private boolean isSameParameters(IMethod method1, IMethod method2) {
-		if (method1 == null || method2 == null) {
-			return false;
-		}
-		String[] params1 = method1.getParameterTypes();
-		String[] params2 = method2.getParameterTypes();
-		if (params2.length == params1.length) {
-			for (int i = 0; i < params2.length; i++) {
-				String t1 = Signature.getSimpleName(Signature.toString(params2[i]));
-				String t2 = Signature.getSimpleName(Signature.toString(params1[i]));
-				if (!t1.equals(t2)) {
-					return false;
-				}
-			}
-			return true;
 		}
 		return false;
 	}

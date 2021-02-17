@@ -37,10 +37,12 @@ public class FindLinksHandler {
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
-		ITypeRoot unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri());
-		if (unit != null && !monitor.isCanceled()) {
+		ITypeRoot unit = null;
+		try {
 			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
-			try {
+			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
+			unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri(), returnCompilationUnit, monitor);
+			if (unit != null && !monitor.isCanceled()) {
 				IJavaElement element = JDTUtils.findElementAtSelection(unit, position.getPosition().getLine(), position.getPosition().getCharacter(), preferenceManager, monitor);
 				if (!monitor.isCanceled() && Objects.equals(linkType, "superImplementation")) {
 					IMethod overriddenMethod = findOverriddenMethod(element, monitor);
@@ -54,9 +56,11 @@ public class FindLinksHandler {
 						}
 					}
 				}
-			} catch (JavaModelException e) {
-				// do nothing
 			}
+		} catch (JavaModelException e) {
+			// do nothing
+		} finally {
+			JDTUtils.discardClassFileWorkingCopy(unit);
 		}
 
 		return Collections.emptyList();
