@@ -256,7 +256,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 		Platform.removeLogListener(logListener);
 		logListener = null;
 		WorkspaceHelper.deleteAllProjects();
-		FileUtils.forceDelete(getWorkingProjectDirectory());
+		try {
+			// https://github.com/eclipse/eclipse.jdt.ls/issues/996
+			FileUtils.forceDelete(getWorkingProjectDirectory());
+		} catch (IOException e) {
+			getWorkingProjectDirectory().deleteOnExit();
+		}
 		Job.getJobManager().setProgressProvider(null);
 		waitForBackgroundJobs();
 	}

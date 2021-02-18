@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
@@ -207,6 +208,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 				assertEquals(title + " has the wrong kind ", kind, action.getRight().getKind());
 			}
 			String actionContent = evaluateCodeActionCommand(action);
+			actionContent = ResourceUtils.dos2Unix(actionContent);
 			assertEquals(title + " has the wrong content ", content, actionContent);
 		}
 	}
@@ -301,9 +303,9 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 		WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
 		if (we.getDocumentChanges() != null) {
-			return evaluateChanges(we.getDocumentChanges());
+			return ResourceUtils.dos2Unix(evaluateChanges(we.getDocumentChanges()));
 		}
-		return evaluateChanges(we.getChanges());
+		return ResourceUtils.dos2Unix(evaluateChanges(we.getChanges()));
 	}
 
 	private String evaluateChanges(List<Either<TextDocumentEdit, ResourceOperation>> documentChanges) throws BadLocationException, JavaModelException {
@@ -313,7 +315,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Only one resource should be modified", 1, uris.size());
 		String uri = uris.iterator().next();
 		List<TextEdit> edits = changes.stream().flatMap(e -> e.getEdits().stream()).collect(Collectors.toList());
-		return evaluateChanges(uri, edits);
+		return ResourceUtils.dos2Unix(evaluateChanges(uri, edits));
 	}
 
 	protected String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
@@ -321,7 +323,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		Entry<String, List<TextEdit>> entry = editEntries.next();
 		assertNotNull("No edits generated", entry);
 		assertEquals("More than one resource modified", false, editEntries.hasNext());
-		return evaluateChanges(entry.getKey(), entry.getValue());
+		return ResourceUtils.dos2Unix(evaluateChanges(entry.getKey(), entry.getValue()));
 	}
 
 	private String evaluateChanges(String uri, List<TextEdit> edits) throws BadLocationException, JavaModelException {
@@ -332,7 +334,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		if (cu.exists()) {
 			doc.set(cu.getSource());
 		}
-		return TextEditUtil.apply(doc, edits);
+		return ResourceUtils.dos2Unix(TextEditUtil.apply(doc, edits));
 	}
 
 	public Command getCommand(Either<Command, CodeAction> codeAction) {
@@ -340,7 +342,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	public String getTitle(Either<Command, CodeAction> codeAction) {
-		return getCommand(codeAction).getTitle();
+		return ResourceUtils.dos2Unix(getCommand(codeAction).getTitle());
 	}
 
 }

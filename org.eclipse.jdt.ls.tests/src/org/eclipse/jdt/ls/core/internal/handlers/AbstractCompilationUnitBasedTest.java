@@ -52,7 +52,8 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 
 	protected ICompilationUnit getWorkingCopy(String path, String source) throws JavaModelException {
 		ICompilationUnit workingCopy = getCompilationUnit(path);
-		workingCopy.getWorkingCopy(wcOwner, monitor);
+		// workingCopy.getWorkingCopy(wcOwner, monitor);
+		workingCopy.becomeWorkingCopy(monitor);
 		workingCopy.getBuffer().setContents(source);
 		workingCopy.makeConsistent(monitor);
 		return workingCopy;
@@ -75,5 +76,13 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 	@After
 	public void shutdown() throws Exception {
 		CoreASTProvider.getInstance().disposeAST();
+		ICompilationUnit[] workingCopies = JavaCore.getWorkingCopies(wcOwner);
+		for (ICompilationUnit workingCopy : workingCopies) {
+			workingCopy.discardWorkingCopy();
+		}
+		workingCopies = JavaCore.getWorkingCopies(null);
+		for (ICompilationUnit workingCopy : workingCopies) {
+			workingCopy.discardWorkingCopy();
+		}
 	}
 }

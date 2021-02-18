@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
@@ -179,6 +178,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		File gradleUserHome = null;
 		try {
 			gradleUserHome = Files.createTempDir();
+			gradleUserHome.deleteOnExit();
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHome.getAbsolutePath());
 			List<IProject> projects = importProjects("gradle/simple-gradle");
 			assertEquals(2, projects.size());//default + 1 eclipse projects
@@ -190,9 +190,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(gradleUserHome, projectConfiguration.getBuildConfiguration().getGradleUserHome());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHomePreference);
-			if (gradleUserHome != null) {
-				FileUtils.deleteDirectory(gradleUserHome);
-			}
 		}
 	}
 

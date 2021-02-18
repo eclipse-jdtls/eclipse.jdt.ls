@@ -44,9 +44,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
-		fCuA.delete(true, null);
-
-		ICompilationUnit cu = fPackageP.getCompilationUnit("A.java");
+		ICompilationUnit cu = fCuA;
 		fClassA = cu.createType("public abstract class A {\n}\n", null, true, null);
 		fClassA.createMethod("public abstract void a();\n", null, true, null);
 		fClassA.createMethod("public abstract void b(java.util.Vector<java.util.Date> v);\n", null, true, null);
