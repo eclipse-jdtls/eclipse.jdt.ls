@@ -254,6 +254,14 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		waitForBackgroundJobs();
 	}
 
+	@Test(expected = CoreException.class)
+	public void testSpecifyingAbsoluteOutputPath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath(new File("projects").getAbsolutePath());
+		copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
+	}
+
 	@Test
 	public void testSpecifyingEmptyOutputPath() throws Exception {
 		Preferences preferences = preferenceManager.getPreferences();
@@ -357,6 +365,14 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		}
 		assertEquals(1, sourcePaths.size());
 		assertTrue(sourcePaths.contains(""));
+	}
+
+	@Test(expected = CoreException.class)
+	public void testSpecifyingAbsoluteSourcePath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList(new File("projects").getAbsolutePath()));
+		copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
 	}
 
 	@Test

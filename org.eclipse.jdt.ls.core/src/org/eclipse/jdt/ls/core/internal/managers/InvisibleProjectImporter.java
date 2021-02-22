@@ -262,11 +262,19 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return Collections.emptyList();
 		}
 
-		return sourcePaths.stream()
+		sourcePaths = sourcePaths.stream()
 				.map(path -> path.trim())
 				.distinct()
-				.map(path -> workspaceLinkFolder.getFolder(path).getFullPath())
 				.collect(Collectors.toList());
+
+		List<IPath> sourceList = new LinkedList<>();
+		for (String sourcePath : sourcePaths) {
+			if (new org.eclipse.core.runtime.Path(sourcePath).isAbsolute()) {
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The source path must be a relative path to the workspace."));
+			}
+			sourceList.add(workspaceLinkFolder.getFolder(sourcePath).getFullPath());
+		}
+		return sourceList;
 	}
 
 	public static List<IPath> getExcludingPath(IJavaProject javaProject, IPath rootPath, IFolder workspaceLinkFolder) throws CoreException {
