@@ -22,11 +22,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.io.Files;
-
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -48,6 +48,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import com.google.common.io.Files;
 
 public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest {
 	private CoreASTProvider sharedASTProvider;
@@ -75,6 +77,29 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}
+	}
+
+	@Test
+	public void testChangeWorkingCopy() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("hello");
+		// IJavaProject javaProject = JavaCore.create(project);
+		IFile file = project.getFile("src/org/sample/Foo.java");
+		ICompilationUnit unit = (ICompilationUnit) JavaCore.create(file);
+		String source = unit.getSource();
+		openDocument(unit, source, 1);
+		File projectFile = project.getRawLocation().toFile();
+		File classFile = new File(projectFile, "bin/org/sample/Foo.class");
+		long lastModified = classFile.lastModified();
+		assertTrue(lastModified > 0);
+		source = source.replace("world", "world2");
+		File javaFile = new File(projectFile, "src/org/sample/Foo.java");
+		FileUtils.writeStringToFile(javaFile, source);
+		String uri = JDTUtils.toURI(unit);
+		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(new FileEvent(uri, FileChangeType.Changed)));
+		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		waitForBackgroundJobs();
+		assertTrue(classFile.lastModified() > lastModified);
 	}
 
 	@Test
