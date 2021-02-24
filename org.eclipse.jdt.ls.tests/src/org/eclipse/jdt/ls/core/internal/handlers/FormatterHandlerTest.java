@@ -100,7 +100,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				"      public class Baz {  String name;}\n";
 			//@formatter:on"
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
-		preferenceManager.getPreferences().setJavaFormatEnabled(false);
+		preferences.setJavaFormatEnabled(false);
 		String uri = JDTUtils.toURI(unit);
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
@@ -349,7 +349,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		options.putString("org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_package", "do not insert");
 		options.putBoolean("org.eclipse.jdt.core.formatter.put_empty_statement_on_new_line", Boolean.TRUE);
 		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
-		preferenceManager.getPreferences().setJavaFormatComments(false);
+		preferences.setJavaFormatComments(false);
 		List<? extends TextEdit> edits = server.formatting(params).get();
 		assertNotNull(edits);
 
@@ -366,7 +366,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				"  }\n"+
 				"}\n";
 		String newText = TextEditUtil.apply(unit, edits);
-		preferenceManager.getPreferences().setJavaFormatComments(true);
+		preferences.setJavaFormatComments(true);
 		assertEquals(expectedText, newText);
 	}
 
@@ -388,15 +388,15 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
 			URL googleFormatter = bundle.getEntry("/formatter resources/eclipse-java-google-style.xml");
 			URL url = FileLocator.resolve(googleFormatter);
-			preferenceManager.getPreferences().setFormatterUrl(url.toExternalForm());
-			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			preferences.setFormatterUrl(url.toExternalForm());
+			FormatterManager.configureFormatter(preferences);
 			List<? extends TextEdit> edits = server.formatting(params).get();
 			assertNotNull(edits);
 			String newText = TextEditUtil.apply(unit, edits);
 			assertEquals(text, newText);
 		} finally {
-			preferenceManager.getPreferences().setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			preferences.setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferences);
 		}
 	}
 
@@ -419,15 +419,15 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			URL googleFormatter = bundle.getEntry("/formatter resources/eclipse-java-google-style.xml");
 			URL url = FileLocator.resolve(googleFormatter);
 			File file = ResourceUtils.toFile(URIUtil.toURI(url));
-			preferenceManager.getPreferences().setFormatterUrl(file.getAbsolutePath());
-			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			preferences.setFormatterUrl(file.getAbsolutePath());
+			FormatterManager.configureFormatter(preferences);
 			List<? extends TextEdit> edits = server.formatting(params).get();
 			assertNotNull(edits);
 			String newText = TextEditUtil.apply(unit, edits);
 			assertEquals(text, newText);
 		} finally {
-			preferenceManager.getPreferences().setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferenceManager, projectsManager);
+			preferences.setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferences);
 		}
 	}
 
@@ -452,7 +452,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -490,7 +490,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -527,7 +527,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -564,7 +564,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -601,7 +601,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -639,7 +639,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -675,7 +675,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(textDocument);
 		params.setOptions(options);
 
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(true);
+		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
 
@@ -720,7 +720,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 	@After
 	public void tearDown() {
 		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, originalTabChar);
-		preferenceManager.getPreferences().setJavaFormatOnTypeEnabled(false);
+		preferences.setJavaFormatOnTypeEnabled(false);
 	}
 
 

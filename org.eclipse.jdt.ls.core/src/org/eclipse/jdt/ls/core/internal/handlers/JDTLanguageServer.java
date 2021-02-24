@@ -469,7 +469,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
-		FormatterManager.configureFormatter(preferenceManager, pm);
+		FormatterManager.configureFormatter(preferenceManager.getPreferences());
 		logInfo(">> New configuration: " + settings);
 	}
 

@@ -16,9 +16,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSettings;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -242,23 +240,6 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	private static IWorkspaceRoot getWorkspaceRoot() {
 		return ResourcesPlugin.getWorkspace().getRoot();
-	}
-
-	public URL getUrl(String formatterUrl) {
-		URL url = null;
-		try {
-			url = new URL(ResourceUtils.toClientUri(formatterUrl));
-		} catch (MalformedURLException e1) {
-			File file = findFile(formatterUrl);
-			if (file != null && file.isFile()) {
-				try {
-					url = file.toURI().toURL();
-				} catch (MalformedURLException e) {
-					JavaLanguageServerPlugin.logInfo("Invalid formatter:" + formatterUrl);
-				}
-			}
-		}
-		return url;
 	}
 
 	@Override
@@ -489,23 +470,6 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			workspace.setDescription(description);
 		}
 		return changed;
-	}
-
-	public File findFile(String formatterUrl) {
-		File file = new File(formatterUrl);
-		if (file.exists()) {
-			return file;
-		}
-		Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
-		if (rootPaths != null) {
-			for (IPath rootPath : rootPaths) {
-				File f = new File(rootPath.toOSString(), formatterUrl);
-				if (f.isFile()) {
-					return f;
-				}
-			}
-		}
-		return null;
 	}
 
 	public void configureFilters(IProgressMonitor monitor) throws CoreException {
