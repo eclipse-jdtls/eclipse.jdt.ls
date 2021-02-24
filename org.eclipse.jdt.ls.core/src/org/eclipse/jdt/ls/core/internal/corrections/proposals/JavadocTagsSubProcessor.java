@@ -94,12 +94,12 @@ public class JavadocTagsSubProcessor {
 		protected void addEdits(IDocument document, TextEdit rootEdit) throws CoreException {
 			try {
 				String lineDelimiter= TextUtilities.getDefaultLineDelimiter(document);
-				final IJavaProject project= getCompilationUnit().getJavaProject();
+				final ICompilationUnit unit= getCompilationUnit();
 				IRegion region= document.getLineInformationOfOffset(fInsertPosition);
 
 				String lineContent= document.get(region.getOffset(), region.getLength());
-				String indentString= Strings.getIndentString(lineContent, project);
-				String str= Strings.changeIndent(fComment, 0, project, indentString, lineDelimiter);
+				String indentString= Strings.getIndentString(lineContent, unit);
+				String str= Strings.changeIndent(fComment, 0, unit, indentString, lineDelimiter);
 				InsertEdit edit= new InsertEdit(fInsertPosition, str);
 				rootEdit.addChild(edit);
 				if (fComment.charAt(fComment.length() - 1) != '\n') {

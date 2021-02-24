@@ -58,6 +58,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInnerToTopRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInstanceMethodProcessor;
@@ -221,7 +222,7 @@ public class MoveHandler {
 		}
 
 		IMethod method = (IMethod) methodBinding.getJavaElement();
-		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(method.getJavaProject().getProject()));
+		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(unit));
 		Refactoring refactoring = new MoveRefactoring(processor);
 		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
 		try {
@@ -448,7 +449,7 @@ public class MoveHandler {
 
 		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving instance method...", 100);
 		IMethod method = (IMethod) methodBinding.getJavaElement();
-		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(method.getJavaProject().getProject()));
+		MoveInstanceMethodProcessor processor = new MoveInstanceMethodProcessor(method, PreferenceManager.getCodeGenerationSettings(unit));
 		Refactoring refactoring = new MoveRefactoring(processor);
 		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
 		try {
@@ -514,7 +515,9 @@ public class MoveHandler {
 			return new RefactorWorkspaceEdit("Failed to move static member because no members are selected or no destination is specified.");
 		}
 
-		MoveStaticMembersProcessor processor = new MoveStaticMembersProcessor(members, PreferenceManager.getCodeGenerationSettings(members[0].getJavaProject().getProject()));
+		CodeGenerationSettings settings = members[0].getTypeRoot() instanceof ICompilationUnit ? PreferenceManager.getCodeGenerationSettings((ICompilationUnit) members[0].getTypeRoot())
+											: PreferenceManager.getCodeGenerationSettings(members[0].getJavaProject().getProject());
+		MoveStaticMembersProcessor processor = new MoveStaticMembersProcessor(members, settings);
 		Refactoring refactoring = new MoveRefactoring(processor);
 		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.INITIAL_CONDITONS);
 		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving static members...", 100);
@@ -558,7 +561,7 @@ public class MoveHandler {
 
 		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving type to new file...", 100);
 		try {
-			MoveInnerToTopRefactoring refactoring = new MoveInnerToTopRefactoring(type, PreferenceManager.getCodeGenerationSettings(unit.getJavaProject().getProject()));
+			MoveInnerToTopRefactoring refactoring = new MoveInnerToTopRefactoring(type, PreferenceManager.getCodeGenerationSettings(unit));
 			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 			check.run(subMonitor.split(50));
 			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {

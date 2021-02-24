@@ -140,7 +140,7 @@ public class OverrideMethodsOperation {
 			return null;
 		}
 
-		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu.getResource());
+		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
 		ImportRewriteContext context = new ContextSensitiveImportRewriteContext(astRoot, typeNode.getStartPosition(), importRewrite);
 		for (IMethodBinding methodBinding : methodBindings) {
 			MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(cu, astRewrite, importRewrite, context, methodBinding, typeBinding, settings, typeBinding.isInterface(), typeNode, false);

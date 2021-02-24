@@ -138,7 +138,7 @@ public class OverrideCompletionProposal {
 				methodToOverride= Bindings.findMethodInType(node.getAST().resolveWellKnownType("java.lang.Object"), fMethodName, fParamTypes); //$NON-NLS-1$
 			}
 			if (methodToOverride != null) {
-				CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fJavaProject.getProject());
+				CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fCompilationUnit);
 				MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(fCompilationUnit, rewrite, importRewrite,
 						context, methodToOverride, declaringType, settings, declaringType.isInterface(), node,
 						snippetStringSupport);
