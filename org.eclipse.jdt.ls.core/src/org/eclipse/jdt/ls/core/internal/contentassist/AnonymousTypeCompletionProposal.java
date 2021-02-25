@@ -173,7 +173,7 @@ public class AnonymousTypeCompletionProposal {
 					bindings = new IMethodBinding[0];
 				}
 			}
-			CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fJavaProject.getProject());
+			CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fCompilationUnit);
 			IMethodBinding[] methodsToOverride = null;
 			settings.createComments = false;
 			List<IMethodBinding> result = new ArrayList<>();

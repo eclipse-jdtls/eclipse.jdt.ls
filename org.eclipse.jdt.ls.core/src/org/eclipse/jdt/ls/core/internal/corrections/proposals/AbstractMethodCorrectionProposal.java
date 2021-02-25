@@ -172,7 +172,7 @@ public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrect
 		}
 		decl.setBody(body);
 
-		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(getCompilationUnit().getResource());
+		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(getCompilationUnit());
 		if (settings.createComments && !fSenderBinding.isAnonymous()) {
 			String string = CodeGeneration.getMethodComment(getCompilationUnit(), fSenderBinding.getName(), decl, null,
 					String.valueOf('\n'));

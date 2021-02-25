@@ -89,7 +89,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 
 		createImportRewrite((CompilationUnit) fTypeNode.getRoot());
 
-		CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(getCompilationUnit().getJavaProject());
+		CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(getCompilationUnit());
 		if (!settings.createComments) {
 			settings= null;
 		}

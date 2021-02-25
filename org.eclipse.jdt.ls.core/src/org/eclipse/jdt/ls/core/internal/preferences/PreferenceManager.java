@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
@@ -253,6 +254,15 @@ public class PreferenceManager {
 		// settings?
 		res.tabWidth = CodeFormatterUtil.getTabWidth(project);
 		res.indentWidth = CodeFormatterUtil.getIndentWidth(project);
+		return res;
+	}
+
+	public static CodeGenerationSettings getCodeGenerationSettings(ICompilationUnit cu) {
+		CodeGenerationSettings res = new CodeGenerationSettings();
+		res.overrideAnnotation = true;
+		res.createComments = false;
+		res.tabWidth = CodeFormatterUtil.getTabWidth(cu);
+		res.indentWidth = CodeFormatterUtil.getIndentWidth(cu);
 		return res;
 	}
 
