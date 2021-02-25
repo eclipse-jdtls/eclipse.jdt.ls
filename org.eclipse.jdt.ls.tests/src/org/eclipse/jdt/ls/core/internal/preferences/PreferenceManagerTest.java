@@ -25,8 +25,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jface.text.templates.Template;
@@ -155,5 +157,19 @@ public class PreferenceManagerTest {
 		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.TYPECOMMENT_ID);
 		assertNotNull(template);
 		assertEquals("/** */", template.getPattern());
+	}
+
+	@Test
+	public void testInsertSpacesTabSize() {
+		preferenceManager.initialize();
+		Preferences preferences = new Preferences();
+		preferenceManager.update(preferences);
+		assertTrue(preferenceManager.getPreferences().isInsertSpaces());
+		assertEquals(4, preferenceManager.getPreferences().getTabSize());
+		Map<String, String> eclipseOptions = JavaCore.getOptions();
+		String tabSize = eclipseOptions.get(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE);
+		assertEquals(4, Integer.valueOf(tabSize).intValue());
+		String insertSpaces = eclipseOptions.get(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR);
+		assertEquals(JavaCore.SPACE, insertSpaces);
 	}
 }

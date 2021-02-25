@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -160,6 +162,10 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
 		StandardPreferenceManager.initialize();
+		Hashtable<String, String> javaCoreOptions = JavaCore.getOptions();
+		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.TAB);
+		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
+		JavaCore.setOptions(javaCoreOptions);
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
 		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);

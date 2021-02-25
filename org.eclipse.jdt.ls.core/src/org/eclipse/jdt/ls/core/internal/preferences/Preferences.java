@@ -18,12 +18,16 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +40,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -427,6 +433,7 @@ public class Preferences {
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
 	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 	private static final String GRADLE_OFFLINE_MODE = "gradle.offline.mode";
+	private static final int DEFAULT_TAB_SIZE = 4;
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -497,6 +504,8 @@ public class Preferences {
 
 	private List<String> fileHeaderTemplate = new LinkedList<>();
 	private List<String> typeCommentTemplate = new LinkedList<>();
+	private boolean insertSpaces;
+	private int tabSize;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -673,6 +682,8 @@ public class Preferences {
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
 		includeAccessors = true;
 		includeDecompiledSources = true;
+		insertSpaces = true;
+		tabSize = DEFAULT_TAB_SIZE;
 	}
 
 	/**
@@ -695,6 +706,10 @@ public class Preferences {
 
 		boolean importGradleEnabled = getBoolean(configuration, IMPORT_GRADLE_ENABLED, true);
 		prefs.setImportGradleEnabled(importGradleEnabled);
+		boolean insertSpaces = getBoolean(configuration, JAVA_CONFIGURATION_INSERTSPACES, true);
+		prefs.setInsertSpaces(insertSpaces);
+		int tabSize = getInt(configuration, JAVA_CONFIGURATION_TABSIZE, DEFAULT_TAB_SIZE);
+		prefs.setTabSize(tabSize);
 		boolean importGradleOfflineEnabled = getBoolean(configuration, IMPORT_GRADLE_OFFLINE_ENABLED, false);
 		prefs.setImportGradleOfflineEnabled(importGradleOfflineEnabled);
 		boolean gradleWrapperEnabled = getBoolean(configuration, GRADLE_WRAPPER_ENABLED, true);
@@ -1238,6 +1253,43 @@ public class Preferences {
 		return formatterUrl;
 	}
 
+	public URI getFormatterAsURI() {
+		return asURI(formatterUrl);
+	}
+
+	private URI asURI(String formatterUrl) {
+		if (formatterUrl == null || formatterUrl.isBlank()) {
+			return null;
+		}
+		URI uri = null;
+		try {
+			uri = new URI(ResourceUtils.toClientUri(formatterUrl));
+		} catch (URISyntaxException e1) {
+			File file = findFile(formatterUrl);
+			if (file != null && file.isFile()) {
+				uri = file.toURI();
+			}
+		}
+		return uri;
+	}
+
+	private File findFile(String path) {
+		File file = new File(path);
+		if (file.exists()) {
+			return file;
+		}
+		Collection<IPath> rootPaths = getRootPaths();
+		if (rootPaths != null) {
+			for (IPath rootPath : rootPaths) {
+				File f = new File(rootPath.toOSString(), path);
+				if (f.isFile()) {
+					return f;
+				}
+			}
+		}
+		return null;
+	}
+
 	public List<String> getResourceFilters() {
 		return resourceFilters;
 	}
@@ -1558,6 +1610,34 @@ public class Preferences {
 
 	public boolean isIncludeDecompiledSources() {
 		return this.includeDecompiledSources;
+	}
+
+	public Preferences setInsertSpaces(boolean insertSpaces) {
+		this.insertSpaces = insertSpaces;
+		return this;
+	}
+
+	public Preferences setTabSize(int tabSize) {
+		this.tabSize = tabSize;
+		return this;
+	}
+
+	public boolean isInsertSpaces() {
+		return insertSpaces;
+	}
+
+	public int getTabSize() {
+		return tabSize;
+	}
+
+	public void updateTabSizeInsertSpaces(Hashtable<String, String> options) {
+		if (options == null) {
+			return;
+		}
+		if (tabSize > 0) {
+			options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, String.valueOf(tabSize));
+		}
+		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 	}
 
 }

@@ -19,8 +19,6 @@ import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -217,22 +215,14 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (resource == null) {
 			return;
 		}
-		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
-		if (formatterUrl != null) {
-			try {
-				URL url = getUrl(formatterUrl);
-				if (url != null) {
-					URI formatterUri = url.toURI();
-					URI uri = JDTUtils.toURI(uriString);
-					if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
-						if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
-							registerWatchers();
-						}
-						FormatterManager.configureFormatter(preferenceManager, this);
-					}
+		URI formatterUri = preferenceManager.getPreferences().getFormatterAsURI();
+		if (formatterUri != null) {
+			URI uri = JDTUtils.toURI(uriString);
+			if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
+					registerWatchers();
 				}
-			} catch (URISyntaxException e) {
-				// ignore
+				FormatterManager.configureFormatter(preferenceManager.getPreferences());
 			}
 		}
 
@@ -367,12 +357,9 @@ public class StandardProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
-			String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
-			if (formatterUrl != null) {
-				File file = new File(formatterUrl);
-				if (!file.isFile()) {
-					file = findFile(formatterUrl);
-				}
+			URI formatter = preferenceManager.getPreferences().getFormatterAsURI();
+			if (formatter != null && "file".equals(formatter.getScheme())) {
+				File file = new File(formatter);
 				if (file != null && file.isFile()) {
 					IPath formatterPath = new Path(file.getAbsolutePath());
 					if (!isContainedIn(formatterPath, sources)) {
