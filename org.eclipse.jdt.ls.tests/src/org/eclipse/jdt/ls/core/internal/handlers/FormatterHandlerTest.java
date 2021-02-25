@@ -748,6 +748,45 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(text, newText);
 	}
 
+	@Test
+	public void testUpdateFormatterVersion() throws Exception {
+		// see: https://github.com/redhat-developer/vscode-java/issues/1640
+		String text =
+			//@formatter:off
+			"package org.sample;\n\n" +
+			"public class Baz {\n"+
+				"\tpublic void test1() {\n"+
+					"\t\tObject o = new Object() {};\n"+
+				"\t}\n"+
+			"}\n";
+			//@formatter:on
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java", text);
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(2, true);// ident == 2 spaces
+		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+		URL testFormatter = bundle.getEntry("/formatter resources/version13.xml");
+		URL url = FileLocator.resolve(testFormatter);
+		File file = ResourceUtils.toFile(URIUtil.toURI(url));
+		preferences.setFormatterUrl(file.getAbsolutePath());
+		FormatterManager.configureFormatter(preferences);
+		List<? extends TextEdit> edits = server.formatting(params).get();
+		assertNotNull(edits);
+		String newText = TextEditUtil.apply(unit, edits);
+		String textResult =
+			//@formatter:off
+			"package org.sample;\n\n" +
+			"public class Baz {\n"+
+			"  public void test1() {\n"+
+			"    Object o = new Object() {};\n"+
+			"  }\n"+
+			"}\n";
+			//@formatter:on
+		assertEquals(textResult, newText);
+	}
+
+
 	@After
 	public void tearDown() {
 		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, originalTabChar);

@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
+import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -63,6 +64,7 @@ public class FormatterManager {
 		private String fName;
 		private Map<String, String> fSettings;
 		private String fKind;
+		private int fVersion;
 		private boolean reading = false;
 
 		/**
@@ -91,6 +93,12 @@ public class FormatterManager {
 						fKind = CODE_FORMATTER_PROFILE_KIND;
 					}
 					fSettings = new HashMap<>(200);
+					try {
+						fVersion = Integer.parseInt(attributes.getValue(XML_ATTRIBUTE_VERSION));
+					} catch (NumberFormatException e) {
+						fVersion = ProfileVersionerCore.getCurrentVersion();
+					}
+
 				}
 			}
 			else if (qName.equals(XML_NODE_ROOT)) {
@@ -111,6 +119,10 @@ public class FormatterManager {
 			return fSettings;
 		}
 
+		public int getVersion() {
+			return fVersion;
+		}
+
 	}
 
 	/**
@@ -124,6 +136,7 @@ public class FormatterManager {
 	private final static String XML_ATTRIBUTE_NAME= "name"; //$NON-NLS-1$
 	private final static String XML_ATTRIBUTE_PROFILE_KIND= "kind"; //$NON-NLS-1$
 	private final static String XML_ATTRIBUTE_VALUE= "value"; //$NON-NLS-1$
+	private final static String XML_ATTRIBUTE_VERSION= "version"; //$NON-NLS-1$
 
 	public FormatterManager() {
 	}
@@ -161,7 +174,11 @@ public class FormatterManager {
 		} catch (Exception e) {
 			throw new CoreException(new Status(IStatus.WARNING, IConstants.PLUGIN_ID, e.getMessage(), e));
 		}
-		return handler.getSettings();
+		int version = handler.getVersion();
+		if (version == ProfileVersionerCore.getCurrentVersion()) {
+			return handler.getSettings();
+		}
+		return ProfileVersionerCore.updateAndComplete(handler.getSettings(), version);
 	}
 
 	public static void configureFormatter(Preferences preferences) {
