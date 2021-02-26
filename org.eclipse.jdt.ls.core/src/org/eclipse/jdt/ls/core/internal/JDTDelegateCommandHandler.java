@@ -92,7 +92,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						projectNames = (ArrayList<String>) arguments.get(1);
 					}
 					return ResolveSourceMappingHandler.resolveStackTraceLocation((String) arguments.get(0), projectNames);
-				case "java.action.resolveTypeHierarchy":
+				case "java.navigate.resolveTypeHierarchy":
 					TypeHierarchyCommand resolveTypeHierarchyCommand = new TypeHierarchyCommand();
 					TypeHierarchyItem toResolve = JSONUtility.toModel(arguments.get(0), TypeHierarchyItem.class);
 					TypeHierarchyDirection resolveDirection = TypeHierarchyDirection.forValue(JSONUtility.toModel(arguments.get(1), Integer.class));
@@ -103,7 +103,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					resolveParams.setResolve(resolveDepth);
 					TypeHierarchyItem resolveItem = resolveTypeHierarchyCommand.resolveTypeHierarchy(resolveParams, monitor);
 					return resolveItem;
-				case "java.action.openTypeHierarchy":
+				case "java.navigate.openTypeHierarchy":
 					TypeHierarchyCommand typeHierarchyCommand = new TypeHierarchyCommand();
 					TypeHierarchyParams params = new TypeHierarchyParams();
 					TextDocumentPositionParams textParams = JSONUtility.toModel(arguments.get(0), TextDocumentPositionParams.class);
