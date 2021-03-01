@@ -101,8 +101,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					resolveParams.setItem(toResolve);
 					resolveParams.setDirection(resolveDirection);
 					resolveParams.setResolve(resolveDepth);
-					TypeHierarchyItem resolveItem = resolveTypeHierarchyCommand.resolveTypeHierarchy(resolveParams, monitor);
-					return resolveItem;
+					TypeHierarchyItem resolvedItem = resolveTypeHierarchyCommand.resolveTypeHierarchy(resolveParams, monitor);
+					return resolvedItem;
 				case "java.navigate.openTypeHierarchy":
 					TypeHierarchyCommand typeHierarchyCommand = new TypeHierarchyCommand();
 					TypeHierarchyParams params = new TypeHierarchyParams();
