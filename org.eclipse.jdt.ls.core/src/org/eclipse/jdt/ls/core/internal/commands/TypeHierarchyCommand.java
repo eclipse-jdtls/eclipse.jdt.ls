@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -153,7 +154,7 @@ public class TypeHierarchyCommand {
 		if (monitor.isCanceled() || resolve <= 0) {
 			return;
 		}
-		ITypeHierarchy typeHierarchy = (direction == TypeHierarchyDirection.Parents) ? type.newSupertypeHierarchy(monitor) : type.newTypeHierarchy(type.getJavaProject(), monitor);
+		ITypeHierarchy typeHierarchy = (direction == TypeHierarchyDirection.Parents) ? type.newSupertypeHierarchy(DefaultWorkingCopyOwner.PRIMARY, monitor) : type.newTypeHierarchy(type.getJavaProject(), DefaultWorkingCopyOwner.PRIMARY, monitor);
 		if (direction == TypeHierarchyDirection.Children || direction == TypeHierarchyDirection.Both) {
 			List<TypeHierarchyItem> childrenItems = new ArrayList<TypeHierarchyItem>();
 			IType[] children = typeHierarchy.getSubtypes(type);
