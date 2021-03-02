@@ -172,11 +172,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			}
 		}
 
-		// Sort the source paths to make the parent folders come first
+		// Sort the source paths to make the child folders come first
 		Collections.sort(sourcePaths, new Comparator<IPath>() {
 			@Override
 			public int compare(IPath path1, IPath path2) {
-				return path1.toString().compareTo(path2.toString());
+				return path1.toString().compareTo(path2.toString()) * -1;
 			}
 		});
 
@@ -187,12 +187,6 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			for (IClasspathEntry sourceEntry : sourceEntries) {
 				if (Objects.equals(sourceEntry.getPath(), currentPath)) {
 					JavaLanguageServerPlugin.logError("Skip duplicated source path: " + currentPath.toString());
-					canAddToSourceEntries = false;
-					break;
-				}
-
-				if (sourceEntry.getPath().isPrefixOf(currentPath)) {
-					JavaLanguageServerPlugin.logError("Skip source path: " + currentPath.toString() + ", since its parent path is already a source path");
 					canAddToSourceEntries = false;
 					break;
 				}
@@ -279,17 +273,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 	public static List<IPath> getExcludingPath(IJavaProject javaProject, IPath rootPath, IFolder workspaceLinkFolder) throws CoreException {
 		if (rootPath == null) {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-			if (preferenceManager == null || preferenceManager.getPreferences() == null) {
-				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to get the preferences."));
-			}
-			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
-			Optional<IPath> belongedRootPath = rootPaths.stream().filter(root -> root.isPrefixOf(workspaceLinkFolder.getLocation())).findFirst();
-			if (belongedRootPath.isEmpty()) {
-				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to find the belonging root of the linked folder: " + workspaceLinkFolder.toString()));
-			}
+			rootPath = ProjectUtils.findBelongedWorkspaceRoot(workspaceLinkFolder.getLocation());
+		}
 
-			rootPath = belongedRootPath.get();
+		if (rootPath == null) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to find the belonging root of the linked folder: " + workspaceLinkFolder.toString()));
 		}
 
 		final IPath root = rootPath;

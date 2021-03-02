@@ -325,8 +325,9 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
 			}
 		}
-		assertEquals(1, sourcePaths.size());
+		assertEquals(2, sourcePaths.size());
 		assertTrue(sourcePaths.contains("foo"));
+		assertTrue(sourcePaths.contains("foo/bar"));
 	}
 
 	@Test
