@@ -131,12 +131,19 @@ public class TypeHierarchyCommand {
 		item.setRange(location.getRange());
 		item.setUri(location.getUri());
 		item.setSelectionRange(selectLocation.getRange());
-		item.setName(JDTUtils.getName(type));
-		item.setKind(DocumentSymbolHandler.mapKind(type));
-		IPackageFragment packageFragment = type.getPackageFragment();
-		if (packageFragment != null) {
-			item.setDetail(packageFragment.getElementName());
+		String fullyQualifiedName = type.getFullyQualifiedParameterizedName();
+		int index = fullyQualifiedName.lastIndexOf('.');
+		if (index >= 1 && index < fullyQualifiedName.length() - 1 && !type.isAnonymous()) {
+			item.setName(fullyQualifiedName.substring(index + 1));
+			item.setDetail(fullyQualifiedName.substring(0, index));
+		} else {
+			item.setName(JDTUtils.getName(type));
+			IPackageFragment packageFragment = type.getPackageFragment();
+			if (packageFragment != null) {
+				item.setDetail(packageFragment.getElementName());
+			}
 		}
+		item.setKind(DocumentSymbolHandler.mapKind(type));
 		item.setDeprecated(JDTUtils.isDeprecated(type));
 		item.setData(type.getHandleIdentifier());
 		return item;
