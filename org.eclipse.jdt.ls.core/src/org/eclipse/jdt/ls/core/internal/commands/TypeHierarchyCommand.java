@@ -13,7 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -157,7 +159,11 @@ public class TypeHierarchyCommand {
 		if (direction == TypeHierarchyDirection.Children || direction == TypeHierarchyDirection.Both) {
 			List<TypeHierarchyItem> childrenItems = new ArrayList<TypeHierarchyItem>();
 			IType[] children = typeHierarchy.getSubtypes(type);
+			Set<String> fullyQualifiedNameSet = new HashSet<>();
 			for (IType childType : children) {
+				if (!fullyQualifiedNameSet.add(childType.getFullyQualifiedName())) {
+					continue;
+				}
 				TypeHierarchyItem childItem = TypeHierarchyCommand.toTypeHierarchyItem(childType);
 				if (childItem == null) {
 					continue;
@@ -170,7 +176,11 @@ public class TypeHierarchyCommand {
 		if (direction == TypeHierarchyDirection.Parents || direction == TypeHierarchyDirection.Both) {
 			List<TypeHierarchyItem> parentsItems = new ArrayList<TypeHierarchyItem>();
 			IType[] parents = typeHierarchy.getSupertypes(type);
+			Set<String> fullyQualifiedNameSet = new HashSet<>();
 			for (IType parentType : parents) {
+				if (!fullyQualifiedNameSet.add(parentType.getFullyQualifiedName())) {
+					continue;
+				}
 				TypeHierarchyItem parentItem = TypeHierarchyCommand.toTypeHierarchyItem(parentType);
 				if (parentItem == null) {
 					continue;
