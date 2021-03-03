@@ -74,6 +74,12 @@ public class Preferences {
 	 * references.
 	 */
 	public static final String JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES = "java.references.includeDecompiledSources";
+
+	/**
+	 * Include method declarations from source files in symbol search.
+	 */
+	public static final String JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS = "java.symbols.includeSourceMethodDeclarations";
+
 	/**
 	 * Insert spaces when pressing Tab
 	 */
@@ -103,6 +109,7 @@ public class Preferences {
 	 * Specifies the file path or url to the Java setting.
 	 */
 	public static final String JAVA_SETTINGS_URL = "java.settings.url";
+
 	/**
 	 * Specifies filter applied on projects to exclude some file system objects
 	 * while populating the resources tree.
@@ -490,6 +497,7 @@ public class Preferences {
 	private List<String> preferredContentProviderIds;
 	private boolean includeAccessors;
 	private boolean includeDecompiledSources;
+	private boolean includeSourceMethodDeclarations;
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
@@ -723,6 +731,7 @@ public class Preferences {
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
 		includeAccessors = true;
 		includeDecompiledSources = true;
+		includeSourceMethodDeclarations = false;
 		insertSpaces = true;
 		tabSize = DEFAULT_TAB_SIZE;
 	}
@@ -995,6 +1004,8 @@ public class Preferences {
 		prefs.setIncludeAccessors(includeAccessors);
 		boolean includeDecompiledSources = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES, true);
 		prefs.setIncludeDecompiledSources(includeDecompiledSources);
+		boolean includeSourceMethodDeclarations = getBoolean(configuration, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS, false);
+		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
 		return prefs;
 	}
 
@@ -1703,6 +1714,14 @@ public class Preferences {
 
 	public boolean isIncludeDecompiledSources() {
 		return this.includeDecompiledSources;
+	}
+
+	public boolean isIncludeSourceMethodDeclarations() {
+		return this.includeSourceMethodDeclarations;
+	}
+
+	public void setIncludeSourceMethodDeclarations(boolean includeSourceMethodDeclarations) {
+		this.includeSourceMethodDeclarations = includeSourceMethodDeclarations;
 	}
 
 	public Preferences setInsertSpaces(boolean insertSpaces) {
