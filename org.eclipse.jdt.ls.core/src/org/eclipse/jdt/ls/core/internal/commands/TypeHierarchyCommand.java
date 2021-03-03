@@ -24,9 +24,11 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
@@ -53,7 +55,7 @@ public class TypeHierarchyCommand {
 		String uri = textDocument.getUri();
 		TypeHierarchyDirection direction = params.getDirection();
 		int resolve = params.getResolve();
-		return getTypeHierarchy(uri, position, direction, resolve, monitor);
+		return getTypeHierarchy(uri, position, direction, resolve, null, monitor);
 	}
 
 	public TypeHierarchyItem resolveTypeHierarchy(ResolveTypeHierarchyItemParams params, IProgressMonitor monitor) {
@@ -72,15 +74,28 @@ public class TypeHierarchyCommand {
 		String uri = item.getUri();
 		TypeHierarchyDirection direction = params.getDirection();
 		int resolve = params.getResolve();
-		return getTypeHierarchy(uri, position, direction, resolve, monitor);
+		return getTypeHierarchy(uri, position, direction, resolve, item, monitor);
 	}
 
-	private TypeHierarchyItem getTypeHierarchy(String uri, Position position, TypeHierarchyDirection direction, int resolve, IProgressMonitor monitor) {
+	private TypeHierarchyItem getTypeHierarchy(String uri, Position position, TypeHierarchyDirection direction, int resolve, TypeHierarchyItem itemInput, IProgressMonitor monitor) {
 		if (uri == null || position == null || direction == null) {
 			return null;
 		}
 		try {
-			IType type = getType(uri, position, monitor);
+			IType type = null;
+			if (itemInput == null) {
+				type = getType(uri, position, monitor);
+			} else {
+				String handleIdentifier = JSONUtility.toModel(itemInput.getData(), String.class);
+				IJavaElement element = JavaCore.create(handleIdentifier);
+				if (element instanceof IType) {
+					type = ((IType)element);
+				} else if (element instanceof IOrdinaryClassFile) {
+					type = ((IOrdinaryClassFile)element).getType();
+				} else {
+					return null;
+				}
+			}
 			TypeHierarchyItem item = TypeHierarchyCommand.toTypeHierarchyItem(type);
 			if (item == null) {
 				return null;
