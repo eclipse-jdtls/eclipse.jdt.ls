@@ -98,7 +98,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/build")//default gradle build dir
 					.addExclusions("**/bin");
 			for (IProject project : ProjectUtils.getAllProjects()) {
-				if (!ProjectUtils.isGradleProject(project)) {
+				if (!BuildSupportManager.find("Gradle").get().applies(project)) {
 					String path = project.getLocation().toOSString();
 					gradleDetector.addExclusions(path);
 				}

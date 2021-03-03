@@ -33,19 +33,35 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public class BuildPathCommand {
+	private static final String UNSUPPORTED_OPERATION = "Unsupported operation. Please use your build tool project file to manage the source directories of the project.";
 	public static final String UNSUPPORTED_ON_MAVEN = "Unsupported operation. Please use pom.xml file to manage the source directories of maven project.";
 	public static final String UNSUPPORTED_ON_GRADLE = "Unsupported operation. Please use build.gradle file to manage the source directories of gradle project.";
+
+	// In most cases it will be either maven or gradle.
+	// But if there is support for other build systems such as bazel, then we will need
+	// a more generic message.
+	private static String unsupportedOperationMessage(IProject targetProject) {
+		if (BuildSupportManager.obtainBuildSupports().size() == 2) {
+			// Case for built-in maven/gradle support
+			return BuildSupportManager.find("Gradle").get().applies(targetProject) ? UNSUPPORTED_ON_GRADLE : UNSUPPORTED_ON_MAVEN;
+
+		} else {
+			// If other build tools supported
+			return UNSUPPORTED_OPERATION;
+		}
+	}
 
 	public static Result addToSourcePath(String sourceFolderUri) {
 		IPath sourceFolderPath = ResourceUtils.filePathFromURI(sourceFolderUri);
 		IProject targetProject = findBelongedProject(sourceFolderPath);
+
 		if (targetProject != null && !ProjectUtils.isGeneralJavaProject(targetProject)) {
-			String message = ProjectUtils.isGradleProject(targetProject) ? UNSUPPORTED_ON_GRADLE : UNSUPPORTED_ON_MAVEN;
-			return new Result(false, message);
+			return new Result(false, unsupportedOperationMessage(targetProject));
 		}
 
 		IPath projectLocation = null;
@@ -96,8 +112,7 @@ public class BuildPathCommand {
 		IPath sourceFolderPath = ResourceUtils.filePathFromURI(sourceFolderUri);
 		IProject targetProject = findBelongedProject(sourceFolderPath);
 		if (targetProject != null && !ProjectUtils.isGeneralJavaProject(targetProject)) {
-			String message = ProjectUtils.isGradleProject(targetProject) ? UNSUPPORTED_ON_GRADLE : UNSUPPORTED_ON_MAVEN;
-			return new Result(false, message);
+			return new Result(false, unsupportedOperationMessage(targetProject));
 		}
 
 		IPath projectLocation = null;
@@ -136,52 +151,58 @@ public class BuildPathCommand {
 	}
 
 	public static Result listSourcePaths() {
-		List<SourcePath> sourcePathList = new ArrayList<>();
-		IProject[] projects = ProjectUtils.getAllProjects();
-		for (IProject project : projects) {
-			if (!ProjectsManager.DEFAULT_PROJECT_NAME.equals(project.getName()) && ProjectUtils.isJavaProject(project)) {
-				try {
-					IPath[] paths = ProjectUtils.listSourcePaths(JavaCore.create(project));
-					for (IPath path : paths) {
-						IPath entryPath = path;
-						String projectName = project.getName();
-						String projectType = "General";
-						if (ProjectUtils.isMavenProject(project)) {
-							projectType = "Maven";
-						}
-
-						if (ProjectUtils.isGradleProject(project)) {
-							projectType = "Gradle";
-						}
-
-						IContainer projectRoot = project;
-						if (!ProjectUtils.isVisibleProject(project)) {
-							projectType = "Workspace";
-							IFolder workspaceLinkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
-							if (!workspaceLinkFolder.isLinked()) {
-								continue;
-							}
-
-							projectRoot = workspaceLinkFolder;
-						}
-
-						IPath relativePath = entryPath.makeRelativeTo(projectRoot.getFullPath());
-						IPath location = projectRoot.getRawLocation().append(relativePath);
-						IPath displayPath = getWorkspacePath(location);
-						sourcePathList.add(new SourcePath(location != null ? location.toOSString() : "",
-							displayPath != null ? displayPath.toOSString() : entryPath.toOSString(),
-							entryPath.toOSString(),
-							projectName,
-							projectType));
-					}
-				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException("Failed to resolve the existing source paths in current workspace.", e);
-					return new ListCommandResult(false, e.getMessage());
+		try {
+			List<SourcePath> sourcePathList = new ArrayList<>();
+			IProject[] projects = ProjectUtils.getAllProjects();
+			for (IProject project : projects) {
+				if (!ProjectsManager.DEFAULT_PROJECT_NAME.equals(project.getName()) && ProjectUtils.isJavaProject(project)) {
+					sourcePathList.addAll(tryAddProjectToSourcePath(project));
 				}
 			}
+
+			return new ListCommandResult(true, null, sourcePathList.toArray(new SourcePath[0]));
+
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Failed to resolve the existing source paths in current workspace.", e);
+			return new ListCommandResult(false, e.getMessage());
+		}
+	}
+
+	private static List<SourcePath> tryAddProjectToSourcePath(IProject project) throws JavaModelException {
+		List<SourcePath> sourcePathList = new ArrayList<>();
+		IPath[] paths = ProjectUtils.listSourcePaths(JavaCore.create(project));
+
+		for (IPath path : paths) {
+			IPath entryPath = path;
+			String projectName = project.getName();
+			String projectType = determineProjectType(project);
+
+			IContainer projectRoot = project;
+			if (!ProjectUtils.isVisibleProject(project)) {
+				projectType = "Workspace";
+				IFolder workspaceLinkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
+				if (!workspaceLinkFolder.isLinked()) {
+					continue;
+				}
+
+				projectRoot = workspaceLinkFolder;
+			}
+
+			IPath relativePath = entryPath.makeRelativeTo(projectRoot.getFullPath());
+			IPath location = projectRoot.getRawLocation().append(relativePath);
+			IPath displayPath = getWorkspacePath(location);
+
+			sourcePathList.add(new SourcePath(location != null ? location.toOSString() : "", displayPath != null ? displayPath.toOSString() : entryPath.toOSString(), entryPath.toOSString(), projectName, projectType));
 		}
 
-		return new ListCommandResult(true, null, sourcePathList.toArray(new SourcePath[0]));
+		return sourcePathList;
+	}
+
+	private static String determineProjectType(IProject project) {
+		return BuildSupportManager
+				.find(project)
+				.map(buildSupport -> buildSupport.buildToolName())
+				.orElseGet(() -> "General");
 	}
 
 	private static IProject findBelongedProject(IPath sourceFolder) {

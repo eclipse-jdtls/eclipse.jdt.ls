@@ -165,7 +165,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(2, projects.size());//default + 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipsegradle");
 			assertNotNull(eclipse);
-			assertTrue(eclipse.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+			assertTrue(eclipse.getName() + " does not have the Gradle nature", BuildSupportManager.find("Gradle").get().applies(eclipse));
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(enabled);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(gradleVersion);
@@ -184,7 +184,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(2, projects.size());//default + 1 eclipse projects
 			IProject project = WorkspaceHelper.getProject("simple-gradle");
 			assertNotNull(project);
-			assertTrue(project.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(project));
+			assertTrue(project.getName() + " does not have the Gradle nature", BuildSupportManager.find("Gradle").get().applies(project));
 			assertTrue(gradleUserHome.exists());
 			ProjectConfiguration projectConfiguration = CorePlugin.configurationManager().loadProjectConfiguration(project);
 			assertEquals(gradleUserHome, projectConfiguration.getBuildConfiguration().getGradleUserHome());
@@ -250,7 +250,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(2, projects.size());//default + 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipse");
 			assertNotNull(eclipse);
-			assertFalse(eclipse.getName() + " has the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+			assertFalse(eclipse.getName() + " has the Gradle nature", BuildSupportManager.find("Gradle").get().applies(eclipse));
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(enabled);
 		}

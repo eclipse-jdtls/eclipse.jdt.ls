@@ -19,7 +19,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 /**
  * @author Fred Bricon
@@ -53,7 +52,7 @@ public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBase
 
 	protected void assertIsMavenProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Maven nature", ProjectUtils.isMavenProject(project));
+		assertTrue(project.getName() + " is missing the Maven nature", BuildSupportManager.find("Maven").get().applies(project));
 	}
 
 	protected String comment(String s, String from, String to) {

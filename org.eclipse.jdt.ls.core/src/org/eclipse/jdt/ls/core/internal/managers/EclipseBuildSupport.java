@@ -103,5 +103,9 @@ public class EclipseBuildSupport implements IBuildSupport {
 		}
 	}
 
+	@Override
+	public String buildToolName() {
+		return "Eclipse";
+	}
 
 }

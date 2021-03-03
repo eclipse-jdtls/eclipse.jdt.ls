@@ -125,16 +125,20 @@ public class StandardProjectsManager extends ProjectsManager {
 			if (project.equals(getDefaultProject())) {
 				continue;
 			}
-			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) || ProjectUtils.isGradleProject(project) || workspaceProjects.contains(project.getName()))) {
+
+			if (project.exists() && (ResourceUtils.isContainedIn(project.getLocation(), rootPaths) ||
+									 workspaceProjects.contains(project.getName()))) {
 				try {
-					project.getDescription();
-					if (ProjectUtils.isGradleProject(project)) {
+					Optional<IBuildSupport> maybeBuildSupport = BuildSupportManager.find(project);
+					if (maybeBuildSupport.isPresent() && maybeBuildSupport.get().hasTemporaryProjectFolder()) {
+						project.getDescription();
 						if (ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
 							validGradleProjects.add(project);
 						} else {
 							suspiciousGradleProjects.add(project);
 						}
 					}
+
 				} catch (CoreException e) {
 					try {
 						project.delete(true, monitor);

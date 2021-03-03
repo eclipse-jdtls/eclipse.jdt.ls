@@ -23,6 +23,7 @@ import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
 import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
@@ -61,7 +62,7 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean applies(IProject project) {
-		return ProjectUtils.isGradleProject(project);
+		return ProjectUtils.hasNature(project, GradleProjectNature.ID);
 	}
 
 	@Override
@@ -92,7 +93,7 @@ public class GradleBuildSupport implements IBuildSupport {
 	private boolean isRoot(IProject project, GradleBuild gradleBuild, IProgressMonitor monitor) {
 		if (gradleBuild instanceof InternalGradleBuild) {
 			CancellationTokenSource tokenSource = GradleConnector.newCancellationTokenSource();
-			Map<String, EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
+			Map<String, EclipseProject> eclipseProjects = (Map<String, EclipseProject>) ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
 			File projectDirectory = project.getLocation().toFile();
 			for (EclipseProject eclipseProject : eclipseProjects.values()) {
 				File eclipseProjectDirectory = eclipseProject.getProjectDirectory();
@@ -106,7 +107,7 @@ public class GradleBuildSupport implements IBuildSupport {
 	@Override
 	public boolean isBuildFile(IResource resource) {
 		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
-				&& ProjectUtils.isGradleProject(resource.getProject())) {
+				&& applies(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
 					return true;
@@ -184,5 +185,15 @@ public class GradleBuildSupport implements IBuildSupport {
 	@Override
 	public void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
 		preferenceManager.removePreferencesChangeListener(listener);
+	}
+
+	@Override
+	public String buildToolName() {
+		return "Gradle";
+	}
+
+	@Override
+	public boolean hasTemporaryProjectFolder() {
+		return true;
 	}
 }
