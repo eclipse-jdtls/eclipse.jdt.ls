@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.MethodNameMatch;
+import org.eclipse.jdt.core.search.MethodNameMatchRequestor;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.TypeNameMatch;
@@ -110,6 +112,46 @@ public class WorkspaceSymbolHandler{
 					return SymbolKind.Class;
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+			if (preferenceManager != null && preferenceManager.getPreferences().isIncludeSourceMethodDeclarations()) {
+				monitor.beginTask("Searching methods...", 100);
+				IJavaSearchScope nonSourceSearchScope = createSearchScope(projectName, true);
+				new SearchEngine().searchAllMethodNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, nonSourceSearchScope, new MethodNameMatchRequestor() {
+
+					@Override
+					public void acceptMethodNameMatch(MethodNameMatch match) {
+						try {
+							if (maxResults > 0 && symbols.size() >= maxResults) {
+								return;
+							}
+
+							Location location = null;
+							try {
+								location = JDTUtils.toLocation(match.getMethod());
+							} catch (Exception e) {
+								JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
+								return;
+							}
+
+							if (location != null && match.getMethod().getElementName() != null && !match.getMethod().getElementName().isEmpty()) {
+								SymbolInformation symbolInformation = new SymbolInformation();
+								symbolInformation.setContainerName(match.getMethod().getDeclaringType().getFullyQualifiedName());
+								symbolInformation.setName(match.getMethod().getElementName());
+								symbolInformation.setKind(SymbolKind.Method);
+								symbolInformation.setLocation(location);
+								symbols.add(symbolInformation);
+								if (maxResults > 0 && symbols.size() >= maxResults) {
+									monitor.setCanceled(true);
+								}
+							}
+						} catch (Exception e) {
+							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
+							return;
+						}
+					}
+				}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+			}
 		} catch (Exception e) {
 			if (e instanceof OperationCanceledException) {
 				// ignore.

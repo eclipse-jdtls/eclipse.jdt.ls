@@ -166,4 +166,22 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		boolean hasEmptyName = results.stream().filter(s -> (s.getName() == null || s.getName().isEmpty())).findFirst().isPresent();
 		assertFalse("Found empty name", hasEmptyName);
 	}
+
+	@Test
+	public void testSearchSourcMethodDeclarations() {
+		preferences.setIncludeSourceMethodDeclarations(true);
+		List<SymbolInformation> results = handler.search("deleteSomething", "hello", true, monitor);
+		assertNotNull(results);
+		assertEquals("Found " + results.size() + " result", 1, results.size());
+		SymbolInformation res = results.get(0);
+		assertEquals(SymbolKind.Method, res.getKind());
+		assertEquals(res.getContainerName(), "org.sample.Baz");
+
+		results = handler.search("main", "hello", true, monitor);
+		assertNotNull(results);
+		assertEquals("Found " + results.size() + " result", 9, results.size());
+		boolean allMethods = results.stream().allMatch(s -> s.getKind() == SymbolKind.Method);
+		assertTrue("Found a non-method symbol", allMethods);
+		preferences.setIncludeSourceMethodDeclarations(false);
+	}
 }
