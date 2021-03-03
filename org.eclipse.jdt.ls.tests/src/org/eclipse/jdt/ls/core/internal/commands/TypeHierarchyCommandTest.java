@@ -82,7 +82,7 @@ public class TypeHierarchyCommandTest extends AbstractInvisibleProjectBasedTest 
 		assertEquals(item.getParents().size(), 2);
 		TypeHierarchyItem builder = item.getParents().get(0);
 		assertNotNull(builder);
-		assertEquals(builder.getName(), "Builder<>");
+		assertEquals(builder.getName(), "Builder");
 		assertNull(builder.getParents());
 		TypeHierarchyItem object = item.getParents().get(1);
 		assertNotNull(object);
@@ -103,7 +103,7 @@ public class TypeHierarchyCommandTest extends AbstractInvisibleProjectBasedTest 
 		params.setPosition(position);
 		TypeHierarchyItem item = fCommand.typeHierarchy(params, monitor);
 		assertNotNull(item);
-		assertEquals(item.getName(), "Builder<>");
+		assertEquals(item.getName(), "Builder");
 		assertNull(item.getParents());
 		assertEquals(item.getChildren().size(), 9);
 		for (TypeHierarchyItem child : item.getChildren()) {
