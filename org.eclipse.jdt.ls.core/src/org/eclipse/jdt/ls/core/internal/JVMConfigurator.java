@@ -56,6 +56,8 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class JVMConfigurator implements IVMInstallChangedListener {
 
+	public static final String MAC_OSX_VM_TYPE = "org.eclipse.jdt.internal.launching.macosx.MacOSXType"; //$NON-NLS-1$
+
 	public static boolean configureDefaultVM(String javaHome) throws CoreException {
 		if (StringUtils.isBlank(javaHome)) {
 			return false;
@@ -74,6 +76,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		IVMInstall vm = findVM(jvmHome, null);
 		if (vm == null) {
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			if (installType == null || installType.getVMInstalls().length == 0) {
+				// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
+				installType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+			}
 			long unique = System.currentTimeMillis();
 			while (installType.findVMInstall(String.valueOf(unique)) != null) {
 				unique++;
@@ -108,6 +114,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 					IPath sourcePath = runtime.getSourcePath();
 					IVMInstall vm = findVM(file, runtime.getName());
 					IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+					if (installType == null || installType.getVMInstalls().length == 0) {
+						// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
+						installType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+					}
 					VMStandin vmStandin;
 					if (vm == null) {
 						long unique = System.currentTimeMillis();
@@ -133,7 +143,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						continue;
 					}
 
-					
+
 					vmStandin.setName(runtime.getName());
 					vmStandin.setInstallLocation(file);
 
@@ -209,7 +219,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			connection.sendActionableNotification(runtimeNotification);
 			return;
 		}
-		
+
 		connection.showNotificationMessage(MessageType.Error, message);
 	}
 
