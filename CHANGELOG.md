@@ -1,4 +1,11 @@
 # Change Log
+# [0.70.0 (March 5th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/88?closed=1)
+ * feature - Code actions should return textedits with proper formatting. See [#1157](https://github.com/eclipse/eclipse.jdt.ls/issues/1157).
+ * bug fix - Change location of .m2/ and .tooling/ from HOME. See [#1654](https://github.com/eclipse/eclipse.jdt.ls/issues/1654).
+ * bug fix - Issue with 'Go To Definition'. See [#1634](https://github.com/eclipse/eclipse.jdt.ls/issues/1634).
+ * other - Adopt the helpers from jdt.core.manipulation to deal with the CU's preferences. See [#1666](https://github.com/eclipse/eclipse.jdt.ls/pull/1666).
+ * debt - Tests fail on Windows. See [#996](https://github.com/eclipse/eclipse.jdt.ls/issues/996).
+
 # [0.69.0 (February 11th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/87?closed=1)
  * enhancement - Specify output path for invisible project. See [#1593](https://github.com/eclipse/eclipse.jdt.ls/issues/1593).
  * other - Remove legacy Semantic Highlighting implementation. See [#1649](https://github.com/eclipse/eclipse.jdt.ls/pull/1649).
