@@ -123,4 +123,20 @@ public class InlineConstantTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		assertCodeActionNotExists(cu, INLINE_CONSTANT);
 	}
+
+	@Test
+	public void testInlineConstant_ReferenceInImports() throws Exception {
+		IPackageFragment pack1 = testSourceFolder.createPackageFragment("test", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("import java.util.HashMap;\n");
+		buf.append("import java.util.Map;\n");
+		buf.append("public class E {\n");
+		buf.append("    public static final Map /*]*/map/*[*/ = new HashMap<>();\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionNotExists(cu, INLINE_CONSTANT);
+	}
 }
