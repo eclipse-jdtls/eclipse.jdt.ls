@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,6 +96,14 @@ public class WorkspaceEventsHandler {
 			}
 			if (unit != null) {
 				if (unit.isWorkingCopy()) {
+					try {
+						IResource resource = unit.getUnderlyingResource();
+						if (resource != null && resource.exists()) {
+							resource.refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
+						}
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
 					continue;
 				}
 				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED) {
