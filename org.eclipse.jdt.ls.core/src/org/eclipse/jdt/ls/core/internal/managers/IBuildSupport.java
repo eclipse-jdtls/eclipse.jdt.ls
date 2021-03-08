@@ -137,7 +137,9 @@ public interface IBuildSupport {
 	default void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
 	}
 
-	String buildToolName();
+	default String buildToolName() {
+		return "UnknownBuildTool";
+	}
 
 	default boolean hasTemporaryProjectFolder() {
 		return false;
