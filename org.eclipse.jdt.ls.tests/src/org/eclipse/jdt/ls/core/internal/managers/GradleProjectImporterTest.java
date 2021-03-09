@@ -51,6 +51,7 @@ import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -200,6 +201,10 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
 		try {
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			if (installType == null || installType.getVMInstalls().length == 0) {
+				// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
+				installType = JavaRuntime.getVMInstallType(JVMConfigurator.MAC_OSX_VM_TYPE);
+			}
 			IVMInstall[] vms = installType.getVMInstalls();
 			IVMInstall vm = vms[0];
 			JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
@@ -224,6 +229,10 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
 		try {
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			if (installType == null || installType.getVMInstalls().length == 0) {
+				// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
+				installType = JavaRuntime.getVMInstallType(JVMConfigurator.MAC_OSX_VM_TYPE);
+			}
 			IVMInstall[] vms = installType.getVMInstalls();
 			IVMInstall vm = vms[0];
 			JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
