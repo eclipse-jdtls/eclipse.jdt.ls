@@ -226,6 +226,11 @@ public class Preferences {
 	public static final String JAVA_PROJECT_OUTPUT_PATH_KEY = "java.project.outputPath";
 
 	/**
+	 * Preference key to specify the source paths of the invisible project
+	 */
+	public static final String JAVA_PROJECT_SOURCE_PATHS_KEY = "java.project.sourcePaths";
+
+	/**
 	 * Preference key for project build/configuration update settings.
 	 */
 	public static final String CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY = "java.configuration.updateBuildConfiguration";
@@ -488,6 +493,7 @@ public class Preferences {
 	private List<String> javaImportExclusions = new LinkedList<>();
 	private ReferencedLibraries referencedLibraries;
 	private String invisibleProjectOutputPath;
+	private List<String> invisibleProjectSourcePaths;
 	private String javaHome;
 	private List<String> importOrder;
 	private List<String> filteredTypes;
@@ -828,6 +834,9 @@ public class Preferences {
 
 		String invisibleProjectOutputPath = getString(configuration, JAVA_PROJECT_OUTPUT_PATH_KEY, "");
 		prefs.setInvisibleProjectOutputPath(invisibleProjectOutputPath);
+
+		List<String> invisibleProjectSourcePaths = getList(configuration, JAVA_PROJECT_SOURCE_PATHS_KEY, null);
+		prefs.setInvisibleProjectSourcePaths(invisibleProjectSourcePaths);
 
 		List<String> javaCompletionFavoriteMembers = getList(configuration, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT);
 		prefs.setJavaCompletionFavoriteMembers(javaCompletionFavoriteMembers);
@@ -1603,6 +1612,14 @@ public class Preferences {
 		this.invisibleProjectOutputPath = invisibleProjectOutputPath;
 	}
 
+	public List<String> getInvisibleProjectSourcePaths() {
+		return invisibleProjectSourcePaths;
+	}
+
+	public void setInvisibleProjectSourcePaths(List<String> invisibleProjectSourcePaths) {
+		this.invisibleProjectSourcePaths = invisibleProjectSourcePaths;
+	}
+
 	public Preferences setIncludeDecompiledSources(boolean includeDecompiledSources) {
 		this.includeDecompiledSources = includeDecompiledSources;
 		return this;
@@ -1639,5 +1656,4 @@ public class Preferences {
 		}
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 	}
-
 }

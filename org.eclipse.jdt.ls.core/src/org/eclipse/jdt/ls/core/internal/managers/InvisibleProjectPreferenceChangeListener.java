@@ -13,11 +13,15 @@
 
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.util.List;
 import java.util.Objects;
 
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -30,8 +34,8 @@ public class InvisibleProjectPreferenceChangeListener implements IPreferencesCha
 
 	@Override
 	public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
-		boolean projectOutputPathChanged = !Objects.equals(oldPreferences.getInvisibleProjectOutputPath(), newPreferences.getInvisibleProjectOutputPath());
-		if (projectOutputPathChanged) {
+		if (!Objects.equals(oldPreferences.getInvisibleProjectOutputPath(), newPreferences.getInvisibleProjectOutputPath()) ||
+				!Objects.equals(oldPreferences.getInvisibleProjectSourcePaths(), newPreferences.getInvisibleProjectSourcePaths())) {
 			for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
 				IProject project = javaProject.getProject();
 				if (ProjectUtils.isVisibleProject(project)) {
@@ -40,13 +44,21 @@ public class InvisibleProjectPreferenceChangeListener implements IPreferencesCha
 				if (project.equals(ProjectsManager.getDefaultProject())) {
 					continue;
 				}
+
 				try {
-					InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, newPreferences.getInvisibleProjectOutputPath(), true /*isUpdate*/, new NullProgressMonitor());
+					IFolder workspaceLinkFolder = javaProject.getProject().getFolder(ProjectUtils.WORKSPACE_LINK);
+					if (!workspaceLinkFolder.exists()) {
+						continue;
+					}
+					List<IPath> sourcePaths = InvisibleProjectImporter.getSourcePaths(newPreferences.getInvisibleProjectSourcePaths(), workspaceLinkFolder);
+					List<IPath> excludingPaths = InvisibleProjectImporter.getExcludingPath(javaProject, null, workspaceLinkFolder);
+					IPath outputPath = InvisibleProjectImporter.getOutputPath(javaProject, newPreferences.getInvisibleProjectOutputPath(), true /*isUpdate*/);
+					IClasspathEntry[] classpathEntries = InvisibleProjectImporter.resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
+					javaProject.setRawClasspath(classpathEntries, outputPath, new NullProgressMonitor());
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(new MessageParams(MessageType.Error, e.getMessage()));
 				}
 			}
 		}
 	}
-
 }

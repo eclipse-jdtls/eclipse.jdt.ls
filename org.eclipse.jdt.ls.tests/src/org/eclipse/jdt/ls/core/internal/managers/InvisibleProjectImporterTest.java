@@ -19,8 +19,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -222,10 +226,11 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 	@Test
 	public void testSpecifyingOutputPathInsideSourcePath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath("output");
 		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
 		waitForBackgroundJobs();
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "output", true /*isUpdate*/, null);
 		boolean isOutputExcluded = false;
 		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
 			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
@@ -243,26 +248,147 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 	@Test(expected = CoreException.class)
 	public void testSpecifyingOutputPathEqualToSourcePath() throws Exception {
-		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath("src");
+		copyAndImportFolder("singlefile/simple", "src/App.java");
 		waitForBackgroundJobs();
-		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "src", true /*isUpdate*/, null);
 	}
 
 	@Test(expected = CoreException.class)
-	public void testSpecifyingOutputPathToUnEmptyFolder() throws Exception {
-		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
+	public void testSpecifyingAbsoluteOutputPath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath(new File("projects").getAbsolutePath());
+		copyAndImportFolder("singlefile/simple", "src/App.java");
 		waitForBackgroundJobs();
-		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "lib", true /*isUpdate*/, null);
 	}
 
 	@Test
 	public void testSpecifyingEmptyOutputPath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectOutputPath("");
 		IProject invisibleProject = copyAndImportFolder("singlefile/simple", "src/App.java");
 		waitForBackgroundJobs();
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		InvisibleProjectImporter.setInvisibleProjectOutputPath(javaProject, "", true /*isUpdate*/, null);
 		assertEquals(String.join("/", "", javaProject.getElementName(), "bin"), javaProject.getOutputLocation().toString());
+	}
+
+	@Test
+	public void testSpecifyingSourcePaths() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList("foo", "bar"));
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IFolder linkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(2, sourcePaths.size());
+		assertTrue(sourcePaths.contains("foo"));
+		assertTrue(sourcePaths.contains("bar"));
+	}
+
+	@Test
+	public void testSpecifyingEmptySourcePaths() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Collections.emptyList());
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IFolder linkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(0, sourcePaths.size());
+	}
+
+	@Test
+	public void testSpecifyingNestedSourcePaths() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList("foo", "foo/bar"));
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IFolder linkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(2, sourcePaths.size());
+		assertTrue(sourcePaths.contains("foo"));
+		assertTrue(sourcePaths.contains("foo/bar"));
+	}
+
+	@Test
+	public void testSpecifyingDuplicatedSourcePaths() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList("foo", "foo"));
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IFolder linkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(1, sourcePaths.size());
+		assertTrue(sourcePaths.contains("foo"));
+	}
+
+	@Test
+	public void testSpecifyingRootAsSourcePaths() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList(""));
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		IFolder linkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(1, sourcePaths.size());
+		assertTrue(sourcePaths.contains(""));
+	}
+
+	@Test(expected = CoreException.class)
+	public void testSpecifyingAbsoluteSourcePath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList(new File("projects").getAbsolutePath()));
+		copyAndImportFolder("singlefile/simple", "src/App.java");
+		waitForBackgroundJobs();
+	}
+
+	@Test
+	public void testSpecifyingSourcePathsContainingOutputPath() throws Exception {
+		Preferences preferences = preferenceManager.getPreferences();
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList(""));
+		preferences.setInvisibleProjectOutputPath("bin");
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		waitForBackgroundJobs();
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				assertEquals("bin/", entry.getExclusionPatterns()[0].toString());
+			}
+		}
 	}
 }

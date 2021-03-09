@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -79,7 +81,11 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 				boolean invisibleProjectEnabled = false;
 				if (belongedRootPath.isPresent()) {
 					IPath rootPath = belongedRootPath.get();
-					invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false);
+					try {
+						invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false, new NullProgressMonitor());
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException("Failed to load invisible project", e);
+					}
 					if (invisibleProjectEnabled) {
 						unit = JDTUtils.resolveCompilationUnit(uri);
 					}

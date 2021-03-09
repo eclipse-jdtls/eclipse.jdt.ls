@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,14 +37,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -91,7 +91,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		loadInvisibleProject(triggerJavaFile.get(), rootPath, true);
+		loadInvisibleProject(triggerJavaFile.get(), rootPath, true, monitor);
 	}
 
 	@Override
@@ -99,12 +99,127 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		// do nothing
 	}
 
-	public static boolean setInvisibleProjectOutputPath(IJavaProject javaProject, String outputPath, boolean isUpdate, IProgressMonitor monitor) throws CoreException {
-		IProject project = javaProject.getProject();
-		if (ProjectUtils.isVisibleProject(project)) {
+	/**
+	 * Based on the trigger file, check whether to load the invisible project to
+	 * manage it. Return true if an invisible project is enabled.
+	 * 
+	 * @throws CoreException
+	 */
+	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath, IProgressMonitor monitor) throws CoreException {
+		if (!ProjectUtils.getVisibleProjects(rootPath).isEmpty()) {
 			return false;
 		}
-	
+
+		String packageName = getPackageName(javaFile, rootPath);
+		IPath sourceDirectory = inferSourceDirectory(javaFile.toFile().toPath(), packageName);
+		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)
+				|| isPartOfMatureProject(sourceDirectory)) {
+			return false;
+		}
+
+		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
+		IProject invisibleProject = ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
+
+		if (!invisibleProject.exists()) {
+			try {
+				JavaLanguageServerPlugin.logInfo("Try to create an invisible project for the workspace " + rootPath);
+				invisibleProject = ProjectUtils.createInvisibleProjectIfNotExist(rootPath);
+				forceUpdateLibPath = true;
+				JavaLanguageServerPlugin.logInfo("Successfully created a workspace invisible project " + invisibleProjectName);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
+				return false;
+			}
+		}
+
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+
+		IFolder workspaceLinkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		List<String> sourcePathsFromPreferences = null;
+		if (preferencesManager != null && preferencesManager.getPreferences() != null) {
+			sourcePathsFromPreferences = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
+		}
+		List<IPath> sourcePaths;
+		if (sourcePathsFromPreferences != null) {
+			sourcePaths = getSourcePaths(sourcePathsFromPreferences, workspaceLinkFolder);
+		} else {
+			IPath relativeSourcePath = sourceDirectory.makeRelativeTo(rootPath);
+			IPath sourcePath = workspaceLinkFolder.getFolder(relativeSourcePath).getFullPath();
+			sourcePaths = Arrays.asList(sourcePath);
+		}
+
+		List<IPath> excludingPaths = getExcludingPath(javaProject, rootPath, workspaceLinkFolder);
+
+		IPath outputPath = getOutputPath(javaProject, preferencesManager.getPreferences().getInvisibleProjectOutputPath(), false /*isUpdate*/);
+
+		IClasspathEntry[] classpathEntries = resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
+		javaProject.setRawClasspath(classpathEntries, outputPath, monitor);
+
+		if (forceUpdateLibPath && preferencesManager != null && preferencesManager.getPreferences() != null) {
+			UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
+		}
+
+		return true;
+	}
+
+
+	public static IClasspathEntry[] resolveClassPathEntries(IJavaProject javaProject, List<IPath> sourcePaths, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
+		List<IClasspathEntry> newEntries = new LinkedList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
+				newEntries.add(entry);
+			}
+		}
+
+		// Sort the source paths to make the child folders come first
+		Collections.sort(sourcePaths, new Comparator<IPath>() {
+			@Override
+			public int compare(IPath path1, IPath path2) {
+				return path1.toString().compareTo(path2.toString()) * -1;
+			}
+		});
+
+		List<IClasspathEntry> sourceEntries = new LinkedList<>();
+		for (IPath currentPath : sourcePaths) {
+			boolean canAddToSourceEntries = true;
+			List<IPath> exclusionPatterns = new ArrayList<>();
+			for (IClasspathEntry sourceEntry : sourceEntries) {
+				if (Objects.equals(sourceEntry.getPath(), currentPath)) {
+					JavaLanguageServerPlugin.logError("Skip duplicated source path: " + currentPath.toString());
+					canAddToSourceEntries = false;
+					break;
+				}
+
+				if (currentPath.isPrefixOf(sourceEntry.getPath())) {
+					exclusionPatterns.add(sourceEntry.getPath().makeRelativeTo(currentPath).addTrailingSeparator());
+				}
+			}
+
+			if (currentPath.equals(outputPath)) {
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The output path cannot be equal to the source path, please provide a new path."));
+			} else if (currentPath.isPrefixOf(outputPath)) {
+				exclusionPatterns.add(outputPath.makeRelativeTo(currentPath).addTrailingSeparator());
+			} else if (outputPath.isPrefixOf(currentPath)) {
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The specified output path contains source folders, please provide a new path instead."));
+			}
+
+			if (canAddToSourceEntries) {
+				if (excludingPaths != null) {
+					for (IPath exclusion : excludingPaths) {
+						if (currentPath.isPrefixOf(exclusion) && !currentPath.equals(exclusion)) {
+							exclusionPatterns.add(exclusion.makeRelativeTo(currentPath).addTrailingSeparator());
+						}
+					}
+				}
+				sourceEntries.add(JavaCore.newSourceEntry(currentPath, exclusionPatterns.toArray(IPath[]::new)));
+			}
+		}
+		newEntries.addAll(sourceEntries);
+		return newEntries.toArray(IClasspathEntry[]::new);
+	}
+
+	public static IPath getOutputPath(IJavaProject javaProject, String outputPath, boolean isUpdate) throws CoreException {
 		if (outputPath == null) {
 			outputPath = "";
 		} else {
@@ -114,120 +229,67 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		if (new org.eclipse.core.runtime.Path(outputPath).isAbsolute()) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The output path must be a relative path to the workspace."));
 		}
-	
+
+		IProject project = javaProject.getProject();
 		if (StringUtils.isEmpty(outputPath)) {
 			// blank means using default output path
-			javaProject.setOutputLocation(project.getFolder("bin").getFullPath(), monitor);
-			return true;
+			return javaProject.getProject().getFolder("bin").getFullPath();
 		}
 
 		outputPath = ProjectUtils.WORKSPACE_LINK + IPath.SEPARATOR + outputPath;
 		IPath outputFullPath = project.getFolder(outputPath).getFullPath();
 		if (javaProject.getOutputLocation().equals(outputFullPath)) {
-			return false;
+			return outputFullPath;
 		}
 	
 		File outputDirectory = project.getFolder(outputPath).getLocation().toFile();
-		// Avoid popping too much dialog during activation, only show error dialog when it's updated
+		// Avoid popping too much dialogs during activation, only show the error dialog when it's updated
 		if (isUpdate && outputDirectory.exists() && outputDirectory.list().length != 0) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Cannot set the output path to a folder which is not empty, please provide a new path."));
 		}
 
-		IClasspathEntry[] existingEntries = javaProject.getRawClasspath();
-		List<IClasspathEntry> newEntries = new ArrayList<>();
-		for (IClasspathEntry entry : existingEntries) {
-			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
-				newEntries.add(entry);
-			} else {
-				IPath entryPath = entry.getPath();
-				if (entryPath.equals(outputFullPath)) {
-					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,
-							"The output path cannot be equal to the source folder path, please provide a new path."));
-				} else if (entryPath.isPrefixOf(outputFullPath)) {
-					List<IPath> exclusionPatterns = new ArrayList<>(Arrays.asList(entry.getExclusionPatterns()));
-					IPath excludePath = outputFullPath.makeRelativeTo(entryPath);
-					boolean hasExcluded = false;
-					for (IPath exclusionPattern : exclusionPatterns) {
-						if (exclusionPattern.isPrefixOf(excludePath)) {
-							hasExcluded = true;
-							break;
-						}
-					}
-					if (!hasExcluded) {
-						exclusionPatterns.add(excludePath.addTrailingSeparator());
-					}
-					newEntries.add(JavaCore.newSourceEntry(entryPath, exclusionPatterns.toArray(new IPath[0])));
-					continue;
-				} else if (outputFullPath.isPrefixOf(entryPath)) {
-					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,
-							"The specified output path contains source folders, please provide a new path instead."));
-				} else {
-					newEntries.add(entry);
-				}
-			}
-		}
-	
-		try {
-			javaProject.setRawClasspath(newEntries.toArray(new IClasspathEntry[0]), outputFullPath, monitor);
-		} catch (JavaModelException e) {
-			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to set the output path.", e));
-		}
-		return true;
+		return outputFullPath;
 	}
 
-	/**
-	 * Based on the trigger file, check whether to load the invisible project to manage it.
-	 * Return true if an invisible project is enabled.
-	 */
-	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath) {
-		if (!ProjectUtils.getVisibleProjects(rootPath).isEmpty()) {
-			return false;
+	public static List<IPath> getSourcePaths(List<String> sourcePaths, IFolder workspaceLinkFolder) throws CoreException {
+		if (sourcePaths == null) {
+			return Collections.emptyList();
 		}
 
-		String packageName = getPackageName(javaFile, rootPath);
-		IPath sourceDirectory = inferSourceDirectory(javaFile.toFile().toPath(), packageName);
-		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)
-			|| isPartOfMatureProject(sourceDirectory)) {
-			return false;
+		sourcePaths = sourcePaths.stream()
+				.map(path -> path.trim())
+				.distinct()
+				.collect(Collectors.toList());
+
+		List<IPath> sourceList = new LinkedList<>();
+		for (String sourcePath : sourcePaths) {
+			if (new org.eclipse.core.runtime.Path(sourcePath).isAbsolute()) {
+				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The source path must be a relative path to the workspace."));
+			}
+			sourceList.add(workspaceLinkFolder.getFolder(sourcePath).getFullPath());
+		}
+		return sourceList;
+	}
+
+	public static List<IPath> getExcludingPath(IJavaProject javaProject, IPath rootPath, IFolder workspaceLinkFolder) throws CoreException {
+		if (rootPath == null) {
+			rootPath = ProjectUtils.findBelongedWorkspaceRoot(workspaceLinkFolder.getLocation());
 		}
 
-		String invisibleProjectName = ProjectUtils.getWorkspaceInvisibleProjectName(rootPath);
-		IProject invisibleProject = ResourcesPlugin.getWorkspace().getRoot().getProject(invisibleProjectName);
+		if (rootPath == null) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to find the belonging root of the linked folder: " + workspaceLinkFolder.toString()));
+		}
+
+		final IPath root = rootPath;
 		IPath libFolder = new Path(InvisibleProjectBuildSupport.LIB_FOLDER);
-		IFolder workspaceLinkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
-		IPath relativeSourcePath = sourceDirectory.makeRelativeTo(rootPath);
-		IPath sourcePath = relativeSourcePath.isEmpty() ? workspaceLinkFolder.getFullPath() : workspaceLinkFolder.getFolder(relativeSourcePath).getFullPath();
-		if (!invisibleProject.exists()) {
-			try {
-				JavaLanguageServerPlugin.logInfo("Try to create an invisible project for the workspace " + rootPath);
-				invisibleProject = ProjectUtils.createInvisibleProjectIfNotExist(rootPath);
-				List<IProject> subProjects = ProjectUtils.getVisibleProjects(rootPath);
-				List<IPath> subProjectPaths = subProjects.stream().map(project -> {
-					IPath relativePath = project.getLocation().makeRelativeTo(rootPath);
-					return workspaceLinkFolder.getFolder(relativePath).getFullPath();
-				}).collect(Collectors.toList());
-				subProjectPaths.add(libFolder);
-				IJavaProject javaProject = JavaCore.create(invisibleProject);
-				ProjectUtils.addSourcePath(sourcePath, subProjectPaths.toArray(new IPath[0]), javaProject);
-				setInvisibleProjectOutputPath(javaProject,  JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getInvisibleProjectOutputPath(),
-						false /*isUpdate*/, new NullProgressMonitor());
-				JavaLanguageServerPlugin.logInfo("Successfully created a workspace invisible project " + invisibleProjectName);
-				forceUpdateLibPath = true;
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
-				return false;
-			}
-		}
+		List<IProject> subProjects = ProjectUtils.getVisibleProjects(rootPath);
+		List<IPath> excludingPaths = subProjects.stream().map(project -> {
+			IPath relativePath = project.getLocation().makeRelativeTo(root);
+			return workspaceLinkFolder.getFolder(relativePath).getFullPath();
+		}).collect(Collectors.toList());
+		excludingPaths.add(libFolder);
 
-		if (forceUpdateLibPath) {
-			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
-			if (preferencesManager != null && preferencesManager.getPreferences() != null) {
-				IJavaProject javaProject = JavaCore.create(invisibleProject);
-				UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
-			}
-		}
-
-		return true;
+		return excludingPaths;
 	}
 
 	private static boolean isPartOfMatureProject(IPath sourcePath) {
