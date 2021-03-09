@@ -14,6 +14,8 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.eclipse.core.runtime.IPath;
@@ -137,11 +139,13 @@ public class RuntimeEnvironment {
 			url = new URL(javadoc);
 		} catch (MalformedURLException e) {
 			File file = new File(javadoc);
-			if (file.exists()) {
+			if (file.exists() && file.isAbsolute()) {
 				try {
-					return JDTUtils.toURI(javadoc).toURL();
-				} catch (MalformedURLException e1) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					URI uri = new URI("file", javadoc, null);
+					uri = new URI(ResourceUtils.fixURI(uri));
+					return uri.toURL();
+				} catch (MalformedURLException | IllegalArgumentException | URISyntaxException e1) {
+					JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
 				}
 			}
 			JavaLanguageServerPlugin.logInfo("Invalid javadoc: " + javadoc);
