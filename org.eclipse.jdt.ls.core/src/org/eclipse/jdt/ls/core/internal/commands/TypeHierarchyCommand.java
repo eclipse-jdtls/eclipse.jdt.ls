@@ -146,7 +146,7 @@ public class TypeHierarchyCommand {
 		item.setRange(location.getRange());
 		item.setUri(location.getUri());
 		item.setSelectionRange(selectLocation.getRange());
-		String fullyQualifiedName = type.getFullyQualifiedParameterizedName();
+		String fullyQualifiedName = type.getFullyQualifiedName();
 		int index = fullyQualifiedName.lastIndexOf('.');
 		if (index >= 1 && index < fullyQualifiedName.length() - 1 && !type.isAnonymous()) {
 			item.setName(fullyQualifiedName.substring(index + 1));
