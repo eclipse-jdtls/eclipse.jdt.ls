@@ -146,6 +146,42 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	@Test
+	public void testInvalidJavadoc() throws Exception {
+		Preferences prefs = new Preferences();
+		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/11a"));
+		File file = URIUtil.toFile(URIUtil.toURI(url));
+		String path = file.getAbsolutePath();
+		String javadoc = new File(file, "doc").getAbsolutePath();
+		Set<RuntimeEnvironment> runtimes = new HashSet<>();
+		RuntimeEnvironment runtime = new RuntimeEnvironment();
+		runtime.setPath(path);
+		runtime.setName(ENVIRONMENT_NAME);
+		runtime.setJavadoc(javadoc);
+		assertTrue(runtime.isValid());
+		runtimes.add(runtime);
+		prefs.setRuntimes(runtimes);
+		file = runtime.getInstallationFile();
+		assertTrue(file != null && file.isDirectory());
+		IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+		IStatus status = installType.validateInstallLocation(file);
+		assertTrue(status.toString(), status.isOK());
+		boolean changed = JVMConfigurator.configureJVMs(prefs);
+		assertTrue("A VM hasn't been changed", changed);
+		JobHelpers.waitForJobsToComplete();
+		IVMInstall vm = JVMConfigurator.findVM(runtime.getInstallationFile(), ENVIRONMENT_NAME);
+		assertNotNull(vm);
+		assertTrue(vm instanceof IVMInstall2);
+		String version = ((IVMInstall2) vm).getJavaVersion();
+		assertTrue(version.startsWith(JavaCore.VERSION_11));
+		LibraryLocation[] libs = vm.getLibraryLocations();
+		assertNotNull(libs);
+		for (LibraryLocation lib : libs) {
+			assertEquals(runtime.getJavadocURL(), lib.getJavadocLocation());
+		}
+	}
+
+	@Test
 	public void testPreviewFeatureSettings() throws Exception {
 		IVMInstallChangedListener jvmConfigurator = new JVMConfigurator();
 		try {
@@ -223,7 +259,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		assertEquals(1, notifications.size());
 		MessageParams notification = notifications.get(0);
 		assertEquals(MessageType.Error, notification.getType());
-		assertEquals("Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path (" + runtime.getPath() + ").", notification.getMessage());	
+		assertEquals("Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path (" + runtime.getPath() + ").", notification.getMessage());
 	}
 
 	private void assertComplianceAndPreviewSupport(IJavaProject javaProject, String compliance, boolean previewEnabled) {
