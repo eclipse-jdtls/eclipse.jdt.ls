@@ -56,6 +56,9 @@
                   id="java.edit.organizeImports">
             </command>
             <command
+                  id="java.edit.stringFormatting">
+            </command>
+            <command
                   id="java.project.updateSourceAttachment">
             </command>
             <command

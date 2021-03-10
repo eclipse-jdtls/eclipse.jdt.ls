@@ -18,7 +18,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
@@ -786,6 +788,28 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(textResult, newText);
 	}
 
+	@Test
+	public void testStringFormatting() throws Exception {
+		//@formatter:off
+		String text = "package org.sample;\n"
+					+ "\n"
+					+ "    public      class     Baz {}  \n";
+		//@formatter:on
+		Map<String, String> options = new HashMap<>();
+		options.put("org.eclipse.jdt.core.formatter.blank_lines_after_package", "3");
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		String formattedText =  handler.stringFormatting(text, options, 21, monitor);
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
 
 	@After
 	public void tearDown() {

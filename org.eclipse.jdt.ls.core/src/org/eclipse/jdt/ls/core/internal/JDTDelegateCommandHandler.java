@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -22,6 +23,7 @@ import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
+import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.commands.SemanticTokensCommand;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
@@ -57,6 +59,9 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						// workspaceEdit on the custom command.
 						return result;
 					}
+				case "java.edit.stringFormatting":
+					FormatterHandler handler = new FormatterHandler(JavaLanguageServerPlugin.getPreferencesManager());
+					return handler.stringFormatting((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), Map.class), Integer.parseInt((String) arguments.get(2)), monitor);
 				case "java.project.resolveSourceAttachment":
 					return SourceAttachmentCommand.resolveSourceAttachment(arguments, monitor);
 				case "java.project.updateSourceAttachment":
