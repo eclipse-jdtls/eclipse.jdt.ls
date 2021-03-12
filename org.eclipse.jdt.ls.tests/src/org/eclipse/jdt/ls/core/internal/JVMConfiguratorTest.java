@@ -30,11 +30,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.launching.LaunchingPlugin;
 import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstall2;
@@ -55,6 +57,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.framework.Bundle;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * @author Fred Bricon
@@ -65,20 +68,34 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	private static final String ENVIRONMENT_NAME = "JavaSE-11";
 	private IVMInstall originalVm;
 	private JavaClientConnection javaClient;
-
+	private String originalVmXml;
 	@Mock
 	private ClientPreferences clientPreferences;
 
+
 	@Before
-	public void setup() {
+	public void setup() throws Exception {
+		Platform.getBundle(LaunchingPlugin.ID_PLUGIN).start(Bundle.START_TRANSIENT);
 		originalVm = JavaRuntime.getDefaultVMInstall();
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(LaunchingPlugin.ID_PLUGIN);
+		originalVmXml = prefs.get(JavaRuntime.PREF_VM_XML, null);
 		javaClient = new JavaClientConnection(client);
 	}
 
 	@Override
 	@After
-	public void cleanUp() throws CoreException {
-		JavaRuntime.setDefaultVMInstall(originalVm, new NullProgressMonitor());
+	public void cleanUp() throws Exception {
+		waitForBackgroundJobs();
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(LaunchingPlugin.ID_PLUGIN);
+		if (prefs != null) {
+			prefs.put(JavaRuntime.PREF_VM_XML, originalVmXml);
+			try {
+				prefs.flush();
+			} catch (BackingStoreException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		waitForBackgroundJobs();
 		javaClient.disconnect();
 	}
 
@@ -147,38 +164,17 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
 	@Test
 	public void testInvalidJavadoc() throws Exception {
-		Preferences prefs = new Preferences();
 		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
 		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/11a"));
 		File file = URIUtil.toFile(URIUtil.toURI(url));
 		String path = file.getAbsolutePath();
 		String javadoc = new File(file, "doc").getAbsolutePath();
-		Set<RuntimeEnvironment> runtimes = new HashSet<>();
 		RuntimeEnvironment runtime = new RuntimeEnvironment();
 		runtime.setPath(path);
 		runtime.setName(ENVIRONMENT_NAME);
 		runtime.setJavadoc(javadoc);
 		assertTrue(runtime.isValid());
-		runtimes.add(runtime);
-		prefs.setRuntimes(runtimes);
-		file = runtime.getInstallationFile();
-		assertTrue(file != null && file.isDirectory());
-		IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
-		IStatus status = installType.validateInstallLocation(file);
-		assertTrue(status.toString(), status.isOK());
-		boolean changed = JVMConfigurator.configureJVMs(prefs);
-		assertTrue("A VM hasn't been changed", changed);
-		JobHelpers.waitForJobsToComplete();
-		IVMInstall vm = JVMConfigurator.findVM(runtime.getInstallationFile(), ENVIRONMENT_NAME);
-		assertNotNull(vm);
-		assertTrue(vm instanceof IVMInstall2);
-		String version = ((IVMInstall2) vm).getJavaVersion();
-		assertTrue(version.startsWith(JavaCore.VERSION_11));
-		LibraryLocation[] libs = vm.getLibraryLocations();
-		assertNotNull(libs);
-		for (LibraryLocation lib : libs) {
-			assertEquals(runtime.getJavadocURL(), lib.getJavadocLocation());
-		}
+		assertNotNull(runtime.getJavadocURL());
 	}
 
 	@Test
