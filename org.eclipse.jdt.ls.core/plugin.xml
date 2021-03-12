@@ -97,6 +97,12 @@
             <command
                   id="java.project.resolveStackTraceLocation">
             </command>
+            <command
+                  id="java.navigate.openTypeHierarchy">
+            </command>
+            <command
+                  id="java.navigate.resolveTypeHierarchy">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
