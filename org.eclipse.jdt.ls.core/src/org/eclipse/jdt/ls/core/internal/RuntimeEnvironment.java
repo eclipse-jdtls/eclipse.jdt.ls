@@ -141,7 +141,7 @@ public class RuntimeEnvironment {
 			File file = new File(javadoc);
 			if (file.exists() && file.isAbsolute()) {
 				try {
-					URI uri = new URI("file", javadoc, null);
+					URI uri = file.toURI();
 					uri = new URI(ResourceUtils.fixURI(uri));
 					return uri.toURL();
 				} catch (MalformedURLException | IllegalArgumentException | URISyntaxException e1) {
