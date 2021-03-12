@@ -172,7 +172,7 @@ public final class ProjectUtils {
 
 		if (!parentSrcPaths.isEmpty()) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, Messages
-					.format("Cannot add the folder ''{0}'' to the source path because it''s parent folder is already in the source path of the project ''{1}''.", new String[] { sourcePath.toOSString(), project.getProject().getName() })));
+					.format("Cannot add the folder ''{0}'' to the source path because its parent folder is already in the source path of the project ''{1}''.", new String[] { sourcePath.toOSString(), project.getProject().getName() })));
 		}
 
 		if (exclusionPaths != null) {
