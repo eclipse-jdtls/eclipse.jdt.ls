@@ -1270,16 +1270,23 @@ public class Preferences {
 		if (formatterUrl == null || formatterUrl.isBlank()) {
 			return null;
 		}
-		URI uri = null;
 		try {
-			uri = new URI(ResourceUtils.toClientUri(formatterUrl));
-		} catch (URISyntaxException e1) {
-			File file = findFile(formatterUrl);
-			if (file != null && file.isFile()) {
-				uri = file.toURI();
+			URI uri = new URI(ResourceUtils.toClientUri(formatterUrl));
+			if (!uri.isAbsolute()) {
+				return getURI(formatterUrl);
 			}
+			return uri;
+		} catch (URISyntaxException e1) {
+			return getURI(formatterUrl);
 		}
-		return uri;
+	}
+
+	private URI getURI(String path) {
+		File file = findFile(path);
+		if (file != null && file.isFile()) {
+			return file.toURI();
+		}
+		return null;
 	}
 
 	private File findFile(String path) {

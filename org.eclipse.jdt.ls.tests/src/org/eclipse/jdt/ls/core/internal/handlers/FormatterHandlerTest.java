@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
@@ -425,6 +426,36 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(edits);
 			String newText = TextEditUtil.apply(unit, edits);
 			assertEquals(text, newText);
+		} finally {
+			preferences.setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferences);
+		}
+	}
+
+	@Test
+	public void testFilePath() throws Exception {
+		try {
+			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+			URL formatterUrl = bundle.getEntry("/formatter/test.xml");
+			URL url = FileLocator.resolve(formatterUrl);
+			File file = ResourceUtils.toFile(URIUtil.toURI(url));
+			assertTrue(file.exists());
+			preferences.setFormatterUrl(file.getAbsolutePath());
+			FormatterManager.configureFormatter(preferences);
+			assertTrue(preferences.getFormatterAsURI().isAbsolute());
+		} finally {
+			preferences.setFormatterUrl(null);
+			FormatterManager.configureFormatter(preferences);
+		}
+	}
+
+	@Test
+	public void testRelativeFilePath() throws Exception {
+		try {
+			String formatterUrl = "../../formatter/test.xml";
+			preferences.setFormatterUrl(formatterUrl);
+			FormatterManager.configureFormatter(preferences);
+			assertTrue(preferences.getFormatterAsURI().isAbsolute());
 		} finally {
 			preferences.setFormatterUrl(null);
 			FormatterManager.configureFormatter(preferences);
