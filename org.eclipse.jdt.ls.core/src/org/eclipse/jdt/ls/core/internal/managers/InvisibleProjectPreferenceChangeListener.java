@@ -47,11 +47,12 @@ public class InvisibleProjectPreferenceChangeListener implements IPreferencesCha
 
 				try {
 					IFolder workspaceLinkFolder = javaProject.getProject().getFolder(ProjectUtils.WORKSPACE_LINK);
-					if (!workspaceLinkFolder.exists()) {
+					IPath rootPath = ProjectUtils.findBelongedWorkspaceRoot(workspaceLinkFolder.getLocation());
+					if (rootPath == null) {
 						continue;
 					}
 					List<IPath> sourcePaths = InvisibleProjectImporter.getSourcePaths(newPreferences.getInvisibleProjectSourcePaths(), workspaceLinkFolder);
-					List<IPath> excludingPaths = InvisibleProjectImporter.getExcludingPath(javaProject, null, workspaceLinkFolder);
+					List<IPath> excludingPaths = InvisibleProjectImporter.getExcludingPath(javaProject, rootPath, workspaceLinkFolder);
 					IPath outputPath = InvisibleProjectImporter.getOutputPath(javaProject, newPreferences.getInvisibleProjectOutputPath(), true /*isUpdate*/);
 					IClasspathEntry[] classpathEntries = InvisibleProjectImporter.resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
 					javaProject.setRawClasspath(classpathEntries, outputPath, new NullProgressMonitor());
