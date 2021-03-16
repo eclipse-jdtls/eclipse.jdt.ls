@@ -21,7 +21,6 @@
    </vm>
 
    <plugins>
-      <plugin id="javax.xml"/>
       <plugin id="org.apache.felix.scr"/>
       <plugin id="org.eclipse.ant.core"/>
       <plugin id="org.eclipse.buildship.core"/>

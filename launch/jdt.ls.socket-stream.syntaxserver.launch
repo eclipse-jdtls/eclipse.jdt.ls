@@ -41,7 +41,6 @@
 <setEntry value="com.google.gson*2.8.2.v20180104-1110@default:default"/>
 <setEntry value="com.google.guava@default:default"/>
 <setEntry value="javax.inject@default:default"/>
-<setEntry value="javax.xml@default:default"/>
 <setEntry value="org.apache.commons.lang3@default:default"/>
 <setEntry value="org.apache.felix.scr@1:true"/>
 <setEntry value="org.apache.log4j@default:default"/>
