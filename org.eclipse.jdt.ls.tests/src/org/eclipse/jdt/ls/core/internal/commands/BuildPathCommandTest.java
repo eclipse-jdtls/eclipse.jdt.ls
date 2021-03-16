@@ -36,6 +36,8 @@ import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.ListCommandRes
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.Result;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.SourcePath;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport;
+import org.eclipse.jdt.ls.core.internal.managers.MavenBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.Test;
 
@@ -120,12 +122,12 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 		IResource srcResource = project.findMember("src");
 		Result addSrcResult = BuildPathCommand.addToSourcePath(JDTUtils.getFileURI(srcResource));
 		assertFalse(addSrcResult.status);
-		assertEquals(addSrcResult.message, BuildPathCommand.UNSUPPORTED_ON_MAVEN);
+		assertEquals(addSrcResult.message, MavenBuildSupport.UNSUPPORTED_ON_MAVEN);
 
 		IResource mainJavaResource = project.findMember("src/main/java");
 		Result addMainJavaResult = BuildPathCommand.removeFromSourcePath(JDTUtils.getFileURI(mainJavaResource));
 		assertFalse(addMainJavaResult.status);
-		assertEquals(addMainJavaResult.message, BuildPathCommand.UNSUPPORTED_ON_MAVEN);
+		assertEquals(addMainJavaResult.message, MavenBuildSupport.UNSUPPORTED_ON_MAVEN);
 	}
 
 	@Test
@@ -144,11 +146,11 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 		IResource srcResource = project.findMember("src");
 		Result addSrcResult = BuildPathCommand.addToSourcePath(JDTUtils.getFileURI(srcResource));
 		assertFalse(addSrcResult.status);
-		assertEquals(addSrcResult.message, BuildPathCommand.UNSUPPORTED_ON_GRADLE);
+		assertEquals(addSrcResult.message, GradleBuildSupport.UNSUPPORTED_ON_GRADLE);
 
 		IResource mainJavaResource = project.findMember("src/main/java");
 		Result addMainJavaResult = BuildPathCommand.removeFromSourcePath(JDTUtils.getFileURI(mainJavaResource));
 		assertFalse(addMainJavaResult.status);
-		assertEquals(addMainJavaResult.message, BuildPathCommand.UNSUPPORTED_ON_GRADLE);
+		assertEquals(addMainJavaResult.message, GradleBuildSupport.UNSUPPORTED_ON_GRADLE);
 	}
 }

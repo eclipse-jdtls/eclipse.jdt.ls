@@ -33,6 +33,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
 import org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager;
@@ -48,6 +49,7 @@ import org.eclipse.m2e.jdt.internal.launch.MavenRuntimeClasspathProvider;
  */
 public class MavenBuildSupport implements IBuildSupport {
 
+	public static final String UNSUPPORTED_ON_MAVEN = "Unsupported operation. Please use pom.xml file to manage the source directories of maven project.";
 	private static final List<String> WATCH_FILE_PATTERNS = Collections.singletonList("**/pom.xml");
 
 	private IProjectConfigurationManager configurationManager;
@@ -66,7 +68,7 @@ public class MavenBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean applies(IProject project) {
-		return ProjectUtils.isMavenProject(project);
+		return ProjectUtils.hasNature(project, IMavenConstants.NATURE_ID);
 	}
 
 	@Override
@@ -92,7 +94,7 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	public void collectProjects(Collection<IProject> projects, IProject project, IProgressMonitor monitor) {
-		if (!project.isOpen() || !ProjectUtils.isMavenProject(project)) {
+		if (!project.isOpen() || !applies(project)) {
 			return;
 		}
 		projects.add(project);
@@ -153,6 +155,16 @@ public class MavenBuildSupport implements IBuildSupport {
 	@Override
 	public List<String> getWatchPatterns() {
 		return WATCH_FILE_PATTERNS;
+	}
+
+	@Override
+	public String buildToolName() {
+		return "Maven";
+	}
+
+	@Override
+	public String unsupportedOperationMessage() {
+		return UNSUPPORTED_ON_MAVEN;
 	}
 
 }

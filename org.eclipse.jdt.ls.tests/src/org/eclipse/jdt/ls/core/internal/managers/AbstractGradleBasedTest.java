@@ -19,7 +19,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 /**
  * @author Fred Bricon
@@ -43,7 +42,7 @@ public abstract class AbstractGradleBasedTest extends AbstractProjectsManagerBas
 
 	protected void assertIsGradleProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Gradle nature", ProjectUtils.isGradleProject(project));
+		assertTrue(project.getName() + " is missing the Gradle nature", BuildSupportManager.find("Gradle").get().applies(project));
 	}
 
 }

@@ -119,4 +119,9 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 		preferenceManager.removePreferencesChangeListener(listener);
 	}
 
+	@Override
+	public String buildToolName() {
+		return InternalBuildSupports.INVISIBLE.toString();
+	}
+
 }

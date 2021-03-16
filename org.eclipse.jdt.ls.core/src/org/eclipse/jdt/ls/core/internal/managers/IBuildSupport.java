@@ -12,12 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClassFile;
@@ -135,6 +138,20 @@ public interface IBuildSupport {
 	 *            the preferences manager
 	 */
 	default void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
+	}
+
+	default String buildToolName() {
+		return "UnknownBuildTool";
+	}
+
+	default boolean hasSpecificDeleteProjectLogic() {
+		return false;
+	}
+
+	default void deleteInvalidProjects(Collection<IPath> rootPaths, ArrayList<IProject> deleteProjectCandates, IProgressMonitor monitor) {}
+
+	default String unsupportedOperationMessage() {
+		return "Unsupported operation. Please use your build tool project file to manage the source directories of the project.";
 	}
 
 }

@@ -330,9 +330,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	@Override
 	public Job updateProject(IProject project, boolean force) {
-		if (project == null || (!ProjectUtils.isMavenProject(project) && !ProjectUtils.isGradleProject(project))) {
+		if (project == null || ProjectUtils.isInternalBuildSupport(BuildSupportManager.find(project).orElse(null))) {
 			return null;
 		}
+
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating " + project.getName() + " configuration");
 		WorkspaceJob job = new WorkspaceJob("Update project " + project.getName()) {
 
