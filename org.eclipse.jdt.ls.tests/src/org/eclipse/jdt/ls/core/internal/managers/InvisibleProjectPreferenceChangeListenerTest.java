@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -116,5 +117,26 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		assertEquals(2, sourcePaths.size());
 		assertTrue(sourcePaths.contains("src"));
 		assertTrue(sourcePaths.contains("src2"));
+	}
+
+	@Test
+	public void testWhenRootPathChanged() throws Exception {
+		JavaLanguageClient client = mock(JavaLanguageClient.class);
+		ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
+		pm.setConnection(client);
+		doNothing().when(client).showMessage(any(MessageParams.class));
+		copyAndImportFolder("singlefile/simple", "src/App.java");
+
+		List<IPath> rootPaths = new ArrayList<>(preferenceManager.getPreferences().getRootPaths());
+		rootPaths.remove(0);
+		preferenceManager.getPreferences().setRootPaths(rootPaths);
+
+		Preferences newPreferences = new Preferences();
+		initPreferences(newPreferences);
+		newPreferences.setInvisibleProjectSourcePaths(Arrays.asList("src", "src2"));
+		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
+		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
+		
+		verify(client, times(0)).showMessage(any(MessageParams.class));
 	}
 }
