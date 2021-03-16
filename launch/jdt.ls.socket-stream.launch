@@ -43,7 +43,6 @@
 <setEntry value="com.google.gson@default:default"/>
 <setEntry value="com.google.guava@default:default"/>
 <setEntry value="javax.inject@default:default"/>
-<setEntry value="javax.xml@default:default"/>
 <setEntry value="org.apache.ant@default:default"/>
 <setEntry value="org.apache.commons.io@default:default"/>
 <setEntry value="org.apache.commons.lang3@default:default"/>
