@@ -57,6 +57,7 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -185,7 +186,7 @@ public class CompletionProposalReplacementProvider {
 		}
 		String text = completionBuffer.toString();
 		if (range != null) {
-			item.setTextEdit(new org.eclipse.lsp4j.TextEdit(range, text));
+			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(range, text)));
 		} else {
 			// fallback
 			item.setInsertText(text);

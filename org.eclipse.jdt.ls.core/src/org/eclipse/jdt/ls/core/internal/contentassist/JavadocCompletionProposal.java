@@ -57,6 +57,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class JavadocCompletionProposal {
 
@@ -110,7 +111,7 @@ public class JavadocCompletionProposal {
 			Range range = JDTUtils.toRange(unit, offset, 0);
 			boolean isSnippetSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
 			String replacement = prepareTemplate(buf.toString(), lineDelimiter, isSnippetSupported);
-			ci.setTextEdit(new TextEdit(range, replacement));
+			ci.setTextEdit(Either.forLeft(new TextEdit(range, replacement)));
 			ci.setFilterText(JAVA_DOC_COMMENT);
 			ci.setLabel(JAVA_DOC_COMMENT);
 			ci.setSortText(SortTextHelper.convertRelevance(0));

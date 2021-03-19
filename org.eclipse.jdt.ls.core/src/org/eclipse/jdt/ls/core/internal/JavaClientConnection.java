@@ -31,7 +31,6 @@ import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.RegistrationParams;
-import org.eclipse.lsp4j.SemanticHighlightingParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -214,13 +213,6 @@ public class JavaClientConnection {
 	 */
 	public void registerCapability(RegistrationParams params) {
 		client.registerCapability(params);
-	}
-
-	/**
-	 * @see {@link LanguageClient#semanticHighlighting(SemanticHighlightingParams)}
-	 */
-	public void semanticHighlighting(SemanticHighlightingParams params) {
-		client.semanticHighlighting(params);
 	}
 
 	/**
