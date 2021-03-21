@@ -260,7 +260,7 @@ public class CodeActionHandler {
 	private static int getProblemId(Diagnostic diagnostic) {
 		int $ = 0;
 		try {
-			Either<String, Number> code = diagnostic.getCode();
+			Either<String, Integer> code = diagnostic.getCode();
 			if (code != null) {
 				if (code.getLeft() != null) {
 					$ = Integer.parseInt(code.getLeft());

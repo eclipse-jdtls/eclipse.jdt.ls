@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.Range;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -268,8 +269,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		proposalProvider.updateReplacement(proposal, $, '\0');
 		// Make sure `filterText` matches `textEdit`
 		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
-		if (proposal.getKind() == CompletionProposal.TYPE_REF && $.getTextEdit() != null && $.getTextEdit().getRange() != null && $.getTextEdit().getNewText() != null) {
-			$.setFilterText($.getTextEdit().getNewText());
+		if ($.getTextEdit() != null) {
+			String newText = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getNewText() : $.getTextEdit().getRight().getNewText();
+			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
+			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
+				$.setFilterText(newText);
+			}
 		}
 		return $;
 	}
