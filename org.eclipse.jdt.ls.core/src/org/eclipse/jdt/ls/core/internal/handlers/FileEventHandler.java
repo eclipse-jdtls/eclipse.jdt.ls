@@ -44,6 +44,8 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenamePackageP
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.IReorgDestination;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory;
+import org.eclipse.lsp4j.FileRename;
+import org.eclipse.lsp4j.RenameFilesParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
@@ -54,25 +56,26 @@ import org.eclipse.ltk.internal.core.refactoring.NotCancelableProgressMonitor;
 
 public class FileEventHandler {
 
-	public static WorkspaceEdit handleWillRenameFiles(FileRenameParams params, IProgressMonitor monitor) {
-		if (params.files == null || params.files.isEmpty()) {
+	public static WorkspaceEdit handleWillRenameFiles(RenameFilesParams params, IProgressMonitor monitor) {
+		List<FileRename> files = params.getFiles();
+		if (files == null || files.isEmpty()) {
 			return null;
 		}
 
-		FileRenameEvent[] renameFiles = new FileRenameEvent[0];
-		FileRenameEvent[] renameFolders = new FileRenameEvent[0];
-		FileRenameEvent[] moveFiles = new FileRenameEvent[0];
-		if (params.files.size() == 1) {
-			FileRenameEvent renameEvent = params.files.get(0);
+		FileRename[] renameFiles = new FileRename[0];
+		FileRename[] renameFolders = new FileRename[0];
+		FileRename[] moveFiles = new FileRename[0];
+		if (files.size() == 1) {
+			FileRename renameEvent = files.get(0);
 			if (isFileNameRenameEvent(renameEvent)) {
-				renameFiles = new FileRenameEvent[] { renameEvent };
+				renameFiles = new FileRename[] { renameEvent };
 			} else if (isFolderRenameEvent(renameEvent)) {
-				renameFolders = new FileRenameEvent[] { renameEvent };
+				renameFolders = new FileRename[] { renameEvent };
 			} else if (isMoveEvent(renameEvent)) {
-				moveFiles = new FileRenameEvent[] { renameEvent };
+				moveFiles = new FileRename[] { renameEvent };
 			}
 		} else {
-			moveFiles = params.files.stream().filter(event -> isMoveEvent(event)).toArray(FileRenameEvent[]::new);
+			moveFiles = files.stream().filter(event -> isMoveEvent(event)).toArray(FileRename[]::new);
 		}
 
 		if (renameFiles.length == 0 && renameFolders.length == 0 && moveFiles.length == 0) {
@@ -105,12 +108,12 @@ public class FileEventHandler {
 		return ChangeUtil.hasChanges(root) ? root : null;
 	}
 
-	private static WorkspaceEdit computeFileRenameEdit(FileRenameEvent[] renameEvents, IProgressMonitor monitor) {
+	private static WorkspaceEdit computeFileRenameEdit(FileRename[] renameEvents, IProgressMonitor monitor) {
 		SubMonitor submonitor = SubMonitor.convert(monitor, "Computing file rename updates...", 100 * renameEvents.length);
 		WorkspaceEdit root = null;
-		for (FileRenameEvent event : renameEvents) {
-			String oldUri = event.oldUri;
-			String newUri = event.newUri;
+		for (FileRename event : renameEvents) {
+			String oldUri = event.getOldUri();
+			String newUri = event.getNewUri();
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(oldUri);
 			SubMonitor splitedMonitor = submonitor.split(100);
 			try {
@@ -138,12 +141,12 @@ public class FileEventHandler {
 		return root;
 	}
 
-	private static WorkspaceEdit computePackageRenameEdit(FileRenameEvent[] renameEvents, SourcePath[] sourcePaths, IProgressMonitor monitor) {
+	private static WorkspaceEdit computePackageRenameEdit(FileRename[] renameEvents, SourcePath[] sourcePaths, IProgressMonitor monitor) {
 		WorkspaceEdit[] root = new WorkspaceEdit[1];
 		SubMonitor submonitor = SubMonitor.convert(monitor, "Computing package rename updates...", 100 * renameEvents.length);
-		for (FileRenameEvent event : renameEvents) {
-			IPath oldLocation = ResourceUtils.filePathFromURI(event.oldUri);
-			IPath newLocation = ResourceUtils.filePathFromURI(event.newUri);
+		for (FileRename event : renameEvents) {
+			IPath oldLocation = ResourceUtils.filePathFromURI(event.getOldUri());
+			IPath newLocation = ResourceUtils.filePathFromURI(event.getNewUri());
 			IPackageFragment oldPackageFragment = resolvePackageFragment(oldLocation, sourcePaths);
 			SubMonitor renameMonitor = submonitor.split(100);
 			try {
@@ -172,18 +175,18 @@ public class FileEventHandler {
 		return ChangeUtil.hasChanges(root[0]) ? root[0] : null;
 	}
 
-	private static WorkspaceEdit computeMoveEdit(FileRenameEvent[] moveEvents, SourcePath[] sourcePaths, IProgressMonitor monitor) {
-		IPath[] newPaths = Stream.of(moveEvents).map(event -> ResourceUtils.filePathFromURI(event.newUri)).toArray(IPath[]::new);
+	private static WorkspaceEdit computeMoveEdit(FileRename[] moveEvents, SourcePath[] sourcePaths, IProgressMonitor monitor) {
+		IPath[] newPaths = Stream.of(moveEvents).map(event -> ResourceUtils.filePathFromURI(event.getNewUri())).toArray(IPath[]::new);
 		IPath destinationPath = ResourceUtils.getLongestCommonPath(newPaths);
 		if (destinationPath == null) {
 			return null;
 		}
 
 		// Verify all files are moving to the same destination.
-		for (FileRenameEvent event : moveEvents) {
-			IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
+		for (FileRename event : moveEvents) {
+			IPath oldPath = ResourceUtils.filePathFromURI(event.getOldUri());
 			IPath expectedNewPath = destinationPath.append(oldPath.lastSegment());
-			IPath actualNewPath = ResourceUtils.filePathFromURI(event.newUri);
+			IPath actualNewPath = ResourceUtils.filePathFromURI(event.getNewUri());
 			if (!Objects.equals(expectedNewPath, actualNewPath)) {
 				JavaLanguageServerPlugin.logError("Failed to compute move refactoring because the files are not moving to the same destination " + destinationPath.toOSString());
 				return null;
@@ -198,9 +201,9 @@ public class FileEventHandler {
 		// formatter:off
 		ICompilationUnit[] cus = Stream.of(moveEvents)
 			.filter(event -> {
-				IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
+				IPath oldPath = ResourceUtils.filePathFromURI(event.getOldUri());
 				return oldPath != null && oldPath.toFile().isFile();
-			}).map(event -> JDTUtils.resolveCompilationUnit(event.oldUri))
+			}).map(event -> JDTUtils.resolveCompilationUnit(event.getOldUri()))
 			.filter(cu -> cu != null && cu.getJavaProject() != null)
 			.toArray(ICompilationUnit[]::new);
 		// formatter:on
@@ -294,9 +297,9 @@ public class FileEventHandler {
 		return sourcePaths;
 	}
 
-	private static boolean isFileNameRenameEvent(FileRenameEvent event) {
-		IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
-		IPath newPath = ResourceUtils.filePathFromURI(event.newUri);
+	private static boolean isFileNameRenameEvent(FileRename event) {
+		IPath oldPath = ResourceUtils.filePathFromURI(event.getOldUri());
+		IPath newPath = ResourceUtils.filePathFromURI(event.getNewUri());
 		if (oldPath == null || newPath == null) {
 			return false;
 		}
@@ -306,9 +309,9 @@ public class FileEventHandler {
 			&& Objects.equals(oldPath.removeLastSegments(1), newPath.removeLastSegments(1));
 	}
 
-	private static boolean isFolderRenameEvent(FileRenameEvent event) {
-		IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
-		IPath newPath = ResourceUtils.filePathFromURI(event.newUri);
+	private static boolean isFolderRenameEvent(FileRename event) {
+		IPath oldPath = ResourceUtils.filePathFromURI(event.getOldUri());
+		IPath newPath = ResourceUtils.filePathFromURI(event.getNewUri());
 		if (oldPath == null || newPath == null) {
 			return false;
 		}
@@ -321,9 +324,9 @@ public class FileEventHandler {
 	 * another package. It does not support moving a package to another package. So the
 	 * language server only needs to handle the file move event, not the directory move event.
 	 */
-	private static boolean isMoveEvent(FileRenameEvent event) {
-		IPath oldPath = ResourceUtils.filePathFromURI(event.oldUri);
-		IPath newPath = ResourceUtils.filePathFromURI(event.newUri);
+	private static boolean isMoveEvent(FileRename event) {
+		IPath oldPath = ResourceUtils.filePathFromURI(event.getOldUri());
+		IPath newPath = ResourceUtils.filePathFromURI(event.getNewUri());
 		if (oldPath == null || newPath == null) {
 			return false;
 		}
@@ -364,29 +367,5 @@ public class FileEventHandler {
 		Change change = renameRefactoring.createChange(submonitor.split(rtp.getCreateChangeTicks()));
 		change.initializeValidationData(new NotCancelableProgressMonitor(submonitor.split(rtp.getInitializeChangeTicks())));
 		return ChangeUtil.convertToWorkspaceEdit(change);
-	}
-
-	public static class FileRenameEvent {
-		public String oldUri;
-		public String newUri;
-
-		public FileRenameEvent() {
-		}
-
-		public FileRenameEvent(String oldUri, String newUri) {
-			this.oldUri = oldUri;
-			this.newUri = newUri;
-		}
-	}
-
-	public static class FileRenameParams {
-		public List<FileRenameEvent> files;
-
-		public FileRenameParams() {
-		}
-
-		public FileRenameParams(List<FileRenameEvent> files) {
-			this.files = files;
-		}
 	}
 }

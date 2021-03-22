@@ -35,11 +35,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
-import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameEvent;
-import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameParams;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.lsp4j.FileRename;
+import org.eclipse.lsp4j.RenameFilesParams;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
@@ -93,7 +93,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String uriA = JDTUtils.toURI(cuA);
 		String newUriA = uriA.replace("ObjectA", "ObjectA1");
-		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(uriA, newUriA))), new NullProgressMonitor());
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new RenameFilesParams(Arrays.asList(new FileRename(uriA, newUriA))), new NullProgressMonitor());
 		assertNotNull(edit);
 		assertEquals(2, edit.getDocumentChanges().size());
 
@@ -135,7 +135,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String uriA = JDTUtils.toURI(cuA);
 		String newUriA = uriA.replace("ObjectA", "ObjectA1");
-		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(uriA, newUriA))), new NullProgressMonitor());
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new RenameFilesParams(Arrays.asList(new FileRename(uriA, newUriA))), new NullProgressMonitor());
 		assertNull(edit);
 	}
 
@@ -169,7 +169,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String pack2Uri = JDTUtils.getFileURI(pack2.getResource());
 		String newPack2Uri = pack2Uri.replace("pack2", "newpack2");
-		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(pack2Uri, newPack2Uri))), new NullProgressMonitor());
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new RenameFilesParams(Arrays.asList(new FileRename(pack2Uri, newPack2Uri))), new NullProgressMonitor());
 		assertNotNull(edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
 		assertEquals(2, documentChanges.size());
@@ -228,7 +228,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String pack2Uri = JDTUtils.getFileURI(pack2.getResource());
 		String newPack2Uri = pack2Uri.replace("pack2", "newpack2").replace("parent", "newparent");
-		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(pack2Uri, newPack2Uri))), new NullProgressMonitor());
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new RenameFilesParams(Arrays.asList(new FileRename(pack2Uri, newPack2Uri))), new NullProgressMonitor());
 		assertNotNull(edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
 		assertEquals(2, documentChanges.size());
@@ -287,7 +287,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String parentPackUri = JDTUtils.getFileURI(parentPack.getResource());
 		String newParentPackUri = parentPackUri.replace("parent", "newparent");
-		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new FileRenameParams(Arrays.asList(new FileRenameEvent(parentPackUri, newParentPackUri))), new NullProgressMonitor());
+		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(new RenameFilesParams(Arrays.asList(new FileRename(parentPackUri, newParentPackUri))), new NullProgressMonitor());
 		assertNotNull(edit);
 		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = edit.getDocumentChanges();
 		assertEquals(3, documentChanges.size());
@@ -356,9 +356,9 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 		String newUriA = uriA.replace("test1", "test2");
 		String newUriB = uriB.replace("test1", "test2");
 		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(
-			new FileRenameParams(Arrays.asList(
-				new FileRenameEvent(uriA, newUriA),
-				new FileRenameEvent(uriB, newUriB))),
+			new RenameFilesParams(Arrays.asList(
+				new FileRename(uriA, newUriA),
+				new FileRename(uriB, newUriB))),
 			new NullProgressMonitor());
 
 		assertNotNull(edit);
@@ -439,9 +439,9 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 		String newUriA = uriA.replace("test1", "test2");
 		String newUriB = uriB.replace("test1", "test3");
 		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(
-			new FileRenameParams(Arrays.asList(
-				new FileRenameEvent(uriA, newUriA),
-				new FileRenameEvent(uriB, newUriB))),
+			new RenameFilesParams(Arrays.asList(
+				new FileRename(uriA, newUriA),
+				new FileRename(uriB, newUriB))),
 			new NullProgressMonitor());
 		assertNull(edit);
 	}
@@ -462,7 +462,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = JDTUtils.toURI(bar);
 		String newUri = uri.replace("Bar.java", "src/jdtls/test1/Bar.java");
 		WorkspaceEdit edit = FileEventHandler.handleWillRenameFiles(
-			new FileRenameParams(Arrays.asList(new FileRenameEvent(uri, newUri))),
+			new RenameFilesParams(Arrays.asList(new FileRename(uri, newUri))),
 			new NullProgressMonitor());
 
 		assertNotNull(edit);
