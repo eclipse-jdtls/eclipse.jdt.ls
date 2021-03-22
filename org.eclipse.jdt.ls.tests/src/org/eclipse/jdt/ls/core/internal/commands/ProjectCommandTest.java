@@ -98,9 +98,9 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
     public void testGetProjectOutputPath() throws Exception {
         IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
         String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
-        List<String> settingKeys = Arrays.asList(ProjectCommand.DEFAULT_OUTPUT_PATH);
+        List<String> settingKeys = Arrays.asList(ProjectCommand.OUTPUT_PATH);
         Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
-        String actualOutputPath = (String) options.get(ProjectCommand.DEFAULT_OUTPUT_PATH);
+        String actualOutputPath = (String) options.get(ProjectCommand.OUTPUT_PATH);
         String expectedOutputPath = project.getFolder("bin").getLocation().toOSString();
         assertEquals(expectedOutputPath, actualOutputPath);
     }

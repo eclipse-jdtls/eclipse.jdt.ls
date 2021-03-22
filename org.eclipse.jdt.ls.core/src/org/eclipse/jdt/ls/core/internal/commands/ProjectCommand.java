@@ -62,7 +62,7 @@ public class ProjectCommand {
 
 	public static final String VM_LOCATION = IConstants.PLUGIN_ID + ".vm.location";
 	public static final String SOURCE_PATHS = IConstants.PLUGIN_ID + ".sourcePaths";
-	public static final String DEFAULT_OUTPUT_PATH = IConstants.PLUGIN_ID + ".defaultOutputPath";
+	public static final String OUTPUT_PATH = IConstants.PLUGIN_ID + ".outputPath";
 	public static final String REFERENCED_LIBRARIES = IConstants.PLUGIN_ID + ".referencedLibraries";
 	private static final String TEST_SCOPE_VALUE = "test";
 
@@ -78,8 +78,8 @@ public class ProjectCommand {
 	 *                        Besides the options defined in JavaCore, the following keys can also be used:
 	 *                        - "org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project
 	 *                        - "org.eclipse.jdt.ls.core.sourcePaths": Get the source root paths of the given Java project
-	 *                        - "org.eclipse.jdt.ls.core.defaultOutputPath": Get the default output path of the given Java project. Note that the default output path
-	 *                                                                       may not be equal to the output path of each source root.
+	 *                        - "org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
+	 *                                                                may not be equal to the output path of each source root.
 	 *                        - "org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
@@ -109,7 +109,7 @@ public class ProjectCommand {
 							.toArray(String[]::new);
 					settings.putIfAbsent(key, sourcePaths);
 					break;
-				case DEFAULT_OUTPUT_PATH:
+				case OUTPUT_PATH:
 					IPath outputPath = javaProject.getOutputLocation();
 					if (outputPath == null) {
 						settings.putIfAbsent(key, "");
