@@ -78,7 +78,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
 			if (installType == null || installType.getVMInstalls().length == 0) {
 				// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
-				installType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+				IVMInstallType macInstallType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+				if (macInstallType != null) {
+					installType = macInstallType;
+				}
 			}
 			long unique = System.currentTimeMillis();
 			while (installType.findVMInstall(String.valueOf(unique)) != null) {
@@ -116,7 +119,10 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 					IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
 					if (installType == null || installType.getVMInstalls().length == 0) {
 						// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
-						installType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+						IVMInstallType macInstallType = JavaRuntime.getVMInstallType(MAC_OSX_VM_TYPE);
+						if (macInstallType != null) {
+							installType = macInstallType;
+						}
 					}
 					VMStandin vmStandin;
 					if (vm == null) {
