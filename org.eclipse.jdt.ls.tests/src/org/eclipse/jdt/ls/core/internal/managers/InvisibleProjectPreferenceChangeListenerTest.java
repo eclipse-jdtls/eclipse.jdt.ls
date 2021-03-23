@@ -101,7 +101,7 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 
 		Preferences newPreferences = new Preferences();
 		initPreferences(newPreferences);
-		newPreferences.setInvisibleProjectSourcePaths(Arrays.asList("src", "src2"));
+		newPreferences.setInvisibleProjectSourcePaths(Arrays.asList("src", "test"));
 		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
 		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
 
@@ -116,7 +116,7 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 
 		assertEquals(2, sourcePaths.size());
 		assertTrue(sourcePaths.contains("src"));
-		assertTrue(sourcePaths.contains("src2"));
+		assertTrue(sourcePaths.contains("test"));
 	}
 
 	@Test

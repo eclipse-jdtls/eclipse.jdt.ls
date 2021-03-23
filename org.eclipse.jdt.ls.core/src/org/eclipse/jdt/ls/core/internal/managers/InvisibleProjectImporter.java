@@ -266,7 +266,10 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			if (new org.eclipse.core.runtime.Path(sourcePath).isAbsolute()) {
 				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The source path must be a relative path to the workspace."));
 			}
-			sourceList.add(workspaceLinkFolder.getFolder(sourcePath).getFullPath());
+			IFolder sourceFolder = workspaceLinkFolder.getFolder(sourcePath);
+			if (sourceFolder.exists()) {
+				sourceList.add(sourceFolder.getFullPath());
+			}
 		}
 		return sourceList;
 	}
