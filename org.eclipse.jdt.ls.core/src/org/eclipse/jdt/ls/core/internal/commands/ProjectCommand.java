@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -60,6 +61,9 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 public class ProjectCommand {
 
 	public static final String VM_LOCATION = IConstants.PLUGIN_ID + ".vm.location";
+	public static final String SOURCE_PATHS = IConstants.PLUGIN_ID + ".sourcePaths";
+	public static final String OUTPUT_PATH = IConstants.PLUGIN_ID + ".outputPath";
+	public static final String REFERENCED_LIBRARIES = IConstants.PLUGIN_ID + ".referencedLibraries";
 	private static final String TEST_SCOPE_VALUE = "test";
 
 	/**
@@ -73,14 +77,19 @@ public class ProjectCommand {
 	 *                        "org.eclipse.jdt.core.compiler.source"].
 	 *                        Besides the options defined in JavaCore, the following keys can also be used:
 	 *                        - "org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project
+	 *                        - "org.eclipse.jdt.ls.core.sourcePaths": Get the source root paths of the given Java project
+	 *                        - "org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
+	 *                                                                may not be equal to the output path of each source root.
+	 *                        - "org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
 	 * @throws CoreException
 	 * @throws URISyntaxException
 	 */
-	public static Map<String, String> getProjectSettings(String uri, List<String> settingKeys) throws CoreException, URISyntaxException {
+	public static Map<String, Object> getProjectSettings(String uri, List<String> settingKeys) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = getJavaProjectFromUri(uri);
-		Map<String, String> settings = new HashMap<>();
+		IProject project = javaProject.getProject();
+		Map<String, Object> settings = new HashMap<>();
 		for (String key : settingKeys) {
 			switch(key) {
 				case VM_LOCATION:
@@ -93,6 +102,26 @@ public class ProjectCommand {
 						continue;
 					}
 					settings.putIfAbsent(key, location.getAbsolutePath());
+					break;
+				case SOURCE_PATHS:
+					String[] sourcePaths = Arrays.stream(ProjectUtils.listSourcePaths(javaProject))
+							.map(p -> project.getFolder(p.makeRelativeTo(project.getFullPath())).getLocation().toOSString())
+							.toArray(String[]::new);
+					settings.putIfAbsent(key, sourcePaths);
+					break;
+				case OUTPUT_PATH:
+					IPath outputPath = javaProject.getOutputLocation();
+					if (outputPath == null) {
+						settings.putIfAbsent(key, "");
+					} else {
+						settings.putIfAbsent(key, project.getFolder(outputPath.makeRelativeTo(project.getFullPath())).getLocation().toOSString());
+					}
+					break;
+				case REFERENCED_LIBRARIES:
+					String[] referencedLibraries = Arrays.stream(ProjectUtils.listReferencedLibraries(javaProject))
+							.map(p -> p.toOSString())
+							.toArray(String[]::new);
+					settings.putIfAbsent(key, referencedLibraries);
 					break;
 				default:
 					settings.putIfAbsent(key, javaProject.getOption(key, true));

@@ -46,7 +46,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         IProject project = WorkspaceHelper.getProject("salut");
         String uriString = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
         List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
-        Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
         assertEquals(settingKeys.size(), options.size());
         assertEquals("1.7", options.get("org.eclipse.jdt.core.compiler.compliance"));
@@ -59,7 +59,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         IProject project = WorkspaceHelper.getProject("salut2");
         String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
         List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
-        Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
         assertEquals(settingKeys.size(), options.size());
         assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.compliance"));
@@ -72,7 +72,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         IProject project = WorkspaceHelper.getProject("salut2");
         String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
         List<String> settingKeys = Arrays.asList(ProjectCommand.VM_LOCATION);
-        Map<String, String> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
         IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(uriString);
         IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
@@ -80,6 +80,41 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         File location = vmInstall.getInstallLocation();
         assertNotNull(location);
         assertEquals(location.getAbsolutePath(), options.get(ProjectCommand.VM_LOCATION));
+    }
+
+    @Test
+    public void testGetProjectSourcePaths() throws Exception {
+        IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+        String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
+        List<String> settingKeys = Arrays.asList(ProjectCommand.SOURCE_PATHS);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
+        String[] actualSourcePaths = (String[]) options.get(ProjectCommand.SOURCE_PATHS);
+        String expectedSourcePath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("src").getLocation().toOSString();
+        assertTrue(actualSourcePaths.length == 1);
+        assertEquals(expectedSourcePath, actualSourcePaths[0]);
+    }
+
+    @Test
+    public void testGetProjectOutputPath() throws Exception {
+        IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+        String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
+        List<String> settingKeys = Arrays.asList(ProjectCommand.OUTPUT_PATH);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
+        String actualOutputPath = (String) options.get(ProjectCommand.OUTPUT_PATH);
+        String expectedOutputPath = project.getFolder("bin").getLocation().toOSString();
+        assertEquals(expectedOutputPath, actualOutputPath);
+    }
+
+    @Test
+    public void testGetProjectReferencedLibraryPaths() throws Exception {
+        IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+        String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
+        List<String> settingKeys = Arrays.asList(ProjectCommand.REFERENCED_LIBRARIES);
+        Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
+        String[] actualReferencedLibraryPaths = (String[]) options.get(ProjectCommand.REFERENCED_LIBRARIES);
+        String expectedReferencedLibraryPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("lib").getFile("mylib.jar").getLocation().toOSString();
+        assertTrue(actualReferencedLibraryPaths.length == 1);
+        assertEquals(expectedReferencedLibraryPath, actualReferencedLibraryPaths[0]);
     }
 
     @Test
@@ -97,7 +132,6 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 
     @Test
     public void testGetInvisibleProjectFromUri() throws Exception {
-        importProjects("singlefile/simple");
         IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
         String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
         IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(linkedFolder);
