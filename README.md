@@ -13,21 +13,28 @@ and can be used with any editor that supports the protocol, to offer good suppor
 
 Features
 --------------
-* As you type reporting of parsing and compilation errors
+* Supports compiling projects from Java 1.5 through 15
+* Maven pom.xml project support
+* Limited Gradle support (Android projects are not supported)
+* Standalone Java files support
+* As you type reporting of syntax and compilation errors
 * Code completion
 * Javadoc hovers
-* Code actions / refactoring
-* Code outline
-* Code navigation
-* Code lens (references/implementations)
-* Highlights
 * Organize imports
 * Type search
+* Code/Source actions / Refactoring
+* Code outline
+* Code folding
+* Code navigation
+* Code lens (references/implementations)
 * Code formatting (on-type/selection/file)
-* Maven pom.xml project support
-* Supports compiling projects from Java 1.5 through 15
-* Limited Gradle support (Android projects are not supported)
+* Code snippets
+* Highlights (semantic highlighting)
 * Annotation processing support (automatic for Maven projects)
+* Semantic selection
+* Diagnostic tags
+* Call Hierarchy
+* Type Hierarchy
 * Extensibility
 
 
