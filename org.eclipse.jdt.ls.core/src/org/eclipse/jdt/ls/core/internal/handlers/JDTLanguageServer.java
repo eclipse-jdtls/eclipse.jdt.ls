@@ -48,7 +48,6 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
-import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameParams;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
@@ -123,6 +122,7 @@ import org.eclipse.lsp4j.PrepareRenameParams;
 import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceParams;
+import org.eclipse.lsp4j.RenameFilesParams;
 import org.eclipse.lsp4j.RenameParams;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
@@ -776,18 +776,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 	@Override
-	public CompletableFuture<WorkspaceEdit> didRenameFiles(FileRenameParams params) {
-		logInfo(">> document/didRenameFiles");
+	public CompletableFuture<WorkspaceEdit> willRenameFiles(RenameFilesParams params) {
+		logInfo(">> workspace/willRenameFiles");
 		return computeAsyncWithClientProgress((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return FileEventHandler.handleRenameFiles(params, monitor);
-		});
-	}
-
-	@Override
-	public CompletableFuture<WorkspaceEdit> willRenameFiles(FileRenameParams params) {
-		logInfo(">> document/willRenameFiles");
-		return computeAsyncWithClientProgress((monitor) -> {
 			return FileEventHandler.handleWillRenameFiles(params, monitor);
 		});
 	}

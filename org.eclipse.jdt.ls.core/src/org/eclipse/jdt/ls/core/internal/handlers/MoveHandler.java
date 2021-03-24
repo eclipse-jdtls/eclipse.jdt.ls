@@ -385,7 +385,7 @@ public class MoveHandler {
 		}
 	}
 
-	private static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws CoreException {
+	public static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws CoreException {
 		IMovePolicy policy = ReorgPolicyFactory.createMovePolicy(resources, javaElements);
 		if (policy.canEnable()) {
 			JavaMoveProcessor processor = new JavaMoveProcessor(policy);

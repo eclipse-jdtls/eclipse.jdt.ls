@@ -13,7 +13,6 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -269,6 +269,11 @@ public class ChangeUtil {
 		}
 
 		TextEditConverter converter = new TextEditConverter(unit, edit);
+		List<org.eclipse.lsp4j.TextEdit> textEdits = filterTextEdits(converter.convert());
+		if (textEdits == null || textEdits.isEmpty()) {
+			return;
+		}
+
 		String uri = JDTUtils.toURI(unit);
 		if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 			List<Either<TextDocumentEdit, ResourceOperation>> changes = root.getDocumentChanges();
@@ -278,16 +283,36 @@ public class ChangeUtil {
 			}
 
 			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, 0);
-			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, converter.convert());
+			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, textEdits);
 			changes.add(Either.forLeft(documentEdit));
 		} else {
 			Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
 			if (changes.containsKey(uri)) {
-				changes.get(uri).addAll(converter.convert());
+				changes.get(uri).addAll(textEdits);
 			} else {
-				changes.put(uri, converter.convert());
+				changes.put(uri, textEdits);
 			}
 		}
+	}
+
+	private static List<org.eclipse.lsp4j.TextEdit> filterTextEdits(List<org.eclipse.lsp4j.TextEdit> textEdits) {
+		if (textEdits == null || textEdits.isEmpty()) {
+			return textEdits;
+		}
+
+		return textEdits.stream().filter(textEdit -> !isEmpty(textEdit)).collect(Collectors.toList());
+	}
+
+	private static boolean isEmpty(org.eclipse.lsp4j.TextEdit textEdit) {
+		if (textEdit == null || textEdit.getRange() == null) {
+			return true;
+		}
+
+		Position start = textEdit.getRange().getStart();
+		Position end = textEdit.getRange().getEnd();
+		return StringUtils.isEmpty(textEdit.getNewText())
+			&& start.getCharacter() == end.getCharacter()
+			&& start.getLine() == end.getLine();
 	}
 
 	private static ICompilationUnit getNewCompilationUnit(IType type, String newName) {

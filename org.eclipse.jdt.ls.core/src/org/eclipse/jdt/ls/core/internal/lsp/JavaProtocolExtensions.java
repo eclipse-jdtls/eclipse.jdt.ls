@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
-import org.eclipse.jdt.ls.core.internal.handlers.FileEventHandler.FileRenameParams;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
@@ -124,10 +123,4 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<List<? extends Location>> findLinks(FindLinksParams params);
-
-	@JsonRequest
-	CompletableFuture<WorkspaceEdit> didRenameFiles(FileRenameParams params);
-
-	@JsonRequest
-	CompletableFuture<WorkspaceEdit> willRenameFiles(FileRenameParams params);
 }
