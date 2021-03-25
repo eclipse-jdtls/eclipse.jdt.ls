@@ -108,21 +108,6 @@
 						</dependency>
 					</dependencies>
 				</plugin>
-				<!-- Those 4 mojos are for signing and packing -->
-				<plugin>
-					<groupId>org.eclipse.tycho.extras</groupId>
-					<artifactId>tycho-pack200a-plugin</artifactId>
-					<version>${tycho-version}</version>
-					<executions>
-						<execution>
-							<id>pack200-normalize</id>
-							<goals>
-								<goal>normalize</goal>
-							</goals>
-							<phase>package</phase>
-						</execution>
-					</executions>
-				</plugin>
 				<plugin>
 					<groupId>org.eclipse.cbi.maven.plugins</groupId>
 					<artifactId>eclipse-jarsigner-plugin</artifactId>
@@ -132,20 +117,6 @@
 							<id>sign</id>
 							<goals>
 								<goal>sign</goal>
-							</goals>
-							<phase>package</phase>
-						</execution>
-					</executions>
-				</plugin>
-				<plugin>
-					<groupId>org.eclipse.tycho.extras</groupId>
-					<artifactId>tycho-pack200b-plugin</artifactId>
-					<version>${tycho-version}</version>
-					<executions>
-						<execution>
-							<id>pack200-pack</id>
-							<goals>
-								<goal>pack</goal>
 							</goals>
 							<phase>package</phase>
 						</execution>
@@ -198,7 +169,6 @@
 								<arch>x86_64</arch>
 							</environment>
 						</environments>
-						<includePackedArtifacts>false</includePackedArtifacts>
 						<dependency-resolution>
 							<!-- <optionalDependencies>ignore</optionalDependencies> -->
 						</dependency-resolution>
@@ -282,22 +252,6 @@
 						<groupId>org.eclipse.tycho</groupId>
 						<artifactId>target-platform-configuration</artifactId>
 						<version>${tycho-version}</version>
-						<configuration>
-							<includePackedArtifacts>true</includePackedArtifacts>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.eclipse.tycho.extras</groupId>
-						<artifactId>tycho-pack200a-plugin</artifactId>
-						<version>${tycho-extras-version}</version>
-						<executions>
-							<execution>
-								<id>pack200-normalize</id>
-								<goals>
-									<goal>normalize</goal>
-								</goals>
-							</execution>
-						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.eclipse.cbi.maven.plugins</groupId>
@@ -308,19 +262,6 @@
 								<id>sign</id>
 								<goals>
 									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.eclipse.tycho.extras</groupId>
-						<artifactId>tycho-pack200b-plugin</artifactId>
-						<version>${tycho-extras-version}</version>
-						<executions>
-							<execution>
-								<id>pack200-pack</id>
-								<goals>
-									<goal>pack</goal>
 								</goals>
 							</execution>
 						</executions>
