@@ -471,9 +471,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_javadocCommentRecord() throws Exception {
-		importProjects("eclipse/java16");
-		IProject proj = WorkspaceHelper.getProject("java16");
+		importProjects("eclipse/java14");
+		IProject proj = WorkspaceHelper.getProject("java14");
 		IJavaProject javaProject = JavaCore.create(proj);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
 		ICompilationUnit unit = null;
 		try {
 			unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Foo.java"));
@@ -515,9 +517,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
-		importProjects("eclipse/java16");
-		IProject proj = WorkspaceHelper.getProject("java16");
+		importProjects("eclipse/java14");
+		IProject proj = WorkspaceHelper.getProject("java14");
 		IJavaProject javaProject = JavaCore.create(proj);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
 		ICompilationUnit unit = null;
 		try {
 			unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Foo.java"));
@@ -1471,7 +1475,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(12);
+		CompletionItem item = items.get(11);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", ResourceUtils.dos2Unix(te));
@@ -1493,7 +1497,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(11);
+		CompletionItem item = items.get(10);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
