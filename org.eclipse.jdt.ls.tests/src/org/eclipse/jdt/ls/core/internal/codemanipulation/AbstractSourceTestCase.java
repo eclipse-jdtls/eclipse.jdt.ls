@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -75,6 +76,7 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 
 	@Before
 	public void setUp() throws Exception {
+		StandardProjectsManager.configureSettings(preferences);
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
 		assertNotNull(fRoot);

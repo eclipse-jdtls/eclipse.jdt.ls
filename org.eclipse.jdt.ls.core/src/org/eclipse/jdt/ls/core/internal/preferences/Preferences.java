@@ -88,7 +88,7 @@ public class Preferences {
 	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";
 	public static final List<String> JAVA_CONFIGURATION_RUNTIMES_DEFAULT;
 	/**
-	 * Specifies the file path to the formatter xml url.
+	 * Specifies the file path or url to the formatter xml url.
 	 */
 	public static final String JAVA_FORMATTER_URL = "java.format.settings.url";
 	/**
@@ -99,6 +99,10 @@ public class Preferences {
 	 * Preference key used to include the comments during the formatting.
 	 */
 	public static final String JAVA_FORMAT_COMMENTS = "java.format.comments.enabled";
+	/**
+	 * Specifies the file path or url to the Java setting.
+	 */
+	public static final String JAVA_SETTINGS_URL = "java.settings.url";
 	/**
 	 * Specifies filter applied on projects to exclude some file system objects
 	 * while populating the resources tree.
@@ -498,6 +502,7 @@ public class Preferences {
 	private List<String> importOrder;
 	private List<String> filteredTypes;
 	private String formatterUrl;
+	private String settingsUrl;
 	private String formatterProfileName;
 	private Collection<IPath> rootPaths;
 	private Collection<IPath> triggerFiles;
@@ -677,6 +682,7 @@ public class Preferences {
 		javaCompletionFavoriteMembers = JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT;
 		javaHome = null;
 		formatterUrl = null;
+		settingsUrl = null;
 		formatterProfileName = null;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
 		filteredTypes = JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
@@ -862,6 +868,9 @@ public class Preferences {
 		String formatterUrl = getString(configuration, JAVA_FORMATTER_URL);
 		prefs.setFormatterUrl(formatterUrl);
 
+		String settingsUrl = getString(configuration, JAVA_SETTINGS_URL);
+		prefs.setSettingsUrl(settingsUrl);
+
 		List<String> resourceFilters = getList(configuration, JAVA_RESOURCE_FILTERS);
 		prefs.setResourceFilters(resourceFilters);
 
@@ -994,6 +1003,11 @@ public class Preferences {
 
 	public Preferences setFormatterUrl(String formatterUrl) {
 		this.formatterUrl = formatterUrl;
+		return this;
+	}
+
+	public Preferences setSettingsUrl(String settingsUrl) {
+		this.settingsUrl = settingsUrl;
 		return this;
 	}
 
@@ -1266,18 +1280,26 @@ public class Preferences {
 		return asURI(formatterUrl);
 	}
 
-	private URI asURI(String formatterUrl) {
-		if (formatterUrl == null || formatterUrl.isBlank()) {
+	public String getSettingsUrl() {
+		return settingsUrl;
+	}
+
+	public URI getSettingsAsURI() {
+		return asURI(settingsUrl);
+	}
+
+	private URI asURI(String url) {
+		if (url == null || url.isBlank()) {
 			return null;
 		}
 		try {
-			URI uri = new URI(ResourceUtils.toClientUri(formatterUrl));
+			URI uri = new URI(ResourceUtils.toClientUri(url));
 			if (!uri.isAbsolute()) {
-				return getURI(formatterUrl);
+				return getURI(url);
 			}
 			return uri;
 		} catch (URISyntaxException e1) {
-			return getURI(formatterUrl);
+			return getURI(url);
 		}
 	}
 

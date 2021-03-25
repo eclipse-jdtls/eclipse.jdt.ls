@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -55,6 +56,8 @@ import org.eclipse.m2e.core.internal.IMavenConstants;
  */
 @SuppressWarnings("restriction")
 public final class ProjectUtils {
+
+	public static final String SETTINGS = ".settings";
 
 	public static final String WORKSPACE_LINK = "_";
 
@@ -311,6 +314,13 @@ public final class ProjectUtils {
 				try {
 					JDTUtils.createFolders(workspaceLinkFolder.getParent(), null);
 					workspaceLinkFolder.createLink(workspaceRoot.toFile().toURI(), IResource.REPLACE, null);
+					File settings = new File(workspaceRoot.toFile(), SETTINGS);
+					if (settings.exists()) {
+						IFolder settingsLinkFolder = invisibleProject.getFolder(SETTINGS);
+						settingsLinkFolder.createLink(settings.toURI(), IResource.REPLACE, null);
+						IJavaProject javaProject = JavaCore.create(invisibleProject);
+						JVMConfigurator.configureJVMSettings(javaProject);
+					}
 				} catch (CoreException e) {
 					invisibleProject.delete(true, null);
 					throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID,

@@ -13,13 +13,16 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import org.codehaus.plexus.util.SelectorUtils;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -64,6 +67,23 @@ public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements
 			if (matchPattern(projectFolder, pattern, resourcePath)) {
 				UpdateClasspathJob.getInstance().updateClasspath(JavaCore.create(project), libraries);
 				return false; // update if included in any pattern
+			}
+		}
+		IPath settings = projectFolder.append(ProjectUtils.SETTINGS);
+		if (settings.equals(resource.getLocation())) {
+			if (CHANGE_TYPE.CREATED.equals(changeType)) {
+				IFolder settingsLinkFolder = project.getFolder(ProjectUtils.SETTINGS);
+				if (!settingsLinkFolder.isLinked()) {
+					settingsLinkFolder.createLink(resource.getLocationURI(), IResource.REPLACE, null);
+					IJavaProject javaProject = JavaCore.create(project);
+					JVMConfigurator.configureJVMSettings(javaProject);
+				}
+			} else if (CHANGE_TYPE.DELETED.equals(changeType)) {
+				if (resource.isLinked()) {
+					resource.delete(IResource.FORCE, monitor);
+					IJavaProject javaProject = JavaCore.create(project);
+					JVMConfigurator.configureJVMSettings(javaProject);
+				}
 			}
 		}
 		return false;
