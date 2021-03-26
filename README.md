@@ -17,7 +17,7 @@ Features
 * Maven pom.xml project support
 * Limited Gradle support (Android projects are not supported)
 * Standalone Java files support
-* As you type reporting of syntax and compilation errors
+* As-you-type reporting of syntax and compilation errors
 * Code completion
 * Javadoc hovers
 * Organize imports
