@@ -30,11 +30,12 @@ Features
 * Code formatting (on-type/selection/file)
 * Code snippets
 * Highlights (semantic highlighting)
-* Annotation processing support (automatic for Maven projects)
 * Semantic selection
 * Diagnostic tags
 * Call Hierarchy
 * Type Hierarchy
+* Annotation processing support (automatic for Maven projects)
+* Automatic source resolution for classes in jars with maven coordinates
 * Extensibility
 
 
