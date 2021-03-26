@@ -22,7 +22,7 @@ Features
 * Javadoc hovers
 * Organize imports
 * Type search
-* Code/Source actions / Refactoring
+* Code actions (quick fixes, source actions & refactorings)
 * Code outline
 * Code folding
 * Code navigation
