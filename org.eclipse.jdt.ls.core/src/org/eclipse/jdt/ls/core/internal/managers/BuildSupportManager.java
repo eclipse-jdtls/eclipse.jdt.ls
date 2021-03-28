@@ -37,7 +37,7 @@ public class BuildSupportManager {
 
 	public static List<IBuildSupport> obtainBuildSupports() {
 		if (instance.lazyLoadedBuildSupportList == null) {
-			instance.lazyLoadedBuildSupportList = ExtensionsExtractor.extractExtensions(IConstants.PLUGIN_ID, "buildSupport");
+			instance.lazyLoadedBuildSupportList = ExtensionsExtractor.extractOrderedExtensions(IConstants.PLUGIN_ID, "buildSupport");
 		}
 
 		return instance.lazyLoadedBuildSupportList;

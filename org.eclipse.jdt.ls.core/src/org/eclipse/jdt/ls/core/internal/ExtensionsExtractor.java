@@ -12,8 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -26,12 +27,18 @@ import org.eclipse.core.runtime.Platform;
  *
  */
 public class ExtensionsExtractor {
-	public static <T> List<T> extractExtensions(final String namespace, final String extensionPointName) {
+	public static <T> List<T> extractOrderedExtensions(final String namespace, final String extensionPointName) {
 
 		final var extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(namespace, extensionPointName);
 		final var configs = extensionPoint.getConfigurationElements();
 
-		return Arrays.stream(configs).map(ExtensionsExtractor::<T>makeExtension).collect(Collectors.toUnmodifiableList());
+		Map<Integer, T> extensionMap = new TreeMap<>();
+
+		for (int i = 0; i < configs.length; i++) {
+				Integer order = Integer.valueOf(configs[i].getAttribute("order"));
+				extensionMap.put(order, makeExtension(configs[i]));
+		}
+		return extensionMap.values().stream().collect(Collectors.toUnmodifiableList());
 	}
 
 	@SuppressWarnings("unchecked")
