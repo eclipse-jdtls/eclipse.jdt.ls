@@ -324,21 +324,12 @@ public class RefactorProcessor {
 					// Inline Constant (static final field)
 					if (RefactoringAvailabilityTesterCore.isInlineConstantAvailable((IField) varBinding.getJavaElement())) {
 						InlineConstantRefactoring refactoring = new InlineConstantRefactoring(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-						if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+						if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences(new NullProgressMonitor(), new RefactoringStatus()).length > 0) {
 							refactoring.setRemoveDeclaration(refactoring.isDeclarationSelected());
 							refactoring.setReplaceAllReferences(refactoring.isDeclarationSelected());
 							CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
 							final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
 							create.run(new NullProgressMonitor());
-							int referenceCount = 0;
-							Change change = create.getChange();
-							Change[] refactoringChanges = ((DynamicValidationRefactoringChange)change).getChildren();
-							for (Change refactoringChange : refactoringChanges) {
-								referenceCount += ((CompilationUnitChange)refactoringChange).getChangeGroups().length;
-							}
-							if (referenceCount <= 1 && refactoring.isDeclarationSelected()) {
-								return true;
-							}
 							String label = ActionMessages.InlineConstantRefactoringAction_label;
 							int relevance = IProposalRelevance.INLINE_LOCAL;
 							ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
