@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
@@ -97,12 +98,7 @@ public class OverrideMethodsOperation {
 		return overridables;
 	}
 
-	// For test purpose
-	public static TextEdit addOverridableMethods(IType type, OverridableMethod[] overridableMethods) {
-		return addOverridableMethods(type, overridableMethods, new NullProgressMonitor());
-	}
-
-	public static TextEdit addOverridableMethods(IType type, OverridableMethod[] overridableMethods, IProgressMonitor monitor) {
+	public static TextEdit addOverridableMethods(IType type, OverridableMethod[] overridableMethods, IJavaElement insertPosition, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null || overridableMethods == null || overridableMethods.length == 0) {
 			return null;
 		}
@@ -119,7 +115,7 @@ public class OverrideMethodsOperation {
 			}
 
 			IMethodBinding[] methodBindings = convertToMethodBindings(astRoot, typeBinding, overridableMethods);
-			return createTextEditForOverridableMethods(type.getCompilationUnit(), astRoot, typeBinding, methodBindings);
+			return createTextEditForOverridableMethods(type.getCompilationUnit(), astRoot, typeBinding, methodBindings, insertPosition);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Add overridable methods", e);
 		}
@@ -127,7 +123,7 @@ public class OverrideMethodsOperation {
 		return null;
 	}
 
-	private static TextEdit createTextEditForOverridableMethods(ICompilationUnit cu, CompilationUnit astRoot, ITypeBinding typeBinding, IMethodBinding[] methodBindings) throws CoreException {
+	private static TextEdit createTextEditForOverridableMethods(ICompilationUnit cu, CompilationUnit astRoot, ITypeBinding typeBinding, IMethodBinding[] methodBindings, IJavaElement insertPosition) throws CoreException {
 		ASTRewrite astRewrite = ASTRewrite.create(astRoot.getAST());
 		ImportRewrite importRewrite = StubUtility.createImportRewrite(astRoot, true);
 		ListRewrite listRewrite = null;
@@ -142,9 +138,16 @@ public class OverrideMethodsOperation {
 
 		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
 		ImportRewriteContext context = new ContextSensitiveImportRewriteContext(astRoot, typeNode.getStartPosition(), importRewrite);
+		ASTNode insertion = StubUtility2Core.getNodeToInsertBefore(listRewrite, insertPosition);
 		for (IMethodBinding methodBinding : methodBindings) {
 			MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(cu, astRewrite, importRewrite, context, methodBinding, typeBinding, settings, typeBinding.isInterface(), typeNode, false);
-			if (stub != null) {
+			if (stub == null) {
+				continue;
+			}
+
+			if (insertion != null) {
+				listRewrite.insertBefore(stub, insertion, null);
+			} else {
 				listRewrite.insertLast(stub, null);
 			}
 		}

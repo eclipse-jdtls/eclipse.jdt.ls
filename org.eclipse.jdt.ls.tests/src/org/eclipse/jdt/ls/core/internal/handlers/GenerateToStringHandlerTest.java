@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,7 +21,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
@@ -33,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
@@ -200,9 +203,129 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		compareSource(expected, unit.getSource());
 	}
 
+	@Test
+	public void testGenerateToStringAfterCursorPosition() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AFTER_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"import java.util.List;\r\n\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	List<String> aList;/*|*/\r\n" +
+					"	String[] arrays;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+
+			ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
+			settings.overrideAnnotation = true;
+			settings.createComments = false;
+			settings.useBlocks = false;
+			settings.stringFormatTemplate = GenerateToStringHandler.DEFAULT_TEMPLATE;
+			settings.toStringStyle = GenerateToStringOperation.STRING_CONCATENATION;
+			settings.skipNulls = false;
+			settings.customArrayToString = true;
+			settings.limitElements = false;
+			settings.customBuilderSettings = new CustomBuilderSettings();
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			generateToString(unit.findPrimaryType(), settings, cursor);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"import java.util.Arrays;\r\n" +
+					"import java.util.List;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	List<String> aList;/*|*/\r\n" +
+					"	@Override\r\n" +
+					"	public String toString() {\r\n" +
+					"		return \"B [aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", id=\" + id + \", name=\" + name + \"]\";\r\n" +
+					"	}\r\n" +
+					"	String[] arrays;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testGenerateToStringBeforeCursorPosition() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_BEFORE_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"import java.util.List;\r\n\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	List<String> aList;/*|*/\r\n" +
+					"	String[] arrays;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+
+			ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
+			settings.overrideAnnotation = true;
+			settings.createComments = false;
+			settings.useBlocks = false;
+			settings.stringFormatTemplate = GenerateToStringHandler.DEFAULT_TEMPLATE;
+			settings.toStringStyle = GenerateToStringOperation.STRING_CONCATENATION;
+			settings.skipNulls = false;
+			settings.customArrayToString = true;
+			settings.limitElements = false;
+			settings.customBuilderSettings = new CustomBuilderSettings();
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			generateToString(unit.findPrimaryType(), settings, cursor);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"import java.util.Arrays;\r\n" +
+					"import java.util.List;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	@Override\r\n" +
+					"	public String toString() {\r\n" +
+					"		return \"B [aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", id=\" + id + \", name=\" + name + \"]\";\r\n" +
+					"	}\r\n" +
+					"	List<String> aList;/*|*/\r\n" +
+					"	String[] arrays;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
 	private void generateToString(IType type, ToStringGenerationSettingsCore settings) throws ValidateEditException, CoreException {
+		generateToString(type, settings, null);
+	}
+
+	private void generateToString(IType type, ToStringGenerationSettingsCore settings, Range cursor) throws ValidateEditException, CoreException {
 		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(type);
-		TextEdit edit = GenerateToStringHandler.generateToString(type, response.fields, settings);
+		// If cursor position is not specified, then insert to the last by default.
+		IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
+		TextEdit edit = GenerateToStringHandler.generateToString(type, response.fields, settings, insertPosition, new NullProgressMonitor());
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(type.getCompilationUnit(), edit, true, null);
 	}

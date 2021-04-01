@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -47,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -133,23 +134,18 @@ public class GenerateConstructorsHandler {
 
 	public static WorkspaceEdit generateConstructors(GenerateConstructorsParams params, IProgressMonitor monitor) {
 		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
-		TextEdit edit = generateConstructors(type, params.constructors, params.fields, monitor);
+		TextEdit edit = generateConstructors(type, params.constructors, params.fields, params.context.getRange(), monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	public static TextEdit generateConstructors(IType type, LspMethodBinding[] constructors, LspVariableBinding[] fields, IProgressMonitor monitor) {
+	public static TextEdit generateConstructors(IType type, LspMethodBinding[] constructors, LspVariableBinding[] fields, Range cursor, IProgressMonitor monitor) {
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = preferences.isCodeGenerationTemplateGenerateComments();
-		return generateConstructors(type, constructors, fields, settings, monitor);
+		return generateConstructors(type, constructors, fields, settings, cursor, monitor);
 	}
 
-	// For test purpose
-	public static TextEdit generateConstructors(IType type, LspMethodBinding[] constructors, LspVariableBinding[] fields, CodeGenerationSettings settings) {
-		return generateConstructors(type, constructors, fields, settings, new NullProgressMonitor());
-	}
-
-	public static TextEdit generateConstructors(IType type, LspMethodBinding[] constructors, LspVariableBinding[] fields, CodeGenerationSettings settings, IProgressMonitor monitor) {
+	public static TextEdit generateConstructors(IType type, LspMethodBinding[] constructors, LspVariableBinding[] fields, CodeGenerationSettings settings, Range cursor, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null || constructors == null || constructors.length == 0) {
 			return null;
 		}
@@ -167,6 +163,8 @@ public class GenerateConstructorsHandler {
 					fieldBindings.put(binding.getKey(), binding);
 				}
 
+				// If cursor position is not specified, then insert to the last by default.
+				IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
 				IVariableBinding[] selectedFields = Arrays.stream(fields).map(field -> fieldBindings.get(field.bindingKey)).filter(binding -> binding != null).toArray(IVariableBinding[]::new);
 				IMethodBinding[] superConstructors = getVisibleConstructors(astRoot, typeBinding);
 				TextEdit textEdit = new MultiTextEdit();
@@ -174,7 +172,7 @@ public class GenerateConstructorsHandler {
 					Optional<IMethodBinding> selectedSuperConstructor = Arrays.stream(superConstructors).filter(superConstructor -> compareConstructor(superConstructor, constructor)).findAny();
 					if (selectedSuperConstructor.isPresent()) {
 						IMethodBinding superConstructor = selectedSuperConstructor.get();
-						AddCustomConstructorOperation constructorOperation = new AddCustomConstructorOperation(astRoot, typeBinding, selectedFields, superConstructor, null, settings, false, false);
+						AddCustomConstructorOperation constructorOperation = new AddCustomConstructorOperation(astRoot, typeBinding, selectedFields, superConstructor, insertPosition, settings, false, false);
 						constructorOperation.setOmitSuper(superConstructor.getParameterTypes().length == 0);
 						constructorOperation.setVisibility(typeBinding.isEnum() ? Modifier.PRIVATE : Modifier.PUBLIC);
 						constructorOperation.run(null);
