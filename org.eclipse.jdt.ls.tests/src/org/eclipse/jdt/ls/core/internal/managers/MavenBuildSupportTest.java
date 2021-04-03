@@ -46,6 +46,7 @@ import org.eclipse.jdt.internal.core.BinaryType;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -226,11 +227,11 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	public void testBatchImport() throws Exception {
 		IProject project = importMavenProject("batch");
 		waitForBackgroundJobs();
-		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
+		assertTrue(ProjectUtils.isMavenProject(project));
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		assertEquals(root.getProjects().length, 14);
 		project = root.getProject("batchchild");
-		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
+		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
 	protected void testNonStandardCompilerId(String projectName) throws Exception {

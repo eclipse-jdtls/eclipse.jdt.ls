@@ -90,10 +90,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/target"); //default maven build dir
 			//@formatter:on
 			for (IProject project : ProjectUtils.getAllProjects()) {
-				// MavenBuildSupport must be available, otherwise the whole system is broken.
-				IBuildSupport buildSupport = BuildSupportManager.find("Maven").get();
-
-				if (!buildSupport.applies(project)) {
+				if (!ProjectUtils.isMavenProject(project)) {
 					String path = project.getLocation().toOSString();
 					mavenDetector.addExclusions(path);
 				}
@@ -154,7 +151,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			} else {
 				IProject project = container.getProject();
 				boolean valid = !ProjectUtils.isJavaProject(project) || project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists();
-				if (BuildSupportManager.find("Maven").get().applies(project) && valid) {
+				if (ProjectUtils.isMavenProject(project) && valid) {
 					projects.add(container.getProject());
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it

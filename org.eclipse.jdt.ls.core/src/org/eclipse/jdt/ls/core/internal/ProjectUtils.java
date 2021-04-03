@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 
 /**
  * @author Fred Bricon
@@ -83,6 +85,14 @@ public final class ProjectUtils {
 		return hasNature(project, JavaCore.NATURE_ID);
 	}
 
+	public static boolean isMavenProject(IProject project) {
+		return hasNature(project, IMavenConstants.NATURE_ID);
+	}
+
+	public static boolean isGradleProject(IProject project) {
+		return hasNature(project, GradleProjectNature.ID);
+	}
+
 	public static boolean isGeneralJavaProject(IProject project) {
 		return isJavaProject(project) && isInternalBuildSupport(BuildSupportManager.find(project).orElse(null));
 	}
@@ -106,11 +116,7 @@ public final class ProjectUtils {
 	}
 
 	public static List<IProject> getGradleProjects() {
-		IBuildSupport buildSupport = BuildSupportManager.find("Gradle").get();
-		return Stream
-			.of(getAllProjects())
-			.filter(buildSupport::applies)
-			.collect(Collectors.toList());
+		return Stream.of(getAllProjects()).filter(ProjectUtils::isGradleProject).collect(Collectors.toList());
 	}
 
 	public static IJavaProject[] getJavaProjects() {

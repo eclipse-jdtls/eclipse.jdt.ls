@@ -25,7 +25,6 @@ import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
-import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
@@ -67,7 +66,7 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean applies(IProject project) {
-		return ProjectUtils.hasNature(project, GradleProjectNature.ID);
+		return ProjectUtils.isGradleProject(project);
 	}
 
 	@Override
@@ -113,7 +112,7 @@ public class GradleBuildSupport implements IBuildSupport {
 	@Override
 	public boolean isBuildFile(IResource resource) {
 		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
-			&& applies(resource.getProject())) {
+			&& ProjectUtils.isGradleProject(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
 					return true;
