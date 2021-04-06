@@ -324,8 +324,7 @@ public class FormatterHandler {
 	 *                    the content to format
 	 * @param options
 	 *                    the Map includes formatter options, If set to
-	 *                    <code>null</code>, then use the current settings from
-	 *                    <code>JavaCore#getOptions</code>.
+	 *                    <code>null</code>, then use the default formatter settings.
 	 * @param version
 	 *                    the version of the formatter options
 	 * @param monitor
@@ -337,11 +336,13 @@ public class FormatterHandler {
 		IDocument document = new Document();
 		document.set(content);
 		Map<String, String> formatOptions = new HashMap<String, String>();
-		if (options != null && version < ProfileVersionerCore.getCurrentVersion()) {
-			formatOptions = ProfileVersionerCore.updateAndComplete(options, version);
-		} else {
+		if (options == null || version == ProfileVersionerCore.getCurrentVersion()) {
 			formatOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
-			formatOptions.putAll(options);
+			if (options != null) {
+				formatOptions.putAll(options);
+			}
+		} else {
+			formatOptions = ProfileVersionerCore.updateAndComplete(options, version);
 		}
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(formatOptions);
 		IRegion region = new Region(0, document.getLength());
