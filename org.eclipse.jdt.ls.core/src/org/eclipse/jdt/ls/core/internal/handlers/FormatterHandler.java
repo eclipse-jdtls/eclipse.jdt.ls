@@ -335,15 +335,7 @@ public class FormatterHandler {
 	public String stringFormatting(String content, Map<String, String> options, int version, IProgressMonitor monitor) {
 		IDocument document = new Document();
 		document.set(content);
-		Map<String, String> formatOptions = new HashMap<String, String>();
-		if (options == null || version == ProfileVersionerCore.getCurrentVersion()) {
-			formatOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
-			if (options != null) {
-				formatOptions.putAll(options);
-			}
-		} else {
-			formatOptions = ProfileVersionerCore.updateAndComplete(options, version);
-		}
+		Map<String, String> formatOptions = (options == null) ? DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap() : ProfileVersionerCore.updateAndComplete(options, version);
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(formatOptions);
 		IRegion region = new Region(0, document.getLength());
 		int kind = CodeFormatter.K_COMPILATION_UNIT;
