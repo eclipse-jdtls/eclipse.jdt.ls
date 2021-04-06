@@ -16,6 +16,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,10 +34,13 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.compiler.env.IModule;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
+import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
+import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
@@ -311,4 +315,41 @@ public class FormatterHandler {
 		return null;
 	}
 
+	/**
+	 * A utility function to format a String with given formatter options.
+	 *
+	 * @see org.eclipse.jdt.core.formatter.CodeFormatterApplication#formatFile(File,
+	 *      CodeFormatter)
+	 * @param content
+	 *                    the content to format
+	 * @param options
+	 *                    the Map includes formatter options, If set to
+	 *                    <code>null</code>, then use the default formatter settings.
+	 * @param version
+	 *                    the version of the formatter options
+	 * @param monitor
+	 *                    the progress monitor
+	 *
+	 * @return the formatted String
+	 */
+	public String stringFormatting(String content, Map<String, String> options, int version, IProgressMonitor monitor) {
+		IDocument document = new Document();
+		document.set(content);
+		Map<String, String> formatOptions = (options == null) ? DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap() : ProfileVersionerCore.updateAndComplete(options, version);
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(formatOptions);
+		IRegion region = new Region(0, document.getLength());
+		int kind = CodeFormatter.K_COMPILATION_UNIT;
+		if (preferenceManager.getPreferences().isJavaFormatComments()) {
+			kind = kind | CodeFormatter.F_INCLUDE_COMMENTS;
+		}
+		TextEdit edit = formatter.format(kind, content, region.getOffset(), region.getLength(), 0, TextUtilities.getDefaultLineDelimiter(document));
+		if (edit != null) {
+			try {
+				edit.apply(document);
+			} catch (Exception e) {
+				// Do nothing
+			}
+		}
+		return document.get();
+	}
 }

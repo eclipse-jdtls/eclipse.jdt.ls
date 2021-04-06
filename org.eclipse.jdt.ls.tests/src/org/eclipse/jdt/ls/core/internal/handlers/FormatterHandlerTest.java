@@ -18,7 +18,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
@@ -786,6 +788,71 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(textResult, newText);
 	}
 
+	@Test
+	public void testStringFormattingWithUpdating() throws Exception {
+		//@formatter:off
+		String text = "package org.sample;\n"
+					+ "\n"
+					+ "    public      class     Baz {public void test1() {Object o = new Object() {};}}  \n";
+		//@formatter:on
+		Map<String, String> options = new HashMap<>();
+		options.put("org.eclipse.jdt.core.formatter.insert_new_line_in_empty_anonymous_type_declaration", "do not insert");
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		String formattedText =  handler.stringFormatting(text, options, 13, monitor);
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "\tpublic void test1() {\n"
+			+ "\t\tObject o = new Object() {};\n"
+			+ "\t}\n"
+			+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
+
+	@Test
+	public void testStringFormatting() throws Exception {
+		//@formatter:off
+		String text = "package org.sample;\n"
+					+ "\n"
+					+ "    public      class     Baz {}  \n";
+		//@formatter:on
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		Map<String, String> options = new HashMap<>();
+		options.put("org.eclipse.jdt.core.formatter.blank_lines_after_package", "3");
+		String formattedText =  handler.stringFormatting(text, options, 21, monitor);
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
+
+	@Test
+	public void testStringFormattingWithDefaultSettings() throws Exception {
+		//@formatter:off
+		String text = "package org.sample;\n"
+					+ "\n"
+					+ "    public      class     Baz {}  \n";
+		//@formatter:on
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		String formattedText =  handler.stringFormatting(text, null, 21, monitor);
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
 
 	@After
 	public void tearDown() {
