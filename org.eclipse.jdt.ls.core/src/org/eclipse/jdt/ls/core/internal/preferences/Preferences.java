@@ -1542,7 +1542,7 @@ public class Preferences {
 	}
 
 	public Preferences setImportOnDemandThreshold(int importOnDemandThreshold) {
-		if (importOnDemandThreshold < 0) {
+		if (importOnDemandThreshold <= 0) {
 			this.importOnDemandThreshold = IMPORTS_ONDEMANDTHRESHOLD_DEFAULT;
 		} else {
 			this.importOnDemandThreshold = importOnDemandThreshold;
@@ -1557,7 +1557,7 @@ public class Preferences {
 	}
 
 	public Preferences setStaticImportOnDemandThreshold(int staticImportOnDemandThreshold) {
-		if (staticImportOnDemandThreshold < 0) {
+		if (staticImportOnDemandThreshold <= 0) {
 			this.staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		} else {
 			this.staticImportOnDemandThreshold = staticImportOnDemandThreshold;
