@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,11 +21,15 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
@@ -42,6 +46,15 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 
 	private void runAndApplyOperation(IType type, boolean generateComments) throws OperationCanceledException, CoreException, MalformedTreeException, BadLocationException {
 		TextEdit edit = runOperation(type, generateComments);
+		ICompilationUnit unit = type.getCompilationUnit();
+		JavaModelUtil.applyEdit(unit, edit, true, null);
+	}
+
+	private void runAndApplyOperation(IType type, boolean generateComments, Range cursor) throws OperationCanceledException, CoreException {
+		// If cursor position is not specified, then insert to the last by default.
+		IJavaElement insertBefore = CodeGenerationUtils.findInsertElement(type, cursor);
+		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments, insertBefore);
+		TextEdit edit = operation.createTextEdit(null);
 		ICompilationUnit unit = type.getCompilationUnit();
 		JavaModelUtil.applyEdit(unit, edit, true, null);
 	}
@@ -614,5 +627,83 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 		/* @formatter:on */
 
 		compareSource(expected, fClassA.getSource());
+	}
+
+	@Test
+	public void testGenerateAfterCursorPosition() throws Exception {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AFTER_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	final String field1 = null;/*|*/\r\n" +
+				"	public B() {\r\n" +
+				"	}\r\n" +
+				"}", true, null);
+			//@formatter:on
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			runAndApplyOperation(unit.findPrimaryType(), true, cursor);
+	
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+							"\r\n" +
+							"public class B {\r\n" +
+							"	final String field1 = null;/*|*/\r\n" +
+							"	/**\r\n" +
+							"	 * @return Returns the field1.\r\n" +
+							"	 */\r\n" +
+							"	public String getField1() {\r\n" +
+							"		return field1;\r\n" +
+							"	}\r\n" +
+							"	public B() {\r\n" +
+							"	}\r\n" +
+							"}";
+			/* @formatter:on */
+	
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testGenerateBeforeCursorPosition() throws Exception {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_BEFORE_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	final String field1 = null;/*|*/\r\n" +
+				"	public B() {\r\n" +
+				"	}\r\n" +
+				"}", true, null);
+			//@formatter:on
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			runAndApplyOperation(unit.findPrimaryType(), true, cursor);
+	
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+							"\r\n" +
+							"public class B {\r\n" +
+							"	/**\r\n" +
+							"	 * @return Returns the field1.\r\n" +
+							"	 */\r\n" +
+							"	public String getField1() {\r\n" +
+							"		return field1;\r\n" +
+							"	}\r\n" +
+							"	final String field1 = null;/*|*/\r\n" +
+							"	public B() {\r\n" +
+							"	}\r\n" +
+							"}";
+			/* @formatter:on */
+	
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
 	}
 }

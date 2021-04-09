@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018-2019 Microsoft Corporation and others.
+* Copyright (c) 2018-2021 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -40,6 +41,7 @@ import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.text.edits.TextEdit;
@@ -50,12 +52,18 @@ public class GenerateGetterSetterOperation {
 	private final IType type;
 	private CompilationUnit astRoot;
 	private boolean generateComments = true;
+	private IJavaElement insertPosition = null; // Insert to the last by default.
 
 	public GenerateGetterSetterOperation(IType type, CompilationUnit astRoot, boolean generateComments) {
+		this(type, astRoot, generateComments, null);
+	}
+
+	public GenerateGetterSetterOperation(IType type, CompilationUnit astRoot, boolean generateComments, IJavaElement insertPosition) {
 		Assert.isNotNull(type);
 		this.type = type;
 		this.astRoot = astRoot;
 		this.generateComments = generateComments;
+		this.insertPosition = insertPosition;
 	}
 
 	public static boolean supportsGetterSetter(IType type) throws JavaModelException {
@@ -124,29 +132,30 @@ public class GenerateGetterSetterOperation {
 			return null;
 		}
 
+		ASTNode insertion = StubUtility2Core.getNodeToInsertBefore(listRewriter, insertPosition);
 		for (AccessorField accessor : accessors) {
-			generateGetterSetterMethods(listRewriter, accessor);
+			generateGetterSetterMethods(listRewriter, accessor, insertion);
 		}
 
 		return astRewrite.rewriteAST();
 	}
 
-	private void generateGetterSetterMethods(ListRewrite listRewriter, AccessorField accessor) throws OperationCanceledException, CoreException {
+	private void generateGetterSetterMethods(ListRewrite listRewriter, AccessorField accessor, ASTNode insertion) throws OperationCanceledException, CoreException {
 		IField field = type.getField(accessor.fieldName);
 		if (field == null) {
 			return;
 		}
 
 		if (accessor.generateGetter && GetterSetterUtil.getGetter(field) == null) {
-			insertMethod(field, listRewriter, AccessorKind.GETTER);
+			insertMethod(field, listRewriter, AccessorKind.GETTER, insertion);
 		}
 
 		if (accessor.generateSetter && GetterSetterUtil.getSetter(field) == null) {
-			insertMethod(field, listRewriter, AccessorKind.SETTER);
+			insertMethod(field, listRewriter, AccessorKind.SETTER, insertion);
 		}
 	}
 
-	private void insertMethod(IField field, ListRewrite rewrite, AccessorKind kind) throws CoreException {
+	private void insertMethod(IField field, ListRewrite rewrite, AccessorKind kind, ASTNode insertion) throws CoreException {
 		IType type = field.getDeclaringType();
 		String delimiter = StubUtility.getLineDelimiterUsed(type);
 		int flags = generateVisibility | (field.getFlags() & Flags.AccStatic);
@@ -162,7 +171,11 @@ public class GenerateGetterSetterOperation {
 		Map<String, String> options = type.getCompilationUnit() != null ? type.getCompilationUnit().getOptions(true) : type.getJavaProject().getOptions(true);
 		String formattedStub = CodeFormatterUtil.format(CodeFormatter.K_CLASS_BODY_DECLARATIONS, stub, 0, delimiter, options);
 		MethodDeclaration declaration = (MethodDeclaration) rewrite.getASTRewrite().createStringPlaceholder(formattedStub, ASTNode.METHOD_DECLARATION);
-		rewrite.insertLast(declaration, null);
+		if (insertion != null) {
+			rewrite.insertBefore(declaration, insertion, null);
+		} else {
+			rewrite.insertLast(declaration, null);
+		}
 	}
 
 	enum AccessorKind {

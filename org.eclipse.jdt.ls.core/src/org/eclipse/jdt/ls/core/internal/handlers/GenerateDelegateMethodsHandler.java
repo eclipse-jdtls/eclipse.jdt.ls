@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
@@ -44,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
@@ -121,16 +123,11 @@ public class GenerateDelegateMethodsHandler {
 		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = preferences.isCodeGenerationTemplateGenerateComments();
-		TextEdit edit = generateDelegateMethods(type, params.delegateEntries, settings, monitor);
+		TextEdit edit = generateDelegateMethods(type, params.delegateEntries, settings, params.context.getRange(), monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	// For test purpose.
-	public static TextEdit generateDelegateMethods(IType type, LspDelegateEntry[] delegateEntries, CodeGenerationSettings settings) {
-		return generateDelegateMethods(type, delegateEntries, settings, new NullProgressMonitor());
-	}
-
-	public static TextEdit generateDelegateMethods(IType type, LspDelegateEntry[] delegateEntries, CodeGenerationSettings settings, IProgressMonitor monitor) {
+	public static TextEdit generateDelegateMethods(IType type, LspDelegateEntry[] delegateEntries, CodeGenerationSettings settings, Range cursor, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null || delegateEntries == null || delegateEntries.length == 0) {
 			return null;
 		}
@@ -158,7 +155,9 @@ public class GenerateDelegateMethodsHandler {
 				.filter(delegateEntry -> delegateEntry != null)
 				.toArray(DelegateEntry[]::new);
 			//@formatter:on
-			AddDelegateMethodsOperation operation = new AddDelegateMethodsOperation(astRoot, selectedDelegateEntries, null, settings, false, false);
+			// If cursor position is not specified, then insert to the last by default.
+			IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
+			AddDelegateMethodsOperation operation = new AddDelegateMethodsOperation(astRoot, selectedDelegateEntries, insertPosition, settings, false, false);
 			operation.run(null);
 			return operation.getResultingEdit();
 		} catch (CoreException e) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -28,11 +28,17 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
 public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
+	@Override
+	protected void initPreferences(Preferences preferences) throws IOException {
+		super.initPreferences(preferences);
+		preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AS_LAST_MEMBER);
+	}
 
 	@Test
 	public void testCheckHashCodeEqualsStatus() throws JavaModelException {
@@ -520,6 +526,136 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());
+	}
+
+	@Test
+	public void testGenerateHashCodeEquals_afterCursor() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AFTER_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"import java.util.List;\r\n\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	double rate;\r\n" +
+					"	Cloneable[] anArray;\r\n" +
+					"	List<String> aList;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+
+			generateHashCodeEquals(unit, "String name", false, true, false, false, false);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"import java.util.Arrays;\r\n" +
+					"import java.util.List;\r\n" +
+					"import java.util.Objects;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	@Override\r\n" +
+					"	public int hashCode() {\r\n" +
+					"		final int prime = 31;\r\n" +
+					"		int result = 1;\r\n" +
+					"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+					"		result = prime * result + Objects.hash(aList, id, name, rate);\r\n" +
+					"		return result;\r\n" +
+					"	}\r\n" +
+					"	@Override\r\n" +
+					"	public boolean equals(Object obj) {\r\n" +
+					"		if (this == obj)\r\n" +
+					"			return true;\r\n" +
+					"		if (obj == null)\r\n" +
+					"			return false;\r\n" +
+					"		if (getClass() != obj.getClass())\r\n" +
+					"			return false;\r\n" +
+					"		B other = (B) obj;\r\n" +
+					"		return Objects.equals(aList, other.aList) && Arrays.deepEquals(anArray, other.anArray) && id == other.id "
+					+ "&& Objects.equals(name, other.name) && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate);\r\n" +
+					"	}\r\n" +
+					"	int id;\r\n" +
+					"	double rate;\r\n" +
+					"	Cloneable[] anArray;\r\n" +
+					"	List<String> aList;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testGenerateHashCodeEquals_beforeCursor() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_BEFORE_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"import java.util.List;\r\n\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	double rate;\r\n" +
+					"	Cloneable[] anArray;\r\n" +
+					"	List<String> aList;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+
+			generateHashCodeEquals(unit, "String name", false, true, false, false, false);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"import java.util.Arrays;\r\n" +
+					"import java.util.List;\r\n" +
+					"import java.util.Objects;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	private static String UUID = \"23434343\";\r\n" +
+					"	@Override\r\n" +
+					"	public int hashCode() {\r\n" +
+					"		final int prime = 31;\r\n" +
+					"		int result = 1;\r\n" +
+					"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+					"		result = prime * result + Objects.hash(aList, id, name, rate);\r\n" +
+					"		return result;\r\n" +
+					"	}\r\n" +
+					"	@Override\r\n" +
+					"	public boolean equals(Object obj) {\r\n" +
+					"		if (this == obj)\r\n" +
+					"			return true;\r\n" +
+					"		if (obj == null)\r\n" +
+					"			return false;\r\n" +
+					"		if (getClass() != obj.getClass())\r\n" +
+					"			return false;\r\n" +
+					"		B other = (B) obj;\r\n" +
+					"		return Objects.equals(aList, other.aList) && Arrays.deepEquals(anArray, other.anArray) && id == other.id "
+					+ "&& Objects.equals(name, other.name) && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate);\r\n" +
+					"	}\r\n" +
+					"	String name;\r\n" +
+					"	int id;\r\n" +
+					"	double rate;\r\n" +
+					"	Cloneable[] anArray;\r\n" +
+					"	List<String> aList;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
 	}
 
 	private void generateHashCodeEquals(ICompilationUnit unit, String hoverOnText, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments)

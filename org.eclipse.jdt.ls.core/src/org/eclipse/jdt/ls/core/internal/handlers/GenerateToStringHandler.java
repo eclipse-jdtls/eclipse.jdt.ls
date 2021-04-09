@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -89,11 +90,13 @@ public class GenerateToStringHandler {
 			return null;
 		}
 
-		TextEdit edit = generateToString(type, params.fields, monitor);
+		// If cursor position is not specified, then insert to the last by default.
+		IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, params.context.getRange());
+		TextEdit edit = generateToString(type, params.fields, insertPosition, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
-	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, IProgressMonitor monitor) {
+	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, IJavaElement insertPosition, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
@@ -116,15 +119,10 @@ public class GenerateToStringHandler {
 			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
 		}
 
-		return generateToString(type, fields, settings, monitor);
+		return generateToString(type, fields, settings, insertPosition, monitor);
 	}
 
-	// For test purpose
-	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings) {
-		return generateToString(type, fields, settings, new NullProgressMonitor());
-	}
-
-	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings, IProgressMonitor monitor) {
+	public static TextEdit generateToString(IType type, LspVariableBinding[] fields, ToStringGenerationSettingsCore settings, IJavaElement insertPosition, IProgressMonitor monitor) {
 		if (type == null) {
 			return null;
 		}
@@ -138,7 +136,7 @@ public class GenerateToStringHandler {
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				IVariableBinding[] selectedFields = JdtDomModels.convertToVariableBindings(typeBinding, fields);
-				GenerateToStringOperation operation = GenerateToStringOperation.createOperation(typeBinding, selectedFields, astRoot, null, settings, false, false);
+				GenerateToStringOperation operation = GenerateToStringOperation.createOperation(typeBinding, selectedFields, astRoot, insertPosition, settings, false, false);
 				operation.run(null);
 				return operation.getResultingEdit();
 			}

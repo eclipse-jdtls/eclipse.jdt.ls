@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017-2020 Microsoft Corporation and others.
+* Copyright (c) 2017-2021 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
@@ -149,7 +150,7 @@ public class SourceAssistProcessor {
 				Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
 			} else {
-				TextEdit toStringEdit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0], monitor);
+				TextEdit toStringEdit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0], CodeGenerationUtils.findInsertElement(type, context.getSelectionOffset()), monitor);
 				Optional<Either<Command, CodeAction>> generateToStringCommand = convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
 						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, toStringEdit);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
@@ -252,7 +253,9 @@ public class SourceAssistProcessor {
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
-				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments());
+				// If cursor position is not specified, then insert to the last by default.
+				IJavaElement insertBefore = CodeGenerationUtils.findInsertElement(type, params.getRange());
+				GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments(), insertBefore);
 				TextEdit edit = operation.createTextEdit(null, accessors);
 				return convertToWorkspaceEditAction(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, edit);
 			} else {
@@ -350,7 +353,7 @@ public class SourceAssistProcessor {
 				return Optional.empty();
 			}
 			if (status.constructors.length == 1 && status.fields.length == 0) {
-				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields, monitor);
+				TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields, params.getRange(), monitor);
 				return convertToWorkspaceEditAction(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, kind, edit);
 			}
 

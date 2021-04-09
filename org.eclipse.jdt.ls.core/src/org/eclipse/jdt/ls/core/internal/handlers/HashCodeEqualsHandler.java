@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -34,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
@@ -81,7 +83,7 @@ public class HashCodeEqualsHandler {
 		boolean useInstanceof = preferences.isHashCodeEqualsTemplateUseInstanceof();
 		boolean useBlocks = preferences.isCodeGenerationTemplateUseBlocks();
 		boolean generateComments = preferences.isCodeGenerationTemplateGenerateComments();
-		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, monitor);
+		TextEdit edit = generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, params.context.getRange(), monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
 
@@ -92,10 +94,10 @@ public class HashCodeEqualsHandler {
 
 	public static TextEdit generateHashCodeEqualsTextEdit(GenerateHashCodeEqualsParams params, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments, IProgressMonitor monitor) {
 		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
-		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, monitor);
+		return generateHashCodeEqualsTextEdit(type, params.fields, params.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, params.context.getRange(), monitor);
 	}
 
-	public static TextEdit generateHashCodeEqualsTextEdit(IType type, LspVariableBinding[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments, IProgressMonitor monitor) {
+	public static TextEdit generateHashCodeEqualsTextEdit(IType type, LspVariableBinding[] fields, boolean regenerate, boolean useJava7Objects, boolean useInstanceof, boolean useBlocks, boolean generateComments, Range cursor, IProgressMonitor monitor) {
 		if (type == null) {
 			return null;
 		}
@@ -111,7 +113,9 @@ public class HashCodeEqualsHandler {
 				CodeGenerationSettings codeGenSettings = new CodeGenerationSettings();
 				codeGenSettings.createComments = generateComments;
 				codeGenSettings.overrideAnnotation = true;
-				GenerateHashCodeEqualsOperation operation = new GenerateHashCodeEqualsOperation(typeBinding, variableBindings, astRoot, null, codeGenSettings, useInstanceof, useJava7Objects, regenerate, false, false);
+				// If cursor position is not specified, then insert to the last by default.
+				IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
+				GenerateHashCodeEqualsOperation operation = new GenerateHashCodeEqualsOperation(typeBinding, variableBindings, astRoot, insertPosition, codeGenSettings, useInstanceof, useJava7Objects, regenerate, false, false);
 				operation.setUseBlocksForThen(useBlocks);
 				operation.run(null);
 				return operation.getResultingEdit();

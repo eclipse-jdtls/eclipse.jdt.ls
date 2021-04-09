@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
@@ -30,6 +31,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
@@ -127,7 +129,7 @@ public class GenerateConstructorsHandlerTest extends AbstractSourceTestCase {
 
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = false;
-		TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings);
+		TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings, null, new NullProgressMonitor());
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(unit, edit, true, null);
 
@@ -173,7 +175,7 @@ public class GenerateConstructorsHandlerTest extends AbstractSourceTestCase {
 
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = false;
-		TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings);
+		TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings, null, new NullProgressMonitor());
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(unit, edit, true, null);
 
@@ -189,5 +191,141 @@ public class GenerateConstructorsHandlerTest extends AbstractSourceTestCase {
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());
+	}
+
+	@Test
+	public void testGenerateConstructorsAfterCursorPosition() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AFTER_CURSOR);
+			//@formatter:off
+			fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	public B(String name) {\r\n" +
+					"	}\r\n" +
+					"	public B(String name, int id) {\r\n" +
+					"	}\r\n" +
+					"	private B() {\r\n" +
+					"	}\r\n" +
+					"}"
+					, true, null);
+			ICompilationUnit unit = fPackageP.createCompilationUnit("C.java", "package p;\r\n" +
+					"\r\n" +
+					"public class C extends B {\r\n" +
+					"	private static String logger;\r\n" +
+					"	private final String uuid = \"123\";\r\n" +
+					"	private final String instance;/*|*/\r\n" +
+					"	private String address;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String address");
+			CheckConstructorsResponse response = GenerateConstructorsHandler.checkConstructorsStatus(params);
+			assertNotNull(response.constructors);
+			assertEquals(2, response.constructors.length);
+			assertNotNull(response.fields);
+			assertEquals(2, response.fields.length);
+
+			CodeGenerationSettings settings = new CodeGenerationSettings();
+			settings.createComments = false;
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings, cursor, new NullProgressMonitor());
+			assertNotNull(edit);
+			JavaModelUtil.applyEdit(unit, edit, true, null);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"public class C extends B {\r\n" +
+					"	private static String logger;\r\n" +
+					"	private final String uuid = \"123\";\r\n" +
+					"	private final String instance;/*|*/\r\n" +
+					"	public C(String name, String instance, String address) {\r\n" +
+					"		super(name);\r\n" +
+					"		this.instance = instance;\r\n" +
+					"		this.address = address;\r\n" +
+					"	}\r\n" +
+					"	public C(String name, int id, String instance, String address) {\r\n" +
+					"		super(name, id);\r\n" +
+					"		this.instance = instance;\r\n" +
+					"		this.address = address;\r\n" +
+					"	}\r\n" +
+					"	private String address;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testGenerateConstructorsBeforeCursorPosition() throws ValidateEditException, CoreException, IOException {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_BEFORE_CURSOR);
+			//@formatter:off
+			fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+					"\r\n" +
+					"public class B {\r\n" +
+					"	public B(String name) {\r\n" +
+					"	}\r\n" +
+					"	public B(String name, int id) {\r\n" +
+					"	}\r\n" +
+					"	private B() {\r\n" +
+					"	}\r\n" +
+					"}"
+					, true, null);
+			ICompilationUnit unit = fPackageP.createCompilationUnit("C.java", "package p;\r\n" +
+					"\r\n" +
+					"public class C extends B {\r\n" +
+					"	private static String logger;\r\n" +
+					"	private final String uuid = \"123\";\r\n" +
+					"	private final String instance;/*|*/\r\n" +
+					"	private String address;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String address");
+			CheckConstructorsResponse response = GenerateConstructorsHandler.checkConstructorsStatus(params);
+			assertNotNull(response.constructors);
+			assertEquals(2, response.constructors.length);
+			assertNotNull(response.fields);
+			assertEquals(2, response.fields.length);
+
+			CodeGenerationSettings settings = new CodeGenerationSettings();
+			settings.createComments = false;
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			TextEdit edit = GenerateConstructorsHandler.generateConstructors(unit.findPrimaryType(), response.constructors, response.fields, settings, cursor, new NullProgressMonitor());
+			assertNotNull(edit);
+			JavaModelUtil.applyEdit(unit, edit, true, null);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+					"\r\n" +
+					"public class C extends B {\r\n" +
+					"	private static String logger;\r\n" +
+					"	private final String uuid = \"123\";\r\n" +
+					"	public C(String name, String instance, String address) {\r\n" +
+					"		super(name);\r\n" +
+					"		this.instance = instance;\r\n" +
+					"		this.address = address;\r\n" +
+					"	}\r\n" +
+					"	public C(String name, int id, String instance, String address) {\r\n" +
+					"		super(name, id);\r\n" +
+					"		this.instance = instance;\r\n" +
+					"		this.address = address;\r\n" +
+					"	}\r\n" +
+					"	private final String instance;/*|*/\r\n" +
+					"	private String address;\r\n" +
+					"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
 	}
 }

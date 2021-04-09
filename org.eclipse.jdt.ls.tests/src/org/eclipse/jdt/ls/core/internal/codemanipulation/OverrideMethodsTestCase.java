@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,10 +18,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
@@ -29,7 +31,10 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperation.OverridableMethod;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
@@ -266,12 +271,104 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 		checkMethods(new String[] { "method2" }, methods);
 	}
 
+	@Test
+	public void testGenerateAfterCursorPosition() throws Exception {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_AFTER_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("Test.java", "package p;\r\n" +
+				"\r\n" +
+				"public class Test implements Cloneable {\r\n" +
+				"	final String field1 = null;/*|*/\r\n" +
+				"	public Test() {\r\n" +
+				"	}\r\n" +
+				"}", true, null);
+			//@formatter:on
+			IType testClass = unit.getType("Test");
+			List<OverridableMethod> overridableMethods = getOverridableMethods(testClass);
+			checkUnimplementedMethods(new String[] { "clone()" }, overridableMethods);
+
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			List<OverridableMethod> generatedMethods = overridableMethods.stream().filter((method) -> Objects.equals(method.name, "clone")).collect(Collectors.toList());
+			addAndApplyOverridableMethods(testClass, generatedMethods, cursor);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+							"\r\n" +
+							"public class Test implements Cloneable {\r\n" +
+							"	final String field1 = null;/*|*/\r\n" +
+							"	@Override\r\n" +
+							"	protected Object clone() throws CloneNotSupportedException {\r\n" +
+							"		// TODO Auto-generated method stub\r\n" +
+							"		return super.clone();\r\n" +
+							"	}\r\n" +
+							"	public Test() {\r\n" +
+							"	}\r\n" +
+							"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testGenerateBeforeCursorPosition() throws Exception {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			preferences.setCodeGenerationInsertionLocation(CodeGenerationUtils.INSERT_BEFORE_CURSOR);
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("Test.java", "package p;\r\n" +
+				"\r\n" +
+				"public class Test implements Cloneable {\r\n" +
+				"	final String field1 = null;/*|*/\r\n" +
+				"	public Test() {\r\n" +
+				"	}\r\n" +
+				"}", true, null);
+			//@formatter:on
+			IType testClass = unit.getType("Test");
+			List<OverridableMethod> overridableMethods = getOverridableMethods(testClass);
+			checkUnimplementedMethods(new String[] { "clone()" }, overridableMethods);
+
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
+			List<OverridableMethod> generatedMethods = overridableMethods.stream().filter((method) -> Objects.equals(method.name, "clone")).collect(Collectors.toList());
+			addAndApplyOverridableMethods(testClass, generatedMethods, cursor);
+
+			/* @formatter:off */
+			String expected = "package p;\r\n" +
+							"\r\n" +
+							"public class Test implements Cloneable {\r\n" +
+							"	@Override\r\n" +
+							"	protected Object clone() throws CloneNotSupportedException {\r\n" +
+							"		// TODO Auto-generated method stub\r\n" +
+							"		return super.clone();\r\n" +
+							"	}\r\n" +
+							"	final String field1 = null;/*|*/\r\n" +
+							"	public Test() {\r\n" +
+							"	}\r\n" +
+							"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
 	private List<OverridableMethod> getOverridableMethods(IType type) {
 		return OverrideMethodsOperation.listOverridableMethods(type);
 	}
 
 	private void addAndApplyOverridableMethods(IType type, List<OverridableMethod> overridableMethods) throws ValidateEditException, CoreException {
-		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, overridableMethods.toArray(new OverridableMethod[overridableMethods.size()]));
+		addAndApplyOverridableMethods(type, overridableMethods, null);
+	}
+
+	private void addAndApplyOverridableMethods(IType type, List<OverridableMethod> overridableMethods, Range cursor) throws ValidateEditException, CoreException {
+		// If cursor position is not specified, then insert to the last by default.
+		IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
+		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, overridableMethods.toArray(new OverridableMethod[overridableMethods.size()]), insertPosition, new NullProgressMonitor());
 		if (edit == null) {
 			return;
 		}

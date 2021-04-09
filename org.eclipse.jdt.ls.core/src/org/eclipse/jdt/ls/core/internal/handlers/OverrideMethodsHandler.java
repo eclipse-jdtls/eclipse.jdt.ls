@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Microsoft Corporation and others.
+ * Copyright (c) 2019-2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperation.OverridableMethod;
@@ -35,7 +36,12 @@ public class OverrideMethodsHandler {
 
 	public static WorkspaceEdit addOverridableMethods(AddOverridableMethodParams params, IProgressMonitor monitor) {
 		IType type = SourceAssistProcessor.getSelectionType(params.context, monitor);
-		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, params.overridableMethods, monitor);
+		IJavaElement insertPosition = null; // Insert to the last by default.
+		if (type != null && params.context != null) {
+			// If cursor position is not specified, then insert to the last by default.
+			insertPosition = CodeGenerationUtils.findInsertElement(type, params.context.getRange());
+		}
+		TextEdit edit = OverrideMethodsOperation.addOverridableMethods(type, params.overridableMethods, insertPosition, monitor);
 		if (edit == null) {
 			return null;
 		}
