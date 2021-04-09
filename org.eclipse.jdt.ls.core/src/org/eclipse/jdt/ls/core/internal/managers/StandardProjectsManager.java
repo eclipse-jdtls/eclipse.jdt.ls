@@ -18,17 +18,22 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -41,7 +46,9 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISaveContext;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -58,6 +65,10 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.launching.AbstractVMInstall;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -211,21 +222,46 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (uriString == null) {
 			return;
 		}
-		IResource resource = JDTUtils.getFileOrFolder(uriString);
-		if (resource == null) {
-			return;
-		}
-		URI formatterUri = preferenceManager.getPreferences().getFormatterAsURI();
-		if (formatterUri != null) {
+		String settingsUrl = preferenceManager.getPreferences().getSettingsUrl();
+		if (settingsUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
 			URI uri = JDTUtils.toURI(uriString);
-			if (uri != null && uri.equals(formatterUri) && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+			List<URI> uris = getURIs(settingsUrl);
+			boolean changed = false;
+			for (URI settingsURI : uris) {
+				if (settingsURI.equals(uri)) {
+					changed = true;
+					break;
+				}
+			}
+			if (changed) {
+				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
+					registerWatchers();
+				}
+				configureSettings(preferenceManager.getPreferences());
+			}
+		}
+		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
+		if (formatterUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+			URI uri = JDTUtils.toURI(uriString);
+			List<URI> uris = getURIs(formatterUrl);
+			boolean changed = false;
+			for (URI formatterUri : uris) {
+				if (formatterUri.equals(uri)) {
+					changed = true;
+					break;
+				}
+			}
+			if (changed) {
 				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
 					registerWatchers();
 				}
 				FormatterManager.configureFormatter(preferenceManager.getPreferences());
 			}
 		}
-
+		IResource resource = JDTUtils.getFileOrFolder(uriString);
+		if (resource == null) {
+			return;
+		}
 		try {
 			Optional<IBuildSupport> bs = getBuildSupport(resource.getProject());
 			if (bs.isPresent()) {
@@ -255,6 +291,57 @@ public class StandardProjectsManager extends ProjectsManager {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
+	}
+
+	public static void configureSettings(Preferences preferences) {
+		URI settingsUri = preferences.getSettingsAsURI();
+		Properties properties = null;
+		if (settingsUri != null) {
+			try (InputStream inputStream = settingsUri.toURL().openStream()) {
+				properties = new Properties();
+				properties.load(inputStream);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				return;
+			}
+		}
+		initializeDefaultOptions(preferences);
+		Hashtable<String, String> javaOptions = JavaCore.getOptions();
+		if (properties != null && !properties.isEmpty()) {
+			properties.forEach((k, v) -> {
+				if (k instanceof String && v instanceof String) {
+					k = ((String) k).replace("/instance/", "");
+					if (javaOptions.get(k) != null) {
+						javaOptions.put((String) k, (String) v);
+					}
+				}
+			});
+		}
+		JavaCore.setOptions(javaOptions);
+		new WorkspaceJob("Clean workspace...") {
+
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
+				return Status.OK_STATUS;
+			}
+		}.schedule();
+	}
+
+	private static void initializeDefaultOptions(Preferences preferences) {
+		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
+		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
+		if (defaultVM instanceof AbstractVMInstall) {
+			AbstractVMInstall jvm = (AbstractVMInstall) defaultVM;
+			long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+			String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
+			JavaCore.setComplianceOptions(compliance, defaultOptions);
+		} else {
+			JavaCore.setComplianceOptions(JavaCore.VERSION_11, defaultOptions);
+		}
+		JavaCore.setOptions(defaultOptions);
+		PreferenceManager.initialize();
+		preferences.updateTabSizeInsertSpaces(defaultOptions);
 	}
 
 	@Override
@@ -350,6 +437,7 @@ public class StandardProjectsManager extends ProjectsManager {
 							for (String pattern: libraries) {
 								patterns.add(ProjectUtils.resolveGlobPath(projectFolder, pattern).toPortableString());
 							}
+							patterns.add("**/.settings");
 						}
 					}
 				}
@@ -357,23 +445,31 @@ public class StandardProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
-			URI formatter = preferenceManager.getPreferences().getFormatterAsURI();
-			if (formatter != null && "file".equals(formatter.getScheme())) {
-				File file = new File(formatter);
-				if (file != null && file.isFile()) {
-					IPath formatterPath = new Path(file.getAbsolutePath());
-					if (!isContainedIn(formatterPath, sources)) {
-						sources.add(formatterPath);
-					}
-				}
-			}
 			patterns.addAll(sources.stream().map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
-
+			sources.clear();
+			URI formatter = preferenceManager.getPreferences().getFormatterAsURI();
+			if (formatter == null && preferenceManager.getPreferences().getFormatterUrl() != null) {
+				List<URI> uris = getURIs(preferenceManager.getPreferences().getFormatterUrl());
+				for (URI uri : uris) {
+					addWatcher(uri, sources);
+				}
+			} else {
+				addWatcher(formatter, sources);
+			}
+			URI settings = preferenceManager.getPreferences().getSettingsAsURI();
+			if (settings == null && preferenceManager.getPreferences().getSettingsUrl() != null) {
+				List<URI> uris = getURIs(preferenceManager.getPreferences().getSettingsUrl());
+				for (URI uri : uris) {
+					addWatcher(uri, sources);
+				}
+			} else {
+				addWatcher(settings, sources);
+			}
+			patterns.addAll(sources.stream().map(p -> ResourceUtils.toGlobPattern(p, false)).collect(Collectors.toList()));
 			for (String pattern : patterns) {
 				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
-
 			// Watch on project root folders.
 			for (IProject project : projects) {
 				if (ProjectUtils.isVisibleProject(project) && project.exists()) {
@@ -396,6 +492,53 @@ public class StandardProjectsManager extends ProjectsManager {
 		return Collections.emptyList();
 	}
 
+	private List<URI> getURIs(String url) {
+		if (url == null) {
+			return Collections.emptyList();
+		}
+		List<URI> result = new ArrayList<>();
+		URI uri;
+		try {
+			uri = new URI(ResourceUtils.toClientUri(url));
+		} catch (URISyntaxException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			return result;
+		}
+		if (uri.isAbsolute()) {
+			if ("file".equals(uri.getScheme())) {
+				url = Path.fromOSString(Paths.get(uri).toString()).toString();
+			} else {
+				result.add(uri);
+				return result;
+			}
+		}
+		if (url.startsWith("/")) {
+			uri = new File(url).toURI();
+			result.add(uri);
+		} else {
+			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+			if (rootPaths != null) {
+				for (IPath rootPath : rootPaths) {
+					File f = new File(rootPath.toOSString(), url);
+					result.add(f.toURI());
+				}
+			}
+		}
+		return result;
+	}
+
+	private void addWatcher(URI uri, Set<IPath> sources) {
+		if (uri != null && "file".equals(uri.getScheme())) {
+			File file = new File(uri);
+			if (file != null) {
+				IPath path = new Path(file.getAbsolutePath());
+				if (!isContainedIn(path, sources)) {
+					sources.add(path);
+				}
+			}
+		}
+	}
+
 	@Override
 	public void registerListeners() {
 		if (this.preferenceChangeListener == null) {
@@ -403,8 +546,17 @@ public class StandardProjectsManager extends ProjectsManager {
 				@Override
 				public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
 					if (!oldPreferences.getReferencedLibraries().equals(newPreferences.getReferencedLibraries())) {
-						registerWatcherJob.schedule(1000L);
+						registerWatcherJob.schedule(100L);
 						UpdateClasspathJob.getInstance().updateClasspath();
+					}
+					if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
+						registerWatcherJob.schedule(100L);
+						if (!Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
+							configureSettings(newPreferences);
+						}
+						if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl())) {
+							FormatterManager.configureFormatter(newPreferences);
+						}
 					}
 					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
 						try {

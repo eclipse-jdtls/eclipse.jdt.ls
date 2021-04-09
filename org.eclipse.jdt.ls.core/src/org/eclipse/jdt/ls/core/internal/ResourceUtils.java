@@ -285,10 +285,13 @@ public final class ResourceUtils {
 		}
 
 		if (recursive) {
-			if (!globPattern.endsWith("/")) {
-				globPattern += "/";
+			File file = path.toFile();
+			if (!file.isFile()) {
+				if (!globPattern.endsWith("/")) {
+					globPattern += "/";
+				}
+				globPattern += "**";
 			}
-			globPattern += "**";
 		}
 
 		return globPattern;
