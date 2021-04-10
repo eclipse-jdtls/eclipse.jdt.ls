@@ -428,9 +428,16 @@ public final class ProjectUtils {
 	public static IPath detectSources(Path file) {
 		String filename = file.getFileName().toString();
 		//better approach would be to (also) resolve sources using Maven central, or anything smarter really
-		String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + SOURCE_JAR_SUFFIX;
-		Path sourcePath = file.getParent().resolve(sourceName);
-		return Files.isRegularFile(sourcePath) ? new org.eclipse.core.runtime.Path(sourcePath.toString()) : null;
+
+		// "java.references.detectSourcesJarSuffix" : ["-sources.jar", "_src.jar"];
+		List<String> detectSourcesJarSuffix = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getDetectSourcesJarSuffix();
+
+		for (String source_jar_suffix : detectSourcesJarSuffix) {
+			String sourceName = filename.substring(0, filename.lastIndexOf(JAR_SUFFIX)) + source_jar_suffix;
+			Path sourcePath = file.getParent().resolve(sourceName);
+			if(Files.isRegularFile(sourcePath))
+				return new org.eclipse.core.runtime.Path(sourcePath.toString());
+		}
 	}
 
 	private static boolean isBinary(Path file) {

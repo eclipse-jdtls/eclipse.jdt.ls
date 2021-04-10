@@ -390,6 +390,8 @@ public class Preferences {
 	public static final String JAVA_TEMPLATES_FILEHEADER = "java.templates.fileHeader";
 	// Specifies the type comment snippets for new Java type.
 	public static final String JAVA_TEMPLATES_TYPECOMMENT = "java.templates.typeComment";
+	// Specifies the source suffix array to a Java libraries.
+	public static final String JAVA_REFERENCES_DETECTSOURCESJARSUFFIX = "java.references.detectSourcesJarSuffix";
 
 	/**
 	 * The preferences for generating toString method.
@@ -516,6 +518,7 @@ public class Preferences {
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 	private List<String> resourceFilters;
 
+	private List<String> detectSourcesJarSuffix = new LinkedList<>();
 	private List<String> fileHeaderTemplate = new LinkedList<>();
 	private List<String> typeCommentTemplate = new LinkedList<>();
 	private boolean insertSpaces;
@@ -970,6 +973,9 @@ public class Preferences {
 		prefs.setIncludeAccessors(includeAccessors);
 		boolean includeDecompiledSources = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES, true);
 		prefs.setIncludeDecompiledSources(includeDecompiledSources);
+
+		List<String> detectSourcesJarSuffix = getList(configuration, JAVA_REFERENCES_DETECTSOURCESJARSUFFIX);
+		prefs.setDetectSourcesJarSuffix(detectSourcesJarSuffix);
 		return prefs;
 	}
 
@@ -1699,5 +1705,13 @@ public class Preferences {
 			options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, String.valueOf(tabSize));
 		}
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
+	}
+
+	public List<String> getDetectSourcesJarSuffix() {
+		return detectSourcesJarSuffix;
+	}
+
+	public void setDetectSourcesJarSuffix(List<String> detectSourcesJarSuffix) {
+		this.detectSourcesJarSuffix = detectSourcesJarSuffix;
 	}
 }
