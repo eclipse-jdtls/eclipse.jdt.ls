@@ -70,9 +70,9 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testFilePath() throws Exception {
-		assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
-		assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
-		testMarkers(1);
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		testMarkers(0);
 		try {
 			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
 			URL settingsUrl = bundle.getEntry("/formatter/settings.prefs");
@@ -83,17 +83,17 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 			StandardProjectsManager.configureSettings(preferences);
 			assertTrue(preferences.getSettingsAsURI().isAbsolute());
 			JobHelpers.waitForJobsToComplete();
-			assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
-			assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
-			testMarkers(0);
+			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+			testMarkers(1);
 		} finally {
 			JavaCore.setOptions(options);
 			preferences.setSettingsUrl(null);
 			StandardProjectsManager.configureSettings(preferences);
 		}
-		assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
 		JobHelpers.waitForJobsToComplete();
-		testMarkers(1);
+		testMarkers(0);
 	}
 
 	private void testMarkers(int count) throws JavaModelException, CoreException {
@@ -104,21 +104,21 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testRelativeFilePath() throws Exception {
-		assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
-		assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
 		try {
 			String settingsUrl = "../../formatter/settings.prefs";
 			preferences.setSettingsUrl(settingsUrl);
 			StandardProjectsManager.configureSettings(preferences);
 			assertTrue(preferences.getSettingsAsURI().isAbsolute());
-			assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
-			assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
 		} finally {
 			JavaCore.setOptions(options);
 			preferences.setSettingsUrl(null);
 			StandardProjectsManager.configureSettings(preferences);
 		}
-		assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
 	}
 
 }
