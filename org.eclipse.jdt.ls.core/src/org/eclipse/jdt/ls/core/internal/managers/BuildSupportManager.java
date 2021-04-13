@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -50,8 +48,6 @@ public class BuildSupportManager {
 	public static Optional<IBuildSupport> find(String buildToolName) {
 		return instance.find(bs -> bs.buildToolName().equalsIgnoreCase(buildToolName));
 	}
-
-	/////////
 
 	private Optional<IBuildSupport> find(Predicate<? super IBuildSupport> predicate) {
 		return obtainBuildSupports().stream().filter(predicate).findFirst();

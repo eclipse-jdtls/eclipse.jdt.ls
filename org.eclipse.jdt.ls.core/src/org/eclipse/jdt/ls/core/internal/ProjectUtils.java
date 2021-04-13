@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,8 +31,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.eclipse.core.resources.ICommand;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
@@ -99,7 +100,7 @@ public final class ProjectUtils {
 
 	public static boolean isInternalBuildSupport(IBuildSupport buildSupport) {
 		return buildSupport != null && Arrays.stream(InternalBuildSupports.values())
-												.anyMatch(bsn -> buildSupport.buildToolName().equals(bsn.toString()));
+				.anyMatch(bsn -> Objects.equals(buildSupport.buildToolName(), bsn.toString()));
 	}
 
 	public static String getJavaSourceLevel(IProject project) {
