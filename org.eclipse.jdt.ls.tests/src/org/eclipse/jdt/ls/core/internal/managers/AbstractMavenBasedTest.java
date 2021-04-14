@@ -53,7 +53,7 @@ public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBase
 
 	protected void assertIsMavenProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Maven nature", ProjectUtils.isMavenProject(project));
+		assertTrue(project.getName() + " is missing the Maven nature", ProjectUtils.isMavenProject(project));
 	}
 
 	protected String comment(String s, String from, String to) {

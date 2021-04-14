@@ -14,7 +14,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
+import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
 import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
 import org.eclipse.buildship.core.internal.workspace.InternalGradleBuild;
@@ -40,6 +43,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -56,6 +60,7 @@ public class GradleBuildSupport implements IBuildSupport {
 	public static final String GRADLE_SUFFIX = ".gradle";
 	public static final String GRADLE_PROPERTIES = "gradle.properties";
 	public static final List<String> WATCH_FILE_PATTERNS = Arrays.asList("**/*.gradle", "**/gradle.properties");
+	public static final String UNSUPPORTED_ON_GRADLE = "Unsupported operation. Please use build.gradle file to manage the source directories of gradle project.";
 
 	private static IPreferencesChangeListener listener = new GradlePreferenceChangeListener();
 
@@ -103,10 +108,11 @@ public class GradleBuildSupport implements IBuildSupport {
 		}
 		return false;
 	}
+
 	@Override
 	public boolean isBuildFile(IResource resource) {
 		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
-				&& ProjectUtils.isGradleProject(resource.getProject())) {
+			&& ProjectUtils.isGradleProject(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
 					return true;
@@ -185,4 +191,94 @@ public class GradleBuildSupport implements IBuildSupport {
 	public void unregisterPreferencesChangeListener(PreferenceManager preferenceManager) throws CoreException {
 		preferenceManager.removePreferencesChangeListener(listener);
 	}
+
+	@Override
+	public String buildToolName() {
+		return "Gradle";
+	}
+
+	@Override
+	public String unsupportedOperationMessage() {
+		return UNSUPPORTED_ON_GRADLE;
+	}
+
+	@Override
+	public boolean hasSpecificDeleteProjectLogic() {
+		return true;
+	}
+
+	@Override
+	public void deleteInvalidProjects(Collection<IPath> rootPaths, ArrayList<IProject> deleteProjectCandates, IProgressMonitor monitor) {
+		List<IProject> validGradleProjects = new ArrayList<>();
+		List<IProject> suspiciousGradleProjects = new ArrayList<>();
+
+		for (IProject project : deleteProjectCandates) {
+			if (applies(project)) {
+				if (ResourceUtils.isContainedIn(project.getLocation(), rootPaths)) {
+					validGradleProjects.add(project);
+				} else {
+					suspiciousGradleProjects.add(project);
+				}
+			}
+
+		}
+
+		List<IProject> unrelatedProjects = findUnrelatedGradleProjects(suspiciousGradleProjects, validGradleProjects);
+		unrelatedProjects.forEach((project) -> {
+			try {
+				project.delete(false, true, monitor);
+			} catch (CoreException e1) {
+				JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
+			}
+		});
+	}
+
+	/**
+	 * Find those gradle projects not referenced by any gradle project in the
+	 * current workspace.
+	 */
+	private List<IProject> findUnrelatedGradleProjects(List<IProject> suspiciousProjects, List<IProject> validProjects) {
+		suspiciousProjects.sort((IProject p1, IProject p2) -> p1.getLocation().toOSString().length() - p2.getLocation().toOSString().length());
+
+		List<IProject> unrelatedCandidates = new ArrayList<>();
+		Collection<IPath> validSubPaths = new ArrayList<>();
+		for (IProject suspiciousProject : suspiciousProjects) {
+			if (validSubPaths.contains(suspiciousProject.getFullPath().makeRelative())) {
+				continue;
+			}
+
+			// Check whether the suspicious gradle project is the parent project of the opening project.
+			boolean isParentProject = false;
+			Collection<IPath> subpaths = null;
+			PersistentModel model = CorePlugin.modelPersistence().loadModel(suspiciousProject);
+			if (model.isPresent()) {
+				subpaths = model.getSubprojectPaths();
+				if (!subpaths.isEmpty()) {
+					for (IProject validProject : validProjects) {
+						if (subpaths.contains(validProject.getFullPath().makeRelative())) {
+							isParentProject = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (isParentProject) {
+				validSubPaths.addAll(subpaths);
+			} else {
+				unrelatedCandidates.add(suspiciousProject);
+			}
+		}
+
+		List<IProject> result = new ArrayList<>();
+		// Exclude those projects which are the subprojects of the verified parent project.
+		for (IProject candidate : unrelatedCandidates) {
+			if (!validSubPaths.contains(candidate.getFullPath().makeRelative())) {
+				result.add(candidate);
+			}
+		}
+
+		return result;
+	}
+
 }

@@ -22,4 +22,9 @@ public class DefaultProjectBuildSupport extends EclipseBuildSupport implements I
 		return JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(project);
 	}
 
+	@Override
+	public String buildToolName() {
+		return InternalBuildSupports.DEFAULT.toString();
+	}
+
 }

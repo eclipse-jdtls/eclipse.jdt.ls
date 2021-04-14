@@ -43,7 +43,7 @@ public abstract class AbstractGradleBasedTest extends AbstractProjectsManagerBas
 
 	protected void assertIsGradleProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Gradle nature", ProjectUtils.isGradleProject(project));
+		assertTrue(project.getName() + " is missing the Gradle nature", ProjectUtils.isGradleProject(project));
 	}
 
 }

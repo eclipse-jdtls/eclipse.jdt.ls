@@ -48,6 +48,7 @@ import org.eclipse.m2e.jdt.internal.launch.MavenRuntimeClasspathProvider;
  */
 public class MavenBuildSupport implements IBuildSupport {
 
+	public static final String UNSUPPORTED_ON_MAVEN = "Unsupported operation. Please use pom.xml file to manage the source directories of maven project.";
 	private static final List<String> WATCH_FILE_PATTERNS = Collections.singletonList("**/pom.xml");
 
 	private IProjectConfigurationManager configurationManager;
@@ -153,6 +154,16 @@ public class MavenBuildSupport implements IBuildSupport {
 	@Override
 	public List<String> getWatchPatterns() {
 		return WATCH_FILE_PATTERNS;
+	}
+
+	@Override
+	public String buildToolName() {
+		return "Maven";
+	}
+
+	@Override
+	public String unsupportedOperationMessage() {
+		return UNSUPPORTED_ON_MAVEN;
 	}
 
 }

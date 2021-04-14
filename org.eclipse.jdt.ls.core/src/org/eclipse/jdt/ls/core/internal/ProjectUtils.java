@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,6 +49,9 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
+import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
+import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -91,7 +95,12 @@ public final class ProjectUtils {
 	}
 
 	public static boolean isGeneralJavaProject(IProject project) {
-		return isJavaProject(project) && !isMavenProject(project) && !isGradleProject(project);
+		return isJavaProject(project) && isInternalBuildSupport(BuildSupportManager.find(project).orElse(null));
+	}
+
+	public static boolean isInternalBuildSupport(IBuildSupport buildSupport) {
+		return buildSupport != null && Arrays.stream(InternalBuildSupports.values())
+				.anyMatch(bsn -> Objects.equals(buildSupport.buildToolName(), bsn.toString()));
 	}
 
 	public static String getJavaSourceLevel(IProject project) {

@@ -33,10 +33,10 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
+import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
 
@@ -142,7 +142,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	public void testAmbiguousStaticImports() throws Exception {
 		importProjects("maven/salut4");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
-		assertTrue(ProjectUtils.isMavenProject(project));
+		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
 		try {
 			List<String> list = new ArrayList<>();
