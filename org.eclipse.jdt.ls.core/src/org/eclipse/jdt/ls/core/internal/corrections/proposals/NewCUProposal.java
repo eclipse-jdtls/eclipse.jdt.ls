@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -268,11 +269,10 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 			TextEdit edit = constructEnclosingTypeEdit(parentCU);
 			cuChange.setEdit(edit);
 			return cuChange;
-		} else if (fTypeContainer instanceof IPackageFragment) {
+		} else if (fTypeContainer instanceof IPackageFragment && ((IPackageFragment) fTypeContainer).getKind() == IPackageFragmentRoot.K_SOURCE) {
 			String name = ASTNodes.getSimpleNameIdentifier(fNode);
 			ICompilationUnit parentCU = ((IPackageFragment) fTypeContainer).getCompilationUnit(getCompilationUnitName(name));
 			targetType = parentCU.getType(name);
-
 			CompositeChange change = new CompositeChange(fName);
 			change.add(new CreateFileChange(targetType.getResource().getRawLocation(), "", ""));
 			change.add(constructNewCUChange(parentCU));

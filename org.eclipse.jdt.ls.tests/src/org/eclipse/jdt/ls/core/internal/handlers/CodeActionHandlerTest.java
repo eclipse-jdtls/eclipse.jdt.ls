@@ -292,6 +292,30 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue("refactor actions should be ahead of source actions",  baseKinds.lastIndexOf(CodeActionKind.Refactor) < baseKinds.indexOf(CodeActionKind.Source));
 	}
 
+	@Test
+	public void testCodeAction_NPEInNewCUProposal() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/org/sample/Foo.java",
+				"package org.sample;\n"+
+				"public class Foo {\n"+
+				"	public static void main(String[] args) {\n"+
+				"		new javax.activity\n"+
+				"	}\n"+
+				"}\n");
+		//@formatter:off
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "javax.activity");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedType), range))
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+	}
+
 	private static String getBaseKind(String codeActionKind) {
 		if (codeActionKind.contains(".")) {
 			return codeActionKind.substring(0, codeActionKind.indexOf('.'));
