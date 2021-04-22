@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.text.StrLookup;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -235,14 +237,38 @@ public final class ResourceUtils {
 	}
 
 	/**
-	 * Expand paths starting with ~/ if necessary, or return the original path.
+	 * Expand paths starting with ~/ if necessary; replaces all the occurrences of
+	 * variables as ${variabeName} in the given string with their matching values
+	 * from the environment variables and system properties.
 	 *
 	 * @param path
 	 * @return expanded or original path
 	 */
 	public static String expandPath(String path) {
-		if (path != null && path.startsWith("~" + File.separator)) {
-			return System.getProperty("user.home") + path.substring(1);
+		if (path != null) {
+			if (path.startsWith("~" + File.separator)) {
+				path = System.getProperty("user.home") + path.substring(1);
+			}
+			StrLookup<String> variableResolver = new StrLookup<>() {
+
+				@Override
+				public String lookup(String key) {
+					if (key.length() > 0) {
+						try {
+							String prop = System.getProperty(key);
+							if (prop != null) {
+								return prop;
+							}
+							return System.getenv(key);
+						} catch (final SecurityException scex) {
+							return null;
+						}
+					}
+					return null;
+				}
+			};
+			StrSubstitutor strSubstitutor = new StrSubstitutor(variableResolver);
+			return strSubstitutor.replace(path);
 		}
 		return path;
 	}
@@ -333,4 +359,5 @@ public final class ResourceUtils {
 
 		return paths[0].uptoSegment(common);
 	}
+
 }
