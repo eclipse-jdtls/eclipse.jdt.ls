@@ -150,7 +150,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		cl = result.get(1);
 		r = cl.getRange();
 		// CodeLens on foo method
-		assertRange(14, 13, 16, r);
+		assertRange(15, 13, 16, r);
 
 		cl = result.get(2);
 		r = cl.getRange();

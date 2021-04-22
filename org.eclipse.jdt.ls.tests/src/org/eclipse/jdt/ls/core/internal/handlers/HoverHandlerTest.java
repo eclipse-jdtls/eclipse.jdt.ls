@@ -299,7 +299,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		// then
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(1).getLeft();//
-		assertEquals("Unexpected hover ", "This method comes from Foo", result);
+		String expected = "This method comes from Foo\n" + "\n" + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
+		assertEquals("Unexpected hover ", expected, result);
 	}
 
 	@Test
