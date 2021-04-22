@@ -11,6 +11,7 @@ public class Foo {
 	
 	/**
 	 * This method comes from Foo
+	 * @param input an input String
 	 */
-	public void foo() {}
+	public void foo(String input) {}
 }

@@ -1899,6 +1899,7 @@ public class JavadocContentAccess2 {
 			}
 		}
 		fBuf.append(BLOCK_TAG_END);
+		fBuf.append(BlOCK_TAG_ENTRY_END);
 	}
 
 	private void handleThrowsTag(TagElement tag) {
@@ -1934,6 +1935,7 @@ public class JavadocContentAccess2 {
 			String name = parameterNames.get(i);
 			if (name != null) {
 				fBuf.append(BLOCK_TAG_START);
+				fBuf.append(BlOCK_TAG_ENTRY_START);
 				fBuf.append(PARAM_NAME_START);
 				if (isTypeParameters) {
 					fBuf.append("&lt;"); //$NON-NLS-1$
@@ -1946,9 +1948,12 @@ public class JavadocContentAccess2 {
 				if (description != null) {
 					fBuf.append(description);
 				}
+				fBuf.append(BlOCK_TAG_ENTRY_END);
 				fBuf.append(BLOCK_TAG_END);
 			}
 		}
+
+		fBuf.append(BlOCK_TAG_ENTRY_END);
 	}
 
 	private void handleParamTag(TagElement tag) {

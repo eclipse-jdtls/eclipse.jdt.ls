@@ -20,7 +20,7 @@ public class Bar extends Foo {
     public void somethingElseFromLombok(){}
    
     @Override
-    public void foo() {
-      super.foo();
+    public void foo(String input) {
+      super.foo("lombok");
     }
 }
