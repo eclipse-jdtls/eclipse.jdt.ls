@@ -606,9 +606,33 @@ public class Preferences {
 		}
 
 		public ReferencedLibraries(Set<String> include, Set<String> exclude, Map<String, String> sources) {
-			this.include = include;
-			this.exclude = exclude;
-			this.sources = sources;
+			this.include = new HashSet<>() {
+
+				@Override
+				public boolean add(String e) {
+					return super.add(ResourceUtils.expandPath(e));
+				}
+
+			};
+			this.include.addAll(include);
+			this.exclude = new HashSet<>() {
+
+				@Override
+				public boolean add(String e) {
+					return super.add(ResourceUtils.expandPath(e));
+				}
+
+			};
+			this.exclude.addAll(exclude);
+			this.sources = new HashMap<>() {
+
+				@Override
+				public String put(String key, String value) {
+					return super.put(ResourceUtils.expandPath(key), ResourceUtils.expandPath(value));
+				}
+
+			};
+			this.sources.putAll(sources);
 		}
 
 		public Set<String> getInclude() {
@@ -639,6 +663,7 @@ public class Preferences {
 				&& Objects.equals(exclude, other.exclude)
 				&& Objects.equals(sources, other.sources);
 		}
+
 	}
 
 	public Preferences() {
@@ -923,17 +948,17 @@ public class Preferences {
 								break;
 							case "path":
 								if (v instanceof String) {
-									runtime.setPath((String) v);
+									runtime.setPath(ResourceUtils.expandPath((String) v));
 								}
 								break;
 							case "javadoc":
 								if (v instanceof String) {
-									runtime.setJavadoc((String) v);
+									runtime.setJavadoc(ResourceUtils.expandPath((String) v));
 								}
 								break;
 							case "sources":
 								if (v instanceof String) {
-									runtime.setSources((String) v);
+									runtime.setSources(ResourceUtils.expandPath((String) v));
 								}
 								break;
 							case "default":
@@ -994,27 +1019,27 @@ public class Preferences {
 	}
 
 	public Preferences setGradleHome(String gradleHome) {
-		this.gradleHome = gradleHome;
+		this.gradleHome = ResourceUtils.expandPath(gradleHome);
 		return this;
 	}
 
 	public Preferences setGradleJavaHome(String gradleJavaHome) {
-		this.gradleJavaHome = gradleJavaHome;
+		this.gradleJavaHome = ResourceUtils.expandPath(gradleJavaHome);
 		return this;
 	}
 
 	public Preferences setGradleUserHome(String gradleUserHome) {
-		this.gradleUserHome = gradleUserHome;
+		this.gradleUserHome = ResourceUtils.expandPath(gradleUserHome);
 		return this;
 	}
 
 	public Preferences setFormatterUrl(String formatterUrl) {
-		this.formatterUrl = formatterUrl;
+		this.formatterUrl = ResourceUtils.expandPath(formatterUrl);
 		return this;
 	}
 
 	public Preferences setSettingsUrl(String settingsUrl) {
-		this.settingsUrl = settingsUrl;
+		this.settingsUrl = ResourceUtils.expandPath(settingsUrl);
 		return this;
 	}
 
@@ -1653,7 +1678,7 @@ public class Preferences {
 	}
 
 	public void setInvisibleProjectOutputPath(String invisibleProjectOutputPath) {
-		this.invisibleProjectOutputPath = invisibleProjectOutputPath;
+		this.invisibleProjectOutputPath = ResourceUtils.expandPath(invisibleProjectOutputPath);
 	}
 
 	public List<String> getInvisibleProjectSourcePaths() {
@@ -1661,7 +1686,14 @@ public class Preferences {
 	}
 
 	public void setInvisibleProjectSourcePaths(List<String> invisibleProjectSourcePaths) {
-		this.invisibleProjectSourcePaths = invisibleProjectSourcePaths;
+		if (invisibleProjectSourcePaths != null) {
+			this.invisibleProjectSourcePaths = new ArrayList<>();
+			for (String path : invisibleProjectSourcePaths) {
+				this.invisibleProjectSourcePaths.add(ResourceUtils.expandPath(path));
+			}
+		} else {
+			this.invisibleProjectSourcePaths = invisibleProjectSourcePaths;
+		}
 	}
 
 	public Preferences setIncludeDecompiledSources(boolean includeDecompiledSources) {
@@ -1700,4 +1732,5 @@ public class Preferences {
 		}
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
 	}
+
 }

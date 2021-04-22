@@ -242,6 +242,33 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 	}
 
 	@Test
+	public void testVariableReferenceLibraries() throws Exception {
+		ReferencedLibraries libraries = new ReferencedLibraries();
+		libraries.getInclude().add("~/lib/foo.jar");
+		libraries.getExclude().add("~/lib/bar.jar");
+		libraries.getSources().put("~/library/bar.jar", "~/library/sources/bar-src.jar");
+		assertTrue(libraries.getInclude().iterator().next().startsWith(System.getProperty("user.home")));
+		assertTrue(libraries.getExclude().iterator().next().startsWith(System.getProperty("user.home")));
+		libraries.getSources().forEach((k, v) -> {
+			assertTrue(k.startsWith(System.getProperty("user.home")));
+			assertTrue(v.startsWith(System.getProperty("user.home")));
+		});
+		libraries = new ReferencedLibraries();
+		libraries.getInclude().add("${java.home}/lib/foo.jar");
+		libraries.getExclude().add("${java.home}/lib/bar.jar");
+		libraries.getSources().put("${java.home}/library/bar.jar", "${java.home}/library/sources/bar-src.jar");
+		assertTrue(libraries.getInclude().iterator().next().startsWith(System.getProperty("java.home")));
+		assertTrue(libraries.getExclude().iterator().next().startsWith(System.getProperty("java.home")));
+		libraries.getSources().forEach((k, v) -> {
+			assertTrue(k.startsWith(System.getProperty("java.home")));
+			assertTrue(v.startsWith(System.getProperty("java.home")));
+		});
+		libraries = new ReferencedLibraries();
+		libraries.getInclude().add("${foo}");
+		assertTrue(libraries.getInclude().iterator().next().equals("${foo}"));
+	}
+
+	@Test
 	public void testDynamicReferenceLibraries() throws Exception {
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
@@ -505,6 +532,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		Hover hover = handler.hover(position, monitor);
 		if (hover.getContents().getLeft().size() < 2) {
 			JobHelpers.waitForDownloadSourcesJobs(60000);
+			waitForBackgroundJobs();
 			hover = handler.hover(position, monitor);
 		}
 
@@ -528,6 +556,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		hover = handler.hover(position, monitor);
 		if (hover.getContents().getLeft().size() < 2) {
 			JobHelpers.waitForDownloadSourcesJobs(60000);
+			waitForBackgroundJobs();
 			hover = handler.hover(position, monitor);
 		}
 
