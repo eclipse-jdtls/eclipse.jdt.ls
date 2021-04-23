@@ -176,7 +176,12 @@ public class StandardProjectsManager extends ProjectsManager {
 			List<URI> uris = getURIs(settingsUrl);
 			boolean changed = false;
 			for (URI settingsURI : uris) {
-				if (settingsURI.equals(uri)) {
+				if (Platform.OS_WIN32.equals(Platform.getOS()) && URIUtil.isFileURI(settingsURI) && URIUtil.isFileURI(uri)) {
+					if (URIUtil.toFile(settingsURI).toPath().equals(URIUtil.toFile(uri).toPath())) {
+						changed = true;
+						break;
+					}
+				} else if (settingsURI.equals(uri)) {
 					changed = true;
 					break;
 				}
