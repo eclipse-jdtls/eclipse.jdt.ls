@@ -176,12 +176,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			List<URI> uris = getURIs(settingsUrl);
 			boolean changed = false;
 			for (URI settingsURI : uris) {
-				if (Platform.OS_WIN32.equals(Platform.getOS()) && URIUtil.isFileURI(settingsURI) && URIUtil.isFileURI(uri)) {
-					if (URIUtil.toFile(settingsURI).toPath().equals(URIUtil.toFile(uri).toPath())) {
-						changed = true;
-						break;
-					}
-				} else if (settingsURI.equals(uri)) {
+				if (URIUtil.sameURI(settingsURI, uri)) {
 					changed = true;
 					break;
 				}
@@ -199,12 +194,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			List<URI> uris = getURIs(formatterUrl);
 			boolean changed = false;
 			for (URI formatterUri : uris) {
-				if (Platform.OS_WIN32.equals(Platform.getOS()) && URIUtil.isFileURI(formatterUri) && URIUtil.isFileURI(uri)) {
-					if (URIUtil.toFile(formatterUri).toPath().equals(URIUtil.toFile(uri).toPath())) {
-						changed = true;
-						break;
-					}
-				} else if (formatterUri.equals(uri)) {
+				if (URIUtil.sameURI(formatterUri, uri)) {
 					changed = true;
 					break;
 				}
