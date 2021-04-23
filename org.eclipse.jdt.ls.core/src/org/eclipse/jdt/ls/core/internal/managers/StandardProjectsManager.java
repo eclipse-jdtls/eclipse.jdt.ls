@@ -58,6 +58,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
@@ -175,7 +176,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			List<URI> uris = getURIs(settingsUrl);
 			boolean changed = false;
 			for (URI settingsURI : uris) {
-				if (settingsURI.equals(uri)) {
+				if (URIUtil.sameURI(settingsURI, uri)) {
 					changed = true;
 					break;
 				}
@@ -193,7 +194,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			List<URI> uris = getURIs(formatterUrl);
 			boolean changed = false;
 			for (URI formatterUri : uris) {
-				if (formatterUri.equals(uri)) {
+				if (URIUtil.sameURI(formatterUri, uri)) {
 					changed = true;
 					break;
 				}
