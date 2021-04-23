@@ -282,7 +282,7 @@ public class ChangeUtil {
 				root.setDocumentChanges(changes);
 			}
 
-			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, 0);
+			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, null);
 			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, textEdits);
 			changes.add(Either.forLeft(documentEdit));
 		} else {
