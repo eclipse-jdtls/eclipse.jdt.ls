@@ -470,8 +470,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
-		StandardProjectsManager.configureSettings(preferenceManager.getPreferences());
 		FormatterManager.configureFormatter(preferenceManager.getPreferences());
+		StandardProjectsManager.configureSettings(preferenceManager.getPreferences());
 		logInfo(">> New configuration: " + settings);
 	}
 

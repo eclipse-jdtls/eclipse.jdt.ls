@@ -170,24 +170,6 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (uriString == null) {
 			return;
 		}
-		String settingsUrl = preferenceManager.getPreferences().getSettingsUrl();
-		if (settingsUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
-			URI uri = JDTUtils.toURI(uriString);
-			List<URI> uris = getURIs(settingsUrl);
-			boolean changed = false;
-			for (URI settingsURI : uris) {
-				if (URIUtil.sameURI(settingsURI, uri)) {
-					changed = true;
-					break;
-				}
-			}
-			if (changed) {
-				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
-					registerWatchers();
-				}
-				configureSettings(preferenceManager.getPreferences());
-			}
-		}
 		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
 		if (formatterUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
 			URI uri = JDTUtils.toURI(uriString);
@@ -204,6 +186,24 @@ public class StandardProjectsManager extends ProjectsManager {
 					registerWatchers();
 				}
 				FormatterManager.configureFormatter(preferenceManager.getPreferences());
+			}
+		}
+		String settingsUrl = preferenceManager.getPreferences().getSettingsUrl();
+		if (settingsUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
+			URI uri = JDTUtils.toURI(uriString);
+			List<URI> uris = getURIs(settingsUrl);
+			boolean changed = false;
+			for (URI settingsURI : uris) {
+				if (URIUtil.sameURI(settingsURI, uri)) {
+					changed = true;
+					break;
+				}
+			}
+			if (changed) {
+				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
+					registerWatchers();
+				}
+				configureSettings(preferenceManager.getPreferences());
 			}
 		}
 		IResource resource = JDTUtils.getFileOrFolder(uriString);
@@ -240,6 +240,14 @@ public class StandardProjectsManager extends ProjectsManager {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
 	}
+
+	/**
+	 * Configures user preferences. configureSettings has to be called after every
+	 * method that resets Java Core options to ensure user preferences to be
+	 * respected
+	 *
+	 * @param preferences
+	 */
 
 	public static void configureSettings(Preferences preferences) {
 		URI settingsUri = preferences.getSettingsAsURI();
@@ -460,7 +468,7 @@ public class StandardProjectsManager extends ProjectsManager {
 				return result;
 			}
 		}
-		if (url.startsWith("/")) {
+		if (url.startsWith("/") && new File(url).isFile()) {
 			uri = new File(url).toURI();
 			result.add(uri);
 		} else {
@@ -499,11 +507,11 @@ public class StandardProjectsManager extends ProjectsManager {
 					}
 					if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
 						registerWatcherJob.schedule(100L);
-						if (!Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
-							configureSettings(newPreferences);
-						}
 						if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl())) {
 							FormatterManager.configureFormatter(newPreferences);
+						}
+						if (!Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
+							configureSettings(newPreferences);
 						}
 					}
 					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
