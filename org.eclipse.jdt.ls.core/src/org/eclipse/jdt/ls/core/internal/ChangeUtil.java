@@ -12,7 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,8 @@ import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.AnnotatedTextEdit;
 import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.CreateFileOptions;
@@ -266,16 +270,46 @@ public class ChangeUtil {
 
 	private static void convertTextChange(TextChange textChange, WorkspaceEdit rootEdit, String annotationId) {
 		Object modifiedElement = textChange.getModifiedElement();
-		if (!(modifiedElement instanceof IJavaElement)) {
-			return;
-		}
 
 		TextEdit textEdits = textChange.getEdit();
 		if (textEdits == null) {
 			return;
 		}
-		ICompilationUnit compilationUnit = (ICompilationUnit) ((IJavaElement) modifiedElement).getAncestor(IJavaElement.COMPILATION_UNIT);
-		convertTextEdit(rootEdit, compilationUnit, textEdits, annotationId);
+
+		if (!(modifiedElement instanceof IJavaElement)) {
+			TextEdit edit = textChange.getEdit();
+			if (textChange instanceof ExternalFileChange && edit instanceof InsertEdit) {
+				URI uri = ((ExternalFileChange) textChange).getURI();
+				String fileUri = ResourceUtils.fixURI(uri);
+
+				InsertEdit insertEdit = (InsertEdit) edit;
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
+				te.setNewText(insertEdit.getText());
+				int[] insertPos = JsonRpcHelpers.toLine((IDocument) modifiedElement, insertEdit.getOffset());
+				Position pos = new Position(insertPos[0], insertPos[1]);
+				te.setRange(new Range(pos, pos));
+
+				if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
+					List<Either<TextDocumentEdit, ResourceOperation>> changes = rootEdit.getDocumentChanges();
+					if (changes == null) {
+						changes = new ArrayList<>();
+						rootEdit.setDocumentChanges(changes);
+					}
+
+					VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(fileUri, null);
+					TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, Arrays.asList(te));
+					changes.add(Either.forLeft(documentEdit));
+				} else {
+					Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = rootEdit.getChanges();
+					List<org.eclipse.lsp4j.TextEdit> edits = new ArrayList<>();
+					edits.add(te);
+					changes.put(fileUri, edits);
+				}
+			}
+		} else {
+			ICompilationUnit compilationUnit = (ICompilationUnit) ((IJavaElement) modifiedElement).getAncestor(IJavaElement.COMPILATION_UNIT);
+			convertTextEdit(rootEdit, compilationUnit, textEdits, annotationId);
+		}
 	}
 
 	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit, String annotationId) {

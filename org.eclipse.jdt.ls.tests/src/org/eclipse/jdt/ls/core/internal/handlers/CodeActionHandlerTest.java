@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +52,7 @@ import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -59,6 +62,7 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -81,6 +85,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
 	private ClientPreferences clientPreferences;
+	private File javaCompilerSettings;
 
 	@Override
 	@Before
@@ -95,6 +100,14 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
 		clientPreferences = super.initPreferenceManager(supportClassFileContents);
 		return clientPreferences;
+	}
+
+	@Override
+	protected void initPreferences(Preferences preferences) throws IOException {
+		super.initPreferences(preferences);
+		javaCompilerSettings = new File(System.getProperty("java.io.tmpdir"), "settings.prefs");
+		javaCompilerSettings.createNewFile();
+		preferences.setSettingsUrl(javaCompilerSettings.toURI().toString());
 	}
 
 	@Test
@@ -143,10 +156,11 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(codeActions.size() >= 3);
+		Assert.assertTrue(codeActions.size() >= 4);
 		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(codeActions.get(2).getRight().getKind(), JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertEquals(codeActions.get(3).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
 		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
 		Assert.assertNotNull(w);
 	}
@@ -680,6 +694,36 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertNotNull(codeActions);
 		CodeAction action = codeActions.get(1).getRight();
 		Assert.assertEquals("Add missing method 'action' to class 'Foo'", action.getTitle());
+    }
+
+	@Test
+	public void testCodeAction_ignoreCompilerIssue() throws Exception{
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"package java;\n"
+				+ "public class Foo {\n"
+				+ "  @SuppressWarnings(\"deprecation\")\n"
+				+ "  public void test () {\n"
+				+ "  }\n"
+				+ "}");
+
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "deprecation");
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedWarningToken), range))));
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse(codeActions.isEmpty());
+
+		Either<Command, CodeAction> codeAction = findAction(codeActions, CodeActionKind.QuickFix, "Ignore compiler problem(s)");
+		WorkspaceEdit we = getEdit(codeAction);
+		Assert.assertEquals(1, we.getDocumentChanges().size());
+
+		TextDocumentEdit textDocEdit = we.getDocumentChanges().get(0).getLeft();
+		Assert.assertEquals("org.eclipse.jdt.core.compiler.problem.unusedWarningToken=ignore\n", textDocEdit.getEdits().get(0).getNewText());
 	}
 
 	@Test
