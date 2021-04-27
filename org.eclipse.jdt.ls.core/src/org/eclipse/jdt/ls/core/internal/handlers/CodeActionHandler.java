@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -62,7 +63,8 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class CodeActionHandler {
-	public static final ResponseStore<Either<ChangeCorrectionProposal, CodeActionProposal>> codeActionStore = new ResponseStore<>();
+	public static final ResponseStore<Either<ChangeCorrectionProposal, CodeActionProposal>> codeActionStore
+		= new ResponseStore<>(ForkJoinPool.commonPool().getParallelism());
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	private QuickFixProcessor quickFixProcessor;
@@ -83,7 +85,6 @@ public class CodeActionHandler {
 	}
 
 	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
-		codeActionStore.clear();
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
