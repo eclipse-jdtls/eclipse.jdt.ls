@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,9 +22,25 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ResponseStore<T> {
 	private AtomicLong idSeed = new AtomicLong(0);
-	private Map<Long, ResponseItem<T>> responseCache = new ConcurrentHashMap<>();
+	private Map<Long, ResponseItem<T>> responseCache;
 
+	/**
+	 * Unlimited cache.
+	 */
 	public ResponseStore() {
+		this.responseCache = new ConcurrentHashMap<>();
+	}
+
+	/**
+	 * Deletes the eldest items if the size of the cache reaches the maximum.
+	 */
+	public ResponseStore(int maxSize) {
+		this.responseCache = Collections.synchronizedMap(new LinkedHashMap<Long, ResponseItem<T>>() {
+			@Override
+			protected boolean removeEldestEntry(final Map.Entry eldest) {
+				return maxSize > 0 && size() > maxSize;
+			}
+		});
 	}
 
 	public ResponseItem<T> createResponse() {
