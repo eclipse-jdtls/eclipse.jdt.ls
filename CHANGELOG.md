@@ -1,4 +1,17 @@
 # Change Log
+# [1.1.0 (April 29th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/90?closed=1)
+ * enhancement - Add Java 16 Support. See [#1733](https://github.com/eclipse/eclipse.jdt.ls/pull/1733).
+ * enhancement - java.project.referencedLibraries should resolve paths leading with ~. See [#1735](https://github.com/eclipse/eclipse.jdt.ls/issues/1735).
+ * enhancement - Add source method declaration lookups to the workspace symbol search. See [#1688](https://github.com/eclipse/eclipse.jdt.ls/pull/1688).
+ * enhancement - Adopt resolveCodeAction capability. See [#1606](https://github.com/eclipse/eclipse.jdt.ls/issues/1606).
+ * bug fix - Changes to Formatter profiles don‘t take effect in real time. See [#1736](https://github.com/eclipse/eclipse.jdt.ls/issues/1736).
+ * bug fix - NPE in NewCUProposal.createChange(NewCUProposal.java:277). See [#1723](https://github.com/eclipse/eclipse.jdt.ls/issues/1723).
+ * bug fix - Javadoc overriding methods not inheriting param descriptions. See [#1732](https://github.com/eclipse/eclipse.jdt.ls/issues/1732).
+ * bug fix - workspaceEdit textDocument version is always 0. See [#1695](https://github.com/eclipse/eclipse.jdt.ls/issues/1695).
+ * bug fix - java.settings.url does not override default java settings. See [#1741](https://github.com/eclipse/eclipse.jdt.ls/issues/1741).
+ * build - Update Maven wrapper to use 3.8.1. See [#1734](https://github.com/eclipse/eclipse.jdt.ls/pull/1734).
+ * other - Engineering: Tune the project settings. See [#1737](https://github.com/eclipse/eclipse.jdt.ls/pull/1737).
+
 # [1.0.0 (April 15th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/89?closed=1)
  * enhancement - Support refactoring when renaming or moving files. See [#1445](https://github.com/eclipse/eclipse.jdt.ls/pull/1445).
  * enhancement - Support Type Hierarchy. See [#1656](https://github.com/eclipse/eclipse.jdt.ls/pull/1656).
@@ -8,14 +21,14 @@
  * enhancement - Add more options to query project settings. See [#1682](https://github.com/eclipse/eclipse.jdt.ls/pull/1682).
  * enhancement - Link .settings directory to 'invisible project'. See [#1579](https://github.com/eclipse/eclipse.jdt.ls/pull/1579).
  * enhancement - Enhanced IBuildSupport usage to support other build tools such as bazel. See [#1694](https://github.com/eclipse/eclipse.jdt.ls/pull/1694).
- * bug - External tool file modifications not registered. See [#1650](https://github.com/eclipse/eclipse.jdt.ls/issues/1650).
- * bug - Enhance the condition of inline constant. See [#1672](https://github.com/eclipse/eclipse.jdt.ls/pull/1672).
- * bug - Update formatter profile options before applying. See [#1675](https://github.com/eclipse/eclipse.jdt.ls/pull/1675).
- * bug - v0.70 broke workspace/DidChangeConfiguration. See [#1685](https://github.com/eclipse/eclipse.jdt.ls/issues/1685).
- * bug - Correct minor typo in exception message. See [#1687](https://github.com/eclipse/eclipse.jdt.ls/pull/1687).
- * bug - Fall back to default value when import threashold is non-positive. See [#1715](https://github.com/eclipse/eclipse.jdt.ls/pull/1715).
- * bug - Invisible project forgets source paths on classpath update. See [#1647](https://github.com/eclipse/eclipse.jdt.ls/issues/1647).
- * bug - Fix javadoc in 'java.configuration.runtimes' settings. See [#1683](https://github.com/eclipse/eclipse.jdt.ls/pull/1683).
+ * bug fix - External tool file modifications not registered. See [#1650](https://github.com/eclipse/eclipse.jdt.ls/issues/1650).
+ * bug fix - Enhance the condition of inline constant. See [#1672](https://github.com/eclipse/eclipse.jdt.ls/pull/1672).
+ * bug fix - Update formatter profile options before applying. See [#1675](https://github.com/eclipse/eclipse.jdt.ls/pull/1675).
+ * bug fix - v0.70 broke workspace/DidChangeConfiguration. See [#1685](https://github.com/eclipse/eclipse.jdt.ls/issues/1685).
+ * bug fix - Correct minor typo in exception message. See [#1687](https://github.com/eclipse/eclipse.jdt.ls/pull/1687).
+ * bug fix - Fall back to default value when import threashold is non-positive. See [#1715](https://github.com/eclipse/eclipse.jdt.ls/pull/1715).
+ * bug fix - Invisible project forgets source paths on classpath update. See [#1647](https://github.com/eclipse/eclipse.jdt.ls/issues/1647).
+ * bug fix - Fix javadoc in 'java.configuration.runtimes' settings. See [#1683](https://github.com/eclipse/eclipse.jdt.ls/pull/1683).
  * build - Update Target Platform to 2021-03 Release. See [#1691](https://github.com/eclipse/eclipse.jdt.ls/pull/1691).
  * build - Update lsp4j to 0.11.0. See [#1700](https://github.com/eclipse/eclipse.jdt.ls/pull/1700).
  * debt - Build Fails Due to Tests. See [#1646](https://github.com/eclipse/eclipse.jdt.ls/issues/1646).
