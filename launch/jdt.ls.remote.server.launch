@@ -39,11 +39,11 @@
 <setEntry value="ch.qos.logback.classic@default:default"/>
 <setEntry value="ch.qos.logback.core@default:default"/>
 <setEntry value="ch.qos.logback.slf4j@default:default"/>
-<setEntry value="com.google.gson*2.8.2.v20180104-1110@default:default"/>
+<setEntry value="com.google.gson@default:default"/>
 <setEntry value="com.google.guava@default:default"/>
 <setEntry value="javax.inject@default:default"/>
 <setEntry value="org.apache.ant@default:default"/>
-<setEntry value="org.apache.commons.io*2.6.0.v20190123-2029@default:default"/>
+<setEntry value="org.apache.commons.io@default:default"/>
 <setEntry value="org.apache.commons.lang3@default:default"/>
 <setEntry value="org.apache.felix.scr@1:true"/>
 <setEntry value="org.apache.log4j@default:default"/>
