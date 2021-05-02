@@ -364,6 +364,14 @@ public class SemanticTokensCommandTest extends AbstractProjectsManagerBasedTest 
 		.endAssertion();
 	}
 
+	@Test
+	public void testSemanticTokens_ClassLiterals() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(getURI("ClassLiterals.java"), "keyword")
+			.assertNextToken("class", "keyword")
+			.assertNextToken("class", "keyword")
+		.endAssertion();
+	}
+
 	private String getURI(String compilationUnitName) {
 		return JDTUtils.toURI(fooPackage.getCompilationUnit(compilationUnitName));
 	}

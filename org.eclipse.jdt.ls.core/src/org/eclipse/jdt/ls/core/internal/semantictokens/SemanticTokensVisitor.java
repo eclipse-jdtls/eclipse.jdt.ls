@@ -183,9 +183,12 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	@Override
 	public boolean visit(TypeLiteral node) {
 		acceptNode(node.getType());
-		// The last 5 characters of a TypeLiteral are the "class" keyword
-		int offset = node.getStartPosition() + node.getLength() - 5;
-		addToken(offset, 5, TokenType.KEYWORD, 0);
+		// Don't add "class" keyword token for recovered type literals
+		if ((node.getFlags() & ASTNode.RECOVERED) == 0) {
+			// The last 5 characters of a TypeLiteral are the "class" keyword
+			int offset = node.getStartPosition() + node.getLength() - 5;
+			addToken(offset, 5, TokenType.KEYWORD, 0);
+		}
 		return false;
 	}
 
