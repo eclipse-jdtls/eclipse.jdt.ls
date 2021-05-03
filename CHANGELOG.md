@@ -1,4 +1,8 @@
 # Change Log
+
+# [1.1.1 (May 3rd, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/91?closed=1)
+* bug fix - Formatter doesn't load format config after update. See [#1757](https://github.com/eclipse/eclipse.jdt.ls/pull/1757).
+
 # [1.1.0 (April 29th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/90?closed=1)
  * enhancement - Add Java 16 Support. See [#1733](https://github.com/eclipse/eclipse.jdt.ls/pull/1733).
  * enhancement - java.project.referencedLibraries should resolve paths leading with ~. See [#1735](https://github.com/eclipse/eclipse.jdt.ls/issues/1735).
