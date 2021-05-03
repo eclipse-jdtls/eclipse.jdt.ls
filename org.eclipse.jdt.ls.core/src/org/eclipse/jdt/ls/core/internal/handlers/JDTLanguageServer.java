@@ -69,9 +69,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.Overrida
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
-import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
@@ -471,8 +469,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
-		FormatterManager.configureFormatter(preferenceManager.getPreferences());
-		StandardProjectsManager.configureSettings(preferenceManager.getPreferences());
 		logInfo(">> New configuration: " + settings);
 	}
 

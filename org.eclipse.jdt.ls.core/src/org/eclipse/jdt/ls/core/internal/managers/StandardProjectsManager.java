@@ -65,6 +65,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 import org.eclipse.jdt.launching.AbstractVMInstall;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -85,8 +86,10 @@ import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WatchKind;
+import org.xml.sax.InputSource;
 
 public class StandardProjectsManager extends ProjectsManager {
+	private final static String FORMATTER_OPTION_PREFIX = JavaCore.PLUGIN_ID + ".formatter"; //$NON-NLS-1$
 	protected static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
 	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
@@ -170,6 +173,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (uriString == null) {
 			return;
 		}
+		boolean configureNeeded = false;
 		String formatterUrl = preferenceManager.getPreferences().getFormatterUrl();
 		if (formatterUrl != null && JavaLanguageServerPlugin.getInstance().getProtocol() != null) {
 			URI uri = JDTUtils.toURI(uriString);
@@ -185,7 +189,7 @@ public class StandardProjectsManager extends ProjectsManager {
 				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
 					registerWatchers();
 				}
-				FormatterManager.configureFormatter(preferenceManager.getPreferences());
+				configureNeeded = true;
 			}
 		}
 		String settingsUrl = preferenceManager.getPreferences().getSettingsUrl();
@@ -203,8 +207,11 @@ public class StandardProjectsManager extends ProjectsManager {
 				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CREATED) {
 					registerWatchers();
 				}
-				configureSettings(preferenceManager.getPreferences());
+				configureNeeded = true;
 			}
+		}
+		if (configureNeeded) {
+			configureSettings(preferenceManager.getPreferences());
 		}
 		IResource resource = JDTUtils.getFileOrFolder(uriString);
 		if (resource == null) {
@@ -242,9 +249,7 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	/**
-	 * Configures user preferences. configureSettings has to be called after every
-	 * method that resets Java Core options to ensure user preferences to be
-	 * respected
+	 * Configures user and formatter preferences.
 	 *
 	 * @param preferences
 	 */
@@ -262,7 +267,25 @@ public class StandardProjectsManager extends ProjectsManager {
 			}
 		}
 		initializeDefaultOptions(preferences);
+		URI formatterUri = preferences.getFormatterAsURI();
+		Map<String, String> formatterOptions = null;
+		if (formatterUri != null) {
+			try (InputStream inputStream = formatterUri.toURL().openStream()) {
+				InputSource inputSource = new InputSource(inputStream);
+				String profileName = preferences.getFormatterProfileName();
+				formatterOptions = FormatterManager.readSettingsFromStream(inputSource, profileName);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		Map<String, String> defaultOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
+		if (formatterOptions != null && !formatterOptions.isEmpty()) {
+			defaultOptions.putAll(formatterOptions);
+		}
 		Hashtable<String, String> javaOptions = JavaCore.getOptions();
+		defaultOptions.entrySet().stream().filter(p -> p.getKey().startsWith(FORMATTER_OPTION_PREFIX)).forEach(p -> {
+			javaOptions.put(p.getKey(), p.getValue());
+		});
 		if (properties != null && !properties.isEmpty()) {
 			properties.forEach((k, v) -> {
 				if (k instanceof String && v instanceof String) {
@@ -507,10 +530,7 @@ public class StandardProjectsManager extends ProjectsManager {
 					}
 					if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
 						registerWatcherJob.schedule(100L);
-						if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl())) {
-							FormatterManager.configureFormatter(newPreferences);
-						}
-						if (!Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
+						if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
 							configureSettings(newPreferences);
 						}
 					}

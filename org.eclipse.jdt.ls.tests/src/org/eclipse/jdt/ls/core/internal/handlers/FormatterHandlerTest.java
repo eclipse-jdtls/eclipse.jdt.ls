@@ -33,7 +33,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
-import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
+import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
@@ -392,14 +392,14 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			URL googleFormatter = bundle.getEntry("/formatter resources/eclipse-java-google-style.xml");
 			URL url = FileLocator.resolve(googleFormatter);
 			preferences.setFormatterUrl(url.toExternalForm());
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 			List<? extends TextEdit> edits = server.formatting(params).get();
 			assertNotNull(edits);
 			String newText = TextEditUtil.apply(unit, edits);
 			assertEquals(text, newText);
 		} finally {
 			preferences.setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 		}
 	}
 
@@ -423,14 +423,14 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			URL url = FileLocator.resolve(googleFormatter);
 			File file = ResourceUtils.toFile(URIUtil.toURI(url));
 			preferences.setFormatterUrl(file.getAbsolutePath());
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 			List<? extends TextEdit> edits = server.formatting(params).get();
 			assertNotNull(edits);
 			String newText = TextEditUtil.apply(unit, edits);
 			assertEquals(text, newText);
 		} finally {
 			preferences.setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 		}
 	}
 
@@ -443,11 +443,11 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 			File file = ResourceUtils.toFile(URIUtil.toURI(url));
 			assertTrue(file.exists());
 			preferences.setFormatterUrl(file.getAbsolutePath());
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 			assertTrue(preferences.getFormatterAsURI().isAbsolute());
 		} finally {
 			preferences.setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 		}
 	}
 
@@ -456,11 +456,11 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		try {
 			String formatterUrl = "../../formatter/test.xml";
 			preferences.setFormatterUrl(formatterUrl);
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 			assertTrue(preferences.getFormatterAsURI().isAbsolute());
 		} finally {
 			preferences.setFormatterUrl(null);
-			FormatterManager.configureFormatter(preferences);
+			StandardProjectsManager.configureSettings(preferences);
 		}
 	}
 
@@ -772,20 +772,25 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		URL url = FileLocator.resolve(testFormatter);
 		File file = ResourceUtils.toFile(URIUtil.toURI(url));
 		preferences.setFormatterUrl(file.getAbsolutePath());
-		FormatterManager.configureFormatter(preferences);
-		List<? extends TextEdit> edits = server.formatting(params).get();
-		assertNotNull(edits);
-		String newText = TextEditUtil.apply(unit, edits);
-		String textResult =
+		try {
+			StandardProjectsManager.configureSettings(preferences);
+			List<? extends TextEdit> edits = server.formatting(params).get();
+			assertNotNull(edits);
+			String newText = TextEditUtil.apply(unit, edits);
+			String textResult =
 			//@formatter:off
-			"package org.sample;\n\n" +
-			"public class Baz {\n"+
-			"  public void test1() {\n"+
-			"    Object o = new Object() {};\n"+
-			"  }\n"+
-			"}\n";
-			//@formatter:on
-		assertEquals(textResult, newText);
+				"package org.sample;\n\n" +
+				"public class Baz {\n"+
+				"  public void test1() {\n"+
+				"    Object o = new Object() {};\n"+
+				"  }\n"+
+				"}\n";
+				//@formatter:on
+			assertEquals(textResult, newText);
+		} finally {
+			preferences.setFormatterUrl(null);
+			StandardProjectsManager.configureSettings(preferences);
+		}
 	}
 
 	@Test
