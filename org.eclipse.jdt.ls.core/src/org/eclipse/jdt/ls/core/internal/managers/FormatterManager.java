@@ -16,10 +16,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 import javax.xml.parsers.SAXParser;
@@ -28,13 +25,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.IConstants;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -52,8 +44,6 @@ public class FormatterManager {
 	protected static final String VERSION_KEY_SUFFIX= ".version"; //$NON-NLS-1$
 
 	public static final String CODE_FORMATTER_PROFILE_KIND = "CodeFormatterProfile"; //$NON-NLS-1$
-
-	private final static String FORMATTER_OPTION_PREFIX = JavaCore.PLUGIN_ID + ".formatter"; //$NON-NLS-1$
 
 	/**
 	 * A SAX event handler to parse the xml format for profiles.
@@ -179,43 +169,6 @@ public class FormatterManager {
 			return handler.getSettings();
 		}
 		return ProfileVersionerCore.updateAndComplete(handler.getSettings(), version);
-	}
-
-	public static void configureFormatter(Preferences preferences) {
-		URI formatterUri = preferences.getFormatterAsURI();
-		Map<String, String> options = null;
-		if (formatterUri != null) {
-			try (InputStream inputStream = formatterUri.toURL().openStream()) {
-				InputSource inputSource = new InputSource(inputStream);
-				String profileName = preferences.getFormatterProfileName();
-				options = FormatterManager.readSettingsFromStream(inputSource, profileName);
-			} catch (Exception e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-		}
-		if (options != null && !options.isEmpty()) {
-			setFormattingOptions(preferences, options);
-		} else {
-			Map<String, String> defaultOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
-			PreferenceManager.initializeJavaCoreOptions();
-			Hashtable<String, String> javaOptions = JavaCore.getOptions();
-			defaultOptions.forEach((k, v) -> {
-				javaOptions.put(k, v);
-			});
-			preferences.updateTabSizeInsertSpaces(javaOptions);
-			JavaCore.setOptions(javaOptions);
-		}
-	}
-
-	private static void setFormattingOptions(Preferences preferences, Map<String, String> options) {
-		Map<String, String> defaultOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
-		defaultOptions.putAll(options);
-		Hashtable<String, String> javaOptions = JavaCore.getOptions();
-		defaultOptions.entrySet().stream().filter(p -> p.getKey().startsWith(FORMATTER_OPTION_PREFIX)).forEach(p -> {
-			javaOptions.put(p.getKey(), p.getValue());
-		});
-		preferences.updateTabSizeInsertSpaces(javaOptions);
-		JavaCore.setOptions(javaOptions);
 	}
 
 }

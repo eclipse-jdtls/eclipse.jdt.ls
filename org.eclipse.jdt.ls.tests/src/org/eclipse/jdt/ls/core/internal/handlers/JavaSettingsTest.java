@@ -17,9 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Map;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -33,12 +31,13 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
-import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -133,9 +132,7 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 		try {
 			String settingsUrl = "../../formatter/settings.prefs";
 			preferences.setSettingsUrl(settingsUrl);
-			Map<String, Object> map = new HashMap<>();
-			DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
-			server.didChangeConfiguration(params);
+			projectsManager.fileChanged(preferences.getSettingsAsURI().toURL().toString(), CHANGE_TYPE.CHANGED);
 			waitForBackgroundJobs();
 			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
 			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
@@ -145,6 +142,31 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 			StandardProjectsManager.configureSettings(preferences);
 		}
 		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+	}
+
+	@Test
+	public void testFormatter() throws Exception {
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+		try {
+			String settingsUrl = "../../formatter/settings.prefs";
+			preferences.setSettingsUrl(settingsUrl);
+			String formatterUrl = "../../formatter/test.xml";
+			preferences.setFormatterUrl(formatterUrl);
+			projectsManager.fileChanged(preferences.getFormatterAsURI().toURL().toString(), CHANGE_TYPE.CHANGED);
+			waitForBackgroundJobs();
+			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+			assertEquals(DefaultCodeFormatterConstants.NEXT_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+		} finally {
+			JavaCore.setOptions(options);
+			preferences.setSettingsUrl(null);
+			preferences.setFormatterUrl(null);
+			StandardProjectsManager.configureSettings(preferences);
+		}
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
 	}
 
 }
