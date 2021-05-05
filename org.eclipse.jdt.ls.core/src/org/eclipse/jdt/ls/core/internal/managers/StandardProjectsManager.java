@@ -530,9 +530,10 @@ public class StandardProjectsManager extends ProjectsManager {
 					}
 					if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
 						registerWatcherJob.schedule(100L);
-						if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
-							configureSettings(newPreferences);
-						}
+					}
+					if (!Objects.equals(oldPreferences.getFormatterUrl(), newPreferences.getFormatterUrl()) || !Objects.equals(oldPreferences.getFormatterProfileName(), newPreferences.getFormatterProfileName())
+							|| !Objects.equals(oldPreferences.getSettingsUrl(), newPreferences.getSettingsUrl())) {
+						configureSettings(newPreferences);
 					}
 					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
 						try {

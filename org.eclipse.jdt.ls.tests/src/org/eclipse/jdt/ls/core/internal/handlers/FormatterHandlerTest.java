@@ -859,6 +859,39 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(formattedText, expectedText);
 	}
 
+	@Test
+	public void testProfileSettings() throws Exception {
+		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+		try {
+			String formatterUrl = "../../formatter/test.xml";
+			// valid profile
+			preferences.setFormatterUrl(formatterUrl);
+			preferences.setFormatterProfileName("GoogleStyle");
+			StandardProjectsManager.configureSettings(preferences);
+			assertEquals(DefaultCodeFormatterConstants.NEXT_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+			// reset
+			preferences.setFormatterUrl(null);
+			preferences.setFormatterProfileName(null);
+			StandardProjectsManager.configureSettings(preferences);
+			assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+			// invalid profile
+			preferences.setFormatterUrl(formatterUrl);
+			preferences.setFormatterProfileName("Invalid");
+			StandardProjectsManager.configureSettings(preferences);
+			assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+			// empty profile (valid)
+			preferences.setFormatterUrl(formatterUrl);
+			preferences.setFormatterProfileName("");
+			StandardProjectsManager.configureSettings(preferences);
+			assertEquals(DefaultCodeFormatterConstants.NEXT_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+		} finally {
+			preferences.setFormatterUrl(null);
+			preferences.setFormatterProfileName(null);
+			StandardProjectsManager.configureSettings(preferences);
+		}
+		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+	}
+
 	@After
 	public void tearDown() {
 		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, originalTabChar);
