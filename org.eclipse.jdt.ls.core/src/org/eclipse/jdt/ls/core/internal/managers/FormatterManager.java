@@ -16,8 +16,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -27,6 +29,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -51,7 +54,7 @@ public class FormatterManager {
 	private final static class ProfileDefaultHandler extends DefaultHandler {
 
 		private String profileName;
-		private String fName;
+		protected String fName;
 		private Map<String, String> fSettings;
 		private String fKind;
 		private int fVersion;
@@ -62,18 +65,19 @@ public class FormatterManager {
 		 */
 		private ProfileDefaultHandler(String profileName) {
 			this.profileName = profileName;
+			if (this.profileName != null && this.profileName.isBlank()) {
+				this.profileName = null;
+			}
 		}
 
 		@Override
 		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-
 			if (qName.equals(XML_NODE_SETTING)) {
 				if (reading) {
 					final String key = attributes.getValue(XML_ATTRIBUTE_ID);
 					final String value = attributes.getValue(XML_ATTRIBUTE_VALUE);
 					fSettings.put(key, value);
 				}
-
 			} else if (qName.equals(XML_NODE_PROFILE)) {
 				fName= attributes.getValue(XML_ATTRIBUTE_NAME);
 				if (profileName == null || profileName.equals(fName)) {
@@ -88,7 +92,6 @@ public class FormatterManager {
 					} catch (NumberFormatException e) {
 						fVersion = ProfileVersionerCore.getCurrentVersion();
 					}
-
 				}
 			}
 			else if (qName.equals(XML_NODE_ROOT)) {
@@ -155,7 +158,6 @@ public class FormatterManager {
 	 * @throws CoreException
 	 */
 	public static Map<String, String> readSettingsFromStream(InputSource inputSource, String profileName) throws CoreException {
-
 		final ProfileDefaultHandler handler = new ProfileDefaultHandler(profileName);
 		try {
 			final SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -165,6 +167,14 @@ public class FormatterManager {
 			throw new CoreException(new Status(IStatus.WARNING, IConstants.PLUGIN_ID, e.getMessage(), e));
 		}
 		int version = handler.getVersion();
+		if (handler.getSettings() == null) {
+			if (!Objects.equals(profileName, handler.fName)) {
+				JavaLanguageServerPlugin.logError("Invalid settings: java.format.settings.profile=" + profileName + ". The '" + profileName + "' profile doesn't exist.");
+			} else {
+				JavaLanguageServerPlugin.logError("Invalid Formatter settings. Check 'java.format.settings.url' and 'java.format.settings.profile'");
+			}
+			return Collections.emptyMap();
+		}
 		if (version == ProfileVersionerCore.getCurrentVersion()) {
 			return handler.getSettings();
 		}
