@@ -462,9 +462,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		try {
 			boolean autoBuildChanged = pm.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 			if (jvmChanged) {
-				buildWorkspace(true);
+				buildWorkspace(Either.forLeft(true));
 			} else if (autoBuildChanged) {
-				buildWorkspace(false);
+				buildWorkspace(Either.forLeft(false));
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -825,10 +825,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#buildWorkspace(boolean)
 	 */
 	@Override
-	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild) {
-		logInfo(">> java/buildWorkspace (" + (forceReBuild ? "full)" : "incremental)"));
+	public CompletableFuture<BuildWorkspaceStatus> buildWorkspace(Either<Boolean, boolean[]> forceRebuild) {
+		// See https://github.com/redhat-developer/vscode-java/issues/1929,
+		// some language client will convert the parameter to an array.
+		boolean rebuild = forceRebuild.isLeft() ? forceRebuild.getLeft() : forceRebuild.getRight()[0];
+		logInfo(">> java/buildWorkspace (" + (rebuild ? "full)" : "incremental)"));
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(pm);
-		return computeAsyncWithClientProgress((monitor) -> handler.buildWorkspace(forceReBuild, monitor));
+		return computeAsyncWithClientProgress((monitor) -> handler.buildWorkspace(rebuild, monitor));
 	}
 
 	/* (non-Javadoc)

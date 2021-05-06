@@ -41,6 +41,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
@@ -65,7 +66,7 @@ public interface JavaProtocolExtensions {
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
 
 	@JsonRequest
-	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(boolean forceReBuild);
+	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(Either<Boolean, boolean[]> forceReBuild);
 
 	@JsonRequest
 	CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params);
