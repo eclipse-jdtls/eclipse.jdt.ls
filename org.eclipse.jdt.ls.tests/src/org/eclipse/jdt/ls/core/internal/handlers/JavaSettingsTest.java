@@ -69,6 +69,7 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		JavaCore.setOptions(options);
+		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		JobHelpers.waitForJobsToComplete();
 	}
 

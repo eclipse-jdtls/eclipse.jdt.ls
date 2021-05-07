@@ -63,6 +63,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
@@ -120,7 +121,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		server.disconnectClient();
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		try {
-			projectsManager.setAutoBuilding(true);
+			ProjectsManager.setAutoBuilding(true);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}

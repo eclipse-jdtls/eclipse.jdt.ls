@@ -102,7 +102,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	/**
 	 * Based on the trigger file, check whether to load the invisible project to
 	 * manage it. Return true if an invisible project is enabled.
-	 * 
+	 *
 	 * @throws CoreException
 	 */
 	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath, IProgressMonitor monitor) throws CoreException {
@@ -225,7 +225,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		} else {
 			outputPath = outputPath.trim();
 		}
-		
+
 		if (new org.eclipse.core.runtime.Path(outputPath).isAbsolute()) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The output path must be a relative path to the workspace."));
 		}
@@ -241,7 +241,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		if (javaProject.getOutputLocation().equals(outputFullPath)) {
 			return outputFullPath;
 		}
-	
+
 		File outputDirectory = project.getFolder(outputPath).getLocation().toFile();
 		// Avoid popping too much dialogs during activation, only show the error dialog when it's updated
 		if (isUpdate && outputDirectory.exists() && outputDirectory.list().length != 0) {
@@ -314,7 +314,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	}
 
 	private static String getPackageName(IPath javaFile, IPath workspaceRoot, String[][] srcPrefixes) {
-		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
+		IProject project = ProjectsManager.getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			return "";
 		}

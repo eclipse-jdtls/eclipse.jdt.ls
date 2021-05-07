@@ -52,7 +52,7 @@ public class BaseJDTLanguageServer {
 	}
 
 	public void unregisterCapability(String id, String method) {
-		if (registeredCapabilities.remove(id)) {
+		if (client != null && registeredCapabilities.remove(id)) {
 			Unregistration unregistration = new Unregistration(id, method);
 			UnregistrationParams unregistrationParams = new UnregistrationParams(Collections.singletonList(unregistration));
 			client.unregisterCapability(unregistrationParams);
@@ -64,7 +64,7 @@ public class BaseJDTLanguageServer {
 	}
 
 	public void registerCapability(String id, String method, Object options) {
-		if (registeredCapabilities.add(id)) {
+		if (client != null && registeredCapabilities.add(id)) {
 			Registration registration = new Registration(id, method, options);
 			RegistrationParams registrationParams = new RegistrationParams(Collections.singletonList(registration));
 			client.registerCapability(registrationParams);

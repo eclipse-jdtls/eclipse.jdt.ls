@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -84,5 +85,6 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 		for (ICompilationUnit workingCopy : workingCopies) {
 			workingCopy.discardWorkingCopy();
 		}
+		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 	}
 }
