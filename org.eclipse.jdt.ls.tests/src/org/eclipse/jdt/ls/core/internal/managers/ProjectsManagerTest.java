@@ -69,7 +69,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		server.disconnectClient();
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		try {
-			projectsManager.setAutoBuilding(autoBuild);
+			ProjectsManager.setAutoBuilding(autoBuild);
 			preferenceManager.getPreferences().setAutobuildEnabled(autoBuild);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -84,7 +84,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, projects.size());
 		IProject result = projects.get(0);
 		assertNotNull(result);
-		assertEquals(projectsManager.getDefaultProject(), result);
+		assertEquals(ProjectsManager.getDefaultProject(), result);
 		assertTrue("the default project doesn't exist", result.exists());
 	}
 

@@ -189,20 +189,20 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected IJavaProject newEmptyProject() throws Exception {
 		IProject testProject = ResourcesPlugin.getWorkspace().getRoot().getProject(TEST_PROJECT_NAME);
 		assertEquals(false, testProject.exists());
-		projectsManager.createJavaProject(testProject, new Path(getWorkingProjectDirectory().getAbsolutePath()).append(TEST_PROJECT_NAME), "src", "bin", new NullProgressMonitor());
+		ProjectsManager.createJavaProject(testProject, new Path(getWorkingProjectDirectory().getAbsolutePath()).append(TEST_PROJECT_NAME), "src", "bin", new NullProgressMonitor());
 		waitForBackgroundJobs();
 		return JavaCore.create(testProject);
 	}
 
 	protected IJavaProject newDefaultProject() throws Exception {
-		IProject testProject = projectsManager.getDefaultProject();
-		projectsManager.createJavaProject(testProject, new NullProgressMonitor());
+		IProject testProject = ProjectsManager.getDefaultProject();
+		ProjectsManager.createJavaProject(testProject, new NullProgressMonitor());
 		waitForBackgroundJobs();
 		return JavaCore.create(testProject);
 	}
 
 	protected IFile linkFilesToDefaultProject(String path) throws Exception {
-		IProject testProject = projectsManager.getDefaultProject();
+		IProject testProject = ProjectsManager.getDefaultProject();
 		String fullpath = copyFiles(path, true).getAbsolutePath().replace('\\', '/');
 		String fileName = fullpath.substring(fullpath.lastIndexOf("/") + 1);
 		IPath filePath = new Path("src").append(fileName);

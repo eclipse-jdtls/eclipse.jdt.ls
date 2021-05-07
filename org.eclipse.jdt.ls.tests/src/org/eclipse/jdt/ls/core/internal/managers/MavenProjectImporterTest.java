@@ -131,7 +131,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	@Test
 	public void testUnzippedSourceImportExclusions() throws Exception {
 		List<IProject> projects = importProjects("maven/unzipped-sources");
-		assertEquals(Arrays.asList(projectsManager.getDefaultProject()), projects);
+		assertEquals(Arrays.asList(ProjectsManager.getDefaultProject()), projects);
 	}
 
 	@Test
