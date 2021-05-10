@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.SafeRunner;
@@ -68,6 +70,7 @@ public class PreferenceManager {
 	private ListenerList<IPreferencesChangeListener> preferencesChangeListeners;
 	private IEclipsePreferences eclipsePrefs;
 	private static Map<String, Template> templates = new LinkedHashMap<>();
+	private static Collection<IPath> triggerFiles;
 
 	public PreferenceManager() {
 		preferences = new Preferences();
@@ -313,6 +316,14 @@ public class PreferenceManager {
 	 */
 	public boolean isClientSupportsCompletionDocumentationMarkDown() {
 		return getClientPreferences() != null && getClientPreferences().isSupportsCompletionDocumentationMarkdown();
+	}
+
+	public static Collection<IPath> getTriggerFiles() {
+		return triggerFiles;
+	}
+
+	public static void setTriggerFiles(Collection<IPath> triggerPaths) {
+		triggerFiles = triggerPaths;
 	}
 
 }

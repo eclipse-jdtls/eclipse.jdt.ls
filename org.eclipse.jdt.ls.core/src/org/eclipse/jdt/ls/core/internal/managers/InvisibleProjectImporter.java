@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
@@ -80,7 +81,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		Collection<IPath> triggerFiles = preferencesManager.getPreferences().getTriggerFiles();
+		Collection<IPath> triggerFiles = PreferenceManager.getTriggerFiles();
 		if (triggerFiles == null || triggerFiles.isEmpty()) {
 			return;
 		}
@@ -91,12 +92,31 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			return;
 		}
 
-		loadInvisibleProject(triggerJavaFile.get(), rootPath, true, monitor);
+		loadInvisibleProject(triggerJavaFile.get(), rootPath, true, false, monitor);
 	}
 
 	@Override
 	public void reset() {
 		// do nothing
+	}
+
+	public static void updateSourcePaths(IJavaProject javaProject) throws CoreException {
+		IProject project = javaProject.getProject();
+		if (ProjectUtils.isVisibleProject(project) || project.equals(ProjectsManager.getDefaultProject())) {
+			return;
+		}
+		IFolder workspaceLinkFolder = javaProject.getProject().getFolder(ProjectUtils.WORKSPACE_LINK);
+		IPath rootPath = workspaceLinkFolder.getLocation();
+		if (rootPath == null) {
+			return;
+		}
+		Collection<IPath> triggerFiles = PreferenceManager.getTriggerFiles();
+		if (triggerFiles != null && !triggerFiles.isEmpty()) {
+			Optional<IPath> triggerJavaFile = triggerFiles.stream().filter(triggerFile -> rootPath.isPrefixOf(triggerFile)).findFirst();
+			if (triggerJavaFile.isPresent()) {
+				loadInvisibleProject(triggerJavaFile.get(), rootPath, true, true, new NullProgressMonitor());
+			}
+		}
 	}
 
 	/**
@@ -105,7 +125,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	 *
 	 * @throws CoreException
 	 */
-	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath, IProgressMonitor monitor) throws CoreException {
+	public static boolean loadInvisibleProject(IPath javaFile, IPath rootPath, boolean forceUpdateLibPath, boolean isUpdate, IProgressMonitor monitor) throws CoreException {
 		if (!ProjectUtils.getVisibleProjects(rootPath).isEmpty()) {
 			return false;
 		}
@@ -151,7 +171,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 		List<IPath> excludingPaths = getExcludingPath(javaProject, rootPath, workspaceLinkFolder);
 
-		IPath outputPath = getOutputPath(javaProject, preferencesManager.getPreferences().getInvisibleProjectOutputPath(), false /*isUpdate*/);
+		IPath outputPath = getOutputPath(javaProject, preferencesManager.getPreferences().getInvisibleProjectOutputPath(), isUpdate);
 
 		IClasspathEntry[] classpathEntries = resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
 		javaProject.setRawClasspath(classpathEntries, outputPath, monitor);

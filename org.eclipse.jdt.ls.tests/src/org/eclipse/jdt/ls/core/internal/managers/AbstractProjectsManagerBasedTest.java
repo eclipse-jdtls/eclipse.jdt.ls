@@ -423,8 +423,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected IProject importRootFolder(IPath rootPath, String triggerFile) throws Exception {
 		if (StringUtils.isNotBlank(triggerFile)) {
 			IPath triggerFilePath = rootPath.append(triggerFile);
-			Preferences preferences = preferenceManager.getPreferences();
-			preferences.setTriggerFiles(Arrays.asList(triggerFilePath));
+			PreferenceManager.setTriggerFiles(Arrays.asList(triggerFilePath));
 		}
 		final List<IPath> roots = Arrays.asList(rootPath);
 		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {

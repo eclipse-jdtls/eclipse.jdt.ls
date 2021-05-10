@@ -460,7 +460,7 @@ public final class ProjectUtils {
 	public static IPath resolveGlobPath(IPath base, String glob) {
 		IPath pattern = new org.eclipse.core.runtime.Path(glob);
 		if (!pattern.isAbsolute()) { // Append cwd to relative path
-			pattern = base.append(pattern);
+			pattern = base != null ? base.append(pattern) : pattern.makeAbsolute();
 		}
 		if (pattern.getDevice() != null) { // VS Code only matches lower-case device
 			pattern = pattern.setDevice(pattern.getDevice().toLowerCase());

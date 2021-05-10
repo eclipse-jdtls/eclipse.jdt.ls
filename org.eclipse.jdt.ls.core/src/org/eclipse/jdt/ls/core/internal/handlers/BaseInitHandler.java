@@ -108,6 +108,17 @@ public abstract class BaseInitHandler {
 			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
 			rootPaths.add(workspaceLocation);
 		}
+		Collection<IPath> triggerPaths = new ArrayList<>();
+		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
+		if (triggerFiles != null) {
+			for (String uri : triggerFiles) {
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
+				if (filePath != null) {
+					triggerPaths.add(filePath);
+				}
+			}
+		}
+		PreferenceManager.setTriggerFiles(triggerPaths);
 		if (initializationOptions.get(SETTINGS_KEY) instanceof Map) {
 			Object settings = initializationOptions.get(SETTINGS_KEY);
 			@SuppressWarnings("unchecked")
@@ -126,18 +137,6 @@ public abstract class BaseInitHandler {
 		} else {
 			preferenceManager.getPreferences().setRootPaths(rootPaths);
 		}
-
-		Collection<IPath> triggerPaths = new ArrayList<>();
-		Collection<String> triggerFiles = getInitializationOption(initializationOptions, "triggerFiles", Collection.class);
-		if (triggerFiles != null) {
-			for (String uri : triggerFiles) {
-				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
-				if (filePath != null) {
-					triggerPaths.add(filePath);
-				}
-			}
-		}
-		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
@@ -146,7 +145,7 @@ public abstract class BaseInitHandler {
 		return initializationOptions;
 	}
 
-	private void registerWorkspaceInitialized() {
+	public static void registerWorkspaceInitialized() {
 		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		prefs.putBoolean(IConstants.WORKSPACE_INITIALIZED, true);
 		try {
@@ -156,7 +155,7 @@ public abstract class BaseInitHandler {
 		}
 	}
 
-	private boolean isWorkspaceInitialized() {
+	public static boolean isWorkspaceInitialized() {
 		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		return prefs.getBoolean(IConstants.WORKSPACE_INITIALIZED, false);
 	}

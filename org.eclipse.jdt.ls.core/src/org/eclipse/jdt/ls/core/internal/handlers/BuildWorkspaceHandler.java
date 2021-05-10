@@ -28,11 +28,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxInitHandler;
 
 /**
  * @author xuzho
@@ -49,6 +51,18 @@ public class BuildWorkspaceHandler {
 		try {
 			if (monitor.isCanceled()) {
 				return BuildWorkspaceStatus.CANCELLED;
+			}
+			while (!BaseInitHandler.isWorkspaceInitialized()) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// ignore and keep waiting
+				}
+			}
+			try {
+				Job.getJobManager().join(SyntaxInitHandler.JAVA_LS_INITIALIZATION_JOBS, null);
+			} catch (OperationCanceledException | InterruptedException e) {
+				logException(e.getMessage(), e);
 			}
 			projectsManager.cleanupResources(projectsManager.getDefaultProject());
 			if (forceReBuild) {

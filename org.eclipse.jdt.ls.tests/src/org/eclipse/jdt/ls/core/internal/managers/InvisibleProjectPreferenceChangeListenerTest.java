@@ -20,6 +20,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,9 +32,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.MessageParams;
 import org.junit.Test;
@@ -56,8 +57,9 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		Preferences newPreferences = new Preferences();
 		initPreferences(newPreferences);
 		newPreferences.setInvisibleProjectOutputPath("bin");
+		when(preferenceManager.getPreferences()).thenReturn(newPreferences);
 		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
-		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
+		listener.preferencesChange(preferences, newPreferences);
 		waitForBackgroundJobs();
 
 		assertEquals(String.join("/", "", javaProject.getElementName(), ProjectUtils.WORKSPACE_LINK, "bin"), javaProject.getOutputLocation().toString());
@@ -71,13 +73,13 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		Preferences newPreferences = new Preferences();
 		initPreferences(newPreferences);
 		newPreferences.setInvisibleProjectOutputPath("lib");
-
+		when(preferenceManager.getPreferences()).thenReturn(newPreferences);
 		JavaLanguageClient client = mock(JavaLanguageClient.class);
 		ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
 		pm.setConnection(client);
 		doNothing().when(client).showMessage(any(MessageParams.class));
 		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
-		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
+		listener.preferencesChange(preferences, newPreferences);
 		waitForBackgroundJobs();
 
 		verify(client, times(1)).showMessage(any(MessageParams.class));
@@ -89,7 +91,7 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		IJavaProject javaProject = JavaCore.create(project);
 		IFolder linkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
-		
+
 		List<String> sourcePaths = new ArrayList<>();
 		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
 			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
@@ -101,9 +103,10 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 
 		Preferences newPreferences = new Preferences();
 		initPreferences(newPreferences);
+		when(preferenceManager.getPreferences()).thenReturn(newPreferences);
 		newPreferences.setInvisibleProjectSourcePaths(Arrays.asList("src", "test"));
 		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
-		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
+		listener.preferencesChange(preferences, newPreferences);
 
 		waitForBackgroundJobs();
 
@@ -136,7 +139,39 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		newPreferences.setInvisibleProjectSourcePaths(Arrays.asList("src", "src2"));
 		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
 		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
-		
+
 		verify(client, times(0)).showMessage(any(MessageParams.class));
 	}
+
+	@Test
+	public void testDeleteSourcePaths() throws Exception {
+		preferenceManager.getPreferences().setInvisibleProjectSourcePaths(Arrays.asList("src"));
+		IProject project = copyAndImportFolder("singlefile/wrong-packagename", "src/mypackage/Foo.java");
+		IJavaProject javaProject = JavaCore.create(project);
+		IFolder linkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
+		List<String> sourcePaths = new ArrayList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(1, sourcePaths.size());
+		assertTrue(sourcePaths.contains("src"));
+		Preferences newPreferences = new Preferences();
+		initPreferences(newPreferences);
+		when(preferenceManager.getPreferences()).thenReturn(newPreferences);
+		newPreferences.setInvisibleProjectSourcePaths(null);
+		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
+		listener.preferencesChange(preferences, newPreferences);
+		waitForBackgroundJobs();
+		sourcePaths.clear();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				sourcePaths.add(entry.getPath().makeRelativeTo(linkFolder.getFullPath()).toString());
+			}
+		}
+		assertEquals(1, sourcePaths.size());
+		assertTrue(sourcePaths.contains("src"));
+	}
+
 }

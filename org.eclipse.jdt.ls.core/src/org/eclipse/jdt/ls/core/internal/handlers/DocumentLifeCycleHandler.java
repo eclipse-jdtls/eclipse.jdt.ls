@@ -82,7 +82,7 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 				if (belongedRootPath.isPresent()) {
 					IPath rootPath = belongedRootPath.get();
 					try {
-						invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false, new NullProgressMonitor());
+						invisibleProjectEnabled = InvisibleProjectImporter.loadInvisibleProject(filePath, rootPath, false, false, new NullProgressMonitor());
 					} catch (CoreException e) {
 						JavaLanguageServerPlugin.logException("Failed to load invisible project", e);
 					}

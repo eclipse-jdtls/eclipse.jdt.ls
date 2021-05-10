@@ -17,6 +17,7 @@ import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -39,6 +40,7 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 		IWorkspaceDescription description = workspace.getDescription();
 		description.setAutoBuilding(true);
 		workspace.setDescription(description);
+		BaseInitHandler.registerWorkspaceInitialized();
 	}
 
 	/* (non-Javadoc)
