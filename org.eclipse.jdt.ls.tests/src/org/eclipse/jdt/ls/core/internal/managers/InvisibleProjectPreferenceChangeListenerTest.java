@@ -64,6 +64,35 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 	}
 
 	@Test
+	public void testUpdateOutputPathWontAffectSourcePath() throws Exception {
+		preferenceManager.getPreferences().setInvisibleProjectOutputPath("");
+		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
+		IJavaProject javaProject = JavaCore.create(project);
+
+		int originalSourcePathCount = 0;
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				originalSourcePathCount++;
+			}
+		}
+
+		Preferences newPreferences = new Preferences();
+		initPreferences(newPreferences);
+		newPreferences.setInvisibleProjectOutputPath("bin");
+		InvisibleProjectPreferenceChangeListener listener = new InvisibleProjectPreferenceChangeListener();
+		listener.preferencesChange(preferenceManager.getPreferences(), newPreferences);
+		waitForBackgroundJobs();
+
+		int newSourcePathCount = 0;
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+				newSourcePathCount++;
+			}
+		}
+		assertEquals(originalSourcePathCount, newSourcePathCount);
+	}
+
+	@Test
 	public void testUpdateOutputPathToUnEmptyFolder() throws Exception {
 		copyAndImportFolder("singlefile/simple", "src/App.java");
 		waitForBackgroundJobs();
@@ -85,7 +114,6 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 
 	@Test
 	public void testUpdateSourcePaths() throws Exception {
-		preferenceManager.getPreferences().setInvisibleProjectOutputPath("");
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		IJavaProject javaProject = JavaCore.create(project);
 		IFolder linkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);

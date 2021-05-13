@@ -34,18 +34,17 @@ public class InvisibleProjectPreferenceChangeListener implements IPreferencesCha
 
 	@Override
 	public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
-		if (!Objects.equals(oldPreferences.getInvisibleProjectOutputPath(), newPreferences.getInvisibleProjectOutputPath()) ||
-				!Objects.equals(oldPreferences.getInvisibleProjectSourcePaths(), newPreferences.getInvisibleProjectSourcePaths())) {
-			for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
-				IProject project = javaProject.getProject();
-				if (ProjectUtils.isVisibleProject(project)) {
-					continue;
-				}
-				if (project.equals(ProjectsManager.getDefaultProject())) {
-					continue;
-				}
-
-				try {
+		try {
+			if (!Objects.equals(oldPreferences.getInvisibleProjectSourcePaths(), newPreferences.getInvisibleProjectSourcePaths())) {
+				for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+					IProject project = javaProject.getProject();
+					if (ProjectUtils.isVisibleProject(project)) {
+						continue;
+					}
+					if (project.equals(ProjectsManager.getDefaultProject())) {
+						continue;
+					}
+	
 					IFolder workspaceLinkFolder = javaProject.getProject().getFolder(ProjectUtils.WORKSPACE_LINK);
 					IPath rootPath = ProjectUtils.findBelongedWorkspaceRoot(workspaceLinkFolder.getLocation());
 					if (rootPath == null) {
@@ -56,10 +55,23 @@ public class InvisibleProjectPreferenceChangeListener implements IPreferencesCha
 					IPath outputPath = InvisibleProjectImporter.getOutputPath(javaProject, newPreferences.getInvisibleProjectOutputPath(), true /*isUpdate*/);
 					IClasspathEntry[] classpathEntries = InvisibleProjectImporter.resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
 					javaProject.setRawClasspath(classpathEntries, outputPath, new NullProgressMonitor());
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(new MessageParams(MessageType.Error, e.getMessage()));
+				}
+			} else if (!Objects.equals(oldPreferences.getInvisibleProjectOutputPath(), newPreferences.getInvisibleProjectOutputPath())) {
+				for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+					IProject project = javaProject.getProject();
+					if (ProjectUtils.isVisibleProject(project)) {
+						continue;
+					}
+					if (project.equals(ProjectsManager.getDefaultProject())) {
+						continue;
+					}
+	
+					IPath outputPath = InvisibleProjectImporter.getOutputPath(javaProject, newPreferences.getInvisibleProjectOutputPath(), true /*isUpdate*/);
+					javaProject.setOutputLocation(outputPath, new NullProgressMonitor());
 				}
 			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(new MessageParams(MessageType.Error, e.getMessage()));
 		}
 	}
 }
