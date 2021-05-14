@@ -1,0 +1,6 @@
+#Mon May 10 12:54:52 CEST 2021
+\!/=
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.staticAccessReceiver=ignore
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.missingSerialVersion=warning
+@org.eclipse.jdt.core=3.25.0.v20210223-0522
+file_export_version=3.0

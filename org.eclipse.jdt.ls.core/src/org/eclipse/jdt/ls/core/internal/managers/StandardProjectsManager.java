@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -289,9 +290,13 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (properties != null && !properties.isEmpty()) {
 			properties.forEach((k, v) -> {
 				if (k instanceof String && v instanceof String) {
-					k = ((String) k).replace("/instance/", "");
-					if (javaOptions.get(k) != null) {
-						javaOptions.put((String) k, (String) v);
+					String path = (String) k;
+					if (!"file_export_version".equals(path) && path.charAt(0) != '@' && path.charAt(0) != '!') {
+						String[] decoded = EclipsePreferences.decodePath(path);
+						String key = decoded[1];
+						if (key != null) {
+							javaOptions.put(key, (String) v);
+						}
 					}
 				}
 			});

@@ -51,7 +51,8 @@ import org.osgi.framework.Bundle;
 @RunWith(MockitoJUnitRunner.class)
 public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 
-	private static final String MISSING_SERIAL_VERSION = "org.eclipse.jdt.core.compiler.problem.missingSerialVersion";
+	private static final String MISSING_SERIAL_VERSION = JavaCore.COMPILER_PB_MISSING_SERIAL_VERSION;
+	private static final String STATIC_ACCESS_RECEIVER = JavaCore.COMPILER_PB_STATIC_ACCESS_RECEIVER;
 	private IJavaProject javaProject;
 	private Hashtable<String, String> options;
 
@@ -168,6 +169,34 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 		}
 		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
 		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/1939
+	@Test
+	public void testSettingsV3() throws Exception {
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("warning", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+		try {
+			String settingsUrl = "../../formatter/settings2.prefs";
+			preferences.setSettingsUrl(settingsUrl);
+			projectsManager.fileChanged(preferences.getSettingsAsURI().toURL().toString(), CHANGE_TYPE.CHANGED);
+			waitForBackgroundJobs();
+			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+			assertEquals("ignore", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+			assertEquals("ignore", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+		} finally {
+			JavaCore.setOptions(options);
+			preferences.setSettingsUrl(null);
+			StandardProjectsManager.configureSettings(preferences);
+			waitForBackgroundJobs();
+		}
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("warning", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
 	}
 
 }
