@@ -1,5 +1,17 @@
 # Change Log
 
+# [1.1.2 (May 19th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/91?closed=1)
+ * bug fix - Package name not recognized when opening standalone java files. See [#1764](https://github.com/eclipse/eclipse.jdt.ls/issues/1764).
+ * bug fix - Fix parameter compatibility issue in buildWorkspace request. See [#1763](https://github.com/eclipse/eclipse.jdt.ls/pull/1763).
+ * bug fix - Invalid formatter profile name setting causes errors. See [#1761](https://github.com/eclipse/eclipse.jdt.ls/issues/1761).
+ * bug fix - Formatter doesn't load format config after update. See [#1757](https://github.com/eclipse/eclipse.jdt.ls/pull/1757).
+ * bug fix - Improve handling of exported settings files. See [#1768](https://github.com/eclipse/eclipse.jdt.ls/pull/1768).
+ * bug fix - Fix class literal keyword semantic token. See [#1753](https://github.com/eclipse/eclipse.jdt.ls/pull/1753).
+ * debt - InvisibleProjectImporterTest.automaticJarDetectionLibUnderSource fails randomly. See [#1756](https://github.com/eclipse/eclipse.jdt.ls/issues/1756).
+ * debt - Build failure on arch with openjdk 11.0.11. See [#1748](https://github.com/eclipse/eclipse.jdt.ls/issues/1748).
+ * debt - Cannot launch JDT.LS using the 'jdt.ls.remote.server.launch' file. See [#1754](https://github.com/eclipse/eclipse.jdt.ls/issues/1754).
+ * debt - Add a timeout to waitForInitializeJobs(). See [#1773](https://github.com/eclipse/eclipse.jdt.ls/pull/1773).
+
 # [1.1.1 (May 3rd, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/91?closed=1)
 * bug fix - Formatter doesn't load format config after update. See [#1757](https://github.com/eclipse/eclipse.jdt.ls/pull/1757).
 
