@@ -261,6 +261,8 @@ public class Preferences {
 	 */
 	public static final String MAVEN_GLOBAL_SETTINGS_KEY = "java.configuration.maven.globalSettings";
 
+	public static final String MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY = "java.configuration.maven.notCoveredPluginExecutionSeverity";
+
 	/**
 	 * Preference key to enable/disable the 'completion'.
 	 */
@@ -501,6 +503,7 @@ public class Preferences {
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
+	private String mavenNotCoveredPluginExecutionSeverity;
 
 	private List<String> javaCompletionFavoriteMembers;
 	private List<?> gradleWrapperList;
@@ -734,6 +737,7 @@ public class Preferences {
 		includeSourceMethodDeclarations = false;
 		insertSpaces = true;
 		tabSize = DEFAULT_TAB_SIZE;
+		mavenNotCoveredPluginExecutionSeverity = "ignore";
 	}
 
 	/**
@@ -896,6 +900,9 @@ public class Preferences {
 
 		String mavenGlobalSettings = getString(configuration, MAVEN_GLOBAL_SETTINGS_KEY, null);
 		prefs.setMavenGlobalSettings(mavenGlobalSettings);
+
+		String mavenNotCoveredPluginExecution = getString(configuration, MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY, "ignore");
+		prefs.setMavenNotCoveredPluginExecutionSeverity(mavenNotCoveredPluginExecution);
 
 		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
@@ -1523,6 +1530,14 @@ public class Preferences {
 
 	public String getMavenGlobalSettings() {
 		return mavenGlobalSettings;
+	}
+
+	public String getMavenNotCoveredPluginExecutionSeverity() {
+		return mavenNotCoveredPluginExecutionSeverity;
+	}
+
+	public void setMavenNotCoveredPluginExecutionSeverity(String mavenNotCoveredPluginExecutionSeverity) {
+		this.mavenNotCoveredPluginExecutionSeverity = mavenNotCoveredPluginExecutionSeverity;
 	}
 
 	public String[] getImportOrder() {
