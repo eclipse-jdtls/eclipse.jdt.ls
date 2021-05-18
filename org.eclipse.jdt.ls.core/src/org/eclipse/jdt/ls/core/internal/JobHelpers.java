@@ -162,7 +162,11 @@ public final class JobHelpers {
 	}
 
 	public static void waitForInitializeJobs() {
-		waitForJobs(InitializeJobMatcher.INSTANCE, MAX_TIME_MILLIS);
+		waitForInitializeJobs(MAX_TIME_MILLIS);
+	}
+
+	public static void waitForInitializeJobs(int maxTimeMillis) {
+		waitForJobs(InitializeJobMatcher.INSTANCE, maxTimeMillis);
 	}
 
 	public static void waitForDownloadSourcesJobs(int maxTimeMillis) {
