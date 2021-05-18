@@ -243,7 +243,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public void initialized(InitializedParams params) {
 		logInfo(">> initialized");
 		try {
-			JobHelpers.waitForInitializeJobs();
+			JobHelpers.waitForInitializeJobs(60 * 60 * 1000); // 1 hour
 		} catch (OperationCanceledException e) {
 			logException(e.getMessage(), e);
 		}
