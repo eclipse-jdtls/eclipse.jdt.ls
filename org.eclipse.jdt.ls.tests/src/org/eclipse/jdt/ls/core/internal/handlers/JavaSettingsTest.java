@@ -146,6 +146,27 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/1944
+	@Test
+	public void testFileChangedOnWindows() throws Exception {
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+			try {
+				String formatterUrl = "..\\\\..\\\\formatter\\\\test.xml";
+				preferences.setFormatterUrl(formatterUrl);
+				projectsManager.fileChanged(preferences.getFormatterAsURI().toURL().toString(), CHANGE_TYPE.CHANGED);
+				waitForBackgroundJobs();
+				assertEquals(DefaultCodeFormatterConstants.NEXT_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+			} finally {
+				JavaCore.setOptions(options);
+				preferences.setSettingsUrl(null);
+				preferences.setFormatterUrl(null);
+				StandardProjectsManager.configureSettings(preferences);
+			}
+			assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
+		}
+	}
+
 	@Test
 	public void testFormatter() throws Exception {
 		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
