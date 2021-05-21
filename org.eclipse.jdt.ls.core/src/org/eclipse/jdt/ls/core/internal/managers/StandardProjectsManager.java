@@ -484,17 +484,16 @@ public class StandardProjectsManager extends ProjectsManager {
 		URI uri;
 		try {
 			uri = new URI(ResourceUtils.toClientUri(url));
+			if (uri.isAbsolute()) {
+				if ("file".equals(uri.getScheme())) {
+					url = Path.fromOSString(Paths.get(uri).toString()).toString();
+				} else {
+					result.add(uri);
+					return result;
+				}
+			}
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			return result;
-		}
-		if (uri.isAbsolute()) {
-			if ("file".equals(uri.getScheme())) {
-				url = Path.fromOSString(Paths.get(uri).toString()).toString();
-			} else {
-				result.add(uri);
-				return result;
-			}
 		}
 		if (url.startsWith("/") && new File(url).isFile()) {
 			uri = new File(url).toURI();
