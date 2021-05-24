@@ -1248,8 +1248,14 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 				 * if (methods[i].getNameRange() == null), then it's a binary file so it's wrong anyway
 				 * (checked as a precondition)
 				 */
-				String name = RefactoringCoreMessages.RenameTypeRefactoring_rename_constructor;
-				TextChangeCompatibility.addTextEdit(manager.get(cu), name, new ReplaceEdit(methods[i].getNameRange().getOffset(), typeNameLength, getNewElementName()));
+				String methodName = methods[i].getElementName();
+				ISourceRange range = methods[i].getNameRange();
+				String sourceName = cu.getBuffer().getText(range.getOffset(), range.getLength());
+				boolean isValid = methodName.equals(sourceName);
+				if (isValid) {
+					String name = RefactoringCoreMessages.RenameTypeRefactoring_rename_constructor;
+					TextChangeCompatibility.addTextEdit(manager.get(cu), name, new ReplaceEdit(methods[i].getNameRange().getOffset(), typeNameLength, getNewElementName()));
+				}
 			}
 		}
 	}
