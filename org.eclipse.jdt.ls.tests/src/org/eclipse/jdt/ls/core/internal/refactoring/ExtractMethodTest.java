@@ -14,15 +14,23 @@
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
+import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +44,6 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-
 		fJProject1.setOptions(options);
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 		setOnly(CodeActionKind.Refactor, CodeActionKind.QuickFix);
@@ -526,6 +533,44 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 
 		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testExtractMethodVar() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions("11", options);
+		fJProject1.setOptions(options);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        var test = new String(\"blah\");\n");
+		buf.append("        test = test + test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		cu.getBuffer().setContents(buf.toString());
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        var test = new String(\"blah\");\n");
+		buf.append("        extracted(test);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    private void extracted(String test) {\n");
+		buf.append("        test = test + test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
+		Range range = new Range(new Position(6, 8), new Position(6, 27));
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		assertCodeActions(codeActions, e1);
 	}
 
 	@Test
