@@ -825,7 +825,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			}
 			VariableDeclaration declaration = ASTNodes.findVariableDeclaration(argument, root);
 			boolean isVarargs = declaration instanceof SingleVariableDeclaration ? ((SingleVariableDeclaration) declaration).isVarargs() : false;
-			ParameterInfo info = new ParameterInfo(argument, getType(declaration, isVarargs), argument.getName(), i);
+			ParameterInfo info = new ParameterInfo(argument, getType(declaration, isVarargs, false), argument.getName(), i);
 			if (isVarargs) {
 				vararg = info;
 			} else {
@@ -993,6 +993,19 @@ public class ExtractMethodRefactoring extends Refactoring {
 			return type + ParameterInfo.ELLIPSIS;
 		} else {
 			return type;
+		}
+	}
+
+	private String getType(VariableDeclaration declaration, boolean isVarargs, boolean isVarTypeAllowed) {
+		if (isVarTypeAllowed) {
+			return getType(declaration, isVarargs);
+		} else {
+			String type = ASTNodes.asString(ASTNodeFactory.newNonVarType(declaration.getAST(), declaration, fImportRewriter, new ContextSensitiveImportRewriteContext(declaration, fImportRewriter)));
+			if (isVarargs) {
+				return type + ParameterInfo.ELLIPSIS;
+			} else {
+				return type;
+			}
 		}
 	}
 
@@ -1205,7 +1218,7 @@ public class ExtractMethodRefactoring extends Refactoring {
 			VariableDeclaration infoDecl = getVariableDeclaration(info);
 			SingleVariableDeclaration parameter = fAST.newSingleVariableDeclaration();
 			parameter.modifiers().addAll(ASTNodeFactory.newModifiers(fAST, ASTNodes.getModifiers(infoDecl)));
-			parameter.setType(ASTNodeFactory.newType(fAST, infoDecl, fImportRewriter, context));
+			parameter.setType(ASTNodeFactory.newNonVarType(fAST, infoDecl, fImportRewriter, context));
 			parameter.setName(fAST.newSimpleName(info.getNewName()));
 			parameter.setVarargs(info.isNewVarargs());
 			parameters.add(parameter);
