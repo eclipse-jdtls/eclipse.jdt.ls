@@ -15,16 +15,21 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -560,6 +565,25 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"   public void foo() {}\n" +
 				"}\n"
 				);
+	}
+
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar)
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1775
+	@Test
+	public void testRenameTypeLombok() throws Exception {
+		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
+		importProjects("maven/mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		IFile file = project.getFile("src/main/java/org/sample/Test.java");
+		assertTrue(file.exists());
+		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
+		Position pos = new Position(5, 15);
+		String source = cu.getSource();
+		String expected = source.replace("Test", "Test1");
+		WorkspaceEdit edit = getRenameEdit(cu, pos, "Test1");
+		assertNotNull(edit);
+		assertEquals(edit.getChanges().size(), 1);
+		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
 	}
 
 	@Test
