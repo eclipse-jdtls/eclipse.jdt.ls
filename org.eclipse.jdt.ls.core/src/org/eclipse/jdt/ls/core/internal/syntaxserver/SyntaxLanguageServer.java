@@ -137,6 +137,17 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		return computeAsync((monitor) -> {
 			shutdownJob.schedule();
 			shutdownReceived = true;
+			if (preferenceManager.getClientPreferences().isSyntaxServerExitsOnShutdown()) {
+				exit();
+				try {
+					/*
+					 * Suppress annoying error message in client, by encouraging
+					 * syntax server to exit before shutdown() can respond to client.
+					 */
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+				}
+			}
 			return new Object();
 		});
 	}
