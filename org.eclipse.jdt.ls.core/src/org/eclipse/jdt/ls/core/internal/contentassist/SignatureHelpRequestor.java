@@ -57,17 +57,24 @@ import com.google.common.util.concurrent.UncheckedTimeoutException;
 public final class SignatureHelpRequestor extends CompletionRequestor {
 
 	private List<CompletionProposal> proposals = new ArrayList<>();
+	private List<CompletionProposal> typeProposals = new ArrayList<>();
 	private final ICompilationUnit unit;
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
+	private boolean acceptType = false;
 
 	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset) {
+		this(aUnit, offset, false);
+	}
+
+	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, boolean acceptType) {
 		this.unit = aUnit;
 		response = new CompletionResponse();
 		response.setOffset(offset);
 		setRequireExtendedContext(true);
 		infoProposals = new HashMap<>();
+		this.acceptType = acceptType;
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
@@ -79,6 +86,10 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		for (int i = 0; i < proposals.size(); i++) {
 			if (!monitor.isCanceled()) {
 				CompletionProposal proposal = proposals.get(i);
+				if (proposal.getKind() != CompletionProposal.METHOD_REF) {
+					typeProposals.add(proposal);
+					continue;
+				}
 				SignatureInformation signatureInformation = this.toSignatureInformation(proposal);
 				infoProposals.put(signatureInformation, proposal);
 				infos.add(signatureInformation);
@@ -94,7 +105,11 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 	@Override
 	public boolean isIgnored(int completionProposalKind) {
-		return completionProposalKind != CompletionProposal.METHOD_REF;
+		if (acceptType) {
+			return completionProposalKind != CompletionProposal.METHOD_REF && completionProposalKind != CompletionProposal.TYPE_REF;
+		} else {
+			return completionProposalKind != CompletionProposal.METHOD_REF;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -242,4 +257,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	public Map<SignatureInformation, CompletionProposal> getInfoProposals() {
 		return infoProposals;
 	}
+
+	public List<CompletionProposal> getTypeProposals() {
+		return typeProposals;
+	}
+
 }

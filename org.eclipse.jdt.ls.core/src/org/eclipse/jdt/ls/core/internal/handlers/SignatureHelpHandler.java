@@ -97,7 +97,7 @@ public class SignatureHelpHandler {
 					SignatureHelp help2 = null;
 					SignatureHelpRequestor collector2 = null;
 					if (contextInfomation[0] + 1 != offset) {
-						collector2 = new SignatureHelpRequestor(unit, offset);
+						collector2 = new SignatureHelpRequestor(unit, offset, true);
 						unit.codeComplete(offset, collector2, monitor);
 						help2 = collector2.getSignatureHelp(monitor);
 					}
@@ -130,6 +130,13 @@ public class SignatureHelpHandler {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
+										}
+										for (CompletionProposal typeProposal : collector2.getTypeProposals()) {
+											if (isSameParameters(m, method, typeProposal)) {
+												help.setActiveSignature(i);
+												help.setActiveParameter(activeParameter);
+												return help;
+											}
 										}
 									}
 								}
@@ -174,6 +181,19 @@ public class SignatureHelpHandler {
 								}
 							}
 						}
+						if (method != null && !monitor.isCanceled() && help.getActiveSignature() == null) {
+							for (int i = 0; i < infos.size(); i++) {
+								if (infos.get(i).getParameters().size() >= size) {
+									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+									IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
+									if (isSameParameters(m, method, null)) {
+										help.setActiveSignature(i);
+										help.setActiveParameter(activeParameter);
+										return help;
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -191,11 +211,34 @@ public class SignatureHelpHandler {
 		for (int i = 0; i < infos.size(); i++) {
 			CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
 			IMethod method = JDTUtils.resolveMethod(proposal, javaProject);
-			if (JDTUtils.isSameParameters(method, m)) {
+			if (m.getElementName().equals(method.getElementName()) && JDTUtils.isSameParameters(method, m)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private static boolean isSameParameters(IMethod method1, IMethod method2, CompletionProposal typeProposal) {
+		if (method1 == null || method2 == null || !method1.getElementName().equals(method2.getElementName())) {
+			return false;
+		}
+		String[] params1 = method1.getParameterTypes();
+		String[] params2 = method2.getParameterTypes();
+		if (params2.length == params1.length - 1) {
+			for (int i = 0; i < params2.length; i++) {
+				String t1 = Signature.getSimpleName(Signature.toString(params2[i]));
+				String t2 = Signature.getSimpleName(Signature.toString(params1[i]));
+				if (!t1.equals(t2)) {
+					return false;
+				}
+			}
+		}
+		if (typeProposal != null) {
+			String param = params1[params1.length - 1];
+			String typeSignature = new String(SignatureUtil.fix83600(typeProposal.getSignature()));
+			return param.equals(typeSignature);
+		}
+		return true;
 	}
 
 	private IMethod getMethod(ASTNode node) throws JavaModelException {

@@ -243,6 +243,25 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSignatureHelp_constructorParameters3() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.text.StringCharacterIterator;\n");
+		buf.append("public class E {\n");
+		buf.append("   public void bar() {\n");
+		buf.append("     new StringCharacterIterator(\"\", 0,  , 2);\n");
+		buf.append("   }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 4, 39);
+		assertNotNull(help);
+		assertEquals(3, help.getSignatures().size());
+		// StringCharacterIterator(String arg0, int arg1, int arg2, int arg3)
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("StringCharacterIterator\\(String \\w+, int \\w+, int \\w+, int \\w+\\)"));
+	}
+
+	@Test
 	public void testSignatureHelp_javadoc() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
