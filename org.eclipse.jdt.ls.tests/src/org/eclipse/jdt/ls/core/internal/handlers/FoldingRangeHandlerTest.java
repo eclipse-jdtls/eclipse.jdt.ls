@@ -121,6 +121,18 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertHasFoldingRange(48, 50, null, foldingRanges);
 	}
 
+	@Test
+	public void testStaticBlockFoldingRange() throws Exception {
+		String className = "org.sample.StaticBlockFoldingRange";
+		List<FoldingRange> foldingRanges = getFoldingRanges(className);
+		assertTrue(foldingRanges.size() == 5);
+		assertHasFoldingRange(2, 18, null, foldingRanges);
+		assertHasFoldingRange(4, 5, null, foldingRanges);
+		assertHasFoldingRange(7, 12, null, foldingRanges);
+		assertHasFoldingRange(14, 15, null, foldingRanges);
+		assertHasFoldingRange(17, 17, null, foldingRanges);
+	}
+
 	private void testClass(String className) throws CoreException {
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		for (FoldingRange range : foldingRanges) {
