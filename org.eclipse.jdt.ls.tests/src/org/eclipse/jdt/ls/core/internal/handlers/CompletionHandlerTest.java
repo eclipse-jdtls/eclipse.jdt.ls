@@ -2057,7 +2057,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 32, 33, "(){\n" +
+		assertTextEdit(2, 33, 37, "(){\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
@@ -2087,7 +2087,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 32, 33, "(){\n" +
+		assertTextEdit(3, 8, 12, "(){\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}

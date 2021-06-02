@@ -574,6 +574,54 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 	}
 
 	@Test
+	public void testExtractMethodReference() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions("11", options);
+		fJProject1.setOptions(options);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("import java.util.Arrays;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        var test = new String(\"blah\");\n");
+		buf.append("        List<String> list = new ArrayList<>();\n");
+		buf.append("        Arrays.asList(\"a\", \"b\").forEach(list::add);\n");
+		buf.append("        test = test + test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		cu.getBuffer().setContents(buf.toString());
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("import java.util.Arrays;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        var test = new String(\"blah\");\n");
+		buf.append("        List<String> list = new ArrayList<>();\n");
+		buf.append("        extracted(test, list);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    private void extracted(String test, List<String> list) {\n");
+		buf.append("        Arrays.asList(\"a\", \"b\").forEach(list::add);\n");
+		buf.append("        test = test + test;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
+		Range range = new Range(new Position(10, 8), new Position(11, 27));
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
 	public void testExtractMethodEnum() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
