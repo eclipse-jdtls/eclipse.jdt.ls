@@ -24,7 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IImportContainer;
+import org.eclipse.jdt.core.IInitializer;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
@@ -159,20 +161,22 @@ public class FoldingRangeHandler {
 		foldingRanges.add(new FoldingRange(scanner.getLineNumber(unit.getNameRange().getOffset()) - 1, scanner.getLineNumber(typeRange.getOffset() + typeRange.getLength()) - 1));
 		IJavaElement[] children = unit.getChildren();
 		for (IJavaElement c : children) {
-			if (c instanceof IMethod) {
-				computeMethodRanges(foldingRanges, (IMethod) c, scanner);
+			if (c instanceof IMethod || c instanceof IInitializer) {
+				computeMethodRanges(foldingRanges, (IMember) c, scanner);
 			} else if (c instanceof IType) {
 				computeTypeRanges(foldingRanges, (IType) c, scanner);
 			}
 		}
 	}
 
-	private void computeMethodRanges(List<FoldingRange> foldingRanges, IMethod method, IScanner scanner) throws CoreException {
-		ISourceRange sourceRange = method.getSourceRange();
+	private void computeMethodRanges(List<FoldingRange> foldingRanges, IMember member, IScanner scanner) throws CoreException {
+		ISourceRange sourceRange = member.getSourceRange();
 		final int shift = sourceRange.getOffset();
 		scanner.resetTo(shift, shift + sourceRange.getLength());
 
-		foldingRanges.add(new FoldingRange(scanner.getLineNumber(method.getNameRange().getOffset()) - 1, scanner.getLineNumber(shift + sourceRange.getLength()) - 1));
+		ISourceRange nameRange = member.getNameRange();
+		int nameStart = nameRange != null ? nameRange.getOffset() : sourceRange.getOffset();
+		foldingRanges.add(new FoldingRange(scanner.getLineNumber(nameStart) - 1, scanner.getLineNumber(shift + sourceRange.getLength()) - 1));
 
 		int start = shift;
 		int token = 0;
