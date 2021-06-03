@@ -262,6 +262,17 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertEquals("This is interface IFoo.", list.get(1).getLeft());
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/1931
+	@Test
+	public void testParameterMismatch() throws Exception {
+		openFile("maven/salut4", "src/main/java/pack/TestSyntax.java");
+		Job.getJobManager().join(SyntaxDocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		assertEquals(1, diagnosticReports.size());
+		PublishDiagnosticsParams params = diagnosticReports.get(0);
+		assertEquals(0, params.getDiagnostics().size());
+	}
+
 	@Test
 	public void testCompletionOnSingleName() throws Exception{
 		URI fileURI = openFile("maven/salut4", "src/main/java/java/Completion.java");

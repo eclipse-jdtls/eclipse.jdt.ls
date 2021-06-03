@@ -92,6 +92,7 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 			case IProblem.UndefinedMethod:
 			case IProblem.UndefinedName:
 			case IProblem.UnresolvedVariable:
+			case IProblem.ParameterMismatch:
 				return false;
 			default:
 				//We log problems for troubleshooting purposes
