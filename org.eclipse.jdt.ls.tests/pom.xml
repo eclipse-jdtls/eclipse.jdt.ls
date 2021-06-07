@@ -20,7 +20,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<argLine>${tycho.testArgLine} ${os.testArgs} ${lombokArgs}</argLine>
 						<runOrder>random</runOrder>
 						<providerProperties>
 							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
@@ -32,6 +32,35 @@
 		</pluginManagement>
 	</build>
 	<profiles>
+		<profile>
+			<id>lombok</id>
+			<activation>
+				<property>
+					<name>jdt.ls.lombok.disabled</name>
+					<value>!true</value>
+				</property>
+			</activation>
+			<properties>
+				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.20.jar</lombokArgs>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.projectlombok</groupId>
+									<artifactId>lombok</artifactId>
+									<version>1.18.20</version>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 		<profile>
 			<id>macosx-jvm-flags</id>
 			<activation>

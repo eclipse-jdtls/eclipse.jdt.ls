@@ -27,6 +27,7 @@
 		<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
 		<!-- To handle OSX-specific settings -->
 		<os.testArgs></os.testArgs>
+		<lombokArgs></lombokArgs>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
