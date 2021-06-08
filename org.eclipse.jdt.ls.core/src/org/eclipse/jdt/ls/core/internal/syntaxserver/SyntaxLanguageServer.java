@@ -271,8 +271,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
 		logInfo(">> document/documentSymbol");
-		boolean hierarchicalDocumentSymbolSupported = preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported();
-		DocumentSymbolHandler handler = new DocumentSymbolHandler(hierarchicalDocumentSymbolSupported);
+		DocumentSymbolHandler handler = new DocumentSymbolHandler(preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.documentSymbol(params, monitor);

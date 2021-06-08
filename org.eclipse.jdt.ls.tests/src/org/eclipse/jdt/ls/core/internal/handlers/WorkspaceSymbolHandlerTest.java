@@ -29,6 +29,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.SymbolTag;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,25 +38,22 @@ import org.junit.Test;
  */
 public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	private WorkspaceSymbolHandler handler;
-
 	@Before
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");//We need at least 1 project
-		handler = new WorkspaceSymbolHandler();
 	}
 
 	@Test
 	public void testSearchWithEmptyResults() {
-		List<SymbolInformation> results = handler.search(null, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(null, monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 
-		results = handler.search("  ", monitor);
+		results = WorkspaceSymbolHandler.search("  ", monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 
-		results = handler.search("Abracadabra", monitor);
+		results = WorkspaceSymbolHandler.search("Abracadabra", monitor);
 		assertNotNull(results);
 		assertEquals(0, results.size());
 	}
@@ -65,7 +63,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	public void testWorkspaceSearchNoClassContentSupport() {
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(false);
 		//No classes from binaries can be found
-		List<SymbolInformation> results = handler.search("Array", monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Array", monitor);
 		assertNotNull(results);
 		assertEquals("Unexpected results", 0, results.size());
 
@@ -76,7 +74,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testWorkspaceSearch() {
 		String query = "Array";
-		List<SymbolInformation> results = handler.search(query, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
 		assertEquals("Unexpected results", 11, results.size());
 		Range defaultRange = JDTUtils.newRange();
@@ -94,7 +92,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testWorkspaceSearchOnFileInWorkspace() {
 		String query = "Baz";
-		List<SymbolInformation> results = handler.search(query, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
 		Range defaultRange = JDTUtils.newRange();
 		assertEquals("Unexpected results", 2, results.size());
@@ -111,7 +109,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testProjectSearch() {
 		String query = "IFoo";
-		List<SymbolInformation> results = handler.search(query, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + " results", 2, results.size());
 		SymbolInformation symbol = results.get(0);
@@ -125,11 +123,11 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testCamelCaseSearch() {
-		List<SymbolInformation> results = handler.search("NPE", monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("NPE", monitor);
 		assertNotNull(results);
 		assertEquals("NullPointerException", results.get(0).getName());
 
-		results = handler.search("HaMa", monitor);
+		results = WorkspaceSymbolHandler.search("HaMa", monitor);
 		String className = "HashMap";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
 		assertTrue("Did not find "+className, foundClass);
@@ -138,7 +136,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testSearchSourceOnly() {
 		String query = "B*";
-		List<SymbolInformation> results = handler.search(query, "hello", true, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, "hello", true, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + "result", 6, results.size());
 		String className = "BaseTest";
@@ -149,7 +147,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testSearchReturnMaxResults() {
 		String query = "B*";
-		List<SymbolInformation> results = handler.search(query, 2, "hello", true, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 2, "hello", true, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + "result", 2, results.size());
 	}
@@ -170,18 +168,60 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testSearchSourcMethodDeclarations() {
 		preferences.setIncludeSourceMethodDeclarations(true);
-		List<SymbolInformation> results = handler.search("deleteSomething", "hello", true, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("deleteSomething", "hello", true, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + " result", 1, results.size());
 		SymbolInformation res = results.get(0);
 		assertEquals(SymbolKind.Method, res.getKind());
 		assertEquals(res.getContainerName(), "org.sample.Baz");
 
-		results = handler.search("main", "hello", true, monitor);
+		results = WorkspaceSymbolHandler.search("main", "hello", true, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + " result", 9, results.size());
 		boolean allMethods = results.stream().allMatch(s -> s.getKind() == SymbolKind.Method);
 		assertTrue("Found a non-method symbol", allMethods);
 		preferences.setIncludeSourceMethodDeclarations(false);
 	}
+
+	@Test
+	public void testDeprecated() {
+		when(preferenceManager.getClientPreferences().isSymbolTagSupported()).thenReturn(true);
+
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Certificate", monitor);
+		assertNotNull(results);
+
+		SymbolInformation deprecated = results.stream()
+			.filter(symbol -> symbol.getContainerName().equals("java.security"))
+			.findFirst().orElse(null);
+
+		assertNotNull(deprecated);
+		assertNotNull(deprecated.getTags());
+		assertTrue("Should have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+
+		SymbolInformation notDeprecated = results.stream()
+			.filter(symbol -> symbol.getContainerName().equals("java.security.cert"))
+			.findFirst().orElse(null);
+
+		assertNotNull(notDeprecated);
+		if (notDeprecated.getTags() != null) {
+			assertFalse("Should not have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+		}
+	}
+
+	@Test
+	public void testDeprecated_property() {
+		when(preferenceManager.getClientPreferences().isSymbolTagSupported()).thenReturn(false);
+
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Certificate", monitor);
+		assertNotNull(results);
+
+		SymbolInformation deprecated = results.stream()
+			.filter(symbol -> symbol.getContainerName().equals("java.security"))
+			.findFirst().orElse(null);
+
+		assertNotNull(deprecated);
+		assertNotNull(deprecated.getDeprecated());
+		assertTrue("Should be deprecated", deprecated.getDeprecated());
+	}
+
 }

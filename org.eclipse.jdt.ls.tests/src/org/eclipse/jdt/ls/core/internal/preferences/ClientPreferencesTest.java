@@ -20,11 +20,13 @@ import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensCapabilities;
 import org.eclipse.lsp4j.CompletionCapabilities;
 import org.eclipse.lsp4j.CompletionItemCapabilities;
+import org.eclipse.lsp4j.CompletionItemTagSupportCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.FormattingCapabilities;
 import org.eclipse.lsp4j.RangeFormattingCapabilities;
 import org.eclipse.lsp4j.RenameCapabilities;
 import org.eclipse.lsp4j.SignatureHelpCapabilities;
+import org.eclipse.lsp4j.SymbolTagSupportCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.junit.Before;
 import org.junit.Test;
@@ -146,4 +148,24 @@ public class ClientPreferencesTest {
 		when(text.getDocumentSymbol()).thenReturn(capabilities);
 		assertTrue(prefs.isHierarchicalDocumentSymbolSupported());
 	}
+
+	@Test
+	public void testIsCompletionItemTagSupported() throws Exception {
+		assertFalse(prefs.isCompletionItemTagSupported());
+		CompletionItemCapabilities itemCapabilities = new CompletionItemCapabilities();
+		CompletionCapabilities capabilities = new CompletionCapabilities(itemCapabilities);
+		when(text.getCompletion()).thenReturn(capabilities);
+		itemCapabilities.setTagSupport(new CompletionItemTagSupportCapabilities());
+		assertTrue(prefs.isCompletionItemTagSupported());
+	}
+
+	@Test
+	public void testIsSymbolTagSupported() throws Exception {
+		assertFalse(prefs.isSymbolTagSupported());
+		DocumentSymbolCapabilities capabilities = new DocumentSymbolCapabilities();
+		when(text.getDocumentSymbol()).thenReturn(capabilities);
+		capabilities.setTagSupport(new SymbolTagSupportCapabilities());
+		assertTrue(prefs.isSymbolTagSupported());
+	}
+
 }

@@ -9,6 +9,7 @@ public class Bar {
       System.out.print( "Hello world! from "+Bar.class);
 	}
 	
+	@Deprecated
 	public static interface MyInterface {
 		
 		void foo();

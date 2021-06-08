@@ -36,9 +36,10 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 
-public class WorkspaceSymbolHandler{
+public class WorkspaceSymbolHandler {
 
 	public static List<SymbolInformation> search(String query, IProgressMonitor monitor) {
 		return search(query, 0, null, false, monitor);
@@ -61,6 +62,8 @@ public class WorkspaceSymbolHandler{
 			if (query.contains("*") || query.contains("?")) {
 				typeMatchRule |= SearchPattern.R_PATTERN_MATCH;
 			}
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+
 			new SearchEngine().searchAllTypeNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
 
 				@Override
@@ -86,6 +89,14 @@ public class WorkspaceSymbolHandler{
 							symbolInformation.setContainerName(match.getTypeContainerName());
 							symbolInformation.setName(match.getSimpleTypeName());
 							symbolInformation.setKind(mapKind(match));
+							if (Flags.isDeprecated(match.getType().getFlags())) {
+								if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
+									symbolInformation.setTags(List.of(SymbolTag.Deprecated));
+								}
+								else {
+									symbolInformation.setDeprecated(true);
+								}
+							}
 							symbolInformation.setLocation(location);
 							symbols.add(symbolInformation);
 							if (maxResults > 0 && symbols.size() >= maxResults) {
@@ -113,7 +124,6 @@ public class WorkspaceSymbolHandler{
 				}
 			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
 			if (preferenceManager != null && preferenceManager.getPreferences().isIncludeSourceMethodDeclarations()) {
 				monitor.beginTask("Searching methods...", 100);
 				IJavaSearchScope nonSourceSearchScope = createSearchScope(projectName, true);
@@ -139,6 +149,14 @@ public class WorkspaceSymbolHandler{
 								symbolInformation.setContainerName(match.getMethod().getDeclaringType().getFullyQualifiedName());
 								symbolInformation.setName(match.getMethod().getElementName());
 								symbolInformation.setKind(SymbolKind.Method);
+								if (Flags.isDeprecated(match.getMethod().getFlags())) {
+									if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
+										symbolInformation.setTags(List.of(SymbolTag.Deprecated));
+									}
+									else {
+										symbolInformation.setDeprecated(true);
+									}
+								}
 								symbolInformation.setLocation(location);
 								symbols.add(symbolInformation);
 								if (maxResults > 0 && symbols.size() >= maxResults) {

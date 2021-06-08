@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.Range;
 
 import com.google.common.collect.ImmutableSet;
@@ -216,6 +217,14 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
 		$.setKind(mapKind(proposal));
+		if (Flags.isDeprecated(proposal.getFlags())) {
+			if (preferenceManager.getClientPreferences().isCompletionItemTagSupported()) {
+				$.setTags(List.of(CompletionItemTag.Deprecated));
+			}
+			else {
+				$.setDeprecated(true);
+			}
+		}
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
 		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(unit));

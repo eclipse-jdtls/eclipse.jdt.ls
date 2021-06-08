@@ -61,6 +61,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -229,8 +230,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"		Objec\n"+
 						"	}\n"+
 				"}\n");
-		int[] loc = findCompletionLocation(unit, "Objec");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Objec");
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 
@@ -265,8 +265,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"		Objec\n"+
 				"	}\n"+
 				"}\n");
-		int[] loc = findCompletionLocation(unit, "Objec");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Objec");
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 
@@ -291,8 +290,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"		Object o = new O\n"+
 						"	}\n"+
 				"}\n");
-		int[] loc = findCompletionLocation(unit, "new O");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "new O");
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 
@@ -328,9 +326,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "java.sq");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "java.sq");
 
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
@@ -364,8 +360,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n"+
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "/**");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/**");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
@@ -397,8 +392,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n"+
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "/**");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/**");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
@@ -429,8 +423,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n"+
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "/**");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/**");
 		assertNotNull(list);
 		assertEquals(0, list.getItems().size());
 	}
@@ -446,8 +439,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n"+
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "/*");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/*");
 		assertNotNull(list);
 		assertEquals(0, list.getItems().size());
 	}
@@ -463,8 +455,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n"+
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "/**");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/**");
 		assertNotNull(list);
 		assertEquals(0, list.getItems().size());
 	}
@@ -487,8 +478,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			//@formatter:on
 			changeDocument(unit, source, 1);
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			int[] loc = findCompletionLocation(unit, "/**");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "/**");
 			assertNotNull(list);
 			assertEquals(1, list.getItems().size());
 			CompletionItem item = list.getItems().get(0);
@@ -531,8 +521,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			//@formatter:on
 			changeDocument(unit, source, 1);
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			int[] loc = findCompletionLocation(unit, "/**");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "/**");
 			assertNotNull(list);
 			assertEquals(1, list.getItems().size());
 			CompletionItem item = list.getItems().get(0);
@@ -564,9 +553,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "java.util.concurrent.TimeUnit.");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "java.util.concurrent.TimeUnit.");
 
 		assertNotNull(list);
 		assertEquals(9, list.getItems().size());
@@ -629,9 +616,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "map.pu");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "map.pu");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
@@ -662,9 +647,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "map.pu");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "map.pu");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  item.getLabel().matches("put\\(String \\w+, String \\w+\\) : String"))
@@ -710,11 +693,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	}\n\n" +
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "tes");
 		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(guessMethodArguments);
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "tes");
 			assertNotNull(list);
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(String name, int i) : void")).findFirst().orElse(null);
 			assertNotNull(ci);
@@ -742,11 +724,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	}\n\n" +
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "tes");
 		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "tes");
 			assertNotNull(list);
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(String name, int i) : void")).findFirst().orElse(null);
 			assertNotNull(ci);
@@ -775,11 +756,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	}\n\n" +
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "tes");
 		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "tes");
 			assertNotNull(list);
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("test(int i, int j) : void")).findFirst().orElse(null);
 			assertNotNull(ci);
@@ -807,11 +787,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	private static class A { public A(String name){} }\n" +
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "new A");
 		boolean oldGuessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGuessMethodArguments(true);
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "new A");
 			assertNotNull(list);
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("A(String name)")).findFirst().orElse(null);
 			assertNotNull(ci);
@@ -846,9 +825,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "this.myTestS");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "this.myTestS");
 
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
@@ -872,9 +849,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "java.util.Ma");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "java.util.Ma");
 
 		assertNotNull(list);
 		assertFalse(list.getItems().isEmpty());
@@ -894,8 +869,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"public class NoPackage {\n"
 						+ "    NoP"
 						+"}\n");
-		int[] loc = findCompletionLocation(unit, "    NoP");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "    NoP");
 		assertNotNull(list);
 		assertFalse("No proposals were found", list.getItems().isEmpty());
 		assertEquals("NoPackage", list.getItems().get(0).getLabel());
@@ -912,9 +886,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"public class Baz {\n"+
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "package o");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package o");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -951,8 +923,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "sysout");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "sysout");
 
 		assertNotNull(list);
 
@@ -976,8 +947,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "syserr");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "syserr");
 
 		assertNotNull(list);
 
@@ -1001,8 +971,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "systrace");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "systrace");
 
 		assertNotNull(list);
 
@@ -1026,8 +995,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "foreach");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "foreach");
 
 		assertNotNull(list);
 
@@ -1052,8 +1020,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "foreach");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "foreach");
 
 		assertNotNull(list);
 
@@ -1077,8 +1044,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "fori");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "fori");
 
 		assertNotNull(list);
 
@@ -1102,8 +1068,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "while");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "while");
 
 		assertNotNull(list);
 
@@ -1127,8 +1092,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "dowhile");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "dowhile");
 
 		assertNotNull(list);
 
@@ -1152,11 +1116,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "if");
 		String substringMatch = System.getProperty(AssistOptions.PROPERTY_SubstringMatch);
 		try {
 			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "true");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "if");
 			assertNotNull(list);
 			List<CompletionItem> items = new ArrayList<>(list.getItems());
 			boolean hasIfSnippet = false;
@@ -1188,8 +1151,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "ifelse");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "ifelse");
 
 		assertNotNull(list);
 
@@ -1213,8 +1175,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "ifnull");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "ifnull");
 
 		assertNotNull(list);
 
@@ -1238,8 +1199,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"}"
 		);
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "ifnotnull");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "ifnotnull");
 
 		assertNotNull(list);
 
@@ -1253,8 +1213,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_interface() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
-		int[] loc = findCompletionLocation(unit, "");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1273,8 +1232,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_interface_with_package() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1290,8 +1248,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_inner_interface() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1307,8 +1264,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_sibling_inner_interface() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{}\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{}\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1324,8 +1280,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_nested_inner_interface() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1342,8 +1297,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testSnippet_nested_inner_interface_nosnippet() throws JavaModelException {
 		mockLSP2Client();
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 
 		assertNotNull(list);
 		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
@@ -1352,8 +1306,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
-		int[] loc = findCompletionLocation(unit, "");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1369,8 +1322,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_class_with_package() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1386,8 +1338,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_inner_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\n");
-		int[] loc = findCompletionLocation(unit, "");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1403,8 +1354,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_sibling_inner_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1421,8 +1371,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testSnippet_sibling_inner_class_nosnippets() throws JavaModelException {
 		mockLSP2Client();
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 
 		assertNotNull(list);
 		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
@@ -1431,8 +1380,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_nested_inner_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1449,8 +1397,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_no_record() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
-		int[] loc = findCompletionLocation(unit, "");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1463,8 +1410,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		importProjects("eclipse/records");
 		project = WorkspaceHelper.getProject("records");
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "");
-		int[] loc = findCompletionLocation(unit, "");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1485,8 +1431,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		importProjects("eclipse/records");
 		project = WorkspaceHelper.getProject("records");
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1505,8 +1450,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		importProjects("eclipse/records");
 		project = WorkspaceHelper.getProject("records");
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic record Test() {");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1525,8 +1469,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		importProjects("eclipse/records");
 		project = WorkspaceHelper.getProject("records");
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){}\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test {}\npublic record InnerTest(){}\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic record Test {}\npublic record InnerTest(){}\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1545,8 +1488,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		importProjects("eclipse/records");
 		project = WorkspaceHelper.getProject("records");
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
 
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
@@ -1565,8 +1507,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		project = WorkspaceHelper.getProject("records");
 		mockLSP2Client();
 		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
-		int[] loc = findCompletionLocation(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
 
 		assertNotNull(list);
 		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
@@ -1625,8 +1566,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"public class Foo {\n"
 						+ "    toStr"
 						+"}\n");
-		int[] loc = findCompletionLocation(unit, " toStr");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, " toStr");
 		assertNotNull(list);
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
@@ -1707,8 +1647,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"    getP" +
 				"}\n");
 				//@formatter:on
-		int[] loc = findCompletionLocation(unit, " getP");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, " getP");
 		assertNotNull(list);
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
@@ -1742,8 +1681,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"    dele"+
 				"}\n");
 				//@formatter:on
-		int[] loc = findCompletionLocation(unit, " dele");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, " dele");
 		assertNotNull(list);
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
@@ -1781,8 +1719,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"	void zzz() {}\n"+
 				"}\n");
 				//@formatter:off
-		int[] loc = findCompletionLocation(unit, "   zz");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "   zz");
 		assertNotNull(list);
 		assertFalse("No proposals were found", list.getItems().isEmpty());
 		CompletionItem item = list.getItems().get(0);
@@ -1802,10 +1739,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    get" +
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "get");
-
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "get");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("getStrField() : String"))
@@ -1834,10 +1768,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    get" +
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "get");
-
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "get");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("getStrField() : String"))
@@ -1864,10 +1795,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    is\n" +
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "is");
-
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "is");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("isBoolField() : boolean"))
@@ -1895,10 +1823,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    set" +
 				"}\n");
 
-		int[] loc = findCompletionLocation(unit, "set");
-
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "set");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("setStrField(String strField) : void"))
@@ -1930,8 +1855,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n"+
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "new ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "new ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Foo.IFoo()  Anonymous Inner Type"))
@@ -1962,8 +1886,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n"+
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "new ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "new ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Foo.IFoo()  Anonymous Inner Type"))
@@ -1989,8 +1912,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable(");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable(");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2016,8 +1938,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable( ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable( ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2045,8 +1966,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable(");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable(");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2075,8 +1995,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable(");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable(");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2100,8 +2019,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    public static void main(String[] args) {\n" +
 						"        run(\"name\", new Runnable(");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable(");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable(");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2131,8 +2049,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "Runnable(");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "Runnable(");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Runnable()  Anonymous Inner Type"))
@@ -2158,8 +2075,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "ArrayList");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "ArrayList");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("ArrayList"))
@@ -2184,8 +2100,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "new Foo");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "new Foo");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Foo$Bar"))
@@ -2210,8 +2125,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"    }\n" +
 				"}\n");
 		waitForBackgroundJobs();
-		int[] loc = findCompletionLocation(unit, "new Foo");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "new Foo");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter(item -> item.getLabel().startsWith("Foo$Bar"))
@@ -2235,8 +2149,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"public class Test extends AbstractTe {\n"+
 				"}\n");
 				//@formatter:on
-		int[] loc = findCompletionLocation(unit, " AbstractTe");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, " AbstractTe");
 		assertEquals("Test proposals leaked:\n" + list.getItems(), 0, list.getItems().size());
 	}
 
@@ -2263,8 +2176,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		"	}\n" +
 		"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "\t\tfo");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "\t\tfo");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("foo(String bar) : void")).findFirst().orElse(null);
 		assertNotNull(ci);
@@ -2293,8 +2205,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"public class BaseTest extends AbstractTe {\n"+
 				"}\n");
 				//@formatter:on
-		int[] loc = findCompletionLocation(unit, " AbstractTe");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, " AbstractTe");
 		assertNotNull(list);
 		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
@@ -2304,8 +2215,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testCompletion_overwrite() throws Exception {
 		ICompilationUnit unit = getCompletionOverwriteReplaceUnit();
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "method(t.");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "method(t.");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("testInt : int")).findFirst().orElse(null);
 		assertNotNull(ci);
@@ -2336,10 +2246,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testCompletion_insert() throws Exception {
 		ICompilationUnit unit = getCompletionOverwriteReplaceUnit();
-		int[] loc = findCompletionLocation(unit, "method(t.");
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setCompletionOverwrite(false);
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "method(t.");
 			assertNotNull(list);
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("testInt : int")).findFirst().orElse(null);
 			assertNotNull(ci);
@@ -2396,8 +2305,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"package org.sample;\n" +
 			"public ");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "public ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "public ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class")
@@ -2421,8 +2329,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"package org.sample;\n" +
 			"/**\n */");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "/**");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "/**");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2440,8 +2347,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:off
 			"package org.sample;\n");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "package ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "package ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2463,8 +2369,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "{\n\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "{\n\n");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2489,8 +2394,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "if (c");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "if (c");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2513,8 +2417,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "int ");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "int ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2536,8 +2439,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 			//@formatter:off
-		int[] loc = findCompletionLocation(unit, "static {\n");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "static {\n");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
 				.filter( item->  (item.getLabel().matches("class") && item.getKind() == CompletionItemKind.Snippet))
@@ -2570,8 +2472,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 			//@formatter:on
 
-			int[] loc = findCompletionLocation(unit, "fo");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "fo");
 			assertNotNull(list);
 			assertFalse(list.isIncomplete());
 			assertTrue(list.getItems().size() > 0);
@@ -2597,10 +2498,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 			//@formatter:on
 
-			int[] loc = findCompletionLocation(unit, "d");
-
 			//Completion should limit results to maxCompletionResults (excluding snippets)
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "d");
 			assertNotNull(list);
 			assertTrue(list.isIncomplete());
 			List<CompletionItem> completionOnly = noSnippets(list.getItems());
@@ -2609,7 +2508,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 			//Set max results to 1 to double check
 			PreferenceManager.getPrefs(null).setMaxCompletionResults(1);
-			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			list = requestCompletions(unit, "d");
 			assertNotNull(list);
 			assertTrue(list.isIncomplete());
 			completionOnly = noSnippets(list.getItems());
@@ -2617,7 +2516,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 			//when maxCompletionResults is set to 0, limit is disabled, completion should be complete
 			PreferenceManager.getPrefs(null).setMaxCompletionResults(0);
-			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			list = requestCompletions(unit, "d");
 			assertNotNull(list);
 			assertFalse(list.isIncomplete());
 			completionOnly = noSnippets(list.getItems());
@@ -2653,8 +2552,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 					"}\n");
 			//@formatter:on
 
-			int[] loc = findCompletionLocation(unit, "/* */fo");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "/* */fo");
 			assertNotNull(list);
 			assertTrue(list.getItems().size() > 0);
 			for (CompletionItem it : list.getItems()) {
@@ -2695,8 +2593,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			"    }\n" +
 			"}\n");
 			//@formatter:on
-			int[] loc = findCompletionLocation(unit, "new ArrayL");
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "new ArrayL");
 			assertNotNull(list);
 			assertTrue(list.getItems().size() > 0);
 			CompletionItem item = list.getItems().stream().filter(i -> "ArrayList()".equals(i.getLabel())).collect(Collectors.toList()).get(0);
@@ -2705,8 +2602,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertEquals(1, textEdits.size());
 			TextEdit textEdit = textEdits.get(0);
 			assertEquals("\n\nimport java.util.*;", textEdit.getNewText());
-			loc = findCompletionLocation(unit, "= abs");
-			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			list = requestCompletions(unit, "= abs");
 			assertNotNull(list);
 			assertTrue(list.getItems().size() > 0);
 			item = list.getItems().stream().filter(i -> i.getLabel().startsWith("abs(double")).collect(Collectors.toList()).get(0);
@@ -2747,9 +2643,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"    }\n" +
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "this.zz");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "this.zz");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem ci = list.getItems().get(0);
@@ -2773,8 +2667,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "o.toStr");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "o.toStr");
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 		CompletionItem ci = list.getItems().get(0);
@@ -2798,8 +2691,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"	}\n"+
 				"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "HashMa");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "HashMa");
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 		CompletionItem ci = list.getItems().get(0);
@@ -2824,9 +2716,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "   Zenu");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "   Zenu");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
@@ -2845,9 +2735,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "pathSeparatorC");
-
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "pathSeparatorC");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
@@ -2866,8 +2754,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "List");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "List");
 		assertNotNull(list);
 		assertTrue(list.getItems().stream().anyMatch(i -> "java.util.List".equals(i.getDetail())));
 		//@formatter:off
@@ -2882,7 +2769,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			List<String> filteredTypes = new ArrayList<>();
 			filteredTypes.add("java.util.*");
 			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
-			list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			list = requestCompletions(unit, "List");
 			assertNotNull(list);
 			assertFalse(list.getItems().stream().anyMatch(i -> "java.util.List".equals(i.getDetail())));
 		} finally {
@@ -2902,13 +2789,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "l.clea");
 		try {
 			List<String> filteredTypes = new ArrayList<>();
 			filteredTypes.add("java.util.*");
 			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
 
-			CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+			CompletionList list = requestCompletions(unit, "l.clea");
 			assertNotNull(list);
 			assertEquals("Missing completion", 1, list.getItems().size());
 			assertEquals("clear() : void", list.getItems().get(0).getLabel());
@@ -2927,9 +2813,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			IJavaProject javaProject = JavaCore.create(project);
 			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
 			unit.becomeWorkingCopy(null);
-			int[] loc = findCompletionLocation(unit, "doc.");
-			CompletionParams position = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
-			CompletionList list = server.completion(position).join().getRight();
+			CompletionList list = requestCompletions(unit, "doc.");
 			CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("accept(DocumentVisitor visitor) : boolean")).findFirst().orElse(null);
 			assertNotNull(ci);
 		} finally {
@@ -2951,8 +2835,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "IConstantDefault.");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "IConstantDefault.");
 		assertNotNull(list);
 		assertEquals(3, list.getItems().size());
 		CompletionItem ci = list.getItems().get(0);
@@ -2967,8 +2850,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Constant, ci.getKind());
 		assertEquals("TEST : double = 107.1921", ci.getLabel());
 
-		loc = findCompletionLocation(unit, "@IConstantDefault(");
-		list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		list = requestCompletions(unit, "@IConstantDefault(");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		ci = list.getItems().get(0);
@@ -2995,8 +2877,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			+	"	}\n"
 			+	"}\n");
 		//@formatter:on
-		int[] loc = findCompletionLocation(unit, "l.add");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "l.add");
 		assertNotNull(list);
 		assertEquals(4, list.getItems().size());
 		CompletionItem ci = list.getItems().get(0);
@@ -3015,12 +2896,80 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(ProjectUtils.isJavaProject(proj));
 		IFile file = proj.getFile("/src/org/sample/Main.java");
 		ICompilationUnit unit = JavaCore.createCompilationUnitFrom(file);
-		int[] loc = findCompletionLocation(unit, "ru");
-		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		CompletionList list = requestCompletions(unit, "ru");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("run() : void")).findFirst().orElse(null);
 		assertNotNull(ci);
 		assertEquals("public void run() {};", ci.getTextEdit().getLeft().getNewText());
+	}
+
+	@Test
+	public void testCompletion_Deprecated() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemTagSupported()).thenReturn(true);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Main {",
+			"	@Deprecated",
+			"	public static final class DeprecatedClass {}",
+
+			"	DeprecatedCl",
+
+			"	/**",
+			"	 * @deprecated",
+			"	 */",
+			"	public static void deprecatedMethod() {",
+			"		deprecatedMe",
+			"	}",
+
+			"	public static void notDeprecated() {",
+			"		notDepr",
+			"	}",
+			"}"
+		));
+
+		CompletionItem deprecatedClass = requestCompletions(unit, "\tDeprecatedCl").getItems().get(0);
+		assertNotNull(deprecatedClass);
+		assertEquals(CompletionItemKind.Class, deprecatedClass.getKind());
+		assertNotNull(deprecatedClass.getTags());
+		assertTrue("Should have deprecated tag", deprecatedClass.getTags().contains(CompletionItemTag.Deprecated));
+
+		CompletionItem deprecatedMethod = requestCompletions(unit, "\t\tdeprecatedMe").getItems().get(0);
+		assertNotNull(deprecatedMethod);
+		assertEquals(CompletionItemKind.Method, deprecatedMethod.getKind());
+		assertNotNull(deprecatedMethod.getTags());
+		assertTrue("Should have deprecated tag", deprecatedMethod.getTags().contains(CompletionItemTag.Deprecated));
+
+		CompletionItem notDeprecated = requestCompletions(unit, "\t\tnotDepr").getItems().get(0);
+		assertNotNull(notDeprecated);
+		assertEquals(CompletionItemKind.Method, notDeprecated.getKind());
+		if (notDeprecated.getTags() != null) {
+			assertFalse("Should not have deprecated tag", notDeprecated.getTags().contains(CompletionItemTag.Deprecated));
+		}
+	}
+
+	@Test
+	public void testCompletion_Deprecated_property() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemTagSupported()).thenReturn(false);
+
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Main {",
+			"	@Deprecated",
+			"	public static final class DeprecatedClass {}",
+
+			"	DeprecatedCl",
+			"}"
+		));
+
+		CompletionItem deprecatedClass = requestCompletions(unit, "\tDeprecatedCl").getItems().get(0);
+		assertNotNull(deprecatedClass);
+		assertEquals(CompletionItemKind.Class, deprecatedClass.getKind());
+		assertNotNull(deprecatedClass.getDeprecated());
+		assertTrue("Should be deprecated", deprecatedClass.getDeprecated());
+	}
+
+	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
+		int[] loc = findCompletionLocation(unit, completeBehind);
+		return server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 	}
 
 	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
