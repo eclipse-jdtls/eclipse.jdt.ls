@@ -361,4 +361,18 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCodeAction().getResolveSupport().getProperties().contains("edit");
 		//@formatter:on
 	}
+
+	public boolean isCompletionItemTagSupported() {
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getTagSupport() != null;
+	}
+
+	public boolean isSymbolTagSupported() {
+		return v3supported
+			&& capabilities.getTextDocument().getDocumentSymbol() != null
+			&& capabilities.getTextDocument().getDocumentSymbol().getTagSupport() != null;
+	}
+
 }

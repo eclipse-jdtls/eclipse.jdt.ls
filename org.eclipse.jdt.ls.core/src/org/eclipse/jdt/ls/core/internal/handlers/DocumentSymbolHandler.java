@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
@@ -55,16 +56,17 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 
 public class DocumentSymbolHandler {
 	private static Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
-	private boolean hierarchicalDocumentSymbolSupported;
+	private PreferenceManager preferenceManager;
 
-	public DocumentSymbolHandler(boolean hierarchicalDocumentSymbolSupported) {
-		this.hierarchicalDocumentSymbolSupported = hierarchicalDocumentSymbolSupported;
+	public DocumentSymbolHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
 	}
 
 	public List<Either<SymbolInformation, DocumentSymbol>> documentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
@@ -74,7 +76,7 @@ public class DocumentSymbolHandler {
 			return Collections.emptyList();
 		}
 
-		if (hierarchicalDocumentSymbolSupported) {
+		if (preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported()) {
 			List<DocumentSymbol> symbols = this.getHierarchicalOutline(unit, monitor);
 			return symbols.stream().map(Either::<SymbolInformation, DocumentSymbol>forRight).collect(toList());
 		} else {
@@ -120,6 +122,14 @@ public class DocumentSymbolHandler {
 				String name = JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
 				si.setName(name == null ? element.getElementName() : name);
 				si.setKind(mapKind(element));
+				if (JDTUtils.isDeprecated(element)) {
+					if (preferenceManager.getClientPreferences().isSymbolTagSupported()) {
+						si.setTags(List.of(SymbolTag.Deprecated));
+					}
+					else {
+						si.setDeprecated(true);
+					}
+				}
 				if (element.getParent() != null) {
 					si.setContainerName(element.getParent().getElementName());
 				}
@@ -162,7 +172,14 @@ public class DocumentSymbolHandler {
 			symbol.setRange(getRange(unit));
 			symbol.setSelectionRange(getSelectionRange(unit));
 			symbol.setKind(mapKind(unit));
-			symbol.setDeprecated(isDeprecated(unit));
+			if (JDTUtils.isDeprecated(unit)) {
+				if (preferenceManager.getClientPreferences().isSymbolTagSupported()) {
+					symbol.setTags(List.of(SymbolTag.Deprecated));
+				}
+				else {
+					symbol.setDeprecated(true);
+				}
+			}
 			symbol.setDetail(getDetail(unit, name));
 			if (unit instanceof IParent) {
 				//@formatter:off
@@ -192,13 +209,6 @@ public class DocumentSymbolHandler {
 	private Range getSelectionRange(IJavaElement element) throws JavaModelException {
 		Location location = JDTUtils.toLocation(element);
 		return location == null ? DEFAULT_RANGE : location.getRange();
-	}
-
-	private boolean isDeprecated(IJavaElement element) throws JavaModelException {
-		if (element instanceof ITypeRoot) {
-			return Flags.isDeprecated(((ITypeRoot) element).findPrimaryType().getFlags());
-		}
-		return false;
 	}
 
 	private String getDetail(IJavaElement element, String name) {
