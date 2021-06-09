@@ -12,14 +12,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -27,6 +31,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -224,6 +229,18 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
 		assertEquals(1, tags.size());
 		assertEquals(DiagnosticTag.Unnecessary, tags.get(0));
+	}
+
+	// test regression https://github.com/eclipse/eclipse.jdt.ls/issues/1781
+	@Test
+	public void testStaticReference() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = getProject("hello");
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("org.sample.HelloWorld");
+		assertTrue(type.exists());
+		IMarker[] markers = type.getUnderlyingResource().findMarkers(null, true, IResource.DEPTH_INFINITE);
+		assertEquals(0, markers.length);
 	}
 
 }
