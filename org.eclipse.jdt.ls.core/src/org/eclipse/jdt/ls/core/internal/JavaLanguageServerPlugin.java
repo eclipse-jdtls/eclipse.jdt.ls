@@ -88,6 +88,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
 	public static final String MANUAL = "Manual";
+	public static final String DIRECT = "Direct";
+	public static final String NATIVE = "Native";
 	public static final String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
 	public static final String HTTPS_NON_PROXY_HOSTS = "https.nonProxyHosts";
 	public static final String HTTPS_PROXY_PASSWORD = "https.proxyPassword";
@@ -259,6 +261,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 	}
 
 	private void configureProxy() {
+		if (Boolean.getBoolean("jdt.ls.disableProxies")) {
+			ProxySelector.setActiveProvider(DIRECT);
+			return;
+		}
 		// It seems there is no way to set a proxy provider type (manual, native or
 		// direct) without the Eclipse UI.
 		// The org.eclipse.core.net plugin removes the http., https. system properties
@@ -343,6 +349,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 					logException(e.getMessage(), e);
 				}
 			}
+		} else {
+			ProxySelector.setActiveProvider(NATIVE);
+			return;
 		}
 	}
 
