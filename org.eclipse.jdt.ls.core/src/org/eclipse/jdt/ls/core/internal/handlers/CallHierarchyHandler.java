@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICodeAssist;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -166,7 +167,8 @@ public class CallHierarchyHandler {
 	}
 
 	private List<CallHierarchyIncomingCall> getIncomingCallItemsAt(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
-		IMember candidate = getCallHierarchyElement(uri, line, character, monitor);
+		SubMonitor sub = SubMonitor.convert(monitor, 2);
+		IMember candidate = getCallHierarchyElement(uri, line, character, sub.split(1));
 		if (candidate == null) {
 			return null;
 		}
@@ -179,7 +181,7 @@ public class CallHierarchyHandler {
 			return null;
 		}
 
-		MethodWrapper[] calls = wrapper.getCalls(monitor);
+		MethodWrapper[] calls = wrapper.getCalls(sub.split(1));
 		if (calls == null) {
 			return null;
 		}
@@ -199,7 +201,8 @@ public class CallHierarchyHandler {
 	}
 
 	private List<CallHierarchyOutgoingCall> getOutgoingCallItemsAt(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
-		IMember candidate = getCallHierarchyElement(uri, line, character, monitor);
+		SubMonitor sub = SubMonitor.convert(monitor, 2);
+		IMember candidate = getCallHierarchyElement(uri, line, character, sub.split(1));
 		if (candidate == null) {
 			return null;
 		}
@@ -211,7 +214,7 @@ public class CallHierarchyHandler {
 			return null;
 		}
 
-		MethodWrapper[] calls = wrapper.getCalls(monitor);
+		MethodWrapper[] calls = wrapper.getCalls(sub.split(1));
 		if (calls == null) {
 			return null;
 		}
