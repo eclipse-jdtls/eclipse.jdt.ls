@@ -1175,6 +1175,30 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1800
+	@Test
+	public void testSnippet_ifelse2() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	private void test(String s, int i) {\n"
+			+ "  if (i > 2) {\n"
+			+ "  } else {\n"
+			+ "    s.\n"
+			+ "    System.out.println(\"b\");\n"
+			+ "}\n"
+			+ "}"
+		);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "s.");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 0);
+	}
+
 	@Test
 	public void testSnippet_ifelse() throws JavaModelException {
 		//@formatter:off
