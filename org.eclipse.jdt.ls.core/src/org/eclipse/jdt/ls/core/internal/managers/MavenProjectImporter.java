@@ -122,7 +122,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		JavaLanguageServerPlugin.logInfo(IMPORTING_MAVEN_PROJECTS);
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenDownloadSources());
-		configurationImpl.setNotCoveredMojoExecutionSeverity(ProblemSeverity.ignore.toString());
+		configurationImpl.setNotCoveredMojoExecutionSeverity(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getMavenNotCoveredPluginExecutionSeverity());
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 105);
 		subMonitor.setTaskName(IMPORTING_MAVEN_PROJECTS);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));

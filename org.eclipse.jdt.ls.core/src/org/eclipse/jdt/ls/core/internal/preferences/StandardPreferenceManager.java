@@ -26,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 
@@ -87,6 +88,15 @@ public class StandardPreferenceManager extends PreferenceManager {
 			}
 		}
 
+		String newMavenNotCoveredExecutionSeverity = preferences.getMavenNotCoveredPluginExecutionSeverity();
+		String oldMavenNotCoveredExecutionSeverity = getMavenConfiguration().getNotCoveredMojoExecutionSeverity();
+		if (!Objects.equals(newMavenNotCoveredExecutionSeverity, oldMavenNotCoveredExecutionSeverity)) {
+			try {
+				((MavenConfigurationImpl) getMavenConfiguration()).setNotCoveredMojoExecutionSeverity(newMavenNotCoveredExecutionSeverity);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("failed to set not covered Maven plugin execution severity", e);
+			}
+		}
 		updateParallelBuild(preferences.getMaxConcurrentBuilds());
 	}
 

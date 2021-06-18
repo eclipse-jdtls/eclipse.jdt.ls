@@ -51,6 +51,7 @@ public class PreferenceManagerTest {
 	public void setUp() {
 		preferenceManager = new StandardPreferenceManager();
 		preferenceManager.setMavenConfiguration(mavenConfig);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
 	}
 
 	@Test
@@ -64,12 +65,14 @@ public class PreferenceManagerTest {
 		//check setting the same path doesn't call Maven's config update
 		reset(mavenConfig);
 		when(mavenConfig.getUserSettingsFile()).thenReturn(path);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
 		preferenceManager.update(preferences);
 		verify(mavenConfig, never()).setUserSettingsFile(anyString());
 
 		//check setting null is allowed
 		reset(mavenConfig);
 		when(mavenConfig.getUserSettingsFile()).thenReturn(path);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
 		preferences.setMavenUserSettings(null);
 		preferenceManager.update(preferences);
 		verify(mavenConfig).setUserSettingsFile(null);
@@ -85,12 +88,14 @@ public class PreferenceManagerTest {
 		//check setting the same path doesn't call Maven's config update
 		reset(mavenConfig);
 		when(mavenConfig.getGlobalSettingsFile()).thenReturn(path);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
 		preferenceManager.update(preferences);
 		verify(mavenConfig, never()).setGlobalSettingsFile(anyString());
 
 		//check setting null is allowed
 		reset(mavenConfig);
 		when(mavenConfig.getGlobalSettingsFile()).thenReturn(path);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
 		preferences.setMavenGlobalSettings(null);
 		preferenceManager.update(preferences);
 		verify(mavenConfig).setGlobalSettingsFile(null);
