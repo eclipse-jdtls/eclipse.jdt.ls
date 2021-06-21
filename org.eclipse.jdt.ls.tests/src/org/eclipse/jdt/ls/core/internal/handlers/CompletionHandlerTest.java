@@ -1162,6 +1162,33 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(items.size() > 0);
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1800
+	@Test
+	public void testSnippet_if2() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"public class Test {\n"
+				+ "  private boolean flag;\n"
+				+ "  private void test(List<String> c) {\n"
+				+ "    if (flag) {\n"
+				+ "      \n"
+				+ "      List<String> scs = c.subList(0, 1);\n"
+				+ "    }\n"
+				+ "  }\n"
+				+ "  String test() {\n"
+				+ "    return null;\n"
+				+ "  } \n"
+				+ "}"
+				);
+		//@formatter:on
+		int[] loc = findCompletionLocation(unit, "      ");
+		CompletionList list = server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertTrue(items.size() > 1);
+	}
+
 	@Test
 	public void testSnippet_ifelse() throws JavaModelException {
 		//@formatter:off
