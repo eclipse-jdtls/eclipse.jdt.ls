@@ -113,7 +113,7 @@ public final class JobHelpers {
 				Deque<MavenExecutionContext> context = MavenExecutionContext.suspend();
 				try {
 					IStatus status = queue.run(monitor);
-					if(!status.isOK()) {
+					if (!status.isOK() && status.getSeverity() != IStatus.CANCEL) {
 						throw new CoreException(status);
 					}
 					processed = true;

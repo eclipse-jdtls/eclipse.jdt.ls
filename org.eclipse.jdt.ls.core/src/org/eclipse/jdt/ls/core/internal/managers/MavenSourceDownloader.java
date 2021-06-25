@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.resources.IFile;
@@ -22,7 +24,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.core.embedder.ArtifactKey;
 import org.eclipse.m2e.jdt.IClasspathManager;
 import org.eclipse.m2e.jdt.MavenJdtPlugin;
@@ -74,6 +78,30 @@ public class MavenSourceDownloader implements ISourceDownloader {
 							artifact = new MavenCentralIdentifier().identify(path, monitor);
 						}
 						if (artifact != null) {
+							if (!ProjectUtils.isMavenProject(element.getJavaProject().getProject())) {
+								// see https://github.com/eclipse-m2e/m2e-core/commit/b547ecc358c990e182a5eaf8d36f121e43f4a8c9#diff-3967743078be6a24ba1e3ec28bfc22bdf2c88a740695411f6d20e2444fef042fR943
+								long lastModified;
+								try {
+									File artifactFile = DependencyUtil.getArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), artifact.getClassifier());
+									lastModified = artifactFile.lastModified();
+								} catch (FileNotFoundException | CoreException e1) {
+									lastModified = -1;
+								}
+								if (lastModified > -1) {
+									try {
+										File sources = DependencyUtil.getSources(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+										sources.setLastModified(lastModified - 1);
+									} catch (FileNotFoundException | CoreException e) {
+										// ignore
+									}
+									try {
+										File javadoc = DependencyUtil.getJavadoc(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+										javadoc.setLastModified(lastModified - 1);
+									} catch (FileNotFoundException | CoreException e) {
+										// ignore
+									}
+								}
+							}
 							BuildPathManager buildpathManager = (BuildPathManager) MavenJdtPlugin.getDefault().getBuildpathManager();
 							buildpathManager.scheduleDownload(fragment, artifact, true, true);
 							JobHelpers.waitForDownloadSourcesJobs(MAX_TIME_MILLIS);
