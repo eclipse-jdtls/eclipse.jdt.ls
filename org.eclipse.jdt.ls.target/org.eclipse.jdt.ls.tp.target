@@ -16,12 +16,12 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/buildship/updates/e415/snapshots/3.x/3.1.5.v20210112-1646-s"/>
+            <repository location="https://download.eclipse.org/buildship/updates/e416/snapshots/3.x/3.1.5.v20210616-0346-s/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.m2e.logback.feature.feature.group" version="0.0.0"/>
-	        <repository location="https://download.eclipse.org/technology/m2e/milestones/1.17/1.17.0.20201112-0751/"/>
+	        <repository location="https://download.eclipse.org/technology/m2e/snapshots/1.18.2/latest/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
