@@ -381,6 +381,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return computeAsync((monitor) -> {
 			shutdownJob.schedule();
 			shutdownReceived = true;
+			if (preferenceManager.getClientPreferences().shouldLanguageServerExitOnShutdown()) {
+				Executors.newSingleThreadScheduledExecutor().schedule(() -> exit(), 1, TimeUnit.SECONDS);
+			}
 			return new Object();
 		});
 	}

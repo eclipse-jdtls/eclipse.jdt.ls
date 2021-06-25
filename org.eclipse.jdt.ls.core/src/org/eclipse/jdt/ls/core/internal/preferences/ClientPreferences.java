@@ -263,8 +263,8 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("actionableRuntimeNotificationSupport", "false").toString());
 	}
 
-	public boolean isSyntaxServerExitsOnShutdown() {
-		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("syntaxServerExitsOnShutdown", "false").toString());
+	public boolean shouldLanguageServerExitOnShutdown() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("shouldLanguageServerExitOnShutdown", "false").toString());
 	}
 
 	public boolean isGradleChecksumWrapperPromptSupport() {
