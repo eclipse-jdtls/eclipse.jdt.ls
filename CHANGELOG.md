@@ -1,5 +1,23 @@
 # Change Log
 
+# [1.2.0 (June 30th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/92?closed=1)
+ * enhancement - Add a preference to control the severity of not covered maven plugin execution. See [#1770](https://github.com/eclipse/eclipse.jdt.ls/pull/1770).
+ * enhancement - Allow folding `static` blocks. See [#1777](https://github.com/eclipse/eclipse.jdt.ls/issues/1777).
+ * enhancement - Add deprecated property to CompletionItem and SymbolInformation. See [#695](https://github.com/eclipse/eclipse.jdt.ls/issues/695).
+ * enhancement - deprecated is not populated in textDocument/documentSymbol. See [#1301](https://github.com/eclipse/eclipse.jdt.ls/issues/1301).
+ * enhancement - Add option to ignore all proxies. See [#1799](https://github.com/eclipse/eclipse.jdt.ls/pull/1799).
+ * bug fix - Cannot make a static reference to the non-static type T. See [#1781](https://github.com/eclipse/eclipse.jdt.ls/issues/1781).
+ * bug fix - Standard language server should also be able to exit on shutdown. See [#1808](https://github.com/eclipse/eclipse.jdt.ls/pull/1808).
+ * bug fix - Syntax language server should be able to exit on shutdown. See [#1790](https://github.com/eclipse/eclipse.jdt.ls/pull/1790).
+ * bug fix - File contents would be strange when renaming java file name (with lombok). See [#1775](https://github.com/eclipse/eclipse.jdt.ls/issues/1775).
+ * bug fix - java.project.sourcePaths doesn't refresh diagnostics. See [#1769](https://github.com/eclipse/eclipse.jdt.ls/issues/1769).
+ * bug fix - wrong status in 'language/progressReport' notification when processing call hierarchy requests. See [#1722](https://github.com/eclipse/eclipse.jdt.ls/issues/1722).
+ * bug fix - Update list of excluded errors with ParameterMismatch. See [#1792](https://github.com/eclipse/eclipse.jdt.ls/pull/1792).
+ * bug fix - extract method does not seem to like var nor method references. See [#1780](https://github.com/eclipse/eclipse.jdt.ls/pull/1780).
+ * bug fix - Fix backslashes (\\) in java.format.settings.url. See [#1774](https://github.com/eclipse/eclipse.jdt.ls/pull/1774).
+ * build - Update target platform to 4.21 build I20210621-1800. See [#1804](https://github.com/eclipse/eclipse.jdt.ls/pull/1804).
+ * other - Run test without setting lombok agent. See [#1782](https://github.com/eclipse/eclipse.jdt.ls/issues/1782).
+
 # [1.1.2 (May 19th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/91?closed=1)
  * bug fix - Package name not recognized when opening standalone java files. See [#1764](https://github.com/eclipse/eclipse.jdt.ls/issues/1764).
  * bug fix - Fix parameter compatibility issue in buildWorkspace request. See [#1763](https://github.com/eclipse/eclipse.jdt.ls/pull/1763).
