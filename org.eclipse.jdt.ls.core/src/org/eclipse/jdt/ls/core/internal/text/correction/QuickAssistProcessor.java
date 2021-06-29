@@ -56,12 +56,14 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Modifier.ModifierKeyword;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
+import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -75,9 +77,11 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
+import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
@@ -95,6 +99,7 @@ import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
@@ -178,6 +183,7 @@ public class QuickAssistProcessor {
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
 			// }
+			getAddMethodDeclaration(context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1165,5 +1171,243 @@ public class QuickAssistProcessor {
 			parent = parent.getSuperclass();
 		}
 		return false;
+	}
+
+	private static void addIfMissing(MethodDeclaration methodDeclaration, TypeParameter newTypeParameter) {
+		List<TypeParameter> typeParameters = methodDeclaration.typeParameters();
+		for (TypeParameter typeParameter : typeParameters) {
+			boolean equals = typeParameter.getName().getFullyQualifiedName().equals(newTypeParameter.getName().getFullyQualifiedName());
+			if (equals) {
+				return;
+			}
+		}
+		typeParameters.add(newTypeParameter);
+	}
+
+	private static class ReturnType {
+		public Type type;
+
+		public ITypeBinding binding;
+	}
+
+	private static ReturnType getReturnType(AST ast, ImportRewrite importRewrite, Type variableType) {
+		ReturnType returnType = new ReturnType();
+		if (variableType instanceof ParameterizedType) {
+			variableType = (Type) ((ParameterizedType) variableType).typeArguments().get(0);
+			ITypeBinding returnTypeBinding = variableType.resolveBinding();
+			if (returnTypeBinding != null) {
+				if (returnTypeBinding.isCapture()) {
+					returnType.binding = returnTypeBinding.getErasure();
+					returnType.type = importRewrite.addImport(returnTypeBinding.getErasure(), ast);
+				} else if (returnTypeBinding.isWildcardType()) {
+					returnType.binding = returnTypeBinding.getBound();
+					returnType.type = importRewrite.addImport(returnTypeBinding.getBound(), ast);
+				} else {
+					returnType.type = importRewrite.addImport(returnTypeBinding, ast);
+					returnType.binding = returnTypeBinding;
+				}
+			}
+		}
+		return returnType;
+	}
+
+	private static Block getNewReturnBlock(AST ast, ITypeBinding returnTypeBinding) {
+		Block newBlock = ast.newBlock();
+		if (!"void".equals(returnTypeBinding.getName())) { //$NON-NLS-1$
+			ReturnStatement newReturnStatement = ast.newReturnStatement();
+			String bName = returnTypeBinding.getBinaryName();
+			if ("Z".equals(bName)) { //$NON-NLS-1$
+				newReturnStatement.setExpression(ast.newBooleanLiteral(false));
+			} else if (returnTypeBinding.isPrimitive()) {
+				newReturnStatement.setExpression(ast.newNumberLiteral());
+			} else if ("java.lang.String".equals(bName)) { //$NON-NLS-1$
+				newReturnStatement.setExpression(ast.newStringLiteral());
+			} else {
+				newReturnStatement.setExpression(ast.newNullLiteral());
+			}
+			newBlock.statements().add(newReturnStatement);
+		}
+		return newBlock;
+	}
+
+	public static boolean getAddMethodDeclaration(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+		CompilationUnit astRoot = context.getASTRoot();
+		ExpressionMethodReference methodReferenceNode = covering instanceof ExpressionMethodReference ? (ExpressionMethodReference) covering : ASTNodes.getParent(covering, ExpressionMethodReference.class);
+		if (methodReferenceNode == null) {
+			return false;
+		}
+		boolean addStaticModifier = false;
+		TypeDeclaration typeDeclaration = ASTNodes.getParent(methodReferenceNode, TypeDeclaration.class);
+
+		if (isTypeReferenceToInstanceMethod(methodReferenceNode)) {
+			String methodReferenceQualifiedName = ((Name) methodReferenceNode.getExpression()).getFullyQualifiedName();
+			String typeDeclarationName = astRoot.getPackage().getName().getFullyQualifiedName() + '.' + typeDeclaration.getName().getFullyQualifiedName();
+			if (!methodReferenceQualifiedName.equals(typeDeclarationName) && !methodReferenceQualifiedName.equals(typeDeclaration.getName().getFullyQualifiedName())) {
+				// only propose for references in same class
+				return false;
+			}
+			addStaticModifier = true;
+		}
+
+		AST ast = astRoot.getAST();
+		ASTRewrite rewrite = ASTRewrite.create(ast);
+		ListRewrite listRewrite = rewrite.getListRewrite(typeDeclaration, TypeDeclaration.BODY_DECLARATIONS_PROPERTY);
+
+		String label = Messages.format(CorrectionMessages.AddUnimplementedMethodReferenceOperation_AddMissingMethod_group,
+				new String[] { methodReferenceNode.getName().getIdentifier(), typeDeclaration.getName().getIdentifier() });
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.ADD_INFERRED_LAMBDA_PARAMETER_TYPES);
+		// ImportRewrite importRewrite= proposal.createImportRewrite(context.getASTRoot());
+		ImportRewrite importRewrite = StubUtility.createImportRewrite(astRoot, true);
+
+		VariableDeclarationStatement variableDeclarationStatement = ASTNodes.getParent(methodReferenceNode, VariableDeclarationStatement.class);
+		MethodInvocation methodInvocationNode = ASTNodes.getParent(methodReferenceNode, MethodInvocation.class);
+		Assignment variableAssignment = ASTNodes.getParent(methodReferenceNode, Assignment.class);
+
+		if ((variableAssignment != null || variableDeclarationStatement != null) && methodInvocationNode == null) {
+			/*
+			 * variable declaration
+			 */
+			Type type = null;
+			ReturnType returnType = null;
+			if (variableDeclarationStatement != null) {
+				type = variableDeclarationStatement.getType();
+				returnType = getReturnType(ast, importRewrite, type);
+			} else {
+				Expression leftHandSide = variableAssignment.getLeftHandSide();
+				ITypeBinding assignmentTypeBinding = leftHandSide.resolveTypeBinding();
+				if (assignmentTypeBinding == null) {
+					return false;
+				}
+				type = importRewrite.addImport(assignmentTypeBinding, ast);
+				returnType = new ReturnType();
+				returnType.type = type;
+				returnType.binding = assignmentTypeBinding;
+			}
+			if (returnType.binding == null) {
+				return false;
+			}
+			MethodDeclaration newMethodDeclaration = ast.newMethodDeclaration();
+			newMethodDeclaration.setName((SimpleName) rewrite.createCopyTarget(methodReferenceNode.getName()));
+			newMethodDeclaration.modifiers().add(ast.newModifier(ModifierKeyword.PRIVATE_KEYWORD));
+			if (addStaticModifier) {
+				newMethodDeclaration.modifiers().add(ast.newModifier(ModifierKeyword.STATIC_KEYWORD));
+			}
+
+			IMethodBinding functionalInterfaceMethod = variableDeclarationStatement == null ? returnType.binding.getFunctionalInterfaceMethod() : variableDeclarationStatement.getType().resolveBinding().getFunctionalInterfaceMethod();
+			if (functionalInterfaceMethod != null) {
+				returnType.type = importRewrite.addImport(functionalInterfaceMethod.getReturnType(), ast);
+				returnType.binding = functionalInterfaceMethod.getReturnType();
+				ITypeBinding[] typeArguments = functionalInterfaceMethod.getParameterTypes();
+				for (int i = 0; i < typeArguments.length; i++) {
+					ITypeBinding iTypeBinding = typeArguments[i];
+					SingleVariableDeclaration newSingleVariableDeclaration = ast.newSingleVariableDeclaration();
+					newSingleVariableDeclaration.setName(ast.newSimpleName(iTypeBinding.getErasure().getName().toLowerCase() + (i + 1)));
+					newSingleVariableDeclaration.setType(importRewrite.addImport(iTypeBinding.getErasure(), ast));
+					newMethodDeclaration.parameters().add(newSingleVariableDeclaration);
+				}
+			}
+			newMethodDeclaration.setReturnType2(returnType.type);
+			Block newBlock = getNewReturnBlock(ast, returnType.binding);
+			newMethodDeclaration.setBody(newBlock);
+			listRewrite.insertLast(newMethodDeclaration, null);
+
+			// add proposal
+			resultingCollections.add(proposal);
+			return true;
+		}
+
+		/*
+		 * method invocation
+		 */
+		IMethodBinding methodBinding = methodInvocationNode == null ? null : methodInvocationNode.resolveMethodBinding();
+		if (methodBinding == null) {
+			return false;
+		}
+		List<ASTNode> arguments = methodInvocationNode.arguments();
+		int index = -1;
+		for (int i = 0; i < arguments.size(); i++) {
+			ASTNode node = arguments.get(i);
+			if (node.equals(methodReferenceNode)) {
+				index = i;
+				break;
+			}
+		}
+		ITypeBinding[] parameterTypes = methodBinding.getParameterTypes();
+		ITypeBinding[] typeArguments = methodBinding.getTypeArguments();
+		ITypeBinding[] parameterTypesFunctionalInterface = parameterTypes[index].getFunctionalInterfaceMethod().getParameterTypes();
+		ITypeBinding returnTypeBindingFunctionalInterface = parameterTypes[index].getFunctionalInterfaceMethod().getReturnType();
+		MethodDeclaration newMethodDeclaration = ast.newMethodDeclaration();
+		newMethodDeclaration.modifiers().add(ast.newModifier(ModifierKeyword.PRIVATE_KEYWORD));
+		if (addStaticModifier) {
+			newMethodDeclaration.modifiers().add(ast.newModifier(ModifierKeyword.STATIC_KEYWORD));
+		}
+		Type newReturnType = null;
+		if (returnTypeBindingFunctionalInterface.isPrimitive()) {
+			newReturnType = ast.newPrimitiveType(PrimitiveType.toCode(returnTypeBindingFunctionalInterface.getName()));
+		} else {
+			newReturnType = importRewrite.addImport(returnTypeBindingFunctionalInterface, ast);
+			ITypeBinding[] typeParameters = typeDeclaration.resolveBinding().getTypeParameters();
+			bIf: if (returnTypeBindingFunctionalInterface.isTypeVariable() || returnTypeBindingFunctionalInterface.isParameterizedType()) {
+				for (ITypeBinding typeParameter : typeParameters) {
+					// check if parameter type is a Type parameter of the class
+					if (Bindings.equals(typeParameter, returnTypeBindingFunctionalInterface)) {
+						break bIf;
+					}
+				}
+				TypeParameter newTypeParameter = ast.newTypeParameter();
+				newTypeParameter.setName(ast.newSimpleName(returnTypeBindingFunctionalInterface.getName()));
+				addIfMissing(newMethodDeclaration, newTypeParameter);
+			}
+		}
+		newMethodDeclaration.setName((SimpleName) rewrite.createCopyTarget(methodReferenceNode.getName()));
+		newMethodDeclaration.setReturnType2(newReturnType);
+		pLoop: for (int i = 0; i < parameterTypesFunctionalInterface.length; i++) {
+			ITypeBinding parameterType2 = parameterTypesFunctionalInterface[i];
+			SingleVariableDeclaration newSingleVariableDeclaration = ast.newSingleVariableDeclaration();
+			if (parameterType2.isCapture()) {
+				newSingleVariableDeclaration.setName(ast.newSimpleName(parameterType2.getErasure().getName().toLowerCase() + (i + 1)));
+				newSingleVariableDeclaration.setType(importRewrite.addImport(parameterType2.getErasure(), ast));
+			} else {
+				newSingleVariableDeclaration.setName(ast.newSimpleName(parameterType2.getName().toLowerCase() + (i + 1)));
+				newSingleVariableDeclaration.setType(importRewrite.addImport(parameterType2, ast));
+			}
+			newMethodDeclaration.parameters().add(newSingleVariableDeclaration);
+			ITypeBinding[] typeParameters = typeDeclaration.resolveBinding().getTypeParameters();
+			if (parameterType2.isTypeVariable()) {
+				// check if parameter type is a Type parameter of the class
+				for (ITypeBinding typeParameter : typeParameters) {
+					if (Bindings.equals(typeParameter, parameterType2)) {
+						continue pLoop;
+					}
+				}
+
+				TypeParameter newTypeParameter = ast.newTypeParameter();
+				newTypeParameter.setName(ast.newSimpleName(importRewrite.addImport(parameterType2)));
+				ITypeBinding[] typeBounds = parameterType2.getTypeBounds();
+				for (ITypeBinding typeBound : typeBounds) {
+					newTypeParameter.typeBounds().add(importRewrite.addImport(typeBound, ast));
+				}
+				addIfMissing(newMethodDeclaration, newTypeParameter);
+			}
+		}
+		for (int i = 0; i < typeArguments.length; i++) {
+			ITypeBinding typeArgument = typeArguments[i];
+			SingleVariableDeclaration newSingleVariableDeclaration = ast.newSingleVariableDeclaration();
+			newSingleVariableDeclaration.setName(ast.newSimpleName(typeArgument.getName().toLowerCase() + (i + 1)));
+			newSingleVariableDeclaration.setType(importRewrite.addImport(typeArgument, ast));
+			newMethodDeclaration.parameters().add(newSingleVariableDeclaration);
+			if (typeArgument.isTypeVariable()) {
+				TypeParameter newTypeParameter = ast.newTypeParameter();
+				newTypeParameter.setName(ast.newSimpleName(importRewrite.addImport(typeArgument)));
+				newMethodDeclaration.typeParameters().add(newTypeParameter);
+			}
+		}
+		Block newBlock = getNewReturnBlock(ast, returnTypeBindingFunctionalInterface);
+		newMethodDeclaration.setBody(newBlock);
+		listRewrite.insertLast(newMethodDeclaration, null);
+
+		// add proposal
+		resultingCollections.add(proposal);
+		return true;
 	}
 }

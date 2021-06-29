@@ -549,6 +549,33 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		AbstractSourceTestCase.compareSource(builder.toString(), actual);
 	}
 
+	@Test
+	public void testCodeAction_unimplementedMethodReference() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"package test1;\n"
+				+ "import java.util.Comparator;\n"
+						+ "class Foo {\n"
+				+ "    void foo(Comparator<String> c) {\n"
+				+ "    }\n"
+				+ "    void bar() {\n"
+				+ "        foo(this::action);\n"
+				+ "    }\n"
+				+ "}");
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "action");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+				Arrays.asList(getDiagnostic(Integer.toString(IProblem.DanglingReference), range)), Collections.singletonList(JavaCodeActionKind.QUICK_ASSIST));
+		params.setContext(context);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+
+		Assert.assertNotNull(codeActions);
+		CodeAction action = codeActions.get(1).getRight();
+		Assert.assertEquals("Add missing method 'action' to class 'Foo'", action.getTitle());
+	}
+
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
 		return server.codeAction(params).join();
 	}
