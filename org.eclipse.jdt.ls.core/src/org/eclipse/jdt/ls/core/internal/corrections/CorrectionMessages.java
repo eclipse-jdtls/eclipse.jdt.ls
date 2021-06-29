@@ -328,6 +328,7 @@ public final class CorrectionMessages extends NLS {
 	public static String TypeChangeCompletionProposal_method_name;
 	public static String ImplementInterfaceProposal_name;
 	public static String AddUnimplementedMethodsOperation_AddMissingMethod_group;
+	public static String AddUnimplementedMethodReferenceOperation_AddMissingMethod_group;
 	public static String AdvancedQuickAssistProcessor_convertToIfReturn;
 	public static String AdvancedQuickAssistProcessor_combineSelectedStrings;
 	public static String AdvancedQuickAssistProcessor_convertToIfElse_description;
