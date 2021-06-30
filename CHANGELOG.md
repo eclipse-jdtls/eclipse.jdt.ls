@@ -4,7 +4,6 @@
  * enhancement - Add a preference to control the severity of not covered maven plugin execution. See [#1770](https://github.com/eclipse/eclipse.jdt.ls/pull/1770).
  * enhancement - Allow folding `static` blocks. See [#1777](https://github.com/eclipse/eclipse.jdt.ls/issues/1777).
  * enhancement - Add deprecated property to CompletionItem and SymbolInformation. See [#695](https://github.com/eclipse/eclipse.jdt.ls/issues/695).
- * enhancement - deprecated is not populated in textDocument/documentSymbol. See [#1301](https://github.com/eclipse/eclipse.jdt.ls/issues/1301).
  * enhancement - Add option to ignore all proxies. See [#1799](https://github.com/eclipse/eclipse.jdt.ls/pull/1799).
  * bug fix - Cannot make a static reference to the non-static type T. See [#1781](https://github.com/eclipse/eclipse.jdt.ls/issues/1781).
  * bug fix - Standard language server should also be able to exit on shutdown. See [#1808](https://github.com/eclipse/eclipse.jdt.ls/pull/1808).
