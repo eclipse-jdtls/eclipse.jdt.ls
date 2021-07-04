@@ -867,6 +867,36 @@ public final class JDTUtils {
 	}
 
 	/**
+	 * Creates a range for the given offset and length for an {@link IDocument}
+	 *
+	 * @param document
+	 * @param offset
+	 * @param length
+	 * @return
+	 * @throws JavaModelException
+	 */
+	public static Range toRange(IDocument document, int offset, int length) throws JavaModelException {
+		Range range = newRange();
+		if (offset > 0 || length > 0) {
+			int[] loc = null;
+			int[] endLoc = null;
+			if (document != null) {
+				loc = JsonRpcHelpers.toLine(document, offset);
+				endLoc = JsonRpcHelpers.toLine(document, offset + length);
+			}
+			if (loc == null) {
+				loc = new int[2];
+			}
+			if (endLoc == null) {
+				endLoc = new int[2];
+			}
+			setPosition(range.getStart(), loc);
+			setPosition(range.getEnd(), endLoc);
+		}
+		return range;
+	}
+
+	/**
 	 * Creates a new {@link Range} with its start and end {@link Position}s set to line=0, character=0
 	 *
 	 * @return a new {@link Range};

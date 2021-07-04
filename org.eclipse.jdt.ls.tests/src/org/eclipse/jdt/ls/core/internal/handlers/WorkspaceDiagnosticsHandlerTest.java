@@ -39,10 +39,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.tests.Unstable;
+import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
@@ -336,6 +343,24 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
+	}
+
+	@Test
+	public void testAnnotation() throws Exception {
+		importProjects("maven/salut4");
+		IProject proj = WorkspaceHelper.getProject("salut4");
+		IJavaProject javaProject = JavaCore.create(proj);
+		assertTrue(javaProject.exists());
+		IType type = javaProject.findType("org.sample.MyTest");
+		ICompilationUnit unit = type.getCompilationUnit();
+		IResource resource = unit.getUnderlyingResource();
+		IMarker[] markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ZERO);
+		IDocument document = new Document(unit.getSource());
+		List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, markers, false);
+		assertEquals(4, diagnostics.size());
+		Optional<Diagnostic> diag = diagnostics.stream().filter(p -> "Test cannot be resolved to a type".equals(p.getMessage())).findFirst();
+		Diagnostic diagnostic = diag.get();
+		assertEquals(4, diagnostic.getRange().getStart().getCharacter());
 	}
 
 	@Test
