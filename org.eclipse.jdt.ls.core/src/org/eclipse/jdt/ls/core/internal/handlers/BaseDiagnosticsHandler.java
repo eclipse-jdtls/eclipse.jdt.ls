@@ -232,6 +232,23 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 	@SuppressWarnings("restriction")
 	private static Range convertRange(IOpenable openable, IProblem problem) {
 		try {
+			if (problem.getID() == IProblem.UndefinedType && openable instanceof ICompilationUnit) {
+				ICompilationUnit cu = (ICompilationUnit) openable;
+				if (cu.getBuffer() != null) {
+					int start = problem.getSourceStart();
+					if (start > 0) {
+						start--;
+						char ch = cu.getBuffer().getChar(start);
+						while (Character.isWhitespace(ch)) {
+							start--;
+							ch = cu.getBuffer().getChar(start);
+						}
+						if (ch == '@') {
+							return JDTUtils.toRange(openable, start, problem.getSourceEnd() - start + 1);
+						}
+					}
+				}
+			}
 			return JDTUtils.toRange(openable, problem.getSourceStart(), problem.getSourceEnd() - problem.getSourceStart() + 1);
 		} catch (CoreException e) {
 			// In case failed to open the IOpenable's buffer, use the IProblem's information to calculate the range.

@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTMatcher;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -56,6 +57,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
@@ -557,8 +559,19 @@ public class UnresolvedElementsSubProcessor {
 	public static void getTypeProposals(IInvocationContext context, IProblemLocationCore problem,
 			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
-
-		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
+		ASTNode selectedNode;
+		if (problem.getProblemId() == IProblem.UndefinedType && cu.getBuffer() != null && cu.getBuffer().getChar(problem.getOffset()) == '@') {
+			int offset = problem.getOffset() + 1;
+			int length = problem.getLength() - 1;
+			while (offset < cu.getBuffer().getLength() && length >= 0 && Character.isWhitespace(cu.getBuffer().getChar(offset))) {
+				offset++;
+				length--;
+			}
+			NodeFinder finder = new NodeFinder(context.getASTRoot(), offset, length);
+			selectedNode = finder.getCoveringNode();
+		} else {
+			selectedNode = problem.getCoveringNode(context.getASTRoot());
+		}
 		if (selectedNode == null) {
 			return;
 		}
@@ -574,6 +587,9 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		Name node= null;
+		if (selectedNode instanceof Annotation) {
+			selectedNode = ((Annotation) selectedNode).getTypeName();
+		}
 		if (selectedNode instanceof SimpleType) {
 			node= ((SimpleType) selectedNode).getName();
 		} else if (selectedNode instanceof NameQualifiedType) {

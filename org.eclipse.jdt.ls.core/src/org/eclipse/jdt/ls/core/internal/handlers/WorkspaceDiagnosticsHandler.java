@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -372,6 +373,14 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			int end = marker.getAttribute(IMarker.CHAR_END, -1);
 			int start = marker.getAttribute(IMarker.CHAR_START, -1);
 			if (start >= 0 && end >= start) {
+				try {
+					Range range = getAnnotationRange(document, marker);
+					if (range != null) {
+						return range;
+					}
+				} catch (BadLocationException | JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 				int[] startPos = JsonRpcHelpers.toLine(document, start);
 				int[] endPos = JsonRpcHelpers.toLine(document, end);
 				return new Range(new Position(startPos[0], startPos[1]), new Position(endPos[0], endPos[1]));
@@ -386,23 +395,52 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				cStart = marker.getAttribute(IMavenConstants.MARKER_COLUMN_START, -1);
 				cEnd = marker.getAttribute(IMavenConstants.MARKER_COLUMN_END, -1);
 			} else {
-				int lineOffset = 0;
-				try {
-					lineOffset = document.getLineOffset(line);
-				} catch (BadLocationException unlikelyException) {
-					JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
-					return new Range(new Position(line, 0), new Position(line, 0));
+				if (marker.getAttribute(IJavaModelMarker.ID, -1) == IProblem.UndefinedType) {
+					try {
+						Range range = getAnnotationRange(document, marker);
+						if (range != null) {
+							return range;
+						}
+					} catch (BadLocationException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				} else {
+					int lineOffset = 0;
+					try {
+						lineOffset = document.getLineOffset(line);
+					} catch (BadLocationException unlikelyException) {
+						JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
+						return new Range(new Position(line, 0), new Position(line, 0));
+					}
+					cEnd = marker.getAttribute(IMarker.CHAR_END, -1) - lineOffset;
+					cStart = marker.getAttribute(IMarker.CHAR_START, -1) - lineOffset;
 				}
-				cEnd = marker.getAttribute(IMarker.CHAR_END, -1) - lineOffset;
-				cStart = marker.getAttribute(IMarker.CHAR_START, -1) - lineOffset;
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		cStart = Math.max(0, cStart);
 		cEnd = Math.max(0, cEnd);
-
 		return new Range(new Position(line, cStart), new Position(line, cEnd));
+	}
+
+	private static Range getAnnotationRange(IDocument document, IMarker marker) throws BadLocationException, JavaModelException {
+		if (marker.getAttribute(IJavaModelMarker.ID, -1) == IProblem.UndefinedType) {
+			int end = marker.getAttribute(IMarker.CHAR_END, -1);
+			int start = marker.getAttribute(IMarker.CHAR_START, -1);
+			if (start > 0) {
+				start--;
+				char ch = document.getChar(start);
+				while (Character.isWhitespace(ch)) {
+					start--;
+					ch = document.getChar(start);
+				}
+				if (ch == '@') {
+					return JDTUtils.toRange(document, start, end - start);
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

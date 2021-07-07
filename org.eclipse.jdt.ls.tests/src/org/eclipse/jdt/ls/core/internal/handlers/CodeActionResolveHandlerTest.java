@@ -13,6 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -20,10 +24,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -31,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.lsp4j.CodeAction;
@@ -40,6 +48,7 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -112,6 +121,38 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		Assert.assertEquals(buf.toString(), actual);
 	}
 
+	// See https://github.com/redhat-developer/vscode-java/issues/1992
+	@Test
+	public void testResolveCodeAction_AnnotationQuickFixes() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
+		importProjects("maven/salut4");
+		IProject proj = WorkspaceHelper.getProject("salut4");
+		IJavaProject javaProject = JavaCore.create(proj);
+		assertTrue(javaProject.exists());
+		IType type = javaProject.findType("org.sample.MyTest");
+		ICompilationUnit unit = type.getCompilationUnit();
+		assertFalse(unit.getSource().contains("import org.junit.jupiter.api.Test"));
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		Position position = new Position(3, 4);
+		final Range range = new Range(position, position);
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedType), range)), Collections.singletonList(CodeActionKind.QuickFix));
+		params.setContext(context);
+		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
+		assertNotNull(quickfixActions);
+		assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		Optional<Either<Command, CodeAction>> importTest = quickfixActions.stream().filter(codeAction -> {
+			return "Import 'Test' (org.junit.jupiter.api)".equals(codeAction.getRight().getTitle());
+		}).findFirst();
+		CodeAction codeAction = importTest.get().getRight();
+		assertEquals(1, codeAction.getDiagnostics().size());
+		CodeAction resolvedCodeAction = server.resolveCodeAction(codeAction).join();
+		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
+		assertTrue(actual.contains("import org.junit.jupiter.api.Test"));
+	}
+
 	@Test
 	public void testResolveCodeAction_Refactors() throws Exception {
 		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
@@ -136,7 +177,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
 		final Range range = CodeActionUtil.getRange(unit);
 		params.setRange(range);
-		
+
 		CodeActionContext context = new CodeActionContext(
 			Collections.emptyList(),
 			Collections.singletonList(CodeActionKind.Refactor)
