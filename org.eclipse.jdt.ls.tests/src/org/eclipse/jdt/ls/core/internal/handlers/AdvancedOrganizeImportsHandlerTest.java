@@ -15,17 +15,21 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
@@ -184,6 +188,40 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 					"}\n";
 			//@formatter:on
 			compareSource(expected, unit.getSource());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
+		}
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2012
+	@Test
+	public void testDuplicateStaticImports() throws Exception {
+		importProjects("maven/salut6");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut6");
+		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
+		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
+		try {
+			List<String> list = new ArrayList<>();
+			list.add("org.assertj.core.api.Assertions.*");
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(list);
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.sample.MyTest");
+			ICompilationUnit unit = type.getCompilationUnit();
+			TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
+				return new ImportCandidate[0];
+			});
+			assertNull(edit);
+			type = javaProject.findType("org.sample.MyTest2");
+			unit = type.getCompilationUnit();
+			edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
+				return new ImportCandidate[0];
+			});
+			assertNotNull(edit);
+			JavaModelUtil.applyEdit(unit, edit, true, null);
+			IImportDeclaration[] imports = unit.getImports();
+			assertEquals(2, imports.length);
+			Optional<IImportDeclaration> el = Stream.of(imports).filter(p -> p.getElementName().equals("org.hamcrest.MatcherAssert.assertThat")).findFirst();
+			assertNotNull(el.get());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
 		}

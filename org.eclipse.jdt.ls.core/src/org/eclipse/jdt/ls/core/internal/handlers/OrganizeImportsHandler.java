@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -181,21 +182,26 @@ public final class OrganizeImportsHandler {
 	}
 
 	private static void addImports(CompilationUnit root, ICompilationUnit unit, String[] favourites, ImportRewrite importRewrite, AST ast, ASTRewrite astRewrite, SimpleName node, boolean isMethod) throws JavaModelException {
-		String name = node.getIdentifier();
-		String[] imports = SimilarElementsRequestor.getStaticImportFavorites(unit, name, isMethod, favourites);
-		if (imports.length > 1) {
-			// See https://github.com/redhat-developer/vscode-java/issues/1472
-			return;
-		}
-		for (int i = 0; i < imports.length; i++) {
-			String curr = imports[i];
-			String qualifiedTypeName = Signature.getQualifier(curr);
-			String res = importRewrite.addStaticImport(qualifiedTypeName, name, isMethod, new ContextSensitiveImportRewriteContext(root, node.getStartPosition(), importRewrite));
-			int dot = res.lastIndexOf('.');
-			if (dot != -1) {
-				String usedTypeName = importRewrite.addImport(qualifiedTypeName);
-				Name newName = ast.newQualifiedName(ast.newName(usedTypeName), ast.newSimpleName(name));
-				astRewrite.replace(node, newName, null);
+		IBinding binding = node.resolveBinding();
+		if (binding != null) {
+			importRewrite.addStaticImport(binding);
+		} else {
+			String name = node.getIdentifier();
+			String[] imports = SimilarElementsRequestor.getStaticImportFavorites(unit, name, isMethod, favourites);
+			if (imports.length > 1) {
+				// See https://github.com/redhat-developer/vscode-java/issues/1472
+				return;
+			}
+			for (int i = 0; i < imports.length; i++) {
+				String curr = imports[i];
+				String qualifiedTypeName = Signature.getQualifier(curr);
+				String res = importRewrite.addStaticImport(qualifiedTypeName, name, isMethod, new ContextSensitiveImportRewriteContext(root, node.getStartPosition(), importRewrite));
+				int dot = res.lastIndexOf('.');
+				if (dot != -1) {
+					String usedTypeName = importRewrite.addImport(qualifiedTypeName);
+					Name newName = ast.newQualifiedName(ast.newName(usedTypeName), ast.newSimpleName(name));
+					astRewrite.replace(node, newName, null);
+				}
 			}
 		}
 	}
