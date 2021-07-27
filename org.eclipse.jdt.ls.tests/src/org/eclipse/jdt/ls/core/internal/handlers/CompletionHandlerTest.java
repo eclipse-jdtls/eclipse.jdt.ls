@@ -2965,6 +2965,32 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(" Test ", documentation);
 	}
 
+	// See https://github.com/redhat-developer/vscode-java/issues/2034
+	@Test
+	public void testCompletion_Anonymous() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+					"package org.sample;\n"
+				+	"import java.util.Arrays;\n"
+				+	"public class Test {\n\n"
+				+	"	public static void main(String[] args) {\n"
+				+	"		new Runnable() {\n"
+				+	"			@Override\n"
+				+	"			public void run() {\n"
+				+	"				boolean equals = Arrays.equals(new Object[0], new Object[0]);\n"
+				+	"			}\n"
+				+	"		};\n"
+				+	"	}\n"
+				+	"}\n");
+			//@formatter:on
+		CompletionList list = requestCompletions(unit, "= A");
+		assertNotNull(list);
+		assertTrue(list.getItems().size() > 0);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("Arrays - java.util")).findFirst().orElse(null);
+		assertEquals(CompletionItemKind.Class, ci.getKind());
+		assertEquals("java.util.Arrays", ci.getDetail());
+	}
+
 	@Test
 	public void testCompletion_Nullable() throws Exception {
 		importProjects("eclipse/testnullable");
