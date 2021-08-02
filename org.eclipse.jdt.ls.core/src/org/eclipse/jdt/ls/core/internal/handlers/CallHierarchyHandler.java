@@ -95,7 +95,17 @@ public class CallHierarchyHandler {
 
 		CallHierarchyItem item = params.getItem();
 		Assert.isNotNull(item, "call item");
-		Position position = item.getSelectionRange().getStart();
+		Position position;
+		switch (item.getKind()) {
+			case Class:
+			case Enum:
+			case Interface:
+				position = item.getSelectionRange().getStart();
+				break;
+			default:
+				position = item.getRange().getStart();
+				break;
+		}
 		int line = position.getLine();
 		int character = position.getCharacter();
 
@@ -115,7 +125,7 @@ public class CallHierarchyHandler {
 
 		CallHierarchyItem item = params.getItem();
 		Assert.isNotNull(item, "call item");
-		Position position = item.getSelectionRange().getStart();
+		Position position = item.getRange().getStart();
 		int line = position.getLine();
 		int character = position.getCharacter();
 
@@ -177,10 +187,9 @@ public class CallHierarchyHandler {
 
 		MethodWrapper wrapper = incomingMethodWrapperCache.containsKey(candidate) ?
 			incomingMethodWrapperCache.get(candidate) : getCallRoot(candidate, true);
-		if (wrapper == null) {
+		if (wrapper == null || !wrapper.canHaveChildren()) {
 			return null;
 		}
-
 		MethodWrapper[] calls = wrapper.getCalls(sub.split(1));
 		if (calls == null) {
 			return null;
@@ -188,16 +197,34 @@ public class CallHierarchyHandler {
 
 		List<CallHierarchyIncomingCall> result = new ArrayList<>();
 		for (MethodWrapper call : calls) {
+			Collection<CallLocation> callLocations = call.getMethodCall().getCallLocations();
+			if (callLocations != null) {
+				for (CallLocation location : callLocations) {
+					IOpenable openable = getOpenable(location);
+					Range callRange = getRange(openable, location);
+					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+					symbol.setSelectionRange(callRange);
+					List<Range> ranges = toCallRanges(callLocations);
+					result.add(new CallHierarchyIncomingCall(symbol, ranges));
+				}
+			}
 			IMember member = call.getMember();
 			if (member != null) {
 				incomingMethodWrapperCache.put(member, call);
 			}
-			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
-			result.add(new CallHierarchyIncomingCall(symbol, ranges));
 		}
 
 		return result;
+	}
+
+	private Range getRange(IOpenable openable, CallLocation location) {
+		int[] start = JsonRpcHelpers.toLine(openable, location.getStart());
+		int[] end = JsonRpcHelpers.toLine(openable, location.getEnd());
+		Assert.isNotNull(start, "start");
+		Assert.isNotNull(end, "end");
+		// Assert.isLegal(start[0] == end[0], "Expected equal start and end lines. Start was: " + Arrays.toString(start) + " End was:" + Arrays.toString(end));
+		Range callRange = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
+		return callRange;
 	}
 
 	private List<CallHierarchyOutgoingCall> getOutgoingCallItemsAt(String uri, int line, int character, IProgressMonitor monitor) throws JavaModelException {
@@ -221,13 +248,18 @@ public class CallHierarchyHandler {
 
 		List<CallHierarchyOutgoingCall> result = new ArrayList<>();
 		for (MethodWrapper call : calls) {
+			Collection<CallLocation> callLocations = call.getMethodCall().getCallLocations();
+			if (callLocations != null && !callLocations.isEmpty()) {
+				List<Range> ranges = toCallRanges(callLocations);
+				for (int i = 0; i < callLocations.size(); i++) {
+					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+					result.add(new CallHierarchyOutgoingCall(symbol, ranges));
+				}
+			}
 			IMember member = call.getMember();
 			if (member != null) {
 				outgoingMethodWrapperCache.put(member, call);
 			}
-			CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-			List<Range> ranges = toCallRanges(call.getMethodCall().getCallLocations());
-			result.add(new CallHierarchyOutgoingCall(symbol, ranges));
 		}
 
 		return result;
@@ -280,21 +312,21 @@ public class CallHierarchyHandler {
 		List<Range> ranges = new ArrayList<>();
 		if (callLocations != null) {
 			for (CallLocation location : callLocations) {
-				IOpenable openable = location.getMember().getCompilationUnit();
-				if (openable == null) {
-					openable = location.getMember().getTypeRoot();
-				}
-				int[] start = JsonRpcHelpers.toLine(openable, location.getStart());
-				int[] end = JsonRpcHelpers.toLine(openable, location.getEnd());
-				Assert.isNotNull(start, "start");
-				Assert.isNotNull(end, "end");
-				// Assert.isLegal(start[0] == end[0], "Expected equal start and end lines. Start was: " + Arrays.toString(start) + " End was:" + Arrays.toString(end));
-				Range callRange = new Range(new Position(start[0], start[1]), new Position(end[0], end[1]));
+				IOpenable openable = getOpenable(location);
+				Range callRange = getRange(openable, location);
 				ranges.add(callRange);
 			}
 		}
 
 		return ranges;
+	}
+
+	private IOpenable getOpenable(CallLocation location) {
+		IOpenable openable = location.getMember().getCompilationUnit();
+		if (openable == null) {
+			openable = location.getMember().getTypeRoot();
+		}
+		return openable;
 	}
 
 	/**
