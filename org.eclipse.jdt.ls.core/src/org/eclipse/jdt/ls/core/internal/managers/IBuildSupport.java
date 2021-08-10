@@ -154,4 +154,12 @@ public interface IBuildSupport {
 		return "Unsupported operation. Please use your build tool project file to manage the source directories of the project.";
 	}
 
+	/**
+	 * Returns file patterns that will not be tracked for changes.
+	 * Use Glob pattern rules to create a pattern.
+	 */
+	default List<String> getExcludedFilePatterns() {
+		return Collections.emptyList();
+	}
+
 }

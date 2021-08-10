@@ -222,6 +222,11 @@ public class StandardProjectsManager extends ProjectsManager {
 			Optional<IBuildSupport> bs = getBuildSupport(resource.getProject());
 			if (bs.isPresent()) {
 				IBuildSupport buildSupport = bs.get();
+
+				if (JDTUtils.isExcludedFile(buildSupport.getExcludedFilePatterns(), uriString)) {
+					return;
+				}
+
 				boolean requireConfigurationUpdate = buildSupport.fileChanged(resource, changeType, new NullProgressMonitor());
 				if (requireConfigurationUpdate) {
 					FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
