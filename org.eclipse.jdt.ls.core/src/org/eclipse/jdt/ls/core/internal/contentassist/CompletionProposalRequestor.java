@@ -57,6 +57,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private List<CompletionProposal> proposals = new ArrayList<>();
 	private final ICompilationUnit unit;
+	private final String uri; // URI of this.unit, used in future "resolve" requests
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private CompletionResponse response;
 	private boolean fIsTestCodeExcluded;
@@ -139,6 +140,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	public CompletionProposalRequestor(ICompilationUnit aUnit, int offset, PreferenceManager preferenceManager) {
 		this.unit = aUnit;
+		this.uri = JDTUtils.toURI(aUnit);
 		this.preferenceManager = preferenceManager;
 		response = new CompletionResponse();
 		response.setOffset(offset);
@@ -227,7 +229,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
-		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(unit));
+		data.put(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(index));
 		$.setData(data);
