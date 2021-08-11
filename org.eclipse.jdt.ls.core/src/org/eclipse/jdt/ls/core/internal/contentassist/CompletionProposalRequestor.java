@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -28,24 +28,17 @@ import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IMethod;
-import org.eclipse.jdt.core.ISourceRange;
-import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
-import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
@@ -235,48 +228,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
-		if (proposal.getKind() == CompletionProposal.FIELD_REF) {
-			try {
-				IField field = JDTUtils.resolveField(proposal, unit.getJavaProject());
-				Region nameRegion = null;
-				if (field != null) {
-					ITypeRoot typeRoot = field.getTypeRoot();
-					ISourceRange nameRange = ((ISourceReference) field).getNameRange();
-					if (SourceRange.isAvailable(nameRange)) {
-						nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
-					}
-					String constantValue = JDTUtils.getConstantValue(field, typeRoot, nameRegion);
-					if (constantValue != null) {
-						String label = $.getLabel();
-						$.setLabel(label + " = " + constantValue);
-						data.put(CompletionResolveHandler.DATA_FIELD_CONSTANT_VALUE, constantValue);
-					}
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.log(e);
-			}
-		}
-		if (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.ANNOTATION_ATTRIBUTE_REF) {
-			try {
-				IMethod method = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
-				Region nameRegion = null;
-				if (method != null) {
-					ITypeRoot typeRoot = method.getTypeRoot();
-					ISourceRange nameRange = ((ISourceReference) method).getNameRange();
-					if (SourceRange.isAvailable(nameRange)) {
-						nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
-					}
-					String defaultValue = JDTUtils.getAnnotationMemberDefaultValue(method, typeRoot, nameRegion);
-					if (defaultValue != null) {
-						String label = $.getLabel();
-						$.setLabel(label + " (Default: " + defaultValue + ")");
-						data.put(CompletionResolveHandler.DATA_METHOD_DEFAULT_VALUE, defaultValue);
-					}
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.log(e);
-			}
-		}
 		proposalProvider.updateReplacement(proposal, $, '\0');
 		// Make sure `filterText` matches `textEdit`
 		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
