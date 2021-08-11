@@ -1,5 +1,18 @@
 # Change Log
 
+# [1.3.0 (August 17th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/93?closed=1)
+ * enhancement - 'Create method' code action for method reference. See [#1464](https://github.com/eclipse/eclipse.jdt.ls/issues/1464).
+ * performance - Avoid displaying (expensive) constant values in completion items. See [#1835](https://github.com/eclipse/eclipse.jdt.ls/issues/1835).
+ * performance - toURI is expensive on Windows for completions. See [#1831](https://github.com/eclipse/eclipse.jdt.ls/issues/1831).
+ * bug fix - Go to definition doesn't compute/find results on methods inside an anonymous class. See [#1813](https://github.com/eclipse/eclipse.jdt.ls/issues/1813).
+ * bug fix - quickfix not available where cursor lands by default on annotations. See [#1812](https://github.com/eclipse/eclipse.jdt.ls/pull/1812).
+ * bug fix - Fix content assist for multiline strings. See [#1819](https://github.com/eclipse/eclipse.jdt.ls/pull/1819).
+ * bug fix - Language server freezes when importing maven project. See [#1816](https://github.com/eclipse/eclipse.jdt.ls/pull/1816).
+ * bug fix - Suggest correct import quick fix in anonymous classes. See [#1822](https://github.com/eclipse/eclipse.jdt.ls/pull/1822).
+ * bug fix - Organize imports generates duplicate static import statement. See [#1814](https://github.com/eclipse/eclipse.jdt.ls/pull/1814).
+ * build - Update eclipse-jarsigner-plugin to 1.3.2. See [#1829](https://github.com/eclipse/eclipse.jdt.ls/pull/1829).
+ * build - Language server distro contains 2 Guava jars. See [#1706](https://github.com/eclipse/eclipse.jdt.ls/issues/1706).
+
 # [1.2.0 (June 30th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/92?closed=1)
  * enhancement - Add a preference to control the severity of not covered maven plugin execution. See [#1770](https://github.com/eclipse/eclipse.jdt.ls/pull/1770).
  * enhancement - Allow folding `static` blocks. See [#1777](https://github.com/eclipse/eclipse.jdt.ls/issues/1777).
