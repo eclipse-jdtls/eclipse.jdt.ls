@@ -177,7 +177,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 		results = WorkspaceSymbolHandler.search("main", "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + " result", 9, results.size());
+		assertEquals("Found " + results.size() + " result", 10, results.size());
 		boolean allMethods = results.stream().allMatch(s -> s.getKind() == SymbolKind.Method);
 		assertTrue("Found a non-method symbol", allMethods);
 		preferences.setIncludeSourceMethodDeclarations(false);

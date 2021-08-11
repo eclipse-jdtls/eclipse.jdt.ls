@@ -92,6 +92,24 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(12, definitions.get(0).getRange().getStart().getCharacter());
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1813
+	@Test
+	public void testMethodInAnonymousClass() throws Exception {
+		String className = "org.sample.App";
+		int line = 12;
+		int column = 28;
+		importProjects("eclipse/hello");
+		IProject hello = WorkspaceHelper.getProject("hello");
+		String uri = ClassFileUtil.getURI(hello, className);
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
+		assertNotNull(definitions);
+		assertEquals("No definition found for " + className, 1, definitions.size());
+		assertNotNull(definitions.get(0).getUri());
+		assertEquals(3, definitions.get(0).getRange().getStart().getLine());
+		assertEquals(18, definitions.get(0).getRange().getStart().getCharacter());
+	}
+
 	@Test
 	public void testJdkClasses() throws Exception {
 		// because for test, we are using fake rt.jar(rtstubs.jar), the issue of issue https://bugs.eclipse.org/bugs/show_bug.cgi?id=541573 will
