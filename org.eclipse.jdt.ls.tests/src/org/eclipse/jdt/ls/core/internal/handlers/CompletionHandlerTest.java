@@ -2916,7 +2916,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(3, list.getItems().size());
 		CompletionItem ci = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Constant, ci.getKind());
-		assertEquals("ONE : int = 1", ci.getLabel());
+		assertEquals("ONE : int", ci.getLabel());
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertEquals(CompletionItemKind.Constant, resolvedItem.getKind());
 		String documentation = resolvedItem.getDocumentation().getLeft();
@@ -2924,14 +2924,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		ci = list.getItems().get(1);
 		assertEquals(CompletionItemKind.Constant, ci.getKind());
-		assertEquals("TEST : double = 107.1921", ci.getLabel());
+		assertEquals("TEST : double", ci.getLabel());
 
 		list = requestCompletions(unit, "@IConstantDefault(");
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		ci = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Text, ci.getKind());
-		assertEquals("someMethod : String (Default: \"test\")", ci.getLabel());
+		assertEquals("someMethod : String", ci.getLabel());
 		resolvedItem = server.resolveCompletionItem(ci).join();
 		assertEquals(CompletionItemKind.Text, resolvedItem.getKind());
 		documentation = resolvedItem.getDocumentation().getLeft();

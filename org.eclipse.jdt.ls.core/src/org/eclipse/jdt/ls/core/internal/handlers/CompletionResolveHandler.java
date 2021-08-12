@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2018 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -28,9 +28,13 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.SourceRange;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
@@ -44,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequesto
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
@@ -115,8 +120,8 @@ public class CompletionResolveHandler {
 				IMember member = null;
 				IType type = unit.getJavaProject().findType(typeName);
 
+				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 				if (type!=null && data.containsKey(DATA_FIELD_NAME)) {
-					CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 					String name = data.get(DATA_FIELD_NAME);
 					String[] paramSigs = CharOperation.NO_STRINGS;
 					if(data.containsKey( DATA_FIELD_SIGNATURE)){
@@ -178,7 +183,24 @@ public class CompletionResolveHandler {
 						JavaLanguageServerPlugin.logException("Unable to read documentation", e);
 						monitor.setCanceled(true);
 					}
-					String constantValue = data.get(DATA_FIELD_CONSTANT_VALUE);
+
+					String constantValue = null;
+					if (proposal.getKind() == CompletionProposal.FIELD_REF) {
+						try {
+							IField field = JDTUtils.resolveField(proposal, unit.getJavaProject());
+							Region nameRegion = null;
+							if (field != null) {
+								ITypeRoot typeRoot = field.getTypeRoot();
+								ISourceRange nameRange = ((ISourceReference) field).getNameRange();
+								if (SourceRange.isAvailable(nameRange)) {
+									nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
+								}
+								constantValue = JDTUtils.getConstantValue(field, typeRoot, nameRegion);
+							}
+						} catch (JavaModelException e) {
+							JavaLanguageServerPlugin.log(e);
+						}
+					}
 					if (constantValue != null) {
 						if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + "\n\n" + VALUE + constantValue;
@@ -186,7 +208,24 @@ public class CompletionResolveHandler {
 							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + VALUE + constantValue;
 						}
 					}
-					String defaultValue = data.get(DATA_METHOD_DEFAULT_VALUE);
+
+					String defaultValue = null;
+					if (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.ANNOTATION_ATTRIBUTE_REF) {
+						try {
+							IMethod method = JDTUtils.resolveMethod(proposal, unit.getJavaProject());
+							Region nameRegion = null;
+							if (method != null) {
+								ITypeRoot typeRoot = method.getTypeRoot();
+								ISourceRange nameRange = ((ISourceReference) method).getNameRange();
+								if (SourceRange.isAvailable(nameRange)) {
+									nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
+								}
+								defaultValue = JDTUtils.getAnnotationMemberDefaultValue(method, typeRoot, nameRegion);
+							}
+						} catch (JavaModelException e) {
+							JavaLanguageServerPlugin.log(e);
+						}
+					}
 					if (defaultValue != null) {
 						if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 							javadoc = (javadoc == null ? EMPTY_STRING : javadoc) + "\n\n" + DEFAULT + defaultValue;
