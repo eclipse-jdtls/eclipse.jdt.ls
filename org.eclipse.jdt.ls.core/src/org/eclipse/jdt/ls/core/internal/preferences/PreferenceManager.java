@@ -47,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jface.text.templates.Template;
+import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.text.templates.ContextTypeRegistry;
 import org.eclipse.text.templates.TemplatePersistenceData;
@@ -103,6 +104,13 @@ public class PreferenceManager {
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE));
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE));
 		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE));
+
+		// These should be upstreamed into CodeTemplateContextType & GlobalVariables
+		TemplateContextType tmp = registry.getContextType(CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE);
+		tmp.addResolver(new CodeTemplatePreferences.Month());
+		tmp.addResolver(new CodeTemplatePreferences.Day());
+		tmp.addResolver(new CodeTemplatePreferences.Hour());
+		tmp.addResolver(new CodeTemplatePreferences.Minute());
 
 		JavaManipulation.setCodeTemplateContextRegistry(registry);
 
