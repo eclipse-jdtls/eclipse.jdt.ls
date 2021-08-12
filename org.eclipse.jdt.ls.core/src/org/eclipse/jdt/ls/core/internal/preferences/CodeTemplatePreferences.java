@@ -13,6 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.util.Calendar;
+
+import org.eclipse.jface.text.templates.SimpleTemplateVariableResolver;
+import org.eclipse.jface.text.templates.TemplateContext;
+
 public class CodeTemplatePreferences {
     private static final String CODETEMPLATES_PREFIX = "org.eclipse.jdt.ui.text.codetemplates."; //$NON-NLS-1$
 	public static final String COMMENT_SUFFIX = "comment"; //$NON-NLS-1$
@@ -191,4 +196,47 @@ public class CodeTemplatePreferences {
 	 */
 	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic record ${type_name}(${cursor}) {\n}";
 
+	public static class Month extends SimpleTemplateVariableResolver {
+		public Month() {
+			super("month", "Current month"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			return String.format("%02d", Calendar.getInstance().get(Calendar.MONTH) + 1);
+		}
+	}
+
+	public static class Day extends SimpleTemplateVariableResolver {
+		public Day() {
+			super("day", "Current day of month"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			return String.format("%02d", Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+		}
+	}
+
+	public static class Hour extends SimpleTemplateVariableResolver {
+		public Hour() {
+			super("hour", "Current hour of day"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			return String.format("%02d", Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
+		}
+	}
+
+	public static class Minute extends SimpleTemplateVariableResolver {
+		public Minute() {
+			super("minute", "Current minute"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			return String.format("%02d", Calendar.getInstance().get(Calendar.MINUTE));
+		}
+	}
 }
