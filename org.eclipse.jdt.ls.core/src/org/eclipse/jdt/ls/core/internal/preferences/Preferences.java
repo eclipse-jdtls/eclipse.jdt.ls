@@ -520,6 +520,7 @@ public class Preferences {
 	private String formatterProfileName;
 	private Collection<IPath> rootPaths;
 	private Collection<IPath> triggerFiles;
+	private Collection<IPath> projectConfigurations;
 	private int parallelBuildsCount;
 	private int maxCompletionResults;
 	private int importOnDemandThreshold;
@@ -1575,6 +1576,14 @@ public class Preferences {
 
 	public Collection<IPath> getTriggerFiles() {
 		return triggerFiles;
+	}
+
+	public Collection<IPath> getProjectConfigurations() {
+		return projectConfigurations;
+	}
+
+	public void setProjectConfigurations(Collection<IPath> projectConfigurations) {
+		this.projectConfigurations = projectConfigurations;
 	}
 
 	public boolean isJavaFormatOnTypeEnabled() {

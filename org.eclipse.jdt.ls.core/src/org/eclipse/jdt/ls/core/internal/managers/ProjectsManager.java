@@ -17,13 +17,16 @@ import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSetti
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +102,13 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		cleanInvalidProjects(rootPaths, subMonitor.split(20));
 		createJavaProject(getDefaultProject(), subMonitor.split(10));
 		cleanupResources(getDefaultProject());
-		importProjects(rootPaths, subMonitor.split(70));
+		Collection<IPath> projectConfigurations = preferenceManager.getPreferences().getProjectConfigurations();
+		if (projectConfigurations == null) {
+			// old way to import project
+			importProjects(rootPaths, subMonitor.split(70));
+		} else {
+			importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
+		}
 		subMonitor.done();
 	}
 
@@ -117,6 +126,49 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				}
 			}
 		}
+	}
+
+	protected void importProjectsFromConfigurationFiles(Collection<IPath> rootPaths, Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
+		for (IPath rootPath : rootPaths) {
+			File rootFolder = rootPath.toFile();
+			String configurationName = null;
+			for (IProjectImporter importer : importers()) {
+				if (importer instanceof GradleProjectImporter) {
+					configurationName = ".gradle";
+				} else if (importer instanceof MavenProjectImporter) {
+					configurationName = "pom.xml";
+				} else if (importer instanceof EclipseProjectImporter) {
+					configurationName = ".project";
+				} else {
+					// other project type go with the previous way
+					importer.initialize(rootFolder);
+					if (!importer.applies(subMonitor.split(1))) {
+						continue;
+					}
+				}
+
+				if (configurationName != null) {
+					Set<Path> directories = findProjectPathByConfigurationName(projectConfigurations, configurationName);
+					if (directories == null || directories.isEmpty()) {
+						continue;
+					}
+					importer.initialize(rootFolder, directories);
+				}
+
+				importer.importToWorkspace(subMonitor.split(70));
+			}
+		}
+	}
+
+	private Set<Path> findProjectPathByConfigurationName(Collection<IPath> projectConfigurations, String name) {
+		Set<Path> set = new HashSet<>();
+		for (IPath path : projectConfigurations) {
+			if (path.lastSegment().endsWith(name)) {
+				set.add(path.removeLastSegments(1).toFile().toPath());
+			}
+		}
+		return set;
 	}
 
 	public void importProjects(IProgressMonitor monitor) {

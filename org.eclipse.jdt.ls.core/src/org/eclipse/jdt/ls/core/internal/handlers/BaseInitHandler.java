@@ -137,6 +137,19 @@ public abstract class BaseInitHandler {
 			}
 		}
 		preferenceManager.getPreferences().setTriggerFiles(triggerPaths);
+
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		Collection<String> projectConfigurations = getInitializationOption(initializationOptions, "projectConfigurations", Collection.class);
+		if (projectConfigurations != null) {
+			for (String uri : projectConfigurations) {
+				IPath filePath = ResourceUtils.canonicalFilePathFromURI(uri);
+				if (filePath != null) {
+					configurationPaths.add(filePath);
+				}
+			}
+			preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+		}
+
 		Integer processId = param.getProcessId();
 		if (processId != null) {
 			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());

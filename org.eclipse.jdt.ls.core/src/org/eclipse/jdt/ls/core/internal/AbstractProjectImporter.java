@@ -28,10 +28,16 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 
 	@Override
 	public void initialize(File rootFolder) {
+		initialize(rootFolder, null);
+	}
+
+	@Override
+	public void initialize(File rootFolder, Collection<java.nio.file.Path> directories) {
 		if (!Objects.equals(this.rootFolder, rootFolder)) {
 			reset();
 		}
 		this.rootFolder = rootFolder;
+		this.directories = directories;
 	}
 
 	@Override

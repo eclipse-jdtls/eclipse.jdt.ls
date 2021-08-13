@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
+import java.util.Collection;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -21,6 +22,8 @@ import org.eclipse.core.runtime.OperationCanceledException;
 public interface IProjectImporter {
 
 	void initialize(File rootFolder);
+
+	void initialize(File rootFolder, Collection<java.nio.file.Path> directories);
 
 	boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
