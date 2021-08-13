@@ -191,6 +191,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 	private Preferences mockPreferences() {
 		Preferences mockPreferences = Mockito.mock(Preferences.class);
+		Mockito.when(mockPreferences.getProjectConfigurations()).thenReturn(null);
 		Mockito.when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
 		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
 		Mockito.when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
