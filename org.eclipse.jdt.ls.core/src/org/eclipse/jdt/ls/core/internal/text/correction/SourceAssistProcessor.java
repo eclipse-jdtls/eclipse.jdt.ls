@@ -36,6 +36,8 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -138,8 +140,33 @@ public class SourceAssistProcessor {
 
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
-			Optional<Either<Command, CodeAction>> hashCodeEquals = getHashCodeEqualsAction(params);
-			addSourceActionCommand($, params.getContext(), hashCodeEquals);
+			// Generate QuickAssist
+			Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = Optional.empty();
+			ASTNode node = context.getCoveredNode();
+			if (node == null) {
+				node = context.getCoveringNode();
+			}
+			if (node instanceof SimpleName) {
+				ASTNode parent = node.getParent();
+				if (parent instanceof TypeDeclaration) {
+					quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+					addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
+				}
+			}
+
+			// Generate Source Action
+			Optional<Either<Command, CodeAction>> sourceActionHashCodeEquals = Optional.empty();
+			if (quickAssistHashCodeEquals.isEmpty()) {
+				sourceActionHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+			} else {
+				sourceActionHashCodeEquals = copySourceActionCommand(quickAssistHashCodeEquals);
+				Either<Command, CodeAction> eitherValue = sourceActionHashCodeEquals.get();
+				if (eitherValue.isRight()) {
+					eitherValue.getRight().setKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+				}
+			}
+			addSourceActionCommand($, params.getContext(), sourceActionHashCodeEquals);
+
 		}
 
 		// Generate toString()
@@ -304,16 +331,16 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params) {
+	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params, String kind) {
 		if (!preferenceManager.getClientPreferences().isHashCodeEqualsPromptSupported()) {
 			return Optional.empty();
 		}
 		Command command = new Command(ActionMessages.GenerateHashCodeEqualsAction_label, COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT, Collections.singletonList(params));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateHashCodeEqualsAction_label);
-			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
@@ -428,7 +455,7 @@ public class SourceAssistProcessor {
 				JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 				return Optional.empty();
 			}
-	
+
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
@@ -459,7 +486,7 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-	
+
 			Command command = new Command(name, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(name);
@@ -554,5 +581,27 @@ public class SourceAssistProcessor {
 
 	public static ICompilationUnit getCompilationUnit(CodeActionParams params) {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+	}
+
+	public static Optional<Either<Command, CodeAction>> copySourceActionCommand(Optional<Either<Command, CodeAction>> sourceActionCommand) {
+		if (!sourceActionCommand.isPresent()) {
+			return Optional.empty();
+		}
+		Either<Command, CodeAction> eitherValue = sourceActionCommand.get();
+		if (eitherValue.isLeft()) {
+			Command command = eitherValue.getLeft();
+			return Optional.of(Either.forLeft(new Command(command.getTitle(), command.getCommand(), command.getArguments())));
+		} else {
+			CodeAction codeAction = eitherValue.getRight();
+			CodeAction copiedCodeAction = new CodeAction(codeAction.getTitle());
+			copiedCodeAction.setKind(codeAction.getKind());
+			copiedCodeAction.setIsPreferred(codeAction.getIsPreferred());
+			copiedCodeAction.setEdit(codeAction.getEdit());
+			copiedCodeAction.setDisabled(codeAction.getDisabled());
+			copiedCodeAction.setDiagnostics(codeAction.getDiagnostics());
+			copiedCodeAction.setData(codeAction.getData());
+			copiedCodeAction.setCommand(codeAction.getCommand());
+			return Optional.of(Either.forRight(copiedCodeAction));
+		}
 	}
 }
