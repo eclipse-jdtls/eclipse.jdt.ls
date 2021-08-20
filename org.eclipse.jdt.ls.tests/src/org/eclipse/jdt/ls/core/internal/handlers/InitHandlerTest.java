@@ -309,14 +309,14 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		newEmptyProject();
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		// 8 basic + 3 project roots
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 11, watchers.size());
-		List<FileSystemWatcher> projectWatchers = watchers.subList(8, 11);
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, watchers.size());
+		List<FileSystemWatcher> projectWatchers = watchers.subList(9, 12);
 		assertTrue(projectWatchers.get(0).getGlobPattern().endsWith("/TestProject"));
 		assertTrue(WatchKind.Delete == projectWatchers.get(0).getKind());
 		assertTrue(projectWatchers.get(1).getGlobPattern().endsWith("/maven/salut"));
 		assertTrue(projectWatchers.get(2).getGlobPattern().endsWith("/gradle/simple-gradle"));
 
-		watchers = watchers.subList(0, 8);
+		watchers = watchers.subList(0, 9);
 		Collections.sort(watchers, new Comparator<FileSystemWatcher>() {
 
 			@Override
@@ -325,13 +325,14 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals("**/*.gradle", watchers.get(0).getGlobPattern());
-		assertEquals("**/*.java", watchers.get(1).getGlobPattern());
-		assertEquals("**/.classpath", watchers.get(2).getGlobPattern());
-		assertEquals("**/.project", watchers.get(3).getGlobPattern());
-		assertEquals("**/.settings/*.prefs", watchers.get(4).getGlobPattern());
-		assertEquals("**/gradle.properties", watchers.get(5).getGlobPattern());
-		assertEquals("**/pom.xml", watchers.get(6).getGlobPattern());
-		assertEquals("**/src/**", watchers.get(7).getGlobPattern());
+		assertEquals("**/*.gradle.kts", watchers.get(1).getGlobPattern());
+		assertEquals("**/*.java", watchers.get(2).getGlobPattern());
+		assertEquals("**/.classpath", watchers.get(3).getGlobPattern());
+		assertEquals("**/.project", watchers.get(4).getGlobPattern());
+		assertEquals("**/.settings/*.prefs", watchers.get(5).getGlobPattern());
+		assertEquals("**/gradle.properties", watchers.get(6).getGlobPattern());
+		assertEquals("**/pom.xml", watchers.get(7).getGlobPattern());
+		assertEquals("**/src/**", watchers.get(8).getGlobPattern());
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		String location = project.getLocation().toString();
 		IJavaProject javaProject = JavaCore.create(project);
@@ -353,13 +354,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).registerCapability(any());
 		List<FileSystemWatcher> newWatchers = projectsManager.registerWatchers();
 		verify(client, times(1)).registerCapability(any());
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 11, newWatchers.size());
-		projectWatchers = newWatchers.subList(8, 11);
+		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, newWatchers.size());
+		projectWatchers = newWatchers.subList(9, 12);
 		assertTrue(projectWatchers.get(0).getGlobPattern().endsWith("/TestProject"));
 		assertTrue(projectWatchers.get(1).getGlobPattern().endsWith("/maven/salut"));
 		assertTrue(projectWatchers.get(2).getGlobPattern().endsWith("/gradle/simple-gradle"));
 
-		newWatchers = watchers.subList(0, 8);
+		newWatchers = watchers.subList(0, 9);
 		Collections.sort(newWatchers, new Comparator<FileSystemWatcher>() {
 
 			@Override
