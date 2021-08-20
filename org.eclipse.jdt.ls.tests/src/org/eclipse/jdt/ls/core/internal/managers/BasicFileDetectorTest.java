@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017, 2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -133,6 +133,40 @@ public class BasicFileDetectorTest {
 		javaImportInclusions.add("!**/parent/1_0");
 		javaImportInclusions.add("!**/parent/1_0/0_2_0");
 		javaImportInclusions.add("**/parent/**");
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
+			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
+			Collection<Path> dirs = detector.scan(null);
+			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 0, dirs.size());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
+		}
+	}
+
+	@Test
+	public void testInclusions4() throws Exception {
+		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		List<String> javaImportInclusions = new LinkedList<>();
+		javaImportInclusions.addAll(javaImportExclusions);
+		javaImportInclusions.add("**");
+		javaImportInclusions.add("!**/parent/1_0/**");
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
+			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
+			Collection<Path> dirs = detector.scan(null);
+			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 2, dirs.size());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
+		}
+	}
+
+	@Test
+	public void testInclusions5() throws Exception {
+		List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+		List<String> javaImportInclusions = new LinkedList<>();
+		javaImportInclusions.addAll(javaImportExclusions);
+		javaImportInclusions.add("!**/parent/1_0/**");
+		javaImportInclusions.add("**");
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);

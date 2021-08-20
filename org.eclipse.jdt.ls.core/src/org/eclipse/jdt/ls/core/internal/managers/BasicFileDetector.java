@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017, 2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -143,6 +143,10 @@ public class BasicFileDetector {
 	}
 
 	private void scanDir(Path dir, final IProgressMonitor monitor) throws IOException {
+		boolean hasInclusionPattern = exclusions.stream().anyMatch((e) -> {
+			return e.startsWith("!");
+		});
+
 		FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -151,11 +155,11 @@ public class BasicFileDetector {
 				}
 				Objects.requireNonNull(dir);
 				if (isExcluded(dir)) {
-					return SKIP_SUBTREE;
+					return hasInclusionPattern ? CONTINUE : SKIP_SUBTREE;
 				}
 				if (hasTargetFile(dir)) {
 					directories.add(dir);
-					return includeNested?CONTINUE:SKIP_SUBTREE;
+					return includeNested ? CONTINUE : SKIP_SUBTREE;
 				}
 				return CONTINUE;
 			}
@@ -163,11 +167,11 @@ public class BasicFileDetector {
 			@Override
 			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
 				Objects.requireNonNull(file);
-    			if (exc instanceof FileSystemLoopException) {
-        			return CONTINUE;
-    			} else {
-        			throw exc;
-    			}
+				if (exc instanceof FileSystemLoopException) {
+					return CONTINUE;
+				} else {
+					throw exc;
+				}
 			}
 
 		};
