@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import java.util.Calendar;
+import java.util.Locale;
 
 import org.eclipse.jface.text.templates.SimpleTemplateVariableResolver;
 import org.eclipse.jface.text.templates.TemplateContext;
@@ -204,6 +205,17 @@ public class CodeTemplatePreferences {
 		@Override
 		protected String resolve(TemplateContext context) {
 			return String.format("%02d", Calendar.getInstance().get(Calendar.MONTH) + 1);
+		}
+	}
+
+	public static class ShortMonth extends SimpleTemplateVariableResolver {
+		public ShortMonth() {
+			super("shortmonth", "Short form representation of current month"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			return Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
 		}
 	}
 

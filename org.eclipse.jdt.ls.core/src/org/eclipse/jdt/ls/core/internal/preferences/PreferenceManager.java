@@ -108,6 +108,7 @@ public class PreferenceManager {
 		// These should be upstreamed into CodeTemplateContextType & GlobalVariables
 		TemplateContextType tmp = registry.getContextType(CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE);
 		tmp.addResolver(new CodeTemplatePreferences.Month());
+		tmp.addResolver(new CodeTemplatePreferences.ShortMonth());
 		tmp.addResolver(new CodeTemplatePreferences.Day());
 		tmp.addResolver(new CodeTemplatePreferences.Hour());
 		tmp.addResolver(new CodeTemplatePreferences.Minute());
