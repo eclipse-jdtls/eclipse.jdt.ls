@@ -15,7 +15,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.core.resources.IProjectDescription.DESCRIPTION_FILE_NAME;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
@@ -50,6 +52,17 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		}
 		directories = directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
 		return !directories.isEmpty();
+	}
+
+	@Override
+	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		Set<java.nio.file.Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(DESCRIPTION_FILE_NAME));
+		if (directories == null || directories.isEmpty()) {
+			return false;
+		}
+
+		this.directories = directories;
+		return true;
 	}
 
 	@Override

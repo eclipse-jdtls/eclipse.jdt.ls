@@ -132,43 +132,20 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
-			String configurationName = null;
 			for (IProjectImporter importer : importers()) {
-				if (importer instanceof GradleProjectImporter) {
-					configurationName = ".gradle";
-				} else if (importer instanceof MavenProjectImporter) {
-					configurationName = "pom.xml";
-				} else if (importer instanceof EclipseProjectImporter) {
-					configurationName = ".project";
-				} else {
-					// other project type go with the previous way
-					importer.initialize(rootFolder);
-					if (!importer.applies(subMonitor.split(1))) {
-						continue;
+				importer.initialize(rootFolder);
+				try {
+					if (importer.applies(projectConfigurations, subMonitor.split(1))) {
+						importer.importToWorkspace(subMonitor.split(70));
+					}
+				} catch (UnsupportedOperationException e) {
+					// fallback to the old import process
+					if (importer.applies(subMonitor.split(1))) {
+						importer.importToWorkspace(subMonitor.split(70));
 					}
 				}
-
-				if (configurationName != null) {
-					Set<Path> directories = findProjectPathByConfigurationName(projectConfigurations, configurationName);
-					if (directories == null || directories.isEmpty()) {
-						continue;
-					}
-					importer.initialize(rootFolder, directories);
-				}
-
-				importer.importToWorkspace(subMonitor.split(70));
 			}
 		}
-	}
-
-	private Set<Path> findProjectPathByConfigurationName(Collection<IPath> projectConfigurations, String name) {
-		Set<Path> set = new HashSet<>();
-		for (IPath path : projectConfigurations) {
-			if (path.lastSegment().endsWith(name)) {
-				set.add(path.removeLastSegments(1).toFile().toPath());
-			}
-		}
-		return set;
 	}
 
 	public void importProjects(IProgressMonitor monitor) {

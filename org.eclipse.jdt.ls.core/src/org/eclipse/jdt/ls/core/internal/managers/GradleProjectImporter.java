@@ -18,9 +18,12 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -33,6 +36,7 @@ import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunchManager;
@@ -108,6 +112,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			directories = gradleDetector.scan(monitor);
 		}
 		return !directories.isEmpty();
+	}
+
+	@Override
+	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		Set<Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(BUILD_GRADLE_DESCRIPTOR, SETTINGS_GRADLE_DESCRIPTOR));
+		if (directories == null || directories.isEmpty()) {
+			return false;
+		}
+
+		this.directories = directories;
+		return true;
 	}
 
 	/* (non-Javadoc)
