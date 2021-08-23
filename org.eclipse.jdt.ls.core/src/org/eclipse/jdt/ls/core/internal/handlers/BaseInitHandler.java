@@ -54,7 +54,6 @@ public abstract class BaseInitHandler {
 	public BaseInitHandler(ProjectsManager projectsManager, PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
 		this.projectsManager = projectsManager;
-		this.projectsManager.registerListeners();
 	}
 
 	@SuppressWarnings("unchecked")

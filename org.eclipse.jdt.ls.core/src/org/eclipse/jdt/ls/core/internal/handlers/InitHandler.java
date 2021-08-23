@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -186,11 +187,16 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
-		try {
-			// a workaround for https://github.com/redhat-developer/vscode-java/issues/2020
-			JobHelpers.waitForBuildJobs(2 * 60 * 1000); // 2 minutes
-		} catch (OperationCanceledException e) {
-			logException(e.getMessage(), e);
+		if (ProjectUtils.getAllProjects().length == 0) {
+			try {
+				// a workaround for https://github.com/redhat-developer/vscode-java/issues/2020
+				JavaLanguageServerPlugin.logInfo("Wait for AutoBuildOffJob start");
+				long start = System.currentTimeMillis();
+				JobHelpers.waitForBuildOffJobs(2 * 60 * 1000); // 2 minutes
+				JavaLanguageServerPlugin.logInfo("Wait for AutoBuildOffJob end " + (System.currentTimeMillis() - start) + "ms");
+			} catch (OperationCanceledException e) {
+				logException(e.getMessage(), e);
+			}
 		}
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
@@ -211,6 +217,8 @@ final public class InitHandler extends BaseInitHandler {
 				} catch (Exception e) {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());
+				} finally {
+					projectsManager.registerListeners();
 				}
 				return Status.OK_STATUS;
 			}
