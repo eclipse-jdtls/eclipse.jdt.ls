@@ -218,6 +218,10 @@ public final class JobHelpers {
 		waitForJobs(LoadingGradleVersionJobMatcher.INSTANCE, MAX_TIME_MILLIS);
 	}
 
+	public static void waitForBuildOffJobs(int maxTimeMillis) {
+		waitForJobs(BuildJobOffMatcher.INSTANCE, maxTimeMillis);
+	}
+
 	interface IJobMatcher {
 
 		boolean matches(Job job);
@@ -232,6 +236,17 @@ public final class JobHelpers {
 		public boolean matches(Job job) {
 			return (job instanceof WorkspaceJob) || job.getClass().getName().matches("(.*\\.AutoBuild.*)")
 					|| job.getClass().getName().endsWith("JREUpdateJob");
+		}
+
+	}
+
+	static class BuildJobOffMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new BuildJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.getClass().getName().matches("(.*\\.AutoBuildOff.*)");
 		}
 
 	}

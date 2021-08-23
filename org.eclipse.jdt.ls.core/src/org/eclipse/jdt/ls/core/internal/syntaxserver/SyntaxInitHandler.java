@@ -98,6 +98,8 @@ public class SyntaxInitHandler extends BaseInitHandler {
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 				} catch (Exception e) {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
+				} finally {
+					projectsManager.registerListeners();
 				}
 
 				return Status.OK_STATUS;
