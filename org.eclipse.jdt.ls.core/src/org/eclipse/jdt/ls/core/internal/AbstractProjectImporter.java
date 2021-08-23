@@ -43,11 +43,6 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 	public abstract boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	@Override
-	public boolean applies(Collection<IPath> projectConfigurations, IProgressMonitor monitor) {
-		throw new UnsupportedOperationException("The current importer does not support checking the project configurations.");
-	}
-
-	@Override
 	public boolean isResolved(File folder) throws OperationCanceledException, CoreException {
 		return directories != null && directories.contains(folder.toPath());
 	};

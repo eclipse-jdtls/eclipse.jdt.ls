@@ -134,15 +134,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			File rootFolder = rootPath.toFile();
 			for (IProjectImporter importer : importers()) {
 				importer.initialize(rootFolder);
-				try {
-					if (importer.applies(projectConfigurations, subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
-					}
-				} catch (UnsupportedOperationException e) {
-					// fallback to the old import process
-					if (importer.applies(subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
-					}
+				if (importer.applies(projectConfigurations, subMonitor.split(1))) {
+					importer.importToWorkspace(subMonitor.split(70));
 				}
 			}
 		}

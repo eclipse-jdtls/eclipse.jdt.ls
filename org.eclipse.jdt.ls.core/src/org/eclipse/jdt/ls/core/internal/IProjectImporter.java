@@ -30,8 +30,12 @@ public interface IProjectImporter {
 	 * Check whether the importer applies to the given project configurations.
 	 * @param projectConfigurations Collection of the project configurations.
 	 * @param monitor progress monitor.
+	 * @throws CoreException
+	 * @throws OperationCanceledException
 	 */
-	boolean applies(Collection<IPath> projectConfigurations, IProgressMonitor monitor);
+	default boolean applies(Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		return applies(monitor);
+	}
 
 	default boolean isResolved(File folder) throws OperationCanceledException, CoreException {
 		return false;
