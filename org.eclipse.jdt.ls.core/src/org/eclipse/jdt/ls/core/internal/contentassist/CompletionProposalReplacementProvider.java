@@ -214,10 +214,12 @@ public class CompletionProposalReplacementProvider {
 			if (!(element instanceof IType)) {
 				return;
 			}
-			IType type = (IType) element;
 			int offset = proposal.getReplaceStart();
-			AnonymousTypeCompletionProposal overrider = new AnonymousTypeCompletionProposal(compilationUnit, offset, type, String.valueOf(proposal.getDeclarationSignature()), client.isCompletionSnippetsSupported());
-			String replacement = overrider.updateReplacementString(document, offset, importRewrite);
+
+			//Below two lines: calculate and format an empty new body
+			AnonymousTypeCompletionProposal overrider = new AnonymousTypeCompletionProposal(compilationUnit, offset, client.isCompletionSnippetsSupported());
+			String replacement = overrider.updateReplacementString(document, offset);
+
 			if (document.getLength() > offset && range != null) {
 				if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
 					// update replacement range

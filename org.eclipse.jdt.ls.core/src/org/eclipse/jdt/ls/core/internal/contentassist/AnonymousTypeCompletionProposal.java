@@ -17,11 +17,8 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.Map;
 
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jface.text.BadLocationException;
@@ -38,12 +35,7 @@ public class AnonymousTypeCompletionProposal {
 	private int fReplacementOffset;
 	private boolean fSnippetSupport;
 
-	public AnonymousTypeCompletionProposal(ICompilationUnit cu, int replacementOffset, IType superType, String declarationSignature, boolean snippetSupport) {
-		Assert.isNotNull(cu.getJavaProject());
-		Assert.isNotNull(superType);
-		Assert.isNotNull(cu);
-		Assert.isNotNull(declarationSignature);
-
+	public AnonymousTypeCompletionProposal(ICompilationUnit cu, int replacementOffset, boolean snippetSupport) {
 		fCompilationUnit = cu;
 		fReplacementOffset = replacementOffset;
 		fSnippetSupport = snippetSupport;
@@ -52,7 +44,7 @@ public class AnonymousTypeCompletionProposal {
 	/*
 	 * @see JavaTypeCompletionProposal#updateReplacementString(IDocument,char,int,ImportRewrite)
 	 */
-	public String updateReplacementString(IDocument document, int offset, ImportRewrite impRewrite) throws CoreException, BadLocationException {
+	public String updateReplacementString(IDocument document, int offset) throws CoreException, BadLocationException {
 		// Construct empty body for performance concern
 		// See https://github.com/microsoft/language-server-protocol/issues/1032#issuecomment-648748013
 		String newBody = fSnippetSupport ? "{\n\t${0}\n}" : "{\n\n}";
