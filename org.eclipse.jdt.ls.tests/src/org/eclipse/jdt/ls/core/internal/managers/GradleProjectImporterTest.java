@@ -545,6 +545,20 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertNotNull(type);
 	}
 
+	@Test
+	public void importGradleKtsProject() throws Exception {
+		List<IProject> projects = importProjects("gradle/kradle");
+		assertEquals(2, projects.size());//default + gradle kts projects
+		IProject kradle = WorkspaceHelper.getProject("kradle");
+		assertIsGradleProject(kradle);
+		assertNoErrors(kradle);
+		IJavaProject javaProject = JavaCore.create(kradle);
+		IType app = javaProject.findType("org.sample.App");
+		assertTrue(app.exists());
+		IType appTest = javaProject.findType("org.sample.AppTest");
+		assertTrue(appTest.exists());
+	}
+
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
 		org.eclipse.buildship.core.internal.configuration.BuildConfiguration buildConfig = CorePlugin.configurationManager().loadBuildConfiguration(project.getLocation().toFile());
 		return CorePlugin.configurationManager().createProjectConfiguration(buildConfig, project.getLocation().toFile());

@@ -62,7 +62,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final String GRADLE_USER_HOME = "GRADLE_USER_HOME";
 
 	public static final String BUILD_GRADLE_DESCRIPTOR = "build.gradle";
+	public static final String BUILD_GRADLE_KTS_DESCRIPTOR = "build.gradle.kts";
 	public static final String SETTINGS_GRADLE_DESCRIPTOR = "settings.gradle";
+	public static final String SETTINGS_GRADLE_KTS_DESCRIPTOR = "settings.gradle.kts";
 
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
@@ -93,7 +95,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 		if (directories == null) {
 			BasicFileDetector gradleDetector = new BasicFileDetector(rootFolder.toPath(), BUILD_GRADLE_DESCRIPTOR,
-					SETTINGS_GRADLE_DESCRIPTOR)
+					SETTINGS_GRADLE_DESCRIPTOR, BUILD_GRADLE_KTS_DESCRIPTOR, SETTINGS_GRADLE_KTS_DESCRIPTOR)
 					.includeNested(false)
 					.addExclusions("**/build")//default gradle build dir
 					.addExclusions("**/bin");
@@ -126,12 +128,18 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		ProjectUtils.getGradleProjects().forEach(project -> {
 			File buildFile = project.getFile(BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
 			File settingsFile = project.getFile(SETTINGS_GRADLE_DESCRIPTOR).getLocation().toFile();
+			File buildKtsFile = project.getFile(BUILD_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
+			File settingsKtsFile = project.getFile(SETTINGS_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
 			try {
 				if (buildFile.exists()) {
 					JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath());
+				} else if (buildKtsFile.exists()) {
+					JavaLanguageServerPlugin.getDigestStore().updateDigest(buildKtsFile.toPath());
 				}
 				if (settingsFile.exists()) {
 					JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath());
+				} else if (settingsKtsFile.exists()) {
+					JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsKtsFile.toPath());
 				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Failed to update digest for gradle build file", e);
@@ -325,7 +333,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 						@Override
 						public boolean accept(File dir, String name) {
-							if (name != null && name.endsWith(GradleBuildSupport.GRADLE_SUFFIX)) {
+							if (name != null && GradleBuildSupport.GRADLE_FILE_EXT.matcher(name).matches()) {
 								return new File(dir, name).lastModified() > modified;
 							}
 							return false;

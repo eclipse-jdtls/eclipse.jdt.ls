@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
@@ -57,9 +58,9 @@ import org.gradle.tooling.model.eclipse.EclipseProject;
  */
 public class GradleBuildSupport implements IBuildSupport {
 
-	public static final String GRADLE_SUFFIX = ".gradle";
+	public static final Pattern GRADLE_FILE_EXT = Pattern.compile("^.*\\.gradle(\\.kts)?$");
 	public static final String GRADLE_PROPERTIES = "gradle.properties";
-	public static final List<String> WATCH_FILE_PATTERNS = Arrays.asList("**/*.gradle", "**/gradle.properties");
+	public static final List<String> WATCH_FILE_PATTERNS = Arrays.asList("**/*.gradle", "**/*.gradle.kts", "**/gradle.properties");
 	public static final String UNSUPPORTED_ON_GRADLE = "Unsupported operation. Please use build.gradle file to manage the source directories of gradle project.";
 
 	private static IPreferencesChangeListener listener = new GradlePreferenceChangeListener();
@@ -86,8 +87,12 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 			File buildFile = project.getFile(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
 			File settingsFile = project.getFile(GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR).getLocation().toFile();
+			File buildKtsFile = project.getFile(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
+			File settingsKtsFile = project.getFile(GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
 			boolean shouldUpdate = (buildFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath()))
-					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath()));
+					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath())) 
+					|| (buildKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildKtsFile.toPath()))
+					|| (settingsKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsKtsFile.toPath()));
 			if (isRoot || shouldUpdate) {
 				gradleBuild.synchronize(monitor);
 			}
@@ -111,7 +116,7 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildFile(IResource resource) {
-		if (resource != null && resource.getType() == IResource.FILE && (resource.getName().endsWith(GRADLE_SUFFIX) || resource.getName().equals(GRADLE_PROPERTIES))
+		if (resource != null && resource.getType() == IResource.FILE && isBuildLikeFileName(resource.getName())
 			&& ProjectUtils.isGradleProject(resource.getProject())) {
 			try {
 				if (!ProjectUtils.isJavaProject(resource.getProject())) {
@@ -129,7 +134,7 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@Override
 	public boolean isBuildLikeFileName(String fileName) {
-		return fileName.endsWith(GRADLE_SUFFIX) || fileName.equals(GRADLE_PROPERTIES);
+		return GRADLE_FILE_EXT.matcher(fileName).matches() || fileName.equals(GRADLE_PROPERTIES);
 	}
 
 	/**
