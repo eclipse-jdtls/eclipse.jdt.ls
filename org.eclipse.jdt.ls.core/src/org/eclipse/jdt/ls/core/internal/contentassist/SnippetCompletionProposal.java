@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.CompletionContext;
+import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
@@ -53,6 +54,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -65,7 +68,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 
-public class SnippetCompletionProposal {
+public class SnippetCompletionProposal extends CompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String RECORD_SNIPPET_LABEL = "record";
@@ -75,6 +78,16 @@ public class SnippetCompletionProposal {
 
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
+
+	private Template template;
+
+	public SnippetCompletionProposal(Template template) {
+		this.template = template;
+	}
+
+	public Template getTemplate() {
+		return this.template;
+	}
 
 	private static class SnippetCompletionContext {
 		private ICompilationUnit cu;
@@ -196,6 +209,10 @@ public class SnippetCompletionProposal {
 	}
 
 	private static List<CompletionItem> getGenericSnippets(SnippetCompletionContext scc) throws JavaModelException {
+		CompletionResponse response = new CompletionResponse();
+		response.setContext(scc.getCompletionContext());
+		response.setOffset(scc.getCompletionContext().getOffset());
+
 		List<CompletionItem> res = new ArrayList<>();
 		CompletionContext completionContext = scc.getCompletionContext();
 		char[] completionToken = completionContext.getToken();
@@ -221,33 +238,57 @@ public class SnippetCompletionProposal {
 			return Collections.emptyList();
 		}
 
-		for (Template template : templates) {
-			if (!javaContext.canEvaluate(template)) {
-				continue;
-			}
-			TemplateBuffer buffer = null;
-			try {
-				buffer = javaContext.evaluate(template);
-			} catch (BadLocationException | TemplateException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				continue;
-			}
-			if (buffer == null) {
-				continue;
-			}
-			String content = buffer.getString();
-			if (Strings.containsOnlyWhitespaces(content)) {
-				continue;
-			}
+		String uri = JDTUtils.toURI(cu);
+		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t)).toArray(Template[]::new);
+		List<CompletionProposal> proposals = new ArrayList<>();
+		for (int i = 0; i < availableTemplates.length; i++) {
+			Template template = availableTemplates[i];
 			final CompletionItem item = new CompletionItem();
 			item.setLabel(template.getName());
-			item.setInsertText(content);
+			item.setKind(CompletionItemKind.Snippet);
+			item.setInsertTextFormat(InsertTextFormat.Snippet);
+			item.setInsertText(SnippetUtils.templateToSnippet(template.getPattern()));
 			item.setDetail(template.getDescription());
-			setFields(item, cu);
+
+			Map<String, String> data = new HashMap<>(3);
+			data.put(CompletionResolveHandler.DATA_FIELD_URI, uri);
+			data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
+			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(i));
+			item.setData(data);
+
+			proposals.add(i, new SnippetCompletionProposal(template));
 			res.add(item);
 		}
 
+		response.setProposals(proposals);
+		CompletionResponses.store(response);
 		return res;
+	}
+
+	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {
+		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
+		char[] completionToken = completionContext.getToken();
+		if (contextType == null || completionToken == null) {
+			return null;
+		}
+
+		TemplateBuffer buffer = null;
+		try {
+			IDocument document = new Document(cu.getSource());
+			DocumentTemplateContext javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+			buffer = javaContext.evaluate(template);
+		} catch (JavaModelException | BadLocationException | TemplateException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			return null;
+		}
+		if (buffer == null) {
+			return null;
+		}
+		String content = buffer.getString();
+		if (Strings.containsOnlyWhitespaces(content)) {
+			return null;
+		}
+		return content;
 	}
 
 	private static List<CompletionItem> getTypeDefinitionSnippets(SnippetCompletionContext scc, IProgressMonitor monitor) throws JavaModelException {
@@ -289,6 +330,10 @@ public class SnippetCompletionProposal {
 				res.add(recordSnippet);
 			}
 		}
+
+		for (CompletionItem item : res) {
+			setFields(item, scc.getCompilationUnit());
+		}
 		return res;
 	}
 
@@ -319,8 +364,6 @@ public class SnippetCompletionProposal {
 		return false;
 	}
 
-
-
 	private static CompletionItem getClassSnippet(SnippetCompletionContext scc, IProgressMonitor monitor) {
 		ICompilationUnit cu = scc.getCompilationUnit();
 		if (!accept(cu, scc.getCompletionContext(), true)) {
@@ -337,7 +380,6 @@ public class SnippetCompletionProposal {
 		try {
 			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.CLASSSNIPPET_PUBLIC : CodeGenerationTemplate.CLASSSNIPPET_DEFAULT;
 			classSnippetItem.setInsertText(getSnippetContent(scc, template, true));
-			setFields(classSnippetItem, cu);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -361,7 +403,6 @@ public class SnippetCompletionProposal {
 		try {
 			CodeGenerationTemplate template = ((scc.needsPublic(monitor))) ? CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC : CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT;
 			interfaceSnippetItem.setInsertText(getSnippetContent(scc, template, true));
-			setFields(interfaceSnippetItem, cu);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -394,7 +435,6 @@ public class SnippetCompletionProposal {
 		try {
 			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.RECORDSNIPPET_PUBLIC : CodeGenerationTemplate.RECORDSNIPPET_DEFAULT;
 			recordSnippet.setInsertText(getSnippetContent(scc, template, true));
-			setFields(recordSnippet, cu);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -406,11 +446,6 @@ public class SnippetCompletionProposal {
 		ci.setKind(CompletionItemKind.Snippet);
 		ci.setInsertTextFormat(InsertTextFormat.Snippet);
 		ci.setDocumentation(SnippetUtils.beautifyDocument(ci.getInsertText()));
-		Map<String, String> data = new HashMap<>(3);
-		data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(cu));
-		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "0");
-		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "0");
-		ci.setData(data);
 	}
 
 	private static String getSnippetContent(SnippetCompletionContext scc, CodeGenerationTemplate templateSetting, boolean snippetStringSupport) throws CoreException {

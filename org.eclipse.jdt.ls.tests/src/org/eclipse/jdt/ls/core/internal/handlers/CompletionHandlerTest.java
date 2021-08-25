@@ -979,7 +979,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("systrace", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("System.out.println(\"Test.testMethod()\");", insertText);
+		assertEquals("System.out.println(\"${enclosing_type}.${enclosing_method}()\");", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("System.out.println(\"Test.testMethod()\");", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1003,7 +1006,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("for (${1:iterable_type} ${2:iterable_element} : ${3:iterable}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1028,7 +1034,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("foreach", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("for (${1:iterable_type} ${2:iterable_element} : ${3:iterable}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1052,7 +1061,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("fori", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:args.length}; ${2:i}++) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("for (${1:int} ${2:index} = ${3:0}; ${2:index} < ${4:array.length}; ${2:index}++) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("for (${1:int} ${2:i} = ${3:0}; ${2:i} < ${4:args.length}; ${2:i}++) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1076,7 +1088,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(1);
 		assertEquals("while", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("while (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("while (${1:condition:var(boolean)}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("while (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1100,7 +1115,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("dowhile", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("do {\n\t$TM_SELECTED_TEXT${0}\n} while (${1:con});", insertText);
+		assertEquals("do {\n\t$TM_SELECTED_TEXT${0}\n} while (${1:condition:var(boolean)});", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("do {\n\t$TM_SELECTED_TEXT${0}\n} while (${1:con});", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1127,7 +1145,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				if (!Objects.equals(item.getLabel(), "if")) {
 					continue;
 				}
-				if (Objects.equals(item.getInsertText(), "if (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}")) {
+				if (Objects.equals(item.getInsertText(), "if (${1:condition:var(boolean)}) {\n\t$TM_SELECTED_TEXT${0}\n}")) {
 					hasIfSnippet = true;
 					break;
 				}
@@ -1235,7 +1253,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifelse", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:con}) {\n\t${2}\n} else {\n\t${0}\n}", insertText);
+		assertEquals("if (${1:condition:var(boolean)}) {\n\t${2}\n} else {\n\t${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("if (${1:con}) {\n\t${2}\n} else {\n\t${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1259,7 +1280,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:obj} == null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("if (${1:name:var} == null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("if (${1:obj} == null) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test
@@ -1283,7 +1307,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = items.get(0);
 		assertEquals("ifnotnull", item.getLabel());
 		String insertText = item.getInsertText();
-		assertEquals("if (${1:obj} != null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		assertEquals("if (${1:name:var} != null) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("if (${1:obj} != null) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test

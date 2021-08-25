@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -45,13 +46,20 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
+import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.templates.Template;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.osgi.util.NLS;
 
 import com.google.common.io.CharStreams;
@@ -110,6 +118,26 @@ public class CompletionResolveHandler {
 			param.setData(null);
 			return param;
 		}
+
+		// generic snippets
+		if (param.getKind() == CompletionItemKind.Snippet) {
+			try {
+				CompletionContext ctx = completionResponse.getContext();
+				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
+				Template template = ((SnippetCompletionProposal) proposal).getTemplate();
+				String content = SnippetCompletionProposal.evaluateGenericTemplate(unit, ctx, template);
+
+				Range range = JDTUtils.toRange(unit, ctx.getOffset(), 0);
+				TextEdit textEdit = new TextEdit(range, content);
+				param.setTextEdit(Either.forLeft(textEdit));
+				param.setDocumentation(SnippetUtils.beautifyDocument(content));
+				param.setData(null);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			return param;
+		}
+
 		if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
 			CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset(), manager.getPreferences(), manager.getClientPreferences());
 			proposalProvider.updateAdditionalTextEdits(completionResponse.getProposals().get(proposalId), param, '\0');
