@@ -685,6 +685,19 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertMatches(expectedJavadoc, javadoc);
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1856
+	@Test
+	public void testEnum() throws Exception {
+		String payload = createHoverRequest("src/org/sample/TestEnum.java", 5, 33);
+		TextDocumentPositionParams position = getParams(payload);
+		Hover hover = handler.hover(position, monitor);
+		assertNotNull(hover);
+		assertNotNull(hover.getContents());
+		MarkedString signature = hover.getContents().getLeft().get(0).getRight();
+		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
+		assertEquals("Unexpected hover " + signature, "ENUM1", signature.getValue());
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);
