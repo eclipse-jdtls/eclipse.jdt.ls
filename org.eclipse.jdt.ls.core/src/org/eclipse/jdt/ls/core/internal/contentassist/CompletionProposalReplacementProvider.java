@@ -86,6 +86,7 @@ public class CompletionProposalReplacementProvider {
 	private ImportRewrite importRewrite;
 	private final ClientPreferences client;
 	private Preferences preferences;
+	private String anonymousTypeNewBody;
 
 	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, Preferences preferences, ClientPreferences clientPrefs) {
 		super();
@@ -214,10 +215,15 @@ public class CompletionProposalReplacementProvider {
 			if (!(element instanceof IType)) {
 				return;
 			}
-			IType type = (IType) element;
 			int offset = proposal.getReplaceStart();
-			AnonymousTypeCompletionProposal overrider = new AnonymousTypeCompletionProposal(compilationUnit, offset, type, String.valueOf(proposal.getDeclarationSignature()), client.isCompletionSnippetsSupported());
-			String replacement = overrider.updateReplacementString(document, offset, importRewrite);
+
+			if (this.anonymousTypeNewBody == null) {
+				// calculate and format an empty new body
+				AnonymousTypeCompletionProposal overrider = new AnonymousTypeCompletionProposal(compilationUnit, offset, client.isCompletionSnippetsSupported());
+				this.anonymousTypeNewBody = overrider.updateReplacementString(document, offset);
+			}
+			String replacement = this.anonymousTypeNewBody;
+
 			if (document.getLength() > offset && range != null) {
 				if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
 					// update replacement range
