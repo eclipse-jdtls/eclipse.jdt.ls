@@ -23,7 +23,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +35,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -42,6 +45,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -345,6 +349,24 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IFile autovalueFoo = project.getFile("target/generated-sources/annotations/foo/bar/AutoValue_Foo.java");
 		assertTrue(autovalueFoo.getRawLocation() + " was not generated", autovalueFoo.exists());
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void avoidImportDuplicatedProjects() throws Exception {
+		try {
+			this.preferences.setImportMavenEnabled(false);
+			importProjects("multi-buildtools");
+			MavenProjectImporter importer = new MavenProjectImporter();
+			File root = new File(getWorkingProjectDirectory(), "multi-buildtools");
+			importer.initialize(root);
+
+			Collection<IPath> configurationPaths = new ArrayList<>();
+			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(root.toPath().resolve("pom.xml").toUri().toString()));
+			this.preferences.setImportMavenEnabled(true);
+			assertFalse(importer.applies(configurationPaths, null));
+		} finally {
+			this.preferences.setImportMavenEnabled(true);
+		}
 	}
 
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {

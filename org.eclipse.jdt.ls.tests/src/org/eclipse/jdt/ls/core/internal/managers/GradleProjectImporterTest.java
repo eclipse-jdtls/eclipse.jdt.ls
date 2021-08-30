@@ -24,7 +24,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -557,6 +560,24 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertTrue(app.exists());
 		IType appTest = javaProject.findType("org.sample.AppTest");
 		assertTrue(appTest.exists());
+	}
+
+	@Test
+	public void avoidImportDuplicatedProjects() throws Exception {
+		try {
+			this.preferences.setImportGradleEnabled(false);
+			importProjects("multi-buildtools");
+			GradleProjectImporter importer = new GradleProjectImporter();
+			File root = new File(getWorkingProjectDirectory(), "multi-buildtools");
+			importer.initialize(root);
+
+			Collection<IPath> configurationPaths = new ArrayList<>();
+			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(root.toPath().resolve("build.gradle").toUri().toString()));
+			this.preferences.setImportGradleEnabled(true);
+			assertFalse(importer.applies(configurationPaths, null));
+		} finally {
+			this.preferences.setImportGradleEnabled(true);
+		}
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {

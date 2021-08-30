@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -106,13 +107,28 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 
-		Set<java.nio.file.Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE));
-		if (directories == null || directories.isEmpty()) {
+		Set<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE));
+		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
 
-		this.directories = directories;
-		return true;
+		Set<java.nio.file.Path> noneMavenProjectPaths = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (!ProjectUtils.isMavenProject(project)) {
+				noneMavenProjectPaths.add(project.getLocation().toFile().toPath());
+			}
+		}
+
+		this.directories = configurationDirs.stream()
+			.filter(d -> {
+				boolean folderIsImported = noneMavenProjectPaths.stream().anyMatch(path -> {
+					return path.compareTo(d) == 0;
+				});
+				return !folderIsImported;
+			})
+			.collect(Collectors.toSet());
+
+		return !this.directories.isEmpty();
 	}
 
 

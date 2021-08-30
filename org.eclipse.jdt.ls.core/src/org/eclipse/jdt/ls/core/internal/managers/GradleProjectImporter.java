@@ -20,10 +20,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -120,18 +122,33 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 
-		Set<Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
+		Set<Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
 			BUILD_GRADLE_DESCRIPTOR,
 			SETTINGS_GRADLE_DESCRIPTOR,
 			BUILD_GRADLE_KTS_DESCRIPTOR,
 			SETTINGS_GRADLE_KTS_DESCRIPTOR
 		));
-		if (directories == null || directories.isEmpty()) {
+		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
 
-		this.directories = directories;
-		return true;
+		Set<Path> noneGradleProjectPaths = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (!ProjectUtils.isGradleProject(project)) {
+				noneGradleProjectPaths.add(project.getLocation().toFile().toPath());
+			}
+		}
+
+		this.directories = configurationDirs.stream()
+			.filter(d -> {
+				boolean folderIsImported = noneGradleProjectPaths.stream().anyMatch(path -> {
+					return path.compareTo(d) == 0;
+				});
+				return !folderIsImported;
+			})
+			.collect(Collectors.toSet());
+
+		return !this.directories.isEmpty();
 	}
 
 	/* (non-Javadoc)
