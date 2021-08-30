@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.core.internal.resources.Resource;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -80,6 +78,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		try {
 			ProjectsManager.setAutoBuilding(autoBuild);
 			preferenceManager.getPreferences().setAutobuildEnabled(autoBuild);
+			preferenceManager.getPreferences().setProjectConfigurations(null);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
@@ -183,99 +182,70 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testImportMavenSubModule() throws IOException, OperationCanceledException, CoreException {
-		File from = new File(getSourceProjectDirectory(), "maven/multimodule");
-		Path workspaceDir = Files.createTempDirectory("mavenMultiModule");
-
-		try {
-			Path projectDir = Files.createDirectory(workspaceDir.resolve("TheMavemMultiModuleProject"));
-			FileUtils.copyDirectory(from, projectDir.toFile());
+		Path projectDir = copyFiles("maven/multimodule", true).toPath();
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		Path subModuleConfiguration = projectDir.resolve("module1/pom.xml");
+		IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
+		configurationPaths.add(filePath);
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
 	
-			Collection<IPath> configurationPaths = new ArrayList<>();
-			Path subModuleConfiguration = projectDir.resolve("module1/pom.xml");
-			IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
-			configurationPaths.add(filePath);
-			preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-	
-			projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), monitor);
-			IProject[] allProjects = ProjectUtils.getAllProjects();
-			Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-				"module1",
-				"childmodule",
-				"jdt.ls-java-project"
-			));
-			assertEquals(3, allProjects.length);
-			for (IProject project : allProjects) {
-				assertTrue(expectedProjects.contains(project.getName()));
-			}
-		} finally {
-			preferenceManager.getPreferences().setProjectConfigurations(null);
-			FileUtils.deleteDirectory(workspaceDir.toFile());
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"module1",
+			"childmodule",
+			"jdt.ls-java-project"
+		));
+		assertEquals(3, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
 		}
 	}
 
 	@Test
 	public void testImportMixedProjects() throws IOException, OperationCanceledException, CoreException {
-		File from = new File(getSourceProjectDirectory(), "mixed");
-		Path workspaceDir = Files.createTempDirectory("mixedWorkspace");
+		Path projectDir = copyFiles("mixed", true).toPath();
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("hello/.project").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
 
-		try {
-			Path projectDir = Files.createDirectory(workspaceDir.resolve("TheMixedProject"));
-			FileUtils.copyDirectory(from, projectDir.toFile());
-	
-			Collection<IPath> configurationPaths = new ArrayList<>();
-			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("hello/.project").toUri().toString()));
-			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
-			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
 
-			preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-	
-			projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), monitor);
-			IProject[] allProjects = ProjectUtils.getAllProjects();
-			Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-				"jdt.ls-java-project",
-				"hello",
-				"salut",
-				"simple-gradle"
-			));
-			assertEquals(4, allProjects.length);
-			for (IProject project : allProjects) {
-				assertTrue(expectedProjects.contains(project.getName()));
-			}
-		} finally {
-			preferenceManager.getPreferences().setProjectConfigurations(null);
-			FileUtils.deleteDirectory(workspaceDir.toFile());
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"jdt.ls-java-project",
+			"hello",
+			"salut",
+			"simple-gradle"
+		));
+		assertEquals(4, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
 		}
 	}
 
 	@Test
 	public void testImportMixedProjectsPartially() throws IOException, OperationCanceledException, CoreException {
-		File from = new File(getSourceProjectDirectory(), "mixed");
-		Path workspaceDir = Files.createTempDirectory("mixedWorkspace");
-
-		try {
-			Path projectDir = Files.createDirectory(workspaceDir.resolve("TheMixedProject"));
-			FileUtils.copyDirectory(from, projectDir.toFile());
+		Path projectDir = copyFiles("mixed", true).toPath();
 	
-			Collection<IPath> configurationPaths = new ArrayList<>();
-			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
-			configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
 
-			preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
 	
-			projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), monitor);
-			IProject[] allProjects = ProjectUtils.getAllProjects();
-			Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-				"jdt.ls-java-project",
-				"salut",
-				"simple-gradle"
-			));
-			assertEquals(3, allProjects.length);
-			for (IProject project : allProjects) {
-				assertTrue(expectedProjects.contains(project.getName()));
-			}
-		} finally {
-			preferenceManager.getPreferences().setProjectConfigurations(null);
-			FileUtils.deleteDirectory(workspaceDir.toFile());
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"jdt.ls-java-project",
+			"salut",
+			"simple-gradle"
+		));
+		assertEquals(3, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
 		}
 	}
 }
