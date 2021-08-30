@@ -116,6 +116,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		if (!getPreferences().isImportGradleEnabled()) {
+			return false;
+		}
+
 		Set<Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
 			BUILD_GRADLE_DESCRIPTOR,
 			SETTINGS_GRADLE_DESCRIPTOR,

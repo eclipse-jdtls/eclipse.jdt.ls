@@ -102,6 +102,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		if (!getPreferences().isImportMavenEnabled()) {
+			return false;
+		}
+
 		Set<java.nio.file.Path> directories = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE));
 		if (directories == null || directories.isEmpty()) {
 			return false;
