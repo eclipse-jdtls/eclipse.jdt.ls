@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Sets;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -34,9 +36,11 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
@@ -76,8 +80,6 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.TextEdit;
-
-import com.google.common.collect.Sets;
 
 public class SourceAssistProcessor {
 
@@ -146,9 +148,18 @@ public class SourceAssistProcessor {
 			if (node == null) {
 				node = context.getCoveringNode();
 			}
-			if (node instanceof SimpleName) {
-				ASTNode parent = node.getParent();
-				if (parent instanceof TypeDeclaration) {
+			ASTNode declarationNode = getDeclarationNode(node);
+			if (declarationNode instanceof TypeDeclaration) {
+				TypeDeclaration typeDeclaration = (TypeDeclaration)declarationNode;
+				List<ASTNode> candidates = new ArrayList<>();
+				Type superType = typeDeclaration.getSuperclassType();
+				if (superType != null) {
+					candidates.add(superType);
+				}
+				candidates.add(typeDeclaration.getName());
+				candidates.addAll(typeDeclaration.modifiers());
+				candidates.addAll(typeDeclaration.superInterfaceTypes());
+				if (isCovered(node, candidates)) {
 					quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
 					addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
 				}
@@ -574,4 +585,27 @@ public class SourceAssistProcessor {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 
+	private static ASTNode getDeclarationNode(ASTNode node) {
+		if (node == null) {
+			return null;
+		}
+		if (node instanceof BodyDeclaration) {
+			return null;
+		}
+		while (node != null && !(node instanceof BodyDeclaration) && !(node instanceof Statement)) {
+			node = node.getParent();
+		}
+		return node;
+	}
+
+	private static boolean isCovered(ASTNode node, List<ASTNode> candidates) {
+		int startPosition = node.getStartPosition();
+		int endPosition = startPosition + node.getLength();
+		for (ASTNode candidate : candidates) {
+			if (startPosition >= candidate.getStartPosition() && endPosition <= candidate.getStartPosition() + candidate.getLength()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
