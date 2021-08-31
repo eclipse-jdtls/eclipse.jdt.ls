@@ -119,7 +119,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 																				CompletionItemKind.Reference,
 																				CompletionItemKind.Variable,
 																				CompletionItemKind.Method,
-																				CompletionItemKind.Text);
+																				CompletionItemKind.Text,
+																				CompletionItemKind.Snippet);
 	// @formatter:on
 
 	/**

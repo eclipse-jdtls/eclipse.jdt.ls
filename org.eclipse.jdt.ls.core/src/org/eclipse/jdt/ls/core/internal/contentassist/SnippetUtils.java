@@ -27,6 +27,22 @@ public class SnippetUtils {
 	private SnippetUtils() {
 	}
 
+
+	/**
+	 * Evaluate template without any context.
+	 * @param pattern template pattern
+	 * @return snippet string
+	 */
+	public static String templateToSnippet(String pattern) {
+		// $${1:${variable}} -> ${1:variable}
+		String evaluated = pattern.replaceAll("\\$\\$\\{(\\d):\\$\\{(.*?)\\}(.*?)\\}", "\\${$1:$2$3}");
+
+		// escape $$.
+		// E.g. $${0} -> ${0}, $$TM_SELECTED_TEXT -> $TM_SELECTED_TEXT
+		String escaped = evaluated.replaceAll("\\$\\$", "\\$");
+		return escaped;
+	}
+
 	public static Either<String, MarkupContent> beautifyDocument(String raw) {
 		// remove the placeholder for the plain cursor like: ${0}, ${1:variable}
 		String escapedString = raw.replaceAll("\\$\\{\\d:?(.*?)\\}", "$1");
