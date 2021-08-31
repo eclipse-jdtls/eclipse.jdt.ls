@@ -155,16 +155,7 @@ public class SourceAssistProcessor {
 			}
 
 			// Generate Source Action
-			Optional<Either<Command, CodeAction>> sourceActionHashCodeEquals = Optional.empty();
-			if (quickAssistHashCodeEquals.isEmpty()) {
-				sourceActionHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
-			} else {
-				sourceActionHashCodeEquals = copySourceActionCommand(quickAssistHashCodeEquals);
-				Either<Command, CodeAction> eitherValue = sourceActionHashCodeEquals.get();
-				if (eitherValue.isRight()) {
-					eitherValue.getRight().setKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
-				}
-			}
+			Optional<Either<Command, CodeAction>> sourceActionHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
 			addSourceActionCommand($, params.getContext(), sourceActionHashCodeEquals);
 
 		}
@@ -583,25 +574,4 @@ public class SourceAssistProcessor {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 
-	public static Optional<Either<Command, CodeAction>> copySourceActionCommand(Optional<Either<Command, CodeAction>> sourceActionCommand) {
-		if (!sourceActionCommand.isPresent()) {
-			return Optional.empty();
-		}
-		Either<Command, CodeAction> eitherValue = sourceActionCommand.get();
-		if (eitherValue.isLeft()) {
-			Command command = eitherValue.getLeft();
-			return Optional.of(Either.forLeft(new Command(command.getTitle(), command.getCommand(), command.getArguments())));
-		} else {
-			CodeAction codeAction = eitherValue.getRight();
-			CodeAction copiedCodeAction = new CodeAction(codeAction.getTitle());
-			copiedCodeAction.setKind(codeAction.getKind());
-			copiedCodeAction.setIsPreferred(codeAction.getIsPreferred());
-			copiedCodeAction.setEdit(codeAction.getEdit());
-			copiedCodeAction.setDisabled(codeAction.getDisabled());
-			copiedCodeAction.setDiagnostics(codeAction.getDiagnostics());
-			copiedCodeAction.setData(codeAction.getData());
-			copiedCodeAction.setCommand(codeAction.getCommand());
-			return Optional.of(Either.forRight(copiedCodeAction));
-		}
-	}
 }
