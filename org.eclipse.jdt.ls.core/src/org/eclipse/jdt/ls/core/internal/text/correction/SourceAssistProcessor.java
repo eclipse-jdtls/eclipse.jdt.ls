@@ -150,19 +150,8 @@ public class SourceAssistProcessor {
 			}
 			ASTNode declarationNode = getDeclarationNode(node);
 			if (declarationNode instanceof TypeDeclaration) {
-				TypeDeclaration typeDeclaration = (TypeDeclaration)declarationNode;
-				List<ASTNode> candidates = new ArrayList<>();
-				Type superType = typeDeclaration.getSuperclassType();
-				if (superType != null) {
-					candidates.add(superType);
-				}
-				candidates.add(typeDeclaration.getName());
-				candidates.addAll(typeDeclaration.modifiers());
-				candidates.addAll(typeDeclaration.superInterfaceTypes());
-				if (isCovered(node, candidates)) {
-					quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
-					addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
-				}
+				quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+				addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
 			}
 
 			// Generate Source Action
@@ -596,16 +585,5 @@ public class SourceAssistProcessor {
 			node = node.getParent();
 		}
 		return node;
-	}
-
-	private static boolean isCovered(ASTNode node, List<ASTNode> candidates) {
-		int startPosition = node.getStartPosition();
-		int endPosition = startPosition + node.getLength();
-		for (ASTNode candidate : candidates) {
-			if (startPosition >= candidate.getStartPosition() && endPosition <= candidate.getStartPosition() + candidate.getLength()) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
