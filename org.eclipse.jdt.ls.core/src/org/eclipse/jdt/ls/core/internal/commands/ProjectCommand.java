@@ -18,6 +18,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
@@ -270,18 +272,15 @@ public class ProjectCommand {
 		}
 
 		// For multi-module scenario
-		IProject[] projects = Arrays.stream(containers).map((container) -> {
-			return container.getProject();
-		}).filter(Objects::nonNull)
-		.sorted((IProject a, IProject b) -> {
-			// inner comes first
-			return b.getFullPath().toPortableString().length() - a.getFullPath().toPortableString().length();
-		}).toArray(IProject[]::new);
+		IPath inputPath = FileUtil.toPath(new URI(uri));
+		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
+			return inputPath.makeRelativeTo(a.getLocation()).segmentCount() - inputPath.makeRelativeTo(b.getLocation()).segmentCount();
+		});
 
 		IJavaElement targetElement = null;
-		for (IProject project : projects) {
-			targetElement = JavaCore.create(project);
-			if (targetElement != null) {
+		for (IContainer container : containers) {
+			targetElement = JavaCore.create(container.getProject());
+			if (targetElement != null && targetElement.exists()) {
 				break;
 			}
 		}
