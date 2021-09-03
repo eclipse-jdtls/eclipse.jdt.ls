@@ -210,6 +210,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return completionItems;
 	}
 
+	private static Set<Integer> PREFER_SIGNATURE_HELP_COMPLETION_ITEMS = Set.of(CompletionProposal.METHOD_REF, CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION);
+
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
 		$.setKind(mapKind(proposal));
@@ -232,7 +234,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		proposalProvider.updateReplacement(proposal, $, '\0');
 		// Make sure `filterText` matches `textEdit`
 		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
-		if ($.getTextEdit() != null) {
+		boolean isSignatureHelpEnabled = preferenceManager.getPreferences().isSignatureHelpEnabled();
+		// Hide completions when signature help is visible.
+		if (isSignatureHelpEnabled && PREFER_SIGNATURE_HELP_COMPLETION_ITEMS.contains(proposal.getKind())) {
+			$.setFilterText(new String(proposal.getName()));
+		}
+		if ($.getFilterText() == null && $.getTextEdit() != null) {
 			String newText = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getNewText() : $.getTextEdit().getRight().getNewText();
 			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
 			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
