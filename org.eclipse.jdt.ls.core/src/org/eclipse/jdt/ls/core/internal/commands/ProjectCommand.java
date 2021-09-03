@@ -18,11 +18,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IContainer;
@@ -270,13 +270,17 @@ public class ProjectCommand {
 		}
 
 		// For multi-module scenario
-		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
-			return a.getFullPath().toPortableString().length() - b.getFullPath().toPortableString().length();
-		});
+		IProject[] projects = Arrays.stream(containers).map((container) -> {
+			return container.getProject();
+		}).filter(Objects::nonNull)
+		.sorted((IProject a, IProject b) -> {
+			// inner comes first
+			return b.getFullPath().toPortableString().length() - a.getFullPath().toPortableString().length();
+		}).toArray(IProject[]::new);
 
 		IJavaElement targetElement = null;
-		for (IContainer container : containers) {
-			targetElement = JavaCore.create(container.getProject());
+		for (IProject project : projects) {
+			targetElement = JavaCore.create(project);
 			if (targetElement != null) {
 				break;
 			}
