@@ -17,13 +17,16 @@ import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSetti
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +102,13 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		cleanInvalidProjects(rootPaths, subMonitor.split(20));
 		createJavaProject(getDefaultProject(), subMonitor.split(10));
 		cleanupResources(getDefaultProject());
-		importProjects(rootPaths, subMonitor.split(70));
+		Collection<IPath> projectConfigurations = preferenceManager.getPreferences().getProjectConfigurations();
+		if (projectConfigurations == null) {
+			// old way to import project
+			importProjects(rootPaths, subMonitor.split(70));
+		} else {
+			importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
+		}
 		subMonitor.done();
 	}
 
@@ -114,6 +123,19 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					if (importer.isResolved(rootFolder)) {
 						break;
 					}
+				}
+			}
+		}
+	}
+
+	protected void importProjectsFromConfigurationFiles(Collection<IPath> rootPaths, Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
+		for (IPath rootPath : rootPaths) {
+			File rootFolder = rootPath.toFile();
+			for (IProjectImporter importer : importers()) {
+				importer.initialize(rootFolder);
+				if (importer.applies(projectConfigurations, subMonitor.split(1))) {
+					importer.importToWorkspace(subMonitor.split(70));
 				}
 			}
 		}

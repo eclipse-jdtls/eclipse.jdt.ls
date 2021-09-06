@@ -14,8 +14,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +33,7 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -48,7 +51,6 @@ import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
-import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
@@ -76,7 +78,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
 	}
 
-
 	@Override
 	public boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
@@ -99,6 +100,37 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}
 		return !directories.isEmpty();
 	}
+
+	@Override
+	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		if (!getPreferences().isImportMavenEnabled()) {
+			return false;
+		}
+
+		Set<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE));
+		if (configurationDirs == null || configurationDirs.isEmpty()) {
+			return false;
+		}
+
+		Set<java.nio.file.Path> noneMavenProjectPaths = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (!ProjectUtils.isMavenProject(project)) {
+				noneMavenProjectPaths.add(project.getLocation().toFile().toPath());
+			}
+		}
+
+		this.directories = configurationDirs.stream()
+			.filter(d -> {
+				boolean folderIsImported = noneMavenProjectPaths.stream().anyMatch(path -> {
+					return path.compareTo(d) == 0;
+				});
+				return !folderIsImported;
+			})
+			.collect(Collectors.toSet());
+
+		return !this.directories.isEmpty();
+	}
+
 
 	synchronized Set<MavenProjectInfo> getMavenProjectInfo(IProgressMonitor monitor) throws OperationCanceledException {
 		if (projectInfos == null) {
@@ -296,5 +328,4 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			}
 		}.collectProjects(projects);
 	}
-
 }

@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +32,13 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.After;
 import org.junit.Before;
@@ -215,6 +219,18 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertFalse(ProjectUtils.isJavaProject(project));
 		IFile bin = project.getFile("bin");
 		assertFalse(bin.getRawLocation().toFile().exists());
+	}
+
+	@Test
+	public void avoidImportDuplicatedProjects() throws Exception {
+		importProjects("multi-buildtools");
+		EclipseProjectImporter importer = new EclipseProjectImporter();
+		File root = new File(getWorkingProjectDirectory(), "multi-buildtools");
+		importer.initialize(root);
+
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(root.toPath().resolve("build.gradle").toUri().toString()));
+		assertFalse(importer.applies(configurationPaths, null));
 	}
 
 	@After

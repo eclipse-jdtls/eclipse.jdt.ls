@@ -15,7 +15,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.core.resources.IProjectDescription.DESCRIPTION_FILE_NAME;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
@@ -50,6 +53,31 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 		}
 		directories = directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
 		return !directories.isEmpty();
+	}
+
+	@Override
+	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		Set<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(DESCRIPTION_FILE_NAME));
+		if (configurationDirs == null || configurationDirs.isEmpty()) {
+			return false;
+		}
+
+		Set<java.nio.file.Path> importedProjectPaths = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			importedProjectPaths.add(project.getLocation().toFile().toPath());
+		}
+
+		this.directories = configurationDirs.stream()
+			.filter(d -> {
+				boolean folderIsImported = importedProjectPaths.stream().anyMatch(path -> {
+					return path.compareTo(d) == 0;
+				});
+				return !folderIsImported;
+			})
+			.collect(Collectors.toSet());
+
+		this.directories = this.directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
+		return !this.directories.isEmpty();
 	}
 
 	@Override

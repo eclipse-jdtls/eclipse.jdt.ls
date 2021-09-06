@@ -21,10 +21,15 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.internal.resources.Resource;
 import org.eclipse.core.resources.IFile;
@@ -33,10 +38,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
@@ -71,6 +78,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		try {
 			ProjectsManager.setAutoBuilding(autoBuild);
 			preferenceManager.getPreferences().setAutobuildEnabled(autoBuild);
+			preferenceManager.getPreferences().setProjectConfigurations(null);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
@@ -172,4 +180,72 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	@Test
+	public void testImportMavenSubModule() throws IOException, OperationCanceledException, CoreException {
+		Path projectDir = copyFiles("maven/multimodule", true).toPath();
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		Path subModuleConfiguration = projectDir.resolve("module1/pom.xml");
+		IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
+		configurationPaths.add(filePath);
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+	
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"module1",
+			"childmodule",
+			"jdt.ls-java-project"
+		));
+		assertEquals(3, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
+		}
+	}
+
+	@Test
+	public void testImportMixedProjects() throws IOException, OperationCanceledException, CoreException {
+		Path projectDir = copyFiles("mixed", true).toPath();
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("hello/.project").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"jdt.ls-java-project",
+			"hello",
+			"salut",
+			"simple-gradle"
+		));
+		assertEquals(4, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
+		}
+	}
+
+	@Test
+	public void testImportMixedProjectsPartially() throws IOException, OperationCanceledException, CoreException {
+		Path projectDir = copyFiles("mixed", true).toPath();
+	
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+	
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"jdt.ls-java-project",
+			"salut",
+			"simple-gradle"
+		));
+		assertEquals(3, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
+		}
+	}
 }

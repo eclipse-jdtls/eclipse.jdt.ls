@@ -70,6 +70,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
 		Preferences p = mock(Preferences.class);
+		when(p.getProjectConfigurations()).thenReturn(null);
 		when(preferenceManager.getPreferences()).thenReturn(p);
 		when(p.isRenameEnabled()).thenReturn(true);
 		handler = new RenameHandler(preferenceManager);

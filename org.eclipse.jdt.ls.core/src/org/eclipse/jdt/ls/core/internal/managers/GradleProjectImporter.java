@@ -18,9 +18,14 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -33,6 +38,7 @@ import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunchManager;
@@ -108,6 +114,41 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			directories = gradleDetector.scan(monitor);
 		}
 		return !directories.isEmpty();
+	}
+
+	@Override
+	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		if (!getPreferences().isImportGradleEnabled()) {
+			return false;
+		}
+
+		Set<Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
+			BUILD_GRADLE_DESCRIPTOR,
+			SETTINGS_GRADLE_DESCRIPTOR,
+			BUILD_GRADLE_KTS_DESCRIPTOR,
+			SETTINGS_GRADLE_KTS_DESCRIPTOR
+		));
+		if (configurationDirs == null || configurationDirs.isEmpty()) {
+			return false;
+		}
+
+		Set<Path> noneGradleProjectPaths = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (!ProjectUtils.isGradleProject(project)) {
+				noneGradleProjectPaths.add(project.getLocation().toFile().toPath());
+			}
+		}
+
+		this.directories = configurationDirs.stream()
+			.filter(d -> {
+				boolean folderIsImported = noneGradleProjectPaths.stream().anyMatch(path -> {
+					return path.compareTo(d) == 0;
+				});
+				return !folderIsImported;
+			})
+			.collect(Collectors.toSet());
+
+		return !this.directories.isEmpty();
 	}
 
 	/* (non-Javadoc)
