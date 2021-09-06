@@ -122,12 +122,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 
-		Set<Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
+		Collection<Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(
 			BUILD_GRADLE_DESCRIPTOR,
 			SETTINGS_GRADLE_DESCRIPTOR,
 			BUILD_GRADLE_KTS_DESCRIPTOR,
 			SETTINGS_GRADLE_KTS_DESCRIPTOR
-		));
+		), false /*includeNested*/);
 		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
@@ -146,7 +146,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				});
 				return !folderIsImported;
 			})
-			.collect(Collectors.toSet());
+			.collect(Collectors.toList());
 
 		return !this.directories.isEmpty();
 	}

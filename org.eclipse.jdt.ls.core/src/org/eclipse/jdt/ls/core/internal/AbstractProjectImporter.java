@@ -16,9 +16,11 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -62,7 +64,7 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 	 * @param projectConfigurations The collection of project configurations.
 	 * @param names The names of the interested configuration file for the importer.
 	 */
-	protected Set<Path> findProjectPathByConfigurationName(Collection<IPath> projectConfigurations, List<String> names) {
+	protected Collection<Path> findProjectPathByConfigurationName(Collection<IPath> projectConfigurations, List<String> names, boolean includeNested) {
 		Set<Path> set = new HashSet<>();
 		for (IPath path : projectConfigurations) {
 			boolean matched = names.stream().anyMatch((name -> {
@@ -73,6 +75,27 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 				set.add(path.removeLastSegments(1).toFile().toPath());
 			}
 		}
-		return set;
+
+		List<Path> filteredPaths = set.stream().sorted().collect(Collectors.toList());
+
+		if (includeNested) {
+			return filteredPaths;
+		}
+
+		Path parentDir = null;
+		List<Path> result = new LinkedList<>();
+		for (Path path : filteredPaths) {
+			if (parentDir == null) {
+				result.add(path);
+				parentDir = path.getParent();
+			} else if (path.startsWith(parentDir)) {
+				continue;
+			} else {
+				result.add(path);
+				parentDir = path.getParent();
+			}
+		}
+
+		return result;
 	}
 }
