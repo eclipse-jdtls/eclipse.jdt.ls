@@ -16,8 +16,10 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -61,6 +63,8 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
@@ -76,6 +80,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private WorkspaceJob validationTimer;
 	private WorkspaceJob publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
+	private Map<String, Integer> documentVersions = new HashMap<>();
 
 	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
 		this.sharedASTProvider = CoreASTProvider.getInstance();
@@ -265,6 +270,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
+		documentVersions.remove(params.getTextDocument().getUri());
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -279,6 +285,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
+		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -293,6 +300,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didChange(DidChangeTextDocumentParams params) {
+		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -527,4 +535,45 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 		return unit;
 	}
+
+	/**
+	 * Can be passed to requests that are sensitive to document changes
+	 * in order to monitor the version and cancel the request if necessary.
+	 */
+	public class DocumentMonitor {
+
+		private final String uri;
+		private final int initialVersion;
+
+		public DocumentMonitor(String uri) {
+			this.uri = uri;
+			this.initialVersion = documentVersions.get(uri);
+		}
+
+		/**
+		 * @return {@code true} if the document has changed since the creation
+		 * of this monitor, {@code false} otherwise.
+		 */
+		public boolean hasChanged() {
+			return initialVersion != documentVersions.get(uri);
+		}
+
+		/**
+		 * If the document {@link #hasChanged()}, throws a {@link ResponseErrorException}
+		 * with the {@code ContentModified} error code.
+		 *
+		 * @see https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#implementationConsiderations
+		 */
+		public void checkChanged() {
+			if (hasChanged()) {
+				throw new ResponseErrorException(new ResponseError(
+					-32801, // ContentModified, see https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#responseMessage
+					"Document changed, request invalid",
+					null
+				));
+			}
+		}
+
+	}
+
 }
