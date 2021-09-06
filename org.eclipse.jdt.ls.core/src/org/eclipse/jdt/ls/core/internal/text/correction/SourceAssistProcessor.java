@@ -573,7 +573,7 @@ public class SourceAssistProcessor {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 
-	private static ASTNode getDeclarationNode(ASTNode node) {
+	public static ASTNode getDeclarationNode(ASTNode node) {
 		if (node == null) {
 			return null;
 		}
