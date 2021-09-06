@@ -558,10 +558,11 @@ public class CompletionProposalDescriptionProvider {
 
 	private void createPackageProposalLabel(CompletionProposal proposal, CompletionItem item) {
 		Assert.isTrue(proposal.getKind() == CompletionProposal.PACKAGE_REF || proposal.getKind() == CompletionProposal.MODULE_REF || proposal.getKind() == CompletionProposal.MODULE_DECLARATION);
-		item.setLabel(String.valueOf(proposal.getDeclarationSignature()));
+		String signature = String.valueOf(proposal.getDeclarationSignature());
+		item.setLabel(signature);
 		StringBuilder detail = new StringBuilder();
 		detail.append(proposal.getKind() == CompletionProposal.PACKAGE_REF ? "(package) " : "(module) ");
-		detail.append(String.valueOf(proposal.getDeclarationSignature()));
+		detail.append(signature);
 		item.setDetail(detail.toString());
 	}
 

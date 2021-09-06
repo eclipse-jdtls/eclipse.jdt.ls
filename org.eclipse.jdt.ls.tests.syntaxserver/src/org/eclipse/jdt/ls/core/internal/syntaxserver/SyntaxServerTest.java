@@ -299,13 +299,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 			assertTrue(StringUtils.isNotBlank(item.getLabel()));
 			assertNotNull(item.getKind());
 			assertTrue(StringUtils.isNotBlank(item.getSortText()));
-			//text edits are set during calls to "completion"
-			assertNotNull(item.getTextEdit());
 			assertTrue(StringUtils.isNotBlank(item.getInsertText()));
-			assertNotNull(item.getFilterText());
-			assertFalse(item.getFilterText().contains(" "));
-			assertTrue(item.getLabel().startsWith(item.getInsertText()));
-			assertTrue(item.getFilterText().startsWith("Objec"));
 			//Check contains data used for completionItem resolution
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
@@ -313,6 +307,14 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_URI)));
 			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID)));
 			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
+
+			//text edits are set during calls to "resolve"
+			CompletionItem resolved = server.resolveCompletionItem(item).join();
+			assertNotNull(resolved.getTextEdit());
+			assertNotNull(resolved.getFilterText());
+			assertFalse(resolved.getFilterText().contains(" "));
+			assertTrue(resolved.getLabel().startsWith(resolved.getInsertText()));
+			assertTrue(resolved.getFilterText().startsWith("Objec"));
 		}
 	}
 

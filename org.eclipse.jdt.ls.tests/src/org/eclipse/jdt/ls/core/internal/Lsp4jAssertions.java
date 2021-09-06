@@ -15,6 +15,8 @@ package org.eclipse.jdt.ls.core.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
@@ -50,4 +52,9 @@ public final class Lsp4jAssertions {
 
 	}
 
+	public static void assertTextEditAfterResolve(JDTLanguageServer server, int expectedLine, int expectedStart, int expectedEnd, String expectedText, CompletionItem ci){
+		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
+		assertNotNull(resolvedItem);
+		assertTextEdit(expectedLine, expectedStart, expectedEnd, expectedText, resolvedItem.getTextEdit().getLeft());
+	}
 }
