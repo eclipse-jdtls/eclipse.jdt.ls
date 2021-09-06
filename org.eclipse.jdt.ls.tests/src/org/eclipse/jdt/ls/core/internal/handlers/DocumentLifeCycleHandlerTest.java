@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -51,6 +52,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler.DocumentMonitor;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -71,6 +73,7 @@ import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
@@ -597,7 +600,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Diagnostic d = diagParam.getDiagnostics().get(0);
 		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 		assertRange(0, 0, 1, d.getRange());
-		
+
 		d = diagParam.getDiagnostics().get(1);
 		assertEquals("Cannot use this in a static context", d.getMessage());
 		assertRange(3, 21, 25, d.getRange());
@@ -783,6 +786,29 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
 		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(0);
+	}
+
+	@Test
+	public void testDocumentMonitor() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment fooPackage = sourceFolder.createPackageFragment("foo", false, null);
+
+		String content = "package foo;\n";
+		ICompilationUnit cu = fooPackage.createCompilationUnit("Foo.java", content, false, null);
+
+		openDocument(cu, content, 1);
+		DocumentMonitor documentMonitor = lifeCycleHandler.new DocumentMonitor(JDTUtils.toURI(cu));
+		documentMonitor.checkChanged();
+		changeDocumentFull(cu, content, 2);
+		try {
+			documentMonitor.checkChanged();
+			fail("Should have thrown ResponseErrorException");
+		}
+		catch (ResponseErrorException e) {
+			assertEquals(e.getResponseError().getCode(), -32801); // ContentModified error code
+		}
+		closeDocument(cu);
 	}
 
 	private File createTempFile(File parent, String fileName, String content) throws IOException {
