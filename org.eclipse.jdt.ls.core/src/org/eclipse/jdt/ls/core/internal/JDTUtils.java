@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IContainer;
@@ -1738,4 +1740,9 @@ public final class JDTUtils {
 		return workingCopy;
 	}
 
+	public static boolean isExcludedFile(List<String> patterns, String uriString) {
+		java.nio.file.Path path = Paths.get(uriString);
+		FileSystem fileSystems = path.getFileSystem();
+		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
+	}
 }
