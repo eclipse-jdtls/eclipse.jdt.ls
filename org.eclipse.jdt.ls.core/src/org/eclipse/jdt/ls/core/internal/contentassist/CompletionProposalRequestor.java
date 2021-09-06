@@ -229,16 +229,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		$.setData(data);
 		this.descriptionProvider.updateDescription(proposal, $);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
-		proposalProvider.updateReplacement(proposal, $, '\0');
-		// Make sure `filterText` matches `textEdit`
-		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
-		if ($.getTextEdit() != null) {
-			String newText = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getNewText() : $.getTextEdit().getRight().getNewText();
-			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
-			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
-				$.setFilterText(newText);
-			}
-		}
 		return $;
 	}
 

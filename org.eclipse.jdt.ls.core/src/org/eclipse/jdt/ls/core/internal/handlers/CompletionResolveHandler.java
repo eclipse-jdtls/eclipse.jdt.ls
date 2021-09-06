@@ -138,8 +138,17 @@ public class CompletionResolveHandler {
 			return param;
 		}
 
+		CompletionContext ctx = completionResponse.getContext();
+		CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
+		int offset = completionResponse.getOffset();
+		CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(
+			unit, ctx, offset,
+			this.manager.getPreferences(),
+			this.manager.getClientPreferences()
+		);
+		proposalProvider.updateReplacement(proposal, param, '\0');
+
 		if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-			CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset(), manager.getPreferences(), manager.getClientPreferences());
 			proposalProvider.updateAdditionalTextEdits(completionResponse.getProposals().get(proposalId), param, '\0');
 		}
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
@@ -148,7 +157,6 @@ public class CompletionResolveHandler {
 				IMember member = null;
 				IType type = unit.getJavaProject().findType(typeName);
 
-				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 				if (type!=null && data.containsKey(DATA_FIELD_NAME)) {
 					String name = data.get(DATA_FIELD_NAME);
 					String[] paramSigs = CharOperation.NO_STRINGS;
@@ -277,6 +285,17 @@ public class CompletionResolveHandler {
 				monitor.setCanceled(true);
 			}
 		}
+
+		// Make sure `filterText` matches `textEdit`
+		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
+		if (param.getTextEdit() != null) {
+			String newText = param.getTextEdit().isLeft() ? param.getTextEdit().getLeft().getNewText() : param.getTextEdit().getRight().getNewText();
+			Range range = param.getTextEdit().isLeft() ? param.getTextEdit().getLeft().getRange() : (param.getTextEdit().getRight().getInsert() != null ? param.getTextEdit().getRight().getInsert() : param.getTextEdit().getRight().getReplace());
+			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
+				param.setFilterText(newText);
+			}
+		}
+
 		if (monitor.isCanceled()) {
 			param.setData(null);
 		}
