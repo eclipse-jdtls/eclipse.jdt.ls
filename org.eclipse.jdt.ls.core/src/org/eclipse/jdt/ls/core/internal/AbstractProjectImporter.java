@@ -87,12 +87,12 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 		for (Path path : filteredPaths) {
 			if (parentDir == null) {
 				result.add(path);
-				parentDir = path.getParent();
+				parentDir = path;
 			} else if (path.startsWith(parentDir)) {
 				continue;
 			} else {
 				result.add(path);
-				parentDir = path.getParent();
+				parentDir = path;
 			}
 		}
 
