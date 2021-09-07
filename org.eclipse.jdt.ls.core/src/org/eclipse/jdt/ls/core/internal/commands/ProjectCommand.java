@@ -271,9 +271,8 @@ public class ProjectCommand {
 		}
 
 		// For multi-module scenario
-		IPath inputPath = FileUtil.toPath(new URI(uri));
 		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
-			return inputPath.makeRelativeTo(a.getLocation()).segmentCount() - inputPath.makeRelativeTo(b.getLocation()).segmentCount();
+			return a.getFullPath().segmentCount() - b.getFullPath().segmentCount();
 		});
 
 		IJavaElement targetElement = null;
