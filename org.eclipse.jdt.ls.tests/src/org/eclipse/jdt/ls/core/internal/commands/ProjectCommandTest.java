@@ -131,6 +131,19 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
     }
 
     @Test
+    public void testGetMultiModuleMavenProjectFromUri() throws Exception {
+        importProjects("maven/multimodule3");
+        IProject project = WorkspaceHelper.getProject("this_is_a_very_long_module_name");
+        String javaSource = project.getFile("src/main/org/eclipse/App.java").getLocationURI().toString();
+        IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
+        assertEquals("this_is_a_very_long_module_name", javaProject.getElementName());
+
+        String projectUri = project.getLocationURI().toString();
+        javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
+        assertEquals("this_is_a_very_long_module_name", javaProject.getElementName());
+    }
+
+    @Test
     public void testGetInvisibleProjectFromUri() throws Exception {
         IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
         String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();

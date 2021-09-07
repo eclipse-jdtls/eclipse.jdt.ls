@@ -271,13 +271,13 @@ public class ProjectCommand {
 
 		// For multi-module scenario
 		Arrays.sort(containers, (Comparator<IContainer>) (IContainer a, IContainer b) -> {
-			return a.getFullPath().toPortableString().length() - b.getFullPath().toPortableString().length();
+			return a.getFullPath().segmentCount() - b.getFullPath().segmentCount();
 		});
 
 		IJavaElement targetElement = null;
 		for (IContainer container : containers) {
 			targetElement = JavaCore.create(container.getProject());
-			if (targetElement != null) {
+			if (targetElement != null && targetElement.exists()) {
 				break;
 			}
 		}
