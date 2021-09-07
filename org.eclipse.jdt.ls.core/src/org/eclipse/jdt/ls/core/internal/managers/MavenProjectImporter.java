@@ -107,7 +107,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 
-		Set<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE));
+		Collection<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE), true /*includeNested*/);
 		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
@@ -126,7 +126,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				});
 				return !folderIsImported;
 			})
-			.collect(Collectors.toSet());
+			.collect(Collectors.toList());
 
 		return !this.directories.isEmpty();
 	}

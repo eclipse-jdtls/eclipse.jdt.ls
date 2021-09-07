@@ -57,7 +57,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
-		Set<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(DESCRIPTION_FILE_NAME));
+		Collection<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(DESCRIPTION_FILE_NAME), true /*includeNested*/);
 		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
@@ -74,7 +74,7 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 				});
 				return !folderIsImported;
 			})
-			.collect(Collectors.toSet());
+			.collect(Collectors.toList());
 
 		this.directories = this.directories.stream().filter(path -> (new File(path.toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists())).collect(Collectors.toList());
 		return !this.directories.isEmpty();
