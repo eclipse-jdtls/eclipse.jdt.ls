@@ -609,4 +609,21 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).findFirst();
 		return any.isPresent() ? any.get() : null;
 	}
+
+	public static List<Either<Command, CodeAction>> findActions(List<Either<Command, CodeAction>> codeActions, String kind) {
+		return codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).collect(Collectors.toList());
+	}
+
+	public static boolean commandExists(List<Either<Command, CodeAction>> codeActions, String command) {
+		if (codeActions.isEmpty()) {
+			return false;
+		}
+		for (Either<Command, CodeAction> codeAction : codeActions) {
+			Command actionCommand = getCommand(codeAction);
+			if (actionCommand != null && actionCommand.getCommand().equals(command)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

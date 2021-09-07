@@ -34,8 +34,11 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -138,8 +141,22 @@ public class SourceAssistProcessor {
 
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
-			Optional<Either<Command, CodeAction>> hashCodeEquals = getHashCodeEqualsAction(params);
-			addSourceActionCommand($, params.getContext(), hashCodeEquals);
+			// Generate QuickAssist
+			Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = Optional.empty();
+			ASTNode node = context.getCoveredNode();
+			if (node == null) {
+				node = context.getCoveringNode();
+			}
+			ASTNode declarationNode = getDeclarationNode(node);
+			if (declarationNode instanceof TypeDeclaration) {
+				quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+				addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
+			}
+
+			// Generate Source Action
+			Optional<Either<Command, CodeAction>> sourceActionHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+			addSourceActionCommand($, params.getContext(), sourceActionHashCodeEquals);
+
 		}
 
 		// Generate toString()
@@ -304,16 +321,16 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params) {
+	private Optional<Either<Command, CodeAction>> getHashCodeEqualsAction(CodeActionParams params, String kind) {
 		if (!preferenceManager.getClientPreferences().isHashCodeEqualsPromptSupported()) {
 			return Optional.empty();
 		}
 		Command command = new Command(ActionMessages.GenerateHashCodeEqualsAction_label, COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT, Collections.singletonList(params));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateHashCodeEqualsAction_label);
-			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_HASHCODE_EQUALS);
+			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
@@ -428,7 +445,7 @@ public class SourceAssistProcessor {
 				JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 				return Optional.empty();
 			}
-	
+
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
@@ -459,7 +476,7 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-	
+
 			Command command = new Command(name, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(name);
@@ -554,5 +571,18 @@ public class SourceAssistProcessor {
 
 	public static ICompilationUnit getCompilationUnit(CodeActionParams params) {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+	}
+
+	public static ASTNode getDeclarationNode(ASTNode node) {
+		if (node == null) {
+			return null;
+		}
+		if (node instanceof BodyDeclaration) {
+			return null;
+		}
+		while (node != null && !(node instanceof BodyDeclaration) && !(node instanceof Statement)) {
+			node = node.getParent();
+		}
+		return node;
 	}
 }
