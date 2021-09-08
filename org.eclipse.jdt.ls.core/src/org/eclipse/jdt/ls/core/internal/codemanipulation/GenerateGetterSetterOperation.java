@@ -80,7 +80,7 @@ public class GenerateGetterSetterOperation {
 		}
 
 		List<AccessorField> unimplemented = new ArrayList<>();
-		IField[] fields = type.getFields();
+		IField[] fields = type.isRecord() ? type.getRecordComponents() : type.getFields();
 		for (IField field : fields) {
 			int flags = field.getFlags();
 			if (!Flags.isEnum(flags)) {
