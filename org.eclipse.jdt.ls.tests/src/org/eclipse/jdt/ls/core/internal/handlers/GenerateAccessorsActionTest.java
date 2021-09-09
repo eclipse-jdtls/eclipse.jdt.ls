@@ -17,15 +17,18 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -127,5 +130,30 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
+	}
+
+	@Test
+	public void testGenerateAccessorsForRecordEnabled() throws Exception {
+		importProjects("eclipse/java16");
+		IProject project = WorkspaceHelper.getProject("java16");
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot root = javaProject.findPackageFragmentRoot(javaProject.getPath().append("src").append("main").append("java"));
+		assertNotNull(root);
+		IPackageFragment packageFragment = root.createPackageFragment("p", true, null);
+		//@formatter:off
+		ICompilationUnit unit = packageFragment.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public record A(String name, int age) {\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
+		Assert.assertNotNull(generateAccessorsAction);
+		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
+		Assert.assertNotNull(generateAccessorsCommand);
+		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
 	}
 }
