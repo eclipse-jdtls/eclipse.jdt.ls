@@ -37,6 +37,7 @@ import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
 import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -96,9 +97,30 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
 		assertNotNull(calls);
 		assertEquals(3, calls.size());
-		assertItem(calls.get(0).getFrom(), "Child()", Constructor, "org.sample.CallHierarchy$Child", false, 42);
-		assertItem(calls.get(1).getFrom(), "main(String[])" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", true, 5);
-		assertItem(calls.get(2).getFrom(), "method_1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy$Base", false, 33);
+		assertItem(calls.get(0).getFrom(), "Child()", Constructor, "org.sample.CallHierarchy$Child", false, 45);
+		assertItem(calls.get(1).getFrom(), "main(String[])" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy", true, 7);
+		assertItem(calls.get(2).getFrom(), "method_1()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.CallHierarchy$Base", false, 35);
+	}
+
+	@Test
+	public void testSelectionRange() throws Exception {
+		// Line  from `org.sample.Foo`
+		//    public void <|>someMethod() {}
+		String uri = getUriFromSrcProject("org.sample.Foo");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 8, 13);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "someMethod()" + JavaElementLabels.DECL_STRING + "void", Method, "org.sample.Foo", false, 8);
+
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+		assertNotNull(calls);
+		assertEquals(4, calls.size());
+		assertItem(calls.get(2).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 7);
+		assertItem(calls.get(3).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 10);
+		Range selectionRange = calls.get(2).getFrom().getSelectionRange();
+		assertEquals(new Range(new Position(7, 18), new Position(7, 30)), selectionRange);
+		selectionRange = calls.get(3).getFrom().getSelectionRange();
+		assertEquals(new Range(new Position(10, 18), new Position(10, 30)), selectionRange);
 	}
 
 	@Test
@@ -119,9 +141,9 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> call1Calls = getOutgoings(calls.get(1).getTo());
 		assertNotNull(call1Calls);
-		assertEquals(2, call1Calls.size());
+		assertEquals(4, call1Calls.size());
 		assertItem(call1Calls.get(0).getTo(), "Child()", Constructor, "org.sample.CallHierarchy$Child", false, 42);
-		assertItem(call1Calls.get(1).getTo(), "currentThread()" + JavaElementLabels.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
+		assertItem(call1Calls.get(2).getTo(), "currentThread()" + JavaElementLabels.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
 	}
 
 	@Test
@@ -137,12 +159,12 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
 		assertNotNull(calls);
 		assertEquals(1, calls.size());
-		assertItem(calls.get(0).getFrom(), "FooBuilder()", Constructor, "org.sample.CallHierarchy$FooBuilder", false, 9);
+		assertItem(calls.get(0).getFrom(), "FooBuilder()", Constructor, "org.sample.CallHierarchy$FooBuilder", false, 10);
 
 		List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
 		assertNotNull(call0Calls);
-		assertEquals(1, call0Calls.size());
-		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "org.sample.CallHierarchyOther", false, 4);
+		assertEquals(3, call0Calls.size());
+		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "org.sample.CallHierarchyOther", false, 5);
 	}
 
 	@Test
@@ -157,7 +179,7 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
 		assertNotNull(calls);
-		assertEquals(1, calls.size());
+		assertEquals(2, calls.size());
 		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabels.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 368);
 
 		List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());
