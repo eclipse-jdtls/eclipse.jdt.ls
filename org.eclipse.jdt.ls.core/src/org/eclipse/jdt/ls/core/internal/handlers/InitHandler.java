@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -31,6 +32,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
@@ -56,6 +58,9 @@ import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
+import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
 
 /**
  * Handler for the VS Code extension initialization
@@ -212,6 +217,16 @@ final public class InitHandler extends BaseInitHandler {
 				logException(e.getMessage(), e);
 			}
 		}
+		// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
+		startBundle(IMavenConstants.PLUGIN_ID);
+		long start = System.currentTimeMillis();
+		JobHelpers.waitForProjectRegistryRefreshJob();
+		JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
+		// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
+		startBundle(CorePlugin.PLUGIN_ID);
+		start = System.currentTimeMillis();
+		JobHelpers.waitForLoadingGradleVersionJob();
+		JavaLanguageServerPlugin.logInfo("LoadingGradleVersionJob finished " + (System.currentTimeMillis() - start) + "ms");
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
@@ -219,10 +234,10 @@ final public class InitHandler extends BaseInitHandler {
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 				try {
-					projectsManager.setAutoBuilding(false);
+					ProjectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.configureFilters(monitor);
-					projectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
+					ProjectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
@@ -255,5 +270,16 @@ final public class InitHandler extends BaseInitHandler {
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule();
+	}
+
+	private void startBundle(String symbolicName) {
+		try {
+			long start = System.currentTimeMillis();
+			JavaLanguageServerPlugin.logInfo("Starting " + symbolicName);
+			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
+			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
+		} catch (BundleException e) {
+			logException(e.getMessage(), e);
+		}
 	}
 }
