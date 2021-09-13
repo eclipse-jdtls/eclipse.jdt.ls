@@ -46,6 +46,13 @@
 								import groovy.json.JsonSlurper
 								import groovy.json.JsonOutput
 
+
+								def checksumsFile = new File(project.basedir.absolutePath, "gradle/checksums/checksums.json")
+								if (System.getProperty("eclipse.jdt.ls.skipGradleChecksums") != null &amp;&amp; checksumsFile.exists()) {
+									println "Skipping gradle wrapper validation checksums ..."
+									return
+								}
+
 								def versionUrl = new URL("https://services.gradle.org/versions/all")
 								def versionStr = versionUrl.text;
 								def versionsFile = new File(project.basedir.absolutePath, "gradle/checksums/versions.json")
@@ -71,7 +78,6 @@
 									}
 								}
 								def json = JsonOutput.toJson(checksums)
-								def checksumsFile = new File(project.basedir.absolutePath, "gradle/checksums/checksums.json")
 								checksumsFile.write(JsonOutput.prettyPrint(json))
 								println "Wrote to ${checksumsFile}"
 							</source>
