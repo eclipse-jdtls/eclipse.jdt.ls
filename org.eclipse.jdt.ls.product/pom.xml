@@ -256,34 +256,5 @@
 				</plugins>
 			</build>
 		</profile>
-		<profile>
-			<id>fast</id>
-			<!-- 
-			Enable faster builds by targeting a single TP environment.
-			Run the Maven command with specific environment properties:
-			- On MacOS : mvn clean verify -Pfast -Denvironment.os=macosx -Denvironment.ws=cocoa -Denvironment.arch=x86_64
-			- On Win32 : mvn clean verify -Pfast -Denvironment.os=win32 -Denvironment.ws=win32 -Denvironment.arch=x86
-			- On Win64 : mvn clean verify -Pfast -Denvironment.os=win32 -Denvironment.ws=win32 -Denvironment.arch=x86_64
-			- On Linux : mvn clean verify -Pfast -Denvironment.os=linux -Denvironment.ws=gtk -Denvironment.arch=x86_64
-			
-			 -->
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.eclipse.tycho</groupId>
-						<artifactId>target-platform-configuration</artifactId>
-						<configuration>
-							<environments>
-								<environment>
-									<os>${environment.os}</os>
-									<ws>${environment.ws}</ws>
-									<arch>${environment.arch}</arch>
-								</environment>
-							</environments>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 	</profiles>
 </project>
