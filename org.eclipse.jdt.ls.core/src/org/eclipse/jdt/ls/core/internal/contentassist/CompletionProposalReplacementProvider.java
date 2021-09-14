@@ -41,6 +41,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -138,7 +139,7 @@ public class CompletionProposalReplacementProvider {
 						appendImportProposal(completionBuffer, requiredProposal, proposal.getKind());
 						break;
 					case CompletionProposal.TYPE_REF:
-						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context));
+						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(proposal, requiredProposal, trigger, proposal.canUseDiamond(context));
 						if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
@@ -574,7 +575,7 @@ public class CompletionProposalReplacementProvider {
 		return !proposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(proposal.getSignature()));
 	}
 
-	private org.eclipse.lsp4j.TextEdit toRequiredTypeEdit(CompletionProposal typeProposal, char trigger, boolean canUseDiamond) {
+	private org.eclipse.lsp4j.TextEdit toRequiredTypeEdit(CompletionProposal originalProposal, CompletionProposal typeProposal, char trigger, boolean canUseDiamond) {
 
 		StringBuilder buffer = new StringBuilder();
 		appendReplacementString(buffer, typeProposal);
@@ -607,7 +608,27 @@ public class CompletionProposalReplacementProvider {
 			onlyAppendArguments= false;
 		}
 		if (onlyAppendArguments || shouldAppendArguments(typeProposal, trigger)) {
-			String[] typeArguments = computeTypeArgumentProposals(typeProposal);
+			String[] typeArguments = null;
+			if (originalProposal instanceof InternalCompletionProposal) {
+				char[] declSig = ((InternalCompletionProposal) originalProposal).getDeclarationSignature();
+				char[][] typeArgSigs = Signature.getTypeArguments(declSig);
+				typeArguments = new String[typeArgSigs.length];
+				for (int idx = 0; idx < typeArgSigs.length; idx++) {
+					char[] typeArgSig = typeArgSigs[idx];
+					if (typeArgSig.length >= 3 && typeArgSig[0] == Signature.C_TYPE_VARIABLE && typeArgSig[typeArgSig.length - 1] == Signature.C_NAME_END) {
+						// wipe leading/trainig constant, e.g. `TK;` -> `K`
+						typeArguments[idx] = String.valueOf(typeArgSig, 1, typeArgSig.length - 2);
+					} else {
+						// shouldn't enter this block
+						typeArguments[idx] = String.valueOf(typeArgSig);
+					}
+				}
+			}
+			// fallback to resolve type args in an expensive way
+			if (typeArguments == null) {
+				typeArguments = computeTypeArgumentProposals(typeProposal);
+			}
+
 			if(typeArguments.length > 0){
 				if (canUseDiamond){
 					buffer.append("<>"); //$NON-NLS-1$
