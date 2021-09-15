@@ -19,10 +19,7 @@ repositories {
 dependencies {
 }
 
-application {
-    // Define the main class for the application.
-    mainClass = 'sample.App'
-}
+mainClassName = "sample.App"
 
 tasks.named('test') {
     // Use junit platform for unit tests.
