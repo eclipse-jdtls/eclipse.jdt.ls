@@ -222,6 +222,10 @@ public final class JobHelpers {
 		waitForJobs(BuildJobOffMatcher.INSTANCE, maxTimeMillis);
 	}
 
+	public static void waitForProjectRegistryRefreshJob() {
+		waitForJobs(ProjectRegistryRefreshJobMatcher.INSTANCE, MAX_TIME_MILLIS);
+	}
+
 	interface IJobMatcher {
 
 		boolean matches(Job job);
@@ -247,6 +251,17 @@ public final class JobHelpers {
 		@Override
 		public boolean matches(Job job) {
 			return job.getClass().getName().matches("(.*\\.AutoBuildOff.*)");
+		}
+
+	}
+
+	static class ProjectRegistryRefreshJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new BuildJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.getClass().getName().matches("org.eclipse.m2e.core.internal.project.registry.ProjectRegistryRefreshJob");
 		}
 
 	}
