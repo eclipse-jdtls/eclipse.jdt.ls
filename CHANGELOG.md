@@ -1,5 +1,26 @@
 # Change Log
 
+# [1.4.0 (September 16th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/94?closed=1)
+ * performance - completion: optimize the performance of SnippetCompletionProposal. See [#1838](https://github.com/eclipse/eclipse.jdt.ls/issues/1838).
+ * performance - completion: listing constructors is slow. See [#1836](https://github.com/eclipse/eclipse.jdt.ls/issues/1836).
+ * enhancement - Support Kotlin gradle files. See [#449](https://github.com/eclipse/eclipse.jdt.ls/issues/449).
+ * enhancement - Add functionality to exclude files that will not be tracked for changes. See [#1847](https://github.com/eclipse/eclipse.jdt.ls/issues/1847).
+ * enhancement - Add 'hashCode()' and 'equals()' to Show Fixes for type declaration. See [#1842](https://github.com/eclipse/eclipse.jdt.ls/pull/1842).
+ * bug fix - Java LS sometimes hangs while loading a gradle project. See [#1874](https://github.com/eclipse/eclipse.jdt.ls/pull/1874).
+ * bug fix - Fix regression in gradle startup performance. See [#1853](https://github.com/eclipse/eclipse.jdt.ls/pull/1853).
+ * bug fix - Cannot exclude maven sub-module. See [#1850](https://github.com/eclipse/eclipse.jdt.ls/pull/1850).
+ * bug fix - 'Open Call Hierarchy' does not jump to reference where it is invoked at. See [#1824](https://github.com/eclipse/eclipse.jdt.ls/pull/1824).
+ * bug fix - Generate getters source action is broken from within a record. See [#1392](https://github.com/eclipse/eclipse.jdt.ls/issues/1392).
+ * bug fix - Get correct Java project in multi-module case. See [#1865](https://github.com/eclipse/eclipse.jdt.ls/pull/1865).
+ * bug fix - Add support for month, shortmonth, day, hour, and minute variables in typeComment. See [#1839](https://github.com/eclipse/eclipse.jdt.ls/pull/1839) & [#1851](https://github.com/eclipse/eclipse.jdt.ls/pull/1851).
+ * bug fix - Cannot cast TypeBinding$LocalTypeBinding to IVariableBinding exception on `completionItem/resolve` . See [#1856](https://github.com/eclipse/eclipse.jdt.ls/issues/1856).
+ * debt - Update target platform to 2021-09 (4.21) Release. See [#1880](https://github.com/eclipse/eclipse.jdt.ls/pull/1880).
+ * debt - JDT LS build fails due to stale target platform. See [#1861](https://github.com/eclipse/eclipse.jdt.ls/issues/1861).
+ * debt - Downgrade test Gradle version to avoid filesystem watching feature. See [#1869](https://github.com/eclipse/eclipse.jdt.ls/issues/1869).
+ * debt - Update Maven wrapper to 3.8.2. See [#1843](https://github.com/eclipse/eclipse.jdt.ls/pull/1843).
+ * debt - Support 3.16 semantic tokens. See [#1678](https://github.com/eclipse/eclipse.jdt.ls/issues/1678).
+ * other - Support import from configuration files. See [#1840](https://github.com/eclipse/eclipse.jdt.ls/pull/1840).
+
 # [1.3.0 (August 17th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/93?closed=1)
  * enhancement - 'Create method' code action for method reference. See [#1464](https://github.com/eclipse/eclipse.jdt.ls/issues/1464).
  * performance - Avoid displaying (expensive) constant values in completion items. See [#1835](https://github.com/eclipse/eclipse.jdt.ls/issues/1835).
