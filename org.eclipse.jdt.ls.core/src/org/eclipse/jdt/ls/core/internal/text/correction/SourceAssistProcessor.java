@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -135,21 +136,20 @@ public class SourceAssistProcessor {
 			addSourceActionCommand($, params.getContext(), overrideMethods);
 		}
 
-		// Generate Getter and Setter
-		Optional<Either<Command, CodeAction>> getterSetter = getGetterSetterAction(params, context, type);
-		addSourceActionCommand($, params.getContext(), getterSetter);
+		// Generate Getter and Setter QuickAssist
+		if (isInTypeDeclaration(context)) {
+			Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
+			addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
+		}
+		// Generate Getter and Setter Source Action
+		Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, monitor);
+		addSourceActionCommand($, params.getContext(), sourceGetterSetter);
 
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
 			// Generate QuickAssist
-			Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = Optional.empty();
-			ASTNode node = context.getCoveredNode();
-			if (node == null) {
-				node = context.getCoveringNode();
-			}
-			ASTNode declarationNode = getDeclarationNode(node);
-			if (declarationNode instanceof TypeDeclaration) {
-				quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+			if (isInTypeDeclaration(context)) {
+				Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
 				addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
 			}
 
@@ -271,27 +271,33 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type) {
+	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, IProgressMonitor monitor) {
 		try {
 			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type);
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
 				CodeActionProposal getAccessorsProposal = (pm) -> {
+					ASTNode declarationNode = null;
+					CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+					if (astRoot != null) {
+						ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), params.getRange()), DiagnosticsHelper.getLength(type.getCompilationUnit(), params.getRange()));
+						declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+					}
 					// If cursor position is not specified, then insert to the last by default.
-					IJavaElement insertBefore = CodeGenerationUtils.findInsertElement(type, params.getRange());
+					IJavaElement insertBefore = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, params.getRange());
 					GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments(), insertBefore);
 					TextEdit edit = operation.createTextEdit(pm, accessors);
 					return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
 				};
-				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, getAccessorsProposal);
+				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, kind, getAccessorsProposal);
 			} else {
 				Command command = new Command(ActionMessages.GenerateGetterSetterAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(params));
 				if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS)) {
 					CodeAction codeAction = new CodeAction(ActionMessages.GenerateGetterSetterAction_ellipsisLabel);
-					codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
+					codeAction.setKind(kind);
 					codeAction.setCommand(command);
-					codeAction.setDiagnostics(Collections.EMPTY_LIST);
+					codeAction.setDiagnostics(Collections.emptyList());
 					return Optional.of(Either.forRight(codeAction));
 				} else {
 					return Optional.of(Either.forLeft(command));
@@ -584,5 +590,14 @@ public class SourceAssistProcessor {
 			node = node.getParent();
 		}
 		return node;
+	}
+
+	private static boolean isInTypeDeclaration(IInvocationContext context) {
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+		ASTNode declarationNode = getDeclarationNode(node);
+		return declarationNode instanceof TypeDeclaration;
 	}
 }
