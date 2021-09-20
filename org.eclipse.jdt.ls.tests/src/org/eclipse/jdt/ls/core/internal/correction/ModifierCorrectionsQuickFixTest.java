@@ -1211,11 +1211,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddSealedMissingClassModifierProposal() throws Exception {
-		Map<String, String> options16 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options16, JavaCore.VERSION_16);
-		options16.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options16.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options16);
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		options17.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options17.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options17);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 

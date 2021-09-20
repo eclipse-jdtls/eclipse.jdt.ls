@@ -178,12 +178,21 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
-	public void testPreviewFeaturesDisabledByDefault() throws Exception {
+	public void testPreviewFeatures16() throws Exception {
 		String name = "java16";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
-		assertHasErrors(project, "is a preview feature and disabled by default");
+		assertHasErrors(project, "The Java feature 'Sealed Types' is only available with source level 17 and above");
+	}
+
+	@Test
+	public void testPreviewFeaturesDisabledByDefault() throws Exception {
+		String name = "java17";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertNoErrors(project);
 	}
 
 	@Test
