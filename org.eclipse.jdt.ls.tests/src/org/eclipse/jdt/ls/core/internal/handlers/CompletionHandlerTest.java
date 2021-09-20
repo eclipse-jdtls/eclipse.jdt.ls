@@ -1520,7 +1520,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(12);
+		CompletionItem item = items.get(10);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic record Test(${0}) {\n}", ResourceUtils.dos2Unix(te));
@@ -1541,7 +1541,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(11);
+		CompletionItem item = items.get(9);
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
