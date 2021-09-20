@@ -17,7 +17,7 @@ import java.lang.reflect.Field;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.jsoup.safety.Cleaner;
-import org.jsoup.safety.Whitelist;
+import org.jsoup.safety.Safelist;
 
 import com.overzealous.remark.Options;
 import com.overzealous.remark.Options.Tables;
@@ -47,13 +47,13 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 
 			Cleaner c = (Cleaner) cleanerField.get(remark);
 
-			Field whitelistField = Cleaner.class.getDeclaredField("whitelist");
-			whitelistField.setAccessible(true);
+			Field safelistField = Cleaner.class.getDeclaredField("safelist");
+			safelistField.setAccessible(true);
 
-			Whitelist w = (Whitelist) whitelistField.get(c);
+			Safelist s = (Safelist) safelistField.get(c);
 
-			w.addProtocols("a", "href", "file", "jdt");
-			w.addProtocols("img", "src", "file");
+			s.addProtocols("a", "href", "file", "jdt");
+			s.addProtocols("img", "src", "file");
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			JavaLanguageServerPlugin.logException("Unable to modify jsoup to include file and jdt protocols", e);
 		}
