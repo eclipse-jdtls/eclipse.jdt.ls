@@ -75,6 +75,7 @@ import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.TextEdit;
@@ -280,12 +281,13 @@ public class SourceAssistProcessor {
 				CodeActionProposal getAccessorsProposal = (pm) -> {
 					ASTNode declarationNode = null;
 					CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
-					if (astRoot != null) {
-						ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), params.getRange()), DiagnosticsHelper.getLength(type.getCompilationUnit(), params.getRange()));
+					Range range = params.getRange();
+					if (astRoot != null && range != null) {
+						ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range), DiagnosticsHelper.getLength(type.getCompilationUnit(), range));
 						declarationNode = SourceAssistProcessor.getDeclarationNode(node);
 					}
 					// If cursor position is not specified, then insert to the last by default.
-					IJavaElement insertBefore = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, params.getRange());
+					IJavaElement insertBefore = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);
 					GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments(), insertBefore);
 					TextEdit edit = operation.createTextEdit(pm, accessors);
 					return convertToWorkspaceEdit(context.getCompilationUnit(), edit);

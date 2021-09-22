@@ -70,7 +70,7 @@ public class GenerateAccessorsHandler {
 		try {
 			ASTNode declarationNode = null;
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
-			if (astRoot != null) {
+			if (astRoot != null && cursor != null) {
 				ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
 				declarationNode = SourceAssistProcessor.getDeclarationNode(node);
 			}
