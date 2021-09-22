@@ -207,6 +207,38 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		}
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
+	@Test
+	public void testPreviewFeaturesSettingsDisabled() throws Exception {
+		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
+		try {
+			TestVMType.setTestJREAsDefault("17");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java17a", "foo/bar/Foo.java");
+			assertTrue(invisibleProject.exists());
+			assertNoErrors(invisibleProject);
+			IJavaProject javaProject = JavaCore.create(invisibleProject);
+			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		} finally {
+			TestVMType.setTestJREAsDefault(defaultJVM);
+		}
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
+	@Test
+	public void testPreviewFeaturesSettingEnabled() throws Exception {
+		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
+		try {
+			TestVMType.setTestJREAsDefault("17");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java17b", "foo/bar/Foo.java");
+			assertTrue(invisibleProject.exists());
+			assertNoErrors(invisibleProject);
+			IJavaProject javaProject = JavaCore.create(invisibleProject);
+			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		} finally {
+			TestVMType.setTestJREAsDefault(defaultJVM);
+		}
+	}
+
 	@Test
 	public void testPreviewFeaturesDisabledForNotLatestJDK() throws Exception {
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
@@ -217,7 +249,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 			assertTrue(invisibleProject.exists());
 			assertNoErrors(invisibleProject);
 			IJavaProject javaProject = JavaCore.create(invisibleProject);
-			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
