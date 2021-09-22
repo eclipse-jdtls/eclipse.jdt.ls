@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -326,9 +327,15 @@ public final class ProjectUtils {
 					workspaceLinkFolder.createLink(workspaceRoot.toFile().toURI(), IResource.REPLACE, null);
 					File settings = new File(workspaceRoot.toFile(), SETTINGS);
 					if (settings.exists()) {
+						// reset the preview feature property - https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
+						Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
+						String defaultPreview = defaultOptions.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES);
+						String defaultReport = defaultOptions.get(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES);
+						IJavaProject javaProject = JavaCore.create(invisibleProject);
+						javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, defaultPreview);
+						javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, defaultReport);
 						IFolder settingsLinkFolder = invisibleProject.getFolder(SETTINGS);
 						settingsLinkFolder.createLink(settings.toURI(), IResource.REPLACE, null);
-						IJavaProject javaProject = JavaCore.create(invisibleProject);
 						JVMConfigurator.configureJVMSettings(javaProject);
 					}
 				} catch (CoreException e) {
@@ -340,6 +347,17 @@ public final class ProjectUtils {
 		}
 
 		return invisibleProject;
+	}
+
+	public static boolean isSettingsFolderLinked(IProject project) {
+		if (project != null) {
+			IFolder workspaceLinkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
+			if (workspaceLinkFolder.isLinked()) {
+				IFolder settings = project.getFolder(SETTINGS);
+				return settings.exists() && settings.isLinked();
+			}
+		}
+		return false;
 	}
 
 	private static IClasspathEntry removeFilters(IClasspathEntry entry, IPath path) {

@@ -339,14 +339,15 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			Map<String, String> options = javaProject.getOptions(false);
 			JavaCore.setComplianceOptions(compliance, options);
 		}
-		if (JavaCore.isSupportedJavaVersion(version) && JavaCore.compareJavaVersions(version, JavaCore.latestSupportedJavaVersion()) >= 0) {
-			//Enable Java preview features for the latest JDK release by default and stfu about it
-			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-			javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		} else {
-			javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.DISABLED);
+		if (!ProjectUtils.isSettingsFolderLinked(javaProject.getProject())) {
+			if (JavaCore.isSupportedJavaVersion(version) && JavaCore.compareJavaVersions(version, JavaCore.latestSupportedJavaVersion()) >= 0) {
+				//Enable Java preview features for the latest JDK release by default and stfu about it
+				javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+				javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+			} else {
+				javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.DISABLED);
+			}
 		}
-
 	}
 
 }
