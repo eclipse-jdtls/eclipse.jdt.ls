@@ -39,56 +39,55 @@ Features
 * Extensibility
 
 
-First Time Setup
---------------
-**Pre-requisite: Java 11 must be installed on your machine and configured in Eclipse.**
+Installation
+------------
 
-0. Fork and clone the repository
-1. Install [Eclipse IDE for Eclipse Committers](https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-eclipse-committers) that will have the most needed plugins already installed. Alternatively,
-you can get the [Eclipse IDE for Java developers](https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-java-developers)
-and just install Eclipse PDE from the Eclipse Marketplace.
+There are several options to install eclipse.jdt.ls:
 
-2. Once installed use `File > Open Projects from File System...` and
-point it at `eclipse.jdt.ls` and Eclipse should automatically
-detect the projects and import it properly.
+- Download and extract a milestone build from [http://download.eclipse.org/jdtls/milestones/](http://download.eclipse.org/jdtls/milestones/?d)
+- Download and extract a snapshot build from [http://download.eclipse.org/jdtls/snapshots/](http://download.eclipse.org/jdtls/snapshots/?d)
+- Under some Linux distributions you can use the package manager. Search the package repositories for `jdtls` or `eclipse.jdt.ls`.
+- Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/11 ./mvnw clean verify`. Optionally append `-DskipTests=true` to by-pass the tests. This command  builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
 
-3. If, after importing the projects, you see an error on `pom.xml` about Tycho, you can use Quick Fix
-(Ctrl+1) to install the Tycho maven integration.
+Some editors or editor extensions bundle eclipse.jdt.ls or contain logic to install it. If that is the case, you only need to install the editor extension. For example for Visual Studio Code you can install the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) and it will take care of the rest.
 
-4. At that point, some plug-ins should still be missing in order to build the project. You can either open `org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target` in the Target Editor (which is the default editor) and click on `Set Target Platform`, or alternatively, open `Preferences > Plug-in Development > Target Platform` and select `Java Language Server Target Definition`). Eclipse will take some time to download all the required dependencies. It should then be able to compile all the projects in the workspace.
-
-Building from the command line
-----------------------------
-**Pre-requisite: Java 11 must be installed on your machine and accessible in the PATH.**
-
-The following command will install [Apache Maven](https://maven.apache.org/) if necessary, then build the server into the  `/org.eclipse.jdt.ls.product/target/repository` folder:
-
-```bash
-    $ ./mvnw clean verify
-````
 
 Running from the command line
 ------------------------------
-1. Choose a connection type from "Managing connection types" section below, and then set those environment variables in your terminal or specify them as system properties with `-D` prior to continuing
 
-2. Make sure to build the server using the steps above in the "Building from command line" section
+If you built eclipse.jdt.ls from source, `cd` into `./org.eclipse.jdt.ls.product/target/repository`. If you downloaded a milestone or snapshot build, extract the contents.
 
-3. `cd` into the build directory of the project: `/org.eclipse.jdt.ls.product/target/repository`
+To start the server in the active terminal, adjust the following command as described further below and run it:
 
-4. Prior to starting the server, make sure that your socket (TCP or sock file) server is running for both the IN and OUT sockets. You will get an error if the JDT server cannot connect on your ports/files specified in the environment variables
-
-5. To start the server in the active terminal, run:
 ```bash
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044 -Declipse.application=org.eclipse.jdt.ls.core.id1 -Dosgi.bundles.defaultStartLevel=4 -Declipse.product=org.eclipse.jdt.ls.core.product -Dlog.level=ALL -noverify -Xmx1G -jar ./plugins/org.eclipse.equinox.launcher_1.5.200.v20180922-1751.jar -configuration ./config_linux -data /path/to/data --add-modules=ALL-SYSTEM --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED
+java \
+	-Declipse.application=org.eclipse.jdt.ls.core.id1 \
+	-Dosgi.bundles.defaultStartLevel=4 \
+	-Declipse.product=org.eclipse.jdt.ls.core.product \
+	-Dlog.level=ALL \
+	-noverify \
+	-Xmx1G \
+	-jar ./plugins/org.eclipse.equinox.launcher_1.5.200.v20180922-1751.jar \
+	-configuration ./config_linux \
+	-data /path/to/data \
+	--add-modules=ALL-SYSTEM \
+	--add-opens java.base/java.util=ALL-UNNAMED \
+	--add-opens java.base/java.lang=ALL-UNNAMED
 ```
 
-6. Choosing a value for `-configuration`: this is the path to your platform's configuration directory. For linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
+1. Choose a value for `-configuration`: this is the path to your platform's configuration directory. For Linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
+2. Change the filename of the jar in `-jar ./plugins/...` to match the version you built or downloaded.
+3. Choose a value for `-data`: An absolute path to your data directory. eclipse.jdt.ls stores workspace specific information in it. This should be unique per workspace/project.
 
-7. Choosing a value for `-data`: the value for your data directory, should be the directory where your active workspace is, and you wish for the java langserver to add in its default files. Should also be the absolute path to this directory, ie., /home/username/workspace
 
-8. Notes about debugging: the `-agentlib:` is for connecting a java debugger agent to the process, and if you wish to debug the server from the start of execution, set `suspend=y` so that the JVM will wait for your debugger prior to starting the server
+If you want to debug eclipse.jdt.ls itself, add `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044` right after `java` and ensure nothing else is running on port 1044. If you want to debug from the start of execution, change `suspend=n` to `suspend=y` so the JVM will wait for your debugger prior to starting the server.
 
-9. Notes on jar versions: the full name of the build jar file above, `org.eclipse.equinox.launcher_1.4.0.v20161219-1356.jar`, may change incrementally as the project version changes. If java complains about jar not found, then look for the latest version of the `org.eclipse.equinox.launcher_*` jar in the `/org.eclipse.jdt.ls.product/target/repository/plugins` directory and replace it in the command after the `-jar`
+
+Development Setup
+-----------------
+
+See [Contributing](CONTRIBUTING.md)
+
 
 Managing connection types
 -------------------------
