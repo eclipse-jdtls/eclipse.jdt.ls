@@ -173,11 +173,16 @@ public class SignatureHelpHandler {
 							}
 						}
 						if (!monitor.isCanceled() && help.getActiveSignature() == null && node instanceof Block) {
+							String methodName = getMethodName(node, unit, contextInfomation);
 							for (int i = 0; i < infos.size(); i++) {
 								if (infos.get(i).getParameters().size() >= activeParameter) {
-									help.setActiveSignature(i);
-									help.setActiveParameter(activeParameter);
-									return help;
+									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
+									IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
+									if (m != null && m.getElementName().equals(methodName)) {
+										help.setActiveSignature(i);
+										help.setActiveParameter(activeParameter);
+										return help;
+									}
 								}
 							}
 						}
@@ -270,34 +275,9 @@ public class SignatureHelpHandler {
 				return node;
 			}
 			if (node instanceof Block) {
-				try {
-					int pos = contextInfomation[0];
-					IBuffer buffer = unit.getBuffer();
-					while (pos >= 0) {
-						char ch = buffer.getChar(pos);
-						if (ch == '(' || Character.isWhitespace(ch)) {
-							pos--;
-						} else {
-							break;
-						}
-					}
-					int end = pos + 1;
-					while (pos >= 0) {
-						char ch = buffer.getChar(pos);
-						if (Character.isJavaIdentifierPart(ch)) {
-							pos--;
-						} else {
-							break;
-						}
-					}
-					int start = pos + 1;
-					String name = unit.getSource().substring(start, end);
-					IStatus status = JavaConventionsUtil.validateMethodName(name, unit);
-					if (status.isOK()) {
-						return node;
-					}
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				String name = getMethodName(node, unit, contextInfomation);
+				if (name != null) {
+					return node;
 				}
 			}
 			if (node instanceof Expression) {
@@ -305,6 +285,41 @@ public class SignatureHelpHandler {
 				if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef) {
 					return node;
 				}
+			}
+		}
+		return null;
+	}
+
+	private String getMethodName(ASTNode node, ICompilationUnit unit, int[] contextInfomation) {
+		if (node instanceof Block) {
+			try {
+				int pos = contextInfomation[0];
+				IBuffer buffer = unit.getBuffer();
+				while (pos >= 0) {
+					char ch = buffer.getChar(pos);
+					if (ch == '(' || Character.isWhitespace(ch)) {
+						pos--;
+					} else {
+						break;
+					}
+				}
+				int end = pos + 1;
+				while (pos >= 0) {
+					char ch = buffer.getChar(pos);
+					if (Character.isJavaIdentifierPart(ch)) {
+						pos--;
+					} else {
+						break;
+					}
+				}
+				int start = pos + 1;
+				String name = unit.getSource().substring(start, end);
+				IStatus status = JavaConventionsUtil.validateMethodName(name, unit);
+				if (status.isOK()) {
+					return name;
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
 		return null;
