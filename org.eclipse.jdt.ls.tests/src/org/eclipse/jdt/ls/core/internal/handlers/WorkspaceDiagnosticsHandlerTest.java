@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -44,6 +44,7 @@ import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -109,13 +110,17 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		String msg3 = "It's probably time to panic";
 		IMarker m3 = createMarker(42, msg3, 100, 10000, 10005);
 
+		String msg4 = "ArrayList cannot be resolved to a type";
+		IMarker m4 = createUndefinedTypeMarker(IMarker.SEVERITY_ERROR, msg4, 14, 215, 228);
+
 		IDocument d = mock(IDocument.class);
 		when(d.getLineOffset(1)).thenReturn(90);
 		when(d.getLineOffset(9)).thenReturn(1000);
+		when(d.getLineOffset(14)).thenReturn(210);
 		when(d.getLineOffset(99)).thenReturn(10000);
 
-		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, m2, m3 }, true);
-		assertEquals(3, diags.size());
+		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, m2, m3, m4 }, true);
+		assertEquals(4, diags.size());
 
 		Range r;
 		Diagnostic d1 = diags.get(0);
@@ -145,6 +150,14 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(99, r.getEnd().getLine());
 		assertEquals(5, r.getEnd().getCharacter());
 
+		Diagnostic d4 = diags.get(3);
+		assertEquals(msg4, d4.getMessage());
+		assertEquals(DiagnosticSeverity.Error, d4.getSeverity());
+		r = d4.getRange();
+		assertEquals(13, r.getStart().getLine());
+		assertEquals(215, r.getStart().getCharacter());
+		assertEquals(13, r.getEnd().getLine());
+		assertEquals(228, r.getEnd().getCharacter());
 	}
 
 	@Test
@@ -537,6 +550,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		when(m.getAttribute(IMarker.LINE_NUMBER, -1)).thenReturn(line);
 		when(m.getAttribute(IMarker.CHAR_START, -1)).thenReturn(start);
 		when(m.getAttribute(IMarker.CHAR_END, -1)).thenReturn(end);
+		return m;
+	}
+
+	private IMarker createUndefinedTypeMarker(int severity, String msg, int line, int start, int end) {
+		IMarker m = createMarker(severity, msg, line, start, end);
+		when(m.exists()).thenReturn(true);
+		when(m.getAttribute(IJavaModelMarker.ID, -1)).thenReturn(IProblem.UndefinedType);
 		return m;
 	}
 

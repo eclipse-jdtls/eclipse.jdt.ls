@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -404,17 +404,17 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 					} catch (BadLocationException e) {
 						JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
-				} else {
-					int lineOffset = 0;
-					try {
-						lineOffset = document.getLineOffset(line);
-					} catch (BadLocationException unlikelyException) {
-						JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
-						return new Range(new Position(line, 0), new Position(line, 0));
-					}
-					cEnd = marker.getAttribute(IMarker.CHAR_END, -1) - lineOffset;
-					cStart = marker.getAttribute(IMarker.CHAR_START, -1) - lineOffset;
 				}
+
+				int lineOffset = 0;
+				try {
+					lineOffset = document.getLineOffset(line);
+				} catch (BadLocationException unlikelyException) {
+					JavaLanguageServerPlugin.logException(unlikelyException.getMessage(), unlikelyException);
+					return new Range(new Position(line, 0), new Position(line, 0));
+				}
+				cEnd = marker.getAttribute(IMarker.CHAR_END, -1) - lineOffset;
+				cStart = marker.getAttribute(IMarker.CHAR_START, -1) - lineOffset;
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
