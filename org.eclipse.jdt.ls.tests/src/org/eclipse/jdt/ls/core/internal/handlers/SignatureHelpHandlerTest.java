@@ -91,9 +91,9 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		SignatureHelp help = getSignatureHelp(cu, 4, 39);
 		assertNotNull(help);
-		assertEquals(1, help.getSignatures().size());
-		assertEquals("foo(String s) : int", help.getSignatures().get(0).getLabel());
-		assertTrue(help.getSignatures().get(0).getDocumentation().getLeft().length() > 0);
+		assertEquals(13, help.getSignatures().size());
+		assertEquals("foo(String s) : int", help.getSignatures().get(help.getActiveSignature()).getLabel());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getDocumentation().getLeft().length() > 0);
 		assertEquals((Integer) 0, help.getActiveParameter());
 	}
 
@@ -112,7 +112,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		SignatureHelp help = getSignatureHelp(cu, 5, 42);
 		assertNotNull(help);
-		assertEquals(3, help.getSignatures().size());
+		assertEquals(15, help.getSignatures().size());
 		assertEquals((Integer) 1, help.getActiveParameter());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(int s, String s) : int");
 	}
@@ -167,7 +167,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 12);
 		assertNotNull(help);
-		assertEquals(2, help.getSignatures().size());
+		assertEquals(14, help.getSignatures().size());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(String s, boolean bar) : void");
 	}
 
@@ -187,7 +187,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 12);
 		assertNotNull(help);
-		assertEquals(3, help.getSignatures().size());
+		assertEquals(15, help.getSignatures().size());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(String s, String b) : void");
 	}
 
@@ -325,7 +325,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().startsWith("asList(T... "));
 		help = getSignatureHelp(cu, 5, 19);
 		assertNotNull(help);
-		assertEquals(1, help.getSignatures().size());
+		assertEquals(2, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("demo(String s, String... s2) : void"));
 	}
 
@@ -336,7 +336,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = type.getCompilationUnit();
 		SignatureHelp help = getSignatureHelp(cu, 4, 16);
 		assertNotNull(help);
-		assertEquals(2, help.getSignatures().size());
+		assertEquals(3, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("run(Class<?> clazz, String... args) : void"));
 	}
 
@@ -347,7 +347,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = type.getCompilationUnit();
 		SignatureHelp help = getSignatureHelp(cu, 8, 14);
 		assertNotNull(help);
-		assertEquals(1, help.getSignatures().size());
+		assertEquals(12, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("test(Function<String,String> f) : void"));
 	}
 
@@ -411,7 +411,8 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	private void testStringLiteral(ICompilationUnit cu, int line, int character) {
 		SignatureHelp help = getSignatureHelp(cu, line, character);
 		assertNotNull(help);
-		assertEquals(1, help.getSignatures().size());
+		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=575149
+		// assertEquals(1, help.getSignatures().size());
 		assertNotNull(help.getActiveParameter());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("foo(String p, int x) : void"));
 	}
