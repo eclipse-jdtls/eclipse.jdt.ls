@@ -104,6 +104,7 @@ public class SourceAssistProcessor {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
+		boolean isInTypeDeclaration = isInTypeDeclaration(context);
 
 		// Generate Constructor quickassist
 		Optional<Either<Command, CodeAction>> generateConstructors = null;
@@ -138,18 +139,18 @@ public class SourceAssistProcessor {
 		}
 
 		// Generate Getter and Setter QuickAssist
-		if (isInTypeDeclaration(context)) {
-			Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
+		if (isInTypeDeclaration) {
+			Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration);
 			addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
 		}
 		// Generate Getter and Setter Source Action
-		Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, monitor);
+		Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration);
 		addSourceActionCommand($, params.getContext(), sourceGetterSetter);
 
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
 			// Generate QuickAssist
-			if (isInTypeDeclaration(context)) {
+			if (isInTypeDeclaration) {
 				Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
 				addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
 			}
@@ -272,22 +273,15 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, IProgressMonitor monitor) {
+	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration) {
 		try {
 			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type);
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
 				CodeActionProposal getAccessorsProposal = (pm) -> {
-					ASTNode declarationNode = null;
-					CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
-					Range range = params.getRange();
-					if (astRoot != null && range != null) {
-						ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range), DiagnosticsHelper.getLength(type.getCompilationUnit(), range));
-						declarationNode = SourceAssistProcessor.getDeclarationNode(node);
-					}
 					// If cursor position is not specified, then insert to the last by default.
-					IJavaElement insertBefore = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);
+					IJavaElement insertBefore = isInTypeDeclaration ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, params.getRange());
 					GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, context.getASTRoot(), preferenceManager.getPreferences().isCodeGenerationTemplateGenerateComments(), insertBefore);
 					TextEdit edit = operation.createTextEdit(pm, accessors);
 					return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
