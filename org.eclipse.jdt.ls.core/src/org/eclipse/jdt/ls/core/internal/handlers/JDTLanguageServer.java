@@ -929,7 +929,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params) {
 		logInfo(">> java/generateAccessors");
-		return computeAsync((monitor) -> GenerateAccessorsHandler.generateAccessors(params));
+		return computeAsync((monitor) -> GenerateAccessorsHandler.generateAccessors(params, monitor));
 	}
 
 	@Override
