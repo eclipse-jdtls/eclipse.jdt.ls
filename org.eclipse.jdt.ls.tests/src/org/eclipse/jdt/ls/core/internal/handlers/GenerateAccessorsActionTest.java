@@ -172,14 +172,12 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(quickAssistActions.isEmpty());
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(quickAssistActions.isEmpty());
 		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
 	}
 }
