@@ -232,13 +232,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.descriptionProvider.updateDescription(proposal, $);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
 		proposalProvider.updateReplacement(proposal, $, '\0');
-		// Make sure `filterText` matches `textEdit`
-		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
 		boolean isSignatureHelpEnabled = preferenceManager.getPreferences().isSignatureHelpEnabled();
 		// Hide completions when signature help is visible.
 		if (isSignatureHelpEnabled && PREFER_SIGNATURE_HELP_COMPLETION_ITEMS.contains(proposal.getKind())) {
 			$.setFilterText(new String(proposal.getName()));
 		}
+		// Make sure `filterText` matches `textEdit`
+		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
 		if ($.getFilterText() == null && $.getTextEdit() != null) {
 			String newText = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getNewText() : $.getTextEdit().getRight().getNewText();
 			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
