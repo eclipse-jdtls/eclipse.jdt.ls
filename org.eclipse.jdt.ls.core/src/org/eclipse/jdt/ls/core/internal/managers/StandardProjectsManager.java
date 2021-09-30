@@ -529,6 +529,7 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	@Override
 	public void registerListeners() {
+		configureSettings(preferenceManager.getPreferences());
 		if (this.preferenceChangeListener == null) {
 			this.preferenceChangeListener = new IPreferencesChangeListener() {
 				@Override
@@ -558,6 +559,20 @@ public class StandardProjectsManager extends ProjectsManager {
 		buildSupports().forEach(p -> {
 			try {
 				p.registerPreferencesChangeListener(this.preferenceManager);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		});
+	}
+
+	@Override
+	public void unregisterListeners() {
+		if (this.preferenceChangeListener == null) {
+			this.preferenceManager.removePreferencesChangeListener(this.preferenceChangeListener);
+		}
+		buildSupports().forEach(p -> {
+			try {
+				p.unregisterPreferencesChangeListener(this.preferenceManager);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}

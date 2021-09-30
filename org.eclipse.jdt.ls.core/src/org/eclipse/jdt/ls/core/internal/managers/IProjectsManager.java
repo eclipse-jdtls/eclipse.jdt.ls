@@ -76,10 +76,19 @@ public interface IProjectsManager {
 	/**
 	 * Register listeners.
 	 */
-	void registerListeners();
+	default void registerListeners() {
+		// do nothing
+	};
 
 	/**
 	 * Handle the file change event.
 	 */
 	void fileChanged(String uriString, CHANGE_TYPE changeType);
+
+	/**
+	 * Unregister listeners.
+	 */
+	default void unregisterListeners() {
+		// do nothing
+	};
 }

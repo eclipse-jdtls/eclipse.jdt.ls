@@ -1343,15 +1343,19 @@ public class Preferences {
 		if (url == null || url.isBlank()) {
 			return null;
 		}
+		URI uri = null;
 		try {
-			URI uri = new URI(ResourceUtils.toClientUri(url));
+			uri = new URI(ResourceUtils.toClientUri(url));
 			if (!uri.isAbsolute()) {
-				return getURI(url);
+				uri = getURI(url);
 			}
-			return uri;
 		} catch (URISyntaxException e1) {
-			return getURI(url);
+			uri = getURI(url);
 		}
+		if (uri == null) {
+			JavaLanguageServerPlugin.logInfo("Cannot resolve '" + url + "'.");
+		}
+		return uri;
 	}
 
 	private URI getURI(String path) {
