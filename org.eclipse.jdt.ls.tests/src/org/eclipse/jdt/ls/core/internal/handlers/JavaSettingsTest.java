@@ -220,4 +220,32 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
 	}
 
+	@Test
+	public void testSettings() throws Exception {
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("warning", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+		try {
+			String settingsUrl = "../../formatter/settings2.prefs";
+			preferences.setSettingsUrl(settingsUrl);
+			projectsManager.registerListeners();
+			waitForBackgroundJobs();
+			assertEquals("warning", JavaCore.getOption(MISSING_SERIAL_VERSION));
+			assertEquals("ignore", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+			assertEquals("warning", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+			assertEquals("ignore", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+		} finally {
+			JavaCore.setOptions(options);
+			preferences.setSettingsUrl(null);
+			StandardProjectsManager.configureSettings(preferences);
+			projectsManager.unregisterListeners();
+			waitForBackgroundJobs();
+		}
+		assertEquals("ignore", JavaCore.getOption(MISSING_SERIAL_VERSION));
+		assertEquals("warning", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
+		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
+		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+	}
+
 }

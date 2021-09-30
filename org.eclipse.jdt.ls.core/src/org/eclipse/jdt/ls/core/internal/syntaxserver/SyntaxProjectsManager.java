@@ -193,11 +193,6 @@ public class SyntaxProjectsManager extends ProjectsManager {
 	}
 
 	@Override
-	public void registerListeners() {
-		// do nothing
-	}
-
-	@Override
 	public void fileChanged(String uriString, CHANGE_TYPE changeType) {
 		if (uriString == null) {
 			return;
