@@ -296,13 +296,11 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		IBinding binding = node.resolveBinding();
 		TokenType tokenType = TokenType.getApplicableType(binding);
 		if (tokenType != null) {
-			int modifiers = TokenModifier.getApplicableModifiers(binding);
-			if (TokenModifier.isGeneric(binding)) {
-				modifiers |= TokenModifier.GENERIC.bitmask;
-			}
-			if (TokenModifier.isDeclaration(node)) {
-				modifiers |= TokenModifier.DECLARATION.bitmask;
-			}
+			int modifiers
+				= TokenModifier.checkJavaModifiers(binding)
+				| TokenModifier.checkConstructor(binding)
+				| TokenModifier.checkGeneric(binding)
+				| TokenModifier.checkDeclaration(node);
 			addToken(node, tokenType, modifiers);
 		}
 
@@ -391,15 +389,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 * @param typeArgument
 	 */
 	private void typeArgumentVisitor(Type typeArgument) {
-		visitSimpleNameOfType(typeArgument, (simpleName) -> {
+		visitSimpleNameOfType(typeArgument, simpleName -> {
 			IBinding binding = simpleName.resolveBinding();
 			TokenType tokenType = TokenType.getApplicableType(binding);
 			if (tokenType != null) {
-				int modifiers = TokenModifier.getApplicableModifiers(binding);
-				if (TokenModifier.isGeneric((ITypeBinding) binding)) {
-					modifiers |= TokenModifier.GENERIC.bitmask;
-				}
-				modifiers |= TokenModifier.TYPE_ARGUMENT.bitmask;
+				int modifiers
+					= TokenModifier.checkJavaModifiers(binding)
+					| TokenModifier.checkGeneric(binding)
+					| TokenModifier.TYPE_ARGUMENT.bitmask;
 				addToken(simpleName, tokenType, modifiers);
 			}
 		});
@@ -410,13 +407,20 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		acceptNode(node.getExpression());
 		visitNodeList(node.typeArguments(), this::typeArgumentVisitor);
 
-		visitSimpleNameOfType(node.getType(), (simpleName) -> {
-			IMethodBinding constructorBinding = node.resolveConstructorBinding();
-			int modifiers = TokenModifier.getApplicableModifiers(constructorBinding);
-			if (TokenModifier.isGeneric(constructorBinding) || node.getType().isParameterizedType()) {
-				modifiers |= TokenModifier.GENERIC.bitmask;
+		visitSimpleNameOfType(node.getType(), simpleName -> {
+			// Figure out the token type based on the constructed type.
+			TokenType tokenType = TokenType.getApplicableType(node.resolveTypeBinding());
+			if (tokenType != null) {
+				// Figure out the token modifiers based on the constructor method.
+				// For example, the type could be public, whereas a specific
+				// constructor may be private.
+				IMethodBinding constructorBinding = node.resolveConstructorBinding();
+				int modifiers
+					= TokenModifier.checkJavaModifiers(constructorBinding)
+					| TokenModifier.checkGeneric(constructorBinding)
+					| TokenModifier.CONSTRUCTOR.bitmask;
+				addToken(simpleName, tokenType, modifiers);
 			}
-			addToken(simpleName, TokenType.METHOD, modifiers);
 		});
 
 		acceptNodeList(node.arguments());

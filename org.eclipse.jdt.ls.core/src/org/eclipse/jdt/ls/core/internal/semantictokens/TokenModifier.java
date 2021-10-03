@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
@@ -47,7 +48,8 @@ public enum TokenModifier {
 	NATIVE("native"),
 	GENERIC("generic"),
 	TYPE_ARGUMENT("typeArgument"),
-	IMPORT_DECLARATION("importDeclaration");
+	IMPORT_DECLARATION("importDeclaration"),
+	CONSTRUCTOR("constructor");
 
 	/**
 	 * This is the name of the token modifier given to the client, so it
@@ -83,14 +85,13 @@ public enum TokenModifier {
 	}
 
 	/**
-	 * Returns the bitwise OR of all the semantic token modifiers that can
-	 * be easily figured out from a given binding. No modifiers (the value 0)
-	 * are returned if the binding is {@code null}.
+	 * Returns the bitwise OR of all the semantic token modifiers that apply
+	 * based on the binding's {@link Modifier}s and wheter or not it is deprecated.
 	 *
 	 * @param binding A binding.
 	 * @return The bitwise OR of the applicable modifiers for the binding.
 	 */
-	public static int getApplicableModifiers(IBinding binding) {
+	public static int checkJavaModifiers(IBinding binding) {
 		if (binding == null) {
 			return 0;
 		}
@@ -125,77 +126,62 @@ public enum TokenModifier {
 	}
 
 	/**
-	 * Returns whether or not a given binding corresponds to
-	 * a generic (or parameterized) type or method. {@code false}
-	 * is returned if the binding is {@code null}.
+	 * Checks whether or not a binding represents a constructor.
 	 *
 	 * @param binding A binding.
-	 * @return {@code true} if the binding corresponds to a generic
-	 * type or method, {@code false} otherwise.
+	 * @return A bitmask with the {@link #CONSTRUCTOR} bit set accordingly.
 	 */
-	public static boolean isGeneric(IBinding binding) {
-		if (binding == null) {
-			return false;
+	public static int checkConstructor(IBinding binding) {
+		if (binding instanceof IMethodBinding && ((IMethodBinding) binding).isConstructor()) {
+			return CONSTRUCTOR.bitmask;
 		}
-
-		switch (binding.getKind()) {
-			case IBinding.TYPE: {
-				return isGeneric((ITypeBinding) binding);
-			}
-			case IBinding.METHOD: {
-				return isGeneric((IMethodBinding) binding);
-			}
-			default:
-			return false;
-		}
+		return 0;
 	}
 
 	/**
-	 * Returns whether or not a given type binding corresponds to
-	 * a generic (or parameterized) type. {@code false}
-	 * is returned if the type binding is {@code null}.
+	 * Checks whether or not a binding represents a generic type or method.
 	 *
-	 * @param typeBinding A type binding.
-	 * @return {@code true} if the type binding corresponds to a generic
-	 * type, {@code false} otherwise.
+	 * @param binding A binding.
+	 * @return A bitmask with the {@link #GENERIC} bit set accordingly.
 	 */
-	public static boolean isGeneric(ITypeBinding typeBinding) {
-		if (typeBinding == null) {
-			return false;
+	public static int checkGeneric(IBinding binding) {
+		if (binding instanceof ITypeBinding) {
+			ITypeBinding typeBinding = (ITypeBinding) binding;
+			if (typeBinding.isGenericType() || typeBinding.isParameterizedType()) {
+				return GENERIC.bitmask;
+			}
 		}
-
-		return typeBinding.isGenericType() || typeBinding.isParameterizedType();
+		if (binding instanceof IMethodBinding) {
+			IMethodBinding methodBinding = (IMethodBinding) binding;
+			if (methodBinding.isGenericMethod() || methodBinding.isParameterizedMethod()) {
+				return GENERIC.bitmask;
+			}
+			return checkGeneric(methodBinding.getDeclaringClass());
+		}
+		return 0;
 	}
 
 	/**
-	 * Returns whether or not a given method binding corresponds to
-	 * a generic (or parameterized) method. {@code false}
-	 * is returned if the method binding is {@code null}.
+	 * Checks whether or not a binding represents a declaration.
 	 *
-	 * @param methodBinding A method binding.
-	 * @return {@code true} if the method binding corresponds to a generic
-	 * method, {@code false} otherwise.
+	 * @param binding A binding.
+	 * @return A bitmask with the {@link #DECLARATION} bit set accordingly.
 	 */
-	public static boolean isGeneric(IMethodBinding methodBinding) {
-		if (methodBinding == null) {
-			return false;
+	public static int checkDeclaration(SimpleName simpleName) {
+		if (isDeclaration(simpleName)) {
+			return DECLARATION.bitmask;
 		}
-
-		return methodBinding.isGenericMethod() || methodBinding.isParameterizedMethod();
+		return 0;
 	}
 
 	/**
 	* Returns whether a simple name represents a name that is being defined,
-	* as opposed to one being referenced. This method behaves exactly like
-	* {@link SimpleName#isDeclaration()} except that it also returns true
-	* for constructor declarations.
+	* as opposed to one being referenced.
 	*
 	* @param simpleName A simple name.
 	* @return {@code true} if this node declares a name, and {@code false} otherwise.
-	*
-	* @see SimpleName#isDeclaration()
 	*/
-	public static boolean isDeclaration(SimpleName simpleName) {
+	private static boolean isDeclaration(SimpleName simpleName) {
 		StructuralPropertyDescriptor d = simpleName.getLocationInParent();
 		if (d == null) {
 			return false;
@@ -227,6 +213,9 @@ public enum TokenModifier {
 		}
 		if (parent instanceof AnnotationTypeMemberDeclaration) {
 			return (d == AnnotationTypeMemberDeclaration.NAME_PROPERTY);
+		}
+		if (parent instanceof RecordDeclaration) {
+			return (d == RecordDeclaration.NAME_PROPERTY);
 		}
 		return false;
 	}
