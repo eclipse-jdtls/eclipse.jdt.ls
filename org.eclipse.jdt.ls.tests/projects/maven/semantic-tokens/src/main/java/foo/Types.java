@@ -17,5 +17,6 @@ public class Types {
 	interface SomeInterface {}
 	enum SomeEnum {}
 	@interface SomeAnnotation {}
+	record SomeRecord() {}
 
 }

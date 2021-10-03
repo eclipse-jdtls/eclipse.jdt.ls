@@ -37,7 +37,10 @@ public enum TokenType {
 
 	// Custom token types
 	ANNOTATION("annotation"),
-	ANNOTATION_MEMBER("annotationMember");
+	ANNOTATION_MEMBER("annotationMember"),
+	RECORD("record"),
+	RECORD_COMPONENT("recordComponent");
+
 
 	/**
 	 * This is the name of the token type given to the client, so it
@@ -79,6 +82,9 @@ public enum TokenType {
 				if (variableBinding.isEnumConstant()) {
 					return TokenType.ENUM_MEMBER;
 				}
+				if (variableBinding.isRecordComponent()) {
+					return TokenType.RECORD_COMPONENT;
+				}
 				if (variableBinding.isField()) {
 					return TokenType.PROPERTY;
 				}
@@ -89,6 +95,9 @@ public enum TokenType {
 			}
 			case IBinding.METHOD: {
 				IMethodBinding methodBinding = (IMethodBinding) binding;
+				if (methodBinding.isConstructor()) {
+					return getApplicableType(methodBinding.getDeclaringClass());
+				}
 				if (methodBinding.isAnnotationMember()) {
 					return TokenType.ANNOTATION_MEMBER;
 				}
@@ -102,14 +111,17 @@ public enum TokenType {
 				if (typeBinding.isAnnotation()) {
 					return TokenType.ANNOTATION;
 				}
-				if (typeBinding.isClass()) {
-					return TokenType.CLASS;
+				if (typeBinding.isRecord()) {
+					return TokenType.RECORD;
 				}
 				if (typeBinding.isInterface()) {
 					return TokenType.INTERFACE;
 				}
 				if (typeBinding.isEnum()) {
 					return TokenType.ENUM;
+				}
+				if (typeBinding.isClass()) {
+					return TokenType.CLASS;
 				}
 				return TokenType.TYPE;
 			}

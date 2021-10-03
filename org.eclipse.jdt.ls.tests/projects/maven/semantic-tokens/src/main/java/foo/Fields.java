@@ -14,4 +14,11 @@ public class Fields {
 		SECOND
 	}
 
+	record SomeRecord(Integer i, Float f) {
+		void foo(Object foo) {
+			foo(i);
+			foo(f);
+		}
+	}
+
 }

@@ -66,7 +66,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	private void setOptions() {
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-		JavaCore.setComplianceOptions("11", options); // Otherwise we can't test module-info.java
+		JavaCore.setComplianceOptions("16", options);
 		semanticTokensProject.setOptions(options);
 	}
 
@@ -117,7 +117,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("main", "method", "public", "static", "declaration")
 			.assertNextToken("String", "class", "public", "readonly")
 			.assertNextToken("Methods", "class", "public")
-			.assertNextToken("Methods", "method", "public")
+			.assertNextToken("Methods", "class", "public", "constructor")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("foo1", "method", "public", "generic")
 			.assertNextToken("foo2", "method", "private")
@@ -136,47 +136,86 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("public", "modifier")
 			.assertNextToken("Constructors", "class", "public", "declaration")
 			.assertNextToken("private", "modifier")
-			.assertNextToken("Constructors", "method", "private", "declaration")
+			.assertNextToken("Constructors", "class", "private", "constructor", "declaration")
 
 			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("c1", "variable", "declaration")
-			.assertNextToken("Constructors", "method", "private")
+			.assertNextToken("Constructors", "class", "private", "constructor")
 
 			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("c2", "variable", "declaration")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
-			.assertNextToken("Constructors", "method", "private")
+			.assertNextToken("Constructors", "class", "private", "constructor")
 
 			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "class", "protected")
 			.assertNextToken("i1", "variable", "declaration")
 			.assertNextToken("Constructors", "class", "public")
-			.assertNextToken("InnerClass", "method", "protected")
+			.assertNextToken("InnerClass", "class", "protected", "constructor")
 
 			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "class", "protected")
 			.assertNextToken("i2", "variable", "declaration")
 			.assertNextToken("SomeAnnotation", "annotation", "public")
 			.assertNextToken("Constructors", "class", "public")
-			.assertNextToken("InnerClass", "method", "protected")
+			.assertNextToken("InnerClass", "class", "protected", "constructor")
 
 			.assertNextToken("Constructors", "class", "public")
 			.assertNextToken("InnerClass", "class", "protected", "generic")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("i3", "variable", "declaration")
 			.assertNextToken("Constructors", "class", "public")
-			.assertNextToken("InnerClass", "method", "protected", "generic")
+			.assertNextToken("InnerClass", "class", "protected", "generic", "constructor")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+
+			.assertNextToken("InnerClass", "class", "protected", "generic")
+			.assertNextToken("Integer", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("i4", "variable", "declaration")
+			.assertNextToken("InnerClass", "class", "protected", "generic", "constructor")
+
+			.assertNextToken("GenericConstructor", "class", "private")
+			.assertNextToken("g1", "variable", "declaration")
+			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
+			.assertNextToken("GenericConstructor", "class", "protected", "generic", "constructor")
+
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("InnerRecord", "record", "private", "static", "readonly")
+			.assertNextToken("r1", "variable", "declaration")
+			.assertNextToken("Constructors", "class", "public")
+			.assertNextToken("InnerRecord", "record", "private", "constructor")
+
+			.assertNextToken("InnerRecord", "record", "protected", "constructor")
 
 			.assertNextToken("protected", "modifier")
 			.assertNextToken("InnerClass", "class", "protected", "generic", "declaration")
 			.assertNextToken("T", "typeParameter", "declaration")
+
+			.assertNextToken("private", "modifier")
+			.assertNextToken("GenericConstructor", "class", "private", "declaration")
+			.assertNextToken("protected", "modifier")
+			.assertNextToken("T", "typeParameter", "declaration")
+			.assertNextToken("GenericConstructor", "class", "protected", "generic", "constructor", "declaration")
+
+			.assertNextToken("public", "modifier")
+			.assertNextToken("InnerEnum", "enum", "public", "static", "readonly", "declaration")
+			.assertNextToken("FOO", "enumMember", "public", "static", "readonly", "declaration")
+			.assertNextToken("InnerEnum", "enum", "private", "constructor", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("string", "parameter", "declaration")
+
+			.assertNextToken("private", "modifier")
+			.assertNextToken("InnerRecord", "record", "private", "static", "readonly", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("string", "recordComponent", "declaration")
+			.assertNextToken("integer", "recordComponent", "declaration")
+			.assertNextToken("protected", "modifier")
+			.assertNextToken("InnerRecord", "record", "protected", "constructor", "declaration")
 		.endAssertion();
 	}
 
 	@Test
-	public void testSemanticTokens_Properties() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Fields.java"), "property", "enumMember")
+	public void testSemanticTokens_Fields() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(getURI("Fields.java"), "property", "enumMember", "recordComponent")
 			.assertNextToken("bar1", "property", "public", "declaration")
 			.assertNextToken("bar2", "property", "private", "declaration")
 			.assertNextToken("bar3", "property", "protected", "declaration")
@@ -186,6 +225,10 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("bar6", "property", "public", "static", "readonly", "declaration")
 			.assertNextToken("FIRST", "enumMember", "public", "static", "readonly", "declaration")
 			.assertNextToken("SECOND", "enumMember", "public", "static", "readonly", "declaration")
+			.assertNextToken("i", "recordComponent", "declaration")
+			.assertNextToken("f", "recordComponent", "declaration")
+			.assertNextToken("i", "property", "private", "readonly")
+			.assertNextToken("f", "property", "private", "readonly")
 		.endAssertion();
 	}
 
@@ -203,7 +246,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Types() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "typeParameter", "keyword")
+		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "record", "typeParameter", "keyword")
 			.assertNextToken("Types", "class", "public", "declaration")
 			.assertNextToken("String", "class", "public", "readonly")
 
@@ -226,6 +269,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("SomeInterface", "interface", "static", "declaration")
 			.assertNextToken("SomeEnum", "enum", "static", "readonly", "declaration")
 			.assertNextToken("SomeAnnotation", "annotation", "static", "declaration")
+			.assertNextToken("SomeRecord", "record", "static", "readonly", "declaration")
 		.endAssertion();
 	}
 
@@ -266,6 +310,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("string", "property", "public", "declaration")
 			.assertNextToken("java", "namespace")
 			.assertNextToken("lang", "namespace")
+			.assertNextToken("String", "class", "public", "constructor")
 		.endAssertion();
 	}
 
