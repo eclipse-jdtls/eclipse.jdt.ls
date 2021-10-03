@@ -49,7 +49,7 @@ public class AnonymousTypeCompletionProposal {
 		// See https://github.com/microsoft/language-server-protocol/issues/1032#issuecomment-648748013
 		String newBody = fSnippetSupport ? "{\n\t${0}\n}" : "{\n\n}";
 
-		StringBuilder buf = new StringBuilder("new A()"); //$NON-NLS-1$
+		StringBuilder buf = new StringBuilder("new A() "); //$NON-NLS-1$
 		buf.append(newBody);
 		// use the code formatter
 		String lineDelim = TextUtilities.getDefaultLineDelimiter(document);

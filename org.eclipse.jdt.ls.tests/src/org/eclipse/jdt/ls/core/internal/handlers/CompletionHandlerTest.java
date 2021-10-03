@@ -1970,7 +1970,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("java.Foo.IFoo", ci.getDetail());
 		assertEquals("999998684", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 23, 23, "IFoo(){\n" +
+		assertTextEdit(2, 23, 23, "IFoo() {\n" +
 				"	${0}\n" +
 				"};", ci.getTextEdit().getLeft());
 	}
@@ -2000,7 +2000,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Constructor, ci.getKind());
 		assertEquals("999998684", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 23, 23, "IFoo(){\n" +
+		assertTextEdit(2, 23, 23, "IFoo() {\n" +
 				"	${0}\n" +
 				"};", ci.getTextEdit().getLeft());
 	}
@@ -2026,7 +2026,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 20, 22, "(){\n" +
+		assertTextEdit(2, 20, 22, "() {\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
@@ -2052,7 +2052,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 20, 24, "(){\n" +
+		assertTextEdit(2, 20, 24, "() {\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
@@ -2080,7 +2080,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 33, 37, "(){\n" +
+		assertTextEdit(2, 33, 37, "() {\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
@@ -2109,7 +2109,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(3, 8, 12, "(){\n" +
+		assertTextEdit(3, 8, 12, "() {\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
@@ -2133,7 +2133,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("999999372", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
-		assertTextEdit(2, 33, 33, "(){\n" +
+		assertTextEdit(2, 33, 33, "() {\n" +
 				"	${0}\n" +
 				"}", ci.getTextEdit().getLeft());
 	}
