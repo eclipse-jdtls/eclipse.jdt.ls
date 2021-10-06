@@ -30,8 +30,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
@@ -73,6 +76,7 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.ThisExpression;
+import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -80,6 +84,7 @@ import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -90,15 +95,22 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
+import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -184,6 +196,7 @@ public class QuickAssistProcessor {
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
 			// }
 			getAddMethodDeclaration(context, coveringNode, resultingCollections);
+			getTryWithResourceProposals(locations, context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1407,6 +1420,257 @@ public class QuickAssistProcessor {
 		listRewrite.insertLast(newMethodDeclaration, null);
 
 		// add proposal
+		resultingCollections.add(proposal);
+		return true;
+	}
+
+	public static boolean getTryWithResourceProposals(IProblemLocationCore[] locations, IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {
+		final List<Integer> exceptionProblems = Arrays.asList(IProblem.UnclosedCloseable, IProblem.UnclosedCloseable, IProblem.PotentiallyUnclosedCloseable, IProblem.UnhandledException);
+		for (IProblemLocationCore location : locations) {
+			if (exceptionProblems.contains(location.getProblemId())) {
+				return false;
+			}
+		}
+
+		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
+		return getTryWithResourceProposals(context, node, coveredNodes, resultingCollections);
+	}
+
+	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {
+		if (!JavaModelUtil.is1d8OrHigher(context.getCompilationUnit().getJavaProject())) {
+			return false;
+		}
+
+		ASTNode parentStatement = ASTResolving.findAncestor(node, ASTNode.VARIABLE_DECLARATION_STATEMENT);
+		if (!(parentStatement instanceof VariableDeclarationStatement) && !(parentStatement instanceof ExpressionStatement) && !(node instanceof SimpleName) && (coveredNodes == null || coveredNodes.isEmpty())) {
+			return false;
+		}
+		List<ASTNode> coveredStatements = new ArrayList<>();
+		if (coveredNodes == null || coveredNodes.isEmpty() && parentStatement != null) {
+			coveredStatements.add(parentStatement);
+		} else {
+			for (ASTNode coveredNode : coveredNodes) {
+				Statement statement = ASTResolving.findParentStatement(coveredNode);
+				if (statement == null) {
+					continue;
+				}
+				if (!coveredStatements.contains(statement)) {
+					coveredStatements.add(statement);
+				}
+			}
+		}
+		List<ASTNode> coveredAutoClosableNodes = QuickAssistProcessorUtil.getCoveredAutoClosableNodes(coveredStatements);
+		if (coveredAutoClosableNodes.isEmpty()) {
+			return false;
+		}
+
+		ASTNode parentBodyDeclaration = (node instanceof Block || node instanceof BodyDeclaration) ? node : ASTNodes.getFirstAncestorOrNull(node, Block.class, BodyDeclaration.class);
+
+		int start = coveredAutoClosableNodes.get(0).getStartPosition();
+		int end = start;
+
+		for (ASTNode astNode : coveredAutoClosableNodes) {
+			int endPosition = QuickAssistProcessorUtil.findEndPostion(astNode);
+			end = Math.max(end, endPosition);
+		}
+
+		// recursive loop to find all nodes affected by wrapping in try block
+		List<ASTNode> nodesInRange = SurroundWithTryWithResourcesRefactoringCore.findNodesInRange(parentBodyDeclaration, start, end);
+		int oldEnd = end;
+		while (true) {
+			int newEnd = oldEnd;
+			for (ASTNode astNode : nodesInRange) {
+				int endPosition = QuickAssistProcessorUtil.findEndPostion(astNode);
+				newEnd = Math.max(newEnd, endPosition);
+			}
+			if (newEnd > oldEnd) {
+				oldEnd = newEnd;
+				nodesInRange = SurroundWithTryWithResourcesRefactoringCore.findNodesInRange(parentBodyDeclaration, start, newEnd);
+				continue;
+			}
+			break;
+		}
+		nodesInRange.removeAll(coveredAutoClosableNodes);
+
+		CompilationUnit cu = (CompilationUnit) node.getRoot();
+		IBuffer buffer = context.getCompilationUnit().getBuffer();
+		AST ast = node.getAST();
+		ASTRewrite rewrite = ASTRewrite.create(ast);
+		boolean modifyExistingTry = false;
+		TryStatement newTryStatement = null;
+		Block newTryBody = null;
+		TryStatement enclosingTry = (TryStatement) ASTResolving.findAncestor(node, ASTNode.TRY_STATEMENT);
+		ListRewrite resourcesRewriter = null;
+		ListRewrite clausesRewriter = null;
+		if (enclosingTry == null || enclosingTry.getBody() == null || enclosingTry.getBody().statements().get(0) != coveredNodes.get(0)) {
+			newTryStatement = ast.newTryStatement();
+			newTryBody = ast.newBlock();
+			newTryStatement.setBody(newTryBody);
+		} else {
+			modifyExistingTry = true;
+			resourcesRewriter = rewrite.getListRewrite(enclosingTry, TryStatement.RESOURCES2_PROPERTY);
+			clausesRewriter = rewrite.getListRewrite(enclosingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
+		}
+		ICompilationUnit icu = context.getCompilationUnit();
+		ASTNode lastNode = nodesInRange.isEmpty() ? coveredAutoClosableNodes.get(coveredAutoClosableNodes.size() - 1) : nodesInRange.get(nodesInRange.size() - 1);
+		Selection selection = Selection.createFromStartLength(start, lastNode.getStartPosition() - start + lastNode.getLength());
+		SurroundWithTryWithResourcesAnalyzer analyzer = new SurroundWithTryWithResourcesAnalyzer(icu, selection);
+		cu.accept(analyzer);
+		ITypeBinding[] exceptions = analyzer.getExceptions(analyzer.getSelection());
+		List<ITypeBinding> allExceptions = new ArrayList<>(Arrays.asList(exceptions));
+		int resourceCount = 0;
+		for (ASTNode coveredNode : coveredAutoClosableNodes) {
+			ASTNode findAncestor = ASTResolving.findAncestor(coveredNode, ASTNode.VARIABLE_DECLARATION_STATEMENT);
+			if (findAncestor == null) {
+				findAncestor = ASTResolving.findAncestor(coveredNode, ASTNode.ASSIGNMENT);
+			}
+			if (findAncestor instanceof VariableDeclarationStatement) {
+				VariableDeclarationStatement vds = (VariableDeclarationStatement) findAncestor;
+				String commentToken = null;
+				int extendedStatementStart = cu.getExtendedStartPosition(vds);
+				if (vds.getStartPosition() > extendedStatementStart) {
+					commentToken = buffer.getText(extendedStatementStart, vds.getStartPosition() - extendedStatementStart);
+				}
+				Type type = vds.getType();
+				ITypeBinding typeBinding = type.resolveBinding();
+				if (typeBinding != null) {
+					IMethodBinding close = SurroundWithTryWithResourcesRefactoringCore.findAutocloseMethod(typeBinding);
+					if (close != null) {
+						for (ITypeBinding exceptionType : close.getExceptionTypes()) {
+							if (!allExceptions.contains(exceptionType)) {
+								allExceptions.add(exceptionType);
+							}
+						}
+					}
+				}
+				String typeName = buffer.getText(type.getStartPosition(), type.getLength());
+
+				for (Object object : vds.fragments()) {
+					VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) object;
+					VariableDeclarationFragment newVariableDeclarationFragment = ast.newVariableDeclarationFragment();
+					SimpleName name = variableDeclarationFragment.getName();
+
+					if (commentToken == null) {
+						int extendedStart = cu.getExtendedStartPosition(variableDeclarationFragment);
+						commentToken = buffer.getText(extendedStart, variableDeclarationFragment.getStartPosition() - extendedStart);
+					}
+					commentToken = Strings.trimTrailingTabsAndSpaces(commentToken);
+
+					newVariableDeclarationFragment.setName(ast.newSimpleName(name.getIdentifier()));
+					Expression newExpression = null;
+					Expression initializer = variableDeclarationFragment.getInitializer();
+					if (initializer == null) {
+						rewrite.remove(coveredNode, null);
+						continue;
+					} else {
+						newExpression = (Expression) rewrite.createMoveTarget(initializer);
+					}
+					newVariableDeclarationFragment.setInitializer(newExpression);
+					VariableDeclarationExpression newVariableDeclarationExpression = ast.newVariableDeclarationExpression(newVariableDeclarationFragment);
+					newVariableDeclarationExpression.setType((Type) rewrite.createStringPlaceholder(commentToken + typeName, type.getNodeType()));
+					resourceCount++;
+					if (modifyExistingTry) {
+						resourcesRewriter.insertLast(newVariableDeclarationExpression, null);
+					} else {
+						newTryStatement.resources().add(newVariableDeclarationExpression);
+					}
+					commentToken = null;
+				}
+			}
+		}
+
+		if (resourceCount == 0) {
+			return false;
+		}
+
+		String label = CorrectionMessages.QuickAssistProcessor_convert_to_try_with_resource;
+		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
+
+		ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
+		ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(node, imports);
+
+		CatchClause catchClause = ast.newCatchClause();
+		SingleVariableDeclaration decl = ast.newSingleVariableDeclaration();
+		String varName = StubUtility.getExceptionVariableName(icu.getJavaProject());
+		parentBodyDeclaration.getRoot().accept(analyzer);
+		CodeScopeBuilder.Scope scope = CodeScopeBuilder.perform(analyzer.getEnclosingBodyDeclaration(), selection).findScope(selection.getOffset(), selection.getLength());
+		scope.setCursor(selection.getOffset());
+		String name = scope.createName(varName, false);
+		decl.setName(ast.newSimpleName(name));
+
+		List<ITypeBinding> mustRethrowList = new ArrayList<>();
+		List<ITypeBinding> catchExceptions = analyzer.calculateCatchesAndRethrows(ASTNodes.filterSubtypes(allExceptions), mustRethrowList);
+		List<ITypeBinding> filteredExceptions = ASTNodes.filterSubtypes(catchExceptions);
+
+		if (catchExceptions.size() > 0) {
+			final String GROUP_EXC_NAME = "exc_name"; //$NON-NLS-1$
+			final String GROUP_EXC_TYPE = "exc_type"; //$NON-NLS-1$
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+
+			int i = 0;
+			if (!modifyExistingTry) {
+				for (ITypeBinding mustThrow : mustRethrowList) {
+					CatchClause newClause = ast.newCatchClause();
+					SingleVariableDeclaration newDecl = ast.newSingleVariableDeclaration();
+					newDecl.setName(ast.newSimpleName(name));
+					Type importType = imports.addImport(mustThrow, ast, importRewriteContext, TypeLocation.EXCEPTION);
+					newDecl.setType(importType);
+					newClause.setException(newDecl);
+					ThrowStatement newThrowStatement = ast.newThrowStatement();
+					newThrowStatement.setExpression(ast.newSimpleName(name));
+					linkedProposalModel.getPositionGroup(GROUP_EXC_NAME + i, true).addPosition(rewrite.track(decl.getName()), false);
+					newClause.getBody().statements().add(newThrowStatement);
+					newTryStatement.catchClauses().add(newClause);
+					++i;
+				}
+			}
+			UnionType unionType = ast.newUnionType();
+			List<Type> types = unionType.types();
+			for (ITypeBinding exception : filteredExceptions) {
+				Type type = imports.addImport(exception, ast, importRewriteContext, TypeLocation.EXCEPTION);
+				types.add(type);
+				linkedProposalModel.getPositionGroup(GROUP_EXC_TYPE + i, true).addPosition(rewrite.track(type), i == 0);
+				i++;
+			}
+
+			decl.setType(unionType);
+			catchClause.setException(decl);
+			linkedProposalModel.getPositionGroup(GROUP_EXC_NAME + 0, true).addPosition(rewrite.track(decl.getName()), false);
+			Statement st = null;
+			String s = StubUtility.getCatchBodyContent(icu, "Exception", name, coveredNodes.isEmpty() ? node : coveredNodes.get(0), icu.findRecommendedLineSeparator()); //$NON-NLS-1$
+			if (s != null) {
+				st = (Statement) rewrite.createStringPlaceholder(s, ASTNode.RETURN_STATEMENT);
+			}
+			if (st != null) {
+				catchClause.getBody().statements().add(st);
+			}
+			if (modifyExistingTry) {
+				clausesRewriter.insertLast(catchClause, null);
+			} else {
+				newTryStatement.catchClauses().add(catchClause);
+			}
+		}
+
+		if (modifyExistingTry) {
+			for (int i = 0; i < coveredAutoClosableNodes.size(); i++) {
+				rewrite.remove(coveredAutoClosableNodes.get(i), null);
+			}
+		} else {
+			if (!nodesInRange.isEmpty()) {
+				ASTNode firstNode = nodesInRange.get(0);
+				ASTNode methodDeclaration = ASTResolving.findAncestor(firstNode, ASTNode.BLOCK);
+				ListRewrite listRewrite = rewrite.getListRewrite(methodDeclaration, Block.STATEMENTS_PROPERTY);
+				ASTNode createCopyTarget = listRewrite.createMoveTarget(firstNode, nodesInRange.get(nodesInRange.size() - 1));
+				rewrite.getListRewrite(newTryBody, Block.STATEMENTS_PROPERTY).insertFirst(createCopyTarget, null);
+			}
+
+			// replace first node and delete the rest of selected nodes
+			rewrite.replace(coveredAutoClosableNodes.get(0), newTryStatement, null);
+			for (int i = 1; i < coveredAutoClosableNodes.size(); i++) {
+				rewrite.remove(coveredAutoClosableNodes.get(i), null);
+			}
+		}
+
 		resultingCollections.add(proposal);
 		return true;
 	}

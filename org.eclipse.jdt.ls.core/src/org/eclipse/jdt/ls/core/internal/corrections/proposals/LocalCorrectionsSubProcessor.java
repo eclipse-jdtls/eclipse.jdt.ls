@@ -169,6 +169,9 @@ public class LocalCorrectionsSubProcessor {
 			}
 		}
 
+		//Surround with try-with
+		getTryWithResourceProposals(context, problem, proposals);
+
 		//Catch exception
 		BodyDeclaration decl = ASTResolving.findParentBodyDeclaration(selectedNode);
 		if (decl == null) {
@@ -1039,6 +1042,18 @@ public class LocalCorrectionsSubProcessor {
 					proposals.add(proposal);
 					break;
 				}
+			}
+		}
+	}
+
+	public static void getTryWithResourceProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		ASTNode coveringNode = problem.getCoveringNode(context.getASTRoot());
+		if (coveringNode != null) {
+			try {
+				ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
+				QuickAssistProcessor.getTryWithResourceProposals(context, coveringNode, coveredNodes, proposals);
+			} catch (IllegalArgumentException | CoreException e) {
+				JavaLanguageServerPlugin.logException(e);
 			}
 		}
 	}
