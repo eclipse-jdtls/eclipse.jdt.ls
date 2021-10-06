@@ -518,6 +518,10 @@ public class QuickFixProcessor {
 				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addCasesOmittedProposals(context, problem, proposals);
 				break;
+			case IProblem.UnclosedCloseable:
+			case IProblem.PotentiallyUnclosedCloseable:
+				LocalCorrectionsSubProcessor.getTryWithResourceProposals(context, problem, proposals);
+				break;
 			// case IProblem.MissingSynchronizedModifierInInheritedMethod:
 			// ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context,
 			// problem, proposals);

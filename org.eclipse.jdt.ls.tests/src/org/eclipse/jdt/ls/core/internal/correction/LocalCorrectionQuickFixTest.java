@@ -23,7 +23,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.Range;
@@ -1535,6 +1534,46 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		Expected e3 = new Expected("Surround with try/catch", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3);
+	}
+
+	@Test
+	public void testUncaughtExceptionForCloseable() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n"
+				+ "\n"
+				+ "import java.io.FileInputStream;\n"
+				+ "import java.io.InputStream;\n"
+				+ "import java.nio.file.Path;\n"
+				+ "\n"
+				+ "public class E {\n"
+				+ "    public void test () {\n"
+				+ "        InputStream inp = new FileInputStream(Path.of(\"test\").toFile());\n"
+				+ "    }\n"
+				+ "}");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n"
+				+ "\n"
+				+ "import java.io.FileInputStream;\n"
+				+ "import java.io.IOException;\n"
+				+ "import java.io.InputStream;\n"
+				+ "import java.nio.file.Path;\n"
+				+ "\n"
+				+ "public class E {\n"
+				+ "    public void test () {\n"
+				+ "        try (InputStream inp = new FileInputStream(Path.of(\"test\").toFile())) {\n"
+				+ "        } catch (IOException e) {\n"
+				+ "            // TODO Auto-generated catch block\n"
+				+ "            e.printStackTrace();\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}");
+
+		Expected e1 = new Expected("Surround with try-with-resources", buf.toString());
+
+		assertCodeActions(cu, e1);
 	}
 
 	@Test
