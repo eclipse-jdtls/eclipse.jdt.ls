@@ -263,6 +263,54 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 	}
 
 	@Test
+	public void testAssignAllParamsToFields() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("public class App {\n");
+		buf.append("    private String s;\n");
+		buf.append("\n");
+		buf.append("    public App(String s, String s3, String s2) {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit unit = defaultPackage.createCompilationUnit("App.java", buf.toString(), false, null);
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		Range range = CodeActionUtil.getRange(unit, "s3");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Collections.emptyList(), Collections.singletonList(JavaCodeActionKind.QUICK_ASSIST));
+		params.setContext(context);
+
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertFalse("No quickassist actions were found", codeActions.isEmpty());
+
+		Optional<Either<Command, CodeAction>> assignAllToNewFieldsResponse = codeActions.stream().filter(codeAction -> {
+			return "Assign all parameters to new fields".equals(codeAction.getRight().getTitle());
+		}).findFirst();
+		Assert.assertTrue("Should return the quick assist 'Assign all parameters to new fields'", assignAllToNewFieldsResponse.isPresent());
+		CodeAction unresolvedCodeAction = assignAllToNewFieldsResponse.get().getRight();
+
+		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
+		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
+		buf = new StringBuilder();
+		buf.append("public class App {\n");
+		buf.append("    private String s;\n");
+		buf.append("    private String s4;\n");
+		buf.append("    private String s3;\n");
+		buf.append("    private String s2;\n");
+		buf.append("\n");
+		buf.append("    public App(String s, String s3, String s2) {\n");
+		buf.append("        s4 = s;\n");
+		buf.append("        this.s3 = s3;\n");
+		buf.append("        this.s2 = s2;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Assert.assertEquals(buf.toString(), actual);
+	}
+
+	@Test
 	public void testResolveCodeAction_SourceActions() throws Exception {
 		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
 
