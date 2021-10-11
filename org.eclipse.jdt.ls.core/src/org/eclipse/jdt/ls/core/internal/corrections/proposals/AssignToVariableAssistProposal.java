@@ -85,6 +85,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	private final int  fVariableKind;
 	private final List<ASTNode> fNodesToAssign; // ExpressionStatement or SingleVariableDeclaration(s)
 	private final ITypeBinding fTypeBinding;
+	private final List<String> fParamNames;
 
 	private VariableDeclarationFragment fExistingFragment;
 
@@ -92,9 +93,9 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		super("", JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance); //$NON-NLS-1$
 
 		fVariableKind= variableKind;
+		fParamNames = null;
 		fNodesToAssign= new ArrayList<>();
 		fNodesToAssign.add(node);
-
 		fTypeBinding= Bindings.normalizeForDeclarationUse(typeBinding, node.getAST());
 		if (variableKind == LOCAL) {
 			setDisplayName(CorrectionMessages.AssignToVariableAssistProposal_assigntolocal_description);
@@ -108,6 +109,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		super("", kind, cu, null, relevance); //$NON-NLS-1$
 
 		fVariableKind = variableKind;
+		fParamNames = null;
 		fNodesToAssign = new ArrayList<>();
 		fNodesToAssign.add(node);
 
@@ -128,7 +130,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		fNodesToAssign.add(parameter);
 		fTypeBinding= typeBinding;
 		fExistingFragment= existingFragment;
-
+		fParamNames = null;
 		if (existingFragment == null) {
 			setDisplayName(CorrectionMessages.AssignToVariableAssistProposal_assignparamtofield_description);
 		} else {
@@ -143,6 +145,8 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		fNodesToAssign= new ArrayList<>();
 		fNodesToAssign.addAll(parameters);
 		fTypeBinding= null;
+		fParamNames = new ArrayList<>();
+		populateNames(parameters);
 
 		setDisplayName(CorrectionMessages.AssignToVariableAssistProposal_assignallparamstofields_description);
 	}
@@ -158,6 +162,16 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 			}
 		} else { // LOCAL
 			return doAddLocal();
+		}
+	}
+
+	private void populateNames(List<SingleVariableDeclaration> parameters) {
+		if (parameters != null && parameters.size() > 0) {
+			for (SingleVariableDeclaration param : parameters) {
+				if (param.getName() != null) {
+					fParamNames.add(param.getName().getIdentifier());
+				}
+			}
 		}
 	}
 
@@ -373,7 +387,28 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	}
 
 	private Collection<String> getUsedVariableNames(ASTNode nodeToAssign) {
-		return Arrays.asList(ASTResolving.getUsedVariableNames(nodeToAssign));
+		Collection<String> usedVarNames = Arrays.asList(ASTResolving.getUsedVariableNames(nodeToAssign));
+		Collection<String> additionalVarNames = getRemainingParamNamed(nodeToAssign);
+		if (additionalVarNames != null) {
+			usedVarNames = new ArrayList<>(Arrays.asList(ASTResolving.getUsedVariableNames(nodeToAssign)));
+			usedVarNames.addAll(additionalVarNames);
+		}
+		return usedVarNames;
+	}
+
+	private ArrayList<String> getRemainingParamNamed(ASTNode nodeToAssign) {
+		ArrayList<String> paramNames = null;
+		if (fParamNames != null) {
+			paramNames = new ArrayList<>();
+			paramNames.addAll(fParamNames);
+			if (nodeToAssign instanceof SingleVariableDeclaration && ((SingleVariableDeclaration) nodeToAssign).getName() != null) {
+				int index = fNodesToAssign.indexOf(nodeToAssign);
+				if (index >= 0 && index < paramNames.size()) {
+					paramNames.remove(index);
+				}
+			}
+		}
+		return paramNames;
 	}
 
 	private int findAssignmentInsertIndex(List<Statement> statements, ASTNode nodeToAssign) {
