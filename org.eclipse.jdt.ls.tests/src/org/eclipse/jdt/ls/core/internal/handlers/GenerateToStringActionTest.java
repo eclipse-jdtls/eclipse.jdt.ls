@@ -26,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -128,5 +129,51 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse("The operation is not applicable to enums", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING));
+	}
+
+	@Test
+	public void testGenerateToStringQuickAssist() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	String name;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
+		// Test if the quick assist exists only for type declaration
+		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
+	}
+
+	@Test
+	public void testGenerateToStringQuickAssist_emptyFields() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	private static String name;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, ActionMessages.GenerateToStringAction_label));
+		// Test if the quick assist exists only for type declaration
+		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, ActionMessages.GenerateToStringAction_label));
 	}
 }

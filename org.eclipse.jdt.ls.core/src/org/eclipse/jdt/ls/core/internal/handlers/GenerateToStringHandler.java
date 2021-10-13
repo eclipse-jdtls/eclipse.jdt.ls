@@ -23,9 +23,12 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
@@ -33,10 +36,12 @@ import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStr
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
@@ -89,9 +94,15 @@ public class GenerateToStringHandler {
 		if (type == null || type.getCompilationUnit() == null) {
 			return null;
 		}
-
+		Range range = params.context.getRange();
+		ASTNode declarationNode = null;
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
+		if (astRoot != null && range != null) {
+			ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range), DiagnosticsHelper.getLength(type.getCompilationUnit(), range));
+			declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+		}
 		// If cursor position is not specified, then insert to the last by default.
-		IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, params.context.getRange());
+		IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);
 		TextEdit edit = generateToString(type, params.fields, insertPosition, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}
