@@ -374,6 +374,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.JAVADOC_TYPE_REF:
+			case CompletionProposal.PACKAGE_REF:
 			case CompletionProposal.TYPE_REF: {
 				char[] declaringType = getDeclaringType(proposal);
 				return declaringType != null && TypeFilter.isFiltered(declaringType);

@@ -2881,6 +2881,31 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_FilterPackages() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+				//@formatter:off
+				"package org.sample;\n\n"
+				+	"public class Test {\n"
+				+	"	void test() {\n"
+				+	"		java.util \n"
+				+	"	}\n"
+				+	"}\n");
+		try {
+			List<String> filteredTypes = new ArrayList<>();
+			filteredTypes.add("java.util.*");
+			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
+
+			CompletionList list = requestCompletions(unit, "java.util");
+			assertNotNull(list);
+			List<String> packages = list.getItems().stream().map(i -> i.getLabel()).collect(Collectors.toList());
+			assertEquals("java.util.* packages were not filtered: " + packages.toString(), 1, packages.size());
+			assertEquals("java.util", packages.get(0));
+		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
 	public void testCompletion_FilterTypesKeepMethods() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
 		//@formatter:off
