@@ -50,7 +50,7 @@ public class CompletionHandler{
 	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*"));
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
-	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<CompletionItem>() {
+	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<>() {
 
 		private final String DEFAULT_SORT_TEXT = String.valueOf(SortTextHelper.MAX_RELEVANCE_VALUE);
 
