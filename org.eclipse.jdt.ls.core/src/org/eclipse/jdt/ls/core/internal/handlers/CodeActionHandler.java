@@ -128,11 +128,10 @@ public class CodeActionHandler {
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
 		context.setASTRoot(astRoot);
-
 		List<Diagnostic> diagnostics = params.getContext().getDiagnostics().stream().filter((d) -> {
 			return JavaLanguageServerPlugin.SERVER_SOURCE_ID.equals(d.getSource());
 		}).collect(Collectors.toList());
-		IProblemLocationCore[] locations = this.getProblemLocationCores(unit, diagnostics);
+		IProblemLocationCore[] locations = getProblemLocationCores(unit, diagnostics);
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
