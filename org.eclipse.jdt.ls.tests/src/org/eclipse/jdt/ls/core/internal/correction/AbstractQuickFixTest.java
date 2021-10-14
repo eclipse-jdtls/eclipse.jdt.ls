@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -115,7 +116,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 
 		Map<String, Expected> expectedActions = Stream.of(expecteds).collect(Collectors.toMap(Expected::getName, Function.identity()));
-		Map<String, Either<Command, CodeAction>> actualActions = codeActions.stream().collect(Collectors.toMap(this::getTitle, Function.identity()));
+		Map<String, Either<Command, CodeAction>> actualActions = codeActions.stream().collect(Collectors.toMap(this::getTitle, Function.identity(), ((first, second) -> first), LinkedHashMap::new));
 
 		for (Expected expected : expecteds) {
 			Either<Command, CodeAction> action = actualActions.get(expected.name);

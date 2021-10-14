@@ -20,9 +20,11 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -229,24 +231,13 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 		return DiagnosticSeverity.Information;
 	}
 
-	@SuppressWarnings("restriction")
 	private static Range convertRange(IOpenable openable, IProblem problem) {
 		try {
 			if (problem.getID() == IProblem.UndefinedType && openable instanceof ICompilationUnit) {
 				ICompilationUnit cu = (ICompilationUnit) openable;
-				if (cu.getBuffer() != null) {
-					int start = problem.getSourceStart();
-					if (start > 0) {
-						start--;
-						char ch = cu.getBuffer().getChar(start);
-						while (Character.isWhitespace(ch)) {
-							start--;
-							ch = cu.getBuffer().getChar(start);
-						}
-						if (ch == '@') {
-							return JDTUtils.toRange(openable, start, problem.getSourceEnd() - start + 1);
-						}
-					}
+				int start = getSourceStart(cu, problem);
+				if (start > -1) {
+					return JDTUtils.toRange(openable, start, problem.getSourceEnd() - start + 1);
 				}
 			}
 			return JDTUtils.toRange(openable, problem.getSourceStart(), problem.getSourceEnd() - problem.getSourceStart() + 1);
@@ -268,6 +259,31 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 			}
 			return new Range(start, end);
 		}
+	}
+
+	protected static int getSourceStart(ICompilationUnit cu, IProblem problem) {
+		IBuffer buffer;
+		try {
+			buffer = cu.getBuffer();
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			return -1;
+		}
+		if (buffer != null) {
+			int start = problem.getSourceStart();
+			if (start > 0) {
+				start--;
+				char ch = buffer.getChar(start);
+				while (Character.isWhitespace(ch)) {
+					start--;
+					ch = buffer.getChar(start);
+				}
+				if (ch == '@') {
+					return start;
+				}
+			}
+		}
+		return -1;
 	}
 
 	public void clearDiagnostics() {

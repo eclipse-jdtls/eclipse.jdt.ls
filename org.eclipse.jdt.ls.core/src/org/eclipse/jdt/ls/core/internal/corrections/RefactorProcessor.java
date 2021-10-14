@@ -71,7 +71,6 @@ import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.manipulation.CleanUpRequirementsCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
-import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -82,9 +81,7 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
-import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
-import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
@@ -109,7 +106,6 @@ import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
-import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
 import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -136,7 +132,7 @@ public class RefactorProcessor {
 
 			getMoveRefactoringProposals(params, context, coveringNode, proposals);
 
-			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
+			boolean noErrorsAtLocation = noErrorsAtLocation(locations, coveringNode);
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
 				getExtractVariableProposal(params, context, problemsAtLocation, proposals);
@@ -210,10 +206,15 @@ public class RefactorProcessor {
 
 	}
 
-	static boolean noErrorsAtLocation(IProblemLocationCore[] locations) {
+	static boolean noErrorsAtLocation(IProblemLocationCore[] locations, ASTNode coveringNode) {
 		if (locations != null) {
+			int start = coveringNode.getStartPosition();
+			int length = coveringNode.getLength();
 			for (int i = 0; i < locations.length; i++) {
 				IProblemLocationCore location = locations[i];
+				if (location.getOffset() > start + length || (location.getOffset() + location.getLength()) < start) {
+					continue;
+				}
 				if (location.isError()) {
 					if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && JavaCore.getOptionForConfigurableSeverity(location.getProblemId()) != null) {
 						// continue (only drop out for severe (non-optional) errors)
@@ -349,7 +350,14 @@ public class RefactorProcessor {
 				// Inline Local Variable
 				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
 					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
-					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences().length > 0) {
+					boolean status;
+					try {
+						status = refactoring.checkAllConditions(new NullProgressMonitor()).isOK();
+					} catch (Exception e) {
+						// ignore
+						status = false;
+					}
+					if (status && refactoring.getReferences().length > 0) {
 						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
 						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);

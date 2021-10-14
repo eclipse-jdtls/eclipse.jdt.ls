@@ -36,6 +36,7 @@ public class DiagnosticsHandler extends BaseDiagnosticsHandler {
 		this.nonProjectFile = isDefaultProject || !JDTUtils.isOnClassPath(cu);
 	}
 
+	@Override
 	public boolean isSyntaxMode() {
 		return nonProjectFile && JavaLanguageServerPlugin.getNonProjectDiagnosticsState().isOnlySyntaxReported(uri);
 	}

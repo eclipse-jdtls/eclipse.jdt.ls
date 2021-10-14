@@ -59,6 +59,7 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class Preferences {
 
+	public static final String LINE = "line";
 	/**
 	 * Specifies the folder path to the JDK .
 	 */
@@ -116,6 +117,11 @@ public class Preferences {
 	 */
 	public static final String JAVA_RESOURCE_FILTERS = "java.project.resourceFilters";
 	public static final List<String> JAVA_RESOURCE_FILTERS_DEFAULT;
+	/**
+	 * Preference key for Show quickfixes at the problem or line level.
+	 */
+	public static final String QUICK_FIX_SHOW_AT = "java.quickfix.showAt";
+
 	/**
 	 * Preference key to enable/disable gradle importer.
 	 */
@@ -474,6 +480,7 @@ public class Preferences {
 	private boolean mavenUpdateSnapshots;
 	private boolean implementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
+	private String javaQuickFixShowAt;
 	private boolean javaFormatOnTypeEnabled;
 	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
@@ -702,6 +709,7 @@ public class Preferences {
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
+		javaQuickFixShowAt = LINE;
 		javaFormatOnTypeEnabled = false;
 		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
@@ -801,6 +809,9 @@ public class Preferences {
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
+
+		String javaQuickFixShowAt = getString(configuration, QUICK_FIX_SHOW_AT, LINE);
+		prefs.setJavaQuickFixShowAt(javaQuickFixShowAt);
 
 		boolean javaFormatOnTypeEnabled = getBoolean(configuration, JAVA_FORMAT_ON_TYPE_ENABLED_KEY, false);
 		prefs.setJavaFormatOnTypeEnabled(javaFormatOnTypeEnabled);
@@ -1203,6 +1214,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setJavaQuickFixShowAt(String value) {
+		this.javaQuickFixShowAt = value;
+		return this;
+	}
+
 	public Preferences setJavaSaveActionAutoOrganizeImportsEnabled(boolean javaSaveActionAutoOrganizeImportsEnabled) {
 		this.javaSaveActionsOrganizeImportsEnabled = javaSaveActionAutoOrganizeImportsEnabled;
 		return this;
@@ -1437,6 +1453,14 @@ public class Preferences {
 
 	public boolean isJavaFormatEnabled() {
 		return javaFormatEnabled;
+	}
+
+	public String getJavaQuickFixShowAt() {
+		return javaQuickFixShowAt;
+	}
+
+	public boolean isJavaQuickFixShowAtLine() {
+		return LINE.equals(javaQuickFixShowAt);
 	}
 
 	public boolean isJavaSaveActionsOrganizeImportsEnabled() {
