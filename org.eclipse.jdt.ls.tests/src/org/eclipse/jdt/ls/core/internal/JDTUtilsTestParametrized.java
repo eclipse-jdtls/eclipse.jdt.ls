@@ -32,10 +32,19 @@ public class JDTUtilsTestParametrized {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] { { "home/some/excluded/path/build.gradle", true }, { "home/some/path/build.excluded", true }, { "home/some/path/build.gradle", false } });
+		return Arrays.asList(new Object[][] {
+			{ "file:///home/some/excluded/path/build.gradle", true },
+			{ "file:///home/some/path/build.excluded", true },
+			{ "file:///home/some/path/build.gradle", false },
+			{ "file:///C:/abc/.excluded", true },
+			{ "file:///C:/abc/.included", false },
+		});
 	}
 
-	private static List<String> patterns = Arrays.asList("**/some/excluded/path/**", "**/*.excluded");
+	private static List<String> patterns = Arrays.asList(
+		"**/some/excluded/path/**",
+		"**/*.excluded"
+	);
 
 	private String filePath;
 	private boolean isExcluded;

@@ -1741,7 +1741,12 @@ public final class JDTUtils {
 	}
 
 	public static boolean isExcludedFile(List<String> patterns, String uriString) {
-		java.nio.file.Path path = Paths.get(uriString);
+		URI uri = toURI(uriString);
+		if (uri == null) {
+			return false;
+		}
+
+		java.nio.file.Path path = Paths.get(uri);
 		FileSystem fileSystems = path.getFileSystem();
 		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
 	}
