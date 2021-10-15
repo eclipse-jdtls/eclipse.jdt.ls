@@ -33,9 +33,9 @@ public class JDTUtilsTestParametrized {
 	@Parameters
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-			{ "file://home/some/excluded/path/build.gradle", true },
-			{ "file://home/some/path/build.excluded", true },
-			{ "file://home/some/path/build.gradle", false },
+			{ "file:///home/some/excluded/path/build.gradle", true },
+			{ "file:///home/some/path/build.excluded", true },
+			{ "file:///home/some/path/build.gradle", false },
 			{ "file:///C:/abc/.excluded", true },
 			{ "file:///C:/abc/.included", false },
 		});
