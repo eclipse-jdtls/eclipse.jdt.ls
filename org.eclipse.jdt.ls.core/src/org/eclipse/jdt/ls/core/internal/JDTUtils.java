@@ -1741,13 +1741,13 @@ public final class JDTUtils {
 	}
 
 	public static boolean isExcludedFile(List<String> patterns, String uriString) {
-		try {
-			java.nio.file.Path path = Paths.get(new URI(uriString));
-			FileSystem fileSystems = path.getFileSystem();
-			return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
-		} catch (URISyntaxException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		URI uri = toURI(uriString);
+		if (uri == null) {
 			return false;
 		}
+
+		java.nio.file.Path path = Paths.get(uri);
+		FileSystem fileSystems = path.getFileSystem();
+		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
 	}
 }
