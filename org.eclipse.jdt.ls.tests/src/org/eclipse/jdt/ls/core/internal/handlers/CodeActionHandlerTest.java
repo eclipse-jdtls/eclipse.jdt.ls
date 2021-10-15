@@ -626,4 +626,17 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		return false;
 	}
+
+	public static boolean commandExists(List<Either<Command, CodeAction>> codeActions, String command, String title) {
+		if (codeActions.isEmpty()) {
+			return false;
+		}
+		for (Either<Command, CodeAction> codeAction : codeActions) {
+			Command actionCommand = getCommand(codeAction);
+			if (actionCommand != null && actionCommand.getCommand().equals(command) && actionCommand.getTitle().equals(title)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

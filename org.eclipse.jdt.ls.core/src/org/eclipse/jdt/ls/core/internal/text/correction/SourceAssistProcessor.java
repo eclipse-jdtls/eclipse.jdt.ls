@@ -168,13 +168,27 @@ public class SourceAssistProcessor {
 				// do nothing.
 			}
 			if (nonStaticFields) {
-				Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params);
+				// Generate QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> generateToStringQuickAssist = getGenerateToStringAction(params, JavaCodeActionKind.QUICK_ASSIST);
+					addSourceActionCommand($, params.getContext(), generateToStringQuickAssist);
+				}
+				// Generate Source Action
+				Optional<Either<Command, CodeAction>> generateToStringCommand = getGenerateToStringAction(params, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
 			} else {
 				CodeActionProposal generateToStringProposal = (pm) -> {
-					TextEdit edit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0], CodeGenerationUtils.findInsertElement(type, context.getSelectionOffset()), pm);
+					IJavaElement insertPosition = isInTypeDeclaration ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, context.getSelectionOffset());
+					TextEdit edit = GenerateToStringHandler.generateToString(type, new LspVariableBinding[0], insertPosition, pm);
 					return convertToWorkspaceEdit(cu, edit);
 				};
+				// Generate QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> generateToStringQuickAssist = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
+							JavaCodeActionKind.QUICK_ASSIST, generateToStringProposal);
+					addSourceActionCommand($, params.getContext(), generateToStringQuickAssist);
+				}
+				// Generate Source Action
 				Optional<Either<Command, CodeAction>> generateToStringCommand = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
 						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, generateToStringProposal);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
@@ -349,16 +363,16 @@ public class SourceAssistProcessor {
 		return true;
 	}
 
-	private Optional<Either<Command, CodeAction>> getGenerateToStringAction(CodeActionParams params) {
+	private Optional<Either<Command, CodeAction>> getGenerateToStringAction(CodeActionParams params, String kind) {
 		if (!preferenceManager.getClientPreferences().isGenerateToStringPromptSupported()) {
 			return Optional.empty();
 		}
 		Command command = new Command(ActionMessages.GenerateToStringAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT, Collections.singletonList(params));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_TO_STRING)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateToStringAction_ellipsisLabel);
-			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
+			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));

@@ -22,6 +22,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Command;
@@ -82,7 +83,6 @@ public class RedundantInterfaceQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack.createCompilationUnit("RedundantInterface.java", buf.toString(), true, null);
 		Range selection = new Range(new Position(1, 45), new Position(1, 45));
 		setIgnoredCommands(ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
-		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		assertEquals(0, codeActions.size());
+		assertCodeActionNotExists(cu, selection, CorrectionMessages.LocalCorrectionsSubProcessor_remove_redundant_superinterface);
 	}
 }
