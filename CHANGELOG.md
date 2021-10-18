@@ -1,5 +1,27 @@
 # Change Log
 
+# [1.5.0 (October 19th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/95?closed=1)
+ * performance - completion: optimize the index engine for the scenario "complete on type name". See [#1846](https://github.com/eclipse/eclipse.jdt.ls/issues/1846).
+ * enhancement - Support Java 17. See [#1845](https://github.com/eclipse/eclipse.jdt.ls/issues/1845).
+ * enhancement - Add semantic tokens for records and constructors. See [#1897](https://github.com/eclipse/eclipse.jdt.ls/pull/1897).
+ * enhancement - Add toString() to Show Fixes for type declaration. See [#1903](https://github.com/eclipse/eclipse.jdt.ls/pull/1903).
+ * enhancement - Add a `codeAction` to generate the serialVersionUID field. See [#1892](https://github.com/eclipse/eclipse.jdt.ls/issues/1892).
+ * enhancement - Add Getter and Setter to Show Fixes for type declaration. See [#1883](https://github.com/eclipse/eclipse.jdt.ls/pull/1883).
+ * bug fix - Add space to anonymous type proposal. See [#1898](https://github.com/eclipse/eclipse.jdt.ls/pull/1898).
+ * bug fix - "Project Configuration Update" is broken due to JDTUtils.isExcludedFile() not working. See [#1909](https://github.com/eclipse/eclipse.jdt.ls/issues/1909).
+ * bug fix - NPE on ::new method refs (Cannot invoke "org.eclipse.jdt.core.dom.IMethodBinding.isSynthetic()" because "functionalMethod" is null). See [#1885](https://github.com/eclipse/eclipse.jdt.ls/issues/1885).
+ * bug fix - Go to definition doesn't compute/find results on methods inside an anonymous class. See [#1813](https://github.com/eclipse/eclipse.jdt.ls/issues/1813).
+ * bug fix - Packages are not filtered from completion despite the java.completion.filteredTypes configuration. See [#1904](https://github.com/eclipse/eclipse.jdt.ls/issues/1904).
+ * bug fix - Exclude `jdk.*`, `org.graalvm.*` and `io.micrometer.shaded.*` from completion. See [#1905](https://github.com/eclipse/eclipse.jdt.ls/pull/1905).
+ * bug fix - Assign all to fields generates wrong field names in some corner cases. See [#1031](https://github.com/eclipse/eclipse.jdt.ls/issues/1031).
+ * bug fix - Report the diagnostic range correctly on save. See [#1886](https://github.com/eclipse/eclipse.jdt.ls/pull/1886).
+ * bug fix - Fix adding preview features to a visible project. See [#1863](https://github.com/eclipse/eclipse.jdt.ls/pull/1863).
+ * build - Add ability to skip Gradle checksum packaging. See [#1906](https://github.com/eclipse/eclipse.jdt.ls/pull/1906).
+ * debt - Bump JUnit dependencies to 4.13 in some test projects. See [#1894](https://github.com/eclipse/eclipse.jdt.ls/pull/1894).
+ * debt - Update org.jsoup 1.9.2 to 1.14.2. See [#1884](https://github.com/eclipse/eclipse.jdt.ls/pull/1884).
+ * debt - Adjust m2e repository due to release of 1.18.2. See [#1912](https://github.com/eclipse/eclipse.jdt.ls/pull/1912).
+ * other - Promote end-user usage instruction more in the README. See [#1887](https://github.com/eclipse/eclipse.jdt.ls/pull/1887).
+
 # [1.4.0 (September 16th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/94?closed=1)
  * performance - completion: optimize the performance of SnippetCompletionProposal. See [#1838](https://github.com/eclipse/eclipse.jdt.ls/issues/1838).
  * performance - completion: listing constructors is slow. See [#1836](https://github.com/eclipse/eclipse.jdt.ls/issues/1836).
