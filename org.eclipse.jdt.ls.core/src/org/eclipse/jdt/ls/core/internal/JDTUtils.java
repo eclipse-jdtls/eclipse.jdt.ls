@@ -756,16 +756,6 @@ public final class JDTUtils {
 		return new Location(ResourceUtils.toClientUri(toURI(unit)), toRange(unit, offset, length));
 	}
 
-	/**
-	 * Creates a default location for the class file.
-	 *
-	 * @param classFile
-	 * @return location
-	 * @throws JavaModelException
-	 */
-	public static Location toLocation(IClassFile classFile) throws JavaModelException{
-		return toLocation(classFile, 0, 0);
-	}
 
 	/**
 	 * Creates a default location for the uri.
