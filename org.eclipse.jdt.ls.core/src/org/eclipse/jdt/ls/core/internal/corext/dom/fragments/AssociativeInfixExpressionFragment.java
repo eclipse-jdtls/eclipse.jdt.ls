@@ -32,8 +32,8 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
+import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.ls.core.internal.corext.SourceRangeFactory;
-import org.eclipse.jdt.ls.core.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.text.edits.TextEditGroup;
 
 
