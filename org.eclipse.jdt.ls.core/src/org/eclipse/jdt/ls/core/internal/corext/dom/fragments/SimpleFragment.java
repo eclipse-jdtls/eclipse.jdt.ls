@@ -19,7 +19,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.dom.JdtASTMatcher;
+import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.text.edits.TextEditGroup;
 
 class SimpleFragment extends ASTFragment {
