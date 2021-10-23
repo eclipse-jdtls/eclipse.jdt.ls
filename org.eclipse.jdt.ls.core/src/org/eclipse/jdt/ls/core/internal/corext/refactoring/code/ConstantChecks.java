@@ -29,8 +29,8 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.ThisExpression;
-import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.ASTFragmentFactory;
-import org.eclipse.jdt.ls.core.internal.corext.dom.fragments.IExpressionFragment;
+import org.eclipse.jdt.internal.corext.dom.fragments.ASTFragmentFactory;
+import org.eclipse.jdt.internal.corext.dom.fragments.IExpressionFragment;
 
 class ConstantChecks {
 	private static abstract class ExpressionChecker extends ASTVisitor {
