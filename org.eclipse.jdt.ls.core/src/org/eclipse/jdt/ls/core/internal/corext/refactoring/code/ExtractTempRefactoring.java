@@ -115,9 +115,12 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
+import org.eclipse.jdt.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
+import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -125,9 +128,6 @@ import org.eclipse.jdt.ls.core.internal.corext.SourceRangeFactory;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.JavaStringStatusContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.RefactoringStatusCodes;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringAnalyzeUtil;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
@@ -899,7 +899,7 @@ public class ExtractTempRefactoring extends Refactoring {
 		if (nodesToReplace.length == 0) {
 			return getSelectedExpression();
 		}
-		Comparator<IASTFragment> comparator = new Comparator<IASTFragment>() {
+		Comparator<IASTFragment> comparator = new Comparator<>() {
 
 			@Override
 			public int compare(IASTFragment o1, IASTFragment o2) {

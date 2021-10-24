@@ -50,6 +50,7 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
+import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -60,7 +61,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngi
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.ReferencesInBinaryContext;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ReferenceFinderUtil;
 import org.eclipse.jdt.ls.core.internal.corext.util.SearchUtils;
-import org.eclipse.jdt.ls.core.internal.corext.util.TextChangeManager;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.text.edits.ReplaceEdit;
