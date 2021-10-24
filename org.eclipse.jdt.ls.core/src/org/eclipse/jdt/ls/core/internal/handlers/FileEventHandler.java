@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgDestination;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -42,7 +43,6 @@ import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.ListCommandRes
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand.SourcePath;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenamePackageProcessor;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.IReorgDestination;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory;
 import org.eclipse.lsp4j.FileRename;
 import org.eclipse.lsp4j.RenameFilesParams;

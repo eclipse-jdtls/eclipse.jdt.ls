@@ -17,6 +17,7 @@ package org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgDestination;
 
 public class ReorgDestinationFactory {
 

@@ -47,6 +47,7 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibili
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil.LocalAnalyzePackage;
 import org.eclipse.jdt.internal.corext.refactoring.rename.TempOccurrenceAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
@@ -56,7 +57,6 @@ import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;

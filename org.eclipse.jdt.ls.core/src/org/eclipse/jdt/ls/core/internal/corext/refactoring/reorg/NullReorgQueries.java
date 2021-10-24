@@ -15,6 +15,8 @@
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg;
 
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IConfirmQuery;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgQueries;
 
 /**
  * Null implementation of reorg queries.

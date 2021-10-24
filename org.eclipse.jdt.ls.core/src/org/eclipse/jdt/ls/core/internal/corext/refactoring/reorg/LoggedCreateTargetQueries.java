@@ -28,6 +28,9 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.CreateTargetExecutionLog;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQueries;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQuery;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.ResourceUtil;
 

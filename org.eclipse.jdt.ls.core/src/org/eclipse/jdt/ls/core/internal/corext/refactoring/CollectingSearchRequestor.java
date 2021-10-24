@@ -26,7 +26,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.ReferencesInBinaryContext;
+import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
 
 /**
  * Collects the results returned by a <code>SearchEngine</code>.

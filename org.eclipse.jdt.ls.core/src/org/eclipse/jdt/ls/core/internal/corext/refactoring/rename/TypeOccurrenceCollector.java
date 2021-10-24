@@ -21,7 +21,7 @@ import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.base.ReferencesInBinaryContext;
+import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
 
 public class TypeOccurrenceCollector extends CuCollectingSearchRequestor {
 

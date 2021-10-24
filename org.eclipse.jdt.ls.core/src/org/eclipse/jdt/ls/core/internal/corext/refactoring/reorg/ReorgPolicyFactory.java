@@ -104,6 +104,16 @@ import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComme
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.CreateTargetExecutionLog;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQueries;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQuery;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.INewNameQueries;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.INewNameQuery;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgDestination;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgPolicy;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgPolicy.ICopyPolicy;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgPolicy.IMovePolicy;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgQueries;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
@@ -119,8 +129,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.CopyResourceC
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MovePackageChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MovePackageFragmentRootChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.IReorgPolicy.ICopyPolicy;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.IReorgPolicy.IMovePolicy;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory.JavaElementDestination;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory.ResourceDestination;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil;
