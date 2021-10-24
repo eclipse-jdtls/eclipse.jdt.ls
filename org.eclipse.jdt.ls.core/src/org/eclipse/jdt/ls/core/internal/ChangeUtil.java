@@ -208,7 +208,7 @@ public class ChangeUtil {
 		} else {
 			//update package's declaration
 			convertPackageUpdateEdit(pack.getCompilationUnits(), packageChange.getNewName(), edit);
-		
+
 			CreateFile createFile = new CreateFile();
 			createFile.setUri(ResourceUtils.fixURI(newPackagePath.append(TEMP_FILE_NAME).toFile().toURI()));
 			createFile.setOptions(new CreateFileOptions(false, true));
@@ -339,7 +339,7 @@ public class ChangeUtil {
 	}
 
 	private static void convertPackageUpdateEdit(ICompilationUnit cu, String newPkgName, WorkspaceEdit rootEdit) throws JavaModelException {
-		CompilationUnit unit = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);		
+		CompilationUnit unit = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
 		ASTRewrite rewrite = ASTRewrite.create(unit.getAST());
 		if (updatePackageStatement(unit, newPkgName, rewrite, cu)) {
 			TextEdit textEdit = rewrite.rewriteAST();
