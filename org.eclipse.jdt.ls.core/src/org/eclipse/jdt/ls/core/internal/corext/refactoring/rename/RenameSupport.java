@@ -26,10 +26,10 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.INameUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.INameUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
 

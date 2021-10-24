@@ -14,6 +14,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg;
 
+import org.eclipse.jdt.internal.corext.refactoring.reorg.CreateTargetExecutionLog;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQueries;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQuery;
+
 /**
  * Creates a new monitoring create target queries.
  *

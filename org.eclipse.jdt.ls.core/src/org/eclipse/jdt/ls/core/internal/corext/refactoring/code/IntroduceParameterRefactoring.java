@@ -80,6 +80,7 @@ import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
+import org.eclipse.jdt.internal.corext.refactoring.code.CodeRefactoringUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IDelegateUpdating;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;

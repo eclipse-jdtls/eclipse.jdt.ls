@@ -38,6 +38,10 @@ import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenamingNameSuggestor;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.IQualifiedNameUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.ISimilarDeclarationUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -45,10 +49,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabili
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IQualifiedNameUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.IReferenceUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ISimilarDeclarationUpdating;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
