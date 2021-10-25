@@ -85,6 +85,7 @@ import org.eclipse.jdt.internal.corext.refactoring.tagging.IQualifiedNameUpdatin
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ISimilarDeclarationUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
@@ -101,7 +102,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompila
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.QualifiedNameFinder;
 import org.eclipse.jdt.ls.core.internal.corext.util.Changes;
-import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementUtil;
 import org.eclipse.jdt.ls.core.internal.corext.util.QualifiedNameSearchResult;
 import org.eclipse.jdt.ls.core.internal.corext.util.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
