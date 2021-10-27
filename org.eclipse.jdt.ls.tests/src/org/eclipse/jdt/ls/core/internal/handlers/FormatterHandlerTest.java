@@ -861,11 +861,11 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testJoinWrappedLinesPreferences() throws Exception {
-		String joinWrappedLines = JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES);
-		assertEquals(DefaultCodeFormatterConstants.FALSE, joinWrappedLines);
-		String joinLinesInComments = JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS);
-		assertEquals(DefaultCodeFormatterConstants.FALSE, joinLinesInComments);
+	public void testDefaultFormatterPreferences() throws Exception {
+		assertEquals(DefaultCodeFormatterConstants.FALSE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES));
+		assertEquals(DefaultCodeFormatterConstants.FALSE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS));
+		assertEquals(DefaultCodeFormatterConstants.TRUE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH));
+		assertEquals(DefaultCodeFormatterConstants.TRUE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS));
 	}
 
 	@Test
@@ -895,7 +895,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				+ "}\n";
 		//@formatter:on
 		assertEquals(formattedText, expectedText);
-		Map<String, String> options = FormatterHandler.getJavaLSDefaultFormatterSettings();
+		Map<String, String> options = FormatterHandler.getCombinedDefaultFormatterSettings();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES, DefaultCodeFormatterConstants.TRUE);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS, DefaultCodeFormatterConstants.TRUE);
 		formattedText = handler.stringFormatting(text, options, ProfileVersionerCore.getCurrentVersion(), monitor);
@@ -905,6 +905,45 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				+ " */\n"
 				+ "public enum X {\n"
 				+ "\tONE, TWO, THREE;\n"
+				+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
+
+	@Test
+	public void testIndentSwitchStatements() throws Exception {
+		//@formatter:off
+		String text = "public class Hello {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        switch (args.length) {\n"
+				+ "        case 0:\n"
+				+ "            System.err.println(\"none\");\n"
+				+ "            break;\n"
+				+ "        case 1:\n"
+				+ "            System.err.println(\"one\");\n"
+				+ "            break;\n"
+				+ "        default:\n"
+				+ "            System.err.println(\"many\");\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}\n";
+		//@formatter:on
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		String formattedText = handler.stringFormatting(text, null, ProfileVersionerCore.getCurrentVersion(), monitor);
+		//@formatter:off
+		String expectedText = "public class Hello {\n"
+				+ "\tpublic static void main(String[] args) {\n"
+				+ "\t\tswitch (args.length) {\n"
+				+ "\t\t\tcase 0:\n"
+				+ "\t\t\t\tSystem.err.println(\"none\");\n"
+				+ "\t\t\t\tbreak;\n"
+				+ "\t\t\tcase 1:\n"
+				+ "\t\t\t\tSystem.err.println(\"one\");\n"
+				+ "\t\t\t\tbreak;\n"
+				+ "\t\t\tdefault:\n"
+				+ "\t\t\t\tSystem.err.println(\"many\");\n"
+				+ "\t\t}\n"
+				+ "\t}\n"
 				+ "}\n";
 		//@formatter:on
 		assertEquals(formattedText, expectedText);
