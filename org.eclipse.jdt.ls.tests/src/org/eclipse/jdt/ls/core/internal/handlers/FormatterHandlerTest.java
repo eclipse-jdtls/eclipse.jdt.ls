@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -827,7 +828,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		FormatterHandler handler = new FormatterHandler(preferenceManager);
 		Map<String, String> options = new HashMap<>();
 		options.put("org.eclipse.jdt.core.formatter.blank_lines_after_package", "3");
-		String formattedText =  handler.stringFormatting(text, options, 21, monitor);
+		String formattedText = handler.stringFormatting(text, options, ProfileVersionerCore.getCurrentVersion(), monitor);
 		//@formatter:off
 		String expectedText =
 			  "package org.sample;\n"
@@ -848,13 +849,63 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 					+ "    public      class     Baz {}  \n";
 		//@formatter:on
 		FormatterHandler handler = new FormatterHandler(preferenceManager);
-		String formattedText =  handler.stringFormatting(text, null, 21, monitor);
+		String formattedText = handler.stringFormatting(text, null, ProfileVersionerCore.getCurrentVersion(), monitor);
 		//@formatter:off
 		String expectedText =
 			  "package org.sample;\n"
 			+ "\n"
 			+ "public class Baz {\n"
 			+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+	}
+
+	@Test
+	public void testJoinWrappedLinesPreferences() throws Exception {
+		String joinWrappedLines = JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES);
+		assertEquals(DefaultCodeFormatterConstants.FALSE, joinWrappedLines);
+		String joinLinesInComments = JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS);
+		assertEquals(DefaultCodeFormatterConstants.FALSE, joinLinesInComments);
+	}
+
+	@Test
+	public void testJoinWrappedLines() throws Exception {
+		//@formatter:off
+		String text = "/**\n"
+				+ " * line 1\n"
+				+ " * line 2\n"
+				+ " */\n"
+				+ "public enum X {\n"
+				+ "       ONE,\n"
+				+ "       TWO,\n"
+				+ "       THREE;\n"
+				+ "}\n";
+		//@formatter:on
+		FormatterHandler handler = new FormatterHandler(preferenceManager);
+		String formattedText = handler.stringFormatting(text, null, ProfileVersionerCore.getCurrentVersion(), monitor);
+		//@formatter:off
+		String expectedText = "/**\n"
+				+ " * line 1\n"
+				+ " * line 2\n"
+				+ " */\n"
+				+ "public enum X {\n"
+				+ "\tONE,\n"
+				+ "\tTWO,\n"
+				+ "\tTHREE;\n"
+				+ "}\n";
+		//@formatter:on
+		assertEquals(formattedText, expectedText);
+		Map<String, String> options = FormatterHandler.getJavaLSDefaultFormatterSettings();
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES, DefaultCodeFormatterConstants.TRUE);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS, DefaultCodeFormatterConstants.TRUE);
+		formattedText = handler.stringFormatting(text, options, ProfileVersionerCore.getCurrentVersion(), monitor);
+		//@formatter:off
+		expectedText = "/**\n"
+				+ " * line 1 line 2\n"
+				+ " */\n"
+				+ "public enum X {\n"
+				+ "\tONE, TWO, THREE;\n"
+				+ "}\n";
 		//@formatter:on
 		assertEquals(formattedText, expectedText);
 	}

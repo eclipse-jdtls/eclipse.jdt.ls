@@ -16,7 +16,6 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -335,7 +334,7 @@ public class FormatterHandler {
 	public String stringFormatting(String content, Map<String, String> options, int version, IProgressMonitor monitor) {
 		IDocument document = new Document();
 		document.set(content);
-		Map<String, String> formatOptions = (options == null) ? DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap() : ProfileVersionerCore.updateAndComplete(options, version);
+		Map<String, String> formatOptions = (options == null) ? getJavaLSDefaultFormatterSettings() : ProfileVersionerCore.updateAndComplete(options, version);
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(formatOptions);
 		IRegion region = new Region(0, document.getLength());
 		int kind = CodeFormatter.K_COMPILATION_UNIT;
@@ -351,5 +350,12 @@ public class FormatterHandler {
 			}
 		}
 		return document.get();
+	}
+
+	public static Map<String, String> getJavaLSDefaultFormatterSettings() {
+		Map<String, String> options = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES, DefaultCodeFormatterConstants.FALSE);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS, DefaultCodeFormatterConstants.FALSE);
+		return options;
 	}
 }
