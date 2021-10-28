@@ -284,7 +284,7 @@ public class StandardProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
-		Map<String, String> defaultOptions = FormatterHandler.getJavaLSDefaultFormatterSettings();
+		Map<String, String> defaultOptions = FormatterHandler.getCombinedDefaultFormatterSettings();
 		if (formatterOptions != null && !formatterOptions.isEmpty()) {
 			defaultOptions.putAll(formatterOptions);
 		}

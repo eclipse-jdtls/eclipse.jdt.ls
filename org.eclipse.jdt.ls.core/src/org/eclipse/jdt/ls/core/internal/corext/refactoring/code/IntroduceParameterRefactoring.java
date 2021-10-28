@@ -332,7 +332,7 @@ public class IntroduceParameterRefactoring extends Refactoring implements IDeleg
 				AST ast= cuRewrite.getAST();
 				Type type= importRewrite.addImport(typeBinding, ast, importRewriteContext);
 				classInstanceCreation.setType(type);    // Should not touch the original AST ...
-				Map<String, String> settings = FormatterHandler.getJavaLSDefaultFormatterSettings();
+				Map<String, String> settings = FormatterHandler.getCombinedDefaultFormatterSettings();
 				defaultValue= ASTNodes.asFormattedString(classInstanceCreation, 0, StubUtility.getLineDelimiterUsed(cuRewrite.getCu()),
 						settings /* FormatterProfileManager.getProjectSettings(cuRewrite.getCu().getJavaProject()) */);
 				classInstanceCreation.setType(cicType); // ... so let's restore it right away.
