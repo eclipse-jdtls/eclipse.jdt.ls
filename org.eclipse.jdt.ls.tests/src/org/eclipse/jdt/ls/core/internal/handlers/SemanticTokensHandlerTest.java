@@ -103,7 +103,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Methods() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Methods.java"), "method", "class")
+		TokenAssertionHelper.beginAssertion(getURI("Methods.java"), "method", "class", "keyword")
 			.assertNextToken("Methods", "class", "public", "declaration")
 			.assertNextToken("foo1", "method", "public", "generic", "declaration")
 			.assertNextToken("foo2", "method", "private", "declaration")
@@ -126,6 +126,10 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("Integer", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("foo6", "method", "deprecated")
 			.assertNextToken("foo5", "method", "native")
+			.assertNextToken("Class", "class", "readonly", "public", "generic")
+			.assertNextToken("class", "keyword")
+			.assertNextToken("m", "class")
+			.assertNextToken("Class", "class", "readonly", "public", "generic")
 		.endAssertion();
 	}
 

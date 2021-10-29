@@ -184,7 +184,11 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	public boolean visit(TypeLiteral node) {
 		acceptNode(node.getType());
 		// Don't add "class" keyword token for recovered type literals
-		if ((node.getFlags() & ASTNode.RECOVERED) == 0) {
+		// The AST doesn't always contain the correct information,
+		// so we need to verfify that the literal is 6 characters longer
+		// than the type itself (corresponding to the ".class" characters).
+		// https://github.com/eclipse/eclipse.jdt.ls/issues/1922
+		if (node.getLength() == node.getType().getLength() + 6) {
 			// The last 5 characters of a TypeLiteral are the "class" keyword
 			int offset = node.getStartPosition() + node.getLength() - 5;
 			addToken(offset, 5, TokenType.KEYWORD, 0);
