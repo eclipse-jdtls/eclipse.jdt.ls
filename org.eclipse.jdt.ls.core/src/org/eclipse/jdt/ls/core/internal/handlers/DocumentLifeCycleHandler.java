@@ -13,7 +13,6 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.core.resources.IFile;
@@ -21,8 +20,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -30,31 +27,18 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.text.edits.DeleteEdit;
-import org.eclipse.text.edits.InsertEdit;
-import org.eclipse.text.edits.MalformedTreeException;
-import org.eclipse.text.edits.ReplaceEdit;
-import org.eclipse.text.edits.TextEdit;
 
 public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
 	private PreferenceManager preferenceManager;
 
-	private CoreASTProvider sharedASTProvider;
-
 	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, boolean delayValidation) {
 		super(delayValidation);
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
-		this.sharedASTProvider = CoreASTProvider.getInstance();
 	}
 
 	@Override
@@ -105,57 +89,6 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
 		if (unit == null || unit.getResource() == null || unit.getResource().isDerived()) {
 			return unit;
-		}
-
-		return unit;
-	}
-
-	@Override
-	public ICompilationUnit handleChanged(DidChangeTextDocumentParams params) {
-		String uri = params.getTextDocument().getUri();
-		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-
-		if (unit == null || !unit.isWorkingCopy() || params.getContentChanges().isEmpty() || unit.getResource().isDerived()) {
-			return unit;
-		}
-
-		try {
-			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
-				sharedASTProvider.disposeAST();
-			}
-			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
-
-				Range range = changeEvent.getRange();
-				int length;
-
-				if (range != null) {
-					length = changeEvent.getRangeLength().intValue();
-				} else {
-					// range is optional and if not given, the whole file content is replaced
-					length = unit.getSource().length();
-					range = JDTUtils.toRange(unit, 0, length);
-				}
-
-				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
-
-				TextEdit edit = null;
-				String text = changeEvent.getText();
-				if (length == 0) {
-					edit = new InsertEdit(startOffset, text);
-				} else if (text.isEmpty()) {
-					edit = new DeleteEdit(startOffset, length);
-				} else {
-					edit = new ReplaceEdit(startOffset, length, text);
-				}
-
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
-				edit.apply(document, TextEdit.NONE);
-
-			}
-			triggerValidation(unit);
-		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
-			JavaLanguageServerPlugin.logException("Error while handling document change. URI: " + uri, e);
 		}
 
 		return unit;
