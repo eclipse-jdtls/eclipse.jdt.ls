@@ -54,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -61,6 +62,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
@@ -390,16 +392,17 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 				Range range = changeEvent.getRange();
 				int length;
-
+				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+				final int startOffset;
 				if (range != null) {
-					length = changeEvent.getRangeLength().intValue();
+					Position start = range.getStart();
+					startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
+					length = DiagnosticsHelper.getLength(unit, range);
 				} else {
 					// range is optional and if not given, the whole file content is replaced
 					length = unit.getSource().length();
-					range = JDTUtils.toRange(unit, 0, length);
+					startOffset = 0;
 				}
-
-				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 
 				TextEdit edit = null;
 				String text = changeEvent.getText();
@@ -410,7 +413,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 
 			}

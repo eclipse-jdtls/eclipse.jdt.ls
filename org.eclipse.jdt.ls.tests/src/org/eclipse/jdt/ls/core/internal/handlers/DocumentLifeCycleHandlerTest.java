@@ -655,7 +655,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		String source = cu.getSource();
 		int length = source.length();
 		source = source.replace("org", "org.eclipse");
-		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, length));
 		FileUtils.writeStringToFile(file, source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
@@ -725,7 +725,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		String source = cu.getSource();
 		int length = source.length();
 		source = source.replace("org", "org.eclipse");
-		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, source.length()), length);
+		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, length));
 		FileUtils.writeStringToFile(file, source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
@@ -736,7 +736,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		source = cu.getSource();
 		length = source.length();
 		source = source.replace("org.eclipse", "org.eclipse.toto");
-		changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, source.length()), length);
+		changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, length));
 		FileUtils.writeStringToFile(file, source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
@@ -852,14 +852,14 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 	private void changeDocumentIncrementally(ICompilationUnit cu, String content, int version, int offset, int length) throws JavaModelException {
 		Range range = JDTUtils.toRange(cu, offset, length);
-		changeDocument(cu, content, version, range, length);
+		changeDocument(cu, content, version, range);
 	}
 
 	private void changeDocumentFull(ICompilationUnit cu, String content, int version) throws JavaModelException {
-		changeDocument(cu, content, version, null, 0);
+		changeDocument(cu, content, version, null);
 	}
 
-	private void changeDocument(ICompilationUnit cu, String content, int version, Range range, int length) throws JavaModelException {
+	private void changeDocument(ICompilationUnit cu, String content, int version, Range range) throws JavaModelException {
 		DidChangeTextDocumentParams changeParms = new DidChangeTextDocumentParams();
 		VersionedTextDocumentIdentifier textDocument = new VersionedTextDocumentIdentifier();
 		textDocument.setUri(JDTUtils.toURI(cu));
@@ -868,7 +868,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		TextDocumentContentChangeEvent event = new TextDocumentContentChangeEvent();
 		if (range != null) {
 			event.setRange(range);
-			event.setRangeLength(length);
 		}
 		event.setText(content);
 		List<TextDocumentContentChangeEvent> contentChanges = new ArrayList<>();
