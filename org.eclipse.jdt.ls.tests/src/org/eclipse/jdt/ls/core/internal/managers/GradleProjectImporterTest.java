@@ -527,28 +527,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testSettingsGradle() throws Exception {
-			List<IProject> projects = importProjects("gradle/sample");
-			assertEquals(3, projects.size());//default, app, sample
-			IProject root = WorkspaceHelper.getProject("sample");
-			assertIsGradleProject(root);
-			IProject project = WorkspaceHelper.getProject("app");
-			assertIsGradleProject(project);
-			assertIsJavaProject(project);
-			IJavaProject javaProject = JavaCore.create(project);
-			IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
-			assertNull(type);
-			IFile build2 = project.getFile("/build.gradle2");
-			InputStream contents = build2.getContents();
-			IFile build = project.getFile("/build.gradle");
-			build.setContents(contents, true, false, null);
-			projectsManager.updateProject(project, false);
-			waitForBackgroundJobs();
-			type = javaProject.findType("org.apache.commons.lang3.StringUtils");
-			assertNotNull(type);
-	}
-
-	@Test
 	public void importGradleKtsProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/kradle");
 		assertEquals(2, projects.size());//default + gradle kts projects
