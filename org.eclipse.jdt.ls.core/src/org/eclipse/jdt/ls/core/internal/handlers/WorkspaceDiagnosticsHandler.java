@@ -164,12 +164,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 				return false;
 			}
-
-			IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-			IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
-			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
-			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
-			document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			if (!cu.isWorkingCopy()) {
+				IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+				IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
+				markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
+				System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
+				document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			}
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {
 			//all errors on that build file should be relevant
