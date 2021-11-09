@@ -72,7 +72,7 @@ public class GenerateAccessorsHandler {
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 			if (astRoot != null && cursor != null) {
 				ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
-				declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+				declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
 			}
 			// If cursor position is not specified, then insert to the last by default.
 			IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, cursor);

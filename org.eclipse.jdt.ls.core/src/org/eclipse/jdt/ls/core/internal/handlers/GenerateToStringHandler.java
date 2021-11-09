@@ -99,7 +99,7 @@ public class GenerateToStringHandler {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 		if (astRoot != null && range != null) {
 			ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range), DiagnosticsHelper.getLength(type.getCompilationUnit(), range));
-			declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+			declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
 		}
 		// If cursor position is not specified, then insert to the last by default.
 		IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);

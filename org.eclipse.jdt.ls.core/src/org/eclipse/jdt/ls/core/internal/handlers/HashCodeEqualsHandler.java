@@ -118,7 +118,7 @@ public class HashCodeEqualsHandler {
 				codeGenSettings.createComments = generateComments;
 				codeGenSettings.overrideAnnotation = true;
 				ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
-				ASTNode declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+				ASTNode declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
 				// If cursor position is not specified, then insert to the last by default.
 				IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, cursor);
 				GenerateHashCodeEqualsOperation operation = new GenerateHashCodeEqualsOperation(typeBinding, variableBindings, astRoot, insertPosition, codeGenSettings, useInstanceof, useJava7Objects, regenerate, false, false);
