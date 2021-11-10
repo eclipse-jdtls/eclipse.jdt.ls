@@ -27,8 +27,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.lsp4j.DidCloseTextDocumentParams;
-import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 
 public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
@@ -82,22 +80,4 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
 		return unit;
 	}
-
-	@Override
-	public ICompilationUnit handleOpen(DidOpenTextDocumentParams params) {
-		ICompilationUnit unit = super.handleOpen(params);
-
-		if (unit == null || unit.getResource() == null || unit.getResource().isDerived()) {
-			return unit;
-		}
-
-		return unit;
-	}
-
-	@Override
-	public ICompilationUnit handleClosed(DidCloseTextDocumentParams params) {
-		ICompilationUnit unit = super.handleClosed(params);
-		return unit;
-	}
-
 }
