@@ -228,6 +228,7 @@ public interface IProposalRelevance {
 	public static final int RETURN_ALLOCATED_OBJECT= 2;
 	public static final int REMOVE_BLOCK_FIX= 2;
 	public static final int CONVERT_TO_ANONYMOUS_CLASS_CREATION= 2;
+	public static final int CONVERT_TO_SWITCH_EXPRESSION = 2;
 
 	public static final int JOIN_VARIABLE_DECLARATION= 1;
 	public static final int INVERT_EQUALS= 1;

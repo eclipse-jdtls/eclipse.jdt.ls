@@ -75,6 +75,9 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodReference;
+import org.eclipse.jdt.core.dom.SwitchCase;
+import org.eclipse.jdt.core.dom.SwitchExpression;
+import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
@@ -93,6 +96,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
@@ -106,11 +110,13 @@ import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
+import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -197,6 +203,7 @@ public class QuickAssistProcessor {
 			// }
 			getAddMethodDeclaration(context, coveringNode, resultingCollections);
 			getTryWithResourceProposals(locations, context, coveringNode, resultingCollections);
+			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1674,4 +1681,47 @@ public class QuickAssistProcessor {
 		resultingCollections.add(proposal);
 		return true;
 	}
+
+	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+		if (covering instanceof Block) {
+			List<Statement> statements = ((Block) covering).statements();
+			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
+			if (startIndex == -1 || startIndex >= statements.size()) {
+				return false;
+			}
+			covering = statements.get(startIndex);
+		} else {
+			while (covering instanceof SwitchCase || covering instanceof SwitchExpression) {
+				covering = covering.getParent();
+			}
+		}
+
+		SwitchStatement switchStatement;
+		if (covering instanceof SwitchStatement) {
+			switchStatement = (SwitchStatement) covering;
+		} else {
+			return false;
+		}
+
+		SwitchExpressionsFixCore fix = SwitchExpressionsFixCore.createConvertToSwitchExpressionFix(switchStatement);
+		if (fix == null) {
+			return false;
+		}
+
+		if (resultingCollections == null) {
+			return true;
+		}
+
+		// add correction proposal
+		try {
+			CompilationUnitChange change = fix.createChange(null);
+			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.CONVERT_TO_SWITCH_EXPRESSION);
+			resultingCollections.add(proposal);
+		} catch (CoreException e) {
+			// continue
+		}
+
+		return true;
+	}
+
 }
