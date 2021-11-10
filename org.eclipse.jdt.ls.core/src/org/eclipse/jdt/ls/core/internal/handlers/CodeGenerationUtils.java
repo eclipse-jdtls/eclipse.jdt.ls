@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.SourceField;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.lsp4j.Range;
@@ -40,7 +41,7 @@ public class CodeGenerationUtils {
 		} else if (Objects.equals(insertionLocation, INSERT_BEFORE_CURSOR)) {
 			return findElementAtPosition(type, cursor);
 		}
-		
+
 		return findElementAfterPosition(type, cursor);
 	}
 
@@ -51,8 +52,28 @@ public class CodeGenerationUtils {
 		} else if (Objects.equals(insertionLocation, INSERT_BEFORE_CURSOR)) {
 			return findElementAtPosition(type, currentOffset);
 		}
-		
+
 		return findElementAfterPosition(type, currentOffset);
+	}
+
+	public static IJavaElement findInsertElementAfterLastField(IType type) {
+		int lastOffset = 0;
+		try {
+			IJavaElement[] members = type.getChildren();
+			for (IJavaElement member : members) {
+				if (member instanceof SourceField) {
+					ISourceRange sourceRange = ((IMember) member).getSourceRange();
+					int offset = sourceRange.getOffset() + sourceRange.getLength();
+					if (offset > lastOffset) {
+						lastOffset = offset;
+					}
+				}
+			}
+			return findElementAfterPosition(type, lastOffset);
+		} catch (JavaModelException e) {
+			// do nothing.
+		}
+		return null;
 	}
 
 	private static IJavaElement findElementAtPosition(IType type, int currentOffset) {

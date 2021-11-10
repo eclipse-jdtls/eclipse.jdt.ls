@@ -112,9 +112,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(codeActions.size() >= 3);
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
+		Assert.assertNotNull(quickAssistActions);
+		Assert.assertTrue(quickAssistActions.size() >= 2);
+		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
+		Assert.assertNotNull(organizeImportActions);
+		Assert.assertEquals(1, organizeImportActions.size());
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -475,9 +478,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(codeActions.size() >= 3);
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
+		Assert.assertNotNull(quickAssistActions);
+		Assert.assertTrue(quickAssistActions.size() >= 2);
+		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
+		Assert.assertNotNull(organizeImportActions);
+		Assert.assertEquals(1, organizeImportActions.size());
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -615,7 +621,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	public static boolean commandExists(List<Either<Command, CodeAction>> codeActions, String command) {
-		if (codeActions.isEmpty()) {
+		if (codeActions == null || codeActions.isEmpty()) {
 			return false;
 		}
 		for (Either<Command, CodeAction> codeAction : codeActions) {
