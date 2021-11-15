@@ -35,7 +35,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -70,17 +69,12 @@ public class QuickFixProcessor {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
-		boolean showQuickFixesAtLine = JavaLanguageServerPlugin.getPreferencesManager() == null ? false : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJavaQuickFixShowAtLine();
 		ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
 		Set<Integer> handledProblems = new HashSet<>(locations.length);
 		for (int i = 0; i < locations.length; i++) {
 			IProblemLocationCore curr = locations[i];
-			if (!showQuickFixesAtLine) {
-				Integer id = Integer.valueOf(curr.getProblemId());
-				if (handledProblems.add(id)) {
-					process(context, curr, resultingCollections);
-				}
-			} else {
+			Integer id = Integer.valueOf(curr.getProblemId());
+			if (handledProblems.add(id)) {
 				process(context, curr, resultingCollections);
 			}
 		}

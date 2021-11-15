@@ -88,8 +88,39 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 	}
 
+	// preferenceManager.getPreferences().setJavaQuickFixShowAt(Preferences.LINE);
 	@Test
-	public void testShowAll() throws Exception {
+	public void testHandledProblems() throws Exception {
+		String showQuickFixes = preferenceManager.getPreferences().getJavaQuickFixShowAt();
+		try {
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(Preferences.LINE);
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("import java.util.List;\n");
+			buf.append("public class F implements List {\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), true, null);
+			CodeActionParams codeActionParams = new CodeActionParams();
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+			textDocument.setUri(JDTUtils.toURI(cu));
+			codeActionParams.setTextDocument(textDocument);
+			codeActionParams.setRange(new Range(new Position(2, 13), new Position(2, 16)));
+			CodeActionContext context = new CodeActionContext();
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+			List<Diagnostic> diagnostics = getDiagnostics(cu, astRoot, 3);
+			context.setDiagnostics(diagnostics);
+			context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
+			codeActionParams.setContext(context);
+			List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
+			assertEquals(1, codeActions.size());
+		} finally {
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(showQuickFixes);
+		}
+	}
+
+	@Test
+	public void testShowAt() throws Exception {
 		String showQuickFixes = preferenceManager.getPreferences().getJavaQuickFixShowAt();
 		try {
 			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
@@ -128,10 +159,10 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 			List<Diagnostic> diagnostics = getDiagnostics(cu, astRoot, 4);
 			context.setDiagnostics(diagnostics);
 			codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(5, codeActions.size());
+			assertEquals(3, codeActions.size());
 			codeActionParams.setRange(new Range(new Position(3, 4), new Position(3, 40)));
 			codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(5, codeActions.size());
+			assertEquals(3, codeActions.size());
 			codeActionParams.setRange(new Range(new Position(5, 1), new Position(5, 1)));
 			diagnostics = getDiagnostics(cu, astRoot, 6);
 			context.setDiagnostics(diagnostics);
