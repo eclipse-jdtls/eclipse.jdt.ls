@@ -72,6 +72,11 @@ public class JdtlsFile extends LocalFile {
             childNameSet.add(IJavaProject.CLASSPATH_FILE_NAME);
         }
 
+        if (!childNameSet.contains(JdtlsFsUtils.FACTORY_PATH) &&
+                JdtlsFsUtils.METADATA_FOLDER_PATH.append(projectName).append(JdtlsFsUtils.FACTORY_PATH).toFile().exists()) {
+            childNameSet.add(JdtlsFsUtils.FACTORY_PATH);
+        }
+
         if (!childNameSet.contains(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME) &&
                 JdtlsFsUtils.METADATA_FOLDER_PATH.append(projectName).append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME).toFile().exists()) {
             childNameSet.add(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);

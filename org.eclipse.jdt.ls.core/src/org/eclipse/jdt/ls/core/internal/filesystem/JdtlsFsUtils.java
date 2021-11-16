@@ -39,13 +39,16 @@ public class JdtlsFsUtils {
     */
     public static final String GENERATES_METADATA_FILES_AT_PROJECT_ROOT = "java.import.generatesMetadataFilesAtProjectRoot";
 
+    public static final String FACTORY_PATH = ".factorypath";
+
     /**
      * The metadata files
      */
     private static final Set<String> METADATA_NAMES = new HashSet<>(Arrays.asList(
         IProjectDescription.DESCRIPTION_FILE_NAME,
         EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME,
-        IJavaProject.CLASSPATH_FILE_NAME
+        IJavaProject.CLASSPATH_FILE_NAME,
+        FACTORY_PATH
     ));
 
     /**
@@ -149,21 +152,22 @@ public class JdtlsFsUtils {
             return METADATA_FOLDER_PATH.append(projectName).append(path);
         }
 
-        if (Objects.equals(path.lastSegment(), IProjectDescription.DESCRIPTION_FILE_NAME) ||
-                Objects.equals(path.lastSegment(), IJavaProject.CLASSPATH_FILE_NAME) ||
-                Objects.equals(path.lastSegment(), EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)) {
-            return METADATA_FOLDER_PATH.append(projectName).append(path.lastSegment());
-        } else if (path.lastSegment().endsWith(EclipsePreferences.PREFS_FILE_EXTENSION)) {
+        String lastSegment = path.lastSegment();
+        if (Objects.equals(lastSegment, IProjectDescription.DESCRIPTION_FILE_NAME) ||
+                Objects.equals(lastSegment, IJavaProject.CLASSPATH_FILE_NAME) ||
+                Objects.equals(lastSegment, FACTORY_PATH) ||
+                Objects.equals(lastSegment, EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)) {
+            return METADATA_FOLDER_PATH.append(projectName).append(lastSegment);
+        } else if (lastSegment.endsWith(EclipsePreferences.PREFS_FILE_EXTENSION)) {
             if (path.segmentCount() > 2) {
                 return METADATA_FOLDER_PATH.append(projectName)
                         .append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)
-                        .append(path.lastSegment());
+                        .append(lastSegment);
             } else {
                 return METADATA_FOLDER_PATH.append(projectName)
                         .append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)
-                        .append(path.lastSegment());
+                        .append(lastSegment);
             }
-            
         }
 
         return null;

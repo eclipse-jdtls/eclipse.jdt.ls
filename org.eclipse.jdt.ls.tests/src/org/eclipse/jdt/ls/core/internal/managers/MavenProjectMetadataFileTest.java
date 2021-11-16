@@ -148,6 +148,38 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 	}
 
 	@Test
+	public void testFactoryPathFileLocation() throws Exception {
+		String name = "autovalued";
+		importProjects("maven/" + name);
+		IProject project = WorkspaceHelper.getProject(name);
+		assertTrue(project.exists());
+
+		IFile projectDescription = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
+		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
+		IPath projectDescriptionPath = FileUtil.toPath(projectDescription.getLocationURI());
+		assertTrue(projectDescriptionPath.toFile().exists());
+		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+
+		IFile classpath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
+		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
+		IPath classpathPath = FileUtil.toPath(classpath.getLocationURI());
+		assertTrue(classpathPath.toFile().exists());
+		assertEquals(project.getLocation().isPrefixOf(classpathPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+
+		IFile preferencesFile = project.getFile(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);
+		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
+		IPath preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
+		assertTrue(preferencesPath.toFile().exists());
+		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+
+		IFile factoryPathFile = project.getFile(JdtlsFsUtils.FACTORY_PATH);
+		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
+		IPath factoryPathFilePath = FileUtil.toPath(factoryPathFile.getLocationURI());
+		assertTrue(factoryPathFilePath.toFile().exists());
+		assertEquals(project.getLocation().isPrefixOf(factoryPathFilePath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+	}
+
+	@Test
 	public void testMultipleMetadataFile() throws Exception {
 		if (JdtlsFsUtils.generatesMetadataFilesAtProjectRoot()) {
 			return;
