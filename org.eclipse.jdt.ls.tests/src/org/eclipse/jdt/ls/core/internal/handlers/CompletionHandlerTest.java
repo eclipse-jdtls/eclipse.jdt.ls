@@ -59,6 +59,8 @@ import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
@@ -72,6 +74,8 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.MalformedTreeException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ComparisonFailure;
@@ -908,6 +912,60 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(8, range.getStart().getCharacter());
 		assertEquals(0, range.getEnd().getLine());
 		assertEquals(15, range.getEnd().getCharacter());
+	}
+
+	@Test
+	public void testSkipAdditionalEditForImport() throws JavaModelException, MalformedTreeException, BadLocationException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import " +
+			"public class Test {\n" +
+			"}"
+		);
+		//@formatter:on
+
+		// mock the user's input behavior
+		int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), 1, 7);
+		InsertEdit edit = new InsertEdit(startOffset, "j");
+		IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+		edit.apply(document, org.eclipse.text.edits.TextEdit.NONE);
+		CompletionList list = requestCompletions(unit, "import j");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNull(resolved.getAdditionalTextEdits());
+	}
+
+	@Test
+	public void testSkipAdditionalEditForImport2() throws JavaModelException, MalformedTreeException, BadLocationException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import " +
+			"public class Test {\n" +
+			"}"
+		);
+		//@formatter:on
+
+		// mock the user's input behavior
+		int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), 1, 7);
+		InsertEdit edit = new InsertEdit(startOffset, "java.util.Arr");
+		IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+		edit.apply(document, org.eclipse.text.edits.TextEdit.NONE);
+		CompletionList list = requestCompletions(unit, "java.util.Arr");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNull(resolved.getAdditionalTextEdits());
 	}
 
 	@Test
