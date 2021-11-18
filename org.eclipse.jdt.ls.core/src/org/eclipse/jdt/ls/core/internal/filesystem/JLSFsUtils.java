@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat Inc. and others.
+ * Copyright (c) 2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -29,8 +29,8 @@ import org.eclipse.jdt.core.IJavaProject;
 /**
  * Utilities of the file system implementation.
  */
-public class JdtlsFsUtils {
-    private JdtlsFsUtils() {}
+public class JLSFsUtils {
+    private JLSFsUtils() {}
 
     public static final IPath METADATA_FOLDER_PATH = ResourcesPlugin.getPlugin().getStateLocation().append(".projects");
 
@@ -44,7 +44,7 @@ public class JdtlsFsUtils {
     /**
      * The metadata files
      */
-    private static final Set<String> METADATA_NAMES = new HashSet<>(Arrays.asList(
+    public static final Set<String> METADATA_NAMES = new HashSet<>(Arrays.asList(
         IProjectDescription.DESCRIPTION_FILE_NAME,
         EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME,
         IJavaProject.CLASSPATH_FILE_NAME,
@@ -57,7 +57,7 @@ public class JdtlsFsUtils {
      * The file will be stored in workspace's metadata folder when following conditions meet:
      * <ul>
      *   <li>The system property shows that it's allowed to store them in workspace.</li>
-     *   <li>The file belongs to the metadata file defined in {@link JdtlsFsUtils#METADATA_NAMES}.</li>
+     *   <li>The file belongs to the metadata file defined in {@link JLSFsUtils#METADATA_NAMES}.</li>
      *   <li>The project's root path does not contain the metadata file with the same name.</li>
      * </ul>
      * </p>
@@ -65,11 +65,29 @@ public class JdtlsFsUtils {
      * @param location the path of the resource.
      * @return whether the resource needs to be stored in workspace's metadata folder.
      */
-    static boolean shouldStoreInWorkspaceStorage(IPath location) {
+    static boolean shouldStoreInMetadataArea(IPath location) {
         if (generatesMetadataFilesAtProjectRoot()) {
             return false;
         }
 
+        if (!isProjectMetadataFile(location)) {
+            return false;
+        }
+
+        // do not redirect if the file already exists on disk
+        if (location.toFile().exists()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check whether the given location points to a metadata file.
+     * @param location file location.
+     * @return whether the given location points to a metadata file.
+     */
+    static boolean isProjectMetadataFile(IPath location) {
         if (location == null || location.segmentCount() < 2) {
             return false;
         }
@@ -86,63 +104,41 @@ public class JdtlsFsUtils {
             return false;
         }
 
-        if (!isAtProjectRoot(location.removeLastSegments(1))) {
-            return false;
-        }
-
-        if (location.toFile().exists()) {
-            return false;
-        }
-
         return true;
     }
 
     /**
-     * Check if the location is a root path of a project in workspace.
-     * @param location the location path.
-     * @return whether the location is a root path of a project in workspace.
+     * Get the container path of the given file path.
+     * If the file path is a preferences file, the grand-parent container will be returned.
+     * @param filePath the file path.
      */
-    static boolean isAtProjectRoot(IPath location) {
+    static IPath getContainerPath(IPath filePath) {
+        if (filePath.lastSegment().endsWith(EclipsePreferences.PREFS_FILE_EXTENSION)) {
+            filePath = filePath.removeLastSegments(1);
+        }
+        return filePath.removeLastSegments(1);
+    }
+
+    /**
+     * Get the project name if the given path is a project root, or <code>null</code> if
+     * no project root can match the path.
+     * @param location the location path.
+     * @return The project name
+     */
+    static String getProjectNameIfLocationIsProjectRoot(IPath location) {
         IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
         for (IProject project : projects) {
             IPath projectLocation = project.getLocation();
             if (Objects.equals(projectLocation, location)) {
-                return true;
+                return project.getName();
             }
         }
-        return false;
-    }
-
-    /**
-     * Get the given resource's belonging project.
-     * @param location the path of the resource.
-     * @return the given resource's belonging project.
-     */
-    static IProject getProject(IPath location) {
-        int resultProjectPathSegments = 0;
-        IProject belongingProject = null;
-        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
-        for (IProject project : projects) {
-            IPath projectLocation = project.getLocation();
-            if (projectLocation != null && projectLocation.isPrefixOf(location)) {
-                int segmentsToRemove = projectLocation.segmentCount();
-                if (segmentsToRemove > resultProjectPathSegments) {
-                    resultProjectPathSegments = segmentsToRemove;
-                    belongingProject = project;
-                }
-            }
-        }
-
-        if (belongingProject == null) {
-            return null;
-        }
-
-        return belongingProject;
+        return null;
     }
 
     /**
      * Get the redirected path of the input path. The path will be redirected to
-     * the workspace's metadata folder ({@link JdtlsFsUtils#METADATA_FOLDER_PATH}).
+     * the workspace's metadata folder ({@link JLSFsUtils#METADATA_FOLDER_PATH}).
      * @param projectName name of the project.
      * @param path path needs to be redirected.
      * @return the redirected path.
@@ -153,21 +149,12 @@ public class JdtlsFsUtils {
         }
 
         String lastSegment = path.lastSegment();
-        if (Objects.equals(lastSegment, IProjectDescription.DESCRIPTION_FILE_NAME) ||
-                Objects.equals(lastSegment, IJavaProject.CLASSPATH_FILE_NAME) ||
-                Objects.equals(lastSegment, FACTORY_PATH) ||
-                Objects.equals(lastSegment, EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)) {
+        if (METADATA_NAMES.contains(lastSegment)) {
             return METADATA_FOLDER_PATH.append(projectName).append(lastSegment);
         } else if (lastSegment.endsWith(EclipsePreferences.PREFS_FILE_EXTENSION)) {
-            if (path.segmentCount() > 2) {
-                return METADATA_FOLDER_PATH.append(projectName)
-                        .append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)
-                        .append(lastSegment);
-            } else {
-                return METADATA_FOLDER_PATH.append(projectName)
-                        .append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)
-                        .append(lastSegment);
-            }
+            return METADATA_FOLDER_PATH.append(projectName)
+                    .append(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME)
+                    .append(lastSegment);
         }
 
         return null;

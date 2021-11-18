@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat Inc. and others.
+ * Copyright (c) 2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -29,7 +29,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
-import org.eclipse.jdt.ls.core.internal.filesystem.JdtlsFsUtils;
+import org.eclipse.jdt.ls.core.internal.filesystem.JLSFsUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +49,7 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 
 	@Before
 	public void setUp() {
-		System.setProperty(JdtlsFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 	}
 
 	@Test
@@ -61,19 +61,19 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		IPath projectDescriptionPath = FileUtil.toPath(projectDescription.getLocationURI());
 		assertTrue(projectDescriptionPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 
 		IFile classpath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
 		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		IPath classpathPath = FileUtil.toPath(classpath.getLocationURI());
 		assertTrue(classpathPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(classpathPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(classpathPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 
 		IFile preferencesFile = project.getFile(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);
 		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		IPath preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
 		assertTrue(preferencesPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JdtlsFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 	}
 
 	@Test

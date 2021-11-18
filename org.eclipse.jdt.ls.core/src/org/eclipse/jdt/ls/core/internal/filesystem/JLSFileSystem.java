@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat Inc. and others.
+ * Copyright (c) 2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -25,18 +25,22 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
  * The purpose of this implementation is to allow the project metadata files (.project, .classpath, .settings/)
  * can be persisted out of the project root.
  */
-public class JdtlsFileSystem extends LocalFileSystem {
+public class JLSFileSystem extends LocalFileSystem {
 
     @Override
     public IFileStore getStore(IPath path) {
-        if (JdtlsFsUtils.shouldStoreInWorkspaceStorage(path)) {
-            IPath realPath = JdtlsFsUtils.getMetaDataFilePath("", path);
+        if (JLSFsUtils.shouldStoreInMetadataArea(path)) {
+            IPath containerPath = JLSFsUtils.getContainerPath(path);
+            String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
+            if (projectName == null) {
+                return new JLSFile(path.toFile());
+            }
+            IPath realPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
             if (realPath != null) {
-                return new JdtlsFile(realPath.toFile()); 
+                return new JLSFile(realPath.toFile()); 
             }
         }
-
-        return new JdtlsFile(path.toFile());
+        return new JLSFile(path.toFile());
     }
 
     @Override

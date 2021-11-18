@@ -432,32 +432,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testDeleteClasspath() throws Exception {
-		FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
-		try {
-			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
-			IProject project = importSimpleJavaProject();
-			assertIsJavaProject(project);
-			assertIsGradleProject(project);
-			IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-			File file = dotClasspath.getRawLocation().toFile();
-			assertTrue(file.exists());
-			file.delete();
-			projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
-			waitForBackgroundJobs();
-			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
-			project = getProject("simple-gradle");
-			assertIsGradleProject(project);
-			assertIsJavaProject(project);
-			IFile bin = project.getFile("bin");
-			assertFalse(bin.getRawLocation().toFile().exists());
-			assertTrue(dotClasspath.exists());
-		} finally {
-			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(status);
-		}
-	}
-
-	@Test
 	public void testJava11Project() throws Exception {
 		IProject project = importGradleProject("gradle-11");
 		assertIsJavaProject(project);

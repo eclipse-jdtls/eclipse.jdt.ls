@@ -167,7 +167,7 @@
    </extension>
    <extension id="org.eclipse.jdt.ls.filesystem" name="JDT LS File System" point="org.eclipse.core.filesystem.filesystems">
       <filesystem scheme="file">
-         <run class="org.eclipse.jdt.ls.core.internal.filesystem.JdtlsFileSystem"/> 
+         <run class="org.eclipse.jdt.ls.core.internal.filesystem.JLSFileSystem"/> 
       </filesystem>
    </extension>
 </plugin>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat Inc. and others.
+ * Copyright (c) 2021 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -30,7 +30,7 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.filesystem.JdtlsFsUtils;
+import org.eclipse.jdt.ls.core.internal.filesystem.JLSFsUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 
 	@Before
 	public void setUp() {
-		System.setProperty(JdtlsFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 	}
 
 	@Test
