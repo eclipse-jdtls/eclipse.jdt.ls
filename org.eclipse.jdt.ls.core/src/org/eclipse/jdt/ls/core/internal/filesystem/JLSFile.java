@@ -50,7 +50,7 @@ public class JLSFile extends LocalFile {
             return childNames;
         }
 
-        IPath filePath = ResourceUtils.filePathFromURI(this.toURI().toString());
+        IPath filePath = new Path(this.filePath);
         String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(filePath);
         if (projectName == null) {
             return childNames;
@@ -76,9 +76,9 @@ public class JLSFile extends LocalFile {
             if (projectName == null) {
                 return new JLSFile(new File(file, name));
             }
-            IPath realPath = JLSFsUtils.getMetaDataFilePath(projectName, new Path(name));
-            if (realPath != null) {
-                return new JLSFile(realPath.toFile());
+            IPath redirectedPath = JLSFsUtils.getMetaDataFilePath(projectName, new Path(name));
+            if (redirectedPath != null) {
+                return new JLSFile(redirectedPath.toFile());
             }
         }
 
@@ -87,16 +87,16 @@ public class JLSFile extends LocalFile {
 
     @Override
     public IFileStore getFileStore(IPath path) {
-        IPath fullPath = new Path(file.getPath()).append(path);
+        IPath fullPath = new Path(this.filePath).append(path);
         if (JLSFsUtils.shouldStoreInMetadataArea(fullPath)) {
             IPath containerPath = JLSFsUtils.getContainerPath(fullPath);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
             if (projectName == null) {
                 return new JLSFile(fullPath.toFile());
             }
-            IPath realPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
-            if (realPath != null) {
-                return new JLSFile(realPath.toFile());
+            IPath redirectedPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
+            if (redirectedPath != null) {
+                return new JLSFile(redirectedPath.toFile());
             }
         }
 

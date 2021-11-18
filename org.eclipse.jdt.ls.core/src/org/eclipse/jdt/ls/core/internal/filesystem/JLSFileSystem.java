@@ -35,9 +35,9 @@ public class JLSFileSystem extends LocalFileSystem {
             if (projectName == null) {
                 return new JLSFile(path.toFile());
             }
-            IPath realPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
-            if (realPath != null) {
-                return new JLSFile(realPath.toFile()); 
+            IPath redirectedPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
+            if (redirectedPath != null) {
+                return new JLSFile(redirectedPath.toFile()); 
             }
         }
         return new JLSFile(path.toFile());
@@ -46,6 +46,9 @@ public class JLSFileSystem extends LocalFileSystem {
     @Override
     public IFileStore getStore(URI uri) {
         IPath path = ResourceUtils.filePathFromURI(uri.toString());
+        if (path == null) {
+            return super.getStore(uri);
+        }
         return getStore(path);
     }
 }

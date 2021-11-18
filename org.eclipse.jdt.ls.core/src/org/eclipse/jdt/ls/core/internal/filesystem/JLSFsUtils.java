@@ -164,6 +164,6 @@ public class JLSFsUtils {
      * Check whether the metadata files needs to be generated at project root.
      */
     public static boolean generatesMetadataFilesAtProjectRoot() {
-        return Boolean.parseBoolean(System.getProperty(GENERATES_METADATA_FILES_AT_PROJECT_ROOT));
+        return Boolean.getBoolean(GENERATES_METADATA_FILES_AT_PROJECT_ROOT);
     }
 }
