@@ -32,19 +32,19 @@ import org.eclipse.jdt.core.IJavaProject;
 public class JLSFsUtils {
     private JLSFsUtils() {}
 
-    public static final IPath METADATA_FOLDER_PATH = ResourcesPlugin.getPlugin().getStateLocation().append(".projects");
+    static final IPath METADATA_FOLDER_PATH = ResourcesPlugin.getPlugin().getStateLocation().append(".projects");
 
     /**
      * The system property key to specify the file system mode.
     */
-    public static final String GENERATES_METADATA_FILES_AT_PROJECT_ROOT = "java.import.generatesMetadataFilesAtProjectRoot";
+    static final String GENERATES_METADATA_FILES_AT_PROJECT_ROOT = "java.import.generatesMetadataFilesAtProjectRoot";
 
-    public static final String FACTORY_PATH = ".factorypath";
+    static final String FACTORY_PATH = ".factorypath";
 
     /**
      * The metadata files
      */
-    public static final Set<String> METADATA_NAMES = new HashSet<>(Arrays.asList(
+    static final Set<String> METADATA_NAMES = new HashSet<>(Arrays.asList(
         IProjectDescription.DESCRIPTION_FILE_NAME,
         EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME,
         IJavaProject.CLASSPATH_FILE_NAME,
@@ -61,7 +61,7 @@ public class JLSFsUtils {
      *   <li>The project's root path does not contain the metadata file with the same name.</li>
      * </ul>
      * </p>
-     * 
+     *
      * @param location the path of the resource.
      * @return whether the resource needs to be stored in workspace's metadata folder.
      */

@@ -11,7 +11,7 @@
  *     Microsoft Corporation
  *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.managers;
+package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertFalse;
@@ -30,7 +30,7 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.filesystem.JLSFsUtils;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.Before;
 import org.junit.Test;

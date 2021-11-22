@@ -11,7 +11,7 @@
  *     Microsoft Corporation
  *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.managers;
+package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,7 +38,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.ls.core.internal.filesystem.JLSFsUtils;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.Before;

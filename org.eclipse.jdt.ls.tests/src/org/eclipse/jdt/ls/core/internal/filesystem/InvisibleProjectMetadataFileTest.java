@@ -11,7 +11,7 @@
  *     Microsoft Corporation
  *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.managers;
+package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +29,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
-import org.eclipse.jdt.ls.core.internal.filesystem.JLSFsUtils;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

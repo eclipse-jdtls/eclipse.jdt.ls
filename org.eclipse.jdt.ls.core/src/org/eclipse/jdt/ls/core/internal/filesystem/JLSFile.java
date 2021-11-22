@@ -23,7 +23,6 @@ import org.eclipse.core.internal.filesystem.local.LocalFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 
 /**
  * JDT.LS's own implementation of files in the local operating system's file system.
