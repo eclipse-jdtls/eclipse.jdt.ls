@@ -259,8 +259,18 @@ public class StandardProjectsManager extends ProjectsManager {
 	 *
 	 * @param preferences
 	 */
-
 	public static void configureSettings(Preferences preferences) {
+		configureSettings(preferences, true);
+	}
+
+	/**
+	 * Configures user and formatter preferences.
+	 *
+	 * @param preferences
+	 * @param cleanWorkspace
+	 */
+
+	public static void configureSettings(Preferences preferences, boolean cleanWorkspace) {
 		URI settingsUri = preferences.getSettingsAsURI();
 		Properties properties = null;
 		if (settingsUri != null) {
@@ -307,14 +317,16 @@ public class StandardProjectsManager extends ProjectsManager {
 			});
 		}
 		JavaCore.setOptions(javaOptions);
-		new WorkspaceJob("Clean workspace...") {
+		if (cleanWorkspace && preferences.isAutobuildEnabled()) {
+			new WorkspaceJob("Clean workspace...") {
 
-			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
-				return Status.OK_STATUS;
-			}
-		}.schedule();
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
+					return Status.OK_STATUS;
+				}
+			}.schedule();
+		}
 	}
 
 	private static void initializeDefaultOptions(Preferences preferences) {
@@ -529,7 +541,7 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	@Override
 	public void registerListeners() {
-		configureSettings(preferenceManager.getPreferences());
+		configureSettings(preferenceManager.getPreferences(), false);
 		if (this.preferenceChangeListener == null) {
 			this.preferenceChangeListener = new IPreferencesChangeListener() {
 				@Override
