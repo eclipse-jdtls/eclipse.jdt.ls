@@ -86,6 +86,7 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 				"}"
 				, true, null);
 		//@formatter:on
+		// test for field declaration
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
@@ -94,6 +95,12 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
 		Assert.assertNotNull(constructorCommand);
 		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, constructorCommand.getCommand());
+		// test for type declaration
+		params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
 	}
 
 	@Test

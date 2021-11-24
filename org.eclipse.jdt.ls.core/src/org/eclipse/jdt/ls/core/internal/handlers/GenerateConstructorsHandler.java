@@ -34,6 +34,8 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.AddCustomConstructorOperation;
@@ -42,6 +44,7 @@ import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -158,13 +161,19 @@ public class GenerateConstructorsHandler {
 
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
+
+				ASTNode declarationNode = null;
+				if (cursor != null) {
+					ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
+					declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+				}
+				// If cursor position is not specified, then insert to the last by default.
+				IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElementAfterLastField(type) : CodeGenerationUtils.findInsertElement(type, cursor);
+
 				Map<String, IVariableBinding> fieldBindings = new HashMap<>();
 				for (IVariableBinding binding : typeBinding.getDeclaredFields()) {
 					fieldBindings.put(binding.getKey(), binding);
 				}
-
-				// If cursor position is not specified, then insert to the last by default.
-				IJavaElement insertPosition = CodeGenerationUtils.findInsertElement(type, cursor);
 				IVariableBinding[] selectedFields = Arrays.stream(fields).map(field -> fieldBindings.get(field.bindingKey)).filter(binding -> binding != null).toArray(IVariableBinding[]::new);
 				IMethodBinding[] superConstructors = getVisibleConstructors(astRoot, typeBinding);
 				TextEdit textEdit = new MultiTextEdit();
