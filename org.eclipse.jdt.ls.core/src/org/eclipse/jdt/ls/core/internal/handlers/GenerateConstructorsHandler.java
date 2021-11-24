@@ -165,7 +165,7 @@ public class GenerateConstructorsHandler {
 				ASTNode declarationNode = null;
 				if (cursor != null) {
 					ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
-					declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+					declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
 				}
 				// If cursor position is not specified, then insert to the last by default.
 				IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElementAfterLastField(type) : CodeGenerationUtils.findInsertElement(type, cursor);
