@@ -432,32 +432,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
-	public void testDeleteClasspath() throws Exception {
-		FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
-		try {
-			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
-			IProject project = importSimpleJavaProject();
-			assertIsJavaProject(project);
-			assertIsGradleProject(project);
-			IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-			File file = dotClasspath.getRawLocation().toFile();
-			assertTrue(file.exists());
-			file.delete();
-			projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
-			waitForBackgroundJobs();
-			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
-			project = getProject("simple-gradle");
-			assertIsGradleProject(project);
-			assertIsJavaProject(project);
-			IFile bin = project.getFile("bin");
-			assertFalse(bin.getRawLocation().toFile().exists());
-			assertTrue(dotClasspath.exists());
-		} finally {
-			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(status);
-		}
-	}
-
-	@Test
 	public void testJava11Project() throws Exception {
 		IProject project = importGradleProject("gradle-11");
 		assertIsJavaProject(project);
@@ -524,28 +498,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
 		}
-	}
-
-	@Test
-	public void testSettingsGradle() throws Exception {
-			List<IProject> projects = importProjects("gradle/sample");
-			assertEquals(3, projects.size());//default, app, sample
-			IProject root = WorkspaceHelper.getProject("sample");
-			assertIsGradleProject(root);
-			IProject project = WorkspaceHelper.getProject("app");
-			assertIsGradleProject(project);
-			assertIsJavaProject(project);
-			IJavaProject javaProject = JavaCore.create(project);
-			IType type = javaProject.findType("org.apache.commons.lang3.StringUtils");
-			assertNull(type);
-			IFile build2 = project.getFile("/build.gradle2");
-			InputStream contents = build2.getContents();
-			IFile build = project.getFile("/build.gradle");
-			build.setContents(contents, true, false, null);
-			projectsManager.updateProject(project, false);
-			waitForBackgroundJobs();
-			type = javaProject.findType("org.apache.commons.lang3.StringUtils");
-			assertNotNull(type);
 	}
 
 	@Test

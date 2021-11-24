@@ -58,15 +58,6 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 	}
 
 	@Test
-	public void testProjectSettings() throws Exception {
-		IProject invisibleProject = copyAndImportFolder("singlefile/lesson1", "src/org/samples/HelloWorld.java");
-		assertTrue(invisibleProject.exists());
-		IJavaProject javaProject = JavaCore.create(invisibleProject);
-		String option = javaProject.getOption(JavaCore.COMPILER_PB_MISSING_SERIAL_VERSION, true);
-		assertEquals(JavaCore.IGNORE, option);
-	}
-
-	@Test
 	public void importCompleteFolderWithoutTriggerFile() throws Exception {
 		IProject invisibleProject = copyAndImportFolder("singlefile/lesson1", null);
 		assertFalse(invisibleProject.exists());
@@ -202,38 +193,6 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 			IJavaProject javaProject = JavaCore.create(invisibleProject);
 			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 			assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
-		} finally {
-			TestVMType.setTestJREAsDefault(defaultJVM);
-		}
-	}
-
-	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
-	@Test
-	public void testPreviewFeaturesSettingsDisabled() throws Exception {
-		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
-		try {
-			TestVMType.setTestJREAsDefault("17");
-			IProject invisibleProject = copyAndImportFolder("singlefile/java17a", "foo/bar/Foo.java");
-			assertTrue(invisibleProject.exists());
-			assertNoErrors(invisibleProject);
-			IJavaProject javaProject = JavaCore.create(invisibleProject);
-			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
-		} finally {
-			TestVMType.setTestJREAsDefault(defaultJVM);
-		}
-	}
-
-	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
-	@Test
-	public void testPreviewFeaturesSettingEnabled() throws Exception {
-		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
-		try {
-			TestVMType.setTestJREAsDefault("17");
-			IProject invisibleProject = copyAndImportFolder("singlefile/java17b", "foo/bar/Foo.java");
-			assertTrue(invisibleProject.exists());
-			assertNoErrors(invisibleProject);
-			IJavaProject javaProject = JavaCore.create(invisibleProject);
-			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
