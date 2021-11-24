@@ -115,7 +115,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertTrue(codeActions.size() >= 3);
 		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
 		Assert.assertNotNull(quickAssistActions);
-		Assert.assertTrue(quickAssistActions.size() >= 2);
+		Assert.assertTrue(quickAssistActions.size() >= 1);
 		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
 		Assert.assertNotNull(organizeImportActions);
 		Assert.assertEquals(1, organizeImportActions.size());
@@ -505,7 +505,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertTrue(codeActions.size() >= 3);
 		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
 		Assert.assertNotNull(quickAssistActions);
-		Assert.assertTrue(quickAssistActions.size() >= 2);
+		Assert.assertTrue(quickAssistActions.size() >= 1);
 		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
 		Assert.assertNotNull(organizeImportActions);
 		Assert.assertEquals(1, organizeImportActions.size());
