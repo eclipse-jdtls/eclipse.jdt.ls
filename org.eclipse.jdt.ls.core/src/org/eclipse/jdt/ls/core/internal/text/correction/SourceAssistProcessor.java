@@ -133,9 +133,14 @@ public class SourceAssistProcessor {
 		}
 
 		if (!UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
-			// Override/Implement Methods
-			Optional<Either<Command, CodeAction>> overrideMethods = getOverrideMethodsAction(params);
-			addSourceActionCommand($, params.getContext(), overrideMethods);
+			// Override/Implement Methods QuickAssist
+			if (isInTypeDeclaration) {
+				Optional<Either<Command, CodeAction>> quickAssistOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+				addSourceActionCommand($, params.getContext(), quickAssistOverrideMethods);
+			}
+			// Override/Implement Methods Source Action
+			Optional<Either<Command, CodeAction>> sourceOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
+			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
 		// Generate Getter and Setter QuickAssist
@@ -253,7 +258,7 @@ public class SourceAssistProcessor {
 
 	}
 
-	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params) {
+	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind) {
 		if (!preferenceManager.getClientPreferences().isOverrideMethodsPromptSupported()) {
 			return Optional.empty();
 		}
@@ -261,9 +266,9 @@ public class SourceAssistProcessor {
 		Command command = new Command(ActionMessages.OverrideMethodsAction_label, COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT, Collections.singletonList(params));
 		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_OVERRIDE_METHODS)) {
 			CodeAction codeAction = new CodeAction(ActionMessages.OverrideMethodsAction_label);
-			codeAction.setKind(JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
+			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
