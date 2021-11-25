@@ -1,5 +1,23 @@
 # Change Log
 
+# [1.6.0 (November 26th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/96?closed=1)
+ * enhancement - Stop generating metadata files at project's root. See [#1900](https://github.com/eclipse/eclipse.jdt.ls/pull/1900).
+ * enhancement - Quickfixes should be available at the line level. See [#1908](https://github.com/eclipse/eclipse.jdt.ls/pull/1908).
+ * enhancement - Add `Generate Constructors` to Show Fixes for type declaration. See [#1937](https://github.com/eclipse/eclipse.jdt.ls/pull/1937).
+ * enhancement - Add `Override/Implement methods` to Show Fixes for type declaration. See [#1932](https://github.com/eclipse/eclipse.jdt.ls/pull/1932).
+ * enhancement - Formatter should indent `case` statements within a `switch` statement by default. See [#1927](https://github.com/eclipse/eclipse.jdt.ls/pull/1927).
+ * enhancement - Formatter should not join wrapped lines by default. See [#1925](https://github.com/eclipse/eclipse.jdt.ls/pull/1925).
+ * enhancement - Add "Surround With Try-With" code assist proposal. See [#1911](https://github.com/eclipse/eclipse.jdt.ls/pull/1911).
+ * enhancement - Always show `Organize imports` in Quick Fixes for import declaration. See [#1936](https://github.com/eclipse/eclipse.jdt.ls/pull/1936).
+ * bug fix - Java server refreshing the workspace (cleaning/building) for each restart. See [#1948](https://github.com/eclipse/eclipse.jdt.ls/pull/1948).
+ * bug fix - Duplicate implement method quick fixes. See [#1942](https://github.com/eclipse/eclipse.jdt.ls/issues/1942).
+ * bug fix - Malformed semantic tokens in some cases. See [#1922](https://github.com/eclipse/eclipse.jdt.ls/issues/1922).
+ * bug fix - Several errors reported for anonymous Object classes. See [#1915](https://github.com/eclipse/eclipse.jdt.ls/issues/1915).
+ * bug fix - `if` with `instanceof` pattern match and `&&` breaks completion in nested `if`. See [#1855](https://github.com/eclipse/eclipse.jdt.ls/issues/1855).
+ * bug fix - Race condition between AutoBuildJob and the publish diagnostics job. See [#1920](https://github.com/eclipse/eclipse.jdt.ls/issues/1920).
+ * debt - Clean up duplicate classes migrated into jdt.core.manipulation. See [#1923](https://github.com/eclipse/eclipse.jdt.ls/pull/1923).
+ * debt - Don't use deprecated rangeLength property in handleChanged. See [#1928](https://github.com/eclipse/eclipse.jdt.ls/pull/1928).
+
 # [1.5.0 (October 19th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/95?closed=1)
  * performance - completion: optimize the index engine for the scenario "complete on type name". See [#1846](https://github.com/eclipse/eclipse.jdt.ls/issues/1846).
  * enhancement - Support Java 17. See [#1845](https://github.com/eclipse/eclipse.jdt.ls/issues/1845).
