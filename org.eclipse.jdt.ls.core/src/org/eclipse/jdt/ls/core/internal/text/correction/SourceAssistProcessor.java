@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -103,6 +104,7 @@ public class SourceAssistProcessor {
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
 		boolean isInTypeDeclaration = isInTypeDeclaration(context);
+		boolean isInImportDeclaration = isInImportDeclaration(context);
 
 		try {
 			// Generate Constructor QuickAssist
@@ -120,16 +122,29 @@ public class SourceAssistProcessor {
 
 		// Organize Imports
 		if (preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported()) {
-			Optional<Either<Command, CodeAction>> organizeImports = getOrganizeImportsAction(params);
-			addSourceActionCommand($, params.getContext(), organizeImports);
+			// Generate QuickAssist
+			if (isInImportDeclaration) {
+				Optional<Either<Command, CodeAction>> quickAssistOrganizeImports = getOrganizeImportsAction(params, JavaCodeActionKind.QUICK_ASSIST);
+				addSourceActionCommand($, params.getContext(), quickAssistOrganizeImports);
+			}
+			// Generate Source Action
+			Optional<Either<Command, CodeAction>> sourceOrganizeImports = getOrganizeImportsAction(params, CodeActionKind.SourceOrganizeImports);
+			addSourceActionCommand($, params.getContext(), sourceOrganizeImports);
 		} else {
 			CodeActionProposal organizeImportsProposal = (pm) -> {
 				TextEdit edit = getOrganizeImportsProposal(context, pm);
 				return convertToWorkspaceEdit(cu, edit);
 			};
-			Optional<Either<Command, CodeAction>> organizeImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
+			// Generate QuickAssist
+			if (isInImportDeclaration) {
+				Optional<Either<Command, CodeAction>> sourceOrganizeImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
+					JavaCodeActionKind.QUICK_ASSIST, organizeImportsProposal);
+				addSourceActionCommand($, params.getContext(), sourceOrganizeImports);
+			}
+			// Generate Source Action
+			Optional<Either<Command, CodeAction>> sourceOrganizeImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
 					CodeActionKind.SourceOrganizeImports, organizeImportsProposal);
-			addSourceActionCommand($, params.getContext(), organizeImports);
+			addSourceActionCommand($, params.getContext(), sourceOrganizeImports);
 		}
 
 		if (!UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
@@ -248,12 +263,12 @@ public class SourceAssistProcessor {
 		return null;
 	}
 
-	private Optional<Either<Command, CodeAction>> getOrganizeImportsAction(CodeActionParams params) {
+	private Optional<Either<Command, CodeAction>> getOrganizeImportsAction(CodeActionParams params, String kind) {
 		Command command = new Command(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description, COMMAND_ID_ACTION_ORGANIZEIMPORTS, Collections.singletonList(params));
 		CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
-		codeAction.setKind(CodeActionKind.SourceOrganizeImports);
+		codeAction.setKind(kind);
 		codeAction.setCommand(command);
-		codeAction.setDiagnostics(Collections.EMPTY_LIST);
+		codeAction.setDiagnostics(Collections.emptyList());
 		return Optional.of(Either.forRight(codeAction));
 
 	}
@@ -577,7 +592,7 @@ public class SourceAssistProcessor {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 
-	public static ASTNode getDeclarationNode(ASTNode node) {
+	public static ASTNode getTypeDeclarationNode(ASTNode node) {
 		if (node == null) {
 			return null;
 		}
@@ -587,7 +602,17 @@ public class SourceAssistProcessor {
 		while (node != null && !(node instanceof BodyDeclaration) && !(node instanceof Statement)) {
 			node = node.getParent();
 		}
-		return node;
+		return node instanceof TypeDeclaration ? node : null;
+	}
+
+	private static ASTNode getImportDeclarationNode(ASTNode node) {
+		if (node == null) {
+			return null;
+		}
+		while (node != null && !(node instanceof ImportDeclaration) && !(node instanceof Statement)) {
+			node = node.getParent();
+		}
+		return node instanceof ImportDeclaration ? node : null;
 	}
 
 	private static boolean isInTypeDeclaration(IInvocationContext context) {
@@ -595,7 +620,14 @@ public class SourceAssistProcessor {
 		if (node == null) {
 			node = context.getCoveringNode();
 		}
-		ASTNode declarationNode = getDeclarationNode(node);
-		return declarationNode instanceof TypeDeclaration;
+		return getTypeDeclarationNode(node) != null;
+	}
+
+	private static boolean isInImportDeclaration(IInvocationContext context) {
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+		return getImportDeclarationNode(node) != null;
 	}
 }

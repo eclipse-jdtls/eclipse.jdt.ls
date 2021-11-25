@@ -157,18 +157,5 @@ public class ReorgCorrectionsSubProcessor {
 				JavaLanguageServerPlugin.log(e);
 			}
 		}
-
-		final ICompilationUnit cu= context.getCompilationUnit();
-		String name= CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description;
-		CUCorrectionProposal proposal = new CUCorrectionProposal(name, CodeActionKind.QuickFix, cu, null, IProposalRelevance.ORGANIZE_IMPORTS) {
-
-			@Override
-			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
-				CompilationUnit astRoot = context.getASTRoot();
-				OrganizeImportsOperation op = new OrganizeImportsOperation(cu, astRoot, true, false, true, null);
-				editRoot.addChild(op.createTextEdit(null));
-			}
-		};
-		proposals.add(proposal);
 	}
 }
