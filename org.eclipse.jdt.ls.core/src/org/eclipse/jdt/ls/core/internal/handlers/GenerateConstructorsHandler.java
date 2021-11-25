@@ -35,7 +35,6 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NodeFinder;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.AddCustomConstructorOperation;
@@ -165,10 +164,10 @@ public class GenerateConstructorsHandler {
 				ASTNode declarationNode = null;
 				if (cursor != null) {
 					ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
-					declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
+					declarationNode = SourceAssistProcessor.getTypeDeclarationNode(node);
 				}
 				// If cursor position is not specified, then insert to the last by default.
-				IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElementAfterLastField(type) : CodeGenerationUtils.findInsertElement(type, cursor);
+				IJavaElement insertPosition = (declarationNode != null) ? CodeGenerationUtils.findInsertElementAfterLastField(type) : CodeGenerationUtils.findInsertElement(type, cursor);
 
 				Map<String, IVariableBinding> fieldBindings = new HashMap<>();
 				for (IVariableBinding binding : typeBinding.getDeclaredFields()) {

@@ -28,7 +28,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.NodeFinder;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
@@ -99,10 +98,10 @@ public class GenerateToStringHandler {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 		if (astRoot != null && range != null) {
 			ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range), DiagnosticsHelper.getLength(type.getCompilationUnit(), range));
-			declarationNode = SourceAssistProcessor.getBodyDeclarationNode(node);
+			declarationNode = SourceAssistProcessor.getTypeDeclarationNode(node);
 		}
 		// If cursor position is not specified, then insert to the last by default.
-		IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);
+		IJavaElement insertPosition = (declarationNode != null) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, range);
 		TextEdit edit = generateToString(type, params.fields, insertPosition, monitor);
 		return (edit == null) ? null : SourceAssistProcessor.convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 	}

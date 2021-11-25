@@ -592,7 +592,7 @@ public class SourceAssistProcessor {
 		return JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 	}
 
-	public static ASTNode getBodyDeclarationNode(ASTNode node) {
+	public static ASTNode getTypeDeclarationNode(ASTNode node) {
 		if (node == null) {
 			return null;
 		}
@@ -602,7 +602,7 @@ public class SourceAssistProcessor {
 		while (node != null && !(node instanceof BodyDeclaration) && !(node instanceof Statement)) {
 			node = node.getParent();
 		}
-		return node;
+		return node instanceof TypeDeclaration ? node : null;
 	}
 
 	private static ASTNode getImportDeclarationNode(ASTNode node) {
@@ -612,7 +612,7 @@ public class SourceAssistProcessor {
 		while (node != null && !(node instanceof ImportDeclaration) && !(node instanceof Statement)) {
 			node = node.getParent();
 		}
-		return node;
+		return node instanceof ImportDeclaration ? node : null;
 	}
 
 	private static boolean isInTypeDeclaration(IInvocationContext context) {
@@ -620,8 +620,7 @@ public class SourceAssistProcessor {
 		if (node == null) {
 			node = context.getCoveringNode();
 		}
-		ASTNode declarationNode = getBodyDeclarationNode(node);
-		return declarationNode instanceof TypeDeclaration;
+		return getTypeDeclarationNode(node) != null;
 	}
 
 	private static boolean isInImportDeclaration(IInvocationContext context) {
@@ -629,7 +628,6 @@ public class SourceAssistProcessor {
 		if (node == null) {
 			node = context.getCoveringNode();
 		}
-		ASTNode importDeclarationNode = getImportDeclarationNode(node);
-		return importDeclarationNode instanceof ImportDeclaration;
+		return getImportDeclarationNode(node) != null;
 	}
 }
