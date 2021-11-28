@@ -36,7 +36,6 @@
 				<version>2.1.1</version>
 				<executions>
 					<execution>
-						<?m2e execute onConfiguration?>
 						<phase>generate-resources</phase>
 						<goals>
 							<goal>execute</goal>
