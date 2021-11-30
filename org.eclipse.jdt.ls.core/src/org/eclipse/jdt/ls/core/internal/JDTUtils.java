@@ -764,7 +764,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(IClassFile classFile) throws JavaModelException{
-		return toLocation(classFile, 0, 0);
+		return toLocation(classFile, -1, -1);
 	}
 
 	/**
@@ -790,8 +790,13 @@ public final class JDTUtils {
 	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException {
 		String uriString = toUri(classFile);
 		if (uriString != null) {
-			Range range = toRange(classFile, offset, length);
-			return new Location(uriString, range);
+			Location location = new Location();
+			location.setUri(uriString);
+			if (offset != -1 && length != -1) {
+				location.setRange(toRange(classFile, offset, length));
+			}
+			return location;
+
 		}
 		return null;
 	}
