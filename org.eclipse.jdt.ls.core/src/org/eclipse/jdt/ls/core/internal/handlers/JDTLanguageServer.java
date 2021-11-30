@@ -147,7 +147,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
+public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions, WorkspaceSymbolsService {
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	/**
@@ -254,7 +254,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
 		}
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
-			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
+			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL, WorkspaceSymbolHandler.WORKSPACE_SYMBOL_RESOLVE_OPTIONS);
 		}
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
@@ -1020,6 +1020,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
 		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+	}
+
+	@Override
+	public CompletableFuture<SymbolInformation> resolve(SymbolInformation params) {
+		return computeAsync((monitor) -> {
+			return WorkspaceSymbolHandler.resolve(params);
+		});
 	}
 
 }

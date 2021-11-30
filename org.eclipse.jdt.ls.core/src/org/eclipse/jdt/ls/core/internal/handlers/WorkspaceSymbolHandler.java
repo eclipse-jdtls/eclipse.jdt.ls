@@ -12,14 +12,24 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IParent;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -32,7 +42,9 @@ import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.AbstractWorkDoneProgressOptions;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -74,11 +86,22 @@ public class WorkspaceSymbolHandler {
 						}
 						Location location = null;
 						try {
+							String uriString = null;
 							if (!sourceOnly && match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType().getClassFile());
+								uriString = JDTUtils.toUri(match.getType().getClassFile());
 							} else if (!match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType());
+
+								ICompilationUnit unit = (ICompilationUnit) match.getType().getAncestor(IJavaElement.COMPILATION_UNIT);
+								IClassFile cf = (IClassFile) match.getType().getAncestor(IJavaElement.CLASS_FILE);
+								if (cf == null) {
+									uriString = ResourceUtils.toClientUri(JDTUtils.toURI(unit));
+								} else {
+									uriString = JDTUtils.toUri(cf);
+								}
 							}
+
+							location = new Location();
+							location.setUri(uriString);
 						} catch (Exception e) {
 							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
 							return;
@@ -92,8 +115,7 @@ public class WorkspaceSymbolHandler {
 							if (Flags.isDeprecated(match.getType().getFlags())) {
 								if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
 									symbolInformation.setTags(List.of(SymbolTag.Deprecated));
-								}
-								else {
+								} else {
 									symbolInformation.setDeprecated(true);
 								}
 							}
@@ -152,8 +174,7 @@ public class WorkspaceSymbolHandler {
 								if (Flags.isDeprecated(match.getMethod().getFlags())) {
 									if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
 										symbolInformation.setTags(List.of(SymbolTag.Deprecated));
-									}
-									else {
+									} else {
 										symbolInformation.setDeprecated(true);
 									}
 								}
@@ -210,5 +231,78 @@ public class WorkspaceSymbolHandler {
 			super(query);
 			this.projectName = projectName;
 		}
+	}
+
+	public static class WorkspaceSymbolResolveOptions extends AbstractWorkDoneProgressOptions {
+
+		private Boolean resolveProvider;
+
+		public WorkspaceSymbolResolveOptions(Boolean resolveProvider) {
+			this.resolveProvider = resolveProvider;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + Objects.hash(resolveProvider);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!super.equals(obj)) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			WorkspaceSymbolResolveOptions other = (WorkspaceSymbolResolveOptions) obj;
+			return Objects.equals(resolveProvider, other.resolveProvider);
+		}
+
+	}
+
+	public final static WorkspaceSymbolResolveOptions WORKSPACE_SYMBOL_RESOLVE_OPTIONS = new WorkspaceSymbolResolveOptions(Boolean.TRUE);
+
+	public static SymbolInformation resolve(SymbolInformation request) {
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(request.getLocation().getUri());
+		if (unit == null || !unit.exists()) {
+			return null;
+		}
+		Location location = null;
+		IJavaElement element = null;
+
+		try {
+			Deque<IJavaElement> children = new ArrayDeque<>(Arrays.asList(unit.getChildren()));
+			while (element == null && !children.isEmpty()) {
+				IJavaElement child = children.pop();
+				if (child instanceof IType) {
+
+					if (request.getName().equals(child.getElementName())) {
+						element = child;
+						break;
+					}
+					children.addAll(Arrays.asList(((IParent) child).getChildren()));
+				}
+
+			}
+			location = JDTUtils.toLocation(element);
+
+			SymbolInformation si = new SymbolInformation();
+			si.setName(request.getName());
+			si.setContainerName(request.getContainerName());
+			si.setLocation(location);
+
+			return si;
+
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logError("Problem resolving symbol information for " + unit.getElementName());
+		}
+
+		return null;
 	}
 }
