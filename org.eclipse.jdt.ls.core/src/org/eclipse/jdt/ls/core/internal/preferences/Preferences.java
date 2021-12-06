@@ -998,7 +998,9 @@ public class Preferences {
 									if (v instanceof Boolean) {
 										runtime.setDefault((Boolean) v);
 									}
-									hasDefault[0] = true;
+									if (runtime.isDefault()) {
+										hasDefault[0] = true;
+									}
 								}
 								break;
 							default:

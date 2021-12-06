@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Red Hat Inc. and others.
+ * Copyright (c) 2019-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -56,10 +56,11 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class JVMConfigurator implements IVMInstallChangedListener {
 
+	public static final String JAVA_LS_DO_NOT_SET_DEFAULT_JVM = "java.ls.doNotSetDefaultJVM"; //$NON-NLS-1$
 	public static final String MAC_OSX_VM_TYPE = "org.eclipse.jdt.internal.launching.macosx.MacOSXType"; //$NON-NLS-1$
 
 	public static boolean configureDefaultVM(String javaHome) throws CoreException {
-		if (StringUtils.isBlank(javaHome)) {
+		if (StringUtils.isBlank(javaHome) || Boolean.getBoolean(JAVA_LS_DO_NOT_SET_DEFAULT_JVM)) {
 			return false;
 		}
 		File jvmHome = new File(javaHome);
@@ -97,7 +98,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		JavaLanguageServerPlugin.logInfo("Setting java.home " + jvmHome + " as default global VM");
 		JavaRuntime.setDefaultVMInstall(vm, new NullProgressMonitor());
 		JDTUtils.setCompatibleVMs(vm.getId());
-
+		setDefaultEnvironmentVM(vm);
 		return true;
 	}
 
@@ -179,7 +180,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						}
 					}
 					vm = vmStandin.convertToRealVM();
-					if (runtime.isDefault()) {
+					if (runtime.isDefault() && !Boolean.getBoolean(JAVA_LS_DO_NOT_SET_DEFAULT_JVM)) {
 						defaultVMSet = true;
 						if (!Objects.equals(vm, JavaRuntime.getDefaultVMInstall())) {
 							JavaLanguageServerPlugin.logInfo("Setting runtime " + runtime.getName() + "-" + runtime.getInstallationFile() + " as default global VM");
@@ -229,10 +230,39 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		connection.showNotificationMessage(MessageType.Error, message);
 	}
 
+	private static boolean setDefaultEnvironmentVM(IVMInstall vm) {
+		if (vm instanceof AbstractVMInstall) {
+			AbstractVMInstall jvm = (AbstractVMInstall) vm;
+			long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
+			String vmCompliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
+			IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
+			IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
+			for (IExecutionEnvironment environment : environments) {
+				if (environment != null) {
+					if (Objects.equals(vm, environment.getDefaultVM())) {
+						return true;
+					}
+					String compliance = environment.getComplianceOptions().get(JavaCore.COMPILER_COMPLIANCE);
+					if (Objects.equals(vmCompliance, compliance)) {
+						if (environment.isStrictlyCompatible(vm)) {
+							JavaLanguageServerPlugin.logInfo("Setting " + vm.getInstallLocation() + " as '" + environment.getId() + "' environment (id:" + vm.getId() + ")");
+							environment.setDefaultVM(vm);
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
 	private static boolean setDefaultEnvironmentVM(IVMInstall vm, String name) {
 		IExecutionEnvironment environment = getExecutionEnvironment(name);
 		if (environment != null) {
 			if (Objects.equals(vm, environment.getDefaultVM())) {
+				return true;
+			}
+			if (Objects.equals(environment.getDefaultVM(), JavaRuntime.getDefaultVMInstall())) {
 				return true;
 			}
 			IVMInstall[] compatibleVMs = environment.getCompatibleVMs();
