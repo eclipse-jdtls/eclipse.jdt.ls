@@ -335,6 +335,38 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		}
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1963
+	@Test
+	public void testWorkingCopy2() throws Exception {
+		ICompilationUnit cu = null;
+		try {
+			DocumentLifeCycleHandler lifeCycleHandler = new DocumentLifeCycleHandler(connection, preferenceManager, projectsManager, false);
+			handler.removeResourceChangeListener();
+			handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences(), lifeCycleHandler);
+			handler.addResourceChangeListener();
+			//import project
+			importProjects("eclipse/hello");
+			IProject project = getProject("hello");
+			IFile iFile = project.getFile("/src/test1/A.java");
+
+			cu = JavaCore.createCompilationUnitFrom(iFile);
+			cu.becomeWorkingCopy(null);
+			reset(connection);
+			ResourceUtils.setContent(iFile, "package test1;\npublic class A() {}\n");
+			waitForBackgroundJobs();
+			ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+			verify(connection, atMost(3)).publishDiagnostics(captor.capture());
+		} finally {
+			if (cu != null) {
+				cu.discardWorkingCopy();
+			}
+			handler.removeResourceChangeListener();
+			handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences());
+			handler.addResourceChangeListener();
+			connection.disconnect();
+		}
+	}
+
 	// https://github.com/eclipse/eclipse.jdt.ls/issues/1920
 	@Test
 	public void testWithoutWorkingCopy() throws Exception {
