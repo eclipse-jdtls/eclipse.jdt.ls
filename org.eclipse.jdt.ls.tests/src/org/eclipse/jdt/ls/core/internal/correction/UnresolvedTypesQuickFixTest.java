@@ -15,6 +15,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -30,6 +34,14 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.ResourceOperationKind;
+import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -592,6 +604,37 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		Expected e1 = new Expected("Create class 'XXX'", buf.toString());
 
 		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testTypeCreation() throws Exception {
+		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E extends XXX {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class XXX {\n");
+		buf.append("\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create class 'XXX'", buf.toString());
+
+		setOnly(CodeActionKind.QuickFix);
+
+		assertCodeActionExists(cu, e1);
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
+		WorkspaceEdit edit = (WorkspaceEdit) codeActions.get(0).getRight().getCommand().getArguments().get(0);
+		assertNotNull(edit.getDocumentChanges());
+		ResourceOperation resourceOperation = edit.getDocumentChanges().get(0).getRight();
+		assertNotNull(resourceOperation);
+		assertEquals(ResourceOperationKind.Create, resourceOperation.getKind());
 	}
 
 	@Test
