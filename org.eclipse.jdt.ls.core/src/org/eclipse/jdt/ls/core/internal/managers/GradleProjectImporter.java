@@ -15,9 +15,15 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static java.util.Arrays.asList;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,6 +35,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.SynchronizationResult;
@@ -40,12 +47,19 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -55,6 +69,8 @@ import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.build.GradleEnvironment;
 
 /**
  * @author Fred Bricon
@@ -164,7 +180,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
 		subMonitor.worked(1);
-		directories.forEach(d -> importDir(d, subMonitor.newChild(1)));
+		MultiStatus compatibilityStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Compatibility issue occurs when importing Gradle projects", null);
+		for (Path directory : directories) {
+			IStatus importStatus = importDir(directory, subMonitor.newChild(1));
+			if (isFailedStatus(importStatus) && importStatus instanceof GradleCompatibilityStatus) {
+				compatibilityStatus.add(importStatus);
+			}
+		}
 		// store the digest for the imported gradle projects.
 		ProjectUtils.getGradleProjects().forEach(project -> {
 			File buildFile = project.getFile(BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
@@ -187,13 +209,25 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 		});
 		subMonitor.done();
+		if (compatibilityStatus.getChildren().length > 0) {
+			String highestJavaVersion = GradleCompatibilityChecker.MAX_SUPPORTED_JAVA;
+			for (IStatus status : compatibilityStatus.getChildren()) {
+				// only report first compatibility issue
+				GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
+				highestJavaVersion = GradleCompatibilityChecker.getHighestSupportedJava(GradleVersion.version(gradleStatus.gradleVersion));
+				GradleCompatibilityInfo info = new GradleCompatibilityInfo(Paths.get(URI.create(gradleStatus.uri)).toString(), gradleStatus.getMessage(), highestJavaVersion, GradleCompatibilityChecker.CURRENT_GRADLE);
+				EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
+				JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+				throw new CoreException(gradleStatus);
+			}
+		}
 	}
 
-	private void importDir(Path projectFolder, IProgressMonitor monitor) {
+	private IStatus importDir(Path projectFolder, IProgressMonitor monitor) {
 		if (monitor.isCanceled()) {
-			return;
+			return Status.CANCEL_STATUS;
 		}
-		startSynchronization(projectFolder, monitor);
+		return startSynchronization(projectFolder, monitor);
 	}
 
 
@@ -299,31 +333,54 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return null;
 	}
 
-	protected void startSynchronization(Path projectFolder, IProgressMonitor monitor) {
+	protected IStatus startSynchronization(Path projectFolder, IProgressMonitor monitor) {
 		File location = projectFolder.toFile();
 		boolean shouldSynchronize = shouldSynchronize(location);
 		if (shouldSynchronize) {
 			BuildConfiguration build = getBuildConfiguration(projectFolder);
-			SynchronizationResult result = GradleCore.getWorkspace().createBuild(build).synchronize(monitor);
-			if (!result.getStatus().isOK()) {
-				JavaLanguageServerPlugin.log(result.getStatus());
+			GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(build);
+			SynchronizationResult result = gradleBuild.synchronize(monitor);
+			IStatus resultStatus = result.getStatus();
+			if (isFailedStatus(resultStatus)) {
+				try {
+					BuildEnvironment environment = gradleBuild.withConnection(connection -> connection.getModel(BuildEnvironment.class), monitor);
+					GradleEnvironment gradleEnvironment = environment.getGradle();
+					String gradleVersion = gradleEnvironment.getGradleVersion();
+					File javaHome = getJavaHome(getPreferences());
+					String javaVersion;
+					if (javaHome == null) {
+						javaVersion = System.getProperty("java.version");
+					} else {
+						StandardVMType type = new StandardVMType();
+						javaVersion = type.readReleaseVersion(javaHome);
+					}
+					if (GradleCompatibilityChecker.compatibilityCheck(GradleVersion.version(gradleVersion), javaVersion)) {
+						StringBuilder messageBuilder = new StringBuilder();
+						messageBuilder.append("Can't use Java ");
+						messageBuilder.append(javaVersion);
+						messageBuilder.append(" and Gradle ");
+						messageBuilder.append(gradleVersion);
+						messageBuilder.append(" to import Gradle project ");
+						URI uri = projectFolder.toUri();
+						Path path = Paths.get(uri);
+						Path projectName = path.getName(path.getNameCount() - 1);
+						messageBuilder.append(projectName.toString());
+						messageBuilder.append(".");
+						return new GradleCompatibilityStatus(resultStatus, messageBuilder.toString(), uri.toString(), gradleVersion, javaVersion);
+					}
+				} catch (Exception e) {
+					// Do nothing
+				}
 			}
+			return resultStatus;
 		}
+		return Status.OK_STATUS;
 	}
 
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
-		File javaHome = getGradleJavaHomeFile();
 		Preferences preferences = getPreferences();
-		if (javaHome == null) {
-			IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
-			if (javaDefaultRuntime != null && javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null) {
-				javaHome = javaDefaultRuntime.getInstallLocation();
-			} else {
-				String javaHomeStr = preferences.getJavaHome();
-				javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
-			}
-		}
+		File javaHome = getJavaHome(preferences);
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = preferences.getGradleArguments();
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();
@@ -342,6 +399,20 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				.build();
 		// @formatter:on
 		return build;
+	}
+
+	private static File getJavaHome(Preferences preferences) {
+		File javaHome = getGradleJavaHomeFile();
+		if (javaHome == null) {
+			IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
+			if (javaDefaultRuntime != null && javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null) {
+				javaHome = javaDefaultRuntime.getInstallLocation();
+			} else {
+				String javaHomeStr = preferences.getJavaHome();
+				javaHome = javaHomeStr == null ? null : new File(javaHomeStr);
+			}
+		}
+		return javaHome;
 	}
 
 	public static boolean shouldSynchronize(File location) {
@@ -387,8 +458,93 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return shouldSynchronize;
 	}
 
+	public static boolean upgradeGradleVersion(String projectDir, IProgressMonitor monitor) {
+		StringBuilder newUrlBuilder = new StringBuilder();
+		newUrlBuilder.append("https://services.gradle.org/distributions/gradle-");
+		newUrlBuilder.append(GradleCompatibilityChecker.CURRENT_GRADLE);
+		newUrlBuilder.append("-bin.zip");
+		String newDistributionUrl = newUrlBuilder.toString();
+		Path projectFolder = Paths.get(projectDir);
+		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
+		Properties properties = new Properties();
+		if (propertiesFile.exists()) {
+			try (FileInputStream stream = new FileInputStream(propertiesFile)) {
+				properties.load(stream);
+				properties.setProperty("distributionUrl", newDistributionUrl);
+			} catch (IOException e) {
+				return false;
+			}
+		} else {
+			properties.setProperty("distributionBase", "GRADLE_USER_HOME");
+			properties.setProperty("distributionPath", "wrapper/dists");
+			properties.setProperty("distributionUrl", newDistributionUrl);
+			properties.setProperty("zipStoreBase", "GRADLE_USER_HOME");
+			properties.setProperty("zipStorePath", "wrapper/dists");
+		}
+		try {
+			properties.store(new FileOutputStream(propertiesFile), null);
+		} catch (Exception e) {
+			return false;
+		}
+		BuildConfiguration build = getBuildConfiguration(projectFolder);
+		GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(build);
+		try {
+			gradleBuild.withConnection(connection -> {
+				connection.newBuild().forTasks("wrapper").run();
+				return null;
+			}, monitor);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+
 	@Override
 	public void reset() {
 	}
 
+	private static boolean isFailedStatus(IStatus status) {
+		return status != null && !status.isOK() && status.getException() != null;
+	}
+
+	public class GradleCompatibilityStatus extends Status {
+
+		private String uri;
+		private String gradleVersion;
+		private String javaVersion;
+
+		public GradleCompatibilityStatus(IStatus status, String message, String uri, String gradleVersion, String javaVersion) {
+			super(status.getSeverity(), status.getPlugin(), status.getCode(), message, status.getException());
+			this.uri = uri;
+			this.gradleVersion = gradleVersion;
+			this.javaVersion = javaVersion;
+		}
+
+		public String getUri() {
+			return this.uri;
+		}
+
+		public String getGradleVersion() {
+			return this.gradleVersion;
+		}
+
+		public String getJavaVersion() {
+			return this.javaVersion;
+		}
+	}
+
+	private class GradleCompatibilityInfo implements Serializable {
+
+		private String projectUri;
+		private String message;
+		private String highestJavaVersion;
+		private String recommendedGradleVersion;
+
+		public GradleCompatibilityInfo(String projectUri, String message, String highestJavaVersion, String recommendedGradleVersion) {
+			this.projectUri = projectUri;
+			this.message = message;
+			this.highestJavaVersion = highestJavaVersion;
+			this.recommendedGradleVersion = recommendedGradleVersion;
+		}
+	}
 }

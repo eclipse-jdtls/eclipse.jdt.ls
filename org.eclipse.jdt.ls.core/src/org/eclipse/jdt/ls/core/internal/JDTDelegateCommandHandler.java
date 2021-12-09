@@ -25,6 +25,7 @@ import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
+import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
 import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
@@ -114,6 +115,9 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					params.setPosition(textParams.getPosition());
 					TypeHierarchyItem typeHierarchyItem = typeHierarchyCommand.typeHierarchy(params, monitor);
 					return typeHierarchyItem;
+				case "java.project.upgradeGradle":
+					String projectDir = (String) arguments.get(0);
+					return GradleProjectImporter.upgradeGradleVersion(projectDir, monitor);
 				default:
 					break;
 			}
