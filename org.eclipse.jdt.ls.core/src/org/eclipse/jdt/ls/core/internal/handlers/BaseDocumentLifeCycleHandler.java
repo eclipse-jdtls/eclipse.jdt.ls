@@ -83,6 +83,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private WorkspaceJob publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 	private Map<String, Integer> documentVersions = new HashMap<>();
+	private MovingAverage movingAverage = new MovingAverage();
 
 	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
 		this.sharedASTProvider = CoreASTProvider.getInstance();
@@ -90,7 +91,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
 				@Override
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-					return performValidation(monitor);
+					long start = System.currentTimeMillis();
+					IStatus status = performValidation(monitor);
+					movingAverage.update(System.currentTimeMillis() - start);
+					return status;
 				}
 
 				/* (non-Javadoc)
@@ -125,7 +129,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public abstract ICompilationUnit resolveCompilationUnit(String uri);
 
 	protected void triggerValidation(ICompilationUnit cu) throws JavaModelException {
-		triggerValidation(cu, 400);
+		triggerValidation(cu, getDocumentLifecycleDelay());
 	}
 
 	protected void triggerValidation(ICompilationUnit cu, long delay) throws JavaModelException {
@@ -148,6 +152,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 		} else {
 			performValidation(new NullProgressMonitor());
 		}
+	}
+
+	private long getDocumentLifecycleDelay() {
+		return Math.min(400, Math.round(1.5 * movingAverage.value));
 	}
 
 	private ISchedulingRule getRule(Set<ICompilationUnit> units) {
