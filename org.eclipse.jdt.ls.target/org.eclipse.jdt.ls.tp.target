@@ -11,7 +11,6 @@
             <unit id="com.google.gson.source" version="2.7.0.v20170129-0911"/>
             <unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
             <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
-            <unit id="org.apache.log4j" version="1.2.15.v201012070815"/>
             <repository location="https://download.eclipse.org/tools/orbit/R-builds/R20200529191137/repository"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
