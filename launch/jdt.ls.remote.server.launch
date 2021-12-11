@@ -47,7 +47,6 @@
 <setEntry value="org.apache.commons.io@default:default"/>
 <setEntry value="org.apache.commons.lang3@default:default"/>
 <setEntry value="org.apache.felix.scr@1:true"/>
-<setEntry value="org.apache.log4j@default:default"/>
 <setEntry value="org.eclipse.ant.core@default:default"/>
 <setEntry value="org.eclipse.buildship.core@default:default"/>
 <setEntry value="org.eclipse.buildship.compat@default:default"/>
