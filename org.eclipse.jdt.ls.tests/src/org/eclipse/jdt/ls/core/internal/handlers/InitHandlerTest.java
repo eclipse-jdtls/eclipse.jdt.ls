@@ -119,6 +119,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	@After
 	public void tearDown() {
 		server.disconnectClient();
+		server.shutdown();
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		try {
 			ProjectsManager.setAutoBuilding(true);
@@ -218,6 +219,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
 		verify(client, times(9)).registerCapability(any());
+		waitForBackgroundJobs();
 	}
 
 	@Test

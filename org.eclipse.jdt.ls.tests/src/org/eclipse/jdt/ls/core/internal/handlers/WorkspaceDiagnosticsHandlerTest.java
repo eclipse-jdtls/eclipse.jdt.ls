@@ -99,6 +99,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		handler.removeResourceChangeListener();
+		connection.disconnect();
 	}
 
 	@Test
@@ -360,10 +361,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 			if (cu != null) {
 				cu.discardWorkingCopy();
 			}
-			handler.removeResourceChangeListener();
-			handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences());
-			handler.addResourceChangeListener();
-			connection.disconnect();
 		}
 	}
 
