@@ -11,18 +11,18 @@
  *     Microsoft Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.handlers;
+package org.eclipse.jdt.ls.core.internal;
 
 public class MovingAverage {
 	public long n = 1;
 	public long value;
 
 	public MovingAverage() {
-		this(400);
+		this(0);
 	}
 
-	public MovingAverage(long value) {
-		this.value = value;
+	public MovingAverage(long initValue) {
+		this.value = initValue;
 	}
 
 	public MovingAverage update(long value) {

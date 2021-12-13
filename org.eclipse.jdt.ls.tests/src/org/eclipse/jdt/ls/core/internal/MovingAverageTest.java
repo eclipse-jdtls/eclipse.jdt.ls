@@ -11,7 +11,7 @@
  *     Microsoft Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.jdt.ls.core.internal.handlers;
+package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
 
@@ -21,7 +21,7 @@ public class MovingAverageTest {
 
 	@Test
 	public void testUpdate() {
-		MovingAverage average = new MovingAverage();
+		MovingAverage average = new MovingAverage(400);
 
 		// initialize to 400 at first
 		assertEquals(400, average.value);
