@@ -1,5 +1,15 @@
 # Change Log
 
+# [1.7.0 (December 16th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/97?closed=1)
+ * enhancement - Make the debounce adaptive for validation job. See [#1973](https://github.com/eclipse/eclipse.jdt.ls/pull/1973).
+ * bug fix - Fix regression in code action for unresolved type. See [#1967](https://github.com/eclipse/eclipse.jdt.ls/pull/1967).
+ * bug fix - Diagnostics from changes to build configuration not reflected in opened source files. See [#1963](https://github.com/eclipse/eclipse.jdt.ls/issues/1963).
+ * bug fix - Fix the wrong additional text edit when completing an import statement. See [#1944](https://github.com/eclipse/eclipse.jdt.ls/pull/1944).
+ * build - Update Target Platform to 4.22 (2021-12) release. See [#1959](https://github.com/eclipse/eclipse.jdt.ls/pull/1959).
+ * debt - Remove unused log4j 1.2.15 from builds. See [#1972](https://github.com/eclipse/eclipse.jdt.ls/pull/1972).
+ * debt - DocumentLifeCycleHandlerTest.testFixInDependencyScenario fails randomly. See [#1968](https://github.com/eclipse/eclipse.jdt.ls/issues/1968).
+ * other - Boost loading performance of eclipse.jdt.ls project itself. See [#1955](https://github.com/eclipse/eclipse.jdt.ls/pull/1955).
+
 # [1.6.0 (November 26th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/96?closed=1)
  * enhancement - Stop generating metadata files at project's root. See [#1900](https://github.com/eclipse/eclipse.jdt.ls/pull/1900).
  * enhancement - Quickfixes should be available at the line level. See [#1908](https://github.com/eclipse/eclipse.jdt.ls/pull/1908).
