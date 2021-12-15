@@ -193,7 +193,7 @@ public class CompletionProposalReplacementProvider {
 			item.setInsertText(text);
 		}
 
-		if (!client.isResolveAdditionalTextEditsSupport() || isResolving) {
+		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
 			addImports(additionalTextEdits);
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
