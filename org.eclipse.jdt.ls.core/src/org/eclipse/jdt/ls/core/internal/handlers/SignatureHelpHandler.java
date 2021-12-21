@@ -79,11 +79,12 @@ public class SignatureHelpHandler {
 			if (node == null) {
 				return help;
 			}
-			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, contextInfomation[0] + 1);
+			IMethod method = getMethod(node);
+			String name = method != null ? method.getElementName() : getMethodName(node, unit, contextInfomation);
+			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, name, contextInfomation[0] + 1);
 			if (offset > -1 && !monitor.isCanceled()) {
 				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
 				help = collector.getSignatureHelp(monitor);
-				IMethod method = getMethod(node);
 				if (help.getSignatures().isEmpty()) {
 					int pos = offset;
 					if (method != null) {
@@ -97,7 +98,7 @@ public class SignatureHelpHandler {
 					SignatureHelp help2 = null;
 					SignatureHelpRequestor collector2 = null;
 					if (contextInfomation[0] + 1 != offset) {
-						collector2 = new SignatureHelpRequestor(unit, offset, true);
+						collector2 = new SignatureHelpRequestor(unit, offset, name, true);
 						unit.codeComplete(offset, collector2, monitor);
 						help2 = collector2.getSignatureHelp(monitor);
 					}
