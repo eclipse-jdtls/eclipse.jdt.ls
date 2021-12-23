@@ -23,6 +23,7 @@
 package org.eclipse.jdt.ls.core.internal.corrections;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -73,12 +74,28 @@ public class QuickFixProcessor {
 		Set<Integer> handledProblems = new HashSet<>(locations.length);
 		for (int i = 0; i < locations.length; i++) {
 			IProblemLocationCore curr = locations[i];
-			Integer id = Integer.valueOf(curr.getProblemId());
-			if (handledProblems.add(id)) {
+			if (handledProblems(curr, locations, handledProblems)) {
 				process(context, curr, resultingCollections);
 			}
 		}
 		return resultingCollections;
+	}
+
+	private static boolean handledProblems(IProblemLocationCore location, IProblemLocationCore[] locations, Set<Integer> handledProblems) {
+		int problemId = location.getProblemId();
+		if (handledProblems.contains(problemId)) {
+			return false;
+		}
+		if (problemId == IProblem.UndefinedName) {
+			// skip different problems with the same resolution
+			for (IProblemLocationCore l : locations) {
+				if (l.getProblemId() == IProblem.UndefinedType && Arrays.deepEquals(l.getProblemArguments(), location.getProblemArguments())) {
+					handledProblems.add(problemId);
+					return false;
+				}
+			}
+		}
+		return handledProblems.add(problemId);
 	}
 
 	private void process(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {

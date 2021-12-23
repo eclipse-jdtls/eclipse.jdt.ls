@@ -62,6 +62,9 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 public class CodeActionHandler {
 	public static final ResponseStore<Either<ChangeCorrectionProposal, CodeActionProposal>> codeActionStore
 		= new ResponseStore<>(ForkJoinPool.commonPool().getParallelism());
@@ -286,11 +289,18 @@ public class CodeActionHandler {
 		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
 			Diagnostic diagnostic = diagnostics.get(i);
-			int problemId = getProblemId(diagnostic);
 			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
 			int end = DiagnosticsHelper.getEndOffset(unit, diagnostic.getRange());
 			boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
-			locations[i] = new ProblemLocationCore(start, end - start, problemId, new String[0], isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
+			int problemId = getProblemId(diagnostic);
+			List<String> arguments = new ArrayList<>();
+			if (diagnostic.getData() instanceof JsonArray) {
+				final JsonArray data = (JsonArray) diagnostic.getData();
+				for (JsonElement e : data) {
+					arguments.add(e.getAsString());
+				}
+			}
+			locations[i] = new ProblemLocationCore(start, end - start, problemId, arguments.toArray(new String[0]), isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
 		}
 		return locations;
 	}

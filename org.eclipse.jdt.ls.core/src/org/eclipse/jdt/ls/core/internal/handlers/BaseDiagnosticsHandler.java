@@ -150,6 +150,9 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(openable, problem));
+			if (problem.getID() == IProblem.UndefinedName || problem.getID() == IProblem.UndefinedType) {
+				diag.setData(problem.getArguments());
+			}
 			if (isDiagnosticTagSupported) {
 				diag.setTags(getDiagnosticTag(problem.getID()));
 			}
