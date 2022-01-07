@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -34,7 +34,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
@@ -51,8 +53,10 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
+import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
+import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -534,6 +538,43 @@ public final class ProjectUtils {
 			}
 			project.setDescription(description, IResource.FORCE, monitor);
 		}
+	}
+
+	public static int getMaxProjectProblemSeverity() {
+		int maxSeverity = IMarker.SEVERITY_INFO;
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			if (ProjectsManager.DEFAULT_PROJECT_NAME.equals(project.getName())) {
+				continue;
+			}
+			
+			try {
+				maxSeverity = Math.max(maxSeverity, project.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+				if (ProjectUtils.isMavenProject(project)) {
+					IFile configFile = project.getFile(MavenProjectImporter.POM_FILE);
+					maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+				} else if (ProjectUtils.isGradleProject(project)) {
+					List<String> gradleConfigs = Arrays.asList(
+						GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
+						GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR,
+						GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR,
+						GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR
+					);
+
+					for (String fileName : gradleConfigs) {
+						IFile configFile = project.getFile(fileName);
+						maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+					}
+				}
+			} catch (CoreException e) {
+				// ignore
+			}
+
+			if (maxSeverity == IMarker.SEVERITY_ERROR) {
+				break;
+			}
+		}
+
+		return maxSeverity;
 	}
 
 }
