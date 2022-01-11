@@ -7,5 +7,6 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="library/Lib.jar"/>
+	<classpathentry kind="lib" path="library/spring-boot-autoconfigure-2.5.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

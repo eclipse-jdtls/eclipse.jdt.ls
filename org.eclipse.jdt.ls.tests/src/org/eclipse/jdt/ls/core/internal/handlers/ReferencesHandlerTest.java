@@ -139,4 +139,20 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertEquals(fileURI, l.getUri());
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/2227
+	@Test
+	public void testPotentialMatch() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		importProjects("eclipse/reference");
+		IProject referenceProject = WorkspaceHelper.getProject("reference");
+		URI uri = referenceProject.getFile("src/org/reference/User.java").getRawLocationURI();
+		String fileURI = ResourceUtils.fixURI(uri);
+		ReferenceParams param = new ReferenceParams();
+		param.setPosition(new Position(1, 15));
+		param.setContext(new ReferenceContext(true));
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<Location> references = handler.findReferences(param, monitor);
+		assertEquals(0, references.size());
+	}
+
 }
