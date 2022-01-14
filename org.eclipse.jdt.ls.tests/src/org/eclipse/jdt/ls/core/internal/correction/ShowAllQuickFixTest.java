@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
@@ -174,7 +175,44 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 		} finally {
 			preferenceManager.getPreferences().setJavaQuickFixShowAt(showQuickFixes);
 		}
+	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/2236
+	@Test
+	public void testDuplicateQuickFix() throws Exception {
+		String showQuickFixes = preferenceManager.getPreferences().getJavaQuickFixShowAt();
+		try {
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("public class F {\n");
+			buf.append("    List list = List.of();\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("F.java", buf.toString(), true, null);
+			cu.becomeWorkingCopy(null);
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(Preferences.LINE);
+			CodeActionParams codeActionParams = new CodeActionParams();
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+			textDocument.setUri(JDTUtils.toURI(cu));
+			codeActionParams.setTextDocument(textDocument);
+			codeActionParams.setRange(new Range(new Position(2, 6), new Position(2, 6)));
+			CodeActionContext context = new CodeActionContext();
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+			List<Diagnostic> diagnostics = getDiagnostics(cu, astRoot, 3);
+			context.setDiagnostics(diagnostics);
+			context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
+			codeActionParams.setContext(context);
+			List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
+			assertEquals(5, codeActions.size());
+			CodeAction action = codeActions.get(0).getRight();
+			assertNotNull(action);
+			assertEquals("Import 'List' (java.util)", action.getTitle());
+			action = codeActions.get(1).getRight();
+			assertNotNull(action);
+			assertNotEquals("Import 'List' (java.util)", action.getTitle());
+		} finally {
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(showQuickFixes);
+		}
 	}
 
 	private List<Diagnostic> getDiagnostics(ICompilationUnit cu, CompilationUnit astRoot, int line) {
