@@ -28,7 +28,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -127,6 +129,36 @@ public class WrapperValidatorTest extends AbstractGradleBasedTest{
 			assertNotNull(result.getChecksum());
 			WrapperValidator.clear();
 			WrapperValidator.allow(sha256);
+			result = wrapperValidator.checkWrapper(file.getAbsolutePath());
+			assertTrue(result.isValid());
+		} finally {
+			WrapperValidator.clear();
+			WrapperValidator.allow(allowed);
+			WrapperValidator.disallow(disallowed);
+			wrapperValidator.checkWrapper(file.getAbsolutePath());
+			assertEquals(size, WrapperValidator.size());
+		}
+	}
+
+	@Test
+	public void testPreferences() throws Exception {
+		WrapperValidator wrapperValidator = new WrapperValidator(100);
+		Set<String> allowed = WrapperValidator.getAllowed();
+		Set<String> disallowed = WrapperValidator.getDisallowed();
+		File file = new File(getSourceProjectDirectory(), "gradle/gradle-4.0");
+		wrapperValidator.checkWrapper(file.getAbsolutePath());
+		int size = WrapperValidator.size();
+		List list = new ArrayList();
+		Map map = new HashMap();
+		map.put("sha256", "41c8aa7a337a44af18d8cda0d632ebba469aef34f3041827624ef5c1a4e4419d");
+		map.put("allowed", Boolean.TRUE);
+		list.add(map);
+		try {
+			ValidationResult result = wrapperValidator.checkWrapper(file.getAbsolutePath());
+			assertFalse(result.isValid());
+			assertNotNull(result.getChecksum());
+			WrapperValidator.clear();
+			WrapperValidator.putSha256(list);
 			result = wrapperValidator.checkWrapper(file.getAbsolutePath());
 			assertTrue(result.isValid());
 		} finally {
