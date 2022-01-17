@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.managers.ISourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.MavenSourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
@@ -314,12 +315,15 @@ public class JavaLanguageServerPlugin extends Plugin {
 	}
 
 	private void startConnection() throws IOException {
+		TelemetryManager telemetryManager = new TelemetryManager();
+		boolean firstTimeInitialization = ProjectUtils.getAllProjects().length == 0;
+		telemetryManager.onLanguageServerStart(System.currentTimeMillis(), firstTimeInitialization);
 		Launcher<JavaLanguageClient> launcher;
 		ExecutorService executorService = getExecutorService();
 		if (JDTEnvironmentUtils.isSyntaxServer()) {
 			protocol = new SyntaxLanguageServer(contentProviderManager, projectsManager, preferenceManager);
 		} else {
-			protocol = new JDTLanguageServer(projectsManager, preferenceManager);
+			protocol = new JDTLanguageServer(projectsManager, preferenceManager, telemetryManager);
 		}
 		if (JDTEnvironmentUtils.inSocketStreamDebugMode()) {
 			String host = JDTEnvironmentUtils.getClientHost();

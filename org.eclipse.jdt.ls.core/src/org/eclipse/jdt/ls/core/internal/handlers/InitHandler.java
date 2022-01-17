@@ -41,8 +41,10 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
@@ -76,11 +78,18 @@ final public class InitHandler extends BaseInitHandler {
 
 	private WorkspaceExecuteCommandHandler commandHandler;
 
+	private TelemetryManager telemetryManager;
+
 	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection, WorkspaceExecuteCommandHandler commandHandler) {
+		this(manager, preferenceManager, connection, commandHandler, new TelemetryManager());
+	}
+
+	public InitHandler(ProjectsManager manager, PreferenceManager preferenceManager, JavaClientConnection connection, WorkspaceExecuteCommandHandler commandHandler, TelemetryManager telemetryManager) {
 		super(manager, preferenceManager);
 		this.connection = connection;
 		this.preferenceManager = preferenceManager;
 		this.commandHandler = commandHandler;
+		this.telemetryManager = telemetryManager;
 	}
 
 	@Override
@@ -247,6 +256,7 @@ final public class InitHandler extends BaseInitHandler {
 					projectsManager.configureFilters(monitor);
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
+					telemetryManager.onProjectsInitialized(projectsManager, System.currentTimeMillis());
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
 					return Status.CANCEL_STATUS;

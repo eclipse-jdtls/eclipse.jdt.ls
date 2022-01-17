@@ -272,4 +272,21 @@ public class PreferenceManagerTest {
 			assertEquals("ignore", preferenceManager.getPreferences().getMavenDefaultMojoExecutionAction());
 		}
 	}
+
+	@Test
+	public void testTelemetrySettings() throws Exception {
+		try {
+			PreferenceManager.initialize();
+			Preferences preferences = new Preferences(); // default is disabled
+			preferenceManager.update(preferences);
+			assertEquals(false, preferenceManager.getPreferences().isTelemetryEnabled());
+			preferences.setTelemetryEnabled(true);
+			preferenceManager.update(preferences);
+			assertEquals(true, preferenceManager.getPreferences().isTelemetryEnabled());
+		} finally {
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertEquals(false, preferenceManager.getPreferences().isTelemetryEnabled());
+		}
+	}
 }
