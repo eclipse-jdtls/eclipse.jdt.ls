@@ -458,6 +458,8 @@ public class Preferences {
 	// Project encoding settings
 	public static final String JAVA_PROJECT_ENCODING = "java.project.encoding";
 
+	public static final String JAVA_TELEMETRY_ENABLED_KEY = "java.telemetry.enabled";
+
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -582,6 +584,7 @@ public class Preferences {
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
 	private boolean guessMethodArguments;
+
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
 	private boolean hashCodeEqualsTemplateUseInstanceof;
@@ -641,6 +644,7 @@ public class Preferences {
 	private FeatureStatus nullAnalysisMode;
 	private List<String> cleanUpActionsOnSave;
 	private boolean extractInterfaceReplaceEnabled;
+	private boolean telemetryEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -869,6 +873,7 @@ public class Preferences {
 		nullAnalysisMode = FeatureStatus.disabled;
 		cleanUpActionsOnSave = new ArrayList<>();
 		extractInterfaceReplaceEnabled = false;
+		telemetryEnabled = false;
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1223,6 +1228,8 @@ public class Preferences {
 		prefs.setCleanUpActionsOnSave(cleanupActionsOnSave);
 		boolean extractInterfaceReplaceEnabled = getBoolean(configuration, JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE, false);
 		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
+		boolean telemetryEnabled = getBoolean(configuration, JAVA_TELEMETRY_ENABLED_KEY, false);
+		prefs.setTelemetryEnabled(telemetryEnabled);
 		return prefs;
 	}
 
@@ -1529,6 +1536,10 @@ public class Preferences {
 		pref.put(TypeFilter.TYPEFILTER_ENABLED, String.join(";", filteredTypes));
 		JavaLanguageServerPlugin.getInstance().getTypeFilter().dispose();
 		return this;
+	}
+
+	public void setTelemetryEnabled(boolean telemetry) {
+		this.telemetryEnabled = telemetry;
 	}
 
 	public Preferences setMaxBuildCount(int maxConcurrentBuilds) {
@@ -2348,6 +2359,10 @@ public class Preferences {
 			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
 		}
 		return options;
+	}
+
+	public boolean isTelemetryEnabled() {
+		return telemetryEnabled;
 	}
 
 }

@@ -200,6 +200,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				List<URI> projectUris = Arrays.stream(getWorkspaceRoot().getProjects())
 					.map(project -> ProjectUtils.getProjectRealFolder(project).toFile().toURI())
 					.collect(Collectors.toList());
+
 				EventNotification notification = new EventNotification().withType(EventType.ProjectsImported).withData(projectUris);
 				client.sendEventNotification(notification);
 				reportProjectsStatus();

@@ -75,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSy
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
@@ -179,6 +180,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 * The status of the language service
 	 */
 	private ServiceStatus status;
+	private TelemetryManager telemetryManager;
 
 	private Job shutdownJob = new Job("Shutdown...") {
 
@@ -212,12 +214,21 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		this(projects, preferenceManager, WorkspaceExecuteCommandHandler.getInstance());
 	}
 
+	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, TelemetryManager telemetryManager) {
+		this(projects, preferenceManager, WorkspaceExecuteCommandHandler.getInstance(), telemetryManager);
+	}
+
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler) {
+		this(projects, preferenceManager, commandHandler, new TelemetryManager());
+	}
+
+	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler, TelemetryManager telemetryManager) {
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
 		this.jvmConfigurator = new JVMConfigurator();
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 		this.commandHandler = commandHandler;
+		this.telemetryManager = telemetryManager;
 	}
 
 	@Override
@@ -229,6 +240,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
 		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
+		this.telemetryManager.setLanguageClient(client);
+		this.telemetryManager.setPreferenceManager(preferenceManager);
 	}
 
 	// For testing purpose
@@ -249,7 +262,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
 		status = ServiceStatus.Starting;
-		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler);
+		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler, telemetryManager);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -289,11 +302,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
 					status = ServiceStatus.ServiceReady;
+					telemetryManager.onServiceReady(System.currentTimeMillis());
 					pm.projectsImported(monitor);
 
 					IndexUtils.copyIndexesToSharedLocation();
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
+					telemetryManager.onBuildFinished(System.currentTimeMillis());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
