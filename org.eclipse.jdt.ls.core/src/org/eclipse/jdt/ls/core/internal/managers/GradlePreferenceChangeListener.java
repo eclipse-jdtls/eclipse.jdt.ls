@@ -15,9 +15,6 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.buildship.core.GradleDistribution;
@@ -76,58 +73,10 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 
 	private boolean hasAllowedChecksumsChanged(Preferences oldPreferences, Preferences newPreferences) {
 		if (!Objects.equals(oldPreferences.getGradleWrapperList(), newPreferences.getGradleWrapperList())) {
-			putSha256(newPreferences.getGradleWrapperList());
+			WrapperValidator.putSha256(newPreferences.getGradleWrapperList());
 			return true;
 		}
 		return false;
 	}
 
-	private void putSha256(List<?> gradleWrapperList) {
-		List<String> sha256Allowed = new ArrayList<>();
-		List<String> sha256Disallowed = new ArrayList<>();
-		for (Object object : gradleWrapperList) {
-			if (object instanceof Map) {
-				Map<?, ?> map = (Map<?, ?>) object;
-				final ChecksumWrapper sha256 = this.new ChecksumWrapper();
-				sha256.allowed = true;
-				map.forEach((k, v) -> {
-					if (k instanceof String) {
-						switch ((String) k) {
-							case "sha256":
-								if (v instanceof String) {
-									sha256.checksum = (String) v;
-								}
-								break;
-							case "allowed":
-								if (v instanceof Boolean) {
-									sha256.allowed = (Boolean) v;
-								}
-								break;
-							default:
-								break;
-						}
-					}
-				});
-				if (sha256.checksum != null) {
-					if (sha256.allowed) {
-						sha256Allowed.add(sha256.checksum);
-					} else {
-						sha256Disallowed.add(sha256.checksum);
-					}
-				}
-			}
-		}
-		WrapperValidator.clear();
-		if (sha256Allowed != null) {
-			WrapperValidator.allow(sha256Allowed);
-		}
-		if (sha256Disallowed != null) {
-			WrapperValidator.disallow(sha256Disallowed);
-		}
-	}
-
-	class ChecksumWrapper {
-		private String checksum;
-		private boolean allowed;
-	}
 }
