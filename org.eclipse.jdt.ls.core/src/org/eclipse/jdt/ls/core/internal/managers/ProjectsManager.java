@@ -48,7 +48,6 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
@@ -66,7 +65,6 @@ import org.eclipse.jdt.ls.core.internal.EventNotification;
 import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -74,7 +72,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
-import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter.GradleCompatibilityStatus;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
@@ -85,7 +82,6 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	public static final String CREATED_BY_JAVA_LANGUAGE_SERVER = "__CREATED_BY_JAVA_LANGUAGE_SERVER__";
 	private static final int JDTLS_FILTER_TYPE = IResourceFilterDescription.EXCLUDE_ALL | IResourceFilterDescription.INHERITABLE | IResourceFilterDescription.FILES | IResourceFilterDescription.FOLDERS;
 
-	private MultiStatus gradleImportErrorStatus;
 	private PreferenceManager preferenceManager;
 	protected JavaLanguageClient client;
 
@@ -114,50 +110,20 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	}
 
 	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		resetGradleImportErrorStatus();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
 			for (IProjectImporter importer : importers()) {
 				importer.initialize(rootFolder);
 				if (importer.applies(subMonitor.split(1))) {
-					// for Gradle importer, we catch and collect CoreExceptions
-					if (importer instanceof GradleProjectImporter) {
-						try {
-							importer.importToWorkspace(subMonitor.split(70));
-						} catch (CoreException e) {
-							this.gradleImportErrorStatus.add(e.getStatus());
-						}
-					// for other importer, we keep the current behavior
-					} else {
-						importer.importToWorkspace(subMonitor.split(70));
-					}
+					importer.importToWorkspace(subMonitor.split(70));
 					if (importer.isResolved(rootFolder)) {
 						break;
 					}
 				}
 			}
 		}
-		for (IProject project : getWorkspaceRoot().getProjects()) {
-			cleanAndSetGradleCompatibilityErrorMarker(project);
-		}
 		return;
-	}
-
-	private void cleanAndSetGradleCompatibilityErrorMarker(IProject project) {
-		try {
-			project.deleteMarkers(GradleCompatibilityErrorMarker.ID, true, IResource.DEPTH_INFINITE);
-			for (IStatus status : this.gradleImportErrorStatus.getChildren()) {
-				if (status instanceof GradleCompatibilityStatus) {
-					GradleCompatibilityStatus gradleStatus = (GradleCompatibilityStatus) status;
-					if (JDTUtils.getFileURI(project).equals(gradleStatus.getUri())) {
-						GradleCompatibilityErrorMarker.createMarker(project, gradleStatus);
-					}
-				}
-			}
-		} catch (CoreException e) {
-			// do nothing
-		}
 	}
 
 	protected void importProjectsFromConfigurationFiles(Collection<IPath> rootPaths, Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
@@ -167,17 +133,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			for (IProjectImporter importer : importers()) {
 				importer.initialize(rootFolder);
 				if (importer.applies(projectConfigurations, subMonitor.split(1))) {
-					// for Gradle importer, we catch CoreExceptions
-					if (importer instanceof GradleProjectImporter) {
-						try {
-							importer.importToWorkspace(subMonitor.split(70));
-						} catch (CoreException e) {
-							this.gradleImportErrorStatus.add(e.getStatus());
-						}
-					// for other importer, we keep the current behavior
-					} else {
-						importer.importToWorkspace(subMonitor.split(70));
-					}
+					importer.importToWorkspace(subMonitor.split(70));
 				}
 			}
 		}
@@ -569,10 +525,6 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				project.createFilter(JDTLS_FILTER_TYPE, new FileInfoMatcherDescription(CORE_RESOURCES_MATCHER_ID, resourceFilter), IResource.BACKGROUND_REFRESH, monitor);
 			}
 		}
-	}
-
-	private void resetGradleImportErrorStatus() {
-		this.gradleImportErrorStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Import projects error");
 	}
 
 }

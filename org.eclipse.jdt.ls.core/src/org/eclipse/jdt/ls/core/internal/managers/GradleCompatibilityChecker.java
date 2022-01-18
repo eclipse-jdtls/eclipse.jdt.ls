@@ -20,7 +20,7 @@ public class GradleCompatibilityChecker {
 	public static String MAX_SUPPORTED_JAVA = JavaCore.VERSION_17;
 	public static String CURRENT_GRADLE = "7.3.1";
 
-	public static boolean compatibilityCheck(GradleVersion gradleVersion, String javaVersion) {
+	public static boolean isIncompatible(GradleVersion gradleVersion, String javaVersion) {
 		if (gradleVersion == null || javaVersion == null || javaVersion.isEmpty()) {
 			return false;
 		}
