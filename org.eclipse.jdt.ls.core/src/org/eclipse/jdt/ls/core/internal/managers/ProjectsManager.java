@@ -123,7 +123,6 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				}
 			}
 		}
-		return;
 	}
 
 	protected void importProjectsFromConfigurationFiles(Collection<IPath> rootPaths, Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
