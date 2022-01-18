@@ -91,7 +91,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		SignatureHelp help = getSignatureHelp(cu, 4, 39);
 		assertNotNull(help);
-		assertEquals(2, help.getSignatures().size());
+		assertEquals(1, help.getSignatures().size());
 		assertEquals("foo(String s) : int", help.getSignatures().get(help.getActiveSignature()).getLabel());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getDocumentation().getLeft().length() > 0);
 		assertEquals((Integer) 0, help.getActiveParameter());
@@ -112,7 +112,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		SignatureHelp help = getSignatureHelp(cu, 5, 42);
 		assertNotNull(help);
-		assertEquals(6, help.getSignatures().size());
+		assertEquals(3, help.getSignatures().size());
 		assertEquals((Integer) 1, help.getActiveParameter());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(int s, String s) : int");
 	}
@@ -134,6 +134,26 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelp help2 = getSignatureHelp(cu, 2, 49);
 		assertEquals(help.getSignatures().size(), help2.getSignatures().size());
 		assertEquals(help.getActiveSignature(), help2.getActiveSignature());
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1980
+	@Test
+	public void testSignatureHelp_double() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public E(String s) {\n");
+		buf.append("        this.unique(\n");
+		buf.append("    }\n");
+		buf.append("    public void unique(double d) {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 20);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertEquals((Integer) 0, help.getActiveParameter());
+		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "unique(double d) : void");
 	}
 
 	@Test
@@ -167,7 +187,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 12);
 		assertNotNull(help);
-		assertEquals(3, help.getSignatures().size());
+		assertEquals(2, help.getSignatures().size());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(String s, boolean bar) : void");
 	}
 
@@ -187,7 +207,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 12);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(3, help.getSignatures().size());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "foo(String s, String b) : void");
 	}
 
@@ -297,7 +317,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		int[] loc = findCompletionLocation(cu, "l.add(");
 		SignatureHelp help = getSignatureHelp(cu, loc[0], loc[1]);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(2, help.getSignatures().size());
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("add(String e) : boolean"));
 		String documentation = signature.getDocumentation().getLeft();
