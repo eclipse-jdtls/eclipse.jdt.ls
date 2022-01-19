@@ -170,15 +170,27 @@ public class CompletionProposalReplacementProvider {
 			}
 			range = toReplacementRange(proposal);
 		}
-		if (proposal.getKind() == CompletionProposal.METHOD_DECLARATION) {
-			appendMethodOverrideReplacement(completionBuffer, proposal);
-		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
-			appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
-		} else if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
-			appendAnonymousClass(completionBuffer, proposal, range);
-		} else {
-			appendReplacementString(completionBuffer, proposal);
+
+		switch (proposal.getKind()) {
+			case CompletionProposal.METHOD_DECLARATION:
+				appendMethodOverrideReplacement(completionBuffer, proposal);
+				break;
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				if (proposal instanceof GetterSetterCompletionProposal) {
+					appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
+				} else {
+					appendReplacementString(completionBuffer, proposal);
+				}
+				break;
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+				appendAnonymousClass(completionBuffer, proposal, range);
+				break;
+			default:
+				appendReplacementString(completionBuffer, proposal);
+				break;
 		}
+
 		//select insertTextFormat.
 		if (client.isCompletionSnippetsSupported()) {
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
