@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -219,11 +220,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			// only report first compatibility issue
 			GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
 			for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
-				if (JDTUtils.getFileURI(gradleProject).equals(Paths.get(gradleStatus.getProjectPath()).toUri().toString())) {
+				if (JDTUtils.getFileURI(gradleProject).equals(URI.create(gradleStatus.getProjectUri()).toString())) {
 					ResourceUtils.createErrorMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
 				}
 			}
-			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectPath(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleCompatibilityChecker.CURRENT_GRADLE);
+			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleCompatibilityChecker.CURRENT_GRADLE);
 			EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
 			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
 			break;
@@ -366,7 +367,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 						Path projectName = projectFolder.getName(projectFolder.getNameCount() - 1);
 						String message = String.format("Can't use Java %s and Gradle %s to import Gradle project %s.", javaVersion, gradleVersion, projectName.toString());
 						String highestJavaVersion = GradleCompatibilityChecker.getHighestSupportedJava(GradleVersion.version(gradleVersion));
-						return new GradleCompatibilityStatus(resultStatus, message, projectFolder.toString(), highestJavaVersion);
+						return new GradleCompatibilityStatus(resultStatus, message, projectFolder.toUri().toString(), highestJavaVersion);
 					}
 				} catch (Exception e) {
 					// Do nothing
@@ -458,9 +459,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return shouldSynchronize;
 	}
 
-	public static boolean upgradeGradleVersion(String projectPath, IProgressMonitor monitor) {
+	public static boolean upgradeGradleVersion(String projectUri, IProgressMonitor monitor) {
 		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", GradleCompatibilityChecker.CURRENT_GRADLE);
-		Path projectFolder = Paths.get(projectPath);
+		Path projectFolder = Paths.get(URI.create(projectUri));
 		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
 		Properties properties = new Properties();
 		if (propertiesFile.exists()) {
@@ -505,17 +506,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public class GradleCompatibilityStatus extends Status {
 
-		private String projectPath;
+		private String projectUri;
 		private String highestJavaVersion;
 
-		public GradleCompatibilityStatus(IStatus status, String message, String projectPath, String highestJavaVersion) {
+		public GradleCompatibilityStatus(IStatus status, String message, String projectUri, String highestJavaVersion) {
 			super(status.getSeverity(), status.getPlugin(), status.getCode(), message, status.getException());
-			this.projectPath = projectPath;
+			this.projectUri = projectUri;
 			this.highestJavaVersion = highestJavaVersion;
 		}
 
-		public String getProjectPath() {
-			return this.projectPath;
+		public String getProjectUri() {
+			return this.projectUri;
 		}
 
 		public String getHighestJavaVersion() {
@@ -525,13 +526,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private class GradleCompatibilityInfo implements Serializable {
 
-		private String projectPath;
+		private String projectUri;
 		private String message;
 		private String highestJavaVersion;
 		private String recommendedGradleVersion;
 
 		public GradleCompatibilityInfo(String projectPath, String message, String highestJavaVersion, String recommendedGradleVersion) {
-			this.projectPath = projectPath;
+			this.projectUri = projectPath;
 			this.message = message;
 			this.highestJavaVersion = highestJavaVersion;
 			this.recommendedGradleVersion = recommendedGradleVersion;
