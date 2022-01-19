@@ -186,6 +186,9 @@ public class CompletionProposalReplacementProvider {
 			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
 				appendAnonymousClass(completionBuffer, proposal, range);
 				break;
+			case CompletionProposal.LAMBDA_EXPRESSION:
+				appendLambdaExpressionReplacement(completionBuffer, proposal);
+				break;
 			default:
 				appendReplacementString(completionBuffer, proposal);
 				break;
@@ -210,6 +213,16 @@ public class CompletionProposalReplacementProvider {
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
 			}
+		}
+	}
+
+	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
+		completionBuffer.append(LPAREN);
+		appendGuessingCompletion(completionBuffer, proposal);
+		completionBuffer.append(RPAREN);
+		completionBuffer.append(" -> ");
+		if(client.isCompletionSnippetsSupported()){
+			completionBuffer.append(CURSOR_POSITION);
 		}
 	}
 
@@ -415,6 +428,8 @@ public class CompletionProposalReplacementProvider {
 	protected boolean hasArgumentList(CompletionProposal proposal) {
 		if (CompletionProposal.METHOD_NAME_REFERENCE == proposal.getKind()) {
 			return false;
+		} else if (CompletionProposal.LAMBDA_EXPRESSION == proposal.getKind()){
+			return true;
 		}
 		char[] completion= proposal.getCompletion();
 		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == RPAREN;
