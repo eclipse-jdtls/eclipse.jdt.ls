@@ -20,7 +20,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -214,22 +213,20 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 		});
 		for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
-			gradleProject.deleteMarkers(COMPATIBILITY_MARKER_ID, true, IResource.DEPTH_INFINITE);
+			gradleProject.deleteMarkers(COMPATIBILITY_MARKER_ID, true, IResource.DEPTH_ZERO);
 		}
-		if (compatibilityStatus.getChildren().length > 0) {
-			for (IStatus status : compatibilityStatus.getChildren()) {
-				// only report first compatibility issue
-				GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
-				for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
-					if (JDTUtils.getFileURI(gradleProject).equals(gradleStatus.getUri())) {
-						ResourceUtils.createMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
-					}
+		for (IStatus status : compatibilityStatus.getChildren()) {
+			// only report first compatibility issue
+			GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
+			for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
+				if (JDTUtils.getFileURI(gradleProject).equals(Paths.get(gradleStatus.getProjectPath()).toUri().toString())) {
+					ResourceUtils.createErrorMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
 				}
-				GradleCompatibilityInfo info = new GradleCompatibilityInfo(Paths.get(URI.create(gradleStatus.uri)).toString(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleCompatibilityChecker.CURRENT_GRADLE);
-				EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
-				JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
-				break;
 			}
+			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectPath(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleCompatibilityChecker.CURRENT_GRADLE);
+			EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
+			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+			break;
 		}
 		subMonitor.done();
 	}
@@ -366,12 +363,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 						javaVersion = type.readReleaseVersion(javaHome);
 					}
 					if (GradleCompatibilityChecker.isIncompatible(GradleVersion.version(gradleVersion), javaVersion)) {
-						URI uri = projectFolder.toUri();
-						Path path = Paths.get(uri);
-						Path projectName = path.getName(path.getNameCount() - 1);
+						Path projectName = projectFolder.getName(projectFolder.getNameCount() - 1);
 						String message = String.format("Can't use Java %s and Gradle %s to import Gradle project %s.", javaVersion, gradleVersion, projectName.toString());
 						String highestJavaVersion = GradleCompatibilityChecker.getHighestSupportedJava(GradleVersion.version(gradleVersion));
-						return new GradleCompatibilityStatus(resultStatus, message, uri.toString(), highestJavaVersion);
+						return new GradleCompatibilityStatus(resultStatus, message, projectFolder.toString(), highestJavaVersion);
 					}
 				} catch (Exception e) {
 					// Do nothing
@@ -463,9 +458,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return shouldSynchronize;
 	}
 
-	public static boolean upgradeGradleVersion(String projectDir, IProgressMonitor monitor) {
+	public static boolean upgradeGradleVersion(String projectPath, IProgressMonitor monitor) {
 		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", GradleCompatibilityChecker.CURRENT_GRADLE);
-		Path projectFolder = Paths.get(projectDir);
+		Path projectFolder = Paths.get(projectPath);
 		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
 		Properties properties = new Properties();
 		if (propertiesFile.exists()) {
@@ -510,17 +505,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public class GradleCompatibilityStatus extends Status {
 
-		private String uri;
+		private String projectPath;
 		private String highestJavaVersion;
 
-		public GradleCompatibilityStatus(IStatus status, String message, String uri, String highestJavaVersion) {
+		public GradleCompatibilityStatus(IStatus status, String message, String projectPath, String highestJavaVersion) {
 			super(status.getSeverity(), status.getPlugin(), status.getCode(), message, status.getException());
-			this.uri = uri;
+			this.projectPath = projectPath;
 			this.highestJavaVersion = highestJavaVersion;
 		}
 
-		public String getUri() {
-			return this.uri;
+		public String getProjectPath() {
+			return this.projectPath;
 		}
 
 		public String getHighestJavaVersion() {
@@ -530,13 +525,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private class GradleCompatibilityInfo implements Serializable {
 
-		private String projectUri;
+		private String projectPath;
 		private String message;
 		private String highestJavaVersion;
 		private String recommendedGradleVersion;
 
-		public GradleCompatibilityInfo(String projectUri, String message, String highestJavaVersion, String recommendedGradleVersion) {
-			this.projectUri = projectUri;
+		public GradleCompatibilityInfo(String projectPath, String message, String highestJavaVersion, String recommendedGradleVersion) {
+			this.projectPath = projectPath;
 			this.message = message;
 			this.highestJavaVersion = highestJavaVersion;
 			this.recommendedGradleVersion = recommendedGradleVersion;

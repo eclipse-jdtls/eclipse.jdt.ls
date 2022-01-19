@@ -116,8 +116,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					TypeHierarchyItem typeHierarchyItem = typeHierarchyCommand.typeHierarchy(params, monitor);
 					return typeHierarchyItem;
 				case "java.project.upgradeGradle":
-					String projectDir = (String) arguments.get(0);
-					return GradleProjectImporter.upgradeGradleVersion(projectDir, monitor);
+					String projectPath = (String) arguments.get(0);
+					return GradleProjectImporter.upgradeGradleVersion(projectPath, monitor);
 				default:
 					break;
 			}

@@ -364,7 +364,7 @@ public final class ResourceUtils {
 	/**
 	 * Creates a simple error marker with the given id and status message to the given resource.
 	 */
-	public static void createMarker(IResource resource, IStatus status, String id) throws CoreException {
+	public static void createErrorMarker(IResource resource, IStatus status, String id) throws CoreException {
 		IMarker marker = resource.createMarker(id);
 		marker.setAttribute(IMarker.LINE_NUMBER, 1);
 		marker.setAttribute(IMarker.MESSAGE, status.getMessage());
