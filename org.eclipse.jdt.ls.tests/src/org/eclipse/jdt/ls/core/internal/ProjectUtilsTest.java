@@ -50,4 +50,15 @@ public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(IMarker.SEVERITY_INFO, ProjectUtils.getMaxProjectProblemSeverity());
 	}
+
+	@Test
+	public void testGetProjectSeverityWhenConfigFileNotExists() throws Exception {
+		importProjects("gradle/invalid");
+		IProject project = WorkspaceHelper.getProject("invalid");
+		IFile config = project.getFile("build.gradle");
+		config.delete(true, null);
+
+		ProjectUtils.getMaxProjectProblemSeverity();
+	}
+
 }

@@ -551,7 +551,9 @@ public final class ProjectUtils {
 				maxSeverity = Math.max(maxSeverity, project.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
 				if (ProjectUtils.isMavenProject(project)) {
 					IFile configFile = project.getFile(MavenProjectImporter.POM_FILE);
-					maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+					if (configFile.exists()) {
+						maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+					}
 				} else if (ProjectUtils.isGradleProject(project)) {
 					List<String> gradleConfigs = Arrays.asList(
 						GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
@@ -562,7 +564,9 @@ public final class ProjectUtils {
 
 					for (String fileName : gradleConfigs) {
 						IFile configFile = project.getFile(fileName);
-						maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+						if (configFile.exists()) {
+							maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
+						}
 					}
 				}
 			} catch (CoreException e) {
