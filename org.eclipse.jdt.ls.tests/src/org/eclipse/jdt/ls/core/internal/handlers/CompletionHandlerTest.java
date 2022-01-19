@@ -3179,6 +3179,26 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue("Should be deprecated", deprecatedClass.getDeprecated());
 	}
 
+	@Test
+	public void testCompletion_Lambda() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"import java.util.function.Consumer;",
+			"public class Test {",
+			"	public static void main(String[] args) {",
+			"		Consumer c = ",
+			"	}",
+			"}"
+		));
+
+		CompletionList list = requestCompletions(unit, "c = ");
+		assertNotNull(list);
+		CompletionItem lambda = list.getItems().stream()
+				.filter(item -> (item.getLabel().matches("\\(Object \\w+\\) -> : void") && item.getKind() == CompletionItemKind.Method))
+				.findFirst().orElse(null);
+		assertNotNull(lambda);
+		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\) -> \\$\\{0\\}"));
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		int[] loc = findCompletionLocation(unit, completeBehind);
 		return server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
