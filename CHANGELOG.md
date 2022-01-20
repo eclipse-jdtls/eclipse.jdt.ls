@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.8.0 (January 24th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/98?closed=1)
+ * enhancement - Support completion for lambda expressions. See [#1985](https://github.com/eclipse/eclipse.jdt.ls/issues/1985).
+ * enhancement - Add "Convert to Switch Expression" code assist proposal. See [#1935](https://github.com/eclipse/eclipse.jdt.ls/pull/1935).
+ * enhancement - Check Gradle compatibility when importing fails. See [#1965](https://github.com/eclipse/eclipse.jdt.ls/pull/1965).
+ * enhancement - Show the error status when imported projects having errors. See [#1962](https://github.com/eclipse/eclipse.jdt.ls/pull/1962).
+ * bug fix - "Go to References" result contains inaccurate references. See [#1984](https://github.com/eclipse/eclipse.jdt.ls/pull/1984).
+ * bug fix - Fix regression in signature help. See [#1980](https://github.com/eclipse/eclipse.jdt.ls/issues/1980).
+ * bug fix - Ensure gradle wrappers are correctly processed on project import. See [#1989](https://github.com/eclipse/eclipse.jdt.ls/pull/1989).
+ * bug fix - Avoid duplicate quick fixes when showing all quick fixes on a line. See [#1982](https://github.com/eclipse/eclipse.jdt.ls/pull/1982).
+ * debt - Update Tycho to 2.5.0. See [#1977](https://github.com/eclipse/eclipse.jdt.ls/pull/1977).
+
 # [1.7.0 (December 16th, 2021)](https://github.com/eclipse/eclipse.jdt.ls/milestone/97?closed=1)
  * enhancement - Make the debounce adaptive for validation job. See [#1973](https://github.com/eclipse/eclipse.jdt.ls/pull/1973).
  * bug fix - Fix regression in code action for unresolved type. See [#1967](https://github.com/eclipse/eclipse.jdt.ls/pull/1967).
