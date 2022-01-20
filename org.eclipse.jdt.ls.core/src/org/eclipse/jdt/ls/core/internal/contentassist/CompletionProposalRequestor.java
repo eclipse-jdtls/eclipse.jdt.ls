@@ -297,6 +297,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 		case CompletionProposal.METHOD_NAME_REFERENCE:
 		case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+		case CompletionProposal.LAMBDA_EXPRESSION:
 			return CompletionItemKind.Method;
 			//text
 		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
