@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Microsoft Corporation and others.
+ * Copyright (c) 2021-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -98,7 +98,6 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		IFile pom = project.getFile("pom.xml");
 		String content = ResourceUtils.getContent(pom);
 		content = content.replaceAll(">11<", ">1.8<");
-		content = content.replace(">11<", ">1.8<");
 		ResourceUtils.setContent(pom, content);
 		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();

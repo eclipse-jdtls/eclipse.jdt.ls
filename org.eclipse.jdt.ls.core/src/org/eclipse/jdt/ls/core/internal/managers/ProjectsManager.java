@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,16 +17,13 @@ import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSetti
 
 import java.io.File;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,6 +31,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.FileInfoMatcherDescription;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
@@ -51,6 +49,7 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
@@ -109,35 +108,54 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		} else {
 			importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
 		}
+		reportProjectsStatus();
 		subMonitor.done();
 	}
 
 	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
+		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
-			for (IProjectImporter importer : importers()) {
-				importer.initialize(rootFolder);
-				if (importer.applies(subMonitor.split(1))) {
-					importer.importToWorkspace(subMonitor.split(70));
-					if (importer.isResolved(rootFolder)) {
-						break;
+			try {
+				for (IProjectImporter importer : importers()) {
+					importer.initialize(rootFolder);
+					if (importer.applies(subMonitor.split(1))) {
+						importer.importToWorkspace(subMonitor.split(70));
+						if (importer.isResolved(rootFolder)) {
+							break;
+						}
 					}
 				}
+			} catch (CoreException e) {
+				// if a rootPath import failed, keep importing the next rootPath
+				importStatusCollection.add(e.getStatus());
 			}
+		}
+		if (!importStatusCollection.isOK()) {
+			throw new CoreException(importStatusCollection);
 		}
 	}
 
 	protected void importProjectsFromConfigurationFiles(Collection<IPath> rootPaths, Collection<IPath> projectConfigurations, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
+		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
-			for (IProjectImporter importer : importers()) {
-				importer.initialize(rootFolder);
-				if (importer.applies(projectConfigurations, subMonitor.split(1))) {
-					importer.importToWorkspace(subMonitor.split(70));
+			try {
+				for (IProjectImporter importer : importers()) {
+					importer.initialize(rootFolder);
+					if (importer.applies(projectConfigurations, subMonitor.split(1))) {
+						importer.importToWorkspace(subMonitor.split(70));
+					}
 				}
+			} catch (CoreException e) {
+				// if a rootPath import failed, keep importing the next rootPath
+				importStatusCollection.add(e.getStatus());
 			}
+		}
+		if (!importStatusCollection.isOK()) {
+			throw new CoreException(importStatusCollection);
 		}
 	}
 
@@ -158,6 +176,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					.collect(Collectors.toList());
 				EventNotification notification = new EventNotification().withType(EventType.ProjectsImported).withData(projectUris);
 				client.sendEventNotification(notification);
+				reportProjectsStatus();
 				return Status.OK_STATUS;
 			}
 		};
@@ -379,11 +398,12 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					}
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
-				} catch (CoreException e) {
+				} catch (Exception e) {
 					String msg = "Error updating " + projectName;
 					JavaLanguageServerPlugin.logError(msg);
 					status = StatusFactory.newErrorStatus(msg, e);
 				}
+				reportProjectsStatus();
 				return status;
 			}
 		};
@@ -526,6 +546,15 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			if (!filterExists && resourceFilter != null && !resourceFilter.isEmpty()) {
 				project.createFilter(JDTLS_FILTER_TYPE, new FileInfoMatcherDescription(CORE_RESOURCES_MATCHER_ID, resourceFilter), IResource.BACKGROUND_REFRESH, monitor);
 			}
+		}
+	}
+
+	public void reportProjectsStatus() {
+		int maxProjectProblemSeverity = ProjectUtils.getMaxProjectProblemSeverity();
+		if (maxProjectProblemSeverity == IMarker.SEVERITY_ERROR) {
+			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "WARNING");
+		} else { 
+			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "OK");
 		}
 	}
 
