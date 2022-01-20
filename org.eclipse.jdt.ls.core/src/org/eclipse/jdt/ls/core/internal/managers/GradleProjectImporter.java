@@ -52,6 +52,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.internal.launching.StandardVMType;
@@ -220,7 +221,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			// only report first compatibility issue
 			GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
 			for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
-				if (JDTUtils.getFileURI(gradleProject).equals(URI.create(gradleStatus.getProjectUri()).toString())) {
+				if (URIUtil.sameURI(URI.create(JDTUtils.getFileURI(gradleProject)), URI.create(gradleStatus.getProjectUri()))) {
 					ResourceUtils.createErrorMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
 				}
 			}
