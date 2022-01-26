@@ -39,7 +39,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
-            <repository location="https://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-apt/1.5.3-2019-11-08_11-04-22-H22/"/>
+            <repository location="https://jbosstools.github.io/m2e-apt/updates/1.5.4/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.11.0/"/>
