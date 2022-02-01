@@ -133,4 +133,50 @@ public class StaticImportQuickAssistTest extends AbstractQuickFixTest {
 		Range selection = CodeActionUtil.getRange(cu, "foo");
 		assertCodeActions(cu, selection, e1, e2);
 	}
+
+	@Test
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1203
+	public void testConvertToStaticImportPreservesExisting() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class T {\n");
+		buf.append("    public static void foo() { };\n");
+		buf.append("}\n");
+		pack1.createCompilationUnit("T.java", buf.toString(), false, null);
+
+		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
+		buf = new StringBuilder();
+		buf.append("package test2;\n");
+		buf.append("\n");
+		buf.append("import test1.T;\n");
+		buf.append("\n");
+		buf.append("public class S {\n");
+		buf.append("    public S() {\n");
+		buf.append("        T.foo();\n");
+		buf.append("        System.out.println(T.class);\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack2.createCompilationUnit("S.java", buf.toString(), false, null);
+
+		Range selection = CodeActionUtil.getRange(cu, "foo");
+
+		StringBuffer expectation = new StringBuffer();
+		expectation.append("package test2;\n");
+		expectation.append("\n");
+		expectation.append("import static test1.T.foo;\n");
+		expectation.append("\n");
+		expectation.append("import test1.T;\n");
+		expectation.append("\n");
+		expectation.append("public class S {\n");
+		expectation.append("    public S() {\n");
+		expectation.append("        foo();\n");
+		expectation.append("        System.out.println(T.class);\n");
+		expectation.append("    }\n");
+		expectation.append("}\n");
+
+		Expected e1 = new Expected("Convert to static import", expectation.toString());
+		Expected e2 = new Expected("Convert to static import (replace all occurrences)", expectation.toString());
+		assertCodeActions(cu, selection, e1, e2);
+	}
 }
