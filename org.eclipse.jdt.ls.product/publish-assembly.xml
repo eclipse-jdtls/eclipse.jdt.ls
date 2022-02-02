@@ -9,8 +9,9 @@
   <fileSets>
     <fileSet>
       <directory>${basedir}/target/repository</directory>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory/>
       <includes>
+        <include>bin/**</include>
         <include>config_linux/**</include>
         <include>config_mac/**</include>
         <include>config_win/**</include>

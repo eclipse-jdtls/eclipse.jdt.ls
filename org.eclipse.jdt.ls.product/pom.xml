@@ -66,7 +66,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<id>copy-config-mac</id>
@@ -158,6 +158,21 @@
 							</resources>
 						</configuration>
 					</execution>
+					<execution>
+						<id>copy-launch-script</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/bin/</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/scripts</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
@@ -171,7 +186,7 @@
 			</activation>
 			<build>
 				<plugins>
-					<!-- get major.minor.incremental from this pom, then use ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion} 
+					<!-- get major.minor.incremental from this pom, then use ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}
 						to use the x.y.z version without the -SNAPSHOT suffix -->
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
