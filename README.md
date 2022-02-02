@@ -67,21 +67,29 @@ java \
 	-Dlog.level=ALL \
 	-noverify \
 	-Xmx1G \
-	-jar ./plugins/org.eclipse.equinox.launcher_1.5.200.v20180922-1751.jar \
-	-configuration ./config_linux \
-	-data /path/to/data \
 	--add-modules=ALL-SYSTEM \
 	--add-opens java.base/java.util=ALL-UNNAMED \
-	--add-opens java.base/java.lang=ALL-UNNAMED
+	--add-opens java.base/java.lang=ALL-UNNAMED \
+	-jar ./plugins/org.eclipse.equinox.launcher_1.5.200.v20180922-1751.jar \
+	-configuration ./config_linux \
+	-data /path/to/data
 ```
 
 1. Choose a value for `-configuration`: this is the path to your platform's configuration directory. For Linux, use `./config_linux`. For windows, use `./config_win`. For mac/OS X, use `./config_mac`.
 2. Change the filename of the jar in `-jar ./plugins/...` to match the version you built or downloaded.
 3. Choose a value for `-data`: An absolute path to your data directory. eclipse.jdt.ls stores workspace specific information in it. This should be unique per workspace/project.
 
-
 If you want to debug eclipse.jdt.ls itself, add `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044` right after `java` and ensure nothing else is running on port 1044. If you want to debug from the start of execution, change `suspend=n` to `suspend=y` so the JVM will wait for your debugger prior to starting the server.
 
+There is also a python wrapper script available that makes the start up of eclipse.jdt.ls more convenient (no need to juggle with Java options etc.). A sample usage is described below.
+
+```bash
+./org.eclipse.jdt.ls.product/target/repository/bin/jdtls \
+	-configuration ~/.cache/jdtls \
+	-data /path/to/data
+```
+
+All shown Java options will be set by the wrapper script. Please, note that the `-configuaration` options points to a user's folder to ensure that the configuration folder in `org.eclipse.jdt.ls.product/target/repository/config_*` remains untouched.
 
 Development Setup
 -----------------
