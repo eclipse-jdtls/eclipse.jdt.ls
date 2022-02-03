@@ -83,6 +83,41 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 		assertTrue("There is a problem", handler.getProblems().size() == 0);
 	}
 
+	@Test
+	public void typemismatchTest() throws Exception {
+		IProject project = importMavenProject("typemismatch");
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("test.Test");
+		ICompilationUnit cu = type.getCompilationUnit();
+		openDocument(cu, cu.getSource(), 1);
+		final DiagnosticsHandler handler = new DiagnosticsHandler(javaClient, cu);
+		WorkingCopyOwner wcOwner = getWorkingCopy(handler);
+		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+		long size = handler.getProblems().stream().filter(p -> p.isError()).count();
+		assertTrue("There is an error", size == 0);
+		String source = cu.getSource();
+		source = source.replace("Test {", "Test { ");
+		cu.getBuffer().setContents(source);
+		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+		size = handler.getProblems().stream().filter(p -> p.isError()).count();
+		assertTrue("There is an error", size == 0);
+		source = source.replace("Test { ", "Test {  ");
+		cu.getBuffer().setContents(source);
+		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+		size = handler.getProblems().stream().filter(p -> p.isError()).count();
+		assertTrue("There is an error", size == 0);
+		source = source.replace("Test {  ", "Test {   ");
+		cu.getBuffer().setContents(source);
+		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+		size = handler.getProblems().stream().filter(p -> p.isError()).count();
+		assertTrue("There is an error", size == 0);
+		source = source.replace("Test {   ", "Test {");
+		cu.getBuffer().setContents(source);
+		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
+		size = handler.getProblems().stream().filter(p -> p.isError()).count();
+		assertTrue("There is an error", size == 0);
+	}
+
 	private void openDocument(ICompilationUnit cu, String content, int version) {
 		DidOpenTextDocumentParams openParms = new DidOpenTextDocumentParams();
 		TextDocumentItem textDocument = new TextDocumentItem();
