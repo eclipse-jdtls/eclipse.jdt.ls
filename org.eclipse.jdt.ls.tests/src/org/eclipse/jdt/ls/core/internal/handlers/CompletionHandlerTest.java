@@ -993,6 +993,34 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_sout() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		sout" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "sout");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		for (CompletionItem item : items) {
+			if (CompletionItemKind.Snippet.equals(item.getKind()) && "sout".equals(item.getLabel())) {
+				String insertText = item.getInsertText();
+		assertEquals("System.out.println(${0});", insertText);
+				return;
+			}
+		}
+		fail("Failed to find snippet: 'sout'.");
+	}
+
+	@Test
 	public void testSnippet_syserr() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -1017,6 +1045,34 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_serr() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		serr" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "serr");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		for (CompletionItem item : items) {
+			if (CompletionItemKind.Snippet.equals(item.getKind()) && "serr".equals(item.getLabel())) {
+				String insertText = item.getInsertText();
+				assertEquals("System.err.println(${0});", insertText);
+				return;
+			}
+		}
+		fail("Failed to find snippet: 'serr'.");
+	}
+
+	@Test
 	public void testSnippet_systrace() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -1036,6 +1092,33 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("systrace", item.getLabel());
+		String insertText = item.getInsertText();
+		assertEquals("System.out.println(\"${enclosing_type}.${enclosing_method}()\");", insertText);
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("System.out.println(\"Test.testMethod()\");", resolved.getTextEdit().getLeft().getNewText());
+	}
+
+	@Test
+	public void testSnippet_soutm() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		soutm" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "soutm");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("soutm", item.getLabel());
 		String insertText = item.getInsertText();
 		assertEquals("System.out.println(\"${enclosing_type}.${enclosing_method}()\");", insertText);
 		CompletionItem resolved = server.resolveCompletionItem(item).join();
@@ -1096,6 +1179,38 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem resolved = server.resolveCompletionItem(item).join();
 		assertNotNull(resolved.getTextEdit());
 		assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
+	}
+
+	@Test
+	public void testSnippet_list_iter() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import java.util.List;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(List<String> args) {\n" +
+			"		iter" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "iter");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		for (CompletionItem item : items) {
+			if (CompletionItemKind.Snippet.equals(item.getKind()) && "iter".equals(item.getLabel())) {
+				String insertText = item.getInsertText();
+				assertEquals("for (${1:iterable_type} ${2:iterable_element} : ${3:iterable}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+				CompletionItem resolved = server.resolveCompletionItem(item).join();
+				assertNotNull(resolved.getTextEdit());
+				assertEquals("for (${1:String} ${2:string} : ${3:args}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
+				return;
+			}
+		}
+		fail("Failed to find snippet: 'iter'.");
 	}
 
 	@Test
