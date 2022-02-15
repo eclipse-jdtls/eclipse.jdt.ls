@@ -113,7 +113,6 @@ import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.internal.core.util.Util;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
@@ -765,7 +764,7 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(IClassFile classFile) throws JavaModelException{
-		return toLocation(classFile, -1, -1);
+		return toLocation(classFile, 0, 0);
 	}
 
 	/**
@@ -791,13 +790,8 @@ public final class JDTUtils {
 	public static Location toLocation(IClassFile classFile, int offset, int length) throws JavaModelException {
 		String uriString = toUri(classFile);
 		if (uriString != null) {
-			Location location = new Location();
-			location.setUri(uriString);
-			if (offset != -1 && length != -1) {
-				location.setRange(toRange(classFile, offset, length));
-			}
-			return location;
-
+			Range range = toRange(classFile, offset, length);
+			return new Location(uriString, range);
 		}
 		return null;
 	}
@@ -1308,7 +1302,7 @@ public final class JDTUtils {
 					return null;
 				}
 
-				VariableDeclarationFragment fieldDecl = ASTNodeSearchUtil.getFieldDeclarationFragmentNode(constantField, ast);
+				VariableDeclarationFragment fieldDecl = org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil.getFieldDeclarationFragmentNode(constantField, ast);
 				if (fieldDecl == null) {
 					return null;
 				}
@@ -1747,12 +1741,7 @@ public final class JDTUtils {
 	}
 
 	public static boolean isExcludedFile(List<String> patterns, String uriString) {
-		URI uri = toURI(uriString);
-		if (uri == null) {
-			return false;
-		}
-
-		java.nio.file.Path path = Paths.get(uri);
+		java.nio.file.Path path = Paths.get(uriString);
 		FileSystem fileSystems = path.getFileSystem();
 		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
 	}
