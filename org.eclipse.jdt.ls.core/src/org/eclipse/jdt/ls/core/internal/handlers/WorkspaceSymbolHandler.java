@@ -23,8 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
-import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IParent;
@@ -42,7 +40,6 @@ import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.AbstractWorkDoneProgressOptions;
 import org.eclipse.lsp4j.Location;
@@ -86,22 +83,11 @@ public class WorkspaceSymbolHandler {
 						}
 						Location location = null;
 						try {
-							String uriString = null;
 							if (!sourceOnly && match.getType().isBinary()) {
-								uriString = JDTUtils.toUri(match.getType().getClassFile());
+								location = JDTUtils.toLocation(match.getType().getClassFile());
 							} else if (!match.getType().isBinary()) {
-
-								ICompilationUnit unit = (ICompilationUnit) match.getType().getAncestor(IJavaElement.COMPILATION_UNIT);
-								IClassFile cf = (IClassFile) match.getType().getAncestor(IJavaElement.CLASS_FILE);
-								if (cf == null) {
-									uriString = ResourceUtils.toClientUri(JDTUtils.toURI(unit));
-								} else {
-									uriString = JDTUtils.toUri(cf);
-								}
+								location = JDTUtils.toLocation(match.getType());
 							}
-
-							location = new Location();
-							location.setUri(uriString);
 						} catch (Exception e) {
 							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
 							return;
