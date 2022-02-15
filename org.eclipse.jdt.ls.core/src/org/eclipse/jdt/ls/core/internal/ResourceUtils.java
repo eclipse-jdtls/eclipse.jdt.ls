@@ -39,6 +39,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
@@ -360,4 +361,13 @@ public final class ResourceUtils {
 		return paths[0].uptoSegment(common);
 	}
 
+	/**
+	 * Creates a simple error marker with the given id and status message to the given resource.
+	 */
+	public static void createErrorMarker(IResource resource, IStatus status, String id) throws CoreException {
+		IMarker marker = resource.createMarker(id);
+		marker.setAttribute(IMarker.LINE_NUMBER, 1);
+		marker.setAttribute(IMarker.MESSAGE, status.getMessage());
+		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+	}
 }

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
+		<version>1.9.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.jdt.ls.core</artifactId>
 	<packaging>eclipse-plugin</packaging>
@@ -36,7 +36,7 @@
 				<version>2.1.1</version>
 				<executions>
 					<execution>
-						<?m2e execute onConfiguration?>
+						<?m2e ignore?>
 						<phase>generate-resources</phase>
 						<goals>
 							<goal>execute</goal>

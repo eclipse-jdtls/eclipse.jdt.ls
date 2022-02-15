@@ -43,6 +43,8 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentFilter;
@@ -233,11 +235,15 @@ final public class InitHandler extends BaseInitHandler {
 				long start = System.currentTimeMillis();
 				connection.sendStatus(ServiceStatus.Starting, "Init...");
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+				Preferences preferences = preferenceManager.getPreferences();
+				if (preferences.isImportGradleEnabled()) {
+					WrapperValidator.putSha256(preferences.getGradleWrapperList());
+				}
 				try {
 					ProjectsManager.setAutoBuilding(false);
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.configureFilters(monitor);
-					ProjectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
+					ProjectsManager.setAutoBuilding(preferences.isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {

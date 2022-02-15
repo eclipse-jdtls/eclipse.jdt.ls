@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -310,6 +311,55 @@ public class WrapperValidator {
 
 	public static Set<String> getDisallowed() {
 		return Collections.unmodifiableSet(allowed);
+	}
+
+	public static void putSha256(List<?> gradleWrapperList) {
+		List<String> sha256Allowed = new ArrayList<>();
+		List<String> sha256Disallowed = new ArrayList<>();
+		for (Object object : gradleWrapperList) {
+			if (object instanceof Map) {
+				Map<?, ?> map = (Map<?, ?>) object;
+				final ChecksumWrapper sha256 = new ChecksumWrapper();
+				sha256.allowed = true;
+				map.forEach((k, v) -> {
+					if (k instanceof String) {
+						switch ((String) k) {
+							case "sha256":
+								if (v instanceof String) {
+									sha256.checksum = (String) v;
+								}
+								break;
+							case "allowed":
+								if (v instanceof Boolean) {
+									sha256.allowed = (Boolean) v;
+								}
+								break;
+							default:
+								break;
+						}
+					}
+				});
+				if (sha256.checksum != null) {
+					if (sha256.allowed) {
+						sha256Allowed.add(sha256.checksum);
+					} else {
+						sha256Disallowed.add(sha256.checksum);
+					}
+				}
+			}
+		}
+		WrapperValidator.clear();
+		if (sha256Allowed != null) {
+			WrapperValidator.allow(sha256Allowed);
+		}
+		if (sha256Disallowed != null) {
+			WrapperValidator.disallow(sha256Disallowed);
+		}
+	}
+
+	private static class ChecksumWrapper {
+		private String checksum;
+		private boolean allowed;
 	}
 
 }

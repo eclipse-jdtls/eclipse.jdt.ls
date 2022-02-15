@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -18,7 +18,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
@@ -52,6 +57,7 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 /**
  * @author Fred Bricon
@@ -247,5 +253,43 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}
+	}
+
+	@Test
+	public void testSendingOKProjectStatus() throws Exception {
+		importProjects("gradle/simple-gradle");
+		IProject project = WorkspaceHelper.getProject("simple-gradle");
+
+		JDTLanguageServer server = mock(JDTLanguageServer.class);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		doNothing().when(server).sendStatus(any(), any());
+
+		projectsManager.updateProject(project, false);
+		waitForBackgroundJobs();
+
+		ArgumentCaptor<ServiceStatus> status = ArgumentCaptor.forClass(ServiceStatus.class);
+		ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+		verify(server, times(2)).sendStatus(status.capture(), msg.capture());
+		assertEquals(ServiceStatus.ProjectStatus, status.getValue());
+		assertEquals("OK", msg.getValue());
+	}
+
+	@Test
+	public void testSendingWarningProjectStatus() throws Exception {
+		importProjects("gradle/invalid");
+		IProject project = WorkspaceHelper.getProject("invalid");
+
+		JDTLanguageServer server = mock(JDTLanguageServer.class);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		doNothing().when(server).sendStatus(any(), any());
+
+		projectsManager.updateProject(project, false);
+		waitForBackgroundJobs();
+
+		ArgumentCaptor<ServiceStatus> status = ArgumentCaptor.forClass(ServiceStatus.class);
+		ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+		verify(server, times(2)).sendStatus(status.capture(), msg.capture());
+		assertEquals(ServiceStatus.ProjectStatus, status.getValue());
+		assertEquals("WARNING", msg.getValue());
 	}
 }

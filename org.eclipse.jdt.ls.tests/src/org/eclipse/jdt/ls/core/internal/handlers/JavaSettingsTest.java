@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IJavaProject;
@@ -246,6 +248,29 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("warning", JavaCore.getOption(STATIC_ACCESS_RECEIVER));
 		assertEquals("ignore", javaProject.getOption(MISSING_SERIAL_VERSION, true));
 		assertEquals("warning", javaProject.getOption(STATIC_ACCESS_RECEIVER, true));
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2222
+	@Test
+	public void testConfigureSettings() throws Exception {
+		IPath path = javaProject.getProject().getRawLocation().append(javaProject.getOutputLocation().removeFirstSegments(1)).append("/org/sample/Test.class");
+		File file = path.toFile();
+		long lastModified = file.lastModified();
+		projectsManager.registerListeners();
+		waitForBackgroundJobs();
+		assertEquals(lastModified, file.lastModified());
+		boolean isAutoBuildEnabled = preferences.isAutobuildEnabled();
+		try {
+			preferences.setAutobuildEnabled(false);
+			StandardProjectsManager.configureSettings(preferences, true);
+			waitForBackgroundJobs();
+			assertEquals(lastModified, file.lastModified());
+		} finally {
+			preferences.setAutobuildEnabled(isAutoBuildEnabled);
+		}
+		StandardProjectsManager.configureSettings(preferences, true);
+		waitForBackgroundJobs();
+		assertNotEquals(lastModified, file.lastModified());
 	}
 
 }

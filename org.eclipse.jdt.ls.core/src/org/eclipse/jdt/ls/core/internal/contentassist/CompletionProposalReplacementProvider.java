@@ -170,15 +170,30 @@ public class CompletionProposalReplacementProvider {
 			}
 			range = toReplacementRange(proposal);
 		}
-		if (proposal.getKind() == CompletionProposal.METHOD_DECLARATION) {
-			appendMethodOverrideReplacement(completionBuffer, proposal);
-		} else if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION && proposal instanceof GetterSetterCompletionProposal) {
-			appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
-		} else if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
-			appendAnonymousClass(completionBuffer, proposal, range);
-		} else {
-			appendReplacementString(completionBuffer, proposal);
+
+		switch (proposal.getKind()) {
+			case CompletionProposal.METHOD_DECLARATION:
+				appendMethodOverrideReplacement(completionBuffer, proposal);
+				break;
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				if (proposal instanceof GetterSetterCompletionProposal) {
+					appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
+				} else {
+					appendReplacementString(completionBuffer, proposal);
+				}
+				break;
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+				appendAnonymousClass(completionBuffer, proposal, range);
+				break;
+			case CompletionProposal.LAMBDA_EXPRESSION:
+				appendLambdaExpressionReplacement(completionBuffer, proposal);
+				break;
+			default:
+				appendReplacementString(completionBuffer, proposal);
+				break;
 		}
+
 		//select insertTextFormat.
 		if (client.isCompletionSnippetsSupported()) {
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
@@ -193,11 +208,21 @@ public class CompletionProposalReplacementProvider {
 			item.setInsertText(text);
 		}
 
-		if (!client.isResolveAdditionalTextEditsSupport() || isResolving) {
+		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
 			addImports(additionalTextEdits);
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
 			}
+		}
+	}
+
+	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
+		completionBuffer.append(LPAREN);
+		appendGuessingCompletion(completionBuffer, proposal);
+		completionBuffer.append(RPAREN);
+		completionBuffer.append(" -> ");
+		if(client.isCompletionSnippetsSupported()){
+			completionBuffer.append(CURSOR_POSITION);
 		}
 	}
 
@@ -403,6 +428,8 @@ public class CompletionProposalReplacementProvider {
 	protected boolean hasArgumentList(CompletionProposal proposal) {
 		if (CompletionProposal.METHOD_NAME_REFERENCE == proposal.getKind()) {
 			return false;
+		} else if (CompletionProposal.LAMBDA_EXPRESSION == proposal.getKind()){
+			return true;
 		}
 		char[] completion= proposal.getCompletion();
 		return !isInJavadoc() && completion.length > 0 && completion[completion.length - 1] == RPAREN;

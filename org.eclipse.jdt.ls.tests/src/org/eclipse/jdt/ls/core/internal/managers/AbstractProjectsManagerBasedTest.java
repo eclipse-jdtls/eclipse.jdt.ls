@@ -162,6 +162,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		preferences.setRootPaths(Collections.singleton(new Path(getWorkingProjectDirectory().getAbsolutePath())));
 		preferences.setCodeGenerationTemplateGenerateComments(true);
 		preferences.setMavenDownloadSources(true);
+		preferences.setJavaQuickFixShowAt("problem");
 	}
 
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {

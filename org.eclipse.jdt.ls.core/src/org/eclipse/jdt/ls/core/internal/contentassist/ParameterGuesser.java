@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.PrimitiveType.Code;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.util.StringMatcher;
 
 
 /**

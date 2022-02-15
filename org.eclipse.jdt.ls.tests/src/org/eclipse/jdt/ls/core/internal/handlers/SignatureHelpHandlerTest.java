@@ -136,6 +136,26 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(help.getActiveSignature(), help2.getActiveSignature());
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1980
+	@Test
+	public void testSignatureHelp_double() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    public E(String s) {\n");
+		buf.append("        this.unique(\n");
+		buf.append("    }\n");
+		buf.append("    public void unique(double d) {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 20);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertEquals((Integer) 0, help.getActiveParameter());
+		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "unique(double d) : void");
+	}
+
 	@Test
 	public void testSignatureHelp_invalid() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);

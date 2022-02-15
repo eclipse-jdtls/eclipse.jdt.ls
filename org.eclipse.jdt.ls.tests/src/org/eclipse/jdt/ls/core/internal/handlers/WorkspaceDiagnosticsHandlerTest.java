@@ -16,7 +16,9 @@ import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -97,6 +99,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		handler.removeResourceChangeListener();
+		connection.disconnect();
 	}
 
 	@Test
@@ -308,6 +311,71 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue(diag.getRange().getStart().getCharacter() >= 0);
 		assertTrue(diag.getRange().getEnd().getLine() >= 0);
 		assertTrue(diag.getRange().getEnd().getCharacter() >= 0);
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1920
+	@Test
+	public void testWorkingCopy() throws Exception {
+		//import project
+		importProjects("eclipse/hello");
+		IProject project = getProject("hello");
+		IFile iFile = project.getFile("/src/test1/A.java");
+		ICompilationUnit cu = null;
+		try {
+			cu = JavaCore.createCompilationUnitFrom(iFile);
+			cu.becomeWorkingCopy(null);
+			reset(connection);
+			ResourceUtils.setContent(iFile, "package test1;\npublic class A() {}\n");
+			waitForBackgroundJobs();
+			ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+			verify(connection, atMost(2)).publishDiagnostics(captor.capture());
+		} finally {
+			if (cu != null) {
+				cu.discardWorkingCopy();
+			}
+		}
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1963
+	@Test
+	public void testWorkingCopy2() throws Exception {
+		ICompilationUnit cu = null;
+		try {
+			DocumentLifeCycleHandler lifeCycleHandler = new DocumentLifeCycleHandler(connection, preferenceManager, projectsManager, false);
+			handler.removeResourceChangeListener();
+			handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences(), lifeCycleHandler);
+			handler.addResourceChangeListener();
+			//import project
+			importProjects("eclipse/hello");
+			IProject project = getProject("hello");
+			IFile iFile = project.getFile("/src/test1/A.java");
+
+			cu = JavaCore.createCompilationUnitFrom(iFile);
+			cu.becomeWorkingCopy(null);
+			reset(connection);
+			ResourceUtils.setContent(iFile, "package test1;\npublic class A() {}\n");
+			waitForBackgroundJobs();
+			ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+			verify(connection, atMost(3)).publishDiagnostics(captor.capture());
+		} finally {
+			if (cu != null) {
+				cu.discardWorkingCopy();
+			}
+		}
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1920
+	@Test
+	public void testWithoutWorkingCopy() throws Exception {
+		//import project
+		importProjects("eclipse/hello");
+		IProject project = getProject("hello");
+		IFile iFile = project.getFile("/src/test1/A.java");
+		reset(connection);
+		ResourceUtils.setContent(iFile, "package test1;\npublic class A() {}\n");
+		waitForBackgroundJobs();
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeast(3)).publishDiagnostics(captor.capture());
 	}
 
 	@Test

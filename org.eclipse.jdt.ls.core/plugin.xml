@@ -100,6 +100,9 @@
             <command
                   id="java.navigate.resolveTypeHierarchy">
             </command>
+            <command
+                  id="java.project.upgradeGradle">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
@@ -164,5 +167,10 @@
       <resolver
             class="org.eclipse.jdt.ls.core.internal.javafx.FXLibraryLocationResolver">
       </resolver>
+   </extension>
+   <extension id="org.eclipse.jdt.ls.filesystem" name="JDT LS File System" point="org.eclipse.core.filesystem.filesystems">
+      <filesystem scheme="file">
+         <run class="org.eclipse.jdt.ls.core.internal.filesystem.JLSFileSystem"/>
+      </filesystem>
    </extension>
 </plugin>

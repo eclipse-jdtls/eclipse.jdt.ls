@@ -144,16 +144,17 @@ public class CodeLensHandler {
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
 		final List<Location> result = new ArrayList<>();
 		SearchEngine engine = new SearchEngine();
-		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
-				createSearchScope(), new SearchRequestor() {
+		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
+				if (match.getAccuracy() == SearchMatch.A_INACCURATE) {
+					return;
+				}
 				Object o = match.getElement();
 				if (o instanceof IJavaElement) {
 					IJavaElement element = (IJavaElement) o;
-					ICompilationUnit compilationUnit = (ICompilationUnit) element
-							.getAncestor(IJavaElement.COMPILATION_UNIT);
+					ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 					if (compilationUnit == null) {
 						return;
 					}

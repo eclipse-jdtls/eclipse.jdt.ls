@@ -13,7 +13,6 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -48,7 +47,6 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.junit.After;
 import org.junit.Test;
@@ -61,8 +59,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
-	private static final String INVALID = "invalid";
-	private static final String MAVEN_INVALID = "maven/invalid";
 	private static final String PROJECT1_PATTERN = "**/project1";
 
 	private MavenUpdateProjectJobSpy jobSpy;
@@ -151,43 +147,6 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportMavenEnabled(enabled);
 		}
-	}
-
-	@Test
-	public void testInvalidProject() throws Exception {
-		List<IProject> projects = importProjects(MAVEN_INVALID);
-		assertEquals(2, projects.size());
-		IProject invalid = WorkspaceHelper.getProject(INVALID);
-		assertIsMavenProject(invalid);
-		IFile projectFile = invalid.getFile("/.project");
-		assertTrue(projectFile.exists());
-		File file = projectFile.getRawLocation().makeAbsolute().toFile();
-		invalid.close(new NullProgressMonitor());
-		assertTrue(file.exists());
-		file.delete();
-		assertFalse(file.exists());
-		projects = importProjects(MAVEN_INVALID);
-		assertEquals(2, projects.size());
-		invalid = WorkspaceHelper.getProject(INVALID);
-		assertIsMavenProject(invalid);
-	}
-
-	@Test
-	public void testDeleteClasspath() throws Exception {
-		String name = "salut";
-		importProjects("maven/" + name);
-		IProject project = getProject(name);
-		assertIsJavaProject(project);
-		assertIsMavenProject(project);
-		IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-		File file = dotClasspath.getRawLocation().toFile();
-		assertTrue(file.exists());
-		file.delete();
-		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
-		project = getProject(name);
-		IFile bin = project.getFile("bin");
-		assertFalse(bin.getRawLocation().toFile().exists());
-		assertTrue(dotClasspath.exists());
 	}
 
 	@Test

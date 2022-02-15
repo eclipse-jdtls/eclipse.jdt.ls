@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -28,18 +27,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -210,24 +206,6 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertNull(project);
-	}
-
-	@Test
-	public void testDeleteClasspath() throws Exception {
-		String name = "classpath2";
-		importProjects("eclipse/" + name);
-		IProject project = getProject(name);
-		assertNotNull(project);
-		IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-		File file = dotClasspath.getRawLocation().toFile();
-		assertTrue(file.exists());
-		file.delete();
-		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
-		waitForBackgroundJobs();
-		project = getProject(name);
-		assertFalse(ProjectUtils.isJavaProject(project));
-		IFile bin = project.getFile("bin");
-		assertFalse(bin.getRawLocation().toFile().exists());
 	}
 
 	@Test

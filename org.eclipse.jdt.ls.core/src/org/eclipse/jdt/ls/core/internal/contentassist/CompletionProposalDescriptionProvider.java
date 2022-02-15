@@ -594,6 +594,19 @@ public class CompletionProposalDescriptionProvider {
 		setDeclarationSignature(item, String.valueOf(declaringTypeSignature));
 	}
 
+	private void createLabelWithLambdaExpression(CompletionProposal proposal, CompletionItem item) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append('(');
+		appendUnboundedParameterList(buffer, proposal);
+		buffer.append(')');
+		buffer.append(" ->");
+		char[] returnType = createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(proposal.getSignature()))));
+		buffer.append(RETURN_TYPE_SEPARATOR);
+		buffer.append(returnType);
+		String label = buffer.toString();
+		item.setLabel(label);
+	}
+
 	/**
 	 * Sets the signature for use on the resolve call.
 	 * @param item
@@ -682,6 +695,9 @@ public class CompletionProposalDescriptionProvider {
 			case CompletionProposal.KEYWORD:
 			case CompletionProposal.LABEL_REF:
 				item.setLabel(createSimpleLabel(proposal).toString());
+				break;
+			case CompletionProposal.LAMBDA_EXPRESSION:
+				createLabelWithLambdaExpression(proposal, item);
 				break;
 			default:
 				JavaLanguageServerPlugin.logInfo(new String(proposal.getName()) + " is of type " + getProposal(proposal));

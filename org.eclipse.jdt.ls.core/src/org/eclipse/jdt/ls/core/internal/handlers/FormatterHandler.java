@@ -335,7 +335,7 @@ public class FormatterHandler {
 	public String stringFormatting(String content, Map<String, String> options, int version, IProgressMonitor monitor) {
 		IDocument document = new Document();
 		document.set(content);
-		Map<String, String> formatOptions = (options == null) ? DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap() : ProfileVersionerCore.updateAndComplete(options, version);
+		Map<String, String> formatOptions = (options == null) ? getCombinedDefaultFormatterSettings() : ProfileVersionerCore.updateAndComplete(options, version);
 		CodeFormatter formatter = ToolFactory.createCodeFormatter(formatOptions);
 		IRegion region = new Region(0, document.getLength());
 		int kind = CodeFormatter.K_COMPILATION_UNIT;
@@ -351,5 +351,20 @@ public class FormatterHandler {
 			}
 		}
 		return document.get();
+	}
+
+	public static Map<String, String> getCombinedDefaultFormatterSettings() {
+		Map<String, String> options = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
+		options.putAll(getJavaLSDefaultFormatterSettings());
+		return options;
+	}
+
+	public static Map<String, String> getJavaLSDefaultFormatterSettings() {
+		Map<String, String> options = new HashMap<>();
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_WRAPPED_LINES, DefaultCodeFormatterConstants.FALSE);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_JOIN_LINES_IN_COMMENTS, DefaultCodeFormatterConstants.FALSE);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, DefaultCodeFormatterConstants.TRUE);
+		options.put(DefaultCodeFormatterConstants.FORMATTER_USE_ON_OFF_TAGS, DefaultCodeFormatterConstants.TRUE);
+		return options;
 	}
 }

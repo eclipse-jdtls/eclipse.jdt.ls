@@ -158,6 +158,9 @@ public final class ReferencesHandler {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
+				if (match.getAccuracy() == SearchMatch.A_INACCURATE) {
+					return;
+				}
 				Object o = match.getElement();
 				if (o instanceof IJavaElement) {
 					IJavaElement element = (IJavaElement) o;

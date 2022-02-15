@@ -66,7 +66,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 import org.eclipse.jdt.launching.AbstractVMInstall;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -77,6 +76,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -259,8 +259,18 @@ public class StandardProjectsManager extends ProjectsManager {
 	 *
 	 * @param preferences
 	 */
-
 	public static void configureSettings(Preferences preferences) {
+		configureSettings(preferences, true);
+	}
+
+	/**
+	 * Configures user and formatter preferences.
+	 *
+	 * @param preferences
+	 * @param cleanWorkspace
+	 */
+
+	public static void configureSettings(Preferences preferences, boolean cleanWorkspace) {
 		URI settingsUri = preferences.getSettingsAsURI();
 		Properties properties = null;
 		if (settingsUri != null) {
@@ -284,7 +294,7 @@ public class StandardProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
-		Map<String, String> defaultOptions = DefaultCodeFormatterOptions.getEclipseDefaultSettings().getMap();
+		Map<String, String> defaultOptions = FormatterHandler.getCombinedDefaultFormatterSettings();
 		if (formatterOptions != null && !formatterOptions.isEmpty()) {
 			defaultOptions.putAll(formatterOptions);
 		}
@@ -307,14 +317,16 @@ public class StandardProjectsManager extends ProjectsManager {
 			});
 		}
 		JavaCore.setOptions(javaOptions);
-		new WorkspaceJob("Clean workspace...") {
+		if (cleanWorkspace && preferences.isAutobuildEnabled()) {
+			new WorkspaceJob("Clean workspace...") {
 
-			@Override
-			public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
-				return Status.OK_STATUS;
-			}
-		}.schedule();
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
+					return Status.OK_STATUS;
+				}
+			}.schedule();
+		}
 	}
 
 	private static void initializeDefaultOptions(Preferences preferences) {
@@ -529,7 +541,7 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	@Override
 	public void registerListeners() {
-		configureSettings(preferenceManager.getPreferences());
+		configureSettings(preferenceManager.getPreferences(), false);
 		if (this.preferenceChangeListener == null) {
 			this.preferenceChangeListener = new IPreferencesChangeListener() {
 				@Override

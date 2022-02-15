@@ -76,7 +76,7 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 
 	@Before
 	public void setUp() throws Exception {
-		StandardProjectsManager.configureSettings(preferences);
+		StandardProjectsManager.configureSettings(preferences, true);
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
 		assertNotNull(fRoot);

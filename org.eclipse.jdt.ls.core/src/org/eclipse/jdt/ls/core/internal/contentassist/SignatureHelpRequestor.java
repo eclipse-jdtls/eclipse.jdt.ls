@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -63,18 +64,20 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	private CompletionResponse response;
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
 	private boolean acceptType = false;
+	private String methodName;
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset) {
-		this(aUnit, offset, false);
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, int offset) {
+		this(aUnit, offset, methodName, false);
 	}
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, boolean acceptType) {
+	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, String methodName, boolean acceptType) {
 		this.unit = aUnit;
 		response = new CompletionResponse();
 		response.setOffset(offset);
 		setRequireExtendedContext(true);
 		infoProposals = new HashMap<>();
 		this.acceptType = acceptType;
+		this.methodName = methodName;
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
@@ -118,6 +121,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	@Override
 	public void accept(CompletionProposal proposal) {
 		if (!isIgnored(proposal.getKind())) {
+			if (proposal.getKind() == CompletionProposal.METHOD_REF && !Objects.equals(proposal.getName() == null ? null : new String(proposal.getName()), methodName)) {
+				return;
+			}
 			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
 				// Hacky way to boost relevance of current package, for package completions, until
 				// https://bugs.eclipse.org/518140 is fixed

@@ -57,7 +57,6 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.Type;
@@ -71,7 +70,6 @@ import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.manipulation.CleanUpRequirementsCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
-import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -82,13 +80,12 @@ import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
-import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
-import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
@@ -96,7 +93,7 @@ import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteRemoveImportsCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
@@ -109,7 +106,6 @@ import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
-import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
 import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -136,7 +132,7 @@ public class RefactorProcessor {
 
 			getMoveRefactoringProposals(params, context, coveringNode, proposals);
 
-			boolean noErrorsAtLocation = noErrorsAtLocation(locations);
+			boolean noErrorsAtLocation = noErrorsAtLocation(locations, coveringNode);
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
 				getExtractVariableProposal(params, context, problemsAtLocation, proposals);
@@ -210,10 +206,15 @@ public class RefactorProcessor {
 
 	}
 
-	static boolean noErrorsAtLocation(IProblemLocationCore[] locations) {
+	static boolean noErrorsAtLocation(IProblemLocationCore[] locations, ASTNode coveringNode) {
 		if (locations != null) {
+			int start = coveringNode.getStartPosition();
+			int length = coveringNode.getLength();
 			for (int i = 0; i < locations.length; i++) {
 				IProblemLocationCore location = locations[i];
+				if (location.getOffset() > start + length || (location.getOffset() + location.getLength()) < start) {
+					continue;
+				}
 				if (location.isError()) {
 					if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && JavaCore.getOptionForConfigurableSeverity(location.getProblemId()) != null) {
 						// continue (only drop out for severe (non-optional) errors)
@@ -349,7 +350,14 @@ public class RefactorProcessor {
 				// Inline Local Variable
 				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
 					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
-					if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences().length > 0) {
+					boolean status;
+					try {
+						status = refactoring.checkAllConditions(new NullProgressMonitor()).isOK();
+					} catch (Exception e) {
+						// ignore
+						status = false;
+					}
+					if (status && refactoring.getReferences().length > 0) {
 						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
 						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
@@ -773,25 +781,31 @@ public class RefactorProcessor {
 
 		try {
 			ImportRewrite importRewrite = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
-			ImportRewrite importRewriteReplaceAllOccurences = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
 			ASTRewrite astRewrite = ASTRewrite.create(node.getAST());
 			ASTRewrite astRewriteReplaceAllOccurrences = ASTRewrite.create(node.getAST());
 
-			int[] allReferencesToDeclaringClass = new int[1];
-			allReferencesToDeclaringClass[0] = 0;
-			int[] referencesFromOtherOccurences = new int[1];
-			referencesFromOtherOccurences[0] = 0;
+			ImportRemover remover = new ImportRemover(context.getCompilationUnit().getJavaProject(), context.getASTRoot());
+			ImportRemover removerAllOccurences = new ImportRemover(context.getCompilationUnit().getJavaProject(), context.getASTRoot());
 			MethodInvocation mi = null;
 			QualifiedName qn = null;
 			if (name.getParent() instanceof MethodInvocation) {
 				mi = (MethodInvocation) name.getParent();
 				// convert the method invocation
 				astRewrite.remove(mi.getExpression(), null);
-				mi.typeArguments().forEach(type -> astRewrite.remove((Type) type, null));
+				remover.registerRemovedNode(mi.getExpression());
+				removerAllOccurences.registerRemovedNode(mi.getExpression());
+				mi.typeArguments().forEach(typeObject -> {
+					Type type = (Type) typeObject;
+					astRewrite.remove(type, null);
+					remover.registerRemovedNode(type);
+					removerAllOccurences.registerRemovedNode(type);
+				});
 			} else if (name.getParent() instanceof QualifiedName) {
 				qn = (QualifiedName) name.getParent();
 				// convert the field access
 				astRewrite.replace(qn, ASTNodeFactory.newName(node.getAST(), name.getFullyQualifiedName()), null);
+				remover.registerRemovedNode(qn);
+				removerAllOccurences.registerRemovedNode(qn);
 			} else {
 				return false;
 			}
@@ -809,21 +823,12 @@ public class RefactorProcessor {
 						String fullyQualifiedName = ((Name) methodInvocationExpression).getFullyQualifiedName();
 						if (miFinal != null && miFinal.getExpression() instanceof Name && ((Name) miFinal.getExpression()).getFullyQualifiedName().equals(fullyQualifiedName)
 								&& miFinal.getName().getIdentifier().equals(methodInvocation.getName().getIdentifier())) {
-							methodInvocation.typeArguments().forEach(type -> astRewriteReplaceAllOccurrences.remove((Type) type, null));
+							methodInvocation.typeArguments().forEach(type -> {
+								astRewriteReplaceAllOccurrences.remove((Type) type, null);
+								removerAllOccurences.registerRemovedNode((Type) type);
+							});
 							astRewriteReplaceAllOccurrences.remove(methodInvocationExpression, null);
-							allReferencesToDeclaringClass[0]++;
-						} else if (declaringClass.getName().equals(fullyQualifiedName)) {
-							allReferencesToDeclaringClass[0]++;
-							referencesFromOtherOccurences[0]++;
-						}
-					} else if (methodInvocationExpression instanceof ClassInstanceCreation) {
-						ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) methodInvocationExpression;
-						if (classInstanceCreation.getType() instanceof SimpleType) {
-							String typeName = ((SimpleType) classInstanceCreation.getType()).getName().getFullyQualifiedName();
-							if (typeName.equals(declaringClass.getName())) {
-								allReferencesToDeclaringClass[0]++;
-								referencesFromOtherOccurences[0]++;
-							}
+							removerAllOccurences.registerRemovedNode(methodInvocationExpression);
 						}
 					}
 
@@ -836,34 +841,25 @@ public class RefactorProcessor {
 				public boolean visit(QualifiedName qualifiedName) {
 					if (qnFinal != null && qualifiedName.getFullyQualifiedName().equals(qnFinal.getFullyQualifiedName())) {
 						astRewriteReplaceAllOccurrences.replace(qualifiedName, ASTNodeFactory.newName(node.getAST(), name.getFullyQualifiedName()), null);
-						allReferencesToDeclaringClass[0]++;
-					} else if (declaringClass.getName().equals(qualifiedName.getQualifier().getFullyQualifiedName())) {
-						allReferencesToDeclaringClass[0]++;
-						referencesFromOtherOccurences[0]++;
+						removerAllOccurences.registerRemovedNode(qualifiedName);
 					}
 					return super.visit(qualifiedName);
 				}
 			});
 
-			// add the static import
 			if (needImport) {
 				importRewrite.addStaticImport(binding);
-				if (allReferencesToDeclaringClass[0] == 1) { // If there are exactly 1 visits, the import can be removed
-					importRewrite.removeImport(declaringClass.getQualifiedName());
-				}
-				importRewriteReplaceAllOccurences.addStaticImport(binding);
-				if (referencesFromOtherOccurences[0] == 0) {
-					importRewriteReplaceAllOccurences.removeImport(declaringClass.getQualifiedName());
-				}
 			}
 
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.Refactor, context.getCompilationUnit(), astRewrite,
+			ASTRewriteRemoveImportsCorrectionProposal proposal= new ASTRewriteRemoveImportsCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.Refactor, context.getCompilationUnit(), astRewrite,
 					IProposalRelevance.ADD_STATIC_IMPORT);
 			proposal.setImportRewrite(importRewrite);
+			proposal.setImportRemover(remover);
 			proposals.add(proposal);
-			ASTRewriteCorrectionProposal proposalReplaceAllOccurrences = new ASTRewriteCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.Refactor, context.getCompilationUnit(),
-					astRewriteReplaceAllOccurrences, IProposalRelevance.ADD_STATIC_IMPORT);
-			proposalReplaceAllOccurrences.setImportRewrite(importRewriteReplaceAllOccurences);
+			ASTRewriteRemoveImportsCorrectionProposal proposalReplaceAllOccurrences= new ASTRewriteRemoveImportsCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.Refactor, context.getCompilationUnit(), astRewriteReplaceAllOccurrences,
+					IProposalRelevance.ADD_STATIC_IMPORT);
+			proposalReplaceAllOccurrences.setImportRewrite(importRewrite);
+			proposalReplaceAllOccurrences.setImportRemover(removerAllOccurences);
 			proposals.add(proposalReplaceAllOccurrences);
 		} catch (IllegalArgumentException e) {
 			// Wrong use of ASTRewrite or ImportRewrite API, see bug 541586

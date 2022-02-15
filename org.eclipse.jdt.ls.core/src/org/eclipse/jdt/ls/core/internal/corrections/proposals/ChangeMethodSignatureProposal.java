@@ -46,10 +46,10 @@ import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRe
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.DimensionRewrite;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.dom.DimensionRewrite;
-import org.eclipse.jdt.ls.core.internal.corext.dom.TypeAnnotationRewrite;
+import org.eclipse.jdt.internal.corext.dom.TypeAnnotationRewrite;
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {

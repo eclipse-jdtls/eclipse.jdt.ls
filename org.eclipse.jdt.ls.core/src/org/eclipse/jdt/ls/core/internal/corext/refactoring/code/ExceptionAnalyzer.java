@@ -23,7 +23,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.ThrowStatement;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.AbstractExceptionAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.util.AbstractExceptionAnalyzer;
 
 /* package */ class ExceptionAnalyzer extends AbstractExceptionAnalyzer {
 

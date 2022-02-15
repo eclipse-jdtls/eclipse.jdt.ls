@@ -54,6 +54,8 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.MovingAverage;
+import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -61,6 +63,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
@@ -76,11 +79,17 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public static final String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
 	public static final String PUBLISH_DIAGNOSTICS_JOBS = "DocumentLifeCyclePublishDiagnosticsJobs";
 
+	/**
+	 * The max & init value of adaptive debounce time for document lifecycle job.
+	 */
+	private static final long DOCUMENT_LIFECYCLE_MAX_DEBOUNCE = 400; /*ms*/
+
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
 	private WorkspaceJob publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 	private Map<String, Integer> documentVersions = new HashMap<>();
+	private MovingAverage movingAverage = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 
 	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
 		this.sharedASTProvider = CoreASTProvider.getInstance();
@@ -88,7 +97,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
 				@Override
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-					return performValidation(monitor);
+					long start = System.currentTimeMillis();
+					IStatus status = performValidation(monitor);
+					movingAverage.update(System.currentTimeMillis() - start);
+					return status;
 				}
 
 				/* (non-Javadoc)
@@ -123,7 +135,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public abstract ICompilationUnit resolveCompilationUnit(String uri);
 
 	protected void triggerValidation(ICompilationUnit cu) throws JavaModelException {
-		triggerValidation(cu, 400);
+		triggerValidation(cu, getDocumentLifecycleDelay());
 	}
 
 	protected void triggerValidation(ICompilationUnit cu, long delay) throws JavaModelException {
@@ -146,6 +158,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 		} else {
 			performValidation(new NullProgressMonitor());
 		}
+	}
+
+	private long getDocumentLifecycleDelay() {
+		return Math.min(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE, Math.round(1.5 * movingAverage.value));
 	}
 
 	private ISchedulingRule getRule(Set<ICompilationUnit> units) {
@@ -390,16 +406,17 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 				Range range = changeEvent.getRange();
 				int length;
-
+				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+				final int startOffset;
 				if (range != null) {
-					length = changeEvent.getRangeLength().intValue();
+					Position start = range.getStart();
+					startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
+					length = DiagnosticsHelper.getLength(unit, range);
 				} else {
 					// range is optional and if not given, the whole file content is replaced
 					length = unit.getSource().length();
-					range = JDTUtils.toRange(unit, 0, length);
+					startOffset = 0;
 				}
-
-				int startOffset = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
 
 				TextEdit edit = null;
 				String text = changeEvent.getText();
@@ -410,7 +427,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 				} else {
 					edit = new ReplaceEdit(startOffset, length, text);
 				}
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
 				edit.apply(document, TextEdit.NONE);
 
 			}

@@ -84,6 +84,7 @@ import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecke
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
@@ -98,7 +99,6 @@ import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.dom.CodeScopeBuilder;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -168,6 +168,9 @@ public class LocalCorrectionsSubProcessor {
 				proposals.add(proposal);
 			}
 		}
+
+		//Surround with try-with
+		getTryWithResourceProposals(context, problem, proposals);
 
 		//Catch exception
 		BodyDeclaration decl = ASTResolving.findParentBodyDeclaration(selectedNode);
@@ -1039,6 +1042,18 @@ public class LocalCorrectionsSubProcessor {
 					proposals.add(proposal);
 					break;
 				}
+			}
+		}
+	}
+
+	public static void getTryWithResourceProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		ASTNode coveringNode = problem.getCoveringNode(context.getASTRoot());
+		if (coveringNode != null) {
+			try {
+				ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
+				QuickAssistProcessor.getTryWithResourceProposals(context, coveringNode, coveredNodes, proposals);
+			} catch (IllegalArgumentException | CoreException e) {
+				JavaLanguageServerPlugin.logException(e);
 			}
 		}
 	}

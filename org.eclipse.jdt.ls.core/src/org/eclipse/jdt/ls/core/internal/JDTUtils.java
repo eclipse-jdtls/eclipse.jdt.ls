@@ -113,6 +113,7 @@ import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.internal.core.util.Util;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
@@ -1307,7 +1308,7 @@ public final class JDTUtils {
 					return null;
 				}
 
-				VariableDeclarationFragment fieldDecl = org.eclipse.jdt.ls.core.internal.corext.refactoring.structure.ASTNodeSearchUtil.getFieldDeclarationFragmentNode(constantField, ast);
+				VariableDeclarationFragment fieldDecl = ASTNodeSearchUtil.getFieldDeclarationFragmentNode(constantField, ast);
 				if (fieldDecl == null) {
 					return null;
 				}

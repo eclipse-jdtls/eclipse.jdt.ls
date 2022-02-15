@@ -45,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
@@ -112,9 +113,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(codeActions.size() >= 3);
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
+		Assert.assertNotNull(quickAssistActions);
+		Assert.assertTrue(quickAssistActions.size() >= 1);
+		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
+		Assert.assertNotNull(organizeImportActions);
+		Assert.assertEquals(1, organizeImportActions.size());
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -170,6 +174,30 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (Either<Command, CodeAction> codeAction : codeActions) {
 			Assert.assertTrue("Unexpected kind:" + codeAction.getRight().getKind(), codeAction.getRight().getKind().startsWith(CodeActionKind.SourceOrganizeImports));
 		}
+	}
+
+	@Test
+	public void testCodeAction_organizeImportsQuickFix() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.util.List;\n"+
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "util");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
+		// Test if the quick assist exists only for type declaration
+		params = CodeActionUtil.constructCodeActionParams(unit, "String bar");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description));
 	}
 
 	@Test
@@ -475,9 +503,12 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(codeActions.size() >= 3);
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		List<Either<Command, CodeAction>> quickAssistActions = findActions(codeActions, CodeActionKind.QuickFix);
+		Assert.assertNotNull(quickAssistActions);
+		Assert.assertTrue(quickAssistActions.size() >= 1);
+		List<Either<Command, CodeAction>> organizeImportActions = findActions(codeActions, CodeActionKind.SourceOrganizeImports);
+		Assert.assertNotNull(organizeImportActions);
+		Assert.assertEquals(1, organizeImportActions.size());
 		Command c = codeActions.get(0).getRight().getCommand();
 		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
 	}
@@ -615,7 +646,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	public static boolean commandExists(List<Either<Command, CodeAction>> codeActions, String command) {
-		if (codeActions.isEmpty()) {
+		if (codeActions == null || codeActions.isEmpty()) {
 			return false;
 		}
 		for (Either<Command, CodeAction> codeAction : codeActions) {

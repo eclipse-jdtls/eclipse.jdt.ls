@@ -23,7 +23,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.NodeFinder;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
@@ -72,10 +71,10 @@ public class GenerateAccessorsHandler {
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 			if (astRoot != null && cursor != null) {
 				ASTNode node = NodeFinder.perform(astRoot, DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), cursor), DiagnosticsHelper.getLength(type.getCompilationUnit(), cursor));
-				declarationNode = SourceAssistProcessor.getDeclarationNode(node);
+				declarationNode = SourceAssistProcessor.getTypeDeclarationNode(node);
 			}
 			// If cursor position is not specified, then insert to the last by default.
-			IJavaElement insertPosition = (declarationNode instanceof TypeDeclaration) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, cursor);
+			IJavaElement insertPosition = (declarationNode != null) ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, cursor);
 			GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments, insertPosition);
 			return operation.createTextEdit(null, accessors);
 		} catch (OperationCanceledException | CoreException e) {

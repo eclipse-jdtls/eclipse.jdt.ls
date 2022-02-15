@@ -57,7 +57,6 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
-import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.ChangeMethodSignatureDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.IntroduceParameterDescriptor;
@@ -80,6 +79,7 @@ import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
+import org.eclipse.jdt.internal.corext.refactoring.code.CodeRefactoringUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IDelegateUpdating;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
@@ -90,6 +90,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.BodyUpdater;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.ChangeSignatureProcessor;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
+import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -331,7 +332,7 @@ public class IntroduceParameterRefactoring extends Refactoring implements IDeleg
 				AST ast= cuRewrite.getAST();
 				Type type= importRewrite.addImport(typeBinding, ast, importRewriteContext);
 				classInstanceCreation.setType(type);    // Should not touch the original AST ...
-				Map<String, String> settings = DefaultCodeFormatterConstants.getEclipseDefaultSettings();
+				Map<String, String> settings = FormatterHandler.getCombinedDefaultFormatterSettings();
 				defaultValue= ASTNodes.asFormattedString(classInstanceCreation, 0, StubUtility.getLineDelimiterUsed(cuRewrite.getCu()),
 						settings /* FormatterProfileManager.getProjectSettings(cuRewrite.getCu().getJavaProject()) */);
 				classInstanceCreation.setType(cicType); // ... so let's restore it right away.

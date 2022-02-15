@@ -70,6 +70,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	private final JavaClientConnection connection;
 	private final ProjectsManager projectsManager;
 	private final boolean isDiagnosticTagSupported;
+	private final DocumentLifeCycleHandler handler;
 
 	@Deprecated
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager) {
@@ -77,9 +78,14 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager, ClientPreferences prefs) {
+		this(connection, projectsManager, prefs, null);
+	}
+
+	public WorkspaceDiagnosticsHandler(JavaClientConnection connection, ProjectsManager projectsManager, ClientPreferences prefs, DocumentLifeCycleHandler handler) {
 		this.connection = connection;
 		this.projectsManager = projectsManager;
 		this.isDiagnosticTagSupported = prefs != null ? prefs.isDiagnosticTagSupported() : false;
+		this.handler = handler;
 	}
 
 	public void addResourceChangeListener() {
@@ -164,12 +170,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 				return false;
 			}
-
-			IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-			IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
-			markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
-			System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
-			document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			if (!cu.isWorkingCopy()) {
+				IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
+				IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
+				markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
+				System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
+				document = JsonRpcHelpers.toDocument(cu.getBuffer());
+			} else if (handler != null) {
+				handler.triggerValidation(cu);
+			}
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {
 			//all errors on that build file should be relevant
