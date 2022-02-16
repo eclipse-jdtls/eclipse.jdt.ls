@@ -30,7 +30,7 @@
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.23-I-builds/I20220203-0300/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.23-I-builds/I20220216-0600/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
