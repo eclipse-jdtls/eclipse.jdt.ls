@@ -69,9 +69,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class Test5 {\n");
 		buf.append("    public void test() {\n");
 		buf.append("        class X implements Serializable, Cloneable, Runnable {\n");
-		buf.append("            /**\n");
-		buf.append("             *\n");
-		buf.append("             */\n");
 		buf.append("            private static final long serialVersionUID = 1L;\n");
 		buf.append("            private static final int x= 1;\n");
 		buf.append("            private Object y;\n");
@@ -91,9 +88,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class Test5 {\n");
 		buf.append("    public void test() {\n");
 		buf.append("        class X implements Serializable, Cloneable, Runnable {\n");
-		buf.append("            /**\n");
-		buf.append("             *\n");
-		buf.append("             */\n");
 		buf.append("            private static final long serialVersionUID = -4564939359985118485L;\n");
 		buf.append("            private static final int x= 1;\n");
 		buf.append("            private Object y;\n");
@@ -136,9 +130,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    protected int var2;\n");
 		buf.append("    public void test() {\n");
 		buf.append("        Serializable var3= new Serializable() {\n");
-		buf.append("            /**\n");
-		buf.append("             *\n");
-		buf.append("             */\n");
 		buf.append("            private static final long serialVersionUID = 1L;\n");
 		buf.append("            int var4; \n");
 		buf.append("        };\n");
@@ -155,9 +146,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    protected int var2;\n");
 		buf.append("    public void test() {\n");
 		buf.append("        Serializable var3= new Serializable() {\n");
-		buf.append("            /**\n");
-		buf.append("             *\n");
-		buf.append("             */\n");
 		buf.append("            private static final long serialVersionUID = -868523843598659436L;\n");
 		buf.append("            int var4; \n");
 		buf.append("        };\n");
@@ -195,9 +183,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    protected int var1;\n");
 		buf.append("    protected int var2;\n");
 		buf.append("    protected class Test1 implements Serializable {\n");
-		buf.append("        /**\n");
-		buf.append("         *\n");
-		buf.append("         */\n");
 		buf.append("        private static final long serialVersionUID = 1L;\n");
 		buf.append("        public long var3;\n");
 		buf.append("    }\n");
@@ -213,9 +198,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    protected int var1;\n");
 		buf.append("    protected int var2;\n");
 		buf.append("    protected class Test1 implements Serializable {\n");
-		buf.append("        /**\n");
-		buf.append("         *\n");
-		buf.append("         */\n");
 		buf.append("        private static final long serialVersionUID = -4023230086280104302L;\n");
 		buf.append("        public long var3;\n");
 		buf.append("    }\n");
@@ -241,9 +223,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.Serializable;\n");
 		buf.append("public class Test1 implements Serializable {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = 1L;\n");
 		buf.append("    protected int var1;\n");
 		buf.append("    protected int var2;\n");
@@ -254,9 +233,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.Serializable;\n");
 		buf.append("public class Test1 implements Serializable {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = -2242798150684569765L;\n");
 		buf.append("    protected int var1;\n");
 		buf.append("    protected int var2;\n");
@@ -293,9 +269,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test3;\n");
 		buf.append("import java.util.EventObject;\n");
 		buf.append("public class Test4 extends EventObject {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = 1L;\n");
 		buf.append("    private static final int x;\n");
 		buf.append("    private static Class[] a2;\n");
@@ -317,9 +290,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test3;\n");
 		buf.append("import java.util.EventObject;\n");
 		buf.append("public class Test4 extends EventObject {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = -7476608308201363525L;\n");
 		buf.append("    private static final int x;\n");
 		buf.append("    private static Class[] a2;\n");
@@ -358,9 +328,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package a.b.c;\n");
 		buf.append("import java.io.Serializable;\n");
 		buf.append("public class Test1 implements Serializable {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = 1L;\n");
 		buf.append("    protected int var1;\n");
 		buf.append("    class Test1Inner {}\n");
@@ -371,9 +338,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package a.b.c;\n");
 		buf.append("import java.io.Serializable;\n");
 		buf.append("public class Test1 implements Serializable {\n");
-		buf.append("    /**\n");
-		buf.append("     *\n");
-		buf.append("     */\n");
 		buf.append("    private static final long serialVersionUID = -3715240305486851194L;\n");
 		buf.append("    protected int var1;\n");
 		buf.append("    class Test1Inner {}\n");
