@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2020 Microsoft Corporation and others.
+* Copyright (c) 2020-2022 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentHighlightHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FoldingRangeHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
@@ -67,6 +68,8 @@ import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentHighlightParams;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.FoldingRange;
@@ -225,6 +228,10 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 
 		if (!preferenceManager.getClientPreferences().isClientHoverProviderRegistered() && preferenceManager.getClientPreferences().isHoverDynamicRegistered()) {
 			registerCapability(Preferences.HOVER_ID, Preferences.HOVER, null);
+		}
+
+		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
+			registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
 		}
 
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
@@ -408,6 +415,12 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		logInfo(">> textDocument/semanticTokens/full");
 		return computeAsync(monitor -> SemanticTokensHandler.full(monitor, params,
 			documentLifeCycleHandler.new DocumentMonitor(params.getTextDocument().getUri())));
+	}
+
+	@Override
+	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams position) {
+		logInfo(">> document/documentHighlight");
+		return computeAsync((monitor) -> DocumentHighlightHandler.documentHighlight(position, monitor));
 	}
 
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
