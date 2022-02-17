@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -620,8 +620,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams position) {
 		logInfo(">> document/documentHighlight");
-		DocumentHighlightHandler handler = new DocumentHighlightHandler();
-		return computeAsync((monitor) -> handler.documentHighlight(position, monitor));
+		return computeAsync((monitor) -> DocumentHighlightHandler.documentHighlight(position, monitor));
 	}
 
 	/* (non-Javadoc)
