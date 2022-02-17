@@ -2990,6 +2990,58 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_FilterTypesKeepMethods2() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"import java.util.List;"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		List l; \n"
+			+	"		l.clea \n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		try {
+			List<String> filteredTypes = new ArrayList<>();
+			filteredTypes.add("java.util.*");
+			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
+
+			CompletionList list = requestCompletions(unit, "l.clea");
+			assertNotNull(list);
+			assertEquals("Missing completion", 1, list.getItems().size());
+			assertEquals("clear() : void", list.getItems().get(0).getLabel());
+		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
+	public void testCompletion_FilterMethodsWhenTypeIsMissing() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
+		//@formatter:off
+				"package org.sample;\n"
+			+	"public class Test {\n\n"
+			+	"	void test() {\n\n"
+			+	"		List l; \n"
+			+	"		l.clea \n"
+			+	"	}\n"
+			+	"}\n");
+		//@formatter:on
+		try {
+			List<String> filteredTypes = new ArrayList<>();
+			filteredTypes.add("java.util.*");
+			PreferenceManager.getPrefs(null).setFilteredTypes(filteredTypes);
+
+			CompletionList list = requestCompletions(unit, "l.clea");
+			assertNotNull(list);
+			assertEquals(0, list.getItems().size());
+		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
 	public void testCompletion_InvalidJavadoc() throws Exception {
 		importProjects("maven/aspose");
 		IProject project = null;
