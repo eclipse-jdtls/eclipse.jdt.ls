@@ -374,7 +374,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.JAVADOC_TYPE_REF:
 			case CompletionProposal.PACKAGE_REF:
-			case CompletionProposal.TYPE_REF: 
+			case CompletionProposal.TYPE_REF:
 				return isTypeFiltered(proposal);
 			case CompletionProposal.METHOD_REF:
 				// Methods from already imported types and packages can still be proposed.
