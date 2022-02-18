@@ -103,6 +103,9 @@
             <command
                   id="java.project.upgradeGradle">
             </command>
+            <command
+            	  id="java.project.resolveWorkspaceSymbol">
+    	    </command>
       </delegateCommandHandler>
    </extension>
    <extension

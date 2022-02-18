@@ -16,9 +16,11 @@ package org.eclipse.jdt.ls.core.internal.commands;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +46,8 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IParent;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -57,6 +61,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.SymbolInformation;
 
 public class ProjectCommand {
 
@@ -303,5 +309,44 @@ public class ProjectCommand {
 			this.classpaths = classpaths;
 			this.modulepaths = modulepaths;
 		}
+	}
+
+	public static SymbolInformation resolve(SymbolInformation request) {
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(request.getLocation().getUri());
+		if (unit == null || !unit.exists()) {
+			return null;
+		}
+		Location location = null;
+		IJavaElement element = null;
+
+		try {
+			Deque<IJavaElement> children = new ArrayDeque<>(Arrays.asList(unit.getChildren()));
+			while (element == null && !children.isEmpty()) {
+				IJavaElement child = children.pop();
+				if (child instanceof IType) {
+
+					if (request.getName().equals(child.getElementName())) {
+						element = child;
+						break;
+					}
+					children.addAll(Arrays.asList(((IParent) child).getChildren()));
+				}
+
+			}
+			location = JDTUtils.toLocation(element);
+
+			SymbolInformation si = new SymbolInformation();
+			si.setName(request.getName());
+			si.setContainerName(request.getContainerName());
+			si.setLocation(location);
+			si.setKind(request.getKind());
+
+			return si;
+
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logError("Problem resolving symbol information for " + unit.getElementName());
+		}
+
+		return null;
 	}
 }
