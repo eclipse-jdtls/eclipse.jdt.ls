@@ -28,7 +28,13 @@ public enum CodeSnippetTemplate {
 	IF(TemplatePreferences.IF_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IF_CONTENT, TemplatePreferences.IF_DESCRIPTION),
 	IFELSE(TemplatePreferences.IFELSE_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFELSE_CONTENT, TemplatePreferences.IFELSE_DESCRIPTION),
 	IFNULL(TemplatePreferences.IFNULL_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFNULL_CONTENT, TemplatePreferences.IFNULL_DESCRIPTION),
-	IFNOTNULL(TemplatePreferences.IFNOTNULL_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFNOTNULL_CONTENT, TemplatePreferences.IFNOTNULL_DESCRIPTION);
+	IFNOTNULL(TemplatePreferences.IFNOTNULL_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFNOTNULL_CONTENT, TemplatePreferences.IFNOTNULL_DESCRIPTION),
+	
+	// the following snippets are the same as above but with different alias, since users may not easily find them if they come from different IDEs.
+	SOUT(TemplatePreferences.SOUT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION),
+	SERR(TemplatePreferences.SERR_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSERR_CONTENT, TemplatePreferences.SYSERR_DESCRIPTION),
+	SOUTM(TemplatePreferences.SOUTM_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSTRACE_CONTENT, TemplatePreferences.SYSTRACE_DESCRIPTION),
+	ITER(TemplatePreferences.ITER_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.FOREACH_CONTENT, TemplatePreferences.FOREACH_DESCRIPTION);
 	//@formatter:on
 
 	private final String templateId;
@@ -55,9 +61,13 @@ public enum CodeSnippetTemplate {
 class TemplatePreferences {
 	// IDs
 	public static final String SYSOUT_ID = "org.eclipse.jdt.ls.templates.sysout";
+	public static final String SOUT_ID = "org.eclipse.jdt.ls.templates.sout";
 	public static final String SYSERR_ID = "org.eclipse.jdt.ls.templates.syserr";
+	public static final String SERR_ID = "org.eclipse.jdt.ls.templates.serr";
 	public static final String SYSTRACE_ID = "org.eclipse.jdt.ls.templates.systrace";
+	public static final String SOUTM_ID = "org.eclipse.jdt.ls.templates.soutm";
 	public static final String FOREACH_ID = "org.eclipse.jdt.ls.templates.for_array";
+	public static final String ITER_ID = "org.eclipse.jdt.ls.templates.iter";
 	public static final String FORI_ID = "org.eclipse.jdt.ls.templates.for_iterable";
 	public static final String WHILE_ID = "org.eclipse.jdt.ls.templates.while_condition";
 	public static final String DOWHILE_ID = "org.eclipse.jdt.ls.templates.do";
