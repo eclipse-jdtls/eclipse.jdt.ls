@@ -224,8 +224,8 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
 		assertEquals(2, list.size());
-		assertTrue(list.get(1).isLeft());
-		assertEquals("Test", list.get(1).getLeft());
+		assertTrue(list.get(1).isRight());
+		assertEquals("Test", list.get(1).getRight().getValue());
 	}
 
 	@Test
@@ -241,8 +241,8 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
 		assertEquals(2, list.size());
-		assertTrue(list.get(1).isLeft());
-		assertEquals("This is Bar.", list.get(1).getLeft());
+		assertTrue(list.get(1).isRight());
+		assertEquals("This is Bar.", list.get(1).getRight().getValue());
 	}
 
 	@Test
@@ -258,8 +258,8 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
 		assertEquals(2, list.size());
-		assertTrue(list.get(1).isLeft());
-		assertEquals("This is interface IFoo.", list.get(1).getLeft());
+		assertTrue(list.get(1).isRight());
+		assertEquals("This is interface IFoo.", list.get(1).getRight().getValue());
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/1931

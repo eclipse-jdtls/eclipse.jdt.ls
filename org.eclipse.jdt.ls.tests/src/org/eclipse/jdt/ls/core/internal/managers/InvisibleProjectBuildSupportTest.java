@@ -540,7 +540,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
 		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
-		String javadoc = hover.getContents().getLeft().get(1).getLeft();
+		String javadoc = hover.getContents().getLeft().get(1).getRight().getValue();
 		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
 
 		// add another artifact to lib folder
@@ -563,7 +563,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		// verify original library source attachment persists
 		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
-		javadoc = hover.getContents().getLeft().get(1).getLeft();
+		javadoc = hover.getContents().getLeft().get(1).getRight().getValue();
 		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
 
 	}

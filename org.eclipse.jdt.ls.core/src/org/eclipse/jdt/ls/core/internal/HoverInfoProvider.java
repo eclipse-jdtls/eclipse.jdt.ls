@@ -144,7 +144,7 @@ public class HoverInfoProvider {
 				}
 				MarkedString javadoc = computeJavadoc(curr);
 				if (javadoc != null && javadoc.getValue() != null && !javadoc.getValue().isBlank()) {
-					res.add(Either.forLeft(javadoc.getValue()));
+					res.add(Either.forRight(javadoc));
 				}
 			}
 		} catch (Exception e) {
