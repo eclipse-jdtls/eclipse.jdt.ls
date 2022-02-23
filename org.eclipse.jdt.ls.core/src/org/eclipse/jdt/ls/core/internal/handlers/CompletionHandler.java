@@ -27,6 +27,12 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -108,7 +114,7 @@ public class CompletionHandler{
 
 		boolean completionForConstructor = false;
 		if (params.getContext() != null && " ".equals(params.getContext().getTriggerCharacter())) {
-			completionForConstructor = isCompletionForConstructor(params, unit);
+			completionForConstructor = isCompletionForConstructor(params, unit, monitor);
 			if (!completionForConstructor) {
 				return null;
 			}
@@ -194,7 +200,7 @@ public class CompletionHandler{
 	 * @param unit completion unit
 	 * @throws JavaModelException
 	 */
-	private boolean isCompletionForConstructor(CompletionParams params, ICompilationUnit unit) throws JavaModelException {
+	private boolean isCompletionForConstructor(CompletionParams params, ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
 		Position pos = params.getPosition();
 		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), pos.getLine(), pos.getCharacter());
 		if (offset < 4) {
@@ -208,6 +214,17 @@ public class CompletionHandler{
 		if (!"new ".equals(triggerWord)) {
 			return false;
 		}
+
+		CompilationUnit root = SharedASTProviderCore.getAST(unit, SharedASTProviderCore.WAIT_ACTIVE_ONLY, monitor);
+		if (root == null || monitor.isCanceled()) {
+			return false;
+		}
+
+		ASTNode node = NodeFinder.perform(root, offset - 4, 0);
+		if (node instanceof StringLiteral || node instanceof SimpleName) {
+			return false;
+		}
+
 		return true;
 	}
 
