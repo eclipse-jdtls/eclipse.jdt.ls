@@ -198,6 +198,7 @@ public class CompletionHandler{
 	 * Check whether the completion is triggered for constructors: "new |"
 	 * @param params completion parameters
 	 * @param unit completion unit
+	 * @param monitor progress monitor
 	 * @throws JavaModelException
 	 */
 	private boolean isCompletionForConstructor(CompletionParams params, ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
