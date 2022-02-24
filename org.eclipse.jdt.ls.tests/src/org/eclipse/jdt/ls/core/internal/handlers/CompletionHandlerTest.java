@@ -46,6 +46,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -61,11 +62,13 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.CompletionContext;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.MarkupContent;
@@ -3364,6 +3367,104 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				.findFirst().orElse(null);
 		assertNotNull(lambda);
 		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\) -> \\$\\{0\\}"));
+	}
+
+	@Test
+	public void testCompletion_afterNew() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Test {",
+			"	public static void main(String[] args) {",
+			"		String s = new ",
+			"	}",
+			"}"
+		));
+		try {
+			int[] loc = findCompletionLocation(unit, "new ");
+			CompletionParams params = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionContext context = new CompletionContext(CompletionTriggerKind.TriggerCharacter, " ");
+			params.setContext(context);
+			CoreASTProvider.getInstance().setActiveJavaElement(unit);
+			CompletionList list = server.completion(params).join().getRight();
+			assertTrue(list.isIncomplete());
+			assertTrue(list.getItems().get(0).getLabel().startsWith("String("));
+		} catch (Exception e) {
+			fail("Unexpected exception " + e);
+		} finally {
+			unit.discardWorkingCopy();
+		}
+	}
+
+	@Test
+	public void testCompletion_IgnoreSpaceWithoutNew() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Test {",
+			"	public static void main(String[] args) {",
+			"		String s ",
+			"	}",
+			"}"
+		));
+		try {
+			int[] loc = findCompletionLocation(unit, "String s ");
+			CompletionParams params = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionContext context = new CompletionContext(CompletionTriggerKind.TriggerCharacter, " ");
+			params.setContext(context);
+			CoreASTProvider.getInstance().setActiveJavaElement(unit);
+			CompletionList list = server.completion(params).join().getRight();
+			assertTrue(list.getItems().isEmpty());
+		} catch (Exception e) {
+			fail("Unexpected exception " + e);
+		} finally {
+			unit.discardWorkingCopy();
+		}
+	}
+
+	@Test
+	public void testCompletion_IgnoreVariableWithNewPostfix() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Test {",
+			"	public static void main(String[] args) {",
+			"		String val_new;",
+			"		new String(val_new );",
+			"	}",
+			"}"
+		));
+		try {
+			int[] loc = findCompletionLocation(unit, "val_new ");
+			CompletionParams params = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionContext context = new CompletionContext(CompletionTriggerKind.TriggerCharacter, " ");
+			params.setContext(context);
+			CoreASTProvider.getInstance().setActiveJavaElement(unit);
+			CompletionList list = server.completion(params).join().getRight();
+			assertTrue(list.getItems().isEmpty());
+		} catch (Exception e) {
+			fail("Unexpected exception " + e);
+		} finally {
+			unit.discardWorkingCopy();
+		}
+	}
+
+	@Test
+	public void testCompletion_IgnoreStringLiteralNew() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			"public class Test {",
+			"	public static void main(String[] args) {",
+			"		String s = \"new \";",
+			"	}",
+			"}"
+		));
+		try {
+			int[] loc = findCompletionLocation(unit, "\"new ");
+			CompletionParams params = JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]));
+			CompletionContext context = new CompletionContext(CompletionTriggerKind.TriggerCharacter, " ");
+			params.setContext(context);
+			CoreASTProvider.getInstance().setActiveJavaElement(unit);
+			CompletionList list = server.completion(params).join().getRight();
+			assertTrue(list.getItems().isEmpty());
+		} catch (Exception e) {
+			fail("Unexpected exception " + e);
+		} finally {
+			unit.discardWorkingCopy();
+		}
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {

@@ -27,6 +27,12 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -41,13 +47,14 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.google.common.collect.Sets;
 
 public class CompletionHandler{
 
-	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*"));
+	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*", " "));
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<>() {
@@ -71,19 +78,17 @@ public class CompletionHandler{
 		this.manager = manager;
 	}
 
-	public Either<List<CompletionItem>, CompletionList> completion(CompletionParams position,
+	public Either<List<CompletionItem>, CompletionList> completion(CompletionParams params,
 			IProgressMonitor monitor) {
 		CompletionList $ = null;
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
-			$ = this.computeContentAssist(unit,
-					position.getPosition().getLine(),
-					position.getPosition().getCharacter(), monitor);
+			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+			$ = this.computeContentAssist(unit, params, monitor);
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
 		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  position.getTextDocument().getUri(), e);
+			JavaLanguageServerPlugin.logException("Problem with codeComplete for " +  params.getTextDocument().getUri(), e);
 			monitor.setCanceled(true);
 		}
 		if ($ == null) {
@@ -101,14 +106,23 @@ public class CompletionHandler{
 		return Either.forRight($);
 	}
 
-	private CompletionList computeContentAssist(ICompilationUnit unit, int line, int column, IProgressMonitor monitor) throws JavaModelException {
+	private CompletionList computeContentAssist(ICompilationUnit unit, CompletionParams params, IProgressMonitor monitor) throws JavaModelException {
 		CompletionResponses.clear();
 		if (unit == null) {
 			return null;
 		}
+
+		boolean completionForConstructor = false;
+		if (params.getContext() != null && " ".equals(params.getContext().getTriggerCharacter())) {
+			completionForConstructor = isCompletionForConstructor(params, unit, monitor);
+			if (!completionForConstructor) {
+				return null;
+			}
+		}
+
 		List<CompletionItem> proposals = new ArrayList<>();
 
-		final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
+		final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), params.getPosition().getLine(), params.getPosition().getCharacter());
 		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset, manager);
 		// Allow completions for unresolved types - since 3.3
 		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
@@ -163,7 +177,7 @@ public class CompletionHandler{
 		}
 		proposals.sort(PROPOSAL_COMPARATOR);
 		CompletionList list = new CompletionList(proposals);
-		list.setIsIncomplete(!collector.isComplete());
+		list.setIsIncomplete(!collector.isComplete() || completionForConstructor);
 		return list;
 	}
 
@@ -178,6 +192,41 @@ public class CompletionHandler{
 	private boolean isSnippetStringSupported() {
 		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
+	}
+
+	/**
+	 * Check whether the completion is triggered for constructors: "new |"
+	 * @param params completion parameters
+	 * @param unit completion unit
+	 * @param monitor progress monitor
+	 * @throws JavaModelException
+	 */
+	private boolean isCompletionForConstructor(CompletionParams params, ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
+		Position pos = params.getPosition();
+		int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), pos.getLine(), pos.getCharacter());
+		if (offset < 4) {
+			return false;
+		}
+		String content = unit.getSource();
+		if (content == null) {
+			return false;
+		}
+		String triggerWord = content.substring(offset - 4, offset);
+		if (!"new ".equals(triggerWord)) {
+			return false;
+		}
+
+		CompilationUnit root = SharedASTProviderCore.getAST(unit, SharedASTProviderCore.WAIT_ACTIVE_ONLY, monitor);
+		if (root == null || monitor.isCanceled()) {
+			return false;
+		}
+
+		ASTNode node = NodeFinder.perform(root, offset - 4, 0);
+		if (node instanceof StringLiteral || node instanceof SimpleName) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public boolean isIndexEngineEnabled() {
