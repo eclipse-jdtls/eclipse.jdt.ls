@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.9.0 (March 3rd, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/99?closed=1)
+ * enhancement - Trigger completion after `new` keyword. See [#2010](https://github.com/eclipse/eclipse.jdt.ls/pull/2010).
+ * enhancement - Improve occurrences highlighting. See [#1941](https://github.com/eclipse/eclipse.jdt.ls/pull/1941).
+ * enhancement - Provide more common aliases for code snippets. See [#2006](https://github.com/eclipse/eclipse.jdt.ls/pull/2006).
+ * bug fix - "Add serial version ID" should not generate empty comments. See [#1899](https://github.com/eclipse/eclipse.jdt.ls/issues/1899).
+ * bug fix - convert to static import incorrectly removes import statements. See [#1203](https://github.com/eclipse/eclipse.jdt.ls/issues/1203).
+ * bug fix - Type mismatch: cannot convert from `Object` to `Map<String,IndexType>`. See [#1971](https://github.com/eclipse/eclipse.jdt.ls/issues/1971).
+ * bug fix - Signature help occasionally fails on constructors and qualified method invocations. See [#2014](https://github.com/eclipse/eclipse.jdt.ls/pull/2014).
+ * build - Update m2e-apt to 1.5.4 (new repo). See [#1994](https://github.com/eclipse/eclipse.jdt.ls/pull/1994).
+ * other - Provide a platform independent script to help launch language server. See [#1823](https://github.com/eclipse/eclipse.jdt.ls/issues/1823).
+
 # [1.8.0 (January 24th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/98?closed=1)
  * enhancement - Support completion for lambda expressions. See [#1985](https://github.com/eclipse/eclipse.jdt.ls/issues/1985).
  * enhancement - Add "Convert to Switch Expression" code assist proposal. See [#1935](https://github.com/eclipse/eclipse.jdt.ls/pull/1935).
