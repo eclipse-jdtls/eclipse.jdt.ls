@@ -1574,16 +1574,39 @@ public final class JDTUtils {
 	 *            - completion proposal
 	 * @param javaProject
 	 *            - Java project
-	 *
 	 * @return the resolved method or <code>null</code> if none is found
 	 * @throws JavaModelException
 	 *             if accessing the java model fails
 	 */
-
 	public static IMethod resolveMethod(CompletionProposal proposal, IJavaProject javaProject) throws JavaModelException {
+		return resolveMethod(proposal, javaProject, null);
+	}
+
+	/**
+	 * Resolves the method described by the receiver and returns it if found.
+	 * Returns <code>null</code> if no corresponding member can be found.
+	 *
+	 * Same functionality as resolveMethod(CompletionProposal proposal, IJavaProject
+	 * javaProject) but also looks for methods in secondary types if the given name
+	 * does not match a compilation unit name.
+	 *
+	 * @param proposal
+	 *            - completion proposal
+	 * @param javaProject
+	 *            - Java project
+	 * @param monitor
+	 *            - monitor
+	 * @return the resolved method or <code>null</code> if none is found
+	 * @throws JavaModelException
+	 *             if accessing the java model fails
+	 */
+	public static IMethod resolveMethod(CompletionProposal proposal, IJavaProject javaProject, IProgressMonitor monitor) throws JavaModelException {
 		char[] declarationSignature = proposal.getDeclarationSignature();
 		String typeName = SignatureUtil.stripSignatureToFQN(String.valueOf(declarationSignature));
 		IType type = javaProject.findType(typeName);
+		if (type == null && monitor != null) {
+			type = javaProject.findType(typeName, new NullProgressMonitor());
+		}
 		if (type != null) {
 			String name = String.valueOf(proposal.getName());
 			if (proposal.getKind() == CompletionProposal.ANNOTATION_ATTRIBUTE_REF) {
