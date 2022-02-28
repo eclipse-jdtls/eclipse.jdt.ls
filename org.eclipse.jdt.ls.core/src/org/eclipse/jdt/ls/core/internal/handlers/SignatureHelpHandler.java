@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -34,10 +35,13 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodRef;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -70,7 +74,6 @@ public class SignatureHelpHandler {
 		if (!preferenceManager.getPreferences(null).isSignatureHelpEnabled()) {
 			return help;
 		}
-
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
 			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), position.getPosition().getLine(), position.getPosition().getCharacter());
@@ -88,11 +91,19 @@ public class SignatureHelpHandler {
 				if (help.getSignatures().isEmpty()) {
 					int pos = offset;
 					if (method != null) {
-						int start = node.getStartPosition();
+						int start;
+						if (node instanceof MethodInvocation) {
+							start = ((MethodInvocation) node).getName().getStartPosition();
+						} else if (node instanceof ClassInstanceCreation) {
+							start = ((ClassInstanceCreation) node).getType().getStartPosition();
+						} else {
+							start = node.getStartPosition();
+						}
 						pos = start + method.getElementName().length();
 					}
 					unit.codeComplete(pos, collector, monitor);
 					help = collector.getSignatureHelp(monitor);
+					addConstructorProposals(help, node, method, collector, pos);
 				}
 				if (!monitor.isCanceled() && help != null) {
 					SignatureHelp help2 = null;
@@ -113,8 +124,8 @@ public class SignatureHelpHandler {
 								for (int i = 0; i < infos.size(); i++) {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-										if (JDTUtils.isSameParameters(m, method)) {
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject, monitor);
+										if (!monitor.isCanceled() && JDTUtils.isSameParameters(m, method)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
@@ -126,8 +137,8 @@ public class SignatureHelpHandler {
 								for (int i = 0; i < infos.size(); i++) {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-										if (isSameParameters(m, help2, collector2, javaProject)) {
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject, monitor);
+										if (!monitor.isCanceled() && isSameParameters(m, help2, collector2, javaProject, monitor)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
@@ -148,8 +159,8 @@ public class SignatureHelpHandler {
 								for (int i = 0; i < infos.size(); i++) {
 									if (infos.get(i).getParameters().size() >= size) {
 										CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-										IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-										if (JDTUtils.isSameParameters(method, m)) {
+										IMethod m = JDTUtils.resolveMethod(proposal, javaProject, monitor);
+										if (!monitor.isCanceled() && JDTUtils.isSameParameters(method, m)) {
 											help.setActiveSignature(i);
 											help.setActiveParameter(activeParameter);
 											return help;
@@ -178,8 +189,8 @@ public class SignatureHelpHandler {
 							for (int i = 0; i < infos.size(); i++) {
 								if (infos.get(i).getParameters().size() >= activeParameter) {
 									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-									IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-									if (m != null && m.getElementName().equals(methodName)) {
+									IMethod m = JDTUtils.resolveMethod(proposal, javaProject, monitor);
+									if (!monitor.isCanceled() && m != null && m.getElementName().equals(methodName)) {
 										help.setActiveSignature(i);
 										help.setActiveParameter(activeParameter);
 										return help;
@@ -191,8 +202,8 @@ public class SignatureHelpHandler {
 							for (int i = 0; i < infos.size(); i++) {
 								if (infos.get(i).getParameters().size() >= size) {
 									CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-									IMethod m = JDTUtils.resolveMethod(proposal, javaProject);
-									if (isSameParameters(m, method, null)) {
+									IMethod m = JDTUtils.resolveMethod(proposal, javaProject, monitor);
+									if (!monitor.isCanceled() && isSameParameters(m, method, null)) {
 										help.setActiveSignature(i);
 										help.setActiveParameter(activeParameter);
 										return help;
@@ -209,14 +220,51 @@ public class SignatureHelpHandler {
 		return help;
 	}
 
-	private boolean isSameParameters(IMethod m, SignatureHelp help, SignatureHelpRequestor collector, IJavaProject javaProject) throws JavaModelException {
+	private void addConstructorProposals(SignatureHelp help, ASTNode node, IMethod constructorMethod, SignatureHelpRequestor collector, int pos) throws JavaModelException {
+		if (help.getSignatures().isEmpty() && constructorMethod.isConstructor() && (node instanceof ClassInstanceCreation)) {
+			IMethodBinding binding = ((ClassInstanceCreation) node).resolveConstructorBinding();
+			ITypeBinding typeBinding = binding.getDeclaringClass();
+			IJavaProject javaProject = constructorMethod.getJavaProject();
+			IType type = javaProject.findType(typeBinding.getQualifiedName());
+			if (type != null) {
+				IMethod[] methods = type.getMethods();
+				for (IMethod method : methods) {
+					try {
+						if (method.isConstructor()) {
+							InternalCompletionProposal proposal = new ConstructorProposal(CompletionProposal.METHOD_REF, pos);
+							proposal.setName(method.getElementName().toCharArray());
+							String signature = method.getSignature();
+							proposal.setReplaceRange(pos, pos + method.getElementName().length());
+							proposal.setSignature(signature.toCharArray());
+							proposal.setCompletion(method.getElementName().toCharArray());
+							char[][] parameterNames = new char[method.getParameterNames().length][];
+							for (int i = 0; i < method.getParameterNames().length; i++) {
+								parameterNames[i] = method.getParameterNames()[i].toCharArray();
+							}
+							proposal.setParameterNames(parameterNames);
+							char[] result = null;
+							result = Signature.createTypeSignature(typeBinding.getQualifiedName(), false).toCharArray();
+							proposal.setDeclarationSignature(result);
+							SignatureInformation info = collector.toSignatureInformation(proposal);
+							help.getSignatures().add(info);
+							collector.getInfoProposals().put(info, proposal);
+						}
+					} catch (JavaModelException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean isSameParameters(IMethod m, SignatureHelp help, SignatureHelpRequestor collector, IJavaProject javaProject, IProgressMonitor monitor) throws JavaModelException {
 		if (m == null || help == null || javaProject == null) {
 			return false;
 		}
 		List<SignatureInformation> infos = help.getSignatures();
 		for (int i = 0; i < infos.size(); i++) {
 			CompletionProposal proposal = collector.getInfoProposals().get(infos.get(i));
-			IMethod method = JDTUtils.resolveMethod(proposal, javaProject);
+			IMethod method = JDTUtils.resolveMethod(proposal, javaProject, monitor);
 			if (m.getElementName().equals(method.getElementName()) && JDTUtils.isSameParameters(method, m)) {
 				return true;
 			}
@@ -370,4 +418,13 @@ public class SignatureHelpHandler {
 		}
 		return result;
 	}
+
+	private class ConstructorProposal extends InternalCompletionProposal {
+
+		public ConstructorProposal(int kind, int completionLocation) {
+			super(kind, completionLocation);
+			setIsContructor(true);
+		}
+	}
 }
+

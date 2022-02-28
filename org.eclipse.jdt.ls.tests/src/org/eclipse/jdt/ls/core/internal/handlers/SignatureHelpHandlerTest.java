@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.URI;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -461,6 +462,32 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		testAssertEquals(cu, 5, 20);
 		testAssertEquals(cu, 5, 21);
 		testAssertEquals(cu, 5, 22);
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2097
+	@Test
+	public void testSignatureHelpConstructor() throws JavaModelException {
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("test1.SignatureHelp2097");
+		ICompilationUnit cu = type.getCompilationUnit();
+		SignatureHelp help = getSignatureHelp(cu, 9, 51);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("SignatureHelp2097(String name)"));
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2097
+	@Test
+	public void testSignatureHelpMethod() throws Exception {
+		IJavaProject javaProject = JavaCore.create(project);
+		IType type = javaProject.findType("test1.SignatureHelp2097");
+		IType resultType = javaProject.findType("test1.Result", new NullProgressMonitor());
+		assertNotNull(resultType);
+		ICompilationUnit cu = type.getCompilationUnit();
+		SignatureHelp help = getSignatureHelp(cu, 14, 42);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("success(Boolean flag) : Boolean"));
 	}
 
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
