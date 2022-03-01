@@ -316,37 +316,33 @@ public class ProjectCommand {
 		if (unit == null || !unit.exists()) {
 			return null;
 		}
-		Location location = null;
-		IJavaElement element = null;
+		Location location = request.getLocation();
 
 		try {
 			Deque<IJavaElement> children = new ArrayDeque<>(Arrays.asList(unit.getChildren()));
-			while (element == null && !children.isEmpty()) {
+			while (!children.isEmpty()) {
 				IJavaElement child = children.pop();
 				if (child instanceof IType) {
 
 					if (request.getName().equals(child.getElementName())) {
-						element = child;
+						location = JDTUtils.toLocation(child);
 						break;
 					}
 					children.addAll(Arrays.asList(((IParent) child).getChildren()));
 				}
 
 			}
-			location = JDTUtils.toLocation(element);
-
-			SymbolInformation si = new SymbolInformation();
-			si.setName(request.getName());
-			si.setContainerName(request.getContainerName());
-			si.setLocation(location);
-			si.setKind(request.getKind());
-
-			return si;
 
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logError("Problem resolving symbol information for " + unit.getElementName());
 		}
 
-		return null;
+		SymbolInformation si = new SymbolInformation();
+		si.setName(request.getName());
+		si.setContainerName(request.getContainerName());
+		si.setLocation(location);
+		si.setKind(request.getKind());
+
+		return si;
 	}
 }
