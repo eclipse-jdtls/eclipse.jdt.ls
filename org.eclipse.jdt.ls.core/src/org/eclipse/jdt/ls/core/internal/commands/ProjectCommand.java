@@ -311,7 +311,7 @@ public class ProjectCommand {
 		}
 	}
 
-	public static SymbolInformation resolve(SymbolInformation request) {
+	public static SymbolInformation resolveWorkspaceSymbol(SymbolInformation request) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(request.getLocation().getUri());
 		if (unit == null || !unit.exists()) {
 			return null;

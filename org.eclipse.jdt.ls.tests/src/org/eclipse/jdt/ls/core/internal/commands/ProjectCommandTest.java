@@ -26,13 +26,20 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKind;
 import org.junit.Test;
 
 /**
@@ -267,4 +274,45 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         List<URI> projects = ProjectCommand.getAllJavaProjects();
         assertEquals(4, projects.size());
     }
+
+	private static Range START_OF_DOCUMENT = new Range(new Position(0, 0), new Position(0, 0));
+
+	@Test
+	public void testResolveClassSymbol() throws Exception {
+		importProjects("maven/salut-java11");
+		IProject project = WorkspaceHelper.getProject("salut-java11");
+
+		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.StringUtils");
+		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
+		assertEquals(new Range(new Position(115, 13), new Position(115, 24)), resolvedSymbol.getLocation().getRange());
+	}
+
+	@Test
+	public void testResolveNestedClassSymbol() throws Exception {
+		importProjects("maven/salut-java11");
+		IProject project = WorkspaceHelper.getProject("salut-java11");
+
+		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.event.EventListenerSupport.ProxyInvocationHandler");
+		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
+		assertEquals(resolvedSymbol.getLocation().getRange(), new Range(new Position(317, 20), new Position(317, 42)));
+	}
+
+	private SymbolInformation buildClassSymbol(IProject project, String fqClassName) throws Exception {
+		String uriString = buildClassfileUri(project, fqClassName);
+		SymbolInformation si = new SymbolInformation();
+		si.setLocation(new Location(uriString, START_OF_DOCUMENT));
+		si.setName(fqClassName.substring(fqClassName.lastIndexOf('.') + 1));
+		si.setKind(SymbolKind.Class);
+		return si;
+	}
+
+	private String buildClassfileUri(IProject project, String fqClassName) throws Exception {
+		IJavaProject javaProject = ProjectUtils.getJavaProject(project);
+		IType type = javaProject.findType(fqClassName);
+		if (type == null) {
+			throw new IllegalStateException("Expected to find type " + fqClassName + " in project.");
+		}
+		return JDTUtils.toUri(type.getClassFile());
+	}
+
 }

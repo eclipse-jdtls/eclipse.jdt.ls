@@ -121,7 +121,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return GradleProjectImporter.upgradeGradleVersion(projectUri, monitor);
 				case "java.project.resolveWorkspaceSymbol":
 					SymbolInformation si = JSONUtility.toModel(arguments.get(0), SymbolInformation.class);
-					return ProjectCommand.resolve(si);
+					return ProjectCommand.resolveWorkspaceSymbol(si);
 				default:
 					break;
 			}
