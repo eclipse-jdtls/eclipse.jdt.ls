@@ -225,7 +225,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 26);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(5, help.getSignatures().size());
 		assertEquals(help.getSignatures().get(help.getActiveSignature()).getLabel(), "RuntimeException()");
 	}
 
@@ -242,7 +242,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 31);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(5, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("RuntimeException\\(String \\w+, Throwable \\w+\\)"));
 	}
 
@@ -259,7 +259,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 31);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(5, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().matches("RuntimeException\\(String \\w+\\)"));
 	}
 
@@ -385,7 +385,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 40);
 		assertNotNull(help);
-		assertEquals(4, help.getSignatures().size());
+		assertEquals(5, help.getSignatures().size());
 		assertNull(help.getActiveParameter());
 	}
 
@@ -470,7 +470,11 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		IType type = javaProject.findType("test1.SignatureHelp2097");
 		ICompilationUnit cu = type.getCompilationUnit();
-		SignatureHelp help = getSignatureHelp(cu, 9, 51);
+		SignatureHelp help = getSignatureHelp(cu, 10, 51);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("SignatureHelp2097(String name)"));
+		help = getSignatureHelp(cu, 11, 53);
 		assertNotNull(help);
 		assertEquals(1, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("SignatureHelp2097(String name)"));
@@ -484,10 +488,18 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		IType resultType = javaProject.findType("test1.Result", new NullProgressMonitor());
 		assertNotNull(resultType);
 		ICompilationUnit cu = type.getCompilationUnit();
-		SignatureHelp help = getSignatureHelp(cu, 14, 42);
+		SignatureHelp help = getSignatureHelp(cu, 16, 42);
 		assertNotNull(help);
-		assertEquals(1, help.getSignatures().size());
-		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("success(Boolean flag) : Boolean"));
+		assertEquals(3, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("success(String msg, Object data) : Boolean"));
+		help = getSignatureHelp(cu, 18, 39);
+		assertNotNull(help);
+		assertEquals(3, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("fail(Object data) : Boolean"));
+		help = getSignatureHelp(cu, 23, 31);
+		assertNotNull(help);
+		assertEquals(3, help.getSignatures().size());
+		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("fail(String msg, Object data) : Boolean"));
 	}
 
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
