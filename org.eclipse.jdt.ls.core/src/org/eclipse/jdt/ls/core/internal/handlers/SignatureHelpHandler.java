@@ -86,23 +86,21 @@ public class SignatureHelpHandler {
 			String name = method != null ? method.getElementName() : getMethodName(node, unit, contextInfomation);
 			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, name, contextInfomation[0] + 1);
 			if (offset > -1 && !monitor.isCanceled()) {
-				unit.codeComplete(contextInfomation[0] + 1, collector, monitor);
-				help = collector.getSignatureHelp(monitor);
-				if (help.getSignatures().isEmpty()) {
-					int pos = offset;
-					if (method != null) {
-						int start;
-						if (node instanceof MethodInvocation) {
-							start = ((MethodInvocation) node).getName().getStartPosition();
-						} else if (node instanceof ClassInstanceCreation) {
-							start = ((ClassInstanceCreation) node).getType().getStartPosition();
-						} else {
-							start = node.getStartPosition();
-						}
-						pos = start + method.getElementName().length();
+				int pos = contextInfomation[0] + 1;
+				if (method != null) {
+					int start;
+					if (node instanceof MethodInvocation) {
+						start = ((MethodInvocation) node).getName().getStartPosition();
+					} else if (node instanceof ClassInstanceCreation) {
+						start = ((ClassInstanceCreation) node).getType().getStartPosition();
+					} else {
+						start = node.getStartPosition();
 					}
-					unit.codeComplete(pos, collector, monitor);
-					help = collector.getSignatureHelp(monitor);
+					pos = start + method.getElementName().length();
+				}
+				unit.codeComplete(pos, collector, monitor);
+				help = collector.getSignatureHelp(monitor);
+				if (method != null) {
 					addConstructorProposals(help, node, method, collector, pos);
 				}
 				if (!monitor.isCanceled() && help != null) {
@@ -233,7 +231,7 @@ public class SignatureHelpHandler {
 						if (method.isConstructor()) {
 							InternalCompletionProposal proposal = new ConstructorProposal(CompletionProposal.METHOD_REF, pos);
 							proposal.setName(method.getElementName().toCharArray());
-							String signature = method.getSignature();
+							String signature = method.getSignature().replace('/', '.');
 							proposal.setReplaceRange(pos, pos + method.getElementName().length());
 							proposal.setSignature(signature.toCharArray());
 							proposal.setCompletion(method.getElementName().toCharArray());
@@ -278,7 +276,7 @@ public class SignatureHelpHandler {
 		}
 		String[] params1 = method1.getParameterTypes();
 		String[] params2 = method2.getParameterTypes();
-		if (params2.length == params1.length - 1) {
+		if (params2.length <= params1.length - 1) {
 			for (int i = 0; i < params2.length; i++) {
 				String t1 = Signature.getSimpleName(Signature.toString(params2[i]));
 				String t2 = Signature.getSimpleName(Signature.toString(params1[i]));
