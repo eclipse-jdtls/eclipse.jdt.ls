@@ -207,7 +207,6 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		when(mockCapabilies.isDocumentSymbolDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isWorkspaceSymbolDynamicRegistered()).thenReturn(Boolean.TRUE);
-		when(mockCapabilies.isDocumentSymbolDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isCodeActionDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isDefinitionDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isHoverDynamicRegistered()).thenReturn(Boolean.TRUE);
@@ -218,6 +217,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
+		waitForBackgroundJobs();
 		verify(client, times(9)).registerCapability(any());
 		waitForBackgroundJobs();
 	}

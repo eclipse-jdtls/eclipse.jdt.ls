@@ -164,6 +164,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private WorkspaceExecuteCommandHandler commandHandler;
 
 	private ProgressReporterManager progressReporterManager;
+	/**
+	 * The status of the language service
+	 */
+	private ServiceStatus status;
 
 	private Job shutdownJob = new Job("Shutdown...") {
 
@@ -233,6 +237,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
+		status = ServiceStatus.Starting;
 		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
@@ -250,17 +255,50 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			logException(e.getMessage(), e);
 		}
 		logInfo(">> initialization job finished");
-		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
-			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
-		}
+
+		Job initializeWorkspace = new Job("Initialize workspace") {
+
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
+				try {
+					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+					logInfo(">> build jobs finished");
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
+					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+					workspaceDiagnosticsHandler.addResourceChangeListener();
+					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
+					classpathUpdateHandler.addElementChangeListener();
+					pm.registerWatchers();
+					logInfo(">> watchers registered");
+
+					registerCapabilities();
+					// we do not have the user setting initialized yet at this point but we should
+					// still call to enable defaults in case client does not support configuration changes
+					syncCapabilitiesToSettings();
+
+					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
+					status = ServiceStatus.ServiceReady;
+				} catch (OperationCanceledException | CoreException e) {
+					logException(e.getMessage(), e);
+					return Status.CANCEL_STATUS;
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		initializeWorkspace.setPriority(Job.BUILD);
+		initializeWorkspace.setSystem(true);
+		initializeWorkspace.schedule();
+	}
+
+	/**
+	 * Register capabilities to client
+	 */
+	private void registerCapabilities() {
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
 		}
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
-		}
-		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			registerCapability(Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
 		}
 		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
@@ -277,47 +315,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		if (preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_HIGHLIGHT_ID, Preferences.DOCUMENT_HIGHLIGHT);
 		}
-		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
-			registerCapability(Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE);
-		}
 		if (preferenceManager.getClientPreferences().isWorkspaceFoldersSupported()) {
 			registerCapability(Preferences.WORKSPACE_CHANGE_FOLDERS_ID, Preferences.WORKSPACE_CHANGE_FOLDERS);
 		}
 		if (preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			registerCapability(Preferences.IMPLEMENTATION_ID, Preferences.IMPLEMENTATION);
 		}
-		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
-			registerCapability(Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE);
-		}
-		// we do not have the user setting initialized yet at this point but we should
-		// still call to enable defaults in case client does not support configuration changes
-		syncCapabilitiesToSettings();
-
-		Job initializeWorkspace = new Job("Initialize workspace") {
-
-			@Override
-			public IStatus run(IProgressMonitor monitor) {
-				try {
-					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
-					logInfo(">> build jobs finished");
-					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
-					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
-					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-					workspaceDiagnosticsHandler.addResourceChangeListener();
-					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
-					classpathUpdateHandler.addElementChangeListener();
-					pm.registerWatchers();
-					logInfo(">> watchers registered");
-				} catch (OperationCanceledException | CoreException e) {
-					logException(e.getMessage(), e);
-					return Status.CANCEL_STATUS;
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		initializeWorkspace.setPriority(Job.BUILD);
-		initializeWorkspace.setSystem(true);
-		initializeWorkspace.schedule();
 	}
 
 	/**
@@ -457,7 +460,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
 		}
-		syncCapabilitiesToSettings();
+		if (status == ServiceStatus.ServiceReady) {
+			// If we toggle on the capabilities too early before the tasks in initialized handler finished,
+			// client will start to send request to server, but the server won't be able to handle them.
+			syncCapabilitiesToSettings();
+		}
 		boolean jvmChanged = false;
 		try {
 			jvmChanged = JVMConfigurator.configureJVMs(preferenceManager.getPreferences(), this.client);
