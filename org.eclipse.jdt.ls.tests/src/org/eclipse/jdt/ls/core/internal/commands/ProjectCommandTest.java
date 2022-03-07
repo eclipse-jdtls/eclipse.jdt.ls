@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -292,9 +293,10 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		importProjects("maven/salut-java11");
 		IProject project = WorkspaceHelper.getProject("salut-java11");
 
-		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.event.EventListenerSupport.ProxyInvocationHandler");
+		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.sample.Bar");
+		requestedSymbol.setName("MyClass");
 		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
-		assertEquals(resolvedSymbol.getLocation().getRange(), new Range(new Position(317, 20), new Position(317, 42)));
+		assertEquals(resolvedSymbol.getLocation().getRange(), new Range(new Position(17, 21), new Position(17, 28)));
 	}
 
 	private SymbolInformation buildClassSymbol(IProject project, String fqClassName) throws Exception {
@@ -312,7 +314,11 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		if (type == null) {
 			throw new IllegalStateException("Expected to find type " + fqClassName + " in project.");
 		}
-		return JDTUtils.toUri(type.getClassFile());
+		if (type.isBinary()) {
+			return JDTUtils.toUri(type.getClassFile());
+		} else {
+			return JDTUtils.toUri((ICompilationUnit) type.getParent());
+		}
 	}
 
 }
