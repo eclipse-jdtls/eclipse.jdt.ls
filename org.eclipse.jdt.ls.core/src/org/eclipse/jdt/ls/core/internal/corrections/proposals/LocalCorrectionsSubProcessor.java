@@ -449,6 +449,16 @@ public class LocalCorrectionsSubProcessor {
 
 		if (problemId == IProblem.ArgumentIsNeverUsed) {
 			JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
+			fix = UnusedCodeFixCore.createUnusedParameterFix(context.getASTRoot(), problem);
+			if (fix != null) {
+				try {
+					CompilationUnitChange change = fix.createChange(null);
+					CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+					proposals.add(proposal);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.log(e);
+				}
+			}
 		}
 
 		if (problemId == IProblem.UnusedPrivateField) {
