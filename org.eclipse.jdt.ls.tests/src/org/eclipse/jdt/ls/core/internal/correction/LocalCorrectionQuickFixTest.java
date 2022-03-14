@@ -255,7 +255,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void foo(int i, int j) {\n");
+		buf.append("    private void foo(int i, int j) {\n");
 		buf.append("       System.out.println(j);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -264,11 +264,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("    public void foo(int j) {\n");
+		buf.append("    private void foo(int j) {\n");
 		buf.append("       System.out.println(j);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Remove 'i', keep assignments with side effects", buf.toString());
+		Expected e1 = new Expected("Remove unused parameter 'i'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -276,7 +276,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    /**\n");
 		buf.append("     * @param i  \n");
 		buf.append("     */\n");
-		buf.append("    public void foo(int i, int j) {\n");
+		buf.append("    private void foo(int i, int j) {\n");
 		buf.append("       System.out.println(j);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
