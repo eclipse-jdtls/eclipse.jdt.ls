@@ -215,6 +215,48 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 		}
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/2339
+	@Test
+	public void testDuplicateQuickFix2() throws Exception {
+		String showQuickFixes = preferenceManager.getPreferences().getJavaQuickFixShowAt();
+		try {
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("import java.util.List;\n");
+			buf.append("public class Foo {\n");
+			buf.append("    public void foo(List<Integer> list) {\n");
+			buf.append("        for (element: list) {");
+			buf.append("        }\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("Foo.java", buf.toString(), true, null);
+			cu.becomeWorkingCopy(null);
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(Preferences.LINE);
+			CodeActionParams codeActionParams = new CodeActionParams();
+			TextDocumentIdentifier textDocument = new TextDocumentIdentifier();
+			textDocument.setUri(JDTUtils.toURI(cu));
+			codeActionParams.setTextDocument(textDocument);
+			codeActionParams.setRange(new Range(new Position(4, 13), new Position(4, 20)));
+			CodeActionContext context = new CodeActionContext();
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+			List<Diagnostic> diagnostics = getDiagnostics(cu, astRoot, 5);
+			context.setDiagnostics(diagnostics);
+			context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
+			codeActionParams.setContext(context);
+			List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
+			assertEquals(10, codeActions.size());
+			CodeAction action = codeActions.get(0).getRight();
+			assertNotNull(action);
+			assertEquals("Create loop variable 'element'", action.getTitle());
+			action = codeActions.get(1).getRight();
+			assertNotNull(action);
+			assertNotEquals("Create loop variable 'element'", action.getTitle());
+		} finally {
+			preferenceManager.getPreferences().setJavaQuickFixShowAt(showQuickFixes);
+		}
+	}
+
 	private List<Diagnostic> getDiagnostics(ICompilationUnit cu, CompilationUnit astRoot, int line) {
 		List<IProblem> problems = new ArrayList<>();
 		for (IProblem problem : astRoot.getProblems()) {
