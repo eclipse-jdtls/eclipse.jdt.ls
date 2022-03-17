@@ -48,6 +48,7 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavaDocSnippetStringEvaluator;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -78,6 +79,10 @@ public class HoverInfoProvider {
 			| JavaElementLabels.T_FULLY_QUALIFIED | JavaElementLabels.M_FULLY_QUALIFIED;
 
 	private static final String LANGUAGE_ID = "java";
+
+	private static final String MARKDOWN_SPACE = "&nbsp;";
+
+	private static final String MARKDOWN_LINEBREAK = "  \n";
 
 	private final ITypeRoot unit;
 
@@ -143,8 +148,10 @@ public class HoverInfoProvider {
 					return cancelled(res);
 				}
 				MarkedString javadoc = computeJavadoc(curr);
-				if (javadoc != null && javadoc.getValue() != null && !javadoc.getValue().isBlank()) {
-					res.add(Either.forLeft(javadoc.getValue()));
+				String value = javadoc == null ? null : javadoc.getValue();
+				if (value != null && !value.isBlank()) {
+					value = fixSnippet(value);
+					res.add(Either.forLeft(value));
 				}
 			}
 		} catch (Exception e) {
@@ -154,6 +161,34 @@ public class HoverInfoProvider {
 			return cancelled(res);
 		}
 		return res;
+	}
+
+	private String fixSnippet(String value) {
+		if (value.contains(JavaDocSnippetStringEvaluator.SNIPPET)) {
+			StringBuilder builder = new StringBuilder();
+			value.lines().forEach((line) -> {
+				if (line.contains(JavaDocSnippetStringEvaluator.SNIPPET)) {
+					line = line.stripLeading();
+					if (line.startsWith(JavaDocSnippetStringEvaluator.SNIPPET)) {
+						line = line.replaceFirst(JavaDocSnippetStringEvaluator.SNIPPET, "");
+						line = replaceLeadingSpaces(line);
+					}
+				}
+				builder.append(line);
+				builder.append(MARKDOWN_LINEBREAK);
+			});
+			value = builder.toString();
+		}
+		return value;
+	}
+
+	private static String replaceLeadingSpaces(String str) {
+		int i = 0;
+		while (str.length() > i + 1 && str.charAt(i) == ' ') {
+			str = str.replaceFirst(" ", MARKDOWN_SPACE);
+			i += MARKDOWN_SPACE.length();
+		}
+		return str;
 	}
 
 	private List<Either<String, MarkedString>> cancelled(List<Either<String, MarkedString>> res) {

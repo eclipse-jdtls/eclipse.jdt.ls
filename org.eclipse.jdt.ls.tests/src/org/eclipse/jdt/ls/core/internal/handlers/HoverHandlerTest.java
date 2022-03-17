@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -553,6 +554,50 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				"    \n" +
 				"     *  java.sql.Driver\n" +
 				" *  **@moduleGraph**";
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
+
+	@Test
+	public void testHoverJavadocSnippet() throws Exception {
+		String name = "java18";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test1;\n"
+				+ "/**\n"
+				+ " * A simple program.\n"
+				+ " * {@snippet :\n"
+				+ " * class HelloWorld {\n"
+				+ " *     public static void main(String... args) {\n"
+				+ " *         System.out.println(\"Hello World!\");      // @highlight substring=\"println\"\n"
+				+ " *     }\n"
+				+ " * }\n"
+				+ " * }\n"
+				+ " */\n"
+				+ "public class Test {\n"
+				+ "}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 11, 15);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = "A simple program.  \n"
+				+ "  \n"
+				+ "&nbsp;class HelloWorld {  \n"
+				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) {  \n"
+				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**(\"Hello World!\");        \n"
+				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}  \n"
+				+ "&nbsp;}  \n"
+				+ "  \n";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);

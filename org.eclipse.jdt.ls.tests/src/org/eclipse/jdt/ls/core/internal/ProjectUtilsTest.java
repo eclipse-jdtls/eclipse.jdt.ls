@@ -34,7 +34,7 @@ public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(project.getLocation(), path);
 	}
 
-	
+
 	@Test
 	public void testGetMaxProjectProblemSeverity() throws Exception {
 		importProjects("gradle/invalid");

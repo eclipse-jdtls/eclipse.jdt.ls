@@ -91,12 +91,12 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 	public void testPreviewFeaturesSettingsDisabled() throws Exception {
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
 		try {
-			TestVMType.setTestJREAsDefault("17");
-			IProject invisibleProject = copyAndImportFolder("singlefile/java17a", "foo/bar/Foo.java");
+			TestVMType.setTestJREAsDefault("18");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java18a", "foo/bar/Foo.java");
 			assertTrue(invisibleProject.exists());
 			assertNoErrors(invisibleProject);
 			IJavaProject javaProject = JavaCore.create(invisibleProject);
-			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+			assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
@@ -107,12 +107,12 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 	public void testPreviewFeaturesSettingEnabled() throws Exception {
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
 		try {
-			TestVMType.setTestJREAsDefault("17");
-			IProject invisibleProject = copyAndImportFolder("singlefile/java17b", "foo/bar/Foo.java");
+			TestVMType.setTestJREAsDefault("18");
+			IProject invisibleProject = copyAndImportFolder("singlefile/java18b", "foo/bar/Foo.java");
 			assertTrue(invisibleProject.exists());
 			assertNoErrors(invisibleProject);
 			IJavaProject javaProject = JavaCore.create(invisibleProject);
-			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+			assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
