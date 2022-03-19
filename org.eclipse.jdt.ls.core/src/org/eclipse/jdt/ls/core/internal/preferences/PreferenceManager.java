@@ -129,6 +129,7 @@ public class PreferenceManager {
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERBODY, CodeGenerationTemplate.SETTERBOY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, CodeGenerationTemplate.CATCHBODY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODBODY, CodeGenerationTemplate.METHODBODY.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_NEWTYPE, CodeGenerationTemplate.NEWTYPE.createTemplate());
 		reloadTemplateStore();
 	}
 

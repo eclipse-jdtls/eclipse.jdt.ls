@@ -20,6 +20,12 @@ import org.eclipse.jface.text.templates.Template;
 
 public enum CodeGenerationTemplate {
 	/**
+	 * New type template
+	 */
+	NEWTYPE(CodeTemplatePreferences.CODETEMPLATE_NEWTYPE,
+			CodeTemplateContextType.NEWTYPE_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_NEWTYPE_DEFAULT),
+	/**
 	 * File comment template
 	 */
 	FILECOMMENT(CodeTemplatePreferences.CODETEMPLATE_FILECOMMENT, CodeTemplateContextType.FILECOMMENT_CONTEXTTYPE, ""),

@@ -26,6 +26,10 @@ public class CodeTemplatePreferences {
 	private static final String BLOCK_SUFFIX = "block"; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for new types
+	 */
+	public static final String CODETEMPLATE_NEWTYPE = CODETEMPLATES_PREFIX + "newtype";
+	/**
 	 * A named preference that defines the template for file comments
 	 */
 	public static final String CODETEMPLATE_FILECOMMENT = CODETEMPLATES_PREFIX + "file" + COMMENT_SUFFIX;
@@ -106,6 +110,10 @@ public class CodeTemplatePreferences {
 
 	public static final String RECORDSNIPPET_CONTEXTTYPE = "recordsnippet_context"; //$NON-NLS-1$
 
+	/**
+	 * Default value for new type
+	 */
+	public static final String CODETEMPLATE_NEWTYPE_DEFAULT = "${filecomment}\n${package_declaration}\n\n${typecomment}\n${type_declaration}";
 	/**
 	 * Default value for field comments
 	 */
