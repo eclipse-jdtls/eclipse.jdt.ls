@@ -358,12 +358,11 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 		return cuChange;
 	}
 
-	// fileComment/typeComment not enabled.
 	private String constructCUContent(ICompilationUnit cu, String typeContent, String lineDelimiter) throws CoreException {
-		//		String fileComment = getFileComment(cu, lineDelimiter);
-		//		String typeComment = getTypeComment(cu, lineDelimiter);
+		String fileComment = CodeGeneration.getFileComment(cu, lineDelimiter);
+		String typeComment = CodeGeneration.getTypeComment(cu, cu.getElementName(), lineDelimiter);
 		IPackageFragment pack = (IPackageFragment) cu.getParent();
-		String content = CodeGeneration.getCompilationUnitContent(cu, null/*fileComment*/, null/*typeComment*/, typeContent, lineDelimiter);
+		String content = CodeGeneration.getCompilationUnitContent(cu, fileComment, typeComment, typeContent, lineDelimiter);
 		if (content != null) {
 
 			ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
@@ -379,9 +378,6 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 			buf.append("package ").append(pack.getElementName()).append(';'); //$NON-NLS-1$
 		}
 		buf.append(lineDelimiter).append(lineDelimiter);
-		//		if (typeComment != null) {
-		//			buf.append(typeComment).append(lineDelimiter);
-		//		}
 		buf.append(typeContent);
 		return buf.toString();
 	}

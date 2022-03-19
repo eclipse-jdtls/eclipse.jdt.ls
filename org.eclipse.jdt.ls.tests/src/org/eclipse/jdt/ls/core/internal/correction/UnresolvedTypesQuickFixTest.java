@@ -484,6 +484,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public class Test {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -492,6 +496,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public interface Test {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -499,6 +507,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
 		buf.append("\n");
 		buf.append("public enum Test {\n");
 		buf.append("\n");
@@ -598,6 +610,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public class XXX {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -620,6 +636,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
 		buf.append("\n");
 		buf.append("public class XXX {\n");
 		buf.append("\n");
@@ -649,6 +669,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public interface XXX {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -670,6 +694,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public @interface Xyz {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -690,6 +718,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package scratch;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
 		buf.append("\n");
 		buf.append("public @interface Unimportant {\n");
 		buf.append("\n");
@@ -908,6 +940,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
+		buf.append("\n");
 		buf.append("public class XXY<T> {\n");
 		buf.append("\n");
 		buf.append("}\n");
@@ -915,6 +951,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
 		buf.append("\n");
 		buf.append("public interface XXY<T> {\n");
 		buf.append("\n");
@@ -1463,6 +1503,10 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * \n");
+		buf.append(" */\n");
 		buf.append("\n");
 		buf.append("public final class F implements E {\n");
 		buf.append("\n");

@@ -165,6 +165,15 @@ public class PreferenceManagerTest {
 	}
 
 	@Test
+	public void testUpdateNewTypeTemplate() {
+		preferenceManager.initialize();
+
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.NEWTYPE_ID);
+		assertNotNull(template);
+		assertEquals(CodeTemplatePreferences.CODETEMPLATE_NEWTYPE_DEFAULT, template.getPattern());
+	}
+
+	@Test
 	public void testInsertSpacesTabSize() {
 		preferenceManager.initialize();
 		Preferences preferences = new Preferences();
