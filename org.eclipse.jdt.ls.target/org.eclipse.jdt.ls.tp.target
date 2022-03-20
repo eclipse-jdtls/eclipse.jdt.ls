@@ -35,7 +35,7 @@
             <repository location="https://download.eclipse.org/releases/2021-09/202109151000/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.11.0/"/>
+           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.12.0/"/>
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
         </location>
     </locations>
