@@ -221,6 +221,7 @@ final public class InitHandler extends BaseInitHandler {
 		semanticTokensOptions.setDocumentSelector(List.of(new DocumentFilter("java", "file", null), new DocumentFilter("java", "jdt", null)));
 		semanticTokensOptions.setLegend(SemanticTokensHandler.legend());
 		capabilities.setSemanticTokensProvider(semanticTokensOptions);
+		capabilities.setTypeHierarchyProvider(Boolean.TRUE);
 
 		initializeResult.setCapabilities(capabilities);
 	}
