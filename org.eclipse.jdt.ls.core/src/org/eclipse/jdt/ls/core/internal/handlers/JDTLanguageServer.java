@@ -147,6 +147,10 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.TypeDefinitionParams;
+import org.eclipse.lsp4j.TypeHierarchyItem;
+import org.eclipse.lsp4j.TypeHierarchyPrepareParams;
+import org.eclipse.lsp4j.TypeHierarchySubtypesParams;
+import org.eclipse.lsp4j.TypeHierarchySupertypesParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbol;
@@ -180,6 +184,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
+	private TypeHierarchyHandler typeHierarchyHandler = new TypeHierarchyHandler();
 
 	private ProgressReporterManager progressReporterManager;
 	/**
@@ -1171,6 +1176,24 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<CheckExtractInterfaceResponse> checkExtractInterfaceStatus(CodeActionParams params) {
 		debugTrace(">> java/checkExtractInterfaceStatus");
 		return computeAsync((monitor) -> ExtractInterfaceHandler.checkExtractInterfaceStatus(params));
+	}
+
+	@Override
+	public CompletableFuture<List<TypeHierarchyItem>> prepareTypeHierarchy(TypeHierarchyPrepareParams params) {
+		logInfo(">> textDocument/prepareTypeHierarchy");
+		return computeAsync(monitor -> typeHierarchyHandler.prepareTypeHierarchy(params, monitor));
+	}
+
+	@Override
+	public CompletableFuture<List<TypeHierarchyItem>> typeHierarchySupertypes(TypeHierarchySupertypesParams params) {
+		logInfo(">> typeHierarchy/supertypes");
+		return computeAsync(monitor -> typeHierarchyHandler.getSupertypeItems(params, monitor));
+	}
+
+	@Override
+	public CompletableFuture<List<TypeHierarchyItem>> typeHierarchySubtypes(TypeHierarchySubtypesParams params) {
+		logInfo(">> typeHierarchy/subtypes");
+		return computeAsync(monitor -> typeHierarchyHandler.getSubtypeItems(params, monitor));
 	}
 
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
