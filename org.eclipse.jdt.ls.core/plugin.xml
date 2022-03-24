@@ -98,12 +98,6 @@
                   id="java.project.resolveStackTraceLocation">
             </command>
             <command
-                  id="java.navigate.openTypeHierarchy">
-            </command>
-            <command
-                  id="java.navigate.resolveTypeHierarchy">
-            </command>
-            <command
                   id="java.project.upgradeGradle">
             </command>
             <command
