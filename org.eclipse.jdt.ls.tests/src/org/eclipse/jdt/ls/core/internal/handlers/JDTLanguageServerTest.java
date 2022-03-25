@@ -30,6 +30,7 @@ import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -126,6 +127,7 @@ public class JDTLanguageServerTest {
 		reset(client);
 		server.initialized(null);
 		JobHelpers.waitForJobsToComplete(new NullProgressMonitor());
+		waitForInitializeJobs();
 		server.didChangeConfiguration(params);
 		verify(client, times(6)).registerCapability(any());
 
@@ -186,4 +188,12 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isOnTypeFormattingDynamicRegistrationSupported()).thenReturn(enable);
 	}
 
+	private void waitForInitializeJobs() throws InterruptedException {
+		Job[] jobs = Job.getJobManager().find(null);
+		for(int i = 0; i < jobs.length; i++ ) {
+			if ("Initialize workspace".equals(jobs[i].getName())) {
+				jobs[i].join();
+			}
+		}
+	}
 }
