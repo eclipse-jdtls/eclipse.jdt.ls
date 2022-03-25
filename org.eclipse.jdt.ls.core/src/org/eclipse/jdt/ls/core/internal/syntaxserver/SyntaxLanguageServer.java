@@ -198,8 +198,6 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		} catch (OperationCanceledException | InterruptedException e) {
 			logException(e.getMessage(), e);
 		}
-		this.client.sendStatus(ServiceStatus.Started, "LightWeightServiceReady");
-		logInfo(">> initialization job finished");
 
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
@@ -237,6 +235,9 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
 			projectsManager.registerWatchers();
 		}
+
+		this.client.sendStatus(ServiceStatus.Started, "LightWeightServiceReady");
+		logInfo(">> initialization job finished");
 	}
 
 	@Override

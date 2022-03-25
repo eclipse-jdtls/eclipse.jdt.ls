@@ -29,6 +29,9 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
@@ -117,6 +120,14 @@ public class JDTLanguageServerTest {
 		map.put(Preferences.JAVA_FORMAT_ON_TYPE_ENABLED_KEY, true);
 		DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 
+		// If initialized jobs are not finished, won't register capabilities
+		server.didChangeConfiguration(params);
+		verify(client, times(0)).registerCapability(any());
+
+		reset(client);
+		server.initialized(null);
+		JobHelpers.waitForJobsToComplete(new NullProgressMonitor());
+		waitForInitializeJobs();
 		server.didChangeConfiguration(params);
 		verify(client, times(6)).registerCapability(any());
 
@@ -177,4 +188,12 @@ public class JDTLanguageServerTest {
 		when(clientPreferences.isOnTypeFormattingDynamicRegistrationSupported()).thenReturn(enable);
 	}
 
+	private void waitForInitializeJobs() throws InterruptedException {
+		Job[] jobs = Job.getJobManager().find(null);
+		for(int i = 0; i < jobs.length; i++ ) {
+			if ("Initialize workspace".equals(jobs[i].getName())) {
+				jobs[i].join();
+			}
+		}
+	}
 }
