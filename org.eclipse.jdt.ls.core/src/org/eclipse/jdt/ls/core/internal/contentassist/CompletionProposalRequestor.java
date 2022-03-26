@@ -440,4 +440,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 	}
 
+	@Override
+	public boolean isIgnored(char[] fullTypeName) {
+		return fullTypeName != null && TypeFilter.isFiltered(fullTypeName);
+	}
+
 }
