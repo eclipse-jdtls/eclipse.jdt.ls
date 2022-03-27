@@ -150,6 +150,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
+	public static final String JAVA_LSP_INITIALIZE_WORKSPACE = "java.lsp.initializeWorkspace";
 	/**
 	 * Exit code returned when JDTLanguageServer is forced to exit.
 	 */
@@ -284,6 +285,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				}
 				return Status.OK_STATUS;
 			}
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return JAVA_LSP_INITIALIZE_WORKSPACE.equals(family);
+			}
+
 		};
 		initializeWorkspace.setPriority(Job.BUILD);
 		initializeWorkspace.setSystem(true);

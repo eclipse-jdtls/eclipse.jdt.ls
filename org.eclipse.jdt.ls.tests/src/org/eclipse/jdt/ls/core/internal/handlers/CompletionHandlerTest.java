@@ -23,7 +23,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -46,7 +45,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
-import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -3487,12 +3485,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
-		reset(preferenceManager);
-		initPreferenceManager(true);
-		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		// Mock the preference manager to use LSP v3 support.
-		when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
-		when(mockCapabilies.isSignatureHelpSupported()).thenReturn(isSignatureHelpSuported);
-		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
+		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(isSignatureHelpSuported);
 	}
 }

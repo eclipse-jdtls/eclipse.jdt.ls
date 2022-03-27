@@ -80,6 +80,7 @@ public class ProgressReporterManagerTest {
 		assertEquals(4, reports.get(1).getWorkDone());
 		assertEquals(7, reports.get(2).getWorkDone());
 		assertEquals(10, reports.get(3).getWorkDone());
+		monitor.done();
 	}
 
 	@Test
@@ -173,7 +174,7 @@ public class ProgressReporterManagerTest {
 		StatusReport report2 = reports.get(1);
 		assertEquals("50% Starting Java Language Server", report2.getMessage());
 		assertEquals(ServiceStatus.Starting.name(), report2.getType());
-
+		monitor.done();
 	}
 
 
