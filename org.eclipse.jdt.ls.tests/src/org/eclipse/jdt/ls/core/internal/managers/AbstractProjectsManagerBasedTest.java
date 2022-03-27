@@ -247,7 +247,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected void waitForBackgroundJobs() throws Exception {
 		JobHelpers.waitForJobsToComplete(monitor);
-		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, monitor);
 	}
 
 	protected File getSourceProjectDirectory() {

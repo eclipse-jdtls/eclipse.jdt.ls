@@ -45,8 +45,10 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
@@ -109,10 +111,8 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IFile file = linkFilesToDefaultProject("singlefile/WithError.java");
 		java.io.File physicalFile = new java.io.File(file.getLocationURI());
 		physicalFile.delete();
-
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(projectsManager);
 		BuildWorkspaceStatus result = handler.buildWorkspace(true, monitor);
-
 		waitForBackgroundJobs();
 		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), BuildWorkspaceStatus.SUCCEED, result);
 	}
@@ -131,6 +131,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(initWorkspaceJob);
 		projectsManager.updateWorkspaceFolders(Collections.emptySet(), rootPaths);
 		waitForBackgroundJobs();
+		JobHelpers.waitForJobs(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY, new NullProgressMonitor());
 		assertTrue("the init job hasn't been cancelled, status is: " + initWorkspaceJob.getResult().getSeverity(), initWorkspaceJob.getResult().matches(IStatus.CANCEL));
 	}
 
@@ -145,10 +146,10 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(updateWorkspaceJob);
 		projectsManager.updateWorkspaceFolders(Collections.emptySet(), addedRootPaths);
 		waitForBackgroundJobs();
+		JobHelpers.waitForJobs(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY, new NullProgressMonitor());
 		assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
 	}
 
-	@SuppressWarnings("restriction")
 	@Test
 	public void testResourceFilters() throws Exception {
 		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
@@ -194,7 +195,6 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
 		configurationPaths.add(filePath);
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-	
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
@@ -215,9 +215,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("hello/.project").toUri().toString()));
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
-
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
@@ -235,13 +233,10 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testImportMixedProjectsPartially() throws IOException, OperationCanceledException, CoreException {
 		Path projectDir = copyFiles("mixed", true).toPath();
-	
 		Collection<IPath> configurationPaths = new ArrayList<>();
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
-
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-	
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
@@ -259,14 +254,11 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	public void testSendingOKProjectStatus() throws Exception {
 		importProjects("gradle/simple-gradle");
 		IProject project = WorkspaceHelper.getProject("simple-gradle");
-
 		JDTLanguageServer server = mock(JDTLanguageServer.class);
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 		doNothing().when(server).sendStatus(any(), any());
-
 		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();
-
 		ArgumentCaptor<ServiceStatus> status = ArgumentCaptor.forClass(ServiceStatus.class);
 		ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
 		verify(server, times(2)).sendStatus(status.capture(), msg.capture());
@@ -278,14 +270,11 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	public void testSendingWarningProjectStatus() throws Exception {
 		importProjects("gradle/invalid");
 		IProject project = WorkspaceHelper.getProject("invalid");
-
 		JDTLanguageServer server = mock(JDTLanguageServer.class);
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 		doNothing().when(server).sendStatus(any(), any());
-
 		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();
-
 		ArgumentCaptor<ServiceStatus> status = ArgumentCaptor.forClass(ServiceStatus.class);
 		ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
 		verify(server, times(2)).sendStatus(status.capture(), msg.capture());

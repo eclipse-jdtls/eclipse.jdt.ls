@@ -218,6 +218,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
 		waitForBackgroundJobs();
+		JobHelpers.waitForJobs(JDTLanguageServer.JAVA_LSP_INITIALIZE_WORKSPACE, monitor);
 		verify(client, times(9)).registerCapability(any());
 		waitForBackgroundJobs();
 	}
