@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
+import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -415,6 +416,11 @@ public class Preferences {
 	public static final String JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS = "java.codeGeneration.toString.listArrayContents";
 	public static final String JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS = "java.codeGeneration.toString.limitElements";
 
+	/**
+	 * Preference key for the inlay hints parameters mode
+	 */
+	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED = "java.inlayHints.parameterNames.enabled";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -539,6 +545,7 @@ public class Preferences {
 	private List<String> typeCommentTemplate = new LinkedList<>();
 	private boolean insertSpaces;
 	private int tabSize;
+	private InlayHintsParameterMode inlayHintsParameterMode;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -751,6 +758,7 @@ public class Preferences {
 		insertSpaces = true;
 		tabSize = DEFAULT_TAB_SIZE;
 		mavenNotCoveredPluginExecutionSeverity = "ignore";
+		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 	}
 
 	/**
@@ -1029,6 +1037,8 @@ public class Preferences {
 		prefs.setIncludeDecompiledSources(includeDecompiledSources);
 		boolean includeSourceMethodDeclarations = getBoolean(configuration, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS, false);
 		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
+		String inlayHintsParameterMode = getString(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, null);
+		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
 		return prefs;
 	}
 
@@ -1806,6 +1816,14 @@ public class Preferences {
 			options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, String.valueOf(tabSize));
 		}
 		options.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, insertSpaces ? JavaCore.SPACE : JavaCore.TAB);
+	}
+
+	public InlayHintsParameterMode getInlayHintsParameterMode() {
+		return inlayHintsParameterMode;
+	}
+
+	public void setInlayHintsParameterMode(InlayHintsParameterMode inlayHintsParameterMode) {
+		this.inlayHintsParameterMode = inlayHintsParameterMode;
 	}
 
 }

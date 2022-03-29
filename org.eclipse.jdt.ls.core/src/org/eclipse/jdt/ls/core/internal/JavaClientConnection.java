@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -35,6 +36,7 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
 import com.google.common.collect.ImmutableList;
@@ -73,6 +75,12 @@ public class JavaClientConnection {
 		@JsonNotification("language/progressReport")
 		void sendProgressReport(ProgressReport report);
 
+		// TODO : remove this method when LSP4J will provide InlayHint support. See
+		// https://github.com/eclipse/lsp4j/issues/570
+		@JsonRequest("workspace/inlayHint/refresh")
+		default CompletableFuture<Void> refreshInlayHints() {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private final LogHandler logHandler;
@@ -220,6 +228,12 @@ public class JavaClientConnection {
 	 */
 	public List<Object> configuration(ConfigurationParams configurationParams) {
 		return this.client.configuration(configurationParams).join();
+	}
+
+	// TODO : remove this method when LSP4J will provide InlayHint support. See
+	// https://github.com/eclipse/lsp4j/issues/570
+	public CompletableFuture<Void> refreshInlayHints() {
+		return this.client.refreshInlayHints();
 	}
 
 	public void disconnect() {
