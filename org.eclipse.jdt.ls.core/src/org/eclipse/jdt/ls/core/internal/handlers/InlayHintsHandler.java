@@ -41,7 +41,6 @@ public class InlayHintsHandler {
 	 * @param params
 	 * @param monitor
 	 * @return inlay hints.
-	 * @throws JavaModelException
 	 */
 	public List<InlayHint> inlayHint(InlayHintParams params, IProgressMonitor monitor) {
 		if (InlayHintsParameterMode.NONE.equals(preferenceManager.getPreferences().getInlayHintsParameterMode())) {
@@ -51,6 +50,9 @@ public class InlayHintsHandler {
 		String uri = params.getTextDocument().getUri();
 
 		ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
+		if (typeRoot == null) {
+			return Collections.emptyList();
+		}
 		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
 		if (root == null || monitor.isCanceled()) {
 			return Collections.emptyList();
