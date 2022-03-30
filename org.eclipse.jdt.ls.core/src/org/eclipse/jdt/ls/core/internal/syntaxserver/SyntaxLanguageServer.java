@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -96,6 +97,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 public class SyntaxLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, IExtendedProtocol {
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 
+	private final ExecutorService executorService;
 	private SyntaxDocumentLifeCycleHandler documentLifeCycleHandler;
 	private ContentProviderManager contentProviderManager;
 	private ProjectsManager projectsManager;
@@ -106,6 +108,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		protected IStatus run(IProgressMonitor monitor) {
 			try {
 				ResourcesPlugin.getWorkspace().save(true, monitor);
+				executorService.shutdown();
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
 			}
@@ -127,6 +130,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		this.contentProviderManager = contentProviderManager;
 		this.projectsManager = projectsManager;
 		this.preferenceManager = preferenceManager;
+		this.executorService = Executors.newCachedThreadPool();
 		this.documentLifeCycleHandler = new SyntaxDocumentLifeCycleHandler(null, projectsManager, preferenceManager, delayValidation);
 	}
 
@@ -395,7 +399,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
-		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
+		CompletionResolveHandler handler = new CompletionResolveHandler(executorService, preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
 			monitors[0] = monitor;

@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -162,6 +163,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 * Exit code returned when JDTLanguageServer is forced to exit.
 	 */
 	private static final int FORCED_EXIT_CODE = 1;
+	private final CompletionResolveHandler completionResolveHandler;
+	private final ExecutorService executorService;
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
@@ -192,6 +195,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					classpathUpdateHandler = null;
 				}
 				ResourcesPlugin.getWorkspace().save(true, monitor);
+				executorService.shutdown();
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
 			}
@@ -210,11 +214,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler) {
+		this.executorService = Executors.newCachedThreadPool();
 		this.pm = projects;
 		this.preferenceManager = preferenceManager;
 		this.jvmConfigurator = new JVMConfigurator();
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 		this.commandHandler = commandHandler;
+		this.completionResolveHandler = new CompletionResolveHandler(executorService, preferenceManager);
 	}
 
 	@Override
@@ -564,14 +570,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
-		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
 			monitors[0] = monitor;
 			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
 				waitForLifecycleJobs(monitor);
 			}
-			return handler.resolve(unresolved, monitor);
+			return completionResolveHandler.resolve(unresolved, monitor);
 		});
 		result.join();
 		if (monitors[0].isCanceled()) {
@@ -596,7 +601,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams position) {
 		logInfo(">> document/signatureHelp");
-		SignatureHelpHandler handler = new SignatureHelpHandler(preferenceManager);
+		SignatureHelpHandler handler = new SignatureHelpHandler(executorService, preferenceManager);
 		return computeAsync((monitor) -> handler.signatureHelp(position, monitor));
 	}
 
