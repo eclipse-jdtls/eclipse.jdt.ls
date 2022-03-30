@@ -18,9 +18,13 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.stripS
 
 import java.io.Reader;
 import java.util.Map;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionContext;
@@ -61,10 +65,6 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.osgi.util.NLS;
-
-import com.google.common.io.CharStreams;
-import com.google.common.util.concurrent.SimpleTimeLimiter;
-import com.google.common.util.concurrent.UncheckedTimeoutException;
 /**
  * Adds the completion string and documentation.
  * It checks the client capabilities.
@@ -80,9 +80,11 @@ public class CompletionResolveHandler {
 	public static final String DEFAULT = "Default: ";
 	private static final String VALUE = "Value: ";
 	private final PreferenceManager manager;
+	private final ExecutorService executorService;
 
-	public CompletionResolveHandler(PreferenceManager manager) {
+	public CompletionResolveHandler(ExecutorService executorService, PreferenceManager manager) {
 		this.manager = manager;
+		this.executorService = executorService;
 	}
 
 	public static final String DATA_FIELD_URI = "uri";
@@ -193,7 +195,7 @@ public class CompletionResolveHandler {
 					String javadoc = null;
 					try {
 						final IMember curMember = member;
-						javadoc = SimpleTimeLimiter.create(Executors.newCachedThreadPool()).callWithTimeout(() -> {
+						javadoc = SimpleTimeLimiter.create(executorService).callWithTimeout(() -> {
 							Reader reader;
 							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 								reader = JavadocContentAccess2.getMarkdownContentReader(curMember);
@@ -282,5 +284,4 @@ public class CompletionResolveHandler {
 		}
 		return param;
 	}
-
 }

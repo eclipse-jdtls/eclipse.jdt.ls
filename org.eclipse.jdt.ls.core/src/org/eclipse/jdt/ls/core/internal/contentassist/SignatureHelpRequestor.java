@@ -23,8 +23,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.CompletionContext;
@@ -51,15 +55,12 @@ import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
 
-import com.google.common.io.CharStreams;
-import com.google.common.util.concurrent.SimpleTimeLimiter;
-import com.google.common.util.concurrent.UncheckedTimeoutException;
-
 public final class SignatureHelpRequestor extends CompletionRequestor {
 
 	private List<CompletionProposal> proposals = new ArrayList<>();
 	private List<CompletionProposal> typeProposals = new ArrayList<>();
 	private final ICompilationUnit unit;
+	private final ExecutorService executorService;
 	private CompletionProposalDescriptionProvider descriptionProvider;
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
 	private boolean acceptType = false;
@@ -234,7 +235,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 							}
 							String javadoc = null;
 							try {
-								javadoc = SimpleTimeLimiter.create(Executors.newCachedThreadPool()).callWithTimeout(() -> {
+								javadoc = SimpleTimeLimiter.create(executorService).callWithTimeout(() -> {
 									Reader reader = JavadocContentAccess.getPlainTextContentReader(method);
 									return reader == null ? null : CharStreams.toString(reader);
 								}, 500, TimeUnit.MILLISECONDS);
@@ -269,7 +270,6 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 		Preferences preferences = preferencesManager.getPreferences();
 		if (preferences == null) {
-			return false;
 		}
 
 		return preferences.isSignatureHelpDescriptionEnabled();

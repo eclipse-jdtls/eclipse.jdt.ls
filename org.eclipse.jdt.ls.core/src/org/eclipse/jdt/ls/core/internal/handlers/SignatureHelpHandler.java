@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -57,9 +58,11 @@ public class SignatureHelpHandler {
 
 	private static final int SEARCH_BOUND = 2000;
 
-	private PreferenceManager preferenceManager;
+	private final PreferenceManager preferenceManager;
+	private final ExecutorService executorService;
 
-	public SignatureHelpHandler(PreferenceManager preferenceManager) {
+	public SignatureHelpHandler(ExecutorService executorService, PreferenceManager preferenceManager) {
+		this.executorService = executorService;
 		this.preferenceManager = preferenceManager;
 	}
 
