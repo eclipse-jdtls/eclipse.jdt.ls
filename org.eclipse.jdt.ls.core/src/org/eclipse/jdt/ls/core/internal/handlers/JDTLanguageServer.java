@@ -139,6 +139,9 @@ import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
+import org.eclipse.lsp4j.proposed.InlayHint;
+import org.eclipse.lsp4j.proposed.InlayHintParams;
+import org.eclipse.lsp4j.proposed.InlayHintProvider;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
@@ -147,7 +150,8 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions {
+public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService,
+		JavaProtocolExtensions, InlayHintProvider {
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	public static final String JAVA_LSP_INITIALIZE_WORKSPACE = "java.lsp.initializeWorkspace";
@@ -1022,6 +1026,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		logInfo(">> textDocument/semanticTokens/full");
 		return computeAsync(monitor -> SemanticTokensHandler.full(monitor, params,
 			documentLifeCycleHandler.new DocumentMonitor(params.getTextDocument().getUri())));
+	}
+
+	@Override
+	public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+		logInfo(">> textDocument/inlayHint");
+		return computeAsync(monitor -> new InlayHintsHandler(preferenceManager).inlayHint(params, monitor));
 	}
 
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
