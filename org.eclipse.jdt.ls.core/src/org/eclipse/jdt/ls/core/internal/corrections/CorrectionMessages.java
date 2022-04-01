@@ -82,6 +82,7 @@ public final class CorrectionMessages extends NLS {
 	public static String CorrectPackageDeclarationProposal_remove_description;
 	public static String CorrectPackageDeclarationProposal_add_description;
 	public static String CorrectPackageDeclarationProposal_change_description;
+	public static String QuickAssistProcessor_extractmethod_from_lambda_description;
 
 	public static String ChangeCorrectionProposal_error_title;
 	public static String ChangeCorrectionProposal_error_message;

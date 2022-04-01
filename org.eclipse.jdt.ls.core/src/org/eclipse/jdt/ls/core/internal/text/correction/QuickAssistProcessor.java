@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
@@ -118,6 +119,7 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
@@ -125,6 +127,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAs
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -172,7 +175,7 @@ public class QuickAssistProcessor {
 
 			// boolean noErrorsAtLocation = noErrorsAtLocation(locations);
 			// if (noErrorsAtLocation) {
-				// boolean problemsAtLocation = locations.length != 0;
+			boolean problemsAtLocation = locations.length != 0;
 				//				getCatchClauseToThrowsProposals(context, coveringNode, resultingCollections);
 				//				getPickoutTypeFromMulticatchProposals(context, coveringNode, coveredNodes, resultingCollections);
 				//				getConvertToMultiCatchProposals(context, coveringNode, resultingCollections);
@@ -190,6 +193,7 @@ public class QuickAssistProcessor {
 				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
 				//				getAddInferredLambdaParameterTypes(context, coveringNode, resultingCollections);
+			getExtractMethodFromLambdaProposal(context, coveringNode, problemsAtLocation, resultingCollections);
 			getConvertMethodReferenceToLambdaProposal(context, coveringNode, resultingCollections);
 			getConvertLambdaToMethodReferenceProposal(context, coveringNode, resultingCollections);
 				//				getFixParenthesesInLambdaExpression(context, coveringNode, resultingCollections);
@@ -207,6 +211,37 @@ public class QuickAssistProcessor {
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private static boolean getExtractMethodFromLambdaProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
+			return false;
+		}
+		ASTNode node = ASTNodes.getFirstAncestorOrNull(coveringNode, LambdaExpression.class, BodyDeclaration.class);
+		if (!(node instanceof LambdaExpression)) {
+			return false;
+		}
+		ASTNode body = ((LambdaExpression) node).getBody();
+		final ICompilationUnit cu = context.getCompilationUnit();
+		final ExtractMethodRefactoring extractMethodRefactoring = new ExtractMethodRefactoring(context.getASTRoot(), body.getStartPosition(), body.getLength());
+		String uniqueMethodName = RefactorProposalUtility.getUniqueMethodName(coveringNode, "extracted"); // $NON-NLS-1$
+		extractMethodRefactoring.setMethodName(uniqueMethodName);
+		if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			if (proposals == null) {
+				return true;
+			}
+			String label = CorrectionMessages.QuickAssistProcessor_extractmethod_from_lambda_description;
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
+
+			// Image image= JavaPluginImages.get(JavaPluginImages.IMG_MISC_PUBLIC);
+			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_LAMBDA_BODY_TO_METHOD;
+			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, cu, extractMethodRefactoring, relevance/*, image*/);
+			proposal.setLinkedProposalModel(linkedProposalModel);
+			proposals.add(proposal);
+			return true;
+		}
+		return false;
 	}
 
 	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {

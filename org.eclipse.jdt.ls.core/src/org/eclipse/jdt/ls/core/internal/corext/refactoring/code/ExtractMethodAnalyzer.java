@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
  *
  * Originally copied from org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodAnalyzer
  *
@@ -73,6 +73,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
+import org.eclipse.jdt.core.dom.YieldStatement;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
@@ -87,6 +88,7 @@ import org.eclipse.jdt.internal.corext.dom.LocalVariableIndex;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.flow.FlowContext;
 import org.eclipse.jdt.internal.corext.refactoring.code.flow.FlowInfo;
 import org.eclipse.jdt.internal.corext.refactoring.code.flow.InOutFlowAnalyzer;
@@ -94,8 +96,7 @@ import org.eclipse.jdt.internal.corext.refactoring.code.flow.InputFlowAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.util.CodeAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -207,7 +208,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 	boolean isValidDestination(ASTNode node) {
 		boolean isInterface = node instanceof TypeDeclaration && ((TypeDeclaration) node).isInterface();
-		return !(node instanceof AnnotationTypeDeclaration) && !(isInterface && !JavaModelUtil.is1d8OrHigher(fCUnit.getJavaProject()));
+		return !(node instanceof AnnotationTypeDeclaration) && (!isInterface || JavaModelUtil.is1d8OrHigher(fCUnit.getJavaProject()));
 	}
 
 	public RefactoringStatus checkInitialConditions(ImportRewrite rewriter) {
@@ -225,7 +226,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			}
 			destination = ASTResolving.findParentType(destination.getParent());
 		}
-		if (validDestinations.size() == 0) {
+		if (validDestinations.isEmpty()) {
 			result.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_no_valid_destination_type);
 			return result;
 		}
@@ -261,7 +262,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			ASTNode node = nodes[0];
 			if (node instanceof Type) {
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_type_reference, JavaStatusContext.create(fCUnit, node));
-			} else if (node.getLocationInParent() == SwitchCase.EXPRESSION_PROPERTY) {
+			} else if (node.getLocationInParent() == SwitchCase.EXPRESSION_PROPERTY || node.getLocationInParent() == SwitchCase.EXPRESSIONS2_PROPERTY) {
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_switch_case, JavaStatusContext.create(fCUnit, node));
 			} else if (node instanceof Annotation || ASTNodes.getParent(node, Annotation.class) != null) {
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_from_annotation, JavaStatusContext.create(fCUnit, node));
@@ -430,16 +431,21 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		}
 
 		final String continueMatchesLoopProblem[] = { null };
-		for (int i = 0; i < selectedNodes.length; i++) {
-			final ASTNode astNode = selectedNodes[i];
+		for (ASTNode astNode : selectedNodes) {
 			astNode.accept(new ASTVisitor() {
 				ArrayList<String> fLocalLoopLabels = new ArrayList<>();
+				ArrayList<Statement> fBreakTargets = new ArrayList<>();
 
 				@Override
 				public boolean visit(BreakStatement node) {
 					SimpleName label = node.getLabel();
 					if (label != null && !fLocalLoopLabels.contains(label.getIdentifier())) {
 						continueMatchesLoopProblem[0] = Messages.format(RefactoringCoreMessages.ExtractMethodAnalyzer_branch_break_mismatch, new Object[] { ("break " + label.getIdentifier()) }); //$NON-NLS-1$
+					} else if (label == null) {
+						ASTNode parentStatement = ASTNodes.getFirstAncestorOrNull(node, WhileStatement.class, ForStatement.class, DoStatement.class, SwitchStatement.class, EnhancedForStatement.class);
+						if (parentStatement != null && !fBreakTargets.contains(parentStatement)) {
+							continueMatchesLoopProblem[0] = RefactoringCoreMessages.ExtractMethodAnalyzer_break_parent_missing;
+						}
 					}
 					return false;
 				}
@@ -451,6 +457,31 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 						fLocalLoopLabels.add(label.getIdentifier());
 					}
 					return true;
+				}
+
+				@Override
+				public void endVisit(ForStatement node) {
+					fBreakTargets.add(node);
+				}
+
+				@Override
+				public void endVisit(EnhancedForStatement node) {
+					fBreakTargets.add(node);
+				}
+
+				@Override
+				public void endVisit(DoStatement node) {
+					fBreakTargets.add(node);
+				}
+
+				@Override
+				public void endVisit(SwitchStatement node) {
+					fBreakTargets.add(node);
+				}
+
+				@Override
+				public void endVisit(WhileStatement node) {
+					fBreakTargets.add(node);
 				}
 
 				@Override
@@ -504,7 +535,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			}
 			binding = fEnclosingMethodBinding.getReturnType();
 		}
-		if (fEnclosingBodyDeclaration.getAST().resolveWellKnownType("void").equals(binding)) {
+		if (fEnclosingBodyDeclaration.getAST().resolveWellKnownType("void").equals(binding)) { //$NON-NLS-1$
 			return true;
 		}
 		return false;
@@ -557,10 +588,10 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 	private IVariableBinding[] removeSelectedDeclarations(IVariableBinding[] bindings) {
 		List<IVariableBinding> result = new ArrayList<>(bindings.length);
 		Selection selection = getSelection();
-		for (int i = 0; i < bindings.length; i++) {
-			ASTNode decl = ((CompilationUnit) fEnclosingBodyDeclaration.getRoot()).findDeclaringNode(bindings[i]);
+		for (IVariableBinding binding : bindings) {
+			ASTNode decl = ((CompilationUnit) fEnclosingBodyDeclaration.getRoot()).findDeclaringNode(binding);
 			if (!selection.covers(decl)) {
-				result.add(bindings[i]);
+				result.add(binding);
 			}
 		}
 		return result.toArray(new IVariableBinding[result.size()]);
@@ -572,15 +603,14 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		// first remove all type variables that come from outside of the method
 		// or are covered by the selection
 		CompilationUnit compilationUnit = (CompilationUnit) fEnclosingBodyDeclaration.getRoot();
-		for (int i = 0; i < bindings.length; i++) {
-			ASTNode decl = compilationUnit.findDeclaringNode(bindings[i]);
+		for (ITypeBinding binding : bindings) {
+			ASTNode decl = compilationUnit.findDeclaringNode(binding);
 			if (decl == null || (!selection.covers(decl) && decl.getParent() instanceof MethodDeclaration)) {
-				result.add(bindings[i]);
+				result.add(binding);
 			}
 		}
 		// all all type variables which are needed since a local variable uses it
-		for (int i = 0; i < fArguments.length; i++) {
-			IVariableBinding arg = fArguments[i];
+		for (IVariableBinding arg : fArguments) {
 			ITypeBinding type = arg.getType();
 			if (type != null && type.isTypeVariable()) {
 				ASTNode decl = compilationUnit.findDeclaringNode(type);
@@ -610,8 +640,8 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		IVariableBinding[] reads = argInfo.get(flowContext, FlowInfo.READ | FlowInfo.READ_POTENTIAL | FlowInfo.UNKNOWN);
 		outer: for (int i = 0; i < returnValues.length && localReads.size() < returnValues.length; i++) {
 			IVariableBinding binding = returnValues[i];
-			for (int x = 0; x < reads.length; x++) {
-				if (reads[x] == binding) {
+			for (IVariableBinding read : reads) {
+				if (read == binding) {
 					localReads.add(binding);
 					fReturnValue = binding;
 					continue outer;
@@ -626,7 +656,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 				break;
 			default:
 				fReturnValue = null;
-				StringBuffer affectedLocals = new StringBuffer();
+				StringBuilder affectedLocals = new StringBuilder();
 				for (int i = 0; i < localReads.size(); i++) {
 					IVariableBinding binding = localReads.get(i);
 					String bindingName = BindingLabelProviderCore.getBindingLabel(binding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS | JavaElementLabels.F_PRE_TYPE_SIGNATURE);
@@ -635,22 +665,20 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 						affectedLocals.append('\n');
 					}
 				}
-				String message = MessageFormat.format(RefactoringCoreMessages.ExtractMethodAnalyzer_assignments_to_local, new Object[] { affectedLocals.toString() });
+				String message = MessageFormat.format(RefactoringCoreMessages.ExtractMethodAnalyzer_assignments_to_local, affectedLocals.toString());
 				status.addFatalError(message, JavaStatusContext.create(fCUnit, getSelection()));
 				return;
 		}
 		List<IVariableBinding> callerLocals = new ArrayList<>(5);
 		FlowInfo localInfo = new InputFlowAnalyzer(flowContext, selection, false).perform(fEnclosingBodyDeclaration);
-		IVariableBinding[] writes = localInfo.get(flowContext, FlowInfo.WRITE | FlowInfo.WRITE_POTENTIAL | FlowInfo.UNKNOWN);
-		for (int i = 0; i < writes.length; i++) {
-			IVariableBinding write = writes[i];
+		for (IVariableBinding write : localInfo.get(flowContext, FlowInfo.WRITE | FlowInfo.WRITE_POTENTIAL | FlowInfo.UNKNOWN)) {
 			if (getSelection().covers(ASTNodes.findDeclaration(write, fEnclosingBodyDeclaration))) {
 				callerLocals.add(write);
 			}
 		}
 		fCallerLocals = callerLocals.toArray(new IVariableBinding[callerLocals.size()]);
 		if (fReturnValue != null && getSelection().covers(ASTNodes.findDeclaration(fReturnValue, fEnclosingBodyDeclaration))) {
-			fReturnLocal = fReturnValue;
+			fReturnLocal= fReturnValue;
 		}
 	}
 
@@ -662,13 +690,13 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			// didn't exist when we computed the locals and arguments (see computeInput())
 			if (fInputFlowInfo.hasAccessMode(fInputFlowContext, argument, FlowInfo.WRITE_POTENTIAL)) {
 				if (argument != fReturnValue) {
-					fArguments[i] = null;
+					fArguments[i]= null;
 				}
 				// We didn't remove the argument. So we have to remove the local declaration
 				if (fArguments[i] != null) {
 					for (int l = 0; l < fMethodLocals.length; l++) {
 						if (fMethodLocals[l] == argument) {
-							fMethodLocals[l] = null;
+							fMethodLocals[l]= null;
 						}
 					}
 				}
@@ -687,8 +715,8 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			return null;
 		}
 		int size = 0;
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] != null) {
+		for (IVariableBinding binding : array) {
+			if (binding != null) {
 				size++;
 			}
 		}
@@ -698,7 +726,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		IVariableBinding[] result = new IVariableBinding[size];
 		for (int i = 0, r = 0; i < array.length; i++) {
 			if (array[i] != null) {
-				result[r++] = array[i];
+				result[r++]= array[i];
 			}
 		}
 		return result;
@@ -716,8 +744,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			return fAllExceptions;
 		}
 		List<ITypeBinding> result = new ArrayList<>(fAllExceptions.length);
-		for (int i = 0; i < fAllExceptions.length; i++) {
-			ITypeBinding exception = fAllExceptions[i];
+		for (ITypeBinding exception : fAllExceptions) {
 			if (!includeRuntimeExceptions && Bindings.isRuntimeException(exception)) {
 				continue;
 			}
@@ -892,7 +919,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		int bodyExclusiveEnd = bodyStart + body.getLength();
 
 		boolean isValidSelection = false;
-		if ((body instanceof Block) && (bodyStart < selectionStart && selectionExclusiveEnd <= bodyExclusiveEnd)) {
+		if ((body instanceof Block) && (bodyStart <= selectionStart && selectionExclusiveEnd <= bodyExclusiveEnd)) {
 			// if selection is inside lambda body's block
 			isValidSelection = true;
 		} else if (body instanceof Expression) {
@@ -927,7 +954,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		int nodeStart = body.getStartPosition();
 		int nodeExclusiveEnd = nodeStart + body.getLength();
 		// if selection node inside of the method body ignore method
-		if (!(nodeStart < selection.getOffset() && selection.getExclusiveEnd() < nodeExclusiveEnd)) {
+		if ((nodeStart >= selection.getOffset()) || (selection.getExclusiveEnd() >= nodeExclusiveEnd)) {
 			return false;
 		}
 		return super.visit(node);
@@ -996,11 +1023,47 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 	}
 
 	@Override
+	public void endVisit(QualifiedName node) {
+		if (isResourceInTry(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_resource_used_in_try_with_resources, JavaStatusContext.create(fCUnit, getSelection()));
+		}
+		super.endVisit(node);
+	}
+
+	@Override
+	public void endVisit(BreakStatement node) {
+		if (isFirstSelectedNode(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_break, JavaStatusContext.create(fCUnit, getSelection()));
+		}
+	}
+
+	@Override
+	public void endVisit(ContinueStatement node) {
+		if (isFirstSelectedNode(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_continue, JavaStatusContext.create(fCUnit, getSelection()));
+		}
+	}
+
+	@Override
+	public void endVisit(YieldStatement node) {
+		if (isFirstSelectedNode(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_cannot_extract_yield, JavaStatusContext.create(fCUnit, getSelection()));
+		}
+		super.endVisit(node);
+	}
+
+	@Override
+	public void endVisit(SimpleName node) {
+		if (isResourceInTry(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_resource_used_in_try_with_resources, JavaStatusContext.create(fCUnit, getSelection()));
+		}
+		super.endVisit(node);
+	}
+
+	@Override
 	public void endVisit(VariableDeclarationExpression node) {
-		if (getSelection().getEndVisitSelectionMode(node) == Selection.SELECTED && getFirstSelectedNode() == node) {
-			if (node.getLocationInParent() == TryStatement.RESOURCES_PROPERTY) {
-				invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_resource_in_try_with_resources, JavaStatusContext.create(fCUnit, getSelection()));
-			}
+		if (isResourceInTry(node)) {
+			invalidSelection(RefactoringCoreMessages.ExtractMethodAnalyzer_resource_in_try_with_resources, JavaStatusContext.create(fCUnit, getSelection()));
 		}
 		checkTypeInDeclaration(node.getType());
 		super.endVisit(node);
@@ -1031,6 +1094,10 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 			return false;
 		}
 		return true;
+	}
+
+	private boolean isResourceInTry(Expression node) {
+		return getSelection().getEndVisitSelectionMode(node) == Selection.SELECTED && getFirstSelectedNode() == node && node.getLocationInParent() == TryStatement.RESOURCES2_PROPERTY;
 	}
 }
 
