@@ -366,6 +366,55 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 	}
 
 	@Test
+	public void testExtractLambdaBodyToMethod() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		//@formatter:off
+		String contents = "package test1;\r\n"
+				+ "interface F1 {\r\n"
+				+ "    int foo1(int a);\r\n"
+				+ "}\r\n"
+				+ "public class E {\r\n"
+				+ "    public void foo(int a) {\r\n"
+				+ "        F1 k = (e) -> {\r\n"
+				+ "            int x = e + 3;\r\n"
+				+ "            if (x > 3) {\r\n"
+				+ "                return a;\r\n"
+				+ "            }\r\n"
+				+ "            return x;\r\n"
+				+ "        };\r\n"
+				+ "        k.foo1(4);\r\n"
+				+ "    }\r\n"
+				+ "}";
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", contents, false, null);
+		//@formatter:off
+		String expected = "package test1;\r\n"
+				+ "interface F1 {\r\n"
+				+ "    int foo1(int a);\r\n"
+				+ "}\r\n"
+				+ "public class E {\r\n"
+				+ "    public void foo(int a) {\r\n"
+				+ "        F1 k = (e) -> extracted(a, e);\r\n"
+				+ "        k.foo1(4);\r\n"
+				+ "    }\r\n"
+				+ "\r\n"
+				+ "    private int extracted(int a, int e) {\r\n"
+				+ "        int x = e + 3;\r\n"
+				+ "        if (x > 3) {\r\n"
+				+ "            return a;\r\n"
+				+ "        }\r\n"
+				+ "        return x;\r\n"
+				+ "    }\r\n"
+				+ "}";
+		//@formatter:on
+		Range range = new Range(new Position(7, 26), new Position(7, 26));
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		Expected e1 = new Expected("Extract lambda body to method", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
 	public void testExtractMethodGeneric() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 

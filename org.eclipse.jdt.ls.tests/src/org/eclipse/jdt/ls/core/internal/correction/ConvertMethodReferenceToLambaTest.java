@@ -84,7 +84,7 @@ public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
 	@Test
 	public void testLambdaToMethodReference() throws Exception {
 		setIgnoredCommands("Assign statement to new field", "Extract to constant", "Extract to field", "Extract to local variable (replace all occurrences)", "Extract to local variable", "Introduce Parameter...",
-				ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
+				ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Extract lambda body to method");
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");

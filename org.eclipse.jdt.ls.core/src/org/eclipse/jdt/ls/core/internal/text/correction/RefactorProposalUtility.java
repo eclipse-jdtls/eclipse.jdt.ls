@@ -816,7 +816,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	private static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
+	public static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
 		while (astNode != null && !(astNode instanceof TypeDeclaration || astNode instanceof AnonymousClassDeclaration)) {
 			astNode = astNode.getParent();
 		}
