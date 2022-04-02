@@ -375,4 +375,11 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getDocumentSymbol().getTagSupport() != null;
 	}
 
+	public boolean isCompletionInsertReplaceSupport() {
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
+	}
+
 }
