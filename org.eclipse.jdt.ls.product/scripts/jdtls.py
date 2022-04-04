@@ -78,25 +78,18 @@ def main(args):
 	shared_config_path = get_shared_config_path(jdtls_base_path)
 	jar_path = find_equinox_launcher(jdtls_base_path)
 
-	os.system(("{java_exec}"
-		" -Declipse.application=org.eclipse.jdt.ls.core.id1"
-		" -Dosgi.bundles.defaultStartLevel=4"
-		" -Declipse.product=org.eclipse.jdt.ls.core.product"
-		" -Dosgi.checkConfiguration=true"
-		" -Dosgi.sharedConfiguration.area='{shared_config_path}'"
-		" -Dosgi.sharedConfiguration.area.readOnly=true"
-		" -Dosgi.configuration.cascaded=true"
-		" -noverify"
-		" -Xms1G"
-		" --add-modules=ALL-SYSTEM"
-		" --add-opens java.base/java.util=ALL-UNNAMED"
-		" --add-opens java.base/java.lang=ALL-UNNAMED"
-		" {jvm_options}"
-		" -jar '{jar_path}'"
-		" {args}").format(
-			java_exec = java_executable,
-			shared_config_path = shared_config_path,
-			jar_path = jar_path,
-			jvm_options = " ".join(f"'{w}'" for w in known_args.jvm_arg),
-			args = " ".join(f"'{w}'" for w in args)))
-
+	subprocess.run([java_executable,
+		"-Declipse.application=org.eclipse.jdt.ls.core.id1",
+		"-Dosgi.bundles.defaultStartLevel=4",
+		"-Declipse.product=org.eclipse.jdt.ls.core.product",
+		"-Dosgi.checkConfiguration=true",
+		"-Dosgi.sharedConfiguration.area=" + str(shared_config_path),
+		"-Dosgi.sharedConfiguration.area.readOnly=true",
+		"-Dosgi.configuration.cascaded=true",
+		"-noverify",
+		"-Xms1G",
+		"--add-modules=ALL-SYSTEM",
+		"--add-opens", "java.base/java.util=ALL-UNNAMED",
+		"--add-opens", "java.base/java.lang=ALL-UNNAMED"]
+		+ known_args.jvm_arg
+		+ ["-jar", jar_path] + args)
