@@ -281,6 +281,28 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testVarargs2() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/java/Foo.java",
+			"public class Foo {\n" +
+			"	void foo(Integer i, String... args) {}\n" +
+			"	void bar() {\n" +
+			"		foo(1);\n" +
+			"	}\n"+
+			"}\n"
+		);
+		unit.getResource().getLocationURI().toString();
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		assertEquals(1, inlayHints.size());
+		assertEquals("i:", inlayHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
 	public void testNoInlayHintsWhenNamesAreEqual() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(

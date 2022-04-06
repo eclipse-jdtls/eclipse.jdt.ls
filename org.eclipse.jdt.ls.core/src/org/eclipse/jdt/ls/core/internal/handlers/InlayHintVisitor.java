@@ -158,12 +158,13 @@ class InlayHintVisitor extends ASTVisitor {
 
 		// not showing the inlay hints when arguments are incomplete,
 		// this is to avoid hint flickering
-		if (arguments.size() < parameterNames.length) {
+		if (!methodBinding.isVarargs() && arguments.size() != parameterNames.length) {
 			return;
 		}
 
 		try {
-			for (int i = 0; i < parameterNames.length; i++) {
+			int paramNum = Math.min(parameterNames.length, arguments.size());
+			for (int i = 0; i < paramNum; i++) {
 				Expression arg = arguments.get(i);
 				if (!acceptArgument(arg, parameterNames[i])) {
 					continue;
