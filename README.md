@@ -47,7 +47,7 @@ There are several options to install eclipse.jdt.ls:
 - Download and extract a milestone build from [http://download.eclipse.org/jdtls/milestones/](http://download.eclipse.org/jdtls/milestones/?d)
 - Download and extract a snapshot build from [http://download.eclipse.org/jdtls/snapshots/](http://download.eclipse.org/jdtls/snapshots/?d)
 - Under some Linux distributions you can use the package manager. Search the package repositories for `jdtls` or `eclipse.jdt.ls`.
-- Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/11 ./mvnw clean verify`. Optionally append `-DskipTests=true` to by-pass the tests. This command  builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
+- Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/11 ./mvnw clean verify`. Optionally append `-DskipTests=true` to by-pass the tests. This command builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
 
 Some editors or editor extensions bundle eclipse.jdt.ls or contain logic to install it. If that is the case, you only need to install the editor extension. For example for Visual Studio Code you can install the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) and it will take care of the rest.
 
@@ -81,7 +81,10 @@ java \
 
 If you want to debug eclipse.jdt.ls itself, add `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044` right after `java` and ensure nothing else is running on port 1044. If you want to debug from the start of execution, change `suspend=n` to `suspend=y` so the JVM will wait for your debugger prior to starting the server.
 
-There is also a python wrapper script available that makes the start up of eclipse.jdt.ls more convenient (no need to juggle with Java options etc.). A sample usage is described below.
+Running from command line with wrapper script
+---------------------------------------------
+
+There is also a Python wrapper script available that makes the start up of eclipse.jdt.ls more convenient (no need to juggle with Java options etc.). A sample usage is described below. The script requires Python 3.9.
 
 ```bash
 ./org.eclipse.jdt.ls.product/target/repository/bin/jdtls \
@@ -89,7 +92,7 @@ There is also a python wrapper script available that makes the start up of eclip
 	-data /path/to/data
 ```
 
-All shown Java options will be set by the wrapper script. Please, note that the `-configuaration` options points to a user's folder to ensure that the configuration folder in `org.eclipse.jdt.ls.product/target/repository/config_*` remains untouched.
+All shown Java options will be set by the wrapper script. Please, note that the `-configuration` options points to a user's folder to ensure that the configuration folder in `org.eclipse.jdt.ls.product/target/repository/config_*` remains untouched.
 
 Development Setup
 -----------------
