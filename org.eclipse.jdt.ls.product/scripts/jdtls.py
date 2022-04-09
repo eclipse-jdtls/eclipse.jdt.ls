@@ -78,8 +78,8 @@ def main(args):
 	shared_config_path = get_shared_config_path(jdtls_base_path)
 	jar_path = find_equinox_launcher(jdtls_base_path)
 
-	subprocess.run([java_executable,
-		"-Declipse.application=org.eclipse.jdt.ls.core.id1",
+	os.execvp(java_executable,
+		["-Declipse.application=org.eclipse.jdt.ls.core.id1",
 		"-Dosgi.bundles.defaultStartLevel=4",
 		"-Declipse.product=org.eclipse.jdt.ls.core.product",
 		"-Dosgi.checkConfiguration=true",
