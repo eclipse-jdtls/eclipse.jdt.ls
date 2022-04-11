@@ -13,9 +13,12 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -412,6 +415,41 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
 		Expected e1 = new Expected("Extract lambda body to method", expected, JavaCodeActionKind.QUICK_ASSIST);
 		assertCodeActions(codeActions, e1);
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2370
+	@Test
+	public void testExtractMethodInStaticBlock() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		setOnly(CodeActionKind.Refactor);
+		//@formatter:off
+		String contents = "package test1;\r\n"
+				+ "public class E {\r\n"
+				+ "    public static String STR;\r\n"
+				+ "    static {\r\n"
+				+ "        STR = new String(\"test\").strip();\r\n"
+				+ "    }\r\n"
+				+ "}";
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", contents, false, null);
+		//@formatter:off
+		String expected = "package test1;\r\n"
+				+ "public class E {\r\n"
+				+ "    public static String STR;\r\n"
+				+ "    static {\r\n"
+				+ "        STR = extracted().strip();\r\n"
+				+ "    }\r\n"
+				+ "    private static String extracted() {\r\n"
+				+ "        return new String(\"test\");\r\n"
+				+ "    }\r\n"
+				+ "}";
+		//@formatter:on
+		Range range = new Range(new Position(4, 14), new Position(4, 32));
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		assertEquals(4, codeActions.size());
+		List<Either<Command, CodeAction>> extractMethod = codeActions.stream().filter((c) -> c.getRight().getTitle().equals("Extract to method")).collect(Collectors.toList());
+		Expected e1 = new Expected("Extract to method", expected, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
+		assertCodeActions(extractMethod, e1);
 	}
 
 	@Test

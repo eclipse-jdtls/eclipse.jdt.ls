@@ -255,7 +255,6 @@ public class ExtractFieldRefactoring extends Refactoring {
 			if (fCompilationUnitNode == null) {
 				fCompilationUnitNode = RefactoringASTParser.parseWithASTProvider(fCu, true, new SubProgressMonitor(pm, 3));
 			}
-			pm.worked(1);
 
 			if (fCURewrite == null) {
 				fCURewrite = new CompilationUnitRewrite(fCu, fCompilationUnitNode);
@@ -269,6 +268,11 @@ public class ExtractFieldRefactoring extends Refactoring {
 			if (selectedExpression == null) {
 				String message = RefactoringCoreMessages.ExtractTempRefactoring_select_expression;
 				return CodeRefactoringUtil.checkMethodSyntaxErrors(fSelectionStart, fSelectionLength, fCompilationUnitNode, message);
+			}
+			pm.worked(1);
+
+			if (getMethodDeclaration() == null) {
+				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractFieldRefactoring_cannot_extract);
 			}
 			pm.worked(1);
 
