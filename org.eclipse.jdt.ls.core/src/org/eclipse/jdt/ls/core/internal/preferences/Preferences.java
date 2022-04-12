@@ -207,6 +207,11 @@ public class Preferences {
 	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
 
 	/**
+	 * Preference key to enable/disable API descriptions in signature help.
+	 */
+	public static final String SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY = "java.signatureHelp.description.enabled";
+
+	/**
 	 * Preference key to enable/disable rename.
 	 */
 	public static final String RENAME_ENABLED_KEY = "java.rename.enabled";
@@ -490,6 +495,7 @@ public class Preferences {
 	private boolean javaFormatOnTypeEnabled;
 	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
+	private boolean signatureHelpDescriptionEnabled;
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
@@ -720,6 +726,7 @@ public class Preferences {
 		javaFormatOnTypeEnabled = false;
 		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
+		signatureHelpDescriptionEnabled = false;
 		renameEnabled = true;
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
@@ -829,6 +836,9 @@ public class Preferences {
 
 		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
+
+		boolean signatureDescriptionEnabled = getBoolean(configuration, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY, true);
+		prefs.setSignatureHelpDescriptionEnabled(signatureDescriptionEnabled);
 
 		boolean renameEnabled = getBoolean(configuration, RENAME_ENABLED_KEY, true);
 		prefs.setRenameEnabled(renameEnabled);
@@ -1174,6 +1184,10 @@ public class Preferences {
 		return this;
 	}
 
+	public void setSignatureHelpDescriptionEnabled(boolean signatureHelpDescriptionEnabled) {
+		this.signatureHelpDescriptionEnabled = signatureHelpDescriptionEnabled;
+	}
+
 	private Preferences setImplementationCodelensEnabled(boolean enabled) {
 		this.implementationsCodeLensEnabled = enabled;
 		return this;
@@ -1479,6 +1493,10 @@ public class Preferences {
 
 	public boolean isSignatureHelpEnabled() {
 		return signatureHelpEnabled;
+	}
+
+	public boolean isSignatureHelpDescriptionEnabled() {
+		return signatureHelpDescriptionEnabled;
 	}
 
 	public boolean isRenameEnabled() {

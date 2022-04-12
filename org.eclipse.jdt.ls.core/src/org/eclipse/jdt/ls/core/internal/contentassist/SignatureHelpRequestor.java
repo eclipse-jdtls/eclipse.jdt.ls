@@ -65,12 +65,13 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
 	private boolean acceptType = false;
 	private String methodName;
+	private boolean isDescriptionEnabled;
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, int offset) {
-		this(aUnit, offset, methodName, false);
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, int offset, boolean isDescriptionEnabled) {
+		this(aUnit, offset, methodName, false, isDescriptionEnabled);
 	}
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, String methodName, boolean acceptType) {
+	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, String methodName, boolean acceptType, boolean isDescriptionEnabled) {
 		this.unit = aUnit;
 		response = new CompletionResponse();
 		response.setOffset(offset);
@@ -78,6 +79,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		infoProposals = new HashMap<>();
 		this.acceptType = acceptType;
 		this.methodName = methodName;
+		this.isDescriptionEnabled = isDescriptionEnabled;
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
@@ -144,7 +146,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		SignatureInformation $ = new SignatureInformation();
 		StringBuilder desription = descriptionProvider.createMethodProposalDescription(methodProposal);
 		$.setLabel(desription.toString());
-		$.setDocumentation(this.computeJavaDoc(methodProposal));
+		if (isDescriptionEnabled) {
+			$.setDocumentation(this.computeJavaDoc(methodProposal));
+		}
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
 		char[][] parameterNames = methodProposal.findParameterNames(null);
