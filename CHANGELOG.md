@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.10.0 (April 13th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/100?closed=1)
+ * performance - Adopt new CompletionProposal API to ignore types before creating certain proposals. See [#2034](https://github.com/eclipse/eclipse.jdt.ls/pull/2034).
+ * enhancement - Provide Java 18 support. See [#2026](https://github.com/eclipse/eclipse.jdt.ls/issues/2026).
+ * enhancement - Support inlay hints for parameter names. See [#2019](https://github.com/eclipse/eclipse.jdt.ls/pull/2019).
+ * enhancement - Add code action to extract lambda body to method. See [#2027](https://github.com/eclipse/eclipse.jdt.ls/issues/2027).
+ * enhancement - Adds support for `workspaceSymbol/resolve`. See [#2008](https://github.com/eclipse/eclipse.jdt.ls/pull/2008).
+ * enhancement - Support completion insert/replace capability. See [#2042](https://github.com/eclipse/eclipse.jdt.ls/pull/2042).
+ * bug fix - Provide file & type comments for newly created compilation units. See [#2047](https://github.com/eclipse/eclipse.jdt.ls/pull/2047).
+ * bug fix - Postpone the capability registration until the service is ready. See [#1979](https://github.com/eclipse/eclipse.jdt.ls/pull/1979).
+ * bug fix - Fix an occurrence of duplicate quick fixes at the line level. See [#2023](https://github.com/eclipse/eclipse.jdt.ls/pull/2023).
+ * bug fix - Cannot refactor in static block. See [#2049](https://github.com/eclipse/eclipse.jdt.ls/pull/2049).
+ * other - Stabilize some intermitently failing tests. See [#2035](https://github.com/eclipse/eclipse.jdt.ls/issues/2035).
+ * other - Advertise "friendly" Python startup wrapper a bit more prominently. See [#2020](https://github.com/eclipse/eclipse.jdt.ls/pull/2020).
+ * other - Add documentation for PDE project support status. See [#1953](https://github.com/eclipse/eclipse.jdt.ls/issues/1953).
+
 # [1.9.0 (March 3rd, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/99?closed=1)
  * enhancement - Trigger completion after `new` keyword. See [#2010](https://github.com/eclipse/eclipse.jdt.ls/pull/2010).
  * enhancement - Improve occurrences highlighting. See [#1941](https://github.com/eclipse/eclipse.jdt.ls/pull/1941).
