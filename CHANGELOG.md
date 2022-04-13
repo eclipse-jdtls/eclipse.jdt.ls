@@ -6,7 +6,6 @@
  * enhancement - Support inlay hints for parameter names. See [#2019](https://github.com/eclipse/eclipse.jdt.ls/pull/2019).
  * enhancement - Add code action to extract lambda body to method. See [#2027](https://github.com/eclipse/eclipse.jdt.ls/issues/2027).
  * enhancement - Adds support for `workspaceSymbol/resolve`. See [#2008](https://github.com/eclipse/eclipse.jdt.ls/pull/2008).
- * enhancement - Support completion insert/replace capability. See [#2042](https://github.com/eclipse/eclipse.jdt.ls/pull/2042).
  * bug fix - Provide file & type comments for newly created compilation units. See [#2047](https://github.com/eclipse/eclipse.jdt.ls/pull/2047).
  * bug fix - Postpone the capability registration until the service is ready. See [#1979](https://github.com/eclipse/eclipse.jdt.ls/pull/1979).
  * bug fix - Fix an occurrence of duplicate quick fixes at the line level. See [#2023](https://github.com/eclipse/eclipse.jdt.ls/pull/2023).

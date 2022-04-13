@@ -55,7 +55,6 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.CompletionItem;
-import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -127,7 +126,7 @@ public class CompletionProposalReplacementProvider {
 		List<org.eclipse.lsp4j.TextEdit> additionalTextEdits = new ArrayList<>();
 
 		StringBuilder completionBuffer = new StringBuilder();
-		InsertReplaceEdit insertReplaceEdit = new InsertReplaceEdit();
+		Range range = null;
 		if (isSupportingRequiredProposals(proposal)) {
 			CompletionProposal[] requiredProposals = proposal.getRequiredProposals();
 			if (requiredProposals != null) {
@@ -144,7 +143,7 @@ public class CompletionProposalReplacementProvider {
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
 								completionBuffer.append(edit.getNewText());
-								setInsertReplaceRange(requiredProposal, insertReplaceEdit);
+								range = edit.getRange();
 						} else {
 							additionalTextEdits.add(edit);
 						}
@@ -160,7 +159,17 @@ public class CompletionProposalReplacementProvider {
 			}
 		}
 
-		setInsertReplaceRange(proposal, insertReplaceEdit);
+		if (range == null) {
+			boolean completionOverwrite = preferences.isCompletionOverwrite();
+			if (!completionOverwrite && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.LOCAL_VARIABLE_REF || proposal.getKind() == CompletionProposal.FIELD_REF)) {
+				// See https://github.com/redhat-developer/vscode-java/issues/462
+				int end = proposal.getReplaceEnd();
+				if (end > offset) {
+					proposal.setReplaceRange(proposal.getReplaceStart(), offset);
+				}
+			}
+			range = toReplacementRange(proposal);
+		}
 
 		switch (proposal.getKind()) {
 			case CompletionProposal.METHOD_DECLARATION:
@@ -175,7 +184,7 @@ public class CompletionProposalReplacementProvider {
 				break;
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-				appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
+				appendAnonymousClass(completionBuffer, proposal, range);
 				break;
 			case CompletionProposal.LAMBDA_EXPRESSION:
 				appendLambdaExpressionReplacement(completionBuffer, proposal);
@@ -192,16 +201,11 @@ public class CompletionProposalReplacementProvider {
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
 		}
 		String text = completionBuffer.toString();
-		if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {
+		if (range != null) {
+			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(range, text)));
+		} else {
 			// fallback
 			item.setInsertText(text);
-		} else if (client.isCompletionInsertReplaceSupport()) {
-			insertReplaceEdit.setNewText(text);
-			item.setTextEdit(Either.forRight(insertReplaceEdit));
-		} else if (preferences.isCompletionOverwrite()) {
-			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getReplace(), text)));
-		} else {
-			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
 		}
 
 		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
@@ -222,7 +226,7 @@ public class CompletionProposalReplacementProvider {
 		}
 	}
 
-	private void appendAnonymousClass(StringBuilder completionBuffer, CompletionProposal proposal, InsertReplaceEdit edit) {
+	private void appendAnonymousClass(StringBuilder completionBuffer, CompletionProposal proposal, Range range) {
 		IDocument document;
 		try {
 			IBuffer buffer = this.compilationUnit.getBuffer();
@@ -245,7 +249,7 @@ public class CompletionProposalReplacementProvider {
 			}
 			String replacement = this.anonymousTypeNewBody;
 
-			if (document.getLength() > offset) {
+			if (document.getLength() > offset && range != null) {
 				if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
 					// update replacement range
 					int length = 0;
@@ -258,12 +262,7 @@ public class CompletionProposalReplacementProvider {
 						pos++;
 						ch = document.getChar(pos);
 					}
-					if (edit.getReplace() != null) {
-						edit.getReplace().getEnd().setCharacter(edit.getReplace().getEnd().getCharacter() + length);
-					}
-					if (edit.getInsert() != null) {
-						edit.getInsert().getEnd().setCharacter(edit.getInsert().getEnd().getCharacter() + length);
-					}
+					range.getEnd().setCharacter(range.getEnd().getCharacter() + length);
 					length = 1;
 					pos = offset - 1;
 					if (pos < document.getLength()) {
@@ -275,12 +274,7 @@ public class CompletionProposalReplacementProvider {
 							ch = document.getChar(pos);
 						}
 					}
-					if (edit.getReplace() != null) {
-						edit.getReplace().getStart().setCharacter(edit.getReplace().getStart().getCharacter() - length);
-					}
-					if (edit.getInsert() != null) {
-						edit.getInsert().getStart().setCharacter(edit.getInsert().getStart().getCharacter() - length);
-					}
+					range.getStart().setCharacter(range.getStart().getCharacter() - length);
 					replacement = checkReplacementEnd(document, replacement, offset);
 				} else if (proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION) {
 					// update replacement range
@@ -310,12 +304,7 @@ public class CompletionProposalReplacementProvider {
 							pos--;
 						}
 						if (length > 0) {
-							if (edit.getReplace() != null) {
-								edit.getReplace().getEnd().setCharacter(edit.getReplace().getEnd().getCharacter() + length);
-							}
-							if (edit.getInsert() != null) {
-								edit.getInsert().getEnd().setCharacter(edit.getInsert().getEnd().getCharacter() + length);
-							}
+							range.getEnd().setCharacter(range.getEnd().getCharacter() + length);
 						}
 					}
 					int next = (pos > 0) ? pos + 1 : offset;
@@ -406,25 +395,6 @@ public class CompletionProposalReplacementProvider {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		return null;
-	}
-
-	private void setInsertReplaceRange(CompletionProposal proposal, InsertReplaceEdit edit){
-		try {
-			int start = proposal.getReplaceStart();
-			int end = proposal.getReplaceEnd();
-			if (edit.getReplace() == null) {
-				Range replaceRange = JDTUtils.toRange(compilationUnit, start, end - start);
-				edit.setReplace(replaceRange);
-			}
-
-			if (edit.getInsert() == null) {
-				end = Math.min(end, offset);
-				Range insertRange = JDTUtils.toRange(compilationUnit, start, end - start);
-				edit.setInsert(insertRange);
-			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-		}
 	}
 
 	/**
