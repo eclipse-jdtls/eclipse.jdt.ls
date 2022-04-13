@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -136,7 +135,8 @@ public class PreferenceManagerTest {
 		preferenceManager.initialize();
 
 		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.FILECOMMENT_ID);
-		assertNull(template);
+		assertNotNull(template);
+		assertEquals("", template.getPattern());
 
 		Preferences preferences = new Preferences();
 		preferences.setFileHeaderTemplate(Arrays.asList("/** */"));
