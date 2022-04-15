@@ -61,4 +61,10 @@ public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 		ProjectUtils.getMaxProjectProblemSeverity();
 	}
 
+	@Test
+	public void testGetMaxProjectProblemSeverityForSubProject() throws Exception {
+		importProjects("gradle/invalid-subproject");
+		assertEquals(IMarker.SEVERITY_ERROR, ProjectUtils.getMaxProjectProblemSeverity());
+	}
+
 }
