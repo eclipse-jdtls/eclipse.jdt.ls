@@ -552,6 +552,9 @@ public final class ProjectUtils {
 				List<IMarker> buildFileMarkers = markers.stream().filter(marker -> isBuildFileMarker(marker, project)).collect(Collectors.toList());
 				for (IMarker marker : buildFileMarkers) {
 					maxSeverity = Math.max(maxSeverity, marker.getAttribute(IMarker.SEVERITY, 0));
+					if (maxSeverity == IMarker.SEVERITY_ERROR) {
+						break;
+					}
 				}
 			} catch (CoreException e) {
 				// ignore
