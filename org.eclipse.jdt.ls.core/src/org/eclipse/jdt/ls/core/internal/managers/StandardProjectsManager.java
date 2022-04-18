@@ -564,6 +564,11 @@ public class StandardProjectsManager extends ProjectsManager {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}
 					}
+					if (!Objects.equals(oldPreferences.getProjectEncoding(), newPreferences.getProjectEncoding())) {
+						for (IProject project : ProjectUtils.getAllProjects()) {
+							updateProject(project, true);
+						}
+					}
 				}
 			};
 			this.preferenceManager.addPreferencesChangeListener(this.preferenceChangeListener);
