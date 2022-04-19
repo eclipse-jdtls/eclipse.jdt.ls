@@ -30,7 +30,7 @@ def get_java_executable(validate_java_version):
 
 	out = subprocess.check_output([java_executable, '-version'], stderr = subprocess.STDOUT, universal_newlines=True)
 
-	matches = re.finditer(r"(?P<major>\d+)\.\d+\.\d+", out)
+	matches = re.finditer(r"(?<=version\s\")(?P<major>\d+)(\.\d+\.\d+(_\d+)?)?", out)
 	for match in matches:
 		java_major_version = int(match.group("major"))
 
