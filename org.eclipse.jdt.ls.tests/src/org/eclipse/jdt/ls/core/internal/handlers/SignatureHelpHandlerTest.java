@@ -34,9 +34,11 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SignatureInformation;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,13 +75,15 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		preferenceManager = mock(PreferenceManager.class);
 		Preferences p = mock(Preferences.class);
-		when(preferenceManager.getPreferences(null)).thenReturn(p);
+		when(preferenceManager.getPreferences()).thenReturn(p);
 		when(p.isSignatureHelpEnabled()).thenReturn(true);
+		when(p.isSignatureHelpDescriptionEnabled()).thenReturn(false);
 		handler = new SignatureHelpHandler(preferenceManager);
 	}
 
 	@Test
 	public void testSignatureHelp_singleMethod() throws JavaModelException {
+		when(preferenceManager.getPreferences().isSignatureHelpDescriptionEnabled()).thenReturn(true);
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -303,6 +307,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	// See https://github.com/redhat-developer/vscode-java/issues/1258
 	@Test
 	public void testSignatureHelp_javadocOriginal() throws JavaModelException {
+		when(preferenceManager.getPreferences().isSignatureHelpDescriptionEnabled()).thenReturn(true);
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -500,6 +505,46 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		assertEquals(3, help.getSignatures().size());
 		assertTrue(help.getSignatures().get(help.getActiveSignature()).getLabel().equals("fail(String msg, Object data) : Boolean"));
+	}
+
+	@Test
+	public void testSignatureHelpDescriptionDisabled() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	/**\n");
+		buf.append("	 * This is an API.\n");
+		buf.append("	 */\n");
+		buf.append("	public void foo(String s) {\n");
+		buf.append("		 foo(null)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 6, 7);
+		assertNotNull(help);
+		assertNull(help.getSignatures().get(help.getActiveSignature()).getDocumentation());
+	}
+
+	@Test
+	public void testSignatureHelpDescriptionEnabled() throws Exception {
+		when(preferenceManager.getPreferences().isSignatureHelpDescriptionEnabled()).thenReturn(true);
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	/**\n");
+		buf.append("	 * This is an API.\n");
+		buf.append("	 */\n");
+		buf.append("	public void foo(String s) {\n");
+		buf.append("		 foo(null)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 6, 7);
+		assertNotNull(help);
+		Either<String, MarkupContent> documentation = help.getSignatures().get(help.getActiveSignature()).getDocumentation();
+		assertEquals("This is an API.", documentation.getLeft().trim());
 	}
 
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
