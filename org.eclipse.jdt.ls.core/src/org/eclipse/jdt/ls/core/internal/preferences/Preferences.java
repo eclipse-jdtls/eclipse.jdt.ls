@@ -837,7 +837,7 @@ public class Preferences {
 		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
 
-		boolean signatureDescriptionEnabled = getBoolean(configuration, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY, true);
+		boolean signatureDescriptionEnabled = getBoolean(configuration, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY, false);
 		prefs.setSignatureHelpDescriptionEnabled(signatureDescriptionEnabled);
 
 		boolean renameEnabled = getBoolean(configuration, RENAME_ENABLED_KEY, true);
