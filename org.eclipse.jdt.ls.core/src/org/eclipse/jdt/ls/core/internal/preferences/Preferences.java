@@ -50,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
+import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -411,6 +412,8 @@ public class Preferences {
 	public static final String JAVA_TEMPLATES_FILEHEADER = "java.templates.fileHeader";
 	// Specifies the type comment snippets for new Java type.
 	public static final String JAVA_TEMPLATES_TYPECOMMENT = "java.templates.typeComment";
+	// Project encoding settings
+	public static final String JAVA_PROJECT_ENCODING = "java.project.encoding";
 
 	/**
 	 * The preferences for generating toString method.
@@ -552,6 +555,7 @@ public class Preferences {
 	private boolean insertSpaces;
 	private int tabSize;
 	private InlayHintsParameterMode inlayHintsParameterMode;
+	private ProjectEncodingMode projectEncoding;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -766,6 +770,7 @@ public class Preferences {
 		tabSize = DEFAULT_TAB_SIZE;
 		mavenNotCoveredPluginExecutionSeverity = "ignore";
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
+		projectEncoding = ProjectEncodingMode.IGNORE;
 	}
 
 	/**
@@ -1049,6 +1054,8 @@ public class Preferences {
 		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
 		String inlayHintsParameterMode = getString(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, null);
 		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
+		String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
+		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
 		return prefs;
 	}
 
@@ -1842,6 +1849,15 @@ public class Preferences {
 
 	public void setInlayHintsParameterMode(InlayHintsParameterMode inlayHintsParameterMode) {
 		this.inlayHintsParameterMode = inlayHintsParameterMode;
+	}
+
+	public Preferences setProjectEncoding(ProjectEncodingMode projectEncoding) {
+		this.projectEncoding = projectEncoding;
+		return this;
+	}
+
+	public ProjectEncodingMode getProjectEncoding() {
+		return this.projectEncoding;
 	}
 
 }

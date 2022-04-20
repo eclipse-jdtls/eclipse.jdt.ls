@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.internal.resources.CheckMissingNaturesListener;
+import org.eclipse.core.internal.resources.ValidateProjectEncoding;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -47,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -201,7 +203,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		IFile pom = project.getFile("pom.xml");
 		List<IMarker> pomMarkers = new ArrayList<>();
 		for (IMarker marker : markers) {
-			if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+			if (isIgnored(marker)) {
 				continue;
 			}
 			if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
@@ -236,12 +238,12 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (monitor != null && monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
-			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(project)) {
+			if (ProjectsManager.getDefaultProject().equals(project)) {
 				continue;
 			}
 			IMarker[] allMarkers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
 			for (IMarker marker : allMarkers) {
-				if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+				if (isIgnored(marker)) {
 					continue;
 				}
 				if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(marker.getType()) || IJavaModelMarker.TASK_MARKER.equals(marker.getType())) {
@@ -255,6 +257,22 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			}
 		}
 		return markers;
+	}
+
+	private static boolean isIgnored(IMarker marker) {
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		boolean ignoreProjectEncoding = preferencesManager != null && ProjectEncodingMode.IGNORE.equals(preferencesManager.getPreferences().getProjectEncoding());
+		try {
+			if (!marker.exists() || CheckMissingNaturesListener.MARKER_TYPE.equals(marker.getType())) {
+				return true;
+			}
+			if (ignoreProjectEncoding && ValidateProjectEncoding.MARKER_TYPE.equals(marker.getType())) {
+				return true;
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return false;
 	}
 
 	private void publishDiagnostics(List<IMarker> markers) {
@@ -314,7 +332,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	private static Diagnostic toDiagnostic(Range range, IMarker marker, boolean isDiagnosticTagSupported) {
-		if (marker == null || !marker.exists()) {
+		if (marker == null || !marker.exists() || isIgnored(marker)) {
 			return null;
 		}
 		Diagnostic d = new Diagnostic();

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.internal.resources.CharsetManager;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.FileInfoMatcherDescription;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
@@ -74,6 +76,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
@@ -108,8 +111,29 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		} else {
 			importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
 		}
+		updateEncoding(monitor);
 		reportProjectsStatus();
 		subMonitor.done();
+	}
+
+	private void updateEncoding(IProgressMonitor monitor) throws CoreException {
+		if (preferenceManager != null && ProjectEncodingMode.SETDEFAULT.equals(preferenceManager.getPreferences().getProjectEncoding())) {
+			IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			if (workspace instanceof Workspace) {
+				Workspace ws = (Workspace) workspace;
+				CharsetManager charsetManager = ws.getCharsetManager();
+				String encoding = ResourcesPlugin.getEncoding();
+				for (IProject project : ProjectUtils.getAllProjects()) {
+					if (!Objects.equals(encoding, project.getDefaultCharset(false))) {
+						try {
+							charsetManager.setCharsetFor(project.getFullPath(), encoding);
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
@@ -396,6 +420,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 						buildSupport.get().update(project, force, progress.split(95));
 						registerWatchers(true);
 					}
+					updateEncoding(monitor);
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
 				} catch (Exception e) {
@@ -553,7 +578,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		int maxProjectProblemSeverity = ProjectUtils.getMaxProjectProblemSeverity();
 		if (maxProjectProblemSeverity == IMarker.SEVERITY_ERROR) {
 			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "WARNING");
-		} else { 
+		} else {
 			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "OK");
 		}
 	}

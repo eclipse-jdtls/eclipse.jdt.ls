@@ -31,8 +31,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.internal.resources.ValidateProjectEncoding;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
@@ -56,6 +58,7 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -608,6 +611,35 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> errors = allCalls.stream().filter((p) -> p.getUri().endsWith("Foo.java")).collect(Collectors.toList());
 		assertTrue("Should update the children's diagnostics of the deleted package", errors.size() == 1);
 		assertTrue("Should clean up the children's diagnostics of the deleted package", errors.get(0).getDiagnostics().isEmpty());
+	}
+
+	@Test
+	public void testEncoding() throws Exception {
+		ProjectEncodingMode projectEncoding = preferenceManager.getPreferences().getProjectEncoding();
+		try {
+			importProjects("eclipse/hello");
+			IProject proj = WorkspaceHelper.getProject("hello");
+			IJavaProject javaProject = JavaCore.create(proj);
+			assertTrue(javaProject.exists());
+			IMarker[] markers = proj.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ZERO);
+			assertEquals(1, markers.length);
+			Range range = new Range(new Position(0, 0), new Position(0, 0));
+			List<IMarker> encodingMarkers = Stream.of(markers).collect(Collectors.toList());
+			List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, encodingMarkers, false);
+			assertEquals(0, diagnostics.size());
+			preferenceManager.getPreferences().setProjectEncoding(ProjectEncodingMode.WARNING);
+			diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticArray(range, encodingMarkers, false);
+			assertEquals(1, diagnostics.size());
+			preferenceManager.getPreferences().setProjectEncoding(ProjectEncodingMode.SETDEFAULT);
+			proj.delete(true, monitor);
+			importProjects("eclipse/hello");
+			proj = WorkspaceHelper.getProject("hello");
+			waitForBackgroundJobs();
+			markers = proj.findMarkers(ValidateProjectEncoding.MARKER_TYPE, false, IResource.DEPTH_ZERO);
+			assertEquals(0, markers.length);
+		} finally {
+			preferenceManager.getPreferences().setProjectEncoding(projectEncoding);
+		}
 	}
 
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {
