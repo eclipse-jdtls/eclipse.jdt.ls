@@ -152,13 +152,7 @@ class InlayHintVisitor extends ASTVisitor {
 		}
 
 		String[] parameterNames = getParameterNames(methodBinding);
-		if (parameterNames == null) {
-			return;
-		}
-
-		// not showing the inlay hints when arguments are incomplete,
-		// this is to avoid hint flickering
-		if (!methodBinding.isVarargs() && arguments.size() != parameterNames.length) {
+		if (skipMethod(methodBinding, arguments, parameterNames)) {
 			return;
 		}
 
@@ -240,10 +234,15 @@ class InlayHintVisitor extends ASTVisitor {
 	 * <ul>
 	 *   <li>It's in literal mode but the given argument is not a literal</li>
 	 *   <li>Argument name and parameter names are same</li>
+	 *   <li>Parameter name is not meaningful (length smaller than 2)</li>
 	 * </ul>
 	 * </p>
 	 */
 	private boolean acceptArgument(Expression argument, String paramName) {
+		if (isMeaninglessName(paramName)) {
+			return false;
+		}
+
 		if (InlayHintsParameterMode.LITERALS.equals(preferenceManager.getPreferences().getInlayHintsParameterMode())) {
 			if (!isLiteral(argument)) {
 				return false;
@@ -282,5 +281,53 @@ class InlayHintVisitor extends ASTVisitor {
 
 		String argName = ((SimpleName) argument).getIdentifier();
 		return Objects.equal(argName, paramName);
+	}
+
+	/**
+	 * Check whether the method should be skipped for displaying inlay hints.
+	 * Following cases will be skipped:
+	 * <p>
+	 * <ul>
+	 *   <li>Passed argument count is different from method parameter count</li>
+	 *   <li>The method's parameter count is no more than 1</li>
+	 * </ul>
+	 * </p>
+	 * @param methodBinding the method binding
+	 * @param arguments the arguments passed to the method
+	 * @param parameterNames the method parameter names
+	 */
+	private boolean skipMethod(IMethodBinding methodBinding, List<Expression> arguments, String[] parameterNames) {
+		if (parameterNames == null) {
+			return true;
+		}
+
+		if (methodBinding.isVarargs()) {
+			// not show inlay hints when methods only have one parameter.
+			// See: https://github.com/redhat-developer/vscode-java/issues/2412
+			if (arguments.size() <= 1) {
+				return true;
+			}
+		} else {
+			// not show inlay hints when methods only have one parameter.
+			// See: https://github.com/redhat-developer/vscode-java/issues/2412
+			if (parameterNames.length <= 1) {
+				return true;
+			}
+
+			// not showing the inlay hints when arguments are incomplete,
+			// this is to avoid hint flickering
+			if (arguments.size() != parameterNames.length) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if the parameter name is meaningful, currently it's checked by length.
+	 */
+	private boolean isMeaninglessName(String paramName) {
+		return paramName.length() <= 1;
 	}
 }
