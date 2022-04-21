@@ -275,6 +275,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("resolveAdditionalTextEditsSupport", "false").toString());
 	}
 
+	public String getParameterHintsCommandId() {
+		return String.valueOf(extendedClientCapabilities.getOrDefault("onCompletionItemSelectedCommand", ""));
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null
