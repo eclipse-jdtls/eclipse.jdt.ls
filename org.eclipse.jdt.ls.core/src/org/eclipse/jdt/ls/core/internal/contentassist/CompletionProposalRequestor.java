@@ -241,9 +241,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			}
 		}
 		if (preferenceManager.getPreferences().isSignatureHelpEnabled()) {
-			String onSelectedCommand = preferenceManager.getClientPreferences().getParameterHintsCommandId();
+			String onSelectedCommand = preferenceManager.getClientPreferences().getCompletionItemCommand();
 			if (!onSelectedCommand.isEmpty()) {
-				$.setCommand(new Command("Trigger Parameter Hints", onSelectedCommand));
+				$.setCommand(new Command("Command triggered for completion", onSelectedCommand));
 			}
 		}
 		return $;
