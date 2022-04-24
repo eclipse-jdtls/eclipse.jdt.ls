@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.fix83600;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLowerBound;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,9 +43,10 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
+import org.eclipse.jdt.ls.core.internal.handlers.SignatureHelpUtils;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
@@ -61,31 +61,28 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	private List<CompletionProposal> typeProposals = new ArrayList<>();
 	private final ICompilationUnit unit;
 	private CompletionProposalDescriptionProvider descriptionProvider;
-	private CompletionResponse response;
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
 	private boolean acceptType = false;
 	private String methodName;
 	private boolean isDescriptionEnabled;
+	private List<String> declaringTypeNames;
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, int offset, boolean isDescriptionEnabled) {
-		this(aUnit, offset, methodName, false, isDescriptionEnabled);
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, List<String> declaringTypeName) {
+		this(aUnit, methodName, declaringTypeName, false);
 	}
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, int offset, String methodName, boolean acceptType, boolean isDescriptionEnabled) {
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, List<String> declaringTypeName, boolean acceptType) {
 		this.unit = aUnit;
-		response = new CompletionResponse();
-		response.setOffset(offset);
 		setRequireExtendedContext(true);
 		infoProposals = new HashMap<>();
 		this.acceptType = acceptType;
 		this.methodName = methodName;
-		this.isDescriptionEnabled = isDescriptionEnabled;
+		this.isDescriptionEnabled = isDescriptionEnabled();
+		this.declaringTypeNames = declaringTypeName;
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
 		SignatureHelp signatureHelp = new SignatureHelp();
-		response.setProposals(proposals);
-		CompletionResponses.store(response);
 
 		List<SignatureInformation> infos = new ArrayList<>();
 		for (int i = 0; i < proposals.size(); i++) {
@@ -126,10 +123,19 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 			if (proposal.getKind() == CompletionProposal.METHOD_REF && !Objects.equals(proposal.getName() == null ? null : new String(proposal.getName()), methodName)) {
 				return;
 			}
-			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
-				// Hacky way to boost relevance of current package, for package completions, until
-				// https://bugs.eclipse.org/518140 is fixed
-				proposal.setRelevance(proposal.getRelevance() + 1);
+			if (this.declaringTypeNames != null) {
+				char[] declarationSignature = proposal.getDeclarationSignature();
+				if (declarationSignature != null) {
+					String proposalTypeSimpleName = SignatureHelpUtils.getSimpleTypeName(String.valueOf(declarationSignature));
+					for (String typeName : this.declaringTypeNames) {
+						String declaringTypeSimpleName = Signature.getSimpleName(typeName);
+						if (Objects.equals(proposalTypeSimpleName, declaringTypeSimpleName)) {
+							proposals.add(proposal);
+							return;
+						}
+					}
+					return;
+				}
 			}
 			proposals.add(proposal);
 		}
@@ -138,19 +144,19 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	@Override
 	public void acceptContext(CompletionContext context) {
 		super.acceptContext(context);
-		response.setContext(context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
 	}
 
 	public SignatureInformation toSignatureInformation(CompletionProposal methodProposal) {
 		SignatureInformation $ = new SignatureInformation();
-		StringBuilder desription = descriptionProvider.createMethodProposalDescription(methodProposal);
-		$.setLabel(desription.toString());
+		StringBuilder description = descriptionProvider.createMethodProposalDescription(methodProposal);
+		$.setLabel(description.toString());
 		if (isDescriptionEnabled) {
 			$.setDocumentation(this.computeJavaDoc(methodProposal));
 		}
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
+		// todo: cannot get parameter names for record class
 		char[][] parameterNames = methodProposal.findParameterNames(null);
 		char[][] parameterTypes = Signature.getParameterTypes(signature);
 
@@ -248,28 +254,26 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		return null;
 	}
 
-	/**
-	 * Gets the reader content as a String
-	 *
-	 * @param reader
-	 *            the reader
-	 * @return the reader content as string
-	 */
-	private static String getString(Reader reader) {
-		try {
-			return CharStreams.toString(reader);
-		} catch (IOException ignored) {
-			//meh
-		}
-		return null;
-	}
-
 	public Map<SignatureInformation, CompletionProposal> getInfoProposals() {
 		return infoProposals;
 	}
 
 	public List<CompletionProposal> getTypeProposals() {
 		return typeProposals;
+	}
+
+	private boolean isDescriptionEnabled() {
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager == null) {
+			return false;
+		}
+
+		Preferences preferences = preferencesManager.getPreferences();
+		if (preferences == null) {
+			return false;
+		}
+
+		return preferences.isSignatureHelpDescriptionEnabled();
 	}
 
 }
