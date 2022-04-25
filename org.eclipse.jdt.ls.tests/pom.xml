@@ -36,12 +36,12 @@
 			<id>lombok</id>
 			<activation>
 				<property>
-					<name>jdt.ls.lombok.enabled</name>
-					<value>true</value>
+					<name>jdt.ls.lombok.disabled</name>
+					<value>!true</value>
 				</property>
 			</activation>
 			<properties>
-				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.22.jar</lombokArgs>
+				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.24.jar</lombokArgs>
 			</properties>
 			<build>
 				<plugins>
@@ -53,7 +53,7 @@
 								<artifactItem>
 									<groupId>org.projectlombok</groupId>
 									<artifactId>lombok</artifactId>
-									<version>1.18.22</version>
+									<version>1.18.24</version>
 								</artifactItem>
 							</artifactItems>
 						</configuration>
