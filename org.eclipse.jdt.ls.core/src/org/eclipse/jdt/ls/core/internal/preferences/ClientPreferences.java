@@ -387,6 +387,7 @@ public class ClientPreferences {
 		return v3supported
 			&& capabilities.getTextDocument().getCompletion() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
 	}
 
