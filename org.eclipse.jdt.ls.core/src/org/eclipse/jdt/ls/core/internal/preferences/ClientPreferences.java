@@ -275,6 +275,14 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("resolveAdditionalTextEditsSupport", "false").toString());
 	}
 
+	/**
+	 * The command which will be triggered when the completion item is selected. Different clients can have different
+	 * command ids. The command id is set in the 'onCompletionItemSelectedCommand' field of the extended client capabilities.
+	 */
+	public String getCompletionItemCommand() {
+		return String.valueOf(extendedClientCapabilities.getOrDefault("onCompletionItemSelectedCommand", ""));
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

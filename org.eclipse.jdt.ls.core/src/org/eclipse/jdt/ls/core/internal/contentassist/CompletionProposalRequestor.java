@@ -39,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
@@ -237,6 +238,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
 			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
 				$.setFilterText(newText);
+			}
+		}
+		if (preferenceManager.getPreferences().isSignatureHelpEnabled()) {
+			String onSelectedCommand = preferenceManager.getClientPreferences().getCompletionItemCommand();
+			if (!onSelectedCommand.isEmpty()) {
+				$.setCommand(new Command("Command triggered for completion", onSelectedCommand));
 			}
 		}
 		return $;
