@@ -411,24 +411,37 @@ public class StandardProjectsManager extends ProjectsManager {
 							if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 								IPath path = entry.getPath();
 								if (path != null && !path.toString().contains("/src/") && !path.toString().endsWith("/src")) {
-									IFolder folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
-									if (folder.exists() && !folder.isDerived()) {
-										IPath location = folder.getLocation();
-										if (location != null && !isContainedIn(location, sources)) {
-											sources.add(location);
+									IPath location = null;
+									if (Objects.equals(entry.getPath(), project.getFullPath())) {
+										location = project.getLocation();
+									} else {
+										IFolder folder;
+										try {
+											folder = ResourcesPlugin.getWorkspace().getRoot().getFolder(path);
+											if (folder.exists() && !folder.isDerived()) {
+												location = folder.getLocation();
+											}
+										} catch (Exception e1) {
+											JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
 										}
 									}
-
+									if (location != null && !isContainedIn(location, sources)) {
+										sources.add(location);
+									}
 								}
 							}
 							if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY) {
 								IPath path = entry.getPath();
-								IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
-								if (resource != null && !resource.isDerived()) {
-									IPath location = resource.getLocation();
-									if (location != null && !isContainedIn(location, sources)) {
-										sources.add(location);
+								try {
+									IFile resource = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
+									if (resource != null && !resource.isDerived()) {
+										IPath location = resource.getLocation();
+										if (location != null && !isContainedIn(location, sources)) {
+											sources.add(location);
+										}
 									}
+								} catch (Exception e1) {
+									JavaLanguageServerPlugin.logException(e1.getMessage(), e1);
 								}
 							}
 						}
