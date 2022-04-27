@@ -28,7 +28,12 @@ public enum EventType {
 	/**
 	 * Incompatible issue between Gradle and Jdk event.
 	 */
-	IncompatibleGradleJdkIssue(300);
+	IncompatibleGradleJdkIssue(300),
+
+	/**
+	 * Recommended to upgrade Gradle wrapper event.
+	 */
+	UpgradeGradleWrapper(400);
 
 	private final int value;
 

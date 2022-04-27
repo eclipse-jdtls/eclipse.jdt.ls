@@ -370,4 +370,15 @@ public final class ResourceUtils {
 		marker.setAttribute(IMarker.MESSAGE, status.getMessage());
 		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
 	}
+
+	/**
+	 * Creates a simple warning marker with the given id and status message to the given resource.
+	 */
+	public static IMarker createWarningMarker(IResource resource, String message, String id, int line) throws CoreException {
+		IMarker marker = resource.createMarker(id);
+		marker.setAttribute(IMarker.LINE_NUMBER, line);
+		marker.setAttribute(IMarker.MESSAGE, message);
+		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
+		return marker;
+	}
 }

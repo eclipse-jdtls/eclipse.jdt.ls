@@ -19,6 +19,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Files;
@@ -43,6 +46,8 @@ import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -91,12 +96,19 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final String BUILD_GRADLE_KTS_DESCRIPTOR = "build.gradle.kts";
 	public static final String SETTINGS_GRADLE_DESCRIPTOR = "settings.gradle";
 	public static final String SETTINGS_GRADLE_KTS_DESCRIPTOR = "settings.gradle.kts";
+	public static final String GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR = "gradle/wrapper/gradle-wrapper.properties";
 
 	public static final GradleDistribution DEFAULT_DISTRIBUTION = GradleDistribution.forVersion(GradleVersion.current().getVersion());
 
 	public static final String IMPORTING_GRADLE_PROJECTS = "Importing Gradle project(s)";
 
 	public static final String COMPATIBILITY_MARKER_ID = IConstants.PLUGIN_ID + ".gradlecompatibilityerrormarker";
+	public static final String GRADLE_UPGRADE_WRAPPER_MARKER_ID = IConstants.PLUGIN_ID + ".gradleupgradewrappermarker";
+
+	public static final String GRADLE_INVALID_TYPE_CODE_MESSAGE = "Exact exceptions are not shown due to an outdated Gradle version, please consider to update your Gradle version.";
+
+	public static final String GRADLE_MARKER_COLUMN_START = "gradleColumnStart";
+	public static final String GRADLE_MARKER_COLUMN_END = "gradleColumnEnd";
 
 	//@formatter:off
 	public static final String GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE =
@@ -187,10 +199,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
 		subMonitor.worked(1);
 		MultiStatus compatibilityStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Compatibility issue occurs when importing Gradle projects", null);
+		MultiStatus gradleUpgradeWrapperStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Gradle upgrade wrapper", null);
 		for (Path directory : directories) {
 			IStatus importStatus = importDir(directory, subMonitor.newChild(1));
 			if (isFailedStatus(importStatus) && importStatus instanceof GradleCompatibilityStatus) {
 				compatibilityStatus.add(importStatus);
+			} else if (GradleUtils.hasGradleInvalidTypeCodeException(importStatus, directory, monitor)) {
+				gradleUpgradeWrapperStatus.add(new GradleUpgradeWrapperStatus(importStatus, GRADLE_INVALID_TYPE_CODE_MESSAGE, directory.toUri().toString()));
 			}
 		}
 		// store the digest for the imported gradle projects.
@@ -216,6 +231,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		});
 		for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
 			gradleProject.deleteMarkers(COMPATIBILITY_MARKER_ID, true, IResource.DEPTH_ZERO);
+			gradleProject.deleteMarkers(GRADLE_UPGRADE_WRAPPER_MARKER_ID, true, IResource.DEPTH_INFINITE);
 		}
 		for (IStatus status : compatibilityStatus.getChildren()) {
 			// only report first compatibility issue
@@ -225,9 +241,39 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					ResourceUtils.createErrorMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
 				}
 			}
-			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleCompatibilityChecker.CURRENT_GRADLE);
+			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleUtils.CURRENT_GRADLE);
 			EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
 			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+			break;
+		}
+		for (IStatus status : gradleUpgradeWrapperStatus.getChildren()) {
+			// only report first marker
+			GradleUpgradeWrapperStatus gradleStatus = ((GradleUpgradeWrapperStatus) status);
+			for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
+				if (!URIUtil.sameURI(URI.create(JDTUtils.getFileURI(gradleProject)), URI.create(gradleStatus.getProjectUri()))) {
+					continue;
+				}
+				IFile wrapperProperties = gradleProject.getFile(GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR);
+				if (!wrapperProperties.exists()) {
+					continue;
+				}
+				try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(wrapperProperties.getContents()))){
+					String line;
+					while ((line = reader.readLine()) != null) {
+						if (line.contains("distributionUrl")) {
+							IMarker marker = ResourceUtils.createWarningMarker(wrapperProperties, GRADLE_INVALID_TYPE_CODE_MESSAGE, GRADLE_UPGRADE_WRAPPER_MARKER_ID, reader.getLineNumber());
+							marker.setAttribute(GRADLE_MARKER_COLUMN_START, 0);
+							marker.setAttribute(GRADLE_MARKER_COLUMN_END, line.length());
+							UpgradeGradleWrapperInfo info = new UpgradeGradleWrapperInfo(gradleStatus.getProjectUri(), GRADLE_INVALID_TYPE_CODE_MESSAGE, GradleUtils.CURRENT_GRADLE);
+							EventNotification notification = new EventNotification().withType(EventType.UpgradeGradleWrapper).withData(info);
+							JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+							break;
+						}
+					}
+				} catch (IOException e) {
+					// Do nothing
+				}
+			}
 			break;
 		}
 		subMonitor.done();
@@ -364,10 +410,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 						StandardVMType type = new StandardVMType();
 						javaVersion = type.readReleaseVersion(javaHome);
 					}
-					if (GradleCompatibilityChecker.isIncompatible(GradleVersion.version(gradleVersion), javaVersion)) {
+					if (GradleUtils.isIncompatible(GradleVersion.version(gradleVersion), javaVersion)) {
 						Path projectName = projectFolder.getName(projectFolder.getNameCount() - 1);
 						String message = String.format("Can't use Java %s and Gradle %s to import Gradle project %s.", javaVersion, gradleVersion, projectName.toString());
-						String highestJavaVersion = GradleCompatibilityChecker.getHighestSupportedJava(GradleVersion.version(gradleVersion));
+						String highestJavaVersion = GradleUtils.getHighestSupportedJava(GradleVersion.version(gradleVersion));
 						return new GradleCompatibilityStatus(resultStatus, message, projectFolder.toUri().toString(), highestJavaVersion);
 					}
 				} catch (Exception e) {
@@ -460,8 +506,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return shouldSynchronize;
 	}
 
-	public static boolean upgradeGradleVersion(String projectUri, IProgressMonitor monitor) {
-		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", GradleCompatibilityChecker.CURRENT_GRADLE);
+	public static boolean upgradeGradleVersion(String projectUri, String gradleVersion, IProgressMonitor monitor) {
+		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", gradleVersion);
 		Path projectFolder = Paths.get(URI.create(projectUri));
 		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
 		Properties properties = new Properties();
@@ -492,7 +538,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				return null;
 			}, monitor);
 		} catch (Exception e) {
-			return false;
+			// Do nothing
 		}
 		return true;
 	}
@@ -501,7 +547,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public void reset() {
 	}
 
-	private static boolean isFailedStatus(IStatus status) {
+	public static boolean isFailedStatus(IStatus status) {
 		return status != null && !status.isOK() && status.getException() != null;
 	}
 
@@ -525,6 +571,20 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 	}
 
+	public class GradleUpgradeWrapperStatus extends Status {
+
+		private String projectUri;
+
+		public GradleUpgradeWrapperStatus(IStatus status, String message, String projectUri) {
+			super(status.getSeverity(), status.getPlugin(), status.getCode(), message, status.getException());
+			this.projectUri = projectUri;
+		}
+
+		public String getProjectUri() {
+			return this.projectUri;
+		}
+	}
+
 	private class GradleCompatibilityInfo implements Serializable {
 
 		private String projectUri;
@@ -536,6 +596,18 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			this.projectUri = projectPath;
 			this.message = message;
 			this.highestJavaVersion = highestJavaVersion;
+			this.recommendedGradleVersion = recommendedGradleVersion;
+		}
+	}
+
+	private class UpgradeGradleWrapperInfo implements Serializable {
+		private String projectUri;
+		private String message;
+		private String recommendedGradleVersion;
+
+		public UpgradeGradleWrapperInfo(String projectUri, String message, String recommendedGradleVersion) {
+			this.projectUri = projectUri;
+			this.message = message;
 			this.recommendedGradleVersion = recommendedGradleVersion;
 		}
 	}

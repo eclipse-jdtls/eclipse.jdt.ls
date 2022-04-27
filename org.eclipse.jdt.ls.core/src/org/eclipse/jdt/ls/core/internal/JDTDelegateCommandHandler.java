@@ -28,6 +28,7 @@ import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.GradleUtils;
 import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -118,7 +119,11 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return typeHierarchyItem;
 				case "java.project.upgradeGradle":
 					String projectUri = (String) arguments.get(0);
-					return GradleProjectImporter.upgradeGradleVersion(projectUri, monitor);
+					String gradleVersion = arguments.size() > 1 ? (String) arguments.get(1) : null;
+					if (gradleVersion == null) {
+						gradleVersion = GradleUtils.CURRENT_GRADLE;
+					}
+					return GradleProjectImporter.upgradeGradleVersion(projectUri, gradleVersion, monitor);
 				case "java.project.resolveWorkspaceSymbol":
 					SymbolInformation si = JSONUtility.toModel(arguments.get(0), SymbolInformation.class);
 					return ProjectCommand.resolveWorkspaceSymbol(si);

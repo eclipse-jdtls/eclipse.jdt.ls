@@ -46,13 +46,16 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticRelatedInformation;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -201,13 +204,17 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 
 		String uri = JDTUtils.getFileURI(project);
 		IFile pom = project.getFile("pom.xml");
+		IFile gradleWrapperProperties = project.getFile(GradleProjectImporter.GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR);
 		List<IMarker> pomMarkers = new ArrayList<>();
+		List<IMarker> gradleMarkers = new ArrayList<>();
 		for (IMarker marker : markers) {
 			if (isIgnored(marker)) {
 				continue;
 			}
 			if (IMavenConstants.MARKER_CONFIGURATION_ID.equals(marker.getType())) {
 				pomMarkers.add(marker);
+			} else if (GradleProjectImporter.GRADLE_UPGRADE_WRAPPER_MARKER_ID.equals(marker.getType())) {
+				gradleMarkers.add(marker);
 			} else {
 				projectMarkers.add(marker);
 			}
@@ -222,6 +229,14 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			diagnostics.addAll(diagnosicts2);
 			String pomSuffix = clientUri.endsWith("/") ? "pom.xml" : "/pom.xml";
 			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + pomSuffix), diagnostics));
+		}
+		if (gradleWrapperProperties.exists()) {
+			IDocument document = JsonRpcHelpers.toDocument(gradleWrapperProperties);
+			diagnostics = toDiagnosticsArray(document, gradleWrapperProperties.findMarkers(null, true, IResource.DEPTH_ZERO), isDiagnosticTagSupported);
+			List<Diagnostic> diagnosicts2 = toDiagnosticArray(range, gradleMarkers, isDiagnosticTagSupported);
+			diagnostics.addAll(diagnosicts2);
+			String gradleSuffix = clientUri.endsWith("/") ? GradleProjectImporter.GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR : "/" + GradleProjectImporter.GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR;
+			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(clientUri + gradleSuffix), diagnostics));
 		}
 	}
 
@@ -421,6 +436,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (marker.isSubtypeOf(IMavenConstants.MARKER_ID)) {
 				cStart = marker.getAttribute(IMavenConstants.MARKER_COLUMN_START, -1);
 				cEnd = marker.getAttribute(IMavenConstants.MARKER_COLUMN_END, -1);
+			} else if (marker.isSubtypeOf(GradleProjectImporter.GRADLE_UPGRADE_WRAPPER_MARKER_ID)) {
+				cStart = marker.getAttribute(GradleProjectImporter.GRADLE_MARKER_COLUMN_START, -1);
+				cEnd = marker.getAttribute(GradleProjectImporter.GRADLE_MARKER_COLUMN_END, -1);
 			} else {
 				if (marker.getAttribute(IJavaModelMarker.ID, -1) == IProblem.UndefinedType) {
 					try {
