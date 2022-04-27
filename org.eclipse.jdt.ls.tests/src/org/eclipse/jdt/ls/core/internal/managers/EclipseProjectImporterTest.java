@@ -36,6 +36,8 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.FileSystemWatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -218,6 +220,22 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		Collection<IPath> configurationPaths = new ArrayList<>();
 		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(root.toPath().resolve("build.gradle").toUri().toString()));
 		assertFalse(importer.applies(configurationPaths, null));
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2436
+	@Test
+	public void importJavaProjectWithRootSource() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		String name = "projectwithrootsource";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+		assertEquals(11, watchers.size());
+		String srcGlobPattern = watchers.get(9).getGlobPattern();
+		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.endsWith("projectwithrootsource/**"));
 	}
 
 	@After
