@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -33,6 +34,7 @@ import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
@@ -43,7 +45,9 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
+import org.eclipse.jdt.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil.LocalAnalyzePackage;
 import org.eclipse.jdt.internal.corext.refactoring.rename.TempOccurrenceAnalyzer;
@@ -52,11 +56,9 @@ import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
@@ -227,7 +229,8 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 
 		if (!Checks.isDeclaredIn(fTempDeclarationNode, MethodDeclaration.class)
 				&& !Checks.isDeclaredIn(fTempDeclarationNode, Initializer.class)
-				&& !Checks.isDeclaredIn(fTempDeclarationNode, LambdaExpression.class)) {
+				&& !Checks.isDeclaredIn(fTempDeclarationNode, LambdaExpression.class)
+				&& !Checks.isDeclaredIn(fTempDeclarationNode, RecordDeclaration.class)) {
 			if (JavaModelUtil.is1d8OrHigher(fCu.getJavaProject())) {
 				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.RenameTempRefactoring_only_in_methods_initializers_and_lambda);
 			}
@@ -267,6 +270,11 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 	@Override
 	protected IFile[] getChangedFiles() throws CoreException {
 		return new IFile[] {ResourceUtil.getFile(fCu)};
+	}
+
+	@Override
+	public int getSaveMode() {
+		return IRefactoringProcessorIds.SAVE_NOTHING;
 	}
 
 	@Override
@@ -427,7 +435,7 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT));
 		}
 		final String name= extended.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME);
-		if (name != null && !"".equals(name)) {
+		if (name != null && !"".equals(name)) { //$NON-NLS-1$
 			setNewElementName(name);
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME));
@@ -439,17 +447,16 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 				int length= -1;
 				final StringTokenizer tokenizer= new StringTokenizer(selection);
 				if (tokenizer.hasMoreTokens()) {
-					offset= Integer.valueOf(tokenizer.nextToken()).intValue();
+					offset= Integer.parseInt(tokenizer.nextToken());
 				}
 				if (tokenizer.hasMoreTokens()) {
-					length= Integer.valueOf(tokenizer.nextToken()).intValue();
+					length= Integer.parseInt(tokenizer.nextToken());
 				}
 				if (offset >= 0 && length >= 0) {
 					try {
 						final IJavaElement[] elements= fCu.codeSelect(offset, length);
 						if (elements != null) {
-							for (int index= 0; index < elements.length; index++) {
-								final IJavaElement element= elements[index];
+							for (IJavaElement element : elements) {
 								if (element instanceof ILocalVariable) {
 									fLocalVariable= (ILocalVariable) element;
 								}
@@ -459,7 +466,7 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 							return JavaRefactoringDescriptorUtil.createInputFatalStatus(null, getProcessorName(), IJavaRefactorings.RENAME_LOCAL_VARIABLE);
 						}
 					} catch (JavaModelException exception) {
-						JavaLanguageServerPlugin.log(exception);
+						JavaLanguageServerPlugin.logException(exception);
 					}
 				} else {
 					return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_illegal_argument, new Object[] { selection,
@@ -472,7 +479,7 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 		}
 		final String references= extended.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES);
 		if (references != null) {
-			fUpdateReferences= Boolean.valueOf(references).booleanValue();
+			fUpdateReferences= Boolean.parseBoolean(references);
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES));
 		}

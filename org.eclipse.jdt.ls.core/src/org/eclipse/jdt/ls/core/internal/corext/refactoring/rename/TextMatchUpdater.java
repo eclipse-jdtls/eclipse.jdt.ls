@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2011 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -37,11 +38,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RefactoringScanner.TextMatch;
 import org.eclipse.ltk.core.refactoring.GroupCategory;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
@@ -93,12 +94,11 @@ class TextMatchUpdater {
 			IProject[] projectsInScope= getProjectsInScope();
 
 			pm.beginTask("", projectsInScope.length); //$NON-NLS-1$
-
-			for (int i =0 ; i < projectsInScope.length; i++){
+			for (IProject project : projectsInScope) {
 				if (pm.isCanceled()) {
 					throw new OperationCanceledException();
 				}
-				addTextMatches(projectsInScope[i], new SubProgressMonitor(pm, 1));
+				addTextMatches(project, new SubProgressMonitor(pm, 1));
 			}
 		} finally{
 			pm.done();
@@ -107,14 +107,11 @@ class TextMatchUpdater {
 
 	private IProject[] getProjectsInScope() {
 		IPath[] enclosingProjects= fScope.enclosingProjectsAndJars();
-		Set<IPath> enclosingProjectSet= new HashSet<>();
-		enclosingProjectSet.addAll(Arrays.asList(enclosingProjects));
-
+		Set<IPath> enclosingProjectSet= new HashSet<>(Arrays.asList(enclosingProjects));
 		ArrayList<IProject> projectsInScope= new ArrayList<>();
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		for (int i =0 ; i < projects.length; i++){
-			if (enclosingProjectSet.contains(projects[i].getFullPath())) {
-				projectsInScope.add(projects[i]);
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			if (enclosingProjectSet.contains(project.getFullPath())) {
+				projectsInScope.add(project);
 			}
 		}
 
@@ -142,12 +139,11 @@ class TextMatchUpdater {
 				IResource[] members= ((IContainer) resource).members();
 				pm.beginTask(task, members.length);
 				pm.subTask(task);
-				for (int i = 0; i < members.length; i++) {
+				for (IResource member : members) {
 					if (pm.isCanceled()) {
 						throw new OperationCanceledException();
 					}
-
-					addTextMatches(members[i], new SubProgressMonitor(pm, 1));
+					addTextMatches(member, new SubProgressMonitor(pm, 1));
 				}
 			}
 		} catch (JavaModelException e){
@@ -162,19 +158,18 @@ class TextMatchUpdater {
 	private void addCuTextMatches(ICompilationUnit cu) throws JavaModelException{
 		fScanner.scan(cu);
 		Set<TextMatch> matches= fScanner.getMatches(); //Set of TextMatch
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			return;
 		}
 
 		removeReferences(cu, matches);
-		if (matches.size() != 0) {
+		if (!matches.isEmpty()) {
 			addTextUpdates(cu, matches);
 		}
 	}
 
 	private void removeReferences(ICompilationUnit cu, Set<TextMatch> matches) {
-		for (int i= 0; i < fReferences.length; i++) {
-			SearchResultGroup group= fReferences[i];
+		for (SearchResultGroup group : fReferences) {
 			if (cu.equals(group.getCompilationUnit())) {
 				removeReferences(matches, group);
 			}
@@ -182,10 +177,9 @@ class TextMatchUpdater {
 	}
 
 	private void removeReferences(Set<TextMatch> matches, SearchResultGroup group) {
-		SearchMatch[] searchResults= group.getSearchResults();
-		for (int r= 0; r < searchResults.length; r++) {
+		for (SearchMatch searchResult : group.getSearchResults()) {
 			//int start= searchResults[r].getStart(); // doesn't work for pack.ReferencedType
-			int unqualifiedStart= searchResults[r].getOffset() + searchResults[r].getLength() - fCurrentNameLength;
+			int unqualifiedStart= searchResult.getOffset() + searchResult.getLength() - fCurrentNameLength;
 			for (Iterator<TextMatch> iter= matches.iterator(); iter.hasNext();) {
 				TextMatch element= iter.next();
 				if (element.getStartPosition() == unqualifiedStart) {
@@ -196,8 +190,7 @@ class TextMatchUpdater {
 	}
 
 	private void addTextUpdates(ICompilationUnit cu, Set<TextMatch> matches) {
-		for (Iterator<TextMatch> resultIter= matches.iterator(); resultIter.hasNext();){
-			TextMatch match= resultIter.next();
+		for (TextMatch match : matches) {
 			if (!match.isQualified() && fOnlyQualified) {
 				continue;
 			}

@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -35,8 +36,10 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
+import org.eclipse.jdt.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenamingNameSuggestor;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IQualifiedNameUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
@@ -44,12 +47,10 @@ import org.eclipse.jdt.internal.corext.refactoring.tagging.ISimilarDeclarationUp
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.util.JavaConventionsUtil;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.IResourceMapper;
@@ -64,7 +65,7 @@ import org.eclipse.ltk.core.refactoring.resource.RenameResourceDescriptor;
 
 public final class RenameCompilationUnitProcessor extends JavaRenameProcessor implements IReferenceUpdating, ITextUpdating, IQualifiedNameUpdating, ISimilarDeclarationUpdating, IResourceMapper, IJavaElementMapper {
 
-	private RenameTypeProcessor fRenameTypeProcessor = null;
+	private RenameTypeProcessor fRenameTypeProcessor= null;
 	private boolean fWillRenameType= false;
 	private ICompilationUnit fCu;
 
@@ -88,7 +89,7 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 
 	@Override
 	public String getIdentifier() {
-		return "org.eclipse.jdt.ui.renameCompilationUnitProcessor";
+		return IRefactoringProcessorIds.RENAME_COMPILATION_UNIT_PROCESSOR;
 	}
 
 	@Override
@@ -119,7 +120,7 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 			String newTypeName= removeFileNameExtension(getNewElementName());
 			RenameTypeArguments arguments= new RenameTypeArguments(newTypeName, getUpdateReferences(), getUpdateSimilarDeclarations(), getSimilarElements());
 			result.rename(fRenameTypeProcessor.getType(), arguments, getUpdateSimilarDeclarations()
-					? new RenameTypeProcessor.ParticipantDescriptorFilter()
+				? new RenameTypeProcessor.ParticipantDescriptorFilter()
 				: null);
 		}
 		return result;
@@ -134,6 +135,11 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 			}
 		}
 		return new IFile[0];
+	}
+
+	@Override
+	public int getSaveMode() {
+		return IRefactoringProcessorIds.SAVE_REFACTORING;
 	}
 
 	//---- IRenameProcessor -------------------------------------
@@ -380,14 +386,14 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 	}
 
 	private void computeRenameTypeRefactoring() throws CoreException{
-		if (getSimpleCUName().indexOf(".") != -1) { //$NON-NLS-1$
+		if (getSimpleCUName().indexOf('.') != -1) {
 			fRenameTypeProcessor= null;
 			fWillRenameType= false;
 			return;
 		}
 		IType type= getTypeWithTheSameName();
 		if (type != null) {
-			fRenameTypeProcessor = new RenameTypeProcessor(type);
+			fRenameTypeProcessor= new RenameTypeProcessor(type);
 		} else {
 			fRenameTypeProcessor= null;
 		}
@@ -396,11 +402,10 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 
 	private IType getTypeWithTheSameName() {
 		try {
-			IType[] topLevelTypes= fCu.getTypes();
 			String name= getSimpleCUName();
-			for (int i = 0; i < topLevelTypes.length; i++) {
-				if (name.equals(topLevelTypes[i].getElementName())) {
-					return topLevelTypes[i];
+			for (IType topLevelType : fCu.getTypes()) {
+				if (name.equals(topLevelType.getElementName())) {
+					return topLevelType;
 				}
 			}
 			return null;
@@ -420,7 +425,7 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 	 * @return main type name
 	 */
 	private static String removeFileNameExtension(String fileName) {
-		if (fileName.lastIndexOf(".") == -1) {
+		if (fileName.lastIndexOf(".") == -1) { //$NON-NLS-1$
 			return fileName;
 		}
 		return fileName.substring(0, fileName.lastIndexOf(".")); //$NON-NLS-1$
@@ -502,7 +507,7 @@ public final class RenameCompilationUnitProcessor extends JavaRenameProcessor im
 			computeRenameTypeRefactoring();
 			setNewElementName(name);
 		} catch (CoreException exception) {
-			JavaLanguageServerPlugin.log(exception);
+			JavaLanguageServerPlugin.logException(exception);
 			return JavaRefactoringDescriptorUtil.createInputFatalStatus(element, getProcessorName(), IJavaRefactorings.RENAME_COMPILATION_UNIT);
 		}
 		return new RefactoringStatus();

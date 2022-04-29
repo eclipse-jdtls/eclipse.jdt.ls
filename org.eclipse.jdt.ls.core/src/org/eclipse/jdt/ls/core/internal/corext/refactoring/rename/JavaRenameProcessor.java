@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2011 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -29,6 +30,7 @@ import org.eclipse.ltk.core.refactoring.participants.ResourceChangeChecker;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
 
+
 public abstract class JavaRenameProcessor extends RenameProcessor implements INameUpdating {
 
 	private String fNewElementName;
@@ -47,9 +49,8 @@ public abstract class JavaRenameProcessor extends RenameProcessor implements INa
 		if (result.hasFatalError()) {
 			return result;
 		}
-		IFile[] changed= getChangedFiles();
-		for (int i= 0; i < changed.length; i++) {
-			deltaFactory.change(changed[i]);
+		for (IFile f : getChangedFiles()) {
+			deltaFactory.change(f);
 		}
 		fRenameModifications= computeRenameModifications();
 		fRenameModifications.buildDelta(deltaFactory);
@@ -75,5 +76,12 @@ public abstract class JavaRenameProcessor extends RenameProcessor implements INa
 	public String getNewElementName() {
 		return fNewElementName;
 	}
+
+	/**
+	 * @return a save mode from {@link RefactoringSaveHelper}
+	 *
+	 * @see RefactoringSaveHelper
+	 */
+	public abstract int getSaveMode();
 
 }

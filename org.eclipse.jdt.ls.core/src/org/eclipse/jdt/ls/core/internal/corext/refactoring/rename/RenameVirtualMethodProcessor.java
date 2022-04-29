@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -11,12 +12,12 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Nikolay Metchev <nikolaymetchev@gmail.com> - [rename] https://bugs.eclipse.org/99622
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.runtime.Assert;
@@ -31,12 +32,12 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusContext;
@@ -57,7 +58,6 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 	public RenameVirtualMethodProcessor(IMethod method) {
 		super(method);
 		fOriginalMethod= getMethod();
-		fActivationChecked = true; // is top level
 	}
 
 	/**
@@ -72,7 +72,6 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 		RefactoringStatus initializeStatus= initialize(arguments);
 		status.merge(initializeStatus);
 		fOriginalMethod= getMethod();
-		fActivationChecked = true; // is top level
 	}
 
 	/*
@@ -86,13 +85,9 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 	RenameVirtualMethodProcessor(IMethod topLevel, IMethod[] ripples, TextChangeManager changeManager, ITypeHierarchy hierarchy, GroupCategorySet categorySet) {
 		super(topLevel, changeManager, categorySet);
 		fOriginalMethod= getMethod();
-		fActivationChecked = true; // is top level
+		fActivationChecked= true; // is top level
 		fCachedHierarchy= hierarchy; // may be null
 		setMethodsToRename(ripples);
-	}
-
-	public IMethod getOriginalMethod() {
-		return fOriginalMethod;
 	}
 
 	private ITypeHierarchy getCachedHierarchy(IType declaring, IProgressMonitor monitor) throws JavaModelException {
@@ -101,6 +96,10 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 		}
 		fCachedHierarchy= declaring.newTypeHierarchy(new SubProgressMonitor(monitor, 1));
 		return fCachedHierarchy;
+	}
+
+	public IMethod getOriginalMethod() {
+		return fOriginalMethod;
 	}
 
 	@Override
@@ -134,7 +133,9 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 					topmost= MethodChecks.getTopmostMethod(getMethod(), hierarchy, monitor);
 				}
 				if (topmost != null) {
+					String newName = getNewElementName();
 					initialize(topmost);
+					setNewElementName(newName);
 				}
 				fActivationChecked= true;
 			}
@@ -164,9 +165,7 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 					result.addError(RefactoringCoreMessages.RenameMethodInInterfaceRefactoring_special_case);
 				}
 				pm.worked(1);
-				IMethod[] relatedMethods= relatedTypeDeclaresMethodName(new SubProgressMonitor(pm, 1), method, name);
-				for (int i= 0; i < relatedMethods.length; i++) {
-					IMethod relatedMethod= relatedMethods[i];
+				for (IMethod relatedMethod : relatedTypeDeclaresMethodName(new SubProgressMonitor(pm, 1), method, name)) {
 					RefactoringStatusContext context= JavaStatusContext.create(relatedMethod);
 					result.addError(RefactoringCoreMessages.RenameMethodInInterfaceRefactoring_already_defined, context);
 				}
@@ -177,9 +176,7 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 						new String[]{ BasicElementLabels.getJavaElementName(method.getElementName()), "UnsatisfiedLinkError"})); //$NON-NLS-1$
 				}
 
-				IMethod[] hierarchyMethods= hierarchyDeclaresMethodName(new SubProgressMonitor(pm, 1), hierarchy, method, name);
-				for (int i= 0; i < hierarchyMethods.length; i++) {
-					IMethod hierarchyMethod= hierarchyMethods[i];
+				for (IMethod hierarchyMethod : hierarchyDeclaresMethodName(new SubProgressMonitor(pm, 1), hierarchy, method, name)) {
 					RefactoringStatusContext context= JavaStatusContext.create(hierarchyMethod);
 					if (Checks.compareParamTypes(method.getParameterTypes(), hierarchyMethod.getParameterTypes())) {
 						result.addError(Messages.format(
@@ -206,8 +203,8 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 			Set<IMethod> result= new HashSet<>();
 			Set<IType> types= getRelatedTypes();
 			pm.beginTask("", types.size()); //$NON-NLS-1$
-			for (Iterator<IType> iter= types.iterator(); iter.hasNext(); ) {
-				final IMethod found= Checks.findMethod(method, iter.next());
+			for (IType type : types) {
+				final IMethod found= Checks.findMethod(method, type);
 				final IType declaring= found.getDeclaringType();
 				result.addAll(Arrays.asList(hierarchyDeclaresMethodName(new SubProgressMonitor(pm, 1), declaring.newTypeHierarchy(new SubProgressMonitor(pm, 1)), found, newName)));
 			}
@@ -244,8 +241,8 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 	private Set<IType> getRelatedTypes() {
 		Set<IMethod> methods= getMethodsToRename();
 		Set<IType> result= new HashSet<>(methods.size());
-		for (Iterator<IMethod> iter= methods.iterator(); iter.hasNext(); ){
-			result.add(iter.next().getDeclaringType());
+		for (IMethod method : methods) {
+			result.add(method.getDeclaringType());
 		}
 		return result;
 	}
@@ -253,12 +250,9 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 	//---- Class checks -------------------------------------
 
 	private boolean classesDeclareOverridingNativeMethod(IType[] classes) throws CoreException {
-		for (int i= 0; i < classes.length; i++){
-			IMethod[] methods= classes[i].getMethods();
-			for (int j= 0; j < methods.length; j++){
-				if ((!methods[j].equals(getMethod()))
-					&& (JdtFlags.isNative(methods[j]))
-					&& (null != Checks.findSimilarMethod(getMethod(), new IMethod[]{methods[j]}))) {
+ 		for (IType type : classes) {
+			for (IMethod method : type.getMethods()) {
+				if ((!method.equals(getMethod())) && (JdtFlags.isNative(method)) && (null != Checks.findSimilarMethod(getMethod(), new IMethod[]{method}))) {
 					return true;
 				}
 			}
@@ -274,4 +268,16 @@ public class RenameVirtualMethodProcessor extends RenameMethodProcessor {
 			return RefactoringCoreMessages.DelegateMethodCreator_keep_original_renamed_singular;
 		}
 	}
+
+	/*
+	@Override
+	protected SearchPattern createOccurrenceSearchPattern() {
+		SearchPattern pattern= null;
+		if (fIsRecordAccessor) {
+			pattern= SearchPattern.createFieldOrAccessorMethodORPattern(getMethod());
+		} else {
+			pattern= super.createOccurrenceSearchPattern();
+		}
+		return pattern;
+	}*/
 }

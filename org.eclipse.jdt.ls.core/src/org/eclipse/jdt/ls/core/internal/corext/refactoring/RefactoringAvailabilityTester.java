@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -1230,6 +1231,10 @@ public final class RefactoringAvailabilityTester {
 		return true;
 	}
 
+	public static boolean isRenameAvailable(final IModuleDescription module) throws JavaModelException {
+		return Checks.isAvailable(module);
+	}
+
 	public static boolean isRenameAvailable(final ILocalVariable variable) throws JavaModelException {
 		return Checks.isAvailable(variable);
 	}
@@ -1329,6 +1334,10 @@ public final class RefactoringAvailabilityTester {
 		return Checks.isAvailable(field) && !JdtFlags.isEnum(field);
 	}
 
+	public static boolean isRenameModuleAvailable(final IModuleDescription module) throws JavaModelException {
+		return Checks.isAvailable(module);
+	}
+
 	public static boolean isRenameNonVirtualMethodAvailable(final IMethod method) throws JavaModelException, CoreException {
 		return isRenameAvailable(method) && !MethodChecks.isVirtual(method);
 	}
@@ -1353,35 +1362,46 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isRenameElementAvailable(IJavaElement element) throws CoreException {
-		switch (element.getElementType()) {
-			case IJavaElement.JAVA_PROJECT:
-				return isRenameAvailable((IJavaProject) element);
-			case IJavaElement.PACKAGE_FRAGMENT_ROOT:
-				return isRenameAvailable((IPackageFragmentRoot) element);
-			case IJavaElement.PACKAGE_FRAGMENT:
-				return isRenameAvailable((IPackageFragment) element);
-			case IJavaElement.COMPILATION_UNIT:
-				return isRenameAvailable((ICompilationUnit) element);
-			case IJavaElement.TYPE:
-				return isRenameAvailable((IType) element);
-			case IJavaElement.METHOD:
-				final IMethod method = (IMethod) element;
-				if (method.isConstructor()) {
-					return isRenameAvailable(method.getDeclaringType());
-				} else {
-					return isRenameAvailable(method);
+		return isRenameElementAvailable(element, false);
+	}
+
+	public static boolean isRenameElementAvailable(IJavaElement element, boolean isTextSelection) throws CoreException {
+		if (element != null) {
+			switch (element.getElementType()) {
+				case IJavaElement.JAVA_PROJECT:
+					return isRenameAvailable((IJavaProject) element);
+				case IJavaElement.PACKAGE_FRAGMENT_ROOT:
+					return isRenameAvailable((IPackageFragmentRoot) element);
+				case IJavaElement.PACKAGE_FRAGMENT:
+					return isRenameAvailable((IPackageFragment) element);
+				case IJavaElement.COMPILATION_UNIT:
+					return isRenameAvailable((ICompilationUnit) element);
+				case IJavaElement.TYPE:
+					return isRenameAvailable((IType) element);
+				case IJavaElement.METHOD:
+					final IMethod method = (IMethod) element;
+					if (method.isConstructor()) {
+						return isRenameAvailable(method.getDeclaringType());
+					} else {
+						return isRenameAvailable(method);
+					}
+				case IJavaElement.FIELD:
+					final IField field = (IField) element;
+					if (Flags.isEnum(field.getFlags())) {
+						return isRenameEnumConstAvailable(field);
+					} else {
+						return isRenameFieldAvailable(field);
+					}
+				case IJavaElement.TYPE_PARAMETER:
+					return isRenameAvailable((ITypeParameter) element);
+				case IJavaElement.LOCAL_VARIABLE:
+					return isRenameAvailable((ILocalVariable) element);
+				case IJavaElement.JAVA_MODULE: {
+					return isRenameAvailable((IModuleDescription) element);
 				}
-			case IJavaElement.FIELD:
-				final IField field = (IField) element;
-				if (Flags.isEnum(field.getFlags())) {
-					return isRenameEnumConstAvailable(field);
-				} else {
-					return isRenameFieldAvailable(field);
-				}
-			case IJavaElement.TYPE_PARAMETER:
-				return isRenameAvailable((ITypeParameter) element);
-			case IJavaElement.LOCAL_VARIABLE:
-				return isRenameAvailable((ILocalVariable) element);
+				default:
+					break;
+			}
 		}
 		return false;
 	}

@@ -1,13 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- *
- * Originally copied from org.eclipse.jdt.internal.corext.refactoring.rename.MethodChecks
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
@@ -24,13 +23,14 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
-import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusContext;
@@ -91,7 +91,7 @@ public class MethodChecks {
 		RefactoringStatusContext context= JavaStatusContext.create(overrides);
 		String message= Messages.format(RefactoringCoreMessages.MethodChecks_overrides,
 				new String[]{JavaElementUtil.createMethodSignature(overrides), JavaElementLabels.getElementLabel(overrides.getDeclaringType(), JavaElementLabels.ALL_FULLY_QUALIFIED)});
-		return RefactoringStatus.createStatus(RefactoringStatus.FATAL, message, context, "", RefactoringStatusCodes.OVERRIDES_ANOTHER_METHOD, overrides);
+		return RefactoringStatus.createStatus(RefactoringStatus.FATAL, message, context, IConstants.PLUGIN_ID, RefactoringStatusCodes.OVERRIDES_ANOTHER_METHOD, overrides);
 	}
 
 	public static RefactoringStatus checkIfComesFromInterface(IMethod method, ITypeHierarchy hierarchy, IProgressMonitor monitor) throws JavaModelException {
@@ -104,7 +104,7 @@ public class MethodChecks {
 		RefactoringStatusContext context= JavaStatusContext.create(inInterface);
 		String message= Messages.format(RefactoringCoreMessages.MethodChecks_implements,
 				new String[]{JavaElementUtil.createMethodSignature(inInterface), JavaElementLabels.getElementLabel(inInterface.getDeclaringType(), JavaElementLabels.ALL_FULLY_QUALIFIED)});
-		return RefactoringStatus.createStatus(RefactoringStatus.FATAL, message, context, "", RefactoringStatusCodes.METHOD_DECLARED_IN_INTERFACE, inInterface);
+		return RefactoringStatus.createStatus(RefactoringStatus.FATAL, message, context, IConstants.PLUGIN_ID, RefactoringStatusCodes.METHOD_DECLARED_IN_INTERFACE, inInterface);
 	}
 
 	public static IMethod isDeclaredInInterface(IMethod method, ITypeHierarchy hierarchy, IProgressMonitor monitor) throws JavaModelException {
@@ -113,16 +113,15 @@ public class MethodChecks {
 		try {
 			IType[] classes= hierarchy.getAllClasses();
 			subMonitor.beginTask("", classes.length); //$NON-NLS-1$
-			for (int i= 0; i < classes.length; i++) {
-				final IType clazz= classes[i];
+			for (IType clazz : classes) {
 				IType[] superinterfaces= null;
 				if (clazz.equals(hierarchy.getType())) {
 					superinterfaces= hierarchy.getAllSuperInterfaces(clazz);
 				} else {
 					superinterfaces= clazz.newSupertypeHierarchy(new SubProgressMonitor(subMonitor, 1)).getAllSuperInterfaces(clazz);
 				}
-				for (int j= 0; j < superinterfaces.length; j++) {
-					IMethod found= Checks.findSimilarMethod(method, superinterfaces[j]);
+				for (IType superinterface : superinterfaces) {
+					IMethod found= Checks.findSimilarMethod(method, superinterface);
 					if (found != null && !found.equals(method)) {
 						return found;
 					}
