@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Code copied from org.eclipse.jdt.internal.corext.refactoring.rename.RippleMethodFinder2
+ * Code copied from org.eclipse.jdt.internal.corext.refactoring.rename.RippleMethodFinder
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation

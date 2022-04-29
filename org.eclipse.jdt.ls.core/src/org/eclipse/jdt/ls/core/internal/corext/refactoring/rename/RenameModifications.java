@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2011 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -37,6 +38,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -54,6 +56,7 @@ import org.eclipse.ltk.core.refactoring.participants.RefactoringProcessor;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
+
 
 public class RenameModifications extends RefactoringModifications {
 
@@ -76,9 +79,8 @@ public class RenameModifications extends RefactoringModifications {
 		IProject rProject= project.getProject();
 		if (rProject != null) {
 			getResourceModifications().addRename(rProject, args);
-			IProject[] referencingProjects= rProject.getReferencingProjects();
-			for (int i= 0; i < referencingProjects.length; i++) {
-				IFile classpath= getClasspathFile(referencingProjects[i]);
+			for (IProject referencingProject : rProject.getReferencingProjects()) {
+				IFile classpath= getClasspathFile(referencingProject);
 				if (classpath != null) {
 					getResourceModifications().addChanged(classpath);
 				}
@@ -98,8 +100,7 @@ public class RenameModifications extends RefactoringModifications {
 		IPackageFragment[] allSubPackages= null;
 		if (renameSubPackages) {
 			allSubPackages= getSubpackages(rootPackage);
-			for (int i= 0; i < allSubPackages.length; i++) {
-				IPackageFragment pack= allSubPackages[i];
+			for (IPackageFragment pack : allSubPackages) {
 				RenameArguments subArgs= new RenameArguments(
 					getNewPackageName(rootPackage, args.getNewName(), pack.getElementName()),
 					args.getUpdateReferences());
@@ -161,6 +162,10 @@ public class RenameModifications extends RefactoringModifications {
 		add(typeParameter, arguments, null);
 	}
 
+	public void rename(IModuleDescription module, RenameArguments args) {
+		add(module, args, null);
+	}
+
 	@Override
 	public void buildDelta(IResourceChangeDescriptionFactory builder) {
 		for (int i= 0; i < fRename.size(); i++) {
@@ -174,8 +179,7 @@ public class RenameModifications extends RefactoringModifications {
 
 	@Override
 	public void buildValidateEdits(ValidateEditChecker checker) {
-		for (Iterator<Object> iter= fRename.iterator(); iter.hasNext();) {
-			Object element= iter.next();
+		for (Object element : fRename) {
 			if (element instanceof ICompilationUnit) {
 				ICompilationUnit unit= (ICompilationUnit)element;
 				IResource resource= unit.getResource();
@@ -216,8 +220,7 @@ public class RenameModifications extends RefactoringModifications {
 				return;
 			}
 			boolean removeContainer= ! container.contains(target);
-			for (int i= 0; i < allSubPackages.length; i++) {
-				IPackageFragment pack= allSubPackages[i];
+			for (IPackageFragment pack : allSubPackages) {
 				IFolder subTarget= addResourceModifications(rootPackage, args, pack, renameSubPackages);
 				if (container.contains(subTarget)) {
 					removeContainer= false;
@@ -237,10 +240,8 @@ public class RenameModifications extends RefactoringModifications {
 		IFolder target= computeTargetFolder(rootPackage, args, pack);
 		createIncludingParents(target);
 		MoveArguments arguments= new MoveArguments(target, args.getUpdateReferences());
-		IResource[] resourcesToMove= collectResourcesOfInterest(pack);
 		Set<IResource> allMembers= new HashSet<>(Arrays.asList(container.members()));
-		for (int i= 0; i < resourcesToMove.length; i++) {
-			IResource toMove= resourcesToMove[i];
+		for (IResource toMove : collectResourcesOfInterest(pack)) {
 			getResourceModifications().addMove(toMove, arguments);
 			allMembers.remove(toMove);
 		}
@@ -263,14 +264,13 @@ public class RenameModifications extends RefactoringModifications {
 
 	private IPackageFragment[] getSubpackages(IPackageFragment pack) throws CoreException {
 		IPackageFragmentRoot root= (IPackageFragmentRoot) pack.getParent();
-		IJavaElement[] allPackages= root.getChildren();
 		if (pack.isDefaultPackage()) {
 			return new IPackageFragment[0];
 		}
 		ArrayList<IPackageFragment> result= new ArrayList<>();
 		String prefix= pack.getElementName() + '.';
-		for (int i= 0; i < allPackages.length; i++) {
-			IPackageFragment currentPackage= (IPackageFragment) allPackages[i];
+		for (IJavaElement element : root.getChildren()) {
+			IPackageFragment currentPackage= (IPackageFragment) element;
 			if (currentPackage.getElementName().startsWith(prefix)) {
 				result.add(currentPackage);
 			}

@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -29,21 +30,26 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.core.refactoring.IJavaRefactorings;
 import org.eclipse.jdt.core.refactoring.descriptors.JavaRefactoringDescriptor;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.MethodReferenceMatch;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchPattern;
@@ -54,6 +60,7 @@ import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComment;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringScopeFactory;
 import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
@@ -62,6 +69,7 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibili
 import org.eclipse.jdt.internal.corext.refactoring.delegates.DelegateCreator;
 import org.eclipse.jdt.internal.corext.refactoring.delegates.DelegateFieldCreator;
 import org.eclipse.jdt.internal.corext.refactoring.delegates.DelegateMethodCreator;
+import org.eclipse.jdt.internal.corext.refactoring.participants.JavaProcessors;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
@@ -74,16 +82,15 @@ import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.internal.corext.util.Messages;
+import org.eclipse.jdt.internal.corext.util.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.CollectingSearchRequestor;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringSearchEngine;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.participants.JavaProcessors;
-import org.eclipse.jdt.ls.core.internal.corext.util.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.GroupCategory;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -100,8 +107,15 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 	private static final String ATTRIBUTE_RENAME_SETTER= "setter"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_DELEGATE= "delegate"; //$NON-NLS-1$
 	private static final String ATTRIBUTE_DEPRECATE= "deprecate"; //$NON-NLS-1$
+	private static final GroupCategorySet CATEGORY_LOCAL_RENAME= new GroupCategorySet(new GroupCategory("org.eclipse.jdt.internal.corext.refactoring.rename.renameType.local", RefactoringCoreMessages.RenameTypeProcessor_changeCategory_local_variables, RefactoringCoreMessages.RenameTypeProcessor_changeCategory_local_variables_description)); //$NON-NLS-1$
 
 	protected IField fField;
+	/* Record Related Fields */
+	private boolean fIsRecordComponent= false;
+	private RenameLocalVariableProcessor fRenameLocalVariableProcessor;
+	private ILocalVariable fLocalVariable;
+	private boolean fIsCompactConstructor;
+	/* Record Related Fields End*/
 	private SearchResultGroup[] fReferences;
 	private TextChangeManager fChangeManager;
 	protected boolean fUpdateReferences;
@@ -112,6 +126,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 	private GroupCategorySet fCategorySet;
 	private boolean fDelegateUpdating;
 	private boolean fDelegateDeprecation;
+	private CompilationUnit fCompUnit;
 
 	/**
 	 * Creates a new rename field processor.
@@ -153,10 +168,11 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		fDelegateUpdating= false;
 		fDelegateDeprecation= true;
 		fIsComposite= true;
+		fIsRecordComponent= false;
 	}
 
 	private void initialize(IField field) {
-		fField= field;
+		assignField(field);
 		if (fField != null) {
 			setNewElementName(fField.getElementName());
 		}
@@ -168,8 +184,14 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 	}
 
 	@Override
+	public void setNewElementName(String newName) {
+		super.setNewElementName(newName);
+		setLocalVariableProcessor();
+	}
+
+	@Override
 	public String getIdentifier() {
-		return "org.eclipse.jdt.ui.renameFieldProcessor";
+		return IRefactoringProcessorIds.RENAME_FIELD_PROCESSOR;
 	}
 
 	@Override
@@ -210,6 +232,15 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			IMethod setter= getSetter();
 			if (setter != null) {
 				result.rename(setter, new RenameArguments(getNewSetterName(), getUpdateReferences()));
+			}
+		}
+		if (fIsRecordComponent) {
+			IMethod accessor= getAccessor();
+			if (accessor != null) {
+				result.rename(accessor, new RenameArguments(getNewElementName(), getUpdateReferences()));
+			}
+			if (fLocalVariable != null) {
+				result.rename(fLocalVariable, new RenameArguments(getNewElementName(), getUpdateReferences()));
 			}
 		}
 		return result;
@@ -373,6 +404,43 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		return GetterSetterUtil.getSetter(fField);
 	}
 
+	private IMethod getAccessor() throws CoreException {
+		return JavaModelUtil.findMethod(fField.getElementName(), new String[0], false, fField.getDeclaringType());
+	}
+
+	private void setLocalVariableProcessor() {
+		if (fIsRecordComponent && fField != null) {
+			IType parent= fField.getDeclaringType();
+			try {
+				if (parent != null && parent.isRecord()) {
+					fCompUnit= SharedASTProviderCore.getAST(fField.getCompilationUnit(), SharedASTProviderCore.WAIT_YES, null);
+					for (IJavaElement elem : parent.getChildren()) {
+						if (elem instanceof IMethod
+								&& ((IMethod) elem).isConstructor()) {
+							IMethod method= (IMethod) elem;
+							MethodDeclaration mDecl= ASTNodeSearchUtil.getMethodDeclarationNode(method, fCompUnit);
+							if (mDecl != null) {
+								IMethodBinding mBinding= mDecl.resolveBinding();
+								if (mBinding != null && mBinding.isCanonicalConstructor()) {
+									ILocalVariable[] localVars= method.getParameters();
+									for (ILocalVariable lVar : localVars) {
+										if (lVar.getElementName().equals(fField.getElementName())) {
+											fLocalVariable= lVar;
+											fIsCompactConstructor= mBinding.isCompactConstructor();
+											fRenameLocalVariableProcessor= createLocalRenameProcessor(lVar, getNewElementName(), fCompUnit);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} catch (JavaModelException e) {
+				//do nothing
+			}
+		}
+	}
+
 	public String getNewGetterName() throws CoreException {
 		IMethod primaryGetterCandidate= JavaModelUtil.findMethod(GetterSetterUtil.getGetterName(fField, new String[0]), new String[0], false, fField.getDeclaringType());
 		if (! JavaModelUtil.isBoolean(fField) || (primaryGetterCandidate != null && primaryGetterCandidate.exists())) {
@@ -431,10 +499,18 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			if (fRenameSetter && getSetter() != null) {
 				count++;
 			}
+			if (fIsRecordComponent && getAccessor() != null) {
+				count++;
+			}
 		} catch (CoreException e) {
 			// no-op
 		}
 		return count;
+	}
+
+	@Override
+	public int getSaveMode() {
+		return IRefactoringProcessorIds.SAVE_REFACTORING;
 	}
 
 	@Override
@@ -444,7 +520,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			String message= Messages.format(RefactoringCoreMessages.RenameFieldRefactoring_deleted, BasicElementLabels.getFileName(fField.getCompilationUnit()));
 			return RefactoringStatus.createFatalErrorStatus(message);
 		}
-		fField= primary;
+		assignField(primary);
 
 		return Checks.checkIfCuBroken(fField);
 	}
@@ -495,6 +571,24 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 				pm.worked(1);
 			}
 
+			if (fIsRecordComponent){
+				result.merge(checkRecordComponentAccessor(new SubProgressMonitor(pm, 1), getAccessor(), getNewElementName()));
+				result.merge(Checks.checkIfConstructorName(getAccessor(), getNewElementName(), fField.getDeclaringType().getElementName()));
+			} else {
+				pm.worked(1);
+			}
+
+			if (fRenameLocalVariableProcessor != null && fIsRecordComponent) {
+				result.merge(fRenameLocalVariableProcessor.checkInitialConditions(new SubProgressMonitor(pm, 1)));
+				if (result.hasFatalError()) {
+					return result;
+				}
+				result.merge(fRenameLocalVariableProcessor.checkFinalConditions(new SubProgressMonitor(pm, 1), context));
+				if (result.hasFatalError()) {
+					return result;
+				}
+			}
+
 			result.merge(createChanges(new SubProgressMonitor(pm, 10)));
 			if (result.hasFatalError()) {
 				return result;
@@ -514,6 +608,15 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		return result;
 	}
 
+	private RefactoringStatus checkRecordComponentAccessor(IProgressMonitor pm, IMethod existingAccessor, String newAccessorName) throws CoreException{
+		RefactoringStatus result= new RefactoringStatus();
+		if (existingAccessor != null) {
+			result.merge(checkAccessorDeclarations(pm, existingAccessor));
+		}
+		result.merge(checkNewRecordComponentAccessor(newAccessorName));
+		return result;
+	}
+
 	private RefactoringStatus checkNewAccessor(IMethod existingAccessor, String newAccessorName) throws CoreException{
 		RefactoringStatus result= new RefactoringStatus();
 		IMethod accessor= JavaModelUtil.findMethod(newAccessorName, existingAccessor.getParameterTypes(), false, fField.getDeclaringType());
@@ -527,9 +630,24 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		return result;
 	}
 
+	private RefactoringStatus checkNewRecordComponentAccessor(String newAccessorName) throws CoreException{
+		RefactoringStatus result= new RefactoringStatus();
+		IMethod accessor= JavaModelUtil.findMethod(newAccessorName, new String[]{}, false, fField.getDeclaringType());
+		if (accessor == null || !accessor.exists()) {
+			return null;
+		}
+		String message= Messages.format(RefactoringCoreMessages.RenameFieldRefactoring_recordromponent_accessor_method_already_exists,
+				new String[]{JavaElementUtil.createMethodSignature(accessor), BasicElementLabels.getJavaElementName(fField.getDeclaringType().getFullyQualifiedName('.'))});
+		result.addError(message, JavaStatusContext.create(accessor));
+		return result;
+	}
+
 	private RefactoringStatus checkAccessorDeclarations(IProgressMonitor pm, IMethod existingAccessor) throws CoreException{
 		RefactoringStatus result= new RefactoringStatus();
 		SearchPattern pattern= SearchPattern.createPattern(existingAccessor, IJavaSearchConstants.DECLARATIONS, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE);
+		if (pattern == null) {
+			return result;
+		}
 		IJavaSearchScope scope= SearchEngine.createHierarchyScope(fField.getDeclaringType());
 		SearchResultGroup[] groupDeclarations= RefactoringSearchEngine.search(pattern, scope, pm, result);
 		Assert.isTrue(groupDeclarations.length > 0);
@@ -563,15 +681,13 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			return null;
 		}
 		RefactoringStatus result= new RefactoringStatus();
-		for (int i= 0; i < nestedTypes.length; i++){
-			IField otherField= nestedTypes[i].getField(getNewElementName());
-			if (otherField.exists()){
-				String msg= Messages.format(
-					RefactoringCoreMessages.RenameFieldRefactoring_hiding,
-					new String[]{ BasicElementLabels.getJavaElementName(fField.getElementName()), BasicElementLabels.getJavaElementName(getNewElementName()), BasicElementLabels.getJavaElementName(nestedTypes[i].getFullyQualifiedName('.'))});
+		for (IType nestedType : nestedTypes) {
+			IField otherField= nestedType.getField(getNewElementName());
+			if (otherField.exists()) {
+				String msg= Messages.format(RefactoringCoreMessages.RenameFieldRefactoring_hiding, new String[]{BasicElementLabels.getJavaElementName(fField.getElementName()), BasicElementLabels.getJavaElementName(getNewElementName()), BasicElementLabels.getJavaElementName(nestedType.getFullyQualifiedName('.'))});
 				result.addWarning(msg, JavaStatusContext.create(otherField));
 			}
-			result.merge(checkNestedHierarchy(nestedTypes[i]));
+			result.merge(checkNestedHierarchy(nestedType));
 		}
 		return result;
 	}
@@ -621,11 +737,47 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		String binaryRefsDescription= Messages.format(RefactoringCoreMessages.ReferencesInBinaryContext_ref_in_binaries_description , BasicElementLabels.getJavaElementName(getCurrentElementName()));
 		ReferencesInBinaryContext binaryRefs= new ReferencesInBinaryContext(binaryRefsDescription);
 
-		SearchResultGroup[] result= RefactoringSearchEngine.search(createSearchPattern(), createRefactoringScope(),
+		SearchResultGroup[] result = RefactoringSearchEngine.search(createSearchPattern(), createRefactoringScope(),
 				new CuCollectingSearchRequestor(binaryRefs), pm, status);
 		binaryRefs.addErrorIfNecessary(status);
-
+		result= filterAccessorMethods(result, true);
 		return result;
+	}
+
+	/**
+	 * @param grouped the list that needs to be filtered
+	 * @param filterOut if <code>true</code>, filters out the references to record component
+	 *            accessor methods. If <code>false</code>, returns only the references to record
+	 *            component accessor methods.
+	 * @return the filtered list
+	 */
+	private SearchResultGroup[] filterAccessorMethods(SearchResultGroup[] grouped, boolean filterOut) {
+		if (this.fIsRecordComponent) {
+			List<SearchResultGroup> result= new ArrayList<>();
+			for (SearchResultGroup g : grouped) {
+				SearchMatch[] matches= g.getSearchResults();
+				List<SearchMatch> newList= new ArrayList<>();
+				for (SearchMatch match : matches) {
+					if (match instanceof MethodReferenceMatch) {
+						if (filterOut) {
+							continue;
+						}
+						newList.add(match);
+					} else if (filterOut) {
+						newList.add(match);
+					}
+				}
+				if (newList.size() != matches.length) {
+					result.add(new SearchResultGroup(g.getResource(), newList.toArray(new SearchMatch[newList.size()])));
+				} else {
+					result.add(g);
+				}
+			}
+			return result.toArray(new SearchResultGroup[result.size()]);
+		} else {
+			return grouped;
+		}
+
 	}
 
 	@Override
@@ -656,7 +808,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 				flags|= RefactoringDescriptor.MULTI_CHANGE;
 			}
 		} catch (JavaModelException exception) {
-			JavaLanguageServerPlugin.log(exception);
+			JavaLanguageServerPlugin.logException(exception);
 		}
 		final IType declaring= fField.getDeclaringType();
 		try {
@@ -664,7 +816,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 				flags|= JavaRefactoringDescriptor.JAR_SOURCE_ATTACHMENT;
 			}
 		} catch (JavaModelException exception) {
-			JavaLanguageServerPlugin.log(exception);
+			JavaLanguageServerPlugin.logException(exception);
 		}
 		final String description= Messages.format(RefactoringCoreMessages.RenameFieldRefactoring_descriptor_description_short, BasicElementLabels.getJavaElementName(fField.getElementName()));
 		final String header= Messages.format(RefactoringCoreMessages.RenameFieldProcessor_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fField.getElementName()), JavaElementLabels.getElementLabel(fField.getParent(), JavaElementLabels.ALL_FULLY_QUALIFIED), getNewElementName()});
@@ -728,6 +880,15 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			pm.worked(1);
 		}
 
+		if (fIsRecordComponent) {
+			addAccessorOccurrences(new SubProgressMonitor(pm, 1), result);
+			if (fRenameLocalVariableProcessor != null) {
+				addLocalVariableOccurrences(new SubProgressMonitor(pm, 1), getNewElementName(), result);
+			}
+		} else {
+			pm.worked(1);
+		}
+
 		if (fUpdateTextualMatches) {
 			addTextMatches(new SubProgressMonitor(pm, 5));
 		} else {
@@ -779,7 +940,9 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		if (getSetter() != null && fRenameSetter) {
 			addMethodDelegate(getSetter(), getNewSetterName(), rewrite);
 		}
-
+		if (fIsRecordComponent && getAccessor() != null) {
+			addMethodDelegate(getAccessor(), getNewElementName(), rewrite);
+		}
 		final CompilationUnitChange change= rewrite.createChange(true);
 		if (change != null) {
 			change.setKeepPreviewEdits(true);
@@ -812,14 +975,13 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 	private void addReferenceUpdates(IProgressMonitor pm) {
 		pm.beginTask("", fReferences.length); //$NON-NLS-1$
 		String editName= RefactoringCoreMessages.RenameFieldRefactoring_Update_field_reference;
-		for (int i= 0; i < fReferences.length; i++){
-			ICompilationUnit cu= fReferences[i].getCompilationUnit();
+		for (SearchResultGroup reference : fReferences) {
+			ICompilationUnit cu= reference.getCompilationUnit();
 			if (cu == null) {
 				continue;
 			}
-			SearchMatch[] results= fReferences[i].getSearchResults();
-			for (int j= 0; j < results.length; j++){
-				addTextEdit(fChangeManager.get(cu), editName, createTextChange(results[j]));
+			for (SearchMatch result : reference.getSearchResults()) {
+				addTextEdit(fChangeManager.get(cu), editName, createTextChange(result));
 			}
 			pm.worked(1);
 		}
@@ -837,23 +999,81 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		addAccessorOccurrences(pm, getSetter(), RefactoringCoreMessages.RenameFieldRefactoring_Update_setter_occurrence, getNewSetterName(), status);
 	}
 
+	private void addAccessorOccurrences(IProgressMonitor pm, RefactoringStatus status) throws CoreException {
+		if (getAccessor() != null) {
+			addAccessorOccurrences(pm, getAccessor(), RefactoringCoreMessages.RenameFieldRefactoring_Update_getter_occurrence, getNewElementName(), status);
+		} else {
+			addFieldAccessorOccurrences(pm, RefactoringCoreMessages.RenameFieldRefactoring_Update_getter_occurrence, getNewElementName(), status);
+		}
+	}
+
 	private void addAccessorOccurrences(IProgressMonitor pm, IMethod accessor, String editName, String newAccessorName, RefactoringStatus status) throws CoreException {
 		Assert.isTrue(accessor.exists());
 
 		IJavaSearchScope scope= RefactoringScopeFactory.create(accessor);
 		SearchPattern pattern= SearchPattern.createPattern(accessor, IJavaSearchConstants.ALL_OCCURRENCES, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE);
+		if (pattern == null) {
+			return;
+		}
 		SearchResultGroup[] groupedResults= RefactoringSearchEngine.search(
 			pattern, scope, new MethodOccurenceCollector(accessor.getElementName()), pm, status);
 
-		for (int i= 0; i < groupedResults.length; i++) {
-			ICompilationUnit cu= groupedResults[i].getCompilationUnit();
+		for (SearchResultGroup groupedResult : groupedResults) {
+			ICompilationUnit cu= groupedResult.getCompilationUnit();
 			if (cu == null) {
 				continue;
 			}
-			SearchMatch[] results= groupedResults[i].getSearchResults();
-			for (int j= 0; j < results.length; j++){
-				SearchMatch searchResult= results[j];
+			SearchMatch[] results= groupedResult.getSearchResults();
+			for (SearchMatch searchResult : results) {
 				TextEdit edit= new ReplaceEdit(searchResult.getOffset(), searchResult.getLength(), newAccessorName);
+				addTextEdit(fChangeManager.get(cu), editName, edit);
+			}
+		}
+	}
+
+	private void addLocalVariableOccurrences(IProgressMonitor pm, String newName, RefactoringStatus status) throws CoreException {
+		Assert.isTrue(this.fRenameLocalVariableProcessor != null);
+
+		int current= 0;
+		ICompilationUnit cu= fField.getCompilationUnit();
+		RenameAnalyzeUtil.LocalAnalyzePackage[] analyzePackages= new RenameAnalyzeUtil.LocalAnalyzePackage[1];
+		RenameAnalyzeUtil.LocalAnalyzePackage analyzePackage= fRenameLocalVariableProcessor.getLocalAnalyzePackage();
+		analyzePackages[current]= analyzePackage;
+		for (TextEdit occurenceEdit : analyzePackage.fOccurenceEdits) {
+			addTextEdit(fChangeManager.get(cu), newName, occurenceEdit);
+		}
+		if (!fIsCompactConstructor) {
+			status.merge(RenameAnalyzeUtil.analyzeLocalRenames(analyzePackages, fChangeManager.get(cu), fCompUnit, false));
+		} else {
+			status.merge(RenameAnalyzeUtil.analyzeCompactConstructorLocalRenames(analyzePackages, fChangeManager.get(cu), fCompUnit, false));
+		}
+	}
+
+
+	private void addFieldAccessorOccurrences(IProgressMonitor pm, String editName, String newAccessorName, RefactoringStatus status) throws CoreException {
+		Assert.isTrue(fField.exists());
+		String fieldName= fField.getElementName();
+		IJavaSearchScope scope= RefactoringScopeFactory.create(fField.getDeclaringType());
+
+		String binaryRefsDescription= Messages.format(RefactoringCoreMessages.ReferencesInBinaryContext_ref_in_binaries_description , BasicElementLabels.getJavaElementName(getCurrentElementName()));
+		ReferencesInBinaryContext binaryRefs= new ReferencesInBinaryContext(binaryRefsDescription);
+
+		SearchPattern searchPattern= createSearchPattern();
+		if (searchPattern == null) {
+			return;
+		}
+		SearchResultGroup[] result= RefactoringSearchEngine.search(searchPattern, scope,
+				new CuCollectingSearchRequestor(binaryRefs), pm, status);
+		binaryRefs.addErrorIfNecessary(status);
+		result= filterAccessorMethods(result, false);
+		for (SearchResultGroup groupedResult : result) {
+			ICompilationUnit cu= groupedResult.getCompilationUnit();
+			if (cu == null) {
+				continue;
+			}
+			SearchMatch[] results= groupedResult.getSearchResults();
+			for (SearchMatch searchResult : results) {
+				TextEdit edit= new ReplaceEdit(searchResult.getOffset(), fieldName.length(), newAccessorName);
 				addTextEdit(fChangeManager.get(cu), editName, edit);
 			}
 		}
@@ -861,6 +1081,21 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 
 	private void addTextMatches(IProgressMonitor pm) throws CoreException {
 		TextMatchUpdater.perform(pm, createRefactoringScope(), this, fChangeManager, fReferences);
+	}
+
+	private void assignField(IField field) {
+		fField= field;
+		fIsRecordComponent= false;
+		if (fField != null) {
+			IType parent= fField.getDeclaringType();
+			try {
+				if (parent != null && parent.isRecord() && !Flags.isStatic(fField.getFlags())) {
+					fIsRecordComponent= true;
+				}
+			} catch (JavaModelException e) {
+				//do nothing
+			}
+		}
 	}
 
 	//----------------
@@ -875,8 +1110,8 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			List<ICompilationUnit> compilationUnitsToModify= new ArrayList<>();
 			if (fIsComposite) {
 				// limited change set, no accessors.
-				for (int i= 0; i < oldReferences.length; i++) {
-					compilationUnitsToModify.add(oldReferences[i].getCompilationUnit());
+				for (SearchResultGroup oldReference : oldReferences) {
+					compilationUnitsToModify.add(oldReference.getCompilationUnit());
 				}
 				compilationUnitsToModify.add(fField.getCompilationUnit());
 			} else {
@@ -893,8 +1128,8 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		} finally{
 			pm.done();
 			if (newWorkingCopies != null){
-				for (int i= 0; i < newWorkingCopies.length; i++) {
-					newWorkingCopies[i].discardWorkingCopy();
+				for (ICompilationUnit newWorkingCopy : newWorkingCopies) {
+					newWorkingCopy.discardWorkingCopy();
 				}
 			}
 		}
@@ -930,6 +1165,9 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		}
 
 		SearchPattern newPattern= SearchPattern.createPattern(field, IJavaSearchConstants.REFERENCES);
+		if (newPattern == null) {
+			return new SearchResultGroup[0];
+		}
 		IJavaSearchScope scope= RefactoringScopeFactory.create(fField, true, true);
 		return RefactoringSearchEngine.search(newPattern, owner, scope, requestor, new SubProgressMonitor(pm, 1), status);
 	}
@@ -951,50 +1189,50 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 			if (element == null || !element.exists() || element.getElementType() != IJavaElement.FIELD) {
 				return JavaRefactoringDescriptorUtil.createInputFatalStatus(element, getProcessorName(), IJavaRefactorings.RENAME_FIELD);
 			} else {
-				fField= (IField) element;
+				assignField((IField) element);
 			}
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_INPUT));
 		}
 		final String name= extended.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME);
-		if (name != null && !"".equals(name)) {
+		if (name != null && !"".equals(name)) { //$NON-NLS-1$
 			setNewElementName(name);
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_NAME));
 		}
 		final String references= extended.getAttribute(JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES);
 		if (references != null) {
-			fUpdateReferences= Boolean.valueOf(references).booleanValue();
+			fUpdateReferences= Boolean.parseBoolean(references);
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, JavaRefactoringDescriptorUtil.ATTRIBUTE_REFERENCES));
 		}
 		final String matches= extended.getAttribute(ATTRIBUTE_TEXTUAL_MATCHES);
 		if (matches != null) {
-			fUpdateTextualMatches= Boolean.valueOf(matches).booleanValue();
+			fUpdateTextualMatches= Boolean.parseBoolean(matches);
 		} else {
 			return RefactoringStatus.createFatalErrorStatus(Messages.format(RefactoringCoreMessages.InitializableRefactoring_argument_not_exist, ATTRIBUTE_TEXTUAL_MATCHES));
 		}
 		final String getters= extended.getAttribute(ATTRIBUTE_RENAME_GETTER);
 		if (getters != null) {
-			fRenameGetter= Boolean.valueOf(getters).booleanValue();
+			fRenameGetter= Boolean.parseBoolean(getters);
 		} else {
 			fRenameGetter= false;
 		}
 		final String setters= extended.getAttribute(ATTRIBUTE_RENAME_SETTER);
 		if (setters != null) {
-			fRenameSetter= Boolean.valueOf(setters).booleanValue();
+			fRenameSetter= Boolean.parseBoolean(setters);
 		} else {
 			fRenameSetter= false;
 		}
 		final String delegate= extended.getAttribute(ATTRIBUTE_DELEGATE);
 		if (delegate != null) {
-			fDelegateUpdating= Boolean.valueOf(delegate).booleanValue();
+			fDelegateUpdating= Boolean.parseBoolean(delegate);
 		} else {
 			fDelegateUpdating= false;
 		}
 		final String deprecate= extended.getAttribute(ATTRIBUTE_DEPRECATE);
 		if (deprecate != null) {
-			fDelegateDeprecation= Boolean.valueOf(deprecate).booleanValue();
+			fDelegateDeprecation= Boolean.parseBoolean(deprecate);
 		} else {
 			fDelegateDeprecation= false;
 		}
@@ -1008,5 +1246,12 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		} else {
 			return RefactoringCoreMessages.DelegateFieldCreator_keep_original_renamed_singular;
 		}
+	}
+
+	private RenameLocalVariableProcessor createLocalRenameProcessor(final ILocalVariable local, final String newName, final CompilationUnit compilationUnit) {
+		final RenameLocalVariableProcessor processor= new RenameLocalVariableProcessor(local, fChangeManager, compilationUnit, CATEGORY_LOCAL_RENAME);
+		processor.setNewElementName(newName);
+		processor.setUpdateReferences(getUpdateReferences());
+		return processor;
 	}
 }

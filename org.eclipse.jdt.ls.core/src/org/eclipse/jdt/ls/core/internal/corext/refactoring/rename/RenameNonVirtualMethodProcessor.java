@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -28,15 +29,15 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.SearchResultGroup;
 import org.eclipse.jdt.internal.corext.refactoring.delegates.DelegateMethodCreator;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
-import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusContext;
@@ -104,8 +105,7 @@ public class RenameNonVirtualMethodProcessor extends RenameMethodProcessor {
 			IMethod[] hierarchyMethods= hierarchyDeclaresMethodName(
 				new SubProgressMonitor(pm, 1), declaring.newTypeHierarchy(new SubProgressMonitor(pm, 1)), method, name);
 
-			for (int i= 0; i < hierarchyMethods.length; i++) {
-				IMethod hierarchyMethod= hierarchyMethods[i];
+			for (IMethod hierarchyMethod : hierarchyMethods) {
 				RefactoringStatusContext context= JavaStatusContext.create(hierarchyMethod);
 				if (Checks.compareParamTypes(method.getParameterTypes(), hierarchyMethod.getParameterTypes())) {
 					String message= Messages.format(
@@ -172,14 +172,10 @@ public class RenameNonVirtualMethodProcessor extends RenameMethodProcessor {
 	}
 
 	private void addReferenceUpdates(TextChangeManager manager, IProgressMonitor pm) {
-		SearchResultGroup[] grouped= getOccurrences();
-		for (int i= 0; i < grouped.length; i++) {
-			SearchResultGroup group= grouped[i];
-			SearchMatch[] results= group.getSearchResults();
+		for (SearchResultGroup group : getOccurrences()) {
 			ICompilationUnit cu= group.getCompilationUnit();
 			TextChange change= manager.get(cu);
-			for (int j= 0; j < results.length; j++){
-				SearchMatch match= results[j];
+			for (SearchMatch match : group.getSearchResults()) {
 				if (!(match instanceof MethodDeclarationMatch)) {
 					ReplaceEdit replaceEdit= createReplaceEdit(match, cu);
 					String editName= RefactoringCoreMessages.RenamePrivateMethodRefactoring_update;
@@ -198,5 +194,4 @@ public class RenameNonVirtualMethodProcessor extends RenameMethodProcessor {
 			return RefactoringCoreMessages.DelegateMethodCreator_keep_original_renamed_singular;
 		}
 	}
-
 }

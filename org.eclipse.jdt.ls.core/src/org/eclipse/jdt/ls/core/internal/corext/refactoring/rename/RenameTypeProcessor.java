@@ -1882,4 +1882,13 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 		}
 		return true;
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.JavaRenameProcessor#getSaveMode()
+	 */
+	@Override
+	public int getSaveMode() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

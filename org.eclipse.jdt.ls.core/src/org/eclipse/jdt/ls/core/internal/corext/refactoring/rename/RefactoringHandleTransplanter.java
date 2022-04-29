@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2000, 2011 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
+ *
+ * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0/
@@ -225,7 +226,7 @@ public class RefactoringHandleTransplanter {
 	}
 
     private static String replaceAll(final String source, final String replaceFrom, final String replaceTo) {
-		final StringBuffer buf= new StringBuffer(source.length());
+		final StringBuilder buf= new StringBuilder(source.length());
 		int currentIndex= 0;
 		int matchIndex;
 		while ((matchIndex= source.indexOf(replaceFrom, currentIndex)) != -1) {

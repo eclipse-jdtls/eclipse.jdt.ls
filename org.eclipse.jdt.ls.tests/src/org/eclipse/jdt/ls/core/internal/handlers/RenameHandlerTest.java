@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -29,6 +31,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -847,6 +850,47 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		RenameFile resourceChange2 = (RenameFile) resourceChanges.get(3).getRight();
 		assertEquals(ResourceUtils.fixURI(cuB.getResource().getRawLocationURI()), resourceChange2.getOldUri());
 		assertEquals(ResourceUtils.fixURI(cuB.getResource().getRawLocationURI()).replace("test2", "newpackage"), resourceChange2.getNewUri());
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2433
+	@Test
+	public void testRenameRecordField() throws Exception {
+		String name = "java17";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertEquals("17", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("/src/main/java"));
+		clientPreferences = preferenceManager.getClientPreferences();
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
+		Preferences p = mock(Preferences.class);
+		when(p.getProjectConfigurations()).thenReturn(null);
+		when(preferenceManager.getPreferences()).thenReturn(p);
+		when(p.isRenameEnabled()).thenReturn(true);
+		handler = new RenameHandler(preferenceManager);
+		IType type = javaProject.findType("test1.Test");
+		assertNotNull(type);
+		ICompilationUnit cu = type.getCompilationUnit();
+		Position pos = new Position(1, 29);
+		WorkspaceEdit edit = getRenameEdit(cu, pos, "value2");
+		assertNotNull(edit);
+		assertEquals(edit.getChanges().size(), 2);
+		ICompilationUnit mainCu = javaProject.findType("test1.Main").getCompilationUnit();
+		assertNotNull(mainCu);
+		List<TextEdit> change = edit.getChanges().get(JDTUtils.toURI(mainCu));
+		assertNotNull(change);
+		String text = TextEditUtil.apply(mainCu.getSource(), change);
+		/* @formatter:off */
+		String expected = "package test1;\n"
+				+ "public class Main {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        Test instance = new Test(2);\n"
+				+ "        System.out.println(instance.value2());\n"
+				+ "    }\n"
+				+ "}\n";
+		/* @formatter:on */
+		assertEquals(ResourceUtils.dos2Unix(expected), ResourceUtils.dos2Unix(text));
 	}
 
 	private Position mergeCode(StringBuilder builder, String[] codes) {
