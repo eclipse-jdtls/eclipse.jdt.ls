@@ -176,6 +176,25 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaLanguageServerPlugin.pluginInstance = this;
 		setPreferenceNodeId();
 
+		// Override logback preferences *before* M2E plugin is activated below
+		if (isDebug && System.getProperty(LOGBACK_CONFIG_FILE_PROPERTY) == null) {
+			File stateDir = getStateLocation().toFile();
+			File configFile = new File(stateDir, LOGBACK_DEFAULT_FILENAME);
+			if (!configFile.isFile()) {
+				try (InputStream is = bundleContext.getBundle().getEntry(LOGBACK_DEFAULT_FILENAME).openStream(); FileOutputStream fos = new FileOutputStream(configFile)) {
+					for (byte[] buffer = new byte[1024 * 4];;) {
+						int n = is.read(buffer);
+						if (n < 0) {
+							break;
+						}
+						fos.write(buffer, 0, n);
+					}
+				}
+			}
+			// ContextInitializer.CONFIG_FILE_PROPERTY
+			System.setProperty(LOGBACK_CONFIG_FILE_PROPERTY, configFile.getAbsolutePath());
+		}
+
 		if (JDTEnvironmentUtils.isSyntaxServer()) {
 			disableServices();
 			preferenceManager = new PreferenceManager();
@@ -200,24 +219,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 		// turn off substring code completion if isn't explicitly set
 		if (System.getProperty(AssistOptions.PROPERTY_SubstringMatch) == null) {
 			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
-		}
-
-		if (isDebug && System.getProperty(LOGBACK_CONFIG_FILE_PROPERTY) == null) {
-			File stateDir = getStateLocation().toFile();
-			File configFile = new File(stateDir, LOGBACK_DEFAULT_FILENAME);
-			if (!configFile.isFile()) {
-				try (InputStream is = bundleContext.getBundle().getEntry(LOGBACK_DEFAULT_FILENAME).openStream(); FileOutputStream fos = new FileOutputStream(configFile)) {
-					for (byte[] buffer = new byte[1024 * 4];;) {
-						int n = is.read(buffer);
-						if (n < 0) {
-							break;
-						}
-						fos.write(buffer, 0, n);
-					}
-				}
-			}
-			// ContextInitializer.CONFIG_FILE_PROPERTY
-			System.setProperty(LOGBACK_CONFIG_FILE_PROPERTY, configFile.getAbsolutePath());
 		}
 	}
 
