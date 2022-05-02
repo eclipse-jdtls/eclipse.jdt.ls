@@ -44,65 +44,47 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
  */
 public class SignatureHelpContext {
 	/**
-	 * The offset used to trigger the completion
+	 * {@link #completionOffset()}
 	 */
 	private int completionOffset = -1;
 
 	/**
-	 * Since there is no concrete rules about triggering completion at which
-	 * place could get the signature help. The secondary completion offset will be
-	 * be used if the <code>completionOffset</code> does not work.
+	 * {@link #secondaryCompletionOffset()}
 	 */
 	private int secondaryCompletionOffset = -1;
+
 	/**
-	 * The ranges of each arguments from the code.
-	 * Note: this is parsed from user's actual code, not the ranges of the AST arguments.
+	 * {@link #argumentRanges()}
 	 */
 	private List<int[]> argumentRanges = new ArrayList<>();
+
 	/**
-	 * The method name used to collect the signature from the completion result
+	 * {@link #methodName()}
 	 */
 	private String methodName;
 
 	/**
-	 * The declaring type name of the method invocation. It's used to filter methods from
-	 * different types but with same names that provided by the completion engine.
+	 * {@link #declaringTypeNames()}
 	 */
 	private List<String> declaringTypeNames;
+
 	/**
-	 * The argument nodes parsed from AST.
+	 * {@link #arguments()}
 	 */
 	private List<Expression> arguments;
+
 	/**
-	 * The parameter type names from {@link IMethod}.
+	 * {@link #parameterTypes()}
 	 */
 	private String[] parameterTypes;
+
 	/**
-	 * The parameter type names resolved from {@link IMethodBinding}.
-	 * Since the completion engine will return different results when it comes to
-	 * generic types. For example:
-	 * <pre>
-	 *     Arrays.asList(foo);
-	 * </pre>
-	 * The signature from completion engine is <code>(T... a)</code>.
-	 * While for:
-	 * <pre>
-	 *     HashMap.put("", "");
-	 * </pre>
-	 * The signature from completion engine is <code>(String key, String value)</code>.
-	 *
-	 * So two versions of parameter types are saved here to make sure we won't miss a match.
+	 * {@link #parameterTypesFromBinding()}
 	 */
 	private String[] parameterTypesFromBinding;
+
 	/**
-	 * The method-like AST node. It might be one of the following type:
-	 *     {@link ClassInstanceCreation},
-	 *     {@link ConstructorInvocation},
-	 *     {@link SuperConstructorInvocation},
-	 *     {@link MethodInvocation},
-	 *     {@link SuperMethodInvocation},
-	 *     {@link MethodRef}.
-	 * <code>null</code> means no valid node could be found from AST.
+	 * {@link #targetNode()}
 	 */
 	private ASTNode targetNode;
 
@@ -670,38 +652,89 @@ public class SignatureHelpContext {
 			c != ')' && c != ']' && c != '}' & c != ';';
 	}
 
+	/**
+	 * The offset used to trigger the completion.
+	 */
 	public int completionOffset() {
 		return completionOffset;
 	}
 
+	/**
+	 * Since there is no concrete rules about triggering completion at which
+	 * place could get the signature help. The secondary completion offset will be
+	 * be used if the {@link #completionOffset()} does not work.
+	 */
 	public int secondaryCompletionOffset() {
 		return secondaryCompletionOffset;
 	}
 
+	/**
+	 * The ranges of each arguments from the code.
+	 * Note: this is parsed from user's actual code, not the ranges of the AST arguments.
+	 */
 	public List<int[]> argumentRanges() {
 		return argumentRanges;
 	}
 
+	/**
+	 * The method name used to collect the signature from the completion result
+	 */
 	public String methodName() {
 		return methodName;
 	}
 
+	/**
+	 * The declaring type name of the method invocation. It's used to filter methods from
+	 * different types but with same names that provided by the completion engine.
+	 */
 	public List<String> declaringTypeNames() {
 		return declaringTypeNames;
 	}
 
+	/**
+	 * The argument nodes parsed from AST.
+	 */
 	public List<Expression> arguments() {
 		return arguments;
 	}
 
+	/**
+	 * The parameter type names from {@link IMethod}.
+	 */
 	public String[] parameterTypes() {
 		return parameterTypes;
 	}
 
+	/**
+	 * The parameter type names resolved from {@link IMethodBinding}.
+	 * Since the completion engine will return different results when it comes to
+	 * generic types. For example:
+	 * <pre>
+	 *     Arrays.asList(foo);
+	 * </pre>
+	 * The signature from completion engine is <code>(T... a)</code>.
+	 * While for:
+	 * <pre>
+	 *     HashMap.put("", "");
+	 * </pre>
+	 * The signature from completion engine is <code>(String key, String value)</code>.
+	 *
+	 * So two versions of parameter types are saved here to make sure we won't miss a match.
+	 */
 	public String[] parameterTypesFromBinding() {
 		return parameterTypesFromBinding;
 	}
 
+	/**
+	 * The method-like AST node. It might be one of the following type:
+	 *     {@link ClassInstanceCreation},
+	 *     {@link ConstructorInvocation},
+	 *     {@link SuperConstructorInvocation},
+	 *     {@link MethodInvocation},
+	 *     {@link SuperMethodInvocation},
+	 *     {@link MethodRef}.
+	 * <code>null</code> means no valid node could be found from AST.
+	 */
 	public ASTNode targetNode() {
 		return targetNode;
 	}

@@ -14,7 +14,6 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,12 +50,28 @@ public class SignatureHelpUtils {
 		try {
 			SignatureHelpContext context = new SignatureHelpContext();
 			context.resolve(triggerOffset, unit, monitor);
+			SignatureHelp help = new SignatureHelp();
+			ASTNode targetNode = context.targetNode();
 			if (context.targetNode() == null) {
 				return null;
 			}
 
+			if (context.arguments() != null && context.arguments().isEmpty()) {
+				int nodeEnd = targetNode.getStartPosition() + targetNode.getLength();
+				if (unit.getBuffer().getChar(nodeEnd - 1) == ')' && nodeEnd <= triggerOffset) {
+					return help;
+				}
+			} else if (context.argumentRanges() != null && context.argumentRanges().size() > 0) {
+				// we use argument ranges (parsed from user's code) to check the offset, because
+				// for code like 'foo(1, );', the AST parsed from JDT might think it only has one
+				// argument.
+				int[] lastRange = context.argumentRanges().get(context.argumentRanges().size() - 1);
+				if (lastRange[1] < triggerOffset) {
+					return help;
+				}
+			}
+
 			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, context.methodName(), context.declaringTypeNames());
-			SignatureHelp help = new SignatureHelp();
 			unit.codeComplete(context.completionOffset(), collector, monitor);
 			help = collector.getSignatureHelp(monitor);
 			if (help.getSignatures().isEmpty() && context.secondaryCompletionOffset() > -1) {

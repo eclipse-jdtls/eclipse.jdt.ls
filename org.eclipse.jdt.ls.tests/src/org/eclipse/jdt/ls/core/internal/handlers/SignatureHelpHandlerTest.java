@@ -939,6 +939,48 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSignatureHelp_skip() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	public foo() {\n");
+		buf.append("		new Object()\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 14);
+		assertEquals(0, help.getSignatures().size());
+	}
+
+	@Test
+	public void testSignatureHelp_nestedInvocation() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	/**\n");
+		buf.append("	 * foo\n");
+		buf.append("	 */\n");
+		buf.append("	public String foo() {return \"\";}\n");
+		buf.append("	/**\n");
+		buf.append("	 * bar\n");
+		buf.append("	 */\n");
+		buf.append("	public void bar(String a) {}\n");
+		buf.append("	public test() {\n");
+		buf.append("		bar(foo());\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 11, 10);
+		assertEquals(1, help.getSignatures().size());
+		assertEquals("foo() : String", help.getSignatures().get(help.getActiveSignature()).getLabel());
+		help = getSignatureHelp(cu, 11, 11);
+		assertEquals("bar(String a) : void", help.getSignatures().get(help.getActiveSignature()).getLabel());
+		assertEquals(1, help.getSignatures().size());
+	}
+
+	@Test
 	public void testSignatureHelp_stringLiteral() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
