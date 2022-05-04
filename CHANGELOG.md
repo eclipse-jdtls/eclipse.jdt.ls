@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.11.0 (May 5th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/102?closed=1)
+ * enhancement - Trigger signature help on completion item selected. See [#2065](https://github.com/eclipse/eclipse.jdt.ls/pull/2065).
+ * enhancement - Support completion insert/replace capability. See [#2057](https://github.com/eclipse/eclipse.jdt.ls/pull/2057).
+ * enhancement - Add a new preference to disable/enable signature description. See [#2051](https://github.com/eclipse/eclipse.jdt.ls/pull/2051).
+ * bug fix - Improve the signature help feature by handling some special cases. See [#2025](https://github.com/eclipse/eclipse.jdt.ls/issues/2025).
+ * bug fix - Do not show signature help at the end of an invocation. See [#2079](https://github.com/eclipse/eclipse.jdt.ls/pull/2079).
+ * bug fix - Show error status when the project is not created. See [#2058](https://github.com/eclipse/eclipse.jdt.ls/issues/2058).
+ * bug fix - Error during importing an Eclipse project whose sources are at root. See [#2072](https://github.com/eclipse/eclipse.jdt.ls/pull/2072).
+ * bug fix - Fix NPE in isCompletionInsertReplaceSupport check. See [#2070](https://github.com/eclipse/eclipse.jdt.ls/pull/2070).
+ * bug fix - Unexpected 'Project xxx has no explicit encoding set' warnings. See [#2061](https://github.com/eclipse/eclipse.jdt.ls/pull/2061).
+ * bug fix - Fix issue where JDT-LS's logback configuration was being ignored. See [#2077](https://github.com/eclipse/eclipse.jdt.ls/pull/2077).
+ * build - Enable lombok agent. See [#2068](https://github.com/eclipse/eclipse.jdt.ls/issues/2068).
+ * build - Add the default FILECOMMENT template to the preference initialization. See [#2056](https://github.com/eclipse/eclipse.jdt.ls/pull/2056).
+ * other - Improve the `jdtls.py` script. See [#2048](https://github.com/eclipse/eclipse.jdt.ls/pull/2048), [#2060](https://github.com/eclipse/eclipse.jdt.ls/issues/2060).
+
 # [1.10.0 (April 13th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/100?closed=1)
  * performance - Adopt new CompletionProposal API to ignore types before creating certain proposals. See [#2034](https://github.com/eclipse/eclipse.jdt.ls/pull/2034).
  * enhancement - Provide Java 18 support. See [#2026](https://github.com/eclipse/eclipse.jdt.ls/issues/2026).
