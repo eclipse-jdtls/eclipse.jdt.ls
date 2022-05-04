@@ -34,7 +34,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.ICommand;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -546,27 +545,15 @@ public final class ProjectUtils {
 			if (ProjectsManager.DEFAULT_PROJECT_NAME.equals(project.getName())) {
 				continue;
 			}
-			
+
 			try {
 				maxSeverity = Math.max(maxSeverity, project.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
-				if (ProjectUtils.isMavenProject(project)) {
-					IFile configFile = project.getFile(MavenProjectImporter.POM_FILE);
-					if (configFile.exists()) {
-						maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
-					}
-				} else if (ProjectUtils.isGradleProject(project)) {
-					List<String> gradleConfigs = Arrays.asList(
-						GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
-						GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR,
-						GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR,
-						GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR
-					);
-
-					for (String fileName : gradleConfigs) {
-						IFile configFile = project.getFile(fileName);
-						if (configFile.exists()) {
-							maxSeverity = Math.max(maxSeverity, configFile.findMaxProblemSeverity(null, true, IResource.DEPTH_ZERO));
-						}
+				List<IMarker> markers = ResourceUtils.findMarkers(project, IMarker.SEVERITY_ERROR, IMarker.SEVERITY_WARNING);
+				List<IMarker> buildFileMarkers = markers.stream().filter(marker -> isBuildFileMarker(marker, project)).collect(Collectors.toList());
+				for (IMarker marker : buildFileMarkers) {
+					maxSeverity = Math.max(maxSeverity, marker.getAttribute(IMarker.SEVERITY, 0));
+					if (maxSeverity == IMarker.SEVERITY_ERROR) {
+						break;
 					}
 				}
 			} catch (CoreException e) {
@@ -579,6 +566,23 @@ public final class ProjectUtils {
 		}
 
 		return maxSeverity;
+	}
+
+	private static boolean isBuildFileMarker(IMarker marker, IProject project) {
+		IResource resource = marker.getResource();
+		if (!resource.exists()) {
+			return false;
+		}
+		String lastSegment = resource.getFullPath().lastSegment();
+		if (ProjectUtils.isMavenProject(project)) {
+			return lastSegment.equals(MavenProjectImporter.POM_FILE);
+		} else if (ProjectUtils.isGradleProject(project)) {
+			return lastSegment.equals(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR) ||
+				lastSegment.equals(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR) ||
+				lastSegment.equals(GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR) ||
+				lastSegment.equals(GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR);
+		}
+		return false;
 	}
 
 }

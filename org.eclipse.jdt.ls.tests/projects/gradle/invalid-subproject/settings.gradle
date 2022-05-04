@@ -1,0 +1,2 @@
+rootProject.name = 'invalid-subproject'
+include 'invalid'
