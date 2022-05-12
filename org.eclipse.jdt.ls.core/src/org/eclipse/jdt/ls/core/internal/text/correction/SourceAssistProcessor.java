@@ -54,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -90,6 +91,8 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
 	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT = "java.action.generateAccessorsPrompt";
+	public static final String COMMAND_ID_ACTION_GENERATEGETTERSPROMPT = "java.action.generateGettersPrompt";
+	public static final String COMMAND_ID_ACTION_GENERATESETTERSPROMPT = "java.action.generateSettersPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT = "java.action.generateConstructorsPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT = "java.action.generateDelegateMethodsPrompt";
 
@@ -158,14 +161,46 @@ public class SourceAssistProcessor {
 			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
-		// Generate Getter and Setter QuickAssist
-		if (isInTypeDeclaration) {
-			Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration);
-			addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
+		try {
+			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
+			AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);
+			AccessorField[] setters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.SETTER);
+
+			if (getters.length > 0 && setters.length > 0) {
+				// Generate Getter and Setter QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, accessors, AccessorKind.BOTH);
+					addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
+				}
+				// Generate Getter and Setter Source Action
+				Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, accessors, AccessorKind.BOTH);
+				addSourceActionCommand($, params.getContext(), sourceGetterSetter);
+			}
+
+			if (getters.length > 0) {
+				// Generate Getter QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> quickAssistGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, getters, AccessorKind.GETTER);
+					addSourceActionCommand($, params.getContext(), quickAssistGetter);
+				}
+				// Generate Getter Source Action
+				Optional<Either<Command, CodeAction>> sourceGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, getters, AccessorKind.GETTER);
+				addSourceActionCommand($, params.getContext(), sourceGetter);
+			}
+
+			if (setters.length > 0) {
+				// Generate Setter QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> quickAssistSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, setters, AccessorKind.SETTER);
+					addSourceActionCommand($, params.getContext(), quickAssistSetter);
+				}
+				// Generate Setter Source Action
+				Optional<Either<Command, CodeAction>> sourceSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, setters, AccessorKind.SETTER);
+				addSourceActionCommand($, params.getContext(), sourceSetter);
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
 		}
-		// Generate Getter and Setter Source Action
-		Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration);
-		addSourceActionCommand($, params.getContext(), sourceGetterSetter);
 
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
@@ -290,9 +325,30 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration) {
+	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration, AccessorField[] accessors, AccessorKind accessorKind) {
+		String commandId;
+		String ellipsisActionMessage;
+		String actionMessage;
+		switch (accessorKind) {
+			case BOTH:
+				commandId = COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT;
+				actionMessage = ActionMessages.GenerateGetterSetterAction_label;
+				ellipsisActionMessage = ActionMessages.GenerateGetterSetterAction_ellipsisLabel;
+				break;
+			case GETTER:
+				commandId = COMMAND_ID_ACTION_GENERATEGETTERSPROMPT;
+				actionMessage = ActionMessages.GenerateGetterAction_label;
+				ellipsisActionMessage = ActionMessages.GenerateGetterAction_ellipsisLabel;
+				break;
+			case SETTER:
+				commandId = COMMAND_ID_ACTION_GENERATESETTERSPROMPT;
+				actionMessage = ActionMessages.GenerateSetterAction_label;
+				ellipsisActionMessage = ActionMessages.GenerateSetterAction_ellipsisLabel;
+				break;
+			default:
+				return Optional.empty();
+		}
 		try {
-			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type);
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
@@ -303,11 +359,11 @@ public class SourceAssistProcessor {
 					TextEdit edit = operation.createTextEdit(pm, accessors);
 					return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
 				};
-				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateGetterSetterAction_label, kind, getAccessorsProposal);
+				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), actionMessage, kind, getAccessorsProposal);
 			} else {
-				Command command = new Command(ActionMessages.GenerateGetterSetterAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(params));
+				Command command = new Command(ellipsisActionMessage, commandId, Collections.singletonList(params));
 				if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS)) {
-					CodeAction codeAction = new CodeAction(ActionMessages.GenerateGetterSetterAction_ellipsisLabel);
+					CodeAction codeAction = new CodeAction(ellipsisActionMessage);
 					codeAction.setKind(kind);
 					codeAction.setCommand(command);
 					codeAction.setDiagnostics(Collections.emptyList());
@@ -316,8 +372,8 @@ public class SourceAssistProcessor {
 					return Optional.of(Either.forLeft(command));
 				}
 			}
-		} catch (OperationCanceledException | CoreException e) {
-			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
+		} catch (OperationCanceledException e) {
+			JavaLanguageServerPlugin.logException("Failed to generate accessors source action", e);
 			return Optional.empty();
 		}
 	}
