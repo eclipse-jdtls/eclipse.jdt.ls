@@ -58,13 +58,31 @@ public class WorkspaceSymbolHandler {
 		try {
 			monitor.beginTask("Searching the types...", 100);
 			IJavaSearchScope searchScope = createSearchScope(projectName, sourceOnly);
-			int typeMatchRule = SearchPattern.R_CAMELCASE_MATCH;
-			if (query.contains("*") || query.contains("?")) {
-				typeMatchRule |= SearchPattern.R_PATTERN_MATCH;
+
+			String tQuery = query.trim();
+			String qualifierName = null;
+			String typeName = tQuery;
+			int qualifierMatchRule = SearchPattern.R_PATTERN_MATCH;
+
+			int qualIndex = tQuery.lastIndexOf('.');
+			if (qualIndex != -1) {
+				qualifierName = tQuery.substring(0, qualIndex);
+				typeName = tQuery.substring(qualIndex + 1);
+				qualifierMatchRule = SearchPattern.R_CAMELCASE_MATCH;
+				if (qualifierName.contains("*") || qualifierName.contains("?")) {
+					qualifierMatchRule = SearchPattern.R_PATTERN_MATCH;
+				}
 			}
+
+			int typeMatchRule = SearchPattern.R_CAMELCASE_MATCH;
+			if (typeName.contains("*") || typeName.contains("?")) {
+				typeMatchRule = SearchPattern.R_PATTERN_MATCH;
+			}
+
+
 			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 
-			new SearchEngine().searchAllTypeNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
+			new SearchEngine().searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
 
 				@Override
 				public void acceptTypeNameMatch(TypeNameMatch match) {
