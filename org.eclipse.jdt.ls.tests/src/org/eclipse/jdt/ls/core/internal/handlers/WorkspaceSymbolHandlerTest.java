@@ -166,6 +166,28 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
+	public void testSearchQualifiedTypeNoWildcards() {
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("java.io.file", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> s.getName().startsWith("File") && "java.io".equals(s.getContainerName())));
+
+		results = WorkspaceSymbolHandler.search("java.util.array", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> s.getName().startsWith("Array") && "java.util".equals(s.getContainerName())));
+	}
+
+	@Test
+	public void testSearchQualifiedTypeWithWildcards() {
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("java.util.*list*", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> "List".equals(s.getName()) && "java.util".equals(s.getContainerName())));
+
+		results = WorkspaceSymbolHandler.search("*.lang*.*exception", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().allMatch(s -> s.getName().endsWith("Exception") && s.getContainerName().contains(".lang")));
+	}
+
+	@Test
 	public void testSearchSourceMethodDeclarations() {
 		preferences.setIncludeSourceMethodDeclarations(true);
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("deleteSomething", "hello", true, monitor);
