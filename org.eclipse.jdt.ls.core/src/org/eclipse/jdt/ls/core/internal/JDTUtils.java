@@ -704,6 +704,8 @@ public final class JDTUtils {
 				} else {
 					return toLocation(cf, nameRange.getOffset(), nameRange.getLength());
 				}
+			} else if (cf != null) {
+				return toLocation(cf);
 			}
 		}
 		return null;
