@@ -482,7 +482,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				"     \\*  String\n" +
 				" \\*  \\*\\*Throws:\\*\\*\n" +
 				"    \n" +
-				"     \\*  IOException\n" +
+				"     \\*  \\[IOException\\]\\(jdt:/.*\\)\n" +
 				" \\*  \\*\\*Since:\\*\\*\n" +
 				"    \n" +
 				"     \\*  0.0.1\n" +
