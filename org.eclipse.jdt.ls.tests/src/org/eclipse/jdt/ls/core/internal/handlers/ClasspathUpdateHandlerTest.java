@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -86,6 +87,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		assertTrue(pom.exists());
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.5</version>", "<version>3.6</version>"));
 
+		reset(connection);
 		projectsManager.fileChanged(pom.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
 		waitForBackgroundJobs();
 
@@ -110,6 +112,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		assertTrue(buildGradle.exists());
 		ResourceUtils.setContent(buildGradle, ResourceUtils.getContent(buildGradle).replaceAll("org.slf4j:slf4j-api:1.7.21", "org.slf4j:slf4j-api:1.7.20"));
 
+		reset(connection);
 		projectsManager.fileChanged(buildGradle.getLocationURI().toString(), CHANGE_TYPE.CHANGED);
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, monitor);
