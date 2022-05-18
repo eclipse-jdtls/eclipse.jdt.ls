@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
@@ -90,17 +91,17 @@ public class GenerateGetterSetterOperation {
 				switch (kind) {
 					case BOTH:
 						if (generateGetter || generateSetter) {
-							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, generateSetter));
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, generateSetter, Signature.getSignatureSimpleName(field.getTypeSignature())));
 						}
 						break;
 					case GETTER:
 						if (generateGetter) {
-							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, false));
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, false, Signature.getSignatureSimpleName(field.getTypeSignature())));
 						}
 						break;
 					case SETTER:
 						if (generateSetter) {
-							unimplemented.add(new AccessorField(field.getElementName(), isStatic, false, generateSetter));
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, false, generateSetter, Signature.getSignatureSimpleName(field.getTypeSignature())));
 						}
 						break;
 					default:
@@ -204,12 +205,14 @@ public class GenerateGetterSetterOperation {
 		public boolean isStatic;
 		public boolean generateGetter;
 		public boolean generateSetter;
+		public String typeName;
 
-		public AccessorField(String fieldName, boolean isStatic, boolean generateGetter, boolean generateSetter) {
+		public AccessorField(String fieldName, boolean isStatic, boolean generateGetter, boolean generateSetter, String typeName) {
 			this.fieldName = fieldName;
 			this.isStatic = isStatic;
 			this.generateGetter = generateGetter;
 			this.generateSetter = generateSetter;
+			this.typeName = typeName;
 		}
 	}
 }
