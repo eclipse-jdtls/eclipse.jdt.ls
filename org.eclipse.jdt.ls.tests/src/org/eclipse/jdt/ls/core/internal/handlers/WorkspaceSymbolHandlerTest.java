@@ -224,4 +224,16 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		assertTrue("Should be deprecated", deprecated.getDeprecated());
 	}
 
+	@Test
+	public void testWorkspaceSearchWithClassContentSupport() {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		//Classes will be found with jar container path.
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Array", monitor);
+		assertNotNull(results);
+		assertNotEquals("Unexpected results", 0, results.size());
+		// sample just the first symbol
+		assertNotNull("Location is null", results.get(0).getLocation());
+		assertNotNull("Location URI is null", results.get(0).getLocation().getUri());
+		assertTrue("Wrong location URI", results.get(0).getLocation().getUri().contains("rtstubs.jar/"));
+	}
 }
