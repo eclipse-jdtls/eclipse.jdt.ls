@@ -154,7 +154,7 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		Assert.assertNotNull(generateAccessorsAction);
 		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
 		Assert.assertNotNull(generateAccessorsCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEGETTERSPROMPT, generateAccessorsCommand.getCommand());
+		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
 	}
 
 	@Test
@@ -172,12 +172,12 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEGETTERSPROMPT));
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEGETTERSPROMPT));
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
 	}
 }

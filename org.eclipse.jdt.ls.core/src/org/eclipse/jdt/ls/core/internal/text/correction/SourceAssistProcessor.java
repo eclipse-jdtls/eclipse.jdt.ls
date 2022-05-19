@@ -70,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -91,8 +92,6 @@ public class SourceAssistProcessor {
 	public static final String COMMAND_ID_ACTION_ORGANIZEIMPORTS = "java.action.organizeImports";
 	public static final String COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT = "java.action.generateToStringPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT = "java.action.generateAccessorsPrompt";
-	public static final String COMMAND_ID_ACTION_GENERATEGETTERSPROMPT = "java.action.generateGettersPrompt";
-	public static final String COMMAND_ID_ACTION_GENERATESETTERSPROMPT = "java.action.generateSettersPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT = "java.action.generateConstructorsPrompt";
 	public static final String COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT = "java.action.generateDelegateMethodsPrompt";
 
@@ -326,22 +325,18 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration, AccessorField[] accessors, AccessorKind accessorKind) {
-		String commandId;
 		String ellipsisActionMessage;
 		String actionMessage;
 		switch (accessorKind) {
 			case BOTH:
-				commandId = COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT;
 				actionMessage = ActionMessages.GenerateGetterSetterAction_label;
 				ellipsisActionMessage = ActionMessages.GenerateGetterSetterAction_ellipsisLabel;
 				break;
 			case GETTER:
-				commandId = COMMAND_ID_ACTION_GENERATEGETTERSPROMPT;
 				actionMessage = ActionMessages.GenerateGetterAction_label;
 				ellipsisActionMessage = ActionMessages.GenerateGetterAction_ellipsisLabel;
 				break;
 			case SETTER:
-				commandId = COMMAND_ID_ACTION_GENERATESETTERSPROMPT;
 				actionMessage = ActionMessages.GenerateSetterAction_label;
 				ellipsisActionMessage = ActionMessages.GenerateSetterAction_ellipsisLabel;
 				break;
@@ -361,7 +356,8 @@ public class SourceAssistProcessor {
 				};
 				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), actionMessage, kind, getAccessorsProposal);
 			} else {
-				Command command = new Command(ellipsisActionMessage, commandId, Collections.singletonList(params));
+				AccessorCodeActionParams accessorParams = new AccessorCodeActionParams(params.getTextDocument(), params.getRange(), params.getContext(), accessorKind);
+				Command command = new Command(ellipsisActionMessage, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(accessorParams));
 				if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS)) {
 					CodeAction codeAction = new CodeAction(ellipsisActionMessage);
 					codeAction.setKind(kind);

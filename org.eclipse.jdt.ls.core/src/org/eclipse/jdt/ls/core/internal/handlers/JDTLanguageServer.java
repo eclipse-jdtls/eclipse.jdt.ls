@@ -50,7 +50,7 @@ import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
-import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.ResolveUnimplementedAccessorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.CheckDelegateMethodsResponse;
@@ -939,7 +939,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 	@Override
-	public CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(ResolveUnimplementedAccessorsParams params) {
+	public CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(AccessorCodeActionParams params) {
 		logInfo(">> java/resolveUnimplementedAccessors");
 		return computeAsync((monitor) -> GenerateAccessorsHandler.getUnimplementedAccessors(params));
 	}

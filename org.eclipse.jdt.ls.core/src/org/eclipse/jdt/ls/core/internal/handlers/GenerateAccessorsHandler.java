@@ -31,14 +31,16 @@ import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOpe
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
+import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 public class GenerateAccessorsHandler {
-	public static AccessorField[] getUnimplementedAccessors(ResolveUnimplementedAccessorsParams params) {
-		IType type = SourceAssistProcessor.getSelectionType(params.context);
+	public static AccessorField[] getUnimplementedAccessors(AccessorCodeActionParams params) {
+		IType type = SourceAssistProcessor.getSelectionType(params);
 		return getUnimplementedAccessors(type, params.kind);
 	}
 
@@ -94,8 +96,13 @@ public class GenerateAccessorsHandler {
 		AccessorField[] accessors;
 	}
 
-	public static class ResolveUnimplementedAccessorsParams {
-		CodeActionParams context;
+	public static class AccessorCodeActionParams extends CodeActionParams {
+
 		AccessorKind kind;
+
+		public AccessorCodeActionParams(TextDocumentIdentifier textDocument, Range range, CodeActionContext context, AccessorKind kind) {
+			super(textDocument, range, context);
+			this.kind = kind;
+		}
 	}
 }
