@@ -21,6 +21,7 @@
    </vm>
 
    <plugins>
+      <plugin id="org.apache.commons.codec"/>
       <plugin id="org.apache.felix.scr"/>
       <plugin id="org.eclipse.ant.core"/>
       <plugin id="org.eclipse.buildship.core"/>
@@ -52,10 +53,10 @@
       <plugin id="org.eclipse.jdt.launching"/>
       <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
+      <plugin id="org.eclipse.m2e.apt.core"/>
       <plugin id="org.eclipse.m2e.core"/>
       <plugin id="org.eclipse.m2e.jdt"/>
       <plugin id="org.eclipse.m2e.lifecyclemapping.defaults"/>
-      <plugin id="org.eclipse.m2e.logback.configuration"/>
       <plugin id="org.eclipse.m2e.maven.runtime"/>
       <plugin id="org.eclipse.m2e.workspace.cli"/>
       <plugin id="org.eclipse.osgi"/>
@@ -63,7 +64,6 @@
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
-      <plugin id="org.jboss.tools.maven.apt.core"/>
    </plugins>
 
    <configurations>
