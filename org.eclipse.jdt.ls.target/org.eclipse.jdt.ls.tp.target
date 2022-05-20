@@ -20,7 +20,7 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.m2e.logback.feature.feature.group" version="0.0.0"/>
-	        <repository location="https://download.eclipse.org/technology/m2e/releases/1.18.2/"/>
+	        <repository location="https://download.eclipse.org/technology/m2e/snapshots/latest/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -36,10 +36,6 @@
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
             <repository location="https://download.eclipse.org/releases/2021-09/202109151000/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.jboss.tools.maven.apt.core" version="0.0.0"/>
-            <repository location="https://jbosstools.github.io/m2e-apt/updates/1.5.4/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.11.0/"/>

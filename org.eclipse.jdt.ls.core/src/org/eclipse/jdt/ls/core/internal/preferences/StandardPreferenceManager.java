@@ -23,6 +23,8 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.m2e.apt.MavenJdtAptPlugin;
+import org.eclipse.m2e.apt.preferences.PreferencesConstants;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -38,7 +40,7 @@ import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
  *
  */
 public class StandardPreferenceManager extends PreferenceManager {
-	private static final String M2E_APT_ID = "org.jboss.tools.maven.apt";
+	private static final String M2E_APT_ID = MavenJdtAptPlugin.PLUGIN_ID;
 	private IMavenConfiguration mavenConfig;
 
 	public StandardPreferenceManager() {
@@ -55,7 +57,7 @@ public class StandardPreferenceManager extends PreferenceManager {
 
 		IEclipsePreferences m2eAptPrefs = DefaultScope.INSTANCE.getNode(M2E_APT_ID);
 		if (m2eAptPrefs != null) {
-			m2eAptPrefs.put(M2E_APT_ID + ".mode", "jdt_apt");
+			m2eAptPrefs.put(PreferencesConstants.MODE, "jdt_apt");
 		}
 
 		IEclipsePreferences store = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);

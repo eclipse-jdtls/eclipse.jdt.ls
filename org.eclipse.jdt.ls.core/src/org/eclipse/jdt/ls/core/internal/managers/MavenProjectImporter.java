@@ -49,13 +49,13 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.project.IMavenProjectImportResult;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
 import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
+import org.osgi.framework.Bundle;
 
 @SuppressWarnings("restriction")
 public class MavenProjectImporter extends AbstractProjectImporter {
@@ -67,6 +67,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	public static final String IMPORTING_MAVEN_PROJECTS = "Importing Maven project(s)";
 
 	public static final String POM_FILE = "pom.xml";
+
+	private static final String STATE_FILENAME = "workspaceState.ser";
 
 	private Set<MavenProjectInfo> projectInfos = null;
 
@@ -232,8 +234,14 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	}
 
 	private long getLastWorkspaceStateModified() {
-		File workspaceStateFile = MavenPluginActivator.getDefault().getMavenProjectManager().getWorkspaceStateFile();
-		return workspaceStateFile.lastModified();
+		Bundle bundle = Platform.getBundle(IMavenConstants.PLUGIN_ID);
+		if (bundle != null) {
+			IPath result = Platform.getStateLocation(bundle);
+			File bundleStateLocation = result.toFile();
+			File workspaceStateFile = new File(bundleStateLocation, STATE_FILENAME);
+			return workspaceStateFile.lastModified();
+		}
+		return 0l;
 	}
 
 	private File getProjectDirectory() {
@@ -288,7 +296,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}
 		try {
 			List<String> folders = directories.stream().map(java.nio.file.Path::toAbsolutePath).map(Object::toString).collect(Collectors.toList());
-			LocalProjectScanner scanner = new LocalProjectScanner(directory.getParentFile(), folders, false, modelManager);
+			LocalProjectScanner scanner = new LocalProjectScanner(folders, false, modelManager);
 			scanner.run(monitor);
 			return collectProjects(scanner.getProjects());
 		} catch (InterruptedException e) {

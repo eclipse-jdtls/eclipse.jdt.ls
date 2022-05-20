@@ -31,7 +31,7 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.jdt.launching,
  org.eclipse.ltk.core.refactoring,
  org.eclipse.jdt.apt.pluggable.core,
- org.jboss.tools.maven.apt.core,
+ org.eclipse.m2e.apt.core,
  org.eclipse.buildship.core
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Activator: org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin
