@@ -29,6 +29,7 @@ import org.eclipse.jdt.internal.corext.util.ValidateEditException;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.Test;
@@ -46,7 +47,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 				"}"
 				, true, null);
 		//@formatter:on
-		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType());
+		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType(), AccessorKind.BOTH);
 		assertNotNull(accessors);
 		assertEquals(3, accessors.length);
 		assertEquals("staticField", accessors[0].fieldName);
@@ -60,6 +61,58 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 		assertFalse(accessors[2].isStatic);
 		assertTrue(accessors[2].generateGetter);
 		assertTrue(accessors[2].generateSetter);
+	}
+
+	@Test
+	public void testResolveUnimplementedGetters() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	private static String staticField = \"23434343\";\r\n" +
+				"	private final String finalField;\r\n" +
+				"	String name;\r\n" +
+				"	public String getName() { return this.name; }" +
+				"}"
+				, true, null);
+		//@formatter:on
+		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType(), AccessorKind.GETTER);
+		assertNotNull(accessors);
+		assertEquals(2, accessors.length);
+		assertEquals("staticField", accessors[0].fieldName);
+		assertTrue(accessors[0].isStatic);
+		assertTrue(accessors[0].generateGetter);
+		assertFalse(accessors[0].generateSetter);
+		assertEquals("finalField", accessors[1].fieldName);
+		assertFalse(accessors[1].isStatic);
+		assertTrue(accessors[1].generateGetter);
+		assertFalse(accessors[1].generateSetter);
+	}
+
+	@Test
+	public void testResolveUnimplementedSetters() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	private static String staticField = \"23434343\";\r\n" +
+				"	private final String finalField;\r\n" +
+				"	String name;\r\n" +
+				"	public String getName() { return this.name; }" +
+				"}"
+				, true, null);
+		//@formatter:on
+		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType(), AccessorKind.SETTER);
+		assertNotNull(accessors);
+		assertEquals(2, accessors.length);
+		assertEquals("staticField", accessors[0].fieldName);
+		assertTrue(accessors[0].isStatic);
+		assertTrue(accessors[0].generateSetter);
+		assertFalse(accessors[0].generateGetter);
+		assertEquals("name", accessors[1].fieldName);
+		assertFalse(accessors[1].isStatic);
+		assertTrue(accessors[1].generateSetter);
+		assertFalse(accessors[1].generateGetter);
 	}
 
 	@Test
@@ -82,7 +135,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 				"}"
 				, true, null);
 		//@formatter:on
-		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType());
+		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(unit.findPrimaryType(), AccessorKind.BOTH);
 		assertNotNull(accessors);
 		assertEquals(1, accessors.length);
 		assertEquals("id", accessors[0].fieldName);
@@ -162,7 +215,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 					, true, null);
 			//@formatter:on
 			IType classB = unit.getType("B");
-			Range cursor = CodeActionUtil.getRange(unit, "/*|*/"); 
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
 			generateAccessors(classB, cursor);
 
 			/* @formatter:off */
@@ -225,7 +278,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 					, true, null);
 			//@formatter:on
 			IType classB = unit.getType("B");
-			Range cursor = CodeActionUtil.getRange(unit, "/*|*/"); 
+			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
 			generateAccessors(classB, cursor);
 
 			/* @formatter:off */
@@ -273,7 +326,7 @@ public class GenerateAccessorsHandlerTest extends AbstractSourceTestCase {
 	}
 
 	private void generateAccessors(IType type, Range cursor) throws ValidateEditException, CoreException {
-		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(type);
+		AccessorField[] accessors = GenerateAccessorsHandler.getUnimplementedAccessors(type, AccessorKind.BOTH);
 		TextEdit edit = GenerateAccessorsHandler.generateAccessors(type, accessors, true, cursor);
 		assertNotNull(edit);
 		JavaModelUtil.applyEdit(type.getCompilationUnit(), edit, true, null);

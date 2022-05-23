@@ -74,7 +74,7 @@ public class GenerateGetterSetterOperation {
 		return true;
 	}
 
-	public static AccessorField[] getUnimplementedAccessors(IType type) throws JavaModelException {
+	public static AccessorField[] getUnimplementedAccessors(IType type, AccessorKind kind) throws JavaModelException {
 		if (!supportsGetterSetter(type)) {
 			return new AccessorField[0];
 		}
@@ -87,8 +87,24 @@ public class GenerateGetterSetterOperation {
 				boolean isStatic = Flags.isStatic(flags);
 				boolean generateGetter = (GetterSetterUtil.getGetter(field) == null);
 				boolean generateSetter = (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null);
-				if (generateGetter || generateSetter) {
-					unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, generateSetter));
+				switch (kind) {
+					case BOTH:
+						if (generateGetter || generateSetter) {
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, generateSetter));
+						}
+						break;
+					case GETTER:
+						if (generateGetter) {
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, generateGetter, false));
+						}
+						break;
+					case SETTER:
+						if (generateSetter) {
+							unimplemented.add(new AccessorField(field.getElementName(), isStatic, false, generateSetter));
+						}
+						break;
+					default:
+						break;
 				}
 			}
 		}
@@ -96,8 +112,9 @@ public class GenerateGetterSetterOperation {
 		return unimplemented.toArray(new AccessorField[0]);
 	}
 
-	public TextEdit createTextEdit(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
-		AccessorField[] accessors = getUnimplementedAccessors(type);
+	// for test purpose
+	public TextEdit createTextEdit(AccessorKind kind, IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+		AccessorField[] accessors = getUnimplementedAccessors(type, kind);
 		return createTextEdit(monitor, accessors);
 	}
 
@@ -178,8 +195,8 @@ public class GenerateGetterSetterOperation {
 		}
 	}
 
-	enum AccessorKind {
-		GETTER, SETTER
+	public enum AccessorKind {
+		GETTER, SETTER, BOTH
 	}
 
 	public static class AccessorField {

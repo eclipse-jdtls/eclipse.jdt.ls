@@ -27,23 +27,26 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
+import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 public class GenerateAccessorsHandler {
-	public static AccessorField[] getUnimplementedAccessors(CodeActionParams params) {
+	public static AccessorField[] getUnimplementedAccessors(AccessorCodeActionParams params) {
 		IType type = SourceAssistProcessor.getSelectionType(params);
-		return getUnimplementedAccessors(type);
+		return getUnimplementedAccessors(type, params.kind);
 	}
 
-	public static AccessorField[] getUnimplementedAccessors(IType type) {
+	public static AccessorField[] getUnimplementedAccessors(IType type, AccessorKind kind) {
 		try {
-			return GenerateGetterSetterOperation.getUnimplementedAccessors(type);
+			return GenerateGetterSetterOperation.getUnimplementedAccessors(type, kind);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to resolve the unimplemented accessors.", e);
 			return new AccessorField[0];
@@ -91,5 +94,15 @@ public class GenerateAccessorsHandler {
 	public static class GenerateAccessorsParams {
 		CodeActionParams context;
 		AccessorField[] accessors;
+	}
+
+	public static class AccessorCodeActionParams extends CodeActionParams {
+
+		AccessorKind kind;
+
+		public AccessorCodeActionParams(TextDocumentIdentifier textDocument, Range range, CodeActionContext context, AccessorKind kind) {
+			super(textDocument, range, context);
+			this.kind = kind;
+		}
 	}
 }

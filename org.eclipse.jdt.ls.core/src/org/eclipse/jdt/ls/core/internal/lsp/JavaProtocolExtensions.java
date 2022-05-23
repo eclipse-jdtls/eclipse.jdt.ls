@@ -19,6 +19,7 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.CheckDelegateMethodsResponse;
@@ -90,7 +91,7 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<WorkspaceEdit> generateToString(GenerateToStringParams params);
 
 	@JsonRequest
-	CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(CodeActionParams params);
+	CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(AccessorCodeActionParams params);
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> generateAccessors(GenerateAccessorsParams params);

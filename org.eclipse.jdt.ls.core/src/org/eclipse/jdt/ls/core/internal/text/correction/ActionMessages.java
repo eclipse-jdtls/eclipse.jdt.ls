@@ -25,6 +25,10 @@ public final class ActionMessages extends NLS {
 	public static String OverrideMethodsAction_label;
 	public static String GenerateGetterSetterAction_label;
 	public static String GenerateGetterSetterAction_ellipsisLabel;
+	public static String GenerateGetterAction_label;
+	public static String GenerateGetterAction_ellipsisLabel;
+	public static String GenerateSetterAction_label;
+	public static String GenerateSetterAction_ellipsisLabel;
 	public static String GenerateHashCodeEqualsAction_label;
 	public static String GenerateToStringAction_label;
 	public static String GenerateToStringAction_ellipsisLabel;

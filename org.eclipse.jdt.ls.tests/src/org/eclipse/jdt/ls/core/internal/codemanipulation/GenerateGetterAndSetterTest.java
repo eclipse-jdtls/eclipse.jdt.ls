@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.Range;
@@ -54,14 +55,14 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 		// If cursor position is not specified, then insert to the last by default.
 		IJavaElement insertBefore = CodeGenerationUtils.findInsertElement(type, cursor);
 		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments, insertBefore);
-		TextEdit edit = operation.createTextEdit(null);
+		TextEdit edit = operation.createTextEdit(AccessorKind.BOTH, null);
 		ICompilationUnit unit = type.getCompilationUnit();
 		JavaModelUtil.applyEdit(unit, edit, true, null);
 	}
 
 	private TextEdit runOperation(IType type, boolean generateComments) throws OperationCanceledException, CoreException {
 		GenerateGetterSetterOperation operation = new GenerateGetterSetterOperation(type, null, generateComments);
-		return operation.createTextEdit(null);
+		return operation.createTextEdit(AccessorKind.BOTH, null);
 	}
 
 	private IType createNewType(String fQName) throws JavaModelException {
@@ -645,7 +646,7 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 			//@formatter:on
 			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
 			runAndApplyOperation(unit.findPrimaryType(), true, cursor);
-	
+
 			/* @formatter:off */
 			String expected = "package p;\r\n" +
 							"\r\n" +
@@ -661,7 +662,7 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 							"	}\r\n" +
 							"}";
 			/* @formatter:on */
-	
+
 			compareSource(expected, unit.getSource());
 		} finally {
 			preferences.setCodeGenerationInsertionLocation(oldValue);
@@ -684,7 +685,7 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 			//@formatter:on
 			Range cursor = CodeActionUtil.getRange(unit, "/*|*/");
 			runAndApplyOperation(unit.findPrimaryType(), true, cursor);
-	
+
 			/* @formatter:off */
 			String expected = "package p;\r\n" +
 							"\r\n" +
@@ -700,7 +701,7 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 							"	}\r\n" +
 							"}";
 			/* @formatter:on */
-	
+
 			compareSource(expected, unit.getSource());
 		} finally {
 			preferences.setCodeGenerationInsertionLocation(oldValue);
