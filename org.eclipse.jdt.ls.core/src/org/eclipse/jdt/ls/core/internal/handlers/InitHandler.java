@@ -254,6 +254,7 @@ final public class InitHandler extends BaseInitHandler {
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());
 				} finally {
 					projectsManager.registerListeners();
+					preferenceManager.addPreferencesChangeListener(new InlayHintsPreferenceChangeListener());
 				}
 				return Status.OK_STATUS;
 			}

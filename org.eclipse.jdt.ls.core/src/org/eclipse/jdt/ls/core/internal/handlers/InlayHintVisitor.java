@@ -162,6 +162,10 @@ class InlayHintVisitor extends ASTVisitor {
 			return;
 		}
 
+		if (InlayHintFilterManager.instance().match((IMethod) methodBinding.getJavaElement())) {
+			return;
+		}
+
 		try {
 			int paramNum = Math.min(parameterNames.length, arguments.size());
 			for (int i = 0; i < paramNum; i++) {
