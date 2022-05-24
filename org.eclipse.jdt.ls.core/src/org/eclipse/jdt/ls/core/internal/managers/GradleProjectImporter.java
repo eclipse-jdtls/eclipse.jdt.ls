@@ -21,7 +21,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -108,6 +107,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static final String GRADLE_MARKER_COLUMN_START = "gradleColumnStart";
 	public static final String GRADLE_MARKER_COLUMN_END = "gradleColumnEnd";
+
+	private static final int GRADLE_RELATED = 0x00080000;
+	private static final int INVALID_TYPE_CODE_ID = GRADLE_RELATED + 1;
 
 	//@formatter:off
 	public static final String GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE =
@@ -260,7 +262,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					String line;
 					while ((line = reader.readLine()) != null) {
 						if (line.contains("distributionUrl")) {
-							IMarker marker = ResourceUtils.createWarningMarker(wrapperProperties, GRADLE_INVALID_TYPE_CODE_MESSAGE, GRADLE_UPGRADE_WRAPPER_MARKER_ID, reader.getLineNumber());
+							IMarker marker = ResourceUtils.createWarningMarker(GRADLE_UPGRADE_WRAPPER_MARKER_ID, wrapperProperties, GRADLE_INVALID_TYPE_CODE_MESSAGE, INVALID_TYPE_CODE_ID, reader.getLineNumber());
 							marker.setAttribute(GRADLE_MARKER_COLUMN_START, 0);
 							marker.setAttribute(GRADLE_MARKER_COLUMN_END, line.length());
 							UpgradeGradleWrapperInfo info = new UpgradeGradleWrapperInfo(gradleStatus.getProjectUri(), GRADLE_INVALID_TYPE_CODE_MESSAGE, GradleUtils.CURRENT_GRADLE);
