@@ -39,7 +39,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNoneMode() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.NONE);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(int i) {}\n" +
 			"	void bar() {\n" +
@@ -60,7 +60,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testOutOfRange() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(int i) {}\n" +
 			"	void bar() {\n" +
@@ -81,7 +81,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testBooleanLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(bool b) {}\n" +
 			"	void bar() {\n" +
@@ -103,7 +103,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testCharacterLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(char c) {}\n" +
 			"	void bar() {\n" +
@@ -125,7 +125,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNullLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(char c) {}\n" +
 			"	void bar() {\n" +
@@ -147,7 +147,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNumberLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(int i) {}\n" +
 			"	void bar() {\n" +
@@ -169,7 +169,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testStringLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(String s) {}\n" +
 			"	void bar() {\n" +
@@ -191,7 +191,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testTypeLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(Class<T> clazz) {}\n" +
 			"	void bar() {\n" +
@@ -213,7 +213,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNoInlayHintForNonLiteral() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.LITERALS);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(Double d) {}\n" +
 			"	void bar() {\n" +
@@ -235,7 +235,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testAllMode() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(Double doubleParam) {}\n" +
 			"	void foo(Integer intParam) {}\n" +
@@ -262,7 +262,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testVarargs() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(String... args) {}\n" +
 			"	void bar() {\n" +
@@ -284,7 +284,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testVarargs2() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(Integer i, String... args) {}\n" +
 			"	void bar() {\n" +
@@ -306,7 +306,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNoInlayHintsWhenNamesAreEqual() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(Double d) {}\n" +
 			"	void bar() {\n" +
@@ -328,7 +328,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNoInlayHintsForCastExpression() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(String str) {}\n" +
 			"	void bar() {\n" +
@@ -350,7 +350,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testNewExpression() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	Foo(String foo) {}\n" +
 			"	void bar() {\n" +
@@ -372,7 +372,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testEnumConstant() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public enum Foo {\n" +
 			"	I(\"i\"), J(\"j\");\n" +
 			"	String id;\n" +
@@ -414,7 +414,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testComplexExpressions() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	void foo(String s) {}\n" +
 			"	void bar(int i) {\n" +
@@ -443,7 +443,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testConstructorInvocation() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	public Foo(Integer a) {\n" +
 			"		this(1, 2);\n" +
@@ -472,7 +472,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testSuperConstructorInvocation() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	public Foo(Integer a, Integer b) {}\n" +
 			"}\n" +
@@ -502,7 +502,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void testSuperMethodInvocation() throws JavaModelException {
 		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
 		ICompilationUnit unit = getWorkingCopy(
-			"src/java/Foo.java",
+			"src/Foo.java",
 			"public class Foo {\n" +
 			"	public void foo(Object obj){}\n" +
 			"}\n" +
