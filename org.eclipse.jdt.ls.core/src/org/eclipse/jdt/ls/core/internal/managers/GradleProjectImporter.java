@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.Serializable;
@@ -105,7 +104,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final String COMPATIBILITY_MARKER_ID = IConstants.PLUGIN_ID + ".gradlecompatibilityerrormarker";
 	public static final String GRADLE_UPGRADE_WRAPPER_MARKER_ID = IConstants.PLUGIN_ID + ".gradleupgradewrappermarker";
 
-	public static final String GRADLE_INVALID_TYPE_CODE_MESSAGE = "Exact exceptions are not shown due to an outdated Gradle version, please consider to update your Gradle version.";
+	public static final String GRADLE_INVALID_TYPE_CODE_MESSAGE = "Exact exceptions are not shown due to an outdated Gradle version, please consider to update your Gradle version to " + GradleUtils.INVALID_TYPE_FIXED_VERSION + " and above.";
 
 	public static final String GRADLE_MARKER_COLUMN_START = "gradleColumnStart";
 	public static final String GRADLE_MARKER_COLUMN_END = "gradleColumnEnd";
@@ -585,7 +584,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 	}
 
-	private class GradleCompatibilityInfo implements Serializable {
+	private class GradleCompatibilityInfo {
 
 		private String projectUri;
 		private String message;
@@ -600,7 +599,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 	}
 
-	private class UpgradeGradleWrapperInfo implements Serializable {
+	private class UpgradeGradleWrapperInfo {
 		private String projectUri;
 		private String message;
 		private String recommendedGradleVersion;
