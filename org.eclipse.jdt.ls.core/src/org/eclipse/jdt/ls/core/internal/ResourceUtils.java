@@ -43,6 +43,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jdt.core.IJavaModelMarker;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -369,5 +370,17 @@ public final class ResourceUtils {
 		marker.setAttribute(IMarker.LINE_NUMBER, 1);
 		marker.setAttribute(IMarker.MESSAGE, status.getMessage());
 		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+	}
+
+	/**
+	 * Creates a simple warning marker with the given type, id and status message to the given resource.
+	 */
+	public static IMarker createWarningMarker(String type, IResource resource, String message, int id, int line) throws CoreException {
+		IMarker marker = resource.createMarker(type);
+		marker.setAttribute(IJavaModelMarker.ID, id);
+		marker.setAttribute(IMarker.LINE_NUMBER, line);
+		marker.setAttribute(IMarker.MESSAGE, message);
+		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
+		return marker;
 	}
 }

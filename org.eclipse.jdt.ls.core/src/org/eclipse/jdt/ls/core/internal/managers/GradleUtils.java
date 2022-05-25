@@ -12,13 +12,25 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
-import org.eclipse.jdt.core.JavaCore;
+import java.io.StreamCorruptedException;
+import java.nio.file.Path;
 
-public class GradleCompatibilityChecker {
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
+import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jdt.core.JavaCore;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.build.GradleEnvironment;
+
+public class GradleUtils {
 
 	public static String MAX_SUPPORTED_JAVA = JavaCore.VERSION_17;
 	public static String CURRENT_GRADLE = "7.3.1";
+	// see https://github.com/gradle/gradle/pull/17397
+	public static String INVALID_TYPE_FIXED_VERSION = "7.2";
 
 	public static boolean isIncompatible(GradleVersion gradleVersion, String javaVersion) {
 		if (gradleVersion == null || javaVersion == null || javaVersion.isEmpty()) {
@@ -54,6 +66,43 @@ public class GradleCompatibilityChecker {
 			return JavaCore.VERSION_1_8;
 		} catch (IllegalArgumentException e) {
 			return MAX_SUPPORTED_JAVA;
+		}
+	}
+
+	public static boolean hasGradleInvalidTypeCodeException(IStatus status, Path projectFolder, IProgressMonitor monitor) {
+		if (!GradleProjectImporter.isFailedStatus(status)) {
+			return false;
+		}
+		if (!isGradleInvalidTypeCodeException(status.getException())) {
+			return false;
+		}
+		GradleVersion version = getGradleVersion(projectFolder, monitor);
+		return version != null && version.compareTo(GradleVersion.version(GradleUtils.INVALID_TYPE_FIXED_VERSION)) < 0;
+	}
+
+	public static boolean isGradleInvalidTypeCodeException(Throwable throwable) {
+		Throwable cause = throwable;
+		while (cause != null) {
+			String message = cause.getMessage();
+			// see https://github.com/gradle/gradle/pull/17397
+			if (cause instanceof StreamCorruptedException && message.contains("invalid type code")) {
+				return true;
+			}
+			cause = cause.getCause();
+		}
+		return false;
+	}
+
+	public static GradleVersion getGradleVersion(Path projectFolder, IProgressMonitor monitor) {
+		try {
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(projectFolder);
+			GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(build);
+			BuildEnvironment environment = gradleBuild.withConnection(connection -> connection.getModel(BuildEnvironment.class), monitor);
+			GradleEnvironment gradleEnvironment = environment.getGradle();
+			String gradleVersion = gradleEnvironment.getGradleVersion();
+			return GradleVersion.version(gradleVersion);
+		} catch (Exception e) {
+			return null;
 		}
 	}
 
