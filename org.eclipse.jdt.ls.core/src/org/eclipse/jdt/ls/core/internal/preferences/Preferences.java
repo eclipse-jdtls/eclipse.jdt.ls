@@ -432,7 +432,7 @@ public class Preferences {
 	/**
 	 * Preference key for the inlay hints exclusion list
 	 */
-	public static final String JAVA_INLAYHINTS_EXCLUSIONS = "java.inlayHints.exclusions";
+	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS = "java.inlayHints.parameterNames.exclusions";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -1060,7 +1060,7 @@ public class Preferences {
 		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
 		String inlayHintsParameterMode = getString(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, null);
 		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
-		List<String> inlayHintsExclusionList = getList(configuration, JAVA_INLAYHINTS_EXCLUSIONS, Collections.emptyList());
+		List<String> inlayHintsExclusionList = getList(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS, Collections.emptyList());
 		prefs.setInlayHintsExclusionList(inlayHintsExclusionList);
 		String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
 		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
