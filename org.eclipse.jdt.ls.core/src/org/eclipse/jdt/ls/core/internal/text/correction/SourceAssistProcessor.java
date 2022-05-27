@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -164,8 +165,9 @@ public class SourceAssistProcessor {
 			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
+		String fieldName = getFieldName(fieldDeclaration, node);
 		try {
-			addGenerateAccessorsSourceActionCommand(params, context, $, type, fieldDeclaration, isInTypeDeclaration);
+			addGenerateAccessorsSourceActionCommand(params, context, $, type, fieldName, isInTypeDeclaration);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
 		}
@@ -231,29 +233,43 @@ public class SourceAssistProcessor {
 		return $;
 	}
 
-	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, FieldDeclaration fieldDeclaration, boolean isInTypeDeclaration) throws JavaModelException {
+	private String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
+		if (fieldDeclaration == null || node == null) {
+			return null;
+		}
+		if (node instanceof SimpleName) {
+			// Focus on a field name
+			ASTNode parent = node.getParent();
+			if (parent instanceof VariableDeclarationFragment) {
+				// Ensure the field name is under a variable declaration
+				return ((SimpleName) node).getIdentifier();
+			}
+		}
+		List<VariableDeclarationFragment> fragments = fieldDeclaration.fragments();
+		if (fragments != null && fragments.size() == 1) {
+			// FieldDeclaration has only one field
+			return fragments.get(0).getName().getIdentifier();
+		}
+		return null;
+	}
+
+	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, String fieldName, boolean isInTypeDeclaration) throws JavaModelException {
 		AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
 		AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);
 		AccessorField[] setters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.SETTER);
 
-		if (fieldDeclaration != null) {
-			List<VariableDeclarationFragment> fragments = fieldDeclaration.fragments();
-			if (fragments != null && fragments.size() == 1) {
-				String fieldName = fragments.get(0).getName().getIdentifier();
-				if (fieldName != null) {
-					Optional<AccessorField> accessorField = Arrays.stream(accessors).filter(accessor -> accessor.fieldName.equals(fieldName)).findFirst();
-					if (accessorField.isPresent() && accessorField.get().generateGetter && accessorField.get().generateSetter) {
-						addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { accessorField.get() }, AccessorKind.BOTH));
-					}
-					Optional<AccessorField> getterField = Arrays.stream(getters).filter(getter -> getter.fieldName.equals(fieldName)).findFirst();
-					if (getterField.isPresent()) {
-						addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { getterField.get() }, AccessorKind.GETTER));
-					}
-					Optional<AccessorField> setterField = Arrays.stream(setters).filter(setter -> setter.fieldName.equals(fieldName)).findFirst();
-					if (setterField.isPresent()) {
-						addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { setterField.get() }, AccessorKind.SETTER));
-					}
-				}
+		if (fieldName != null) {
+			Optional<AccessorField> accessorField = Arrays.stream(accessors).filter(accessor -> accessor.fieldName.equals(fieldName)).findFirst();
+			if (accessorField.isPresent() && accessorField.get().generateGetter && accessorField.get().generateSetter) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { accessorField.get() }, AccessorKind.BOTH));
+			}
+			Optional<AccessorField> getterField = Arrays.stream(getters).filter(getter -> getter.fieldName.equals(fieldName)).findFirst();
+			if (getterField.isPresent()) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { getterField.get() }, AccessorKind.GETTER));
+			}
+			Optional<AccessorField> setterField = Arrays.stream(setters).filter(setter -> setter.fieldName.equals(fieldName)).findFirst();
+			if (setterField.isPresent()) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { setterField.get() }, AccessorKind.SETTER));
 			}
 		}
 
