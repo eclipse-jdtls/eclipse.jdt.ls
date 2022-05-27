@@ -429,6 +429,11 @@ public class Preferences {
 	 */
 	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED = "java.inlayHints.parameterNames.enabled";
 
+	/**
+	 * Preference key for the inlay hints exclusion list
+	 */
+	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS = "java.inlayHints.parameterNames.exclusions";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -555,6 +560,7 @@ public class Preferences {
 	private boolean insertSpaces;
 	private int tabSize;
 	private InlayHintsParameterMode inlayHintsParameterMode;
+	private List<String> inlayHintsExclusionList;
 	private ProjectEncodingMode projectEncoding;
 
 	static {
@@ -1054,6 +1060,8 @@ public class Preferences {
 		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
 		String inlayHintsParameterMode = getString(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, null);
 		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
+		List<String> inlayHintsExclusionList = getList(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS, Collections.emptyList());
+		prefs.setInlayHintsExclusionList(inlayHintsExclusionList);
 		String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
 		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
 		return prefs;
@@ -1854,6 +1862,14 @@ public class Preferences {
 	public Preferences setProjectEncoding(ProjectEncodingMode projectEncoding) {
 		this.projectEncoding = projectEncoding;
 		return this;
+	}
+
+	public List<String> getInlayHintsExclusionList() {
+		return inlayHintsExclusionList;
+	}
+
+	public void setInlayHintsExclusionList(List<String> inlayHintsExclusionList) {
+		this.inlayHintsExclusionList = inlayHintsExclusionList;
 	}
 
 	public ProjectEncodingMode getProjectEncoding() {
