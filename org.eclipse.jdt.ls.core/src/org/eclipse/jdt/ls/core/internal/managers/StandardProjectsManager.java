@@ -542,12 +542,16 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	private void addWatcher(URI uri, Set<IPath> sources) {
 		if (uri != null && "file".equals(uri.getScheme())) {
-			File file = new File(uri);
-			if (file != null) {
-				IPath path = new Path(file.getAbsolutePath());
-				if (!isContainedIn(path, sources)) {
-					sources.add(path);
+			try {
+				File file = new File(uri);
+				if (file != null) {
+					IPath path = new Path(file.getAbsolutePath());
+					if (!isContainedIn(path, sources)) {
+						sources.add(path);
+					}
 				}
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
 	}

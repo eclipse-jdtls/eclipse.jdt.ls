@@ -17,6 +17,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -372,6 +373,26 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			}
 		});
 		assertEquals(newWatchers, watchers);
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2429
+	@Test
+	public void testSettingsWatchers() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		try {
+			preferences.setFormatterUrl("file:c:invalid");
+			String settingsUrl = "../../formatter/settings.prefs";
+			preferences.setSettingsUrl(settingsUrl);
+			List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+			assertEquals("Unexpected watchers:\n" + toString(watchers), 10, watchers.size());
+		} catch (Exception e) {
+			fail(e.getMessage());
+		} finally {
+			preferences.setFormatterUrl(null);
+			preferences.setSettingsUrl(null);
+		}
 	}
 
 	private String toString(List<FileSystemWatcher> watchers) {
