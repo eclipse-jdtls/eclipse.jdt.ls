@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -198,11 +198,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 		CompletionResponses.store(response);
 
+		boolean resolveParameterName = needResolveParameterName();
 		//Let's compute replacement texts for the most relevant results only
 		for (int i = 0; i < limit; i++) {
 			CompletionProposal proposal = proposals.get(i);
 			try {
-				CompletionItem item = toCompletionItem(proposal, i);
+				CompletionItem item = toCompletionItem(proposal, i, resolveParameterName);
 				completionItems.add(item);
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -211,7 +212,35 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return completionItems;
 	}
 
+	private boolean needResolveParameterName() {
+		int resolvingThreshold = preferenceManager.getPreferences().getParameterNamesResolvingThreshold();
+		if (resolvingThreshold == 0) {
+			return true;
+		}
+
+		int constructorCount = 0;
+		for (CompletionProposal proposal : proposals) {
+			switch (proposal.getKind()) {
+				case CompletionProposal.CONSTRUCTOR_INVOCATION:
+				case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+					constructorCount++;
+					break;
+				default:
+					break;
+			}
+
+			if (constructorCount > resolvingThreshold) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
+		return toCompletionItem(proposal, index, true);
+	}
+
+	public CompletionItem toCompletionItem(CompletionProposal proposal, int index, boolean resolveParameterName) {
 		final CompletionItem $ = new CompletionItem();
 		$.setKind(mapKind(proposal));
 		if (Flags.isDeprecated(proposal.getFlags())) {
@@ -228,9 +257,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(index));
 		$.setData(data);
-		this.descriptionProvider.updateDescription(proposal, $);
+		this.descriptionProvider.updateDescription(proposal, $, resolveParameterName);
 		$.setSortText(SortTextHelper.computeSortText(proposal));
-		proposalProvider.updateReplacement(proposal, $, '\0');
+		proposalProvider.updateReplacement(proposal, $, '\0', resolveParameterName);
 		// Make sure `filterText` matches `textEdit`
 		// See https://github.com/eclipse/eclipse.jdt.ls/issues/1348
 		if ($.getTextEdit() != null) {

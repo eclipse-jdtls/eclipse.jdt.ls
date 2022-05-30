@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corporation and others.
+ * Copyright (c) 2005-2022 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -65,6 +65,19 @@ public class CompletionProposalDescriptionProvider {
 	 * @return the string of method signature suitable for display
 	 */
 	public StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
+		return createMethodProposalDescription(proposal, true);
+	}
+
+	/**
+	 * Creates and returns the method signature suitable for display.
+	 *
+	 * @param proposal
+	 *            the proposal to create the description for
+	 * @param resolveParameterName
+	 *            whether the parameter names should be resolved
+	 * @return the string of method signature suitable for display
+	 */
+	public StringBuilder createMethodProposalDescription(CompletionProposal proposal, boolean resolveParameterName) {
 		int kind = proposal.getKind();
 		StringBuilder description = new StringBuilder();
 		switch (kind) {
@@ -78,7 +91,7 @@ public class CompletionProposalDescriptionProvider {
 
 				// parameters
 				description.append('(');
-				appendUnboundedParameterList(description, proposal);
+				appendUnboundedParameterList(description, proposal, resolveParameterName);
 				description.append(')');
 
 				// return type
@@ -135,17 +148,21 @@ public class CompletionProposalDescriptionProvider {
 	 * @return the modified <code>buffer</code>
 	 */
 	private StringBuilder appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal) {
+		return appendUnboundedParameterList(buffer, methodProposal, true);
+	}
+
+	/**
+	 * Appends the parameter list to <code>buffer</code>.
+	 *
+	 * @param buffer the buffer to append to
+	 * @param methodProposal the method proposal
+	 * @param resolveParameterName whether the parameter names should be resolved.
+	 * @return the modified <code>buffer</code>
+	 */
+	private StringBuilder appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal, boolean resolveParameterName) {
 		// TODO remove once https://bugs.eclipse.org/bugs/show_bug.cgi?id=85293
 		// gets fixed.
 		char[] signature= SignatureUtil.fix83600(methodProposal.getSignature());
-		char[][] parameterNames;
-		try {
-			parameterNames = methodProposal.findParameterNames(null);
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
-			methodProposal.setParameterNames(parameterNames);
-		}
 		char[][] parameterTypes= Signature.getParameterTypes(signature);
 
 		for (int i= 0; i < parameterTypes.length; i++) {
@@ -156,6 +173,20 @@ public class CompletionProposalDescriptionProvider {
 			int index= parameterTypes.length - 1;
 			parameterTypes[index]= convertToVararg(parameterTypes[index]);
 		}
+
+		char[][] parameterNames;
+		if (resolveParameterName) {
+			try {
+				parameterNames = methodProposal.findParameterNames(null);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
+				methodProposal.setParameterNames(parameterNames);
+			}
+		} else {
+			parameterNames = new char[parameterTypes.length][];
+		}
+
 		return appendParameterSignature(buffer, parameterTypes, parameterNames);
 	}
 
@@ -300,11 +331,26 @@ public class CompletionProposalDescriptionProvider {
 	 *
 	 * @param methodProposal the method proposal to display
 	 * @param item to update
+	 * @param resolveParameterName whether the parameter names should be resolved
 	 */
-	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
-		StringBuilder description = this.createMethodProposalDescription(methodProposal);
-		item.setLabel(description.toString());
+	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item, boolean resolveParameterName) {
+		setMethodLabelAndDetail(methodProposal, item, resolveParameterName);
 		item.setInsertText(String.valueOf(methodProposal.getName()));
+
+		setSignature(item, String.valueOf(methodProposal.getSignature()));
+		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
+		setName(item, String.valueOf(methodProposal.getName()));
+	}
+
+	/**
+	 * Set the label and detail fields to the completion item
+	 * @param methodProposal method proposal
+	 * @param item completion item
+	 * @param resolveParameterName whether the parameter names should be resolved
+	 */
+	public void setMethodLabelAndDetail(CompletionProposal methodProposal, CompletionItem item, boolean resolveParameterName) {
+		StringBuilder description = this.createMethodProposalDescription(methodProposal, resolveParameterName);
+		item.setLabel(description.toString());
 
 		// declaring type
 		StringBuilder typeInfo = new StringBuilder();
@@ -327,11 +373,6 @@ public class CompletionProposalDescriptionProvider {
 		}
 		detail.append(description);
 		item.setDetail(detail.toString());
-
-		setSignature(item, String.valueOf(methodProposal.getSignature()));
-		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
-		setName(item, String.valueOf(methodProposal.getName()));
-
 	}
 
 	/**
@@ -571,7 +612,7 @@ public class CompletionProposalDescriptionProvider {
 		return buf;
 	}
 
-	private void createAnonymousTypeLabel(CompletionProposal proposal, CompletionItem item) {
+	private void createAnonymousTypeLabel(CompletionProposal proposal, CompletionItem item, boolean resolveParameterName) {
 		char[] declaringTypeSignature= proposal.getDeclarationSignature();
 		declaringTypeSignature= Signature.getTypeErasure(declaringTypeSignature);
 		String name = new String(Signature.getSignatureSimpleName(declaringTypeSignature));
@@ -579,7 +620,7 @@ public class CompletionProposalDescriptionProvider {
 		StringBuilder buf= new StringBuilder();
 		buf.append(name);
 		buf.append('(');
-		appendUnboundedParameterList(buf, proposal);
+		appendUnboundedParameterList(buf, proposal, resolveParameterName);
 		buf.append(')');
 		buf.append("  "); //$NON-NLS-1$
 		buf.append("Anonymous Inner Type"); //TODO: consider externalization
@@ -639,28 +680,43 @@ public class CompletionProposalDescriptionProvider {
 	/**
 	 * Updates the description fields of the item.
 	 *
-	 * @param proposal
-	 * @param item
+	 * @param proposal completion proposal
+	 * @param item completion item
 	 */
 	public void updateDescription(CompletionProposal proposal, CompletionItem item) {
+		updateDescription(proposal, item, false);
+	}
+
+	/**
+	 * Updates the description fields of the item.
+	 *
+	 * @param proposal completion proposal.
+	 * @param item completion item.
+	 * @param resolveParameterName whether the parameter name should be resolved.
+	 */
+	public void updateDescription(CompletionProposal proposal, CompletionItem item, boolean resolveParameterName) {
 		switch (proposal.getKind()) {
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+				createMethodProposalLabel(proposal, item, resolveParameterName);
+				break;
 			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.METHOD_REF:
-			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 				if (fContext != null && fContext.isInJavadoc()) {
 					createJavadocMethodProposalLabel(proposal, item);
 					break;
 				}
-				createMethodProposalLabel(proposal, item);
+				createMethodProposalLabel(proposal, item, true);
 				break;
 			case CompletionProposal.METHOD_DECLARATION:
 				createOverrideMethodProposalLabel(proposal, item);
 				break;
 			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+				createAnonymousTypeLabel(proposal, item, true);
+				break;
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				createAnonymousTypeLabel(proposal, item);
+				createAnonymousTypeLabel(proposal, item, resolveParameterName);
 				break;
 			case CompletionProposal.TYPE_REF:
 				createTypeProposalLabel(proposal, item);

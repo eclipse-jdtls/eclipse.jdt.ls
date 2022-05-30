@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -119,6 +119,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//		sharedASTProvider.clearASTCreationCount();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
+		preferences.setParameterNamesResolvingThreshold(0);
 	}
 
 	@After
@@ -3463,6 +3464,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} finally {
 			unit.discardWorkingCopy();
 		}
+	}
+
+	@Test
+	public void testCompletion_resolveParameterNamesThreshold() throws JavaModelException{
+		preferences.setParameterNamesResolvingThreshold(1);
+
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String s = new String;\n" +
+				"	}\n"+
+				"}\n");
+		//@formatter:on
+
+		CompletionList list = requestCompletions(unit, "new String");
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream()
+				.filter( item-> "String(int[], int, int)".equals(item.getLabel()))
+				.findFirst().orElse(null);
+		assertNotNull(ci);
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {

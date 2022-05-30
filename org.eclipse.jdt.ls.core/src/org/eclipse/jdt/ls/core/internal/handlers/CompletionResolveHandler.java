@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -44,6 +44,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalDescriptionProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
@@ -120,9 +121,9 @@ public class CompletionResolveHandler {
 		}
 
 		// generic snippets
+		CompletionContext ctx = completionResponse.getContext();
 		if (param.getKind() == CompletionItemKind.Snippet) {
 			try {
-				CompletionContext ctx = completionResponse.getContext();
 				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 				Template template = ((SnippetCompletionProposal) proposal).getTemplate();
 				String content = SnippetCompletionProposal.evaluateGenericTemplate(unit, ctx, template);
@@ -272,6 +273,8 @@ public class CompletionResolveHandler {
 						}
 					}
 				}
+
+				updateDetail(param, ctx, proposal);
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Unable to resolve compilation", e);
 				monitor.setCanceled(true);
@@ -281,6 +284,23 @@ public class CompletionResolveHandler {
 			param.setData(null);
 		}
 		return param;
+	}
+
+	/**
+	 * Update the completion item's detail in case the parameter name resolving is skipped before.
+	 * 
+	 * @param item completion item
+	 * @param ctx completion context
+	 * @param proposal completion proposal
+	 */
+	private void updateDetail(CompletionItem item, CompletionContext ctx, CompletionProposal proposal) {
+		switch (proposal.getKind()) {
+			// Only re-calculate constructor invocation since the anonymous constructor invocation only shows The
+			// type name in the detail field - no need to resolve the parameter names.
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+				CompletionProposalDescriptionProvider desProvider = new CompletionProposalDescriptionProvider(ctx);
+				desProvider.setMethodLabelAndDetail(proposal, item, true);
+		}
 	}
 
 }

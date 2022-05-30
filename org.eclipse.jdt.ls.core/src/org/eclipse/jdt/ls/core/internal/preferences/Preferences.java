@@ -317,6 +317,14 @@ public class Preferences {
 	public static final int JAVA_COMPLETION_MAX_RESULTS_DEFAULT = 50;
 
 	/**
+	 * Preference key for the threshold to control whether the parameter names will be resolved
+	 * in the completion list. If the number of the constructors in the completion list is larger
+	 * than the threshold, parameter names will not be resolved.
+	 */
+	public static final String JAVA_COMPLETION_CONSTRUCTORS_RESOLVE_PARAMETER_NAMES_THRESHOLD = "java.completion.constructors.resolveParameterNamesThreshold";
+	public static final int JAVA_COMPLETION_CONSTRUCTORS_RESOLVE_PARAMETER_NAMES_THRESHOLD_DEFAULT = 30;
+
+	/**
 	 * A named preference that controls if the Java code assist only inserts
 	 * completions. When set to true, code completion overwrites the current text.
 	 * When set to false, code is simply added instead.
@@ -550,6 +558,7 @@ public class Preferences {
 	private Collection<IPath> projectConfigurations;
 	private int parallelBuildsCount;
 	private int maxCompletionResults;
+	private int resolveParameterNamesThreshold;
 	private int importOnDemandThreshold;
 	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
@@ -985,6 +994,9 @@ public class Preferences {
 
 		int maxCompletions = getInt(configuration, JAVA_COMPLETION_MAX_RESULTS_KEY, JAVA_COMPLETION_MAX_RESULTS_DEFAULT);
 		prefs.setMaxCompletionResults(maxCompletions);
+
+		int resolveThreshold = getInt(configuration, JAVA_COMPLETION_CONSTRUCTORS_RESOLVE_PARAMETER_NAMES_THRESHOLD, JAVA_COMPLETION_CONSTRUCTORS_RESOLVE_PARAMETER_NAMES_THRESHOLD_DEFAULT);
+		prefs.setParameterNamesResolvingThreshold(resolveThreshold);
 
 		int onDemandThreshold = getInt(configuration, IMPORTS_ONDEMANDTHRESHOLD, IMPORTS_ONDEMANDTHRESHOLD_DEFAULT);
 		prefs.setImportOnDemandThreshold(onDemandThreshold);
@@ -1689,6 +1701,14 @@ public class Preferences {
 			this.maxCompletionResults = maxCompletions;
 		}
 		return this;
+	}
+
+	public int getParameterNamesResolvingThreshold() {
+		return resolveParameterNamesThreshold;
+	}
+
+	public void setParameterNamesResolvingThreshold(int threshold) {
+		this.resolveParameterNamesThreshold = threshold;
 	}
 
 	public ReferencedLibraries getReferencedLibraries() {

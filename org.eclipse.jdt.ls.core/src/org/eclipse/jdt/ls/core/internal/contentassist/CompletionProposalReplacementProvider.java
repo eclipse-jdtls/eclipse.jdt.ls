@@ -106,7 +106,7 @@ public class CompletionProposalReplacementProvider {
 	 * @param trigger
 	 */
 	public void updateAdditionalTextEdits(CompletionProposal proposal, CompletionItem item, char trigger) {
-		updateReplacement(proposal, item, trigger, true);
+		updateReplacement(proposal, item, trigger, false, true);
 	}
 
 	/**
@@ -117,10 +117,15 @@ public class CompletionProposalReplacementProvider {
 	 * @param trigger
 	 */
 	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger) {
-		updateReplacement(proposal, item, trigger, false);
+		updateReplacement(proposal, item, trigger, true, false);
 	}
 
-	private void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, boolean isResolving) {
+	
+	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, boolean resolveParameterName) {
+		updateReplacement(proposal, item, trigger, resolveParameterName, false);
+	}
+
+	private void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, boolean resolveParameterName, boolean isResolving) {
 		// reset importRewrite
 		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 
@@ -139,7 +144,7 @@ public class CompletionProposalReplacementProvider {
 						appendImportProposal(completionBuffer, requiredProposal, proposal.getKind());
 						break;
 					case CompletionProposal.TYPE_REF:
-						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context));
+						org.eclipse.lsp4j.TextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context), resolveParameterName);
 						if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
 							|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
@@ -170,7 +175,7 @@ public class CompletionProposalReplacementProvider {
 				if (proposal instanceof GetterSetterCompletionProposal) {
 					appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
 				} else {
-					appendReplacementString(completionBuffer, proposal);
+					appendReplacementString(completionBuffer, proposal, resolveParameterName);
 				}
 				break;
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
@@ -178,10 +183,10 @@ public class CompletionProposalReplacementProvider {
 				appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
 				break;
 			case CompletionProposal.LAMBDA_EXPRESSION:
-				appendLambdaExpressionReplacement(completionBuffer, proposal);
+				appendLambdaExpressionReplacement(completionBuffer, proposal, resolveParameterName);
 				break;
 			default:
-				appendReplacementString(completionBuffer, proposal);
+				appendReplacementString(completionBuffer, proposal, resolveParameterName);
 				break;
 		}
 
@@ -191,17 +196,22 @@ public class CompletionProposalReplacementProvider {
 		} else {
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
 		}
-		String text = completionBuffer.toString();
-		if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {
-			// fallback
-			item.setInsertText(text);
-		} else if (client.isCompletionInsertReplaceSupport()) {
-			insertReplaceEdit.setNewText(text);
-			item.setTextEdit(Either.forRight(insertReplaceEdit));
-		} else if (preferences.isCompletionOverwrite()) {
-			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getReplace(), text)));
-		} else {
-			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
+
+		if (!isResolving) {
+			// TODO: decouple the methods used in this class and only do the necessary jobs
+			// separately in completion requests and resolve request.
+			String text = completionBuffer.toString();
+			if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {
+				// fallback
+				item.setInsertText(text);
+			} else if (client.isCompletionInsertReplaceSupport()) {
+				insertReplaceEdit.setNewText(text);
+				item.setTextEdit(Either.forRight(insertReplaceEdit));
+			} else if (preferences.isCompletionOverwrite()) {
+				item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getReplace(), text)));
+			} else {
+				item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
+			}
 		}
 
 		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
@@ -212,9 +222,9 @@ public class CompletionProposalReplacementProvider {
 		}
 	}
 
-	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
+	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal, boolean resolveParameterName) {
 		completionBuffer.append(LPAREN);
-		appendGuessingCompletion(completionBuffer, proposal);
+		appendGuessingCompletion(completionBuffer, proposal, resolveParameterName);
 		completionBuffer.append(RPAREN);
 		completionBuffer.append(" -> ");
 		if(client.isCompletionSnippetsSupported()){
@@ -469,7 +479,7 @@ public class CompletionProposalReplacementProvider {
 		return context.isInJavadoc();
 	}
 
-	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal) {
+	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal, boolean resolveParameterName) {
 		if (!hasArgumentList(proposal)) {
 			String str = proposal.getKind() == CompletionProposal.TYPE_REF ? computeJavaTypeReplacementString(proposal) : String.valueOf(proposal.getCompletion());
 			if (client.isCompletionSnippetsSupported()) {
@@ -490,7 +500,7 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		if (hasParameters(proposal)) {
-			appendGuessingCompletion(buffer, proposal);
+			appendGuessingCompletion(buffer, proposal, resolveParameterName);
 		}
 
 		if(addParen){
@@ -532,15 +542,20 @@ public class CompletionProposalReplacementProvider {
 
 	}
 
-	private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal) {
+	private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal, boolean resolveParameterName) {
 		char[][] parameterNames;
-		try {
-			parameterNames = proposal.findParameterNames(null);
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		if (resolveParameterName) {
+			try {
+				parameterNames = proposal.findParameterNames(null);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				char[] signature = SignatureUtil.fix83600(proposal.getSignature());
+				parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
+				proposal.setParameterNames(parameterNames);
+			}
+		} else {
 			char[] signature = SignatureUtil.fix83600(proposal.getSignature());
 			parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
-			proposal.setParameterNames(parameterNames);
 		}
 
 		int count= parameterNames.length;
@@ -631,10 +646,10 @@ public class CompletionProposalReplacementProvider {
 		return !proposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(proposal.getSignature()));
 	}
 
-	private org.eclipse.lsp4j.TextEdit toRequiredTypeEdit(CompletionProposal typeProposal, char trigger, boolean canUseDiamond) {
+	private org.eclipse.lsp4j.TextEdit toRequiredTypeEdit(CompletionProposal typeProposal, char trigger, boolean canUseDiamond, boolean resolveParameterName) {
 
 		StringBuilder buffer = new StringBuilder();
-		appendReplacementString(buffer, typeProposal);
+		appendReplacementString(buffer, typeProposal, resolveParameterName);
 
 		if (compilationUnit == null /*|| getContext() != null && getContext().isInJavadoc()*/) {
 			Range range = toReplacementRange(typeProposal);
