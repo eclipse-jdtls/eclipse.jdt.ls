@@ -460,10 +460,6 @@ public class LocalCorrectionsSubProcessor {
 				}
 			}
 		}
-
-		if (problemId == IProblem.UnusedPrivateField) {
-			GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNUSED_PRIVATE_FIELD);
-		}
 	}
 
 	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {

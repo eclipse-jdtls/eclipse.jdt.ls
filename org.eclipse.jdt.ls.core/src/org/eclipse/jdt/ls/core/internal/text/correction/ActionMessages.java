@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018-2019 Microsoft Corporation and others.
+* Copyright (c) 2018-2022 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -25,10 +25,13 @@ public final class ActionMessages extends NLS {
 	public static String OverrideMethodsAction_label;
 	public static String GenerateGetterSetterAction_label;
 	public static String GenerateGetterSetterAction_ellipsisLabel;
+	public static String GenerateGetterSetterAction_templateLabel;
 	public static String GenerateGetterAction_label;
 	public static String GenerateGetterAction_ellipsisLabel;
+	public static String GenerateGetterAction_templateLabel;
 	public static String GenerateSetterAction_label;
 	public static String GenerateSetterAction_ellipsisLabel;
+	public static String GenerateSetterAction_templateLabel;
 	public static String GenerateHashCodeEqualsAction_label;
 	public static String GenerateToStringAction_label;
 	public static String GenerateToStringAction_ellipsisLabel;

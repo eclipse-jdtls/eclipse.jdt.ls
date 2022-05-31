@@ -158,13 +158,13 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 	}
 
 	@Test
-	public void testGenerateAccessorsQuickAssist() throws JavaModelException {
+	public void testGenerateAccessorsQuickAssistForTypeDeclaration() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
 				"public class A {\r\n" +
-				"	public final String name = \"name\";\r\n" +
-				"	public final String pet = \"pet\";\r\n" +
+				"	public String name = \"name\";\r\n" +
+				"	public String pet = \"pet\";\r\n" +
 				"}"
 				, true, null);
 		//@formatter:on
@@ -173,11 +173,45 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
-		// Test if the quick assist exists only for type declaration
-		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
-		codeActions = server.codeAction(params).join();
+	}
+
+	@Test
+	public void testGenerateAccessorsQuickAssistForFieldDeclaration() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	public String name = \"name\";\r\n" +
+				"	public String pet = \"pet\";\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT));
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+	}
+
+	@Test
+	public void testGenerateAccessorsQuickAssistForFinalField() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	public final String name = \"name\";\r\n" +
+				"	public String pet = \"pet\";\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
+		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
 	}
 }

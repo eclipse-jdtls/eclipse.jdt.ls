@@ -147,7 +147,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this.count = count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'count'", buf.toString());
+		Expected e2 = new Expected("Generate Getter and Setter for 'count'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -195,7 +195,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        this.color = color;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'color'", buf.toString());
+		Expected e2 = new Expected("Generate Getter and Setter for 'color'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -225,9 +225,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("    private int count= 0;\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        setCount(1 + 2);\n");
-		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * @return the count\n");
 		buf.append("     */\n");
@@ -240,8 +237,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void setCount(int count) {\n");
 		buf.append("        this.count = count;\n");
 		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        count= 1 + 2;\n");
+		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'count'", buf.toString());
+		Expected e2 = new Expected("Generate Getter and Setter for 'count'", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017-2021 Microsoft Corporation and others.
+* Copyright (c) 2017-2022 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -36,10 +36,13 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -51,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
@@ -105,18 +109,19 @@ public class SourceAssistProcessor {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
-		boolean isInTypeDeclaration = isInTypeDeclaration(context);
-		boolean isInImportDeclaration = isInImportDeclaration(context);
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+		FieldDeclaration fieldDeclaration = getFieldDeclarationNode(node);
+		boolean isInFieldDeclaration = fieldDeclaration != null;
+		boolean isInTypeDeclaration = getTypeDeclarationNode(node) != null;
+		boolean isInImportDeclaration = getImportDeclarationNode(node) != null;
 
-		try {
-			// Generate Constructor QuickAssist
-			IJavaElement element = JDTUtils.findElementAtSelection(cu, params.getRange().getEnd().getLine(), params.getRange().getEnd().getCharacter(), this.preferenceManager, new NullProgressMonitor());
-			if (element instanceof IField || isInTypeDeclaration) {
-				Optional<Either<Command, CodeAction>> quickAssistGenerateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
-				addSourceActionCommand($, params.getContext(), quickAssistGenerateConstructors);
-			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException(e);
+		// Generate Constructor QuickAssist
+		if (isInFieldDeclaration || isInTypeDeclaration) {
+			Optional<Either<Command, CodeAction>> quickAssistGenerateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
+			addSourceActionCommand($, params.getContext(), quickAssistGenerateConstructors);
 		}
 		// Generate Constructor Source Action
 		Optional<Either<Command, CodeAction>> sourceGenerateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, monitor);
@@ -160,43 +165,9 @@ public class SourceAssistProcessor {
 			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
+		String fieldName = getFieldName(fieldDeclaration, node);
 		try {
-			AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
-			AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);
-			AccessorField[] setters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.SETTER);
-
-			if (getters.length > 0 && setters.length > 0) {
-				// Generate Getter and Setter QuickAssist
-				if (isInTypeDeclaration) {
-					Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, accessors, AccessorKind.BOTH);
-					addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
-				}
-				// Generate Getter and Setter Source Action
-				Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, accessors, AccessorKind.BOTH);
-				addSourceActionCommand($, params.getContext(), sourceGetterSetter);
-			}
-
-			if (getters.length > 0) {
-				// Generate Getter QuickAssist
-				if (isInTypeDeclaration) {
-					Optional<Either<Command, CodeAction>> quickAssistGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, getters, AccessorKind.GETTER);
-					addSourceActionCommand($, params.getContext(), quickAssistGetter);
-				}
-				// Generate Getter Source Action
-				Optional<Either<Command, CodeAction>> sourceGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, getters, AccessorKind.GETTER);
-				addSourceActionCommand($, params.getContext(), sourceGetter);
-			}
-
-			if (setters.length > 0) {
-				// Generate Setter QuickAssist
-				if (isInTypeDeclaration) {
-					Optional<Either<Command, CodeAction>> quickAssistSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, setters, AccessorKind.SETTER);
-					addSourceActionCommand($, params.getContext(), quickAssistSetter);
-				}
-				// Generate Setter Source Action
-				Optional<Either<Command, CodeAction>> sourceSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, setters, AccessorKind.SETTER);
-				addSourceActionCommand($, params.getContext(), sourceSetter);
-			}
+			addGenerateAccessorsSourceActionCommand(params, context, $, type, fieldName, isInTypeDeclaration);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
 		}
@@ -262,6 +233,80 @@ public class SourceAssistProcessor {
 		return $;
 	}
 
+	private String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
+		if (fieldDeclaration == null || node == null) {
+			return null;
+		}
+		if (node instanceof SimpleName) {
+			// Focus on a field name
+			ASTNode parent = node.getParent();
+			if (parent instanceof VariableDeclarationFragment) {
+				// Ensure the field name is under a variable declaration
+				return ((SimpleName) node).getIdentifier();
+			}
+		}
+		List<VariableDeclarationFragment> fragments = fieldDeclaration.fragments();
+		if (fragments != null && fragments.size() == 1) {
+			// FieldDeclaration has only one field
+			return fragments.get(0).getName().getIdentifier();
+		}
+		return null;
+	}
+
+	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, String fieldName, boolean isInTypeDeclaration) throws JavaModelException {
+		AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
+		AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);
+		AccessorField[] setters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.SETTER);
+
+		if (fieldName != null) {
+			Optional<AccessorField> accessorField = Arrays.stream(accessors).filter(accessor -> accessor.fieldName.equals(fieldName)).findFirst();
+			if (accessorField.isPresent() && accessorField.get().generateGetter && accessorField.get().generateSetter) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { accessorField.get() }, AccessorKind.BOTH));
+			}
+			Optional<AccessorField> getterField = Arrays.stream(getters).filter(getter -> getter.fieldName.equals(fieldName)).findFirst();
+			if (getterField.isPresent()) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { getterField.get() }, AccessorKind.GETTER));
+			}
+			Optional<AccessorField> setterField = Arrays.stream(setters).filter(setter -> setter.fieldName.equals(fieldName)).findFirst();
+			if (setterField.isPresent()) {
+				addSourceActionCommand($, params.getContext(), getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, new AccessorField[] { setterField.get() }, AccessorKind.SETTER));
+			}
+		}
+
+		if (getters.length > 0 && setters.length > 0) {
+			// Generate Getter and Setter QuickAssist
+			if (isInTypeDeclaration) {
+				Optional<Either<Command, CodeAction>> quickAssistGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, accessors, AccessorKind.BOTH);
+				addSourceActionCommand($, params.getContext(), quickAssistGetterSetter);
+			}
+			// Generate Getter and Setter Source Action
+			Optional<Either<Command, CodeAction>> sourceGetterSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, accessors, AccessorKind.BOTH);
+			addSourceActionCommand($, params.getContext(), sourceGetterSetter);
+		}
+
+		if (getters.length > 0) {
+			// Generate Getter QuickAssist
+			if (isInTypeDeclaration) {
+				Optional<Either<Command, CodeAction>> quickAssistGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, getters, AccessorKind.GETTER);
+				addSourceActionCommand($, params.getContext(), quickAssistGetter);
+			}
+			// Generate Getter Source Action
+			Optional<Either<Command, CodeAction>> sourceGetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, getters, AccessorKind.GETTER);
+			addSourceActionCommand($, params.getContext(), sourceGetter);
+		}
+
+		if (setters.length > 0) {
+			// Generate Setter QuickAssist
+			if (isInTypeDeclaration) {
+				Optional<Either<Command, CodeAction>> quickAssistSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, isInTypeDeclaration, setters, AccessorKind.SETTER);
+				addSourceActionCommand($, params.getContext(), quickAssistSetter);
+			}
+			// Generate Setter Source Action
+			Optional<Either<Command, CodeAction>> sourceSetter = getGetterSetterAction(params, context, type, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS, isInTypeDeclaration, setters, AccessorKind.SETTER);
+			addSourceActionCommand($, params.getContext(), sourceSetter);
+		}
+	}
+
 	private void addSourceActionCommand(List<Either<Command, CodeAction>> result, CodeActionContext context, Optional<Either<Command, CodeAction>> target) {
 		if (!target.isPresent()) {
 			return;
@@ -325,28 +370,25 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration, AccessorField[] accessors, AccessorKind accessorKind) {
-		String ellipsisActionMessage;
-		String actionMessage;
-		switch (accessorKind) {
-			case BOTH:
-				actionMessage = ActionMessages.GenerateGetterSetterAction_label;
-				ellipsisActionMessage = ActionMessages.GenerateGetterSetterAction_ellipsisLabel;
-				break;
-			case GETTER:
-				actionMessage = ActionMessages.GenerateGetterAction_label;
-				ellipsisActionMessage = ActionMessages.GenerateGetterAction_ellipsisLabel;
-				break;
-			case SETTER:
-				actionMessage = ActionMessages.GenerateSetterAction_label;
-				ellipsisActionMessage = ActionMessages.GenerateSetterAction_ellipsisLabel;
-				break;
-			default:
-				return Optional.empty();
-		}
+		boolean isQuickAssist = kind.equals(JavaCodeActionKind.QUICK_ASSIST);
 		try {
 			if (accessors == null || accessors.length == 0) {
 				return Optional.empty();
 			} else if (accessors.length == 1 || !preferenceManager.getClientPreferences().isAdvancedGenerateAccessorsSupported()) {
+				String actionMessage;
+				switch (accessorKind) {
+					case BOTH:
+						actionMessage = isQuickAssist ? Messages.format(ActionMessages.GenerateGetterSetterAction_templateLabel, accessors[0].fieldName) : ActionMessages.GenerateGetterSetterAction_label;
+						break;
+					case GETTER:
+						actionMessage = isQuickAssist ? Messages.format(ActionMessages.GenerateGetterAction_templateLabel, accessors[0].fieldName) : ActionMessages.GenerateGetterAction_label;
+						break;
+					case SETTER:
+						actionMessage = isQuickAssist ? Messages.format(ActionMessages.GenerateSetterAction_templateLabel, accessors[0].fieldName) : ActionMessages.GenerateSetterAction_label;
+						break;
+					default:
+						return Optional.empty();
+				}
 				CodeActionProposal getAccessorsProposal = (pm) -> {
 					// If cursor position is not specified, then insert to the last by default.
 					IJavaElement insertBefore = isInTypeDeclaration ? CodeGenerationUtils.findInsertElement(type, null) : CodeGenerationUtils.findInsertElement(type, params.getRange());
@@ -356,10 +398,24 @@ public class SourceAssistProcessor {
 				};
 				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), actionMessage, kind, getAccessorsProposal);
 			} else {
+				String actionMessage;
+				switch (accessorKind) {
+					case BOTH:
+						actionMessage = ActionMessages.GenerateGetterSetterAction_ellipsisLabel;
+						break;
+					case GETTER:
+						actionMessage = ActionMessages.GenerateGetterAction_ellipsisLabel;
+						break;
+					case SETTER:
+						actionMessage = ActionMessages.GenerateSetterAction_ellipsisLabel;
+						break;
+					default:
+						return Optional.empty();
+				}
 				AccessorCodeActionParams accessorParams = new AccessorCodeActionParams(params.getTextDocument(), params.getRange(), params.getContext(), accessorKind);
-				Command command = new Command(ellipsisActionMessage, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(accessorParams));
+				Command command = new Command(actionMessage, COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, Collections.singletonList(accessorParams));
 				if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS)) {
-					CodeAction codeAction = new CodeAction(ellipsisActionMessage);
+					CodeAction codeAction = new CodeAction(actionMessage);
 					codeAction.setKind(kind);
 					codeAction.setCommand(command);
 					codeAction.setDiagnostics(Collections.emptyList());
@@ -667,19 +723,13 @@ public class SourceAssistProcessor {
 		return node instanceof ImportDeclaration ? node : null;
 	}
 
-	private static boolean isInTypeDeclaration(IInvocationContext context) {
-		ASTNode node = context.getCoveredNode();
+	private static FieldDeclaration getFieldDeclarationNode(ASTNode node) {
 		if (node == null) {
-			node = context.getCoveringNode();
+			return null;
 		}
-		return getTypeDeclarationNode(node) != null;
-	}
-
-	private static boolean isInImportDeclaration(IInvocationContext context) {
-		ASTNode node = context.getCoveredNode();
-		if (node == null) {
-			node = context.getCoveringNode();
+		while (node != null && !(node instanceof FieldDeclaration) && !(node instanceof Statement)) {
+			node = node.getParent();
 		}
-		return getImportDeclarationNode(node) != null;
+		return node instanceof FieldDeclaration ? (FieldDeclaration) node : null;
 	}
 }
