@@ -580,11 +580,11 @@ public class Preferences {
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.Assumptions.*");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicContainer.*");
 		JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT.add("org.junit.jupiter.api.DynamicTest.*");
-		JAVA_IMPORT_ORDER_DEFAULT = new ArrayList<>();
+		JAVA_IMPORT_ORDER_DEFAULT = new LinkedList<>();
 		JAVA_IMPORT_ORDER_DEFAULT.add("java");
 		JAVA_IMPORT_ORDER_DEFAULT.add("javax");
-		JAVA_IMPORT_ORDER_DEFAULT.add("com");
 		JAVA_IMPORT_ORDER_DEFAULT.add("org");
+		JAVA_IMPORT_ORDER_DEFAULT.add("com");
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT = new ArrayList<>();
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("com.sun.*");
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("io.micrometer.shaded.*");
