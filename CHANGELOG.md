@@ -1,5 +1,18 @@
 # Change Log
 
+# [1.12.0 (June 1st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/102?closed=1)
+ * enhancment - Support separate "Generate Getters" and "Generate Setters". See [#2086](https://github.com/eclipse/eclipse.jdt.ls/pull/2086).
+ * enhancement - Show quick fixes for generating accessors in field declarations. See [#2092](https://github.com/eclipse/eclipse.jdt.ls/pull/2092).
+ * enhancement - Add support for workspace symbols with qualified names. See [#2084](https://github.com/eclipse/eclipse.jdt.ls/issues/2084).
+ * enhancement - Show field type when generating accessors. See [#2093](https://github.com/eclipse/eclipse.jdt.ls/pull/2093).
+ * enhancement - Support Gradle invalid type code error check. See [#2082](https://github.com/eclipse/eclipse.jdt.ls/pull/2082).
+ * enhancement - Support the exclusion list for inlay hints. See [#2098](https://github.com/eclipse/eclipse.jdt.ls/pull/2098).
+ * bug fix - Add support to open decompiled symbols through the symbols list. See [#2087](https://github.com/eclipse/eclipse.jdt.ls/issues/2087).
+ * bug fix - Handle illegal URL settings to avoid breaking language server. See [#2089](https://github.com/eclipse/eclipse.jdt.ls/pull/2089).
+ * bug fix - Fix `java.completion.importOrder`. See [#2107](https://github.com/eclipse/eclipse.jdt.ls/pull/2107).
+ * build - Update M2E to 2.0.0 snapshot release. See [#2085](https://github.com/eclipse/eclipse.jdt.ls/issues/2085).
+ * build - Update to buildship 3.1.6 release. See [#2094](https://github.com/eclipse/eclipse.jdt.ls/issues/2094).
+
 # [1.11.0 (May 5th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/102?closed=1)
  * enhancement - Trigger signature help on completion item selected. See [#2065](https://github.com/eclipse/eclipse.jdt.ls/pull/2065).
  * enhancement - Support completion insert/replace capability. See [#2057](https://github.com/eclipse/eclipse.jdt.ls/pull/2057).
