@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Red Hat Inc. and others.
+ * Copyright (c) 2019-2021 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -109,6 +110,27 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		assertEquals("9", newDefaultVM.getId());
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1960
+	@Test
+	public void testJavaLSSetDefaultJVM() throws CoreException {
+		String setDefaultJVM = System.getProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM);
+		try {
+			System.setProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM, "true");
+			String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
+			boolean changed = JVMConfigurator.configureDefaultVM(javaHome);
+			IVMInstall newDefaultVM = JavaRuntime.getDefaultVMInstall();
+			assertFalse("A VM has been changed", changed);
+			assertEquals(originalVm, newDefaultVM);
+			assertNotEquals("9", newDefaultVM.getId());
+		} finally {
+			if (setDefaultJVM != null) {
+				System.setProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM, setDefaultJVM);
+			} else {
+				System.clearProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM);
+			}
+		}
+	}
+
 	@Test
 	public void testJVM() throws Exception {
 		try {
@@ -140,7 +162,6 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertTrue(vm instanceof IVMInstall2);
 			String version = ((IVMInstall2) vm).getJavaVersion();
 			assertTrue(version.startsWith(JavaCore.VERSION_11));
-			StandardVMType svt = (StandardVMType) vm.getVMInstallType();
 			LibraryLocation[] libs = vm.getLibraryLocations();
 			assertNotNull(libs);
 			for (LibraryLocation lib : libs) {
@@ -156,6 +177,66 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			IVMInstall vm = JVMConfigurator.findVM(null, ENVIRONMENT_NAME);
 			if (vm != null) {
 				vm.getVMInstallType().disposeVMInstall(vm.getId());
+			}
+		}
+		IVMInstall vm = JVMConfigurator.findVM(null, ENVIRONMENT_NAME);
+		assertNull(vm);
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/1960
+	@Test
+	public void testJVM2() throws Exception {
+		String setDefaultJVM = System.getProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM);
+		try {
+			System.setProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM, "true");
+			Preferences prefs = new Preferences();
+			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
+			URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/11a"));
+			File file = URIUtil.toFile(URIUtil.toURI(url));
+			String path = file.getAbsolutePath();
+			String javadoc = "file:///javadoc";
+			Set<RuntimeEnvironment> runtimes = new HashSet<>();
+			RuntimeEnvironment runtime = new RuntimeEnvironment();
+			runtime.setPath(path);
+			runtime.setName(ENVIRONMENT_NAME);
+			runtime.setJavadoc(javadoc);
+			runtime.setDefault(true);
+			assertTrue(runtime.isValid());
+			runtimes.add(runtime);
+			prefs.setRuntimes(runtimes);
+			file = runtime.getInstallationFile();
+			assertTrue(file != null && file.isDirectory());
+			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
+			IStatus status = installType.validateInstallLocation(file);
+			assertTrue(status.toString(), status.isOK());
+			boolean changed = JVMConfigurator.configureJVMs(prefs);
+			assertTrue("A VM hasn't been changed", changed);
+			JobHelpers.waitForJobsToComplete();
+			IVMInstall vm = JVMConfigurator.findVM(runtime.getInstallationFile(), ENVIRONMENT_NAME);
+			assertNotNull(vm);
+			assertTrue(vm instanceof IVMInstall2);
+			String version = ((IVMInstall2) vm).getJavaVersion();
+			assertTrue(version.startsWith(JavaCore.VERSION_11));
+			LibraryLocation[] libs = vm.getLibraryLocations();
+			assertNotNull(libs);
+			for (LibraryLocation lib : libs) {
+				assertEquals(runtime.getJavadocURL(), lib.getJavadocLocation());
+			}
+			IVMInstall newDefaultVM = JavaRuntime.getDefaultVMInstall();
+			assertEquals(originalVm, newDefaultVM);
+			assertNotEquals(vm, newDefaultVM);
+			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(ENVIRONMENT_NAME);
+			assertNotNull(environment);
+			assertEquals(vm, environment.getDefaultVM());
+		} finally {
+			IVMInstall vm = JVMConfigurator.findVM(null, ENVIRONMENT_NAME);
+			if (vm != null) {
+				vm.getVMInstallType().disposeVMInstall(vm.getId());
+			}
+			if (setDefaultJVM != null) {
+				System.setProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM, setDefaultJVM);
+			} else {
+				System.clearProperty(JVMConfigurator.JAVA_LS_DO_NOT_SET_DEFAULT_JVM);
 			}
 		}
 		IVMInstall vm = JVMConfigurator.findVM(null, ENVIRONMENT_NAME);
