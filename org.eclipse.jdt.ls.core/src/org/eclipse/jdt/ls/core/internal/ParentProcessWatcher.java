@@ -65,6 +65,13 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		if (pid == 0 || lastActivityTime > (System.currentTimeMillis() - INACTIVITY_DELAY_SECS)) {
 			return true;
 		}
+
+		try {
+			return ProcessHandle.of(pid).isPresent();
+		} catch (UnsupportedOperationException | SecurityException e) {
+			// Unable to determine process state, fallback behaviour
+		}
+
 		String command;
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
 			command = "cmd /c \"tasklist /FI \"PID eq " + pid + "\" | findstr " + pid + "\"";
