@@ -100,7 +100,7 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
 	}
 
