@@ -47,7 +47,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -68,7 +67,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -89,7 +87,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -111,7 +108,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -133,7 +129,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -155,7 +150,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -177,7 +171,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -199,7 +192,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -222,7 +214,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -247,7 +238,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -270,7 +260,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -286,13 +275,12 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit unit = getWorkingCopy(
 			"src/Foo.java",
 			"public class Foo {\n" +
-			"	void foo(Integer i, String... args) {}\n" +
+			"	void foo2(Integer i, String... args) {}\n" +
 			"	void bar() {\n" +
-			"		foo(1);\n" +
+			"		foo2(1);\n" +
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -315,7 +303,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -337,7 +324,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -358,7 +344,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -381,7 +366,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -427,7 +411,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -452,7 +435,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n"+
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -482,7 +464,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n" +
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
@@ -512,7 +493,6 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 			"	}\n" +
 			"}\n"
 		);
-		unit.getResource().getLocationURI().toString();
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));

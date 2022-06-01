@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.proposed.InlayHint;
 import org.eclipse.lsp4j.proposed.InlayHintParams;
@@ -46,6 +47,8 @@ public class InlayHintsHandler {
 		if (InlayHintsParameterMode.NONE.equals(preferenceManager.getPreferences().getInlayHintsParameterMode())) {
 			return Collections.emptyList();
 		}
+
+		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 
 		String uri = params.getTextDocument().getUri();
 
