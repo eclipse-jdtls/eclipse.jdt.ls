@@ -21,6 +21,9 @@
    </vm>
 
    <plugins>
+      <plugin id="ch.qos.logback.classic"/>
+      <plugin id="ch.qos.logback.core"/>
+      <plugin id="ch.qos.logback.slf4j" fragment="true"/>
       <plugin id="org.apache.commons.codec"/>
       <plugin id="org.apache.felix.scr"/>
       <plugin id="org.eclipse.ant.core"/>
@@ -53,6 +56,7 @@
       <plugin id="org.eclipse.jdt.launching"/>
       <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
+      <plugin id="org.eclipse.jdt.ls.logback.appender" fragment="true"/>
       <plugin id="org.eclipse.m2e.apt.core"/>
       <plugin id="org.eclipse.m2e.core"/>
       <plugin id="org.eclipse.m2e.jdt"/>

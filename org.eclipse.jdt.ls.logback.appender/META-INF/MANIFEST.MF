@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %Bundle-Name
+Bundle-SymbolicName: org.eclipse.jdt.ls.logback.appender;singleton:=true
+Bundle-Version: 1.13.0.qualifier
+Fragment-Host: ch.qos.logback.classic
+Automatic-Module-Name: org.eclipse.jdt.ls.logback.appender
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.25.0"
+Bundle-Vendor: %Bundle-Vendor

@@ -47,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
@@ -56,6 +57,7 @@ import org.eclipse.m2e.core.project.LocalProjectScanner;
 import org.eclipse.m2e.core.project.MavenProjectInfo;
 import org.eclipse.m2e.core.project.ProjectImportConfiguration;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 @SuppressWarnings("restriction")
 public class MavenProjectImporter extends AbstractProjectImporter {
@@ -234,7 +236,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	}
 
 	private long getLastWorkspaceStateModified() {
-		Bundle bundle = Platform.getBundle(IMavenConstants.PLUGIN_ID);
+		Bundle bundle = FrameworkUtil.getBundle(IMaven.class);
 		if (bundle != null) {
 			IPath result = Platform.getStateLocation(bundle);
 			File bundleStateLocation = result.toFile();
