@@ -48,7 +48,7 @@ public class TestVMType extends AbstractVMInstallType {
 		IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(VMTYPE_ID);
 		IVMInstall testVMInstall = vmInstallType.findVMInstall(vmId);
 		if (!testVMInstall.equals(JavaRuntime.getDefaultVMInstall())) {
-			// set the 1.8 test JRE as the new default JRE
+			// set the 17 test JRE as the new default JRE
 			JavaRuntime.setDefaultVMInstall(testVMInstall, new NullProgressMonitor());
 			Hashtable<String, String> options = JavaCore.getOptions();
 			JavaCore.setComplianceOptions(vmId, options);

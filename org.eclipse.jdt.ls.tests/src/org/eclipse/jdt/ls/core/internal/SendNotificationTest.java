@@ -14,12 +14,13 @@ package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.withSettings;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class SendNotificationTest {
 
 	@Before
 	public void setUp() throws IOException {
-		this.client = mock(ExecuteCommandProposedClient.class);
+		this.client = mock(ExecuteCommandProposedClient.class, withSettings().withoutAnnotations());
 
 		PipedOutputStream clientWritesTo = new PipedOutputStream();
 		PipedInputStream clientReadsFrom = new PipedInputStream();

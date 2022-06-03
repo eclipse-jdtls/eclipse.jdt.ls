@@ -242,9 +242,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					ResourceUtils.createErrorMarker(gradleProject, gradleStatus, COMPATIBILITY_MARKER_ID);
 				}
 			}
-			GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleUtils.CURRENT_GRADLE);
-			EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
-			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+			if (JavaLanguageServerPlugin.getProjectsManager() != null && JavaLanguageServerPlugin.getProjectsManager().getConnection() != null) {
+				GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleUtils.CURRENT_GRADLE);
+				EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
+				JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
+			}
 			break;
 		}
 		for (IStatus status : gradleUpgradeWrapperStatus.getChildren()) {

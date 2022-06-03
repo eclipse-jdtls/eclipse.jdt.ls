@@ -39,7 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTest {
@@ -49,8 +49,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
+	@Override
 	@Before
-	public void setUp() throws Exception {
+	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
 		assertNotNull(fRoot);

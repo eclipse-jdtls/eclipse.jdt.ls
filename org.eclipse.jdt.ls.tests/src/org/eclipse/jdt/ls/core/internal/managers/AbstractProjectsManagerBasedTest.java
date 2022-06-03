@@ -15,10 +15,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,6 +83,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 /**
  * @author Fred Bricon
@@ -171,19 +171,19 @@ public abstract class AbstractProjectsManagerBasedTest {
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, JavaCore.TAB);
 		javaCoreOptions.put(DefaultCodeFormatterConstants.FORMATTER_TAB_SIZE, "4");
 		JavaCore.setOptions(javaCoreOptions);
-		when(preferenceManager.getPreferences()).thenReturn(preferences);
-		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
-		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
+		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(preferences);
+		Mockito.lenient().when(preferenceManager.getPreferences(any())).thenReturn(preferences);
+		Mockito.lenient().when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
 		ClientPreferences clientPreferences = mock(ClientPreferences.class);
-		when(clientPreferences.isProgressReportSupported()).thenReturn(true);
-		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
-		when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
-		when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
-		when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
-		when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
-		when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
-		when(clientPreferences.isGenerateConstructorsPromptSupported()).thenReturn(true);
-		when(clientPreferences.isGenerateDelegateMethodsPromptSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isProgressReportSupported()).thenReturn(true);
+		Mockito.lenient().when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isOverrideMethodsPromptSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isHashCodeEqualsPromptSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isGenerateToStringPromptSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isAdvancedGenerateAccessorsSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isGenerateConstructorsPromptSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isGenerateDelegateMethodsPromptSupported()).thenReturn(true);
 		return clientPreferences;
 	}
 
