@@ -66,7 +66,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;

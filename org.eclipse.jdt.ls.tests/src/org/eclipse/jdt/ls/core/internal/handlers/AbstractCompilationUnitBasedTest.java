@@ -85,6 +85,9 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 		for (ICompilationUnit workingCopy : workingCopies) {
 			workingCopy.discardWorkingCopy();
 		}
+		if (server != null) {
+			server.shutdown();
+		}
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 	}
 }

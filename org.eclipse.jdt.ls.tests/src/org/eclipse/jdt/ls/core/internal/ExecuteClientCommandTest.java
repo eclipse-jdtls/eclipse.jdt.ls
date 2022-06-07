@@ -14,7 +14,7 @@ package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -124,7 +124,7 @@ public class ExecuteClientCommandTest {
 	 * {@link Answer}.
 	 */
 	private static <T> Answer<T> handler(SyncHandler h) {
-		return new Answer<T>() {
+		return new Answer<>() {
 			@SuppressWarnings("unchecked")
 			@Override
 			public T answer(InvocationOnMock invocation) throws Throwable {

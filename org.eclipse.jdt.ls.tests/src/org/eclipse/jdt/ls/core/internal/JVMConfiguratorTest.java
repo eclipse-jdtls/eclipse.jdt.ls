@@ -55,7 +55,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.osgi.framework.Bundle;
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -65,7 +65,7 @@ import org.osgi.service.prefs.BackingStoreException;
 @RunWith(MockitoJUnitRunner.class)
 public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
-	private static final String ENVIRONMENT_NAME = "JavaSE-11";
+	private static final String ENVIRONMENT_NAME = "JavaSE-17";
 	private IVMInstall originalVm;
 	private JavaClientConnection javaClient;
 	private String originalVmXml;
@@ -85,7 +85,14 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@Override
 	@After
 	public void cleanUp() throws Exception {
+		super.cleanUp();
 		waitForBackgroundJobs();
+		TestVMType.setTestJREAsDefault("17");
+		IVMInstall defaultJRE = JavaRuntime.getDefaultVMInstall();
+		IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment("JavaSE-17");
+		if (environment != null) {
+			environment.setDefaultVM(defaultJRE);
+		}
 		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(LaunchingPlugin.ID_PLUGIN);
 		if (prefs != null) {
 			prefs.put(JavaRuntime.PREF_VM_XML, originalVmXml);
@@ -114,7 +121,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		try {
 			Preferences prefs = new Preferences();
 			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
-			URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/11a"));
+			URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/17a"));
 			File file = URIUtil.toFile(URIUtil.toURI(url));
 			String path = file.getAbsolutePath();
 			String javadoc = "file:///javadoc";
@@ -139,7 +146,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertNotNull(vm);
 			assertTrue(vm instanceof IVMInstall2);
 			String version = ((IVMInstall2) vm).getJavaVersion();
-			assertTrue(version.startsWith(JavaCore.VERSION_11));
+			assertTrue(version.startsWith(JavaCore.VERSION_17));
 			StandardVMType svt = (StandardVMType) vm.getVMInstallType();
 			LibraryLocation[] libs = vm.getLibraryLocations();
 			assertNotNull(libs);
@@ -165,7 +172,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testInvalidJavadoc() throws Exception {
 		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
-		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/11a"));
+		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/17a"));
 		File file = URIUtil.toFile(URIUtil.toURI(url));
 		String path = file.getAbsolutePath();
 		String javadoc = new File(file, "doc").getAbsolutePath();
@@ -186,8 +193,8 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			IProject invisibleProject = copyAndImportFolder("singlefile/java13", "foo/bar/Foo.java");
 			IJavaProject randomProject = JavaCore.create(invisibleProject);
 
-			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
-			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
+			assertComplianceAndPreviewSupport(defaultProject, "17", false);
+			assertComplianceAndPreviewSupport(randomProject, "17", false);
 
 			String latest = JavaCore.latestSupportedJavaVersion();
 			TestVMType.setTestJREAsDefault(latest);
@@ -200,10 +207,10 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertComplianceAndPreviewSupport(defaultProject, "12", false);
 			assertComplianceAndPreviewSupport(randomProject, "12", false);
 
-			TestVMType.setTestJREAsDefault("1.8");
+			TestVMType.setTestJREAsDefault("17");
 
-			assertComplianceAndPreviewSupport(defaultProject, "1.8", false);
-			assertComplianceAndPreviewSupport(randomProject, "1.8", false);
+			assertComplianceAndPreviewSupport(defaultProject, "17", false);
+			assertComplianceAndPreviewSupport(randomProject, "17", false);
 
 		} finally {
 			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
@@ -240,7 +247,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		when(clientPreferences.isActionableRuntimeNotificationSupport()).thenReturn(false);
 
 		Preferences prefs = new Preferences();
-		File file = new File("fakejdk2", "11a" + File.separator + "bin");
+		File file = new File("fakejdk2", "17a" + File.separator + "bin");
 		String path = file.getAbsolutePath();
 		Set<RuntimeEnvironment> runtimes = new HashSet<>();
 		RuntimeEnvironment runtime = new RuntimeEnvironment();

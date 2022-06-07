@@ -33,7 +33,7 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		TestVMType.setTestJREAsDefault("1.8");
+		TestVMType.setTestJREAsDefault("17");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceDescription description = workspace.getDescription();

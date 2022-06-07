@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.syntaxserver;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 public abstract class AbstractSyntaxProjectsManagerBasedTest {
 	protected IProgressMonitor monitor;
@@ -122,7 +123,7 @@ public abstract class AbstractSyntaxProjectsManagerBasedTest {
 	protected ClientPreferences initPreferenceManager(boolean supportClassFileContents) {
 		PreferenceManager.initialize();
 		when(preferenceManager.getPreferences()).thenReturn(preferences);
-		when(preferenceManager.getPreferences(any())).thenReturn(preferences);
+		Mockito.lenient().when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
 		ClientPreferences clientPreferences = mock(ClientPreferences.class);
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);

@@ -69,7 +69,8 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author Fred Bricon
@@ -120,10 +121,10 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IMarker m4 = createUndefinedTypeMarker(IMarker.SEVERITY_ERROR, msg4, 14, 215, 228);
 
 		IDocument d = mock(IDocument.class);
-		when(d.getLineOffset(1)).thenReturn(90);
-		when(d.getLineOffset(9)).thenReturn(1000);
-		when(d.getLineOffset(14)).thenReturn(210);
-		when(d.getLineOffset(99)).thenReturn(10000);
+		Mockito.lenient().when(d.getLineOffset(1)).thenReturn(90);
+		Mockito.lenient().when(d.getLineOffset(9)).thenReturn(1000);
+		Mockito.lenient().when(d.getLineOffset(14)).thenReturn(210);
+		Mockito.lenient().when(d.getLineOffset(99)).thenReturn(10000);
 
 		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, m2, m3, m4 }, true);
 		assertEquals(4, diags.size());
@@ -392,7 +393,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		projectsManager.setConnection(client);
 		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> (p.getUri().endsWith("eclipse/wtpproject")) || p.getUri().endsWith("eclipse/wtpproject/")).findFirst();
 		assertTrue(projectDiags.isPresent());
-		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 0, projectDiags.get().getDiagnostics().size());
+		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 1, projectDiags.get().getDiagnostics().size());
 	}
 
 	@Test

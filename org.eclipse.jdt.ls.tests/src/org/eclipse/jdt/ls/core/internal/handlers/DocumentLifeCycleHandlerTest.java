@@ -81,7 +81,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTest {
@@ -194,12 +194,12 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 	private Preferences mockPreferences() {
 		Preferences mockPreferences = Mockito.mock(Preferences.class);
-		Mockito.when(mockPreferences.getProjectConfigurations()).thenReturn(null);
-		Mockito.when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
-		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
-		Mockito.when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
-		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
-		when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		Mockito.lenient().when(mockPreferences.getProjectConfigurations()).thenReturn(null);
+		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
+		Mockito.lenient().when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
+		Mockito.lenient().when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
+		Mockito.lenient().when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
+		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
 		return mockPreferences;
 	}
 

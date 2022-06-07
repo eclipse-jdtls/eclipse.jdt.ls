@@ -160,7 +160,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 			list.add("org.mockito.ArgumentMatchers.*");
 			list.add("org.mockito.Answers.*");
 			list.add("org.mockito.hamcrest.MockitoHamcrest.*");
-			list.add("org.mockito.Matchers.*");
+			list.add("org.mockito.ArgumentMatchers.*");
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(list);
 			IJavaProject javaProject = JavaCore.create(project);
 			IType type = javaProject.findType("org.sample.MyTest");
@@ -174,6 +174,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 			String expected = "package org.sample;\n" +
 					"\n" +
 					"import static org.hamcrest.MatcherAssert.assertThat;\n" +
+					"import static org.hamcrest.Matchers.any;\n" +
 					"import static org.junit.jupiter.api.Assertions.assertEquals;\n" +
 					"\n" +
 					"import org.junit.jupiter.api.Test;\n" +

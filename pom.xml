@@ -18,7 +18,7 @@
 	<properties>
 		<base.name>JDT Language Server</base.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<tycho-version>2.5.0</tycho-version>
+		<tycho-version>2.7.2</tycho-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/eclipse/eclipse.jdt.ls.git</tycho.scmUrl>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -225,7 +225,7 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.8.5</version>
+						<version>0.8.7</version>
 						<executions>
 							<execution>
 								<goals>
