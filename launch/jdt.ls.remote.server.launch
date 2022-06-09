@@ -86,7 +86,6 @@
 <setEntry value="org.eclipse.lsp4j.jsonrpc@default:default"/>
 <setEntry value="org.eclipse.lsp4j@default:default"/>
 <setEntry value="org.eclipse.ltk.core.refactoring@default:default"/>
-<setEntry value="org.eclipse.m2e.archetype.common@default:default"/>
 <setEntry value="org.eclipse.m2e.core@default:default"/>
 <setEntry value="org.eclipse.m2e.jdt@default:default"/>
 <setEntry value="org.eclipse.m2e.lifecyclemapping.defaults@default:default"/>
