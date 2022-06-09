@@ -531,7 +531,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		HoverHandler handler = new HoverHandler(preferenceManager);
 		Hover hover = handler.hover(position, monitor);
 		if (hover.getContents().getLeft().size() < 2) {
-			JobHelpers.waitForDownloadSourcesJobs(60000);
+			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
 			waitForBackgroundJobs();
 			hover = handler.hover(position, monitor);
 		}
@@ -555,7 +555,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		// perform hover
 		hover = handler.hover(position, monitor);
 		if (hover.getContents().getLeft().size() < 2) {
-			JobHelpers.waitForDownloadSourcesJobs(60000);
+			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
 			waitForBackgroundJobs();
 			hover = handler.hover(position, monitor);
 		}
