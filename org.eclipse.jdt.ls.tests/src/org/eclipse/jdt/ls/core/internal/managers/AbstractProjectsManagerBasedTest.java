@@ -234,6 +234,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 			File file = copyFiles(path, deleteExistingFiles);
 			roots.add(Path.fromOSString(file.getAbsolutePath()));
 		}
+		waitForBackgroundJobs();
 		IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
 			@Override
 			public void run(IProgressMonitor monitor) throws CoreException {
@@ -248,6 +249,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected void waitForBackgroundJobs() throws Exception {
 		JobHelpers.waitForJobsToComplete(monitor);
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, monitor);
+		JobHelpers.waitUntilIndexesReady();
 	}
 
 	protected File getSourceProjectDirectory() {
@@ -266,15 +268,30 @@ public abstract class AbstractProjectsManagerBasedTest {
 		projectsManager = null;
 		Platform.removeLogListener(logListener);
 		logListener = null;
+		try {
+			waitForBackgroundJobs();
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
 		WorkspaceHelper.deleteAllProjects();
 		try {
 			// https://github.com/eclipse/eclipse.jdt.ls/issues/996
 			FileUtils.forceDelete(getWorkingProjectDirectory());
 		} catch (IOException e) {
-			getWorkingProjectDirectory().deleteOnExit();
+			JavaLanguageServerPlugin.logException(e);
+			try {
+				getWorkingProjectDirectory().deleteOnExit();
+			} catch (IOException e1) {
+				JavaLanguageServerPlugin.logException(e1);
+			}
 		}
 		Job.getJobManager().setProgressProvider(null);
-		waitForBackgroundJobs();
+		try {
+			waitForBackgroundJobs();
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		ResourcesPlugin.getWorkspace().save(true/*full save*/, null/*no progress*/);
 	}
 
 	protected void assertIsJavaProject(IProject project) {
