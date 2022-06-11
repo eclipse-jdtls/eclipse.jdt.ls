@@ -32,11 +32,8 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.internal.launching.LaunchingPlugin;
 import org.eclipse.jdt.internal.launching.StandardVMType;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstall2;
@@ -57,7 +54,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.osgi.framework.Bundle;
-import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * @author Fred Bricon
@@ -68,17 +64,13 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	private static final String ENVIRONMENT_NAME = "JavaSE-17";
 	private IVMInstall originalVm;
 	private JavaClientConnection javaClient;
-	private String originalVmXml;
 	@Mock
 	private ClientPreferences clientPreferences;
 
 
 	@Before
 	public void setup() throws Exception {
-		Platform.getBundle(LaunchingPlugin.ID_PLUGIN).start(Bundle.START_TRANSIENT);
 		originalVm = JavaRuntime.getDefaultVMInstall();
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(LaunchingPlugin.ID_PLUGIN);
-		originalVmXml = prefs.get(JavaRuntime.PREF_VM_XML, null);
 		javaClient = new JavaClientConnection(client);
 	}
 
@@ -86,21 +78,11 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@After
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		waitForBackgroundJobs();
 		TestVMType.setTestJREAsDefault("17");
 		IVMInstall defaultJRE = JavaRuntime.getDefaultVMInstall();
 		IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment("JavaSE-17");
 		if (environment != null) {
 			environment.setDefaultVM(defaultJRE);
-		}
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(LaunchingPlugin.ID_PLUGIN);
-		if (prefs != null) {
-			prefs.put(JavaRuntime.PREF_VM_XML, originalVmXml);
-			try {
-				prefs.flush();
-			} catch (BackingStoreException e) {
-				JavaLanguageServerPlugin.logException(e);
-			}
 		}
 		waitForBackgroundJobs();
 		javaClient.disconnect();

@@ -22,12 +22,14 @@ import java.util.List;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.hamcrest.core.IsNull;
@@ -37,6 +39,7 @@ import org.junit.Test;
 public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 
 	private static final String JAVA_SE_8 = "JavaSE-1.8";
+	private static final String JAVA_SE_17 = "JavaSE-17";
 
 	/**
 	 * Test musts run with the -Djdkfx8.home=/path/to/jdk8+fx System property, or it
@@ -65,19 +68,25 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 			// Delete JavaFX runtime, project should fail to compile
 			IVMInstall vm = JVMConfigurator.findVM(null, JAVA_SE_8);
 			vm.getVMInstallType().disposeVMInstall(vm.getId());
-
+			TestVMType.setTestJREAsDefault("1.8");
+			IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(TestVMType.VMTYPE_ID);
+			IVMInstall jvm8 = vmInstallType.findVMInstall("1.8");
+			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
+			if (environment != null) {
+				environment.setDefaultVM(jvm8);
+			}
+			JobHelpers.waitForJobsToComplete();
+			List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+			assertNotEquals(0, errors.size());
+			String errorsStr = ResourceUtils.toString(errors);
+			assertTrue("Unexpected errors:\n " + errorsStr, errorsStr.contains("javafx cannot be resolved"));
 		} finally {
 			JavaRuntime.setDefaultVMInstall(defaultJRE, monitor, true);
-			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
+			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_17);
 			if (environment != null) {
 				environment.setDefaultVM(defaultJRE);
 			}
 		}
-		JobHelpers.waitForJobsToComplete();
-		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertNotEquals(0, errors.size());
-		String errorsStr = ResourceUtils.toString(errors);
-		assertTrue("Unexpected errors:\n " + errorsStr, errorsStr.contains("javafx cannot be resolved"));
 	}
 
 	private Preferences createJavaFXRuntimePrefs(String path) {

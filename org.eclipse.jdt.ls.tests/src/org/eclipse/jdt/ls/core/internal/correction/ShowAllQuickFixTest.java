@@ -23,6 +23,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -86,6 +87,7 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 		}
 		super.cleanUp();
 		javaClient.disconnect();
+		Job.getJobManager().setProgressProvider(null);
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 	}
 
