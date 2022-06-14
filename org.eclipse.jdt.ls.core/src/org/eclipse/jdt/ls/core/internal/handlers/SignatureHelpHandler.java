@@ -72,6 +72,9 @@ public class SignatureHelpHandler {
 		}
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(position.getTextDocument().getUri());
+			if (unit == null) {
+				return help;
+			}
 			final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), position.getPosition().getLine(), position.getPosition().getCharacter());
 			SignatureHelp helpFromASTNode = SignatureHelpUtils.getSignatureHelpFromASTNode(unit, offset, monitor);
 			if (helpFromASTNode != null) {

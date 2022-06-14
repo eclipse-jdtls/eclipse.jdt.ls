@@ -1114,6 +1114,15 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("This is an API.", documentation.getLeft().trim());
 	}
 
+	@Test
+	public void testSignatureHelpInClassFile() throws Exception {
+		String uri = "jdt://contents/java.base/java.lang/String.class";
+		String payload = HOVER_TEMPLATE.replace("${file}", uri).replace("${line}", "10").replace("${char}", "10");
+		SignatureHelpParams position = getParams(payload);
+		SignatureHelp sh = handler.signatureHelp(position, monitor);
+		assertNotNull(sh);
+	}
+
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
 		SignatureHelp help = getSignatureHelp(cu, line, character);
 		assertNotNull(help);
