@@ -72,8 +72,10 @@ public class GenerateConstructorsHandlerTest extends AbstractSourceTestCase {
 		assertEquals(2, response.fields.length);
 		assertEquals("instance", response.fields[0].name);
 		assertEquals("String", response.fields[0].type);
+		assertEquals(false, response.fields[0].isSelected);
 		assertEquals("address", response.fields[1].name);
 		assertEquals("String", response.fields[1].type);
+		assertEquals(true, response.fields[1].isSelected);
 	}
 
 	@Test

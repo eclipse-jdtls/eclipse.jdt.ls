@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
@@ -30,6 +31,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -44,6 +46,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -62,20 +65,26 @@ public class GenerateConstructorsHandler {
 
 	public static CheckConstructorsResponse checkConstructorsStatus(CodeActionParams params, IProgressMonitor monitor) {
 		IType type = SourceAssistProcessor.getSelectionType(params, monitor);
-		return checkConstructorStatus(type, monitor);
+		return checkConstructorStatus(type, params.getRange(), monitor);
 	}
 
-	public static CheckConstructorsResponse checkConstructorStatus(IType type, IProgressMonitor monitor) {
+	public static CheckConstructorsResponse checkConstructorStatus(IType type, Range range, IProgressMonitor monitor) {
 		if (type == null || type.getCompilationUnit() == null) {
 			return new CheckConstructorsResponse();
 		}
 
 		try {
+			ICompilationUnit compilationUnit = type.getCompilationUnit();
+			if (compilationUnit == null) {
+				return new CheckConstructorsResponse();
+			}
+
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 			if (astRoot == null) {
 				return new CheckConstructorsResponse();
 			}
 
+			String fieldName = getFieldName(compilationUnit, astRoot, range);
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
 				return new CheckConstructorsResponse();
@@ -111,7 +120,7 @@ public class GenerateConstructorsHandler {
 			//@formatter:off
 			return new CheckConstructorsResponse(
 				Arrays.stream(superConstructors).map(binding -> new LspMethodBinding(binding)).toArray(LspMethodBinding[]::new),
-				fields.stream().map(binding -> new LspVariableBinding(binding)).toArray(LspVariableBinding[]::new)
+				fields.stream().map(binding -> binding.getName().equals(fieldName) ? new LspVariableBinding(binding, true) : new LspVariableBinding(binding)).toArray(LspVariableBinding[]::new)
 			);
 			//@formatter:on
 		} catch (JavaModelException e) {
@@ -208,6 +217,22 @@ public class GenerateConstructorsHandler {
 
 		String[] parameters = Arrays.stream(binding.getParameterTypes()).map(type -> type.getName()).toArray(String[]::new);
 		return Arrays.equals(parameters, lspBinding.parameters);
+	}
+
+	private static String getFieldName(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
+		if (range == null) {
+			return null;
+		}
+		InnovationContext context = CodeActionHandler.getContext(unit, astRoot, range);
+		ASTNode node = context.getCoveredNode();
+		if (node == null) {
+			node = context.getCoveringNode();
+		}
+		FieldDeclaration fieldDeclaration = SourceAssistProcessor.getFieldDeclarationNode(node);
+		if (fieldDeclaration != null) {
+			return SourceAssistProcessor.getFieldName(fieldDeclaration, node);
+		}
+		return null;
 	}
 
 	public static class CheckConstructorsResponse {

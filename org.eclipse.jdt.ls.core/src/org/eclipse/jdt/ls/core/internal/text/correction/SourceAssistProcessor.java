@@ -233,7 +233,7 @@ public class SourceAssistProcessor {
 		return $;
 	}
 
-	private String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
+	public static String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
 		if (fieldDeclaration == null || node == null) {
 			return null;
 		}
@@ -502,7 +502,7 @@ public class SourceAssistProcessor {
 		}
 
 		if (preferenceManager.getClientPreferences().isGenerateConstructorsPromptSupported()) {
-			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type, monitor);
+			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type, params.getRange(), monitor);
 			if (status.constructors.length == 0) {
 				return Optional.empty();
 			}
@@ -723,7 +723,7 @@ public class SourceAssistProcessor {
 		return node instanceof ImportDeclaration ? node : null;
 	}
 
-	private static FieldDeclaration getFieldDeclarationNode(ASTNode node) {
+	public static FieldDeclaration getFieldDeclarationNode(ASTNode node) {
 		if (node == null) {
 			return null;
 		}
