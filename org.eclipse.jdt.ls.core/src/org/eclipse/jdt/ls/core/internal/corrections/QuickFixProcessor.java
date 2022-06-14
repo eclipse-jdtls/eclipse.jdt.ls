@@ -356,9 +356,9 @@ public class QuickFixProcessor {
 			// proposals.add(new TaskMarkerProposal(context.getCompilationUnit(),
 			// problem, 10));
 			// break;
-			case IProblem.JavadocMissing:
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
-				break;
+			// case IProblem.JavadocMissing:
+			// JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
+			// break;
 			case IProblem.JavadocMissingParamTag:
 			case IProblem.JavadocMissingReturnTag:
 			case IProblem.JavadocMissingThrowsTag:

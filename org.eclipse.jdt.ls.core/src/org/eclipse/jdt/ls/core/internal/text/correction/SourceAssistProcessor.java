@@ -63,8 +63,10 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
@@ -230,6 +232,20 @@ public class SourceAssistProcessor {
 		Optional<Either<Command, CodeAction>> generateFinalModifiers = addFinalModifierWherePossibleAction(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiers);
 
+		// Add add javadoc quick assist
+		ASTNode coveringNode = context.getCoveringNode();
+		if (coveringNode != null) {
+			ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
+			try {
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections);
+				for (ChangeCorrectionProposal result : resultingCollections) {
+					Optional<Either<Command, CodeAction>> codeActionFromProposal = CodeActionHandler.getCodeActionFromProposal(result, params.getContext(), this.preferenceManager);
+					addSourceActionCommand($, params.getContext(), codeActionFromProposal);
+				}
+			} catch (CoreException e) {
+				// Do nothing
+			}
+		}
 		return $;
 	}
 

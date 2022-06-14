@@ -198,7 +198,7 @@ public class CodeActionHandler {
 		}
 		try {
 			for (ChangeCorrectionProposal proposal : proposals) {
-				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
+				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext(), this.preferenceManager);
 				if (codeActionFromProposal.isPresent() && !codeActions.contains(codeActionFromProposal.get())) {
 					codeActions.add(codeActionFromProposal.get());
 				}
@@ -249,7 +249,7 @@ public class CodeActionHandler {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+	public static Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context, PreferenceManager preferenceManager) throws CoreException {
 		String name = proposal.getName();
 
 		Command command = null;
@@ -263,7 +263,7 @@ public class CodeActionHandler {
 			AssignToVariableAssistCommandProposal commandProposal = (AssignToVariableAssistCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			if (!this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
+			if (!preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
 				WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 				if (!ChangeUtil.hasChanges(edit)) {
 					return Optional.empty();
@@ -281,7 +281,9 @@ public class CodeActionHandler {
 			} else {
 				codeAction.setCommand(command);
 			}
-			codeAction.setDiagnostics(context.getDiagnostics());
+			if (proposal.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
+				codeAction.setDiagnostics(context.getDiagnostics());
+			}
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
