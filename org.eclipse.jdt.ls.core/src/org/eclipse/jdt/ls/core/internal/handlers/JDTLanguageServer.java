@@ -137,6 +137,7 @@ import org.eclipse.lsp4j.TypeDefinitionParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
+import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
@@ -841,6 +842,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		logInfo(">> java/projectConfigurationUpdate");
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
 		handler.updateConfiguration(param);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#projectConfigurationsUpdate(org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam)
+	 */
+	@Override
+	public void projectConfigurationsUpdate(ProjectConfigurationsUpdateParam param) {
+		logInfo(">> java/projectConfigurationsUpdate");
+		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
+		handler.updateConfigurations(param.getIdentifiers());
 	}
 
 	/* (non-Javadoc)
